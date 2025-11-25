@@ -2,13 +2,9 @@ import React, { useState } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
-  Settings as SettingsIcon,
   User,
-  Building2,
   Bell,
-  Shield,
   Palette,
-  Globe,
   Moon,
   Sun,
   Save,
@@ -28,7 +24,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Separator } from "@/components/ui/separator";
+
 import { useToast } from "@/components/ui/use-toast";
 import PageHeader from "@/components/ui/PageHeader";
 
@@ -49,15 +45,6 @@ export default function Settings() {
   });
 
   const currentEmployee = employee?.[0];
-  const orgId = currentEmployee?.organisation_id;
-
-  const { data: organisation } = useQuery({
-    queryKey: ['organisation', orgId],
-    queryFn: () => base44.entities.Organisation.filter({ id: orgId }),
-    enabled: !!orgId,
-  });
-
-  const currentOrg = organisation?.[0];
 
   const updateEmployeeMutation = useMutation({
     mutationFn: (data) => base44.entities.Employee.update(currentEmployee?.id, data),
@@ -90,19 +77,15 @@ export default function Settings() {
         <TabsList className="mb-6 flex flex-wrap h-auto gap-1 p-1 bg-gray-100">
           <TabsTrigger value="profile" className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm px-2 sm:px-3 py-1.5 sm:py-2 data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#1EB053] data-[state=active]:to-[#0072C6] data-[state=active]:text-white">
             <User className="w-3 h-3 sm:w-4 sm:h-4" />
-            <span className="hidden xs:inline">Profile</span>
-          </TabsTrigger>
-          <TabsTrigger value="organisation" className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm px-2 sm:px-3 py-1.5 sm:py-2 data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#1EB053] data-[state=active]:to-[#0072C6] data-[state=active]:text-white">
-            <Building2 className="w-3 h-3 sm:w-4 sm:h-4" />
-            <span className="hidden xs:inline">Organisation</span>
+            Profile
           </TabsTrigger>
           <TabsTrigger value="notifications" className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm px-2 sm:px-3 py-1.5 sm:py-2 data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#1EB053] data-[state=active]:to-[#0072C6] data-[state=active]:text-white">
             <Bell className="w-3 h-3 sm:w-4 sm:h-4" />
-            <span className="hidden xs:inline">Alerts</span>
+            Notifications
           </TabsTrigger>
           <TabsTrigger value="appearance" className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm px-2 sm:px-3 py-1.5 sm:py-2 data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#1EB053] data-[state=active]:to-[#0072C6] data-[state=active]:text-white">
             <Palette className="w-3 h-3 sm:w-4 sm:h-4" />
-            <span className="hidden xs:inline">Theme</span>
+            Appearance
           </TabsTrigger>
         </TabsList>
 
@@ -197,69 +180,6 @@ export default function Settings() {
               </CardContent>
             </Card>
           </div>
-        </TabsContent>
-
-        <TabsContent value="organisation">
-          <Card>
-            <CardHeader>
-              <CardTitle>Organisation Details</CardTitle>
-              <CardDescription>Information about your organisation</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-6">
-                <div className="flex flex-col sm:flex-row items-center gap-4 text-center sm:text-left">
-                  {currentOrg?.logo_url ? (
-                    <img src={currentOrg.logo_url} alt="Logo" className="w-14 h-14 sm:w-16 sm:h-16 rounded-xl object-cover" />
-                  ) : (
-                    <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-xl bg-gradient-to-r from-[#1EB053] to-[#0072C6] flex items-center justify-center text-white text-xl sm:text-2xl font-bold">
-                      {currentOrg?.name?.charAt(0) || 'O'}
-                    </div>
-                  )}
-                  <div>
-                    <h3 className="text-lg sm:text-xl font-bold">{currentOrg?.name || 'Organisation'}</h3>
-                    <p className="text-gray-500">{currentOrg?.code}</p>
-                  </div>
-                </div>
-
-                <Separator />
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <Label className="text-gray-500">Owner</Label>
-                    <p className="font-medium">{currentOrg?.owner_name || '-'}</p>
-                  </div>
-                  <div>
-                    <Label className="text-gray-500">Email</Label>
-                    <p className="font-medium">{currentOrg?.email || '-'}</p>
-                  </div>
-                  <div>
-                    <Label className="text-gray-500">Phone</Label>
-                    <p className="font-medium">{currentOrg?.phone || '-'}</p>
-                  </div>
-                  <div>
-                    <Label className="text-gray-500">Currency</Label>
-                    <p className="font-medium">{currentOrg?.currency || 'SLE'}</p>
-                  </div>
-                  <div>
-                    <Label className="text-gray-500">Address</Label>
-                    <p className="font-medium">{currentOrg?.address || '-'}</p>
-                  </div>
-                  <div>
-                    <Label className="text-gray-500">City</Label>
-                    <p className="font-medium">{currentOrg?.city || '-'}</p>
-                  </div>
-                  <div>
-                    <Label className="text-gray-500">Country</Label>
-                    <p className="font-medium">{currentOrg?.country || 'Sierra Leone'}</p>
-                  </div>
-                  <div>
-                    <Label className="text-gray-500">Subscription</Label>
-                    <p className="font-medium capitalize">{currentOrg?.subscription_type || 'Free'}</p>
-                  </div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
         </TabsContent>
 
         <TabsContent value="notifications">
