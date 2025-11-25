@@ -159,10 +159,7 @@ export default function Sales() {
       setShowCheckout(false);
       setShowReceipt(true);
       setCustomerName("");
-      toast({
-        title: "Sale Completed",
-        description: "The sale has been recorded successfully.",
-      });
+      toast.success("Sale Completed", { description: "The sale has been recorded successfully." });
 
       // Send auto sale report to admins
       try {
@@ -193,11 +190,7 @@ export default function Sales() {
 
   const addToCart = (product) => {
     if (!selectedLocation) {
-      toast({
-        title: "Select Location",
-        description: `Please select a ${saleType === 'vehicle' ? 'vehicle' : saleType === 'warehouse' ? 'warehouse' : 'store'} first.`,
-        variant: "destructive"
-      });
+      toast.error("Select Location", { description: `Please select a ${saleType === 'vehicle' ? 'vehicle' : saleType === 'warehouse' ? 'warehouse' : 'store'} first.` });
       return;
     }
 
@@ -206,11 +199,7 @@ export default function Sales() {
     
     if (existing) {
       if (existing.quantity >= availableStock) {
-        toast({
-          title: "Stock Limit",
-          description: `Only ${availableStock} available at this location.`,
-          variant: "destructive"
-        });
+        toast.error("Stock Limit", { description: `Only ${availableStock} available at this location.` });
         return;
       }
       setCart(cart.map(item => 
@@ -220,11 +209,7 @@ export default function Sales() {
       ));
     } else {
       if (availableStock < 1) {
-        toast({
-          title: "Out of Stock",
-          description: "This product is not available at this location.",
-          variant: "destructive"
-        });
+        toast.error("Out of Stock", { description: "This product is not available at this location." });
         return;
       }
       setCart([...cart, {
@@ -245,11 +230,7 @@ export default function Sales() {
       if (item.product_id === productId) {
         const newQty = Math.max(1, item.quantity + delta);
         if (newQty > availableStock) {
-          toast({
-            title: "Stock Limit",
-            description: `Only ${availableStock} available at this location.`,
-            variant: "destructive"
-          });
+          toast.error("Stock Limit", { description: `Only ${availableStock} available at this location.` });
           return item;
         }
         return { ...item, quantity: newQty, total: newQty * item.unit_price };
@@ -266,11 +247,7 @@ export default function Sales() {
 
   const completeSale = async () => {
     if (!selectedLocation) {
-      toast({
-        title: "Location Required",
-        description: `Please select a ${saleType === 'vehicle' ? 'vehicle' : saleType === 'warehouse' ? 'warehouse' : 'store'} for this sale.`,
-        variant: "destructive"
-      });
+      toast.error("Location Required", { description: `Please select a ${saleType === 'vehicle' ? 'vehicle' : saleType === 'warehouse' ? 'warehouse' : 'store'} for this sale.` });
       return;
     }
 
