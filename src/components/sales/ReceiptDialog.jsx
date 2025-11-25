@@ -265,20 +265,11 @@ export default function ReceiptDialog({ open, onOpenChange, sale, organisation }
     }
     setSending(true);
     try {
-      await base44.integrations.Core.SendEmail({
-        to: emailTo,
-        subject: `Receipt ${sale?.sale_number} - ${organisation?.name || 'BFSE'}`,
-        body: `
-          <div style="font-family: Arial, sans-serif;">
-            <p>Dear ${sale?.customer_name || 'Valued Customer'},</p>
-            <p>Thank you for your purchase! Please find your receipt details below:</p>
-            ${getReceiptHTML()}
-            <p style="margin-top: 20px; color: #666;">
-              If you have any questions, please contact us at ${organisation?.phone || 'our store'}.<br>
-              🇸🇱 Proudly Sierra Leonean
-            </p>
-          </div>
-        `
+      await base44.functions.invoke('sendReceipt', {
+        sale: sale,
+        customerEmail: emailTo,
+        customerName: sale?.customer_name,
+        organisation: organisation
       });
       toast({ 
         title: "Email sent successfully", 
@@ -287,7 +278,7 @@ export default function ReceiptDialog({ open, onOpenChange, sale, organisation }
       setShowEmailInput(false);
       setEmailTo("");
     } catch (error) {
-      toast({ title: "Failed to send email", variant: "destructive" });
+      toast({ title: "Failed to send email", description: error.message, variant: "destructive" });
     }
     setSending(false);
   };
