@@ -12,6 +12,7 @@ import Attendance from './pages/Attendance';
 import Profile from './pages/Profile';
 import RolePermissions from './pages/RolePermissions';
 import Suppliers from './pages/Suppliers';
+import OrganisationSetup from './pages/OrganisationSetup';
 import __Layout from './Layout.jsx';
 
 
@@ -30,6 +31,7 @@ export const PAGES = {
     "Profile": Profile,
     "RolePermissions": RolePermissions,
     "Suppliers": Suppliers,
+    "OrganisationSetup": OrganisationSetup,
 }
 
 export const pagesConfig = {
