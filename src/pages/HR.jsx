@@ -541,6 +541,11 @@ export default function HR() {
       <Dialog open={showEmployeeDialog} onOpenChange={setShowEmployeeDialog}>
         <DialogContent className="max-w-lg">
           <DialogHeader>
+            <div className="flex h-1 w-16 rounded-full overflow-hidden mb-3">
+              <div className="flex-1 bg-[#1EB053]" />
+              <div className="flex-1 bg-white border-y border-gray-200" />
+              <div className="flex-1 bg-[#0072C6]" />
+            </div>
             <DialogTitle>Edit Employee</DialogTitle>
           </DialogHeader>
           {editingEmployee && (
@@ -629,7 +634,7 @@ export default function HR() {
                 <Button type="button" variant="outline" onClick={() => setShowEmployeeDialog(false)}>
                   Cancel
                 </Button>
-                <Button type="submit" className="sl-gradient">
+                <Button type="submit" className="bg-gradient-to-r from-[#1EB053] to-[#0072C6] hover:from-[#178f43] hover:to-[#005a9e] text-white shadow-lg">
                   Update Employee
                 </Button>
               </DialogFooter>

@@ -143,6 +143,11 @@ export default function PerformanceReviewDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
+          <div className="flex h-1 w-16 rounded-full overflow-hidden mb-3">
+            <div className="flex-1 bg-[#1EB053]" />
+            <div className="flex-1 bg-white border-y border-gray-200" />
+            <div className="flex-1 bg-[#0072C6]" />
+          </div>
           <DialogTitle>
             Performance Review - {employee?.full_name || `${employee?.first_name} ${employee?.last_name}`}
           </DialogTitle>
@@ -231,6 +236,7 @@ export default function PerformanceReviewDialog({
             <Button 
               type="button" 
               variant="outline"
+              className="border-[#0072C6] text-[#0072C6] hover:bg-[#0072C6]/10"
               onClick={(e) => handleSubmit(e, "draft")}
               disabled={createMutation.isPending || updateMutation.isPending}
             >
@@ -238,7 +244,7 @@ export default function PerformanceReviewDialog({
             </Button>
             <Button 
               type="submit" 
-              className="bg-[#1EB053] hover:bg-green-600"
+              className="bg-gradient-to-r from-[#1EB053] to-[#0072C6] hover:from-[#178f43] hover:to-[#005a9e] text-white shadow-lg"
               disabled={createMutation.isPending || updateMutation.isPending}
             >
               Submit Review

@@ -164,11 +164,16 @@ export default function EmployeeDocuments({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
+          <div className="flex h-1 w-16 rounded-full overflow-hidden mb-3">
+            <div className="flex-1 bg-[#1EB053]" />
+            <div className="flex-1 bg-white border-y border-gray-200" />
+            <div className="flex-1 bg-[#0072C6]" />
+          </div>
           <DialogTitle className="flex items-center justify-between">
             <span>Documents - {employee?.full_name || `${employee?.first_name} ${employee?.last_name}`}</span>
             <Button 
               size="sm" 
-              className="bg-[#1EB053] hover:bg-green-600"
+              className="bg-gradient-to-r from-[#1EB053] to-[#0072C6] hover:from-[#178f43] hover:to-[#005a9e] text-white shadow-lg"
               onClick={() => setShowUploadDialog(true)}
             >
               <Upload className="w-4 h-4 mr-2" />
@@ -286,6 +291,11 @@ export default function EmployeeDocuments({
       <Dialog open={showUploadDialog} onOpenChange={setShowUploadDialog}>
         <DialogContent className="max-w-md">
           <DialogHeader>
+            <div className="flex h-1 w-16 rounded-full overflow-hidden mb-3">
+              <div className="flex-1 bg-[#1EB053]" />
+              <div className="flex-1 bg-white border-y border-gray-200" />
+              <div className="flex-1 bg-[#0072C6]" />
+            </div>
             <DialogTitle>Upload Document</DialogTitle>
           </DialogHeader>
           <form onSubmit={handleUploadSubmit} className="space-y-4">
@@ -332,8 +342,8 @@ export default function EmployeeDocuments({
             <div>
               <Label>File</Label>
               {uploadForm.file_url ? (
-                <div className="mt-1 p-3 bg-green-50 rounded-lg flex items-center justify-between">
-                  <span className="text-sm text-green-700 truncate">{uploadForm.file_name}</span>
+                <div className="mt-1 p-3 bg-gradient-to-r from-[#1EB053]/10 to-[#0072C6]/10 rounded-lg flex items-center justify-between border border-[#1EB053]/20">
+                  <span className="text-sm text-[#1EB053] truncate">{uploadForm.file_name}</span>
                   <Button 
                     type="button" 
                     variant="ghost" 
@@ -344,7 +354,7 @@ export default function EmployeeDocuments({
                   </Button>
                 </div>
               ) : (
-                <label className="mt-1 flex items-center justify-center gap-2 p-6 border-2 border-dashed rounded-lg cursor-pointer hover:border-[#1EB053] transition-colors">
+                <label className="mt-1 flex items-center justify-center gap-2 p-6 border-2 border-dashed rounded-lg cursor-pointer hover:border-[#1EB053] hover:bg-[#1EB053]/5 transition-colors">
                   <Upload className="w-6 h-6 text-gray-400" />
                   <span className="text-sm text-gray-500">
                     {uploading ? "Uploading..." : "Click to select file"}
@@ -365,7 +375,7 @@ export default function EmployeeDocuments({
               </Button>
               <Button 
                 type="submit" 
-                className="bg-[#1EB053] hover:bg-green-600"
+                className="bg-gradient-to-r from-[#1EB053] to-[#0072C6] hover:from-[#178f43] hover:to-[#005a9e] text-white shadow-lg"
                 disabled={createMutation.isPending || !uploadForm.file_url}
               >
                 Upload Document

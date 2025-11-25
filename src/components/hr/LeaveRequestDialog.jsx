@@ -131,6 +131,11 @@ export default function LeaveRequestDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-md">
         <DialogHeader>
+          <div className="flex h-1 w-16 rounded-full overflow-hidden mb-3">
+            <div className="flex-1 bg-[#1EB053]" />
+            <div className="flex-1 bg-white border-y border-gray-200" />
+            <div className="flex-1 bg-[#0072C6]" />
+          </div>
           <DialogTitle>{editingRequest ? 'Edit Leave Request' : 'Request Leave'}</DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
@@ -192,7 +197,7 @@ export default function LeaveRequestDialog({
           </div>
 
           {daysRequested > 0 && (
-            <div className="p-3 bg-blue-50 rounded-lg text-sm text-blue-700">
+            <div className="p-3 bg-gradient-to-r from-[#1EB053]/10 to-[#0072C6]/10 rounded-lg text-sm text-[#0072C6] border border-[#0072C6]/20">
               Total days requested: <strong>{daysRequested}</strong>
             </div>
           )}
@@ -246,7 +251,7 @@ export default function LeaveRequestDialog({
             </Button>
             <Button 
               type="submit" 
-              className="bg-[#1EB053] hover:bg-green-600"
+              className="bg-gradient-to-r from-[#1EB053] to-[#0072C6] hover:from-[#178f43] hover:to-[#005a9e] text-white shadow-lg"
               disabled={createMutation.isPending || updateMutation.isPending}
             >
               {editingRequest ? 'Update Request' : 'Submit Request'}

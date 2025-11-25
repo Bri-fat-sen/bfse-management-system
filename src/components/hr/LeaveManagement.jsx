@@ -216,6 +216,11 @@ export default function LeaveManagement({ orgId, currentEmployee }) {
       <Dialog open={showRejectDialog} onOpenChange={setShowRejectDialog}>
         <DialogContent className="max-w-sm">
           <DialogHeader>
+            <div className="flex h-1 w-16 rounded-full overflow-hidden mb-3">
+              <div className="flex-1 bg-[#1EB053]" />
+              <div className="flex-1 bg-white border-y border-gray-200" />
+              <div className="flex-1 bg-[#0072C6]" />
+            </div>
             <DialogTitle>Reject Leave Request</DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
