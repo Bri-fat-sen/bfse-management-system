@@ -48,7 +48,7 @@ import NotificationCenter from "@/components/notifications/NotificationCenter";
 import MobileNav from "@/components/mobile/MobileNav";
 import { OfflineProvider, OfflineStatus } from "@/components/offline/OfflineManager";
 import GlobalSearch from "@/components/search/GlobalSearch";
-import { Toaster } from "@/components/ui/sonner";
+import { Toaster } from "sonner";
 
 const menuSections = [
   {
