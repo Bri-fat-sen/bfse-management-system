@@ -12,7 +12,6 @@ import Attendance from './pages/Attendance';
 import Profile from './pages/Profile';
 import RolePermissions from './pages/RolePermissions';
 import Suppliers from './pages/Suppliers';
-import OrganisationSetup from './pages/OrganisationSetup';
 import OrganisationManage from './pages/OrganisationManage';
 import EmployeeDashboard from './pages/EmployeeDashboard';
 import Analytics from './pages/Analytics';
@@ -35,7 +34,6 @@ export const PAGES = {
     "Profile": Profile,
     "RolePermissions": RolePermissions,
     "Suppliers": Suppliers,
-    "OrganisationSetup": OrganisationSetup,
     "OrganisationManage": OrganisationManage,
     "EmployeeDashboard": EmployeeDashboard,
     "Analytics": Analytics,
