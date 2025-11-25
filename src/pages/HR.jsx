@@ -42,6 +42,7 @@ import { useToast } from "@/components/ui/use-toast";
 import PageHeader from "@/components/ui/PageHeader";
 import EmptyState from "@/components/ui/EmptyState";
 import StatCard from "@/components/ui/StatCard";
+import PayrollProcessDialog from "@/components/hr/PayrollProcessDialog";
 
 const roles = [
   "org_admin", "hr_admin", "payroll_admin", "warehouse_manager",
@@ -59,6 +60,7 @@ export default function HR() {
   const [showEmployeeDialog, setShowEmployeeDialog] = useState(false);
   const [editingEmployee, setEditingEmployee] = useState(null);
   const [activeTab, setActiveTab] = useState("employees");
+  const [showPayrollDialog, setShowPayrollDialog] = useState(false);
 
   const { data: user } = useQuery({
     queryKey: ['currentUser'],
@@ -338,8 +340,12 @@ export default function HR() {
 
         <TabsContent value="payroll" className="mt-6">
           <Card>
-            <CardHeader>
+            <CardHeader className="flex flex-row items-center justify-between">
               <CardTitle>Payroll Records</CardTitle>
+              <Button onClick={() => setShowPayrollDialog(true)} className="bg-[#1EB053] hover:bg-[#178f43]">
+                <Plus className="w-4 h-4 mr-2" />
+                Process Payroll
+              </Button>
             </CardHeader>
             <CardContent>
               {payrolls.length === 0 ? (
@@ -380,6 +386,15 @@ export default function HR() {
           </Card>
         </TabsContent>
       </Tabs>
+
+      {/* Payroll Process Dialog */}
+      <PayrollProcessDialog
+        open={showPayrollDialog}
+        onOpenChange={setShowPayrollDialog}
+        employees={employees}
+        orgId={orgId}
+        currentEmployee={currentEmployee}
+      />
 
       {/* Edit Employee Dialog */}
       <Dialog open={showEmployeeDialog} onOpenChange={setShowEmployeeDialog}>

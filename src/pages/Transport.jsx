@@ -40,6 +40,7 @@ import { useToast } from "@/components/ui/use-toast";
 import PageHeader from "@/components/ui/PageHeader";
 import EmptyState from "@/components/ui/EmptyState";
 import StatCard from "@/components/ui/StatCard";
+import RouteDialog from "@/components/transport/RouteDialog";
 
 export default function Transport() {
   const { toast } = useToast();
@@ -47,6 +48,7 @@ export default function Transport() {
   const [activeTab, setActiveTab] = useState("trips");
   const [showTripDialog, setShowTripDialog] = useState(false);
   const [showVehicleDialog, setShowVehicleDialog] = useState(false);
+  const [showRouteDialog, setShowRouteDialog] = useState(false);
 
   const { data: user } = useQuery({
     queryKey: ['currentUser'],
@@ -342,8 +344,12 @@ export default function Transport() {
 
         <TabsContent value="routes" className="mt-6">
           <Card>
-            <CardHeader>
+            <CardHeader className="flex flex-row items-center justify-between">
               <CardTitle>Routes</CardTitle>
+              <Button onClick={() => setShowRouteDialog(true)} className="bg-[#0072C6] hover:bg-[#005a9e]">
+                <Plus className="w-4 h-4 mr-2" />
+                Add Route
+              </Button>
             </CardHeader>
             <CardContent>
               {routes.length === 0 ? (
@@ -492,6 +498,13 @@ export default function Transport() {
           </form>
         </DialogContent>
       </Dialog>
+
+      {/* Route Dialog */}
+      <RouteDialog
+        open={showRouteDialog}
+        onOpenChange={setShowRouteDialog}
+        orgId={orgId}
+      />
 
       {/* Vehicle Dialog */}
       <Dialog open={showVehicleDialog} onOpenChange={setShowVehicleDialog}>

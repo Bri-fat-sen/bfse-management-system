@@ -38,6 +38,7 @@ import { useToast } from "@/components/ui/use-toast";
 import PageHeader from "@/components/ui/PageHeader";
 import EmptyState from "@/components/ui/EmptyState";
 import StatCard from "@/components/ui/StatCard";
+import StockAdjustmentDialog from "@/components/inventory/StockAdjustmentDialog";
 
 const categories = ["Water", "Beverages", "Food", "Electronics", "Clothing", "Other"];
 
@@ -49,6 +50,7 @@ export default function Inventory() {
   const [showProductDialog, setShowProductDialog] = useState(false);
   const [editingProduct, setEditingProduct] = useState(null);
   const [activeTab, setActiveTab] = useState("products");
+  const [showStockDialog, setShowStockDialog] = useState(false);
 
   const { data: user } = useQuery({
     queryKey: ['currentUser'],
@@ -155,7 +157,12 @@ export default function Inventory() {
           setShowProductDialog(true);
         }}
         actionLabel="Add Product"
-      />
+      >
+        <Button variant="outline" onClick={() => setShowStockDialog(true)}>
+          <Upload className="w-4 h-4 mr-2" />
+          Stock Adjustment
+        </Button>
+      </PageHeader>
 
       {/* Stats */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -392,6 +399,16 @@ export default function Inventory() {
           </Card>
         </TabsContent>
       </Tabs>
+
+      {/* Stock Adjustment Dialog */}
+      <StockAdjustmentDialog
+        open={showStockDialog}
+        onOpenChange={setShowStockDialog}
+        products={products}
+        warehouses={warehouses}
+        orgId={orgId}
+        currentEmployee={currentEmployee}
+      />
 
       {/* Product Dialog */}
       <Dialog open={showProductDialog} onOpenChange={setShowProductDialog}>
