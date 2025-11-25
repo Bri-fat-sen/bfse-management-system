@@ -28,7 +28,7 @@ import {
   Sun,
   Clock,
   Shield,
-  Smartphone
+  BarChart3
 } from "lucide-react";
 import { PermissionsProvider } from "@/components/permissions/PermissionsContext";
 import { DEFAULT_ROLE_PERMISSIONS } from "@/components/permissions/PermissionsContext";
@@ -49,8 +49,6 @@ import MobileNav from "@/components/mobile/MobileNav";
 import { OfflineProvider, OfflineStatus } from "@/components/offline/OfflineManager";
 import GlobalSearch from "@/components/search/GlobalSearch";
 import OnboardingWizard from "@/components/onboarding/OnboardingWizard";
-
-import { BarChart3 } from "lucide-react";
 
 const menuSections = [
   {
