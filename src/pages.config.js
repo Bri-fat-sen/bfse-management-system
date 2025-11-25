@@ -7,8 +7,9 @@ import Communication from './pages/Communication';
 import Finance from './pages/Finance';
 import ActivityLog from './pages/ActivityLog';
 import Settings from './pages/Settings';
-import Profile from './pages/Profile';
 import Support from './pages/Support';
+import Attendance from './pages/Attendance';
+import Profile from './pages/Profile';
 import __Layout from './Layout.jsx';
 
 
@@ -22,8 +23,9 @@ export const PAGES = {
     "Finance": Finance,
     "ActivityLog": ActivityLog,
     "Settings": Settings,
-    "Profile": Profile,
     "Support": Support,
+    "Attendance": Attendance,
+    "Profile": Profile,
 }
 
 export const pagesConfig = {

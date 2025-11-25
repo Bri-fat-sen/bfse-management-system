@@ -1,300 +1,279 @@
-import React, { useState } from "react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import React from "react";
 import { base44 } from "@/api/base44Client";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Badge } from "@/components/ui/badge";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import PageHeader from "@/components/ui/PageHeader";
+import { useQuery } from "@tanstack/react-query";
+import { format } from "date-fns";
 import {
   User,
   Mail,
   Phone,
-  MapPin,
-  Calendar,
-  Briefcase,
   Building2,
-  Save,
-  Camera,
+  Briefcase,
+  Calendar,
+  MapPin,
+  Shield,
   Clock,
-  Award
+  Edit
 } from "lucide-react";
-import { format } from "date-fns";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Link } from "react-router-dom";
+import { createPageUrl } from "@/utils";
+import PageHeader from "@/components/ui/PageHeader";
 
 export default function Profile() {
-  const queryClient = useQueryClient();
-
   const { data: user } = useQuery({
     queryKey: ['currentUser'],
     queryFn: () => base44.auth.me(),
   });
 
-  const { data: employee, isLoading } = useQuery({
+  const { data: employee } = useQuery({
     queryKey: ['employee', user?.email],
     queryFn: () => base44.entities.Employee.filter({ user_email: user?.email }),
     enabled: !!user?.email,
   });
 
+  const currentEmployee = employee?.[0];
+  const orgId = currentEmployee?.organisation_id;
+
   const { data: organisation } = useQuery({
-    queryKey: ['organisation', employee?.[0]?.organisation_id],
-    queryFn: () => base44.entities.Organisation.filter({ id: employee?.[0]?.organisation_id }),
-    enabled: !!employee?.[0]?.organisation_id,
+    queryKey: ['organisation', orgId],
+    queryFn: () => base44.entities.Organisation.filter({ id: orgId }),
+    enabled: !!orgId,
   });
 
   const { data: attendance = [] } = useQuery({
-    queryKey: ['myAttendance', employee?.[0]?.id],
-    queryFn: () => base44.entities.Attendance.filter({ employee_id: employee?.[0]?.id }, '-date', 30),
-    enabled: !!employee?.[0]?.id,
+    queryKey: ['myAttendance', currentEmployee?.id],
+    queryFn: () => base44.entities.Attendance.filter({ employee_id: currentEmployee?.id }, '-date', 30),
+    enabled: !!currentEmployee?.id,
   });
 
-  const currentEmployee = employee?.[0];
   const currentOrg = organisation?.[0];
-
-  const [formData, setFormData] = useState({
-    phone: "",
-    address: "",
-    emergency_contact: "",
-    emergency_phone: ""
-  });
-
-  React.useEffect(() => {
-    if (currentEmployee) {
-      setFormData({
-        phone: currentEmployee.phone || "",
-        address: currentEmployee.address || "",
-        emergency_contact: currentEmployee.emergency_contact || "",
-        emergency_phone: currentEmployee.emergency_phone || ""
-      });
-    }
-  }, [currentEmployee]);
-
-  const updateProfileMutation = useMutation({
-    mutationFn: (data) => base44.entities.Employee.update(currentEmployee.id, data),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['employee'] });
-    },
-  });
-
-  // Calculate stats
-  const daysWorked = attendance.filter(a => a.clock_in_time).length;
   const totalHours = attendance.reduce((sum, a) => sum + (a.total_hours || 0), 0);
-  const avgHoursPerDay = daysWorked > 0 ? (totalHours / daysWorked).toFixed(1) : 0;
-
-  if (isLoading) {
-    return <div className="p-6">Loading...</div>;
-  }
+  const presentDays = attendance.filter(a => a.status === 'present').length;
 
   return (
     <div className="space-y-6">
-      <PageHeader 
-        title="My Profile" 
-        subtitle="View and update your personal information"
-      />
+      <PageHeader
+        title="My Profile"
+        subtitle="View and manage your profile information"
+      >
+        <Link to={createPageUrl("Settings")}>
+          <Button variant="outline">
+            <Edit className="w-4 h-4 mr-2" />
+            Edit Profile
+          </Button>
+        </Link>
+      </PageHeader>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Profile Card */}
-        <Card className="border-0 shadow-sm">
-          <CardContent className="p-6">
-            <div className="flex flex-col items-center text-center">
-              <div className="relative">
-                <Avatar className="w-32 h-32">
-                  <AvatarImage src={currentEmployee?.profile_photo} />
-                  <AvatarFallback className="bg-gradient-to-br from-[#1EB053] to-[#1D5FC3] text-white text-4xl">
-                    {currentEmployee?.first_name?.[0]}{currentEmployee?.last_name?.[0]}
-                  </AvatarFallback>
-                </Avatar>
-                <Button 
-                  size="icon" 
-                  className="absolute bottom-0 right-0 rounded-full w-10 h-10 sl-gradient"
-                >
-                  <Camera className="w-4 h-4" />
-                </Button>
-              </div>
-              
-              <h2 className="text-2xl font-bold mt-4">{currentEmployee?.full_name}</h2>
-              <p className="text-gray-500">{currentEmployee?.position || currentEmployee?.role}</p>
-              
-              <div className="flex gap-2 mt-3">
-                <Badge className="bg-gradient-to-r from-[#1EB053] to-[#1D5FC3] text-white capitalize">
-                  {currentEmployee?.role?.replace(/_/g, ' ')}
+      {/* Profile Header */}
+      <Card className="overflow-hidden">
+        <div className="h-32 sl-gradient" />
+        <CardContent className="relative pt-0">
+          <div className="flex flex-col md:flex-row md:items-end gap-6 -mt-16">
+            <Avatar className="w-32 h-32 border-4 border-white shadow-lg">
+              <AvatarImage src={currentEmployee?.profile_photo} />
+              <AvatarFallback className="sl-gradient text-white text-4xl">
+                {user?.full_name?.charAt(0) || 'U'}
+              </AvatarFallback>
+            </Avatar>
+            <div className="flex-1 pb-4">
+              <h1 className="text-2xl font-bold">{currentEmployee?.full_name || user?.full_name}</h1>
+              <p className="text-gray-500">{currentEmployee?.position || 'Employee'}</p>
+              <div className="flex flex-wrap items-center gap-2 mt-2">
+                <Badge className="sl-gradient">
+                  {currentEmployee?.role?.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
                 </Badge>
-                <Badge variant="outline" className={
-                  currentEmployee?.status === 'active' ? "border-green-500 text-green-600" : "border-gray-500"
-                }>
+                <Badge variant={currentEmployee?.status === 'active' ? 'secondary' : 'outline'}>
                   {currentEmployee?.status}
                 </Badge>
               </div>
-
-              <div className="w-full mt-6 pt-6 border-t space-y-3">
-                <div className="flex items-center gap-3 text-sm">
-                  <Mail className="w-4 h-4 text-gray-400" />
-                  <span>{currentEmployee?.email || user?.email}</span>
-                </div>
-                <div className="flex items-center gap-3 text-sm">
-                  <Phone className="w-4 h-4 text-gray-400" />
-                  <span>{currentEmployee?.phone || "Not set"}</span>
-                </div>
-                <div className="flex items-center gap-3 text-sm">
-                  <Building2 className="w-4 h-4 text-gray-400" />
-                  <span>{currentOrg?.name || "Organisation"}</span>
-                </div>
-                <div className="flex items-center gap-3 text-sm">
-                  <Calendar className="w-4 h-4 text-gray-400" />
-                  <span>Joined {currentEmployee?.hire_date ? format(new Date(currentEmployee.hire_date), 'MMM d, yyyy') : 'N/A'}</span>
-                </div>
-              </div>
             </div>
-          </CardContent>
-        </Card>
-
-        {/* Edit Form */}
-        <Card className="lg:col-span-2 border-0 shadow-sm">
-          <CardHeader>
-            <CardTitle>Personal Information</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <Label>First Name</Label>
-                <Input value={currentEmployee?.first_name || ""} disabled />
-              </div>
-              <div>
-                <Label>Last Name</Label>
-                <Input value={currentEmployee?.last_name || ""} disabled />
-              </div>
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <Label>Employee Code</Label>
-                <Input value={currentEmployee?.employee_code || ""} disabled />
-              </div>
-              <div>
-                <Label>Department</Label>
-                <Input value={currentEmployee?.department || ""} disabled />
-              </div>
-            </div>
-            <div>
-              <Label>Phone Number</Label>
-              <Input 
-                value={formData.phone}
-                onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                placeholder="Enter your phone number"
-              />
-            </div>
-            <div>
-              <Label>Address</Label>
-              <Input 
-                value={formData.address}
-                onChange={(e) => setFormData({ ...formData, address: e.target.value })}
-                placeholder="Enter your address"
-              />
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <Label>Emergency Contact Name</Label>
-                <Input 
-                  value={formData.emergency_contact}
-                  onChange={(e) => setFormData({ ...formData, emergency_contact: e.target.value })}
-                  placeholder="Contact name"
-                />
-              </div>
-              <div>
-                <Label>Emergency Contact Phone</Label>
-                <Input 
-                  value={formData.emergency_phone}
-                  onChange={(e) => setFormData({ ...formData, emergency_phone: e.target.value })}
-                  placeholder="Contact phone"
-                />
-              </div>
-            </div>
-            <Button 
-              onClick={() => updateProfileMutation.mutate(formData)}
-              disabled={updateProfileMutation.isPending}
-              className="sl-gradient"
-            >
-              <Save className="w-4 h-4 mr-2" />
-              {updateProfileMutation.isPending ? "Saving..." : "Save Changes"}
-            </Button>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Stats Row */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <Card className="border-0 shadow-sm">
-          <CardContent className="p-6">
-            <div className="flex items-center gap-4">
-              <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-[#1EB053]/20 to-[#1EB053]/10 flex items-center justify-center">
-                <Clock className="w-7 h-7 text-[#1EB053]" />
-              </div>
-              <div>
-                <p className="text-sm text-gray-500">Days Worked (30d)</p>
-                <p className="text-2xl font-bold">{daysWorked}</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-        <Card className="border-0 shadow-sm">
-          <CardContent className="p-6">
-            <div className="flex items-center gap-4">
-              <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-[#1D5FC3]/20 to-[#1D5FC3]/10 flex items-center justify-center">
-                <Briefcase className="w-7 h-7 text-[#1D5FC3]" />
-              </div>
-              <div>
-                <p className="text-sm text-gray-500">Total Hours (30d)</p>
-                <p className="text-2xl font-bold">{totalHours.toFixed(1)}</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-        <Card className="border-0 shadow-sm">
-          <CardContent className="p-6">
-            <div className="flex items-center gap-4">
-              <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-[#D4AF37]/20 to-[#D4AF37]/10 flex items-center justify-center">
-                <Award className="w-7 h-7 text-[#D4AF37]" />
-              </div>
-              <div>
-                <p className="text-sm text-gray-500">Avg Hours/Day</p>
-                <p className="text-2xl font-bold">{avgHoursPerDay}</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Recent Attendance */}
-      <Card className="border-0 shadow-sm">
-        <CardHeader>
-          <CardTitle>Recent Attendance</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-3">
-            {attendance.slice(0, 7).map((record) => (
-              <div key={record.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                <div className="flex items-center gap-3">
-                  <div className={`w-2 h-2 rounded-full ${
-                    record.status === 'present' ? 'bg-green-500' :
-                    record.status === 'late' ? 'bg-yellow-500' :
-                    record.status === 'absent' ? 'bg-red-500' : 'bg-gray-500'
-                  }`} />
-                  <div>
-                    <p className="font-medium">{record.date && format(new Date(record.date), 'EEEE, MMM d')}</p>
-                    <p className="text-sm text-gray-500">
-                      {record.clock_in_time || '--:--'} - {record.clock_out_time || '--:--'}
-                    </p>
-                  </div>
-                </div>
-                <div className="text-right">
-                  <p className="font-medium">{record.total_hours?.toFixed(1) || 0} hrs</p>
-                  <Badge variant="outline" className="capitalize">{record.status}</Badge>
-                </div>
-              </div>
-            ))}
           </div>
         </CardContent>
       </Card>
+
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Personal Info */}
+        <div className="lg:col-span-2 space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <User className="w-5 h-5" />
+                Personal Information
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="flex items-start gap-3">
+                  <div className="w-10 h-10 rounded-lg bg-blue-100 flex items-center justify-center">
+                    <Mail className="w-5 h-5 text-blue-600" />
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-500">Email</p>
+                    <p className="font-medium">{currentEmployee?.email || user?.email || '-'}</p>
+                  </div>
+                </div>
+                <div className="flex items-start gap-3">
+                  <div className="w-10 h-10 rounded-lg bg-green-100 flex items-center justify-center">
+                    <Phone className="w-5 h-5 text-green-600" />
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-500">Phone</p>
+                    <p className="font-medium">{currentEmployee?.phone || '-'}</p>
+                  </div>
+                </div>
+                <div className="flex items-start gap-3">
+                  <div className="w-10 h-10 rounded-lg bg-purple-100 flex items-center justify-center">
+                    <Shield className="w-5 h-5 text-purple-600" />
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-500">Employee Code</p>
+                    <p className="font-medium">{currentEmployee?.employee_code || '-'}</p>
+                  </div>
+                </div>
+                <div className="flex items-start gap-3">
+                  <div className="w-10 h-10 rounded-lg bg-amber-100 flex items-center justify-center">
+                    <MapPin className="w-5 h-5 text-amber-600" />
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-500">Address</p>
+                    <p className="font-medium">{currentEmployee?.address || '-'}</p>
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Briefcase className="w-5 h-5" />
+                Employment Details
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="flex items-start gap-3">
+                  <div className="w-10 h-10 rounded-lg bg-indigo-100 flex items-center justify-center">
+                    <Building2 className="w-5 h-5 text-indigo-600" />
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-500">Department</p>
+                    <p className="font-medium">{currentEmployee?.department || '-'}</p>
+                  </div>
+                </div>
+                <div className="flex items-start gap-3">
+                  <div className="w-10 h-10 rounded-lg bg-pink-100 flex items-center justify-center">
+                    <Briefcase className="w-5 h-5 text-pink-600" />
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-500">Position</p>
+                    <p className="font-medium">{currentEmployee?.position || '-'}</p>
+                  </div>
+                </div>
+                <div className="flex items-start gap-3">
+                  <div className="w-10 h-10 rounded-lg bg-cyan-100 flex items-center justify-center">
+                    <Calendar className="w-5 h-5 text-cyan-600" />
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-500">Hire Date</p>
+                    <p className="font-medium">
+                      {currentEmployee?.hire_date 
+                        ? format(new Date(currentEmployee.hire_date), 'MMMM d, yyyy')
+                        : '-'
+                      }
+                    </p>
+                  </div>
+                </div>
+                <div className="flex items-start gap-3">
+                  <div className="w-10 h-10 rounded-lg bg-emerald-100 flex items-center justify-center">
+                    <Clock className="w-5 h-5 text-emerald-600" />
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-500">Salary Type</p>
+                    <p className="font-medium capitalize">{currentEmployee?.salary_type || '-'}</p>
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Sidebar */}
+        <div className="space-y-6">
+          {/* Organisation */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Building2 className="w-5 h-5" />
+                Organisation
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="flex items-center gap-4 mb-4">
+                {currentOrg?.logo_url ? (
+                  <img src={currentOrg.logo_url} alt="" className="w-12 h-12 rounded-xl object-cover" />
+                ) : (
+                  <div className="w-12 h-12 rounded-xl sl-gradient flex items-center justify-center text-white font-bold text-xl">
+                    {currentOrg?.name?.charAt(0) || 'O'}
+                  </div>
+                )}
+                <div>
+                  <p className="font-semibold">{currentOrg?.name || 'Organisation'}</p>
+                  <p className="text-sm text-gray-500">{currentOrg?.city}, {currentOrg?.country}</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Attendance Summary */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Clock className="w-5 h-5" />
+                This Month
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <span className="text-gray-500">Days Present</span>
+                  <span className="font-bold text-[#1EB053]">{presentDays}</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-gray-500">Total Hours</span>
+                  <span className="font-bold text-[#1D5FC3]">{totalHours.toFixed(1)} hrs</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-gray-500">Avg Hours/Day</span>
+                  <span className="font-bold">
+                    {presentDays > 0 ? (totalHours / presentDays).toFixed(1) : 0} hrs
+                  </span>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Emergency Contact */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Emergency Contact</CardTitle>
+            </CardHeader>
+            <CardContent>
+              {currentEmployee?.emergency_contact ? (
+                <div className="space-y-2">
+                  <p className="font-medium">{currentEmployee.emergency_contact}</p>
+                  <p className="text-sm text-gray-500">{currentEmployee.emergency_phone || 'No phone'}</p>
+                </div>
+              ) : (
+                <p className="text-gray-500 text-sm">No emergency contact set</p>
+              )}
+            </CardContent>
+          </Card>
+        </div>
+      </div>
     </div>
   );
 }

@@ -1,10 +1,22 @@
 import React, { useState } from "react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { format, startOfMonth, endOfMonth } from "date-fns";
+import {
+  DollarSign,
+  TrendingUp,
+  TrendingDown,
+  Plus,
+  Receipt,
+  PieChart,
+  BarChart3,
+  Filter,
+  Download,
+  Calendar
+} from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
@@ -12,6 +24,7 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogFooter,
 } from "@/components/ui/dialog";
 import {
   Select,
@@ -20,69 +33,27 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { useToast } from "@/components/ui/use-toast";
 import PageHeader from "@/components/ui/PageHeader";
+import EmptyState from "@/components/ui/EmptyState";
 import StatCard from "@/components/ui/StatCard";
-import {
-  DollarSign,
-  TrendingUp,
-  TrendingDown,
-  Receipt,
-  Plus,
-  Download,
-  PieChart,
-  BarChart3,
-  Wallet,
-  CreditCard
-} from "lucide-react";
-import { format, subDays, startOfMonth, endOfMonth } from "date-fns";
-import {
-  AreaChart,
-  Area,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  ResponsiveContainer,
-  PieChart as RechartPie,
-  Pie,
-  Cell,
-  BarChart,
-  Bar,
-  Legend
-} from "recharts";
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart as RePieChart, Pie, Cell } from 'recharts';
 
-const EXPENSE_CATEGORIES = [
+const expenseCategories = [
   "fuel", "maintenance", "utilities", "supplies", "rent", 
   "salaries", "transport", "marketing", "insurance", "petty_cash", "other"
 ];
 
-const CATEGORY_COLORS = {
-  fuel: "#1EB053",
-  maintenance: "#1D5FC3",
-  utilities: "#D4AF37",
-  supplies: "#8B5CF6",
-  rent: "#EC4899",
-  salaries: "#14B8A6",
-  transport: "#F97316",
-  marketing: "#6366F1",
-  insurance: "#84CC16",
-  petty_cash: "#06B6D4",
-  other: "#6B7280"
-};
+const COLORS = ['#1EB053', '#1D5FC3', '#D4AF37', '#0F1F3C', '#9333ea', '#f59e0b', '#ef4444', '#10b981'];
 
 export default function Finance() {
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
   const [activeTab, setActiveTab] = useState("overview");
   const [showExpenseDialog, setShowExpenseDialog] = useState(false);
-  const [dateRange, setDateRange] = useState("month");
-  const queryClient = useQueryClient();
+  const [categoryFilter, setCategoryFilter] = useState("all");
 
   const { data: user } = useQuery({
     queryKey: ['currentUser'],
@@ -98,7 +69,7 @@ export default function Finance() {
   const currentEmployee = employee?.[0];
   const orgId = currentEmployee?.organisation_id;
 
-  const { data: expenses = [] } = useQuery({
+  const { data: expenses = [], isLoading: loadingExpenses } = useQuery({
     queryKey: ['expenses', orgId],
     queryFn: () => base44.entities.Expense.filter({ organisation_id: orgId }, '-date', 100),
     enabled: !!orgId,
@@ -112,7 +83,7 @@ export default function Finance() {
 
   const { data: trips = [] } = useQuery({
     queryKey: ['trips', orgId],
-    queryFn: () => base44.entities.Trip.filter({ organisation_id: orgId }),
+    queryFn: () => base44.entities.Trip.filter({ organisation_id: orgId }, '-date', 100),
     enabled: !!orgId,
   });
 
@@ -121,58 +92,69 @@ export default function Finance() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['expenses'] });
       setShowExpenseDialog(false);
+      toast({ title: "Expense recorded successfully" });
     },
   });
 
-  const updateExpenseMutation = useMutation({
-    mutationFn: ({ id, data }) => base44.entities.Expense.update(id, data),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['expenses'] }),
-  });
-
-  // Calculate financial metrics
-  const totalRevenue = sales.reduce((sum, s) => sum + (s.total_amount || 0), 0) +
-                       trips.reduce((sum, t) => sum + (t.total_revenue || 0), 0);
+  // Calculate totals
+  const totalSalesRevenue = sales.reduce((sum, s) => sum + (s.total_amount || 0), 0);
+  const totalTransportRevenue = trips.reduce((sum, t) => sum + (t.total_revenue || 0), 0);
+  const totalRevenue = totalSalesRevenue + totalTransportRevenue;
   const totalExpenses = expenses.reduce((sum, e) => sum + (e.amount || 0), 0);
   const netProfit = totalRevenue - totalExpenses;
-  const profitMargin = totalRevenue > 0 ? ((netProfit / totalRevenue) * 100).toFixed(1) : 0;
 
-  // This month's data
-  const thisMonthStart = startOfMonth(new Date());
-  const thisMonthEnd = endOfMonth(new Date());
-  const thisMonthExpenses = expenses.filter(e => 
-    e.date && new Date(e.date) >= thisMonthStart && new Date(e.date) <= thisMonthEnd
-  );
-  const thisMonthTotal = thisMonthExpenses.reduce((sum, e) => sum + (e.amount || 0), 0);
-
-  // Expense by category
-  const expenseByCategory = EXPENSE_CATEGORIES.map(cat => ({
-    name: cat.replace(/_/g, ' '),
-    value: expenses.filter(e => e.category === cat).reduce((sum, e) => sum + (e.amount || 0), 0),
-    color: CATEGORY_COLORS[cat]
+  // Expense breakdown by category
+  const expensesByCategory = expenseCategories.map(cat => ({
+    name: cat.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase()),
+    value: expenses.filter(e => e.category === cat).reduce((sum, e) => sum + (e.amount || 0), 0)
   })).filter(item => item.value > 0);
 
-  // Revenue trend data
-  const last7Days = Array.from({ length: 7 }, (_, i) => {
-    const date = subDays(new Date(), 6 - i);
-    const dateStr = format(date, 'yyyy-MM-dd');
-    const dayRevenue = sales.filter(s => 
-      s.created_date && format(new Date(s.created_date), 'yyyy-MM-dd') === dateStr
-    ).reduce((sum, s) => sum + (s.total_amount || 0), 0);
-    const dayExpense = expenses.filter(e => e.date === dateStr)
-      .reduce((sum, e) => sum + (e.amount || 0), 0);
+  // Monthly revenue data
+  const monthlyData = [];
+  for (let i = 5; i >= 0; i--) {
+    const date = new Date();
+    date.setMonth(date.getMonth() - i);
+    const monthStart = startOfMonth(date);
+    const monthEnd = endOfMonth(date);
+    const monthSales = sales.filter(s => {
+      const saleDate = new Date(s.created_date);
+      return saleDate >= monthStart && saleDate <= monthEnd;
+    }).reduce((sum, s) => sum + (s.total_amount || 0), 0);
     
-    return {
-      date: format(date, 'EEE'),
-      revenue: dayRevenue,
-      expense: dayExpense,
-      profit: dayRevenue - dayExpense
+    monthlyData.push({
+      month: format(date, 'MMM'),
+      revenue: monthSales
+    });
+  }
+
+  const filteredExpenses = categoryFilter === "all" 
+    ? expenses 
+    : expenses.filter(e => e.category === categoryFilter);
+
+  const handleExpenseSubmit = (e) => {
+    e.preventDefault();
+    const formData = new FormData(e.target);
+    const data = {
+      organisation_id: orgId,
+      category: formData.get('category'),
+      description: formData.get('description'),
+      amount: parseFloat(formData.get('amount')) || 0,
+      date: formData.get('date'),
+      vendor: formData.get('vendor'),
+      payment_method: formData.get('payment_method'),
+      recorded_by: currentEmployee?.id,
+      recorded_by_name: currentEmployee?.full_name,
+      status: 'pending',
+      notes: formData.get('notes'),
     };
-  });
+
+    createExpenseMutation.mutate(data);
+  };
 
   return (
     <div className="space-y-6">
-      <PageHeader 
-        title="Finance" 
+      <PageHeader
+        title="Finance"
         subtitle="Track revenue, expenses, and profitability"
         action={() => setShowExpenseDialog(true)}
         actionLabel="Add Expense"
@@ -186,7 +168,7 @@ export default function Finance() {
           icon={TrendingUp}
           color="green"
           trend="up"
-          trendValue="+8.2%"
+          trendValue="+15%"
         />
         <StatCard
           title="Total Expenses"
@@ -198,16 +180,13 @@ export default function Finance() {
           title="Net Profit"
           value={`Le ${netProfit.toLocaleString()}`}
           icon={DollarSign}
-          color="blue"
-          trend={netProfit >= 0 ? "up" : "down"}
-          trendValue={`${profitMargin}% margin`}
+          color={netProfit >= 0 ? "green" : "red"}
         />
         <StatCard
-          title="This Month"
-          value={`Le ${thisMonthTotal.toLocaleString()}`}
-          icon={Wallet}
+          title="Pending Expenses"
+          value={expenses.filter(e => e.status === 'pending').length}
+          icon={Receipt}
           color="gold"
-          subtitle="expenses"
         />
       </div>
 
@@ -219,284 +198,242 @@ export default function Finance() {
         </TabsList>
 
         <TabsContent value="overview" className="mt-6">
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            {/* Revenue vs Expense Chart */}
-            <Card className="lg:col-span-2 border-0 shadow-sm">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* Revenue Chart */}
+            <Card>
               <CardHeader>
-                <CardTitle>Revenue vs Expenses (7 Days)</CardTitle>
+                <CardTitle className="flex items-center gap-2">
+                  <BarChart3 className="w-5 h-5" />
+                  Revenue Trend (6 Months)
+                </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="h-80">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <AreaChart data={last7Days}>
-                      <defs>
-                        <linearGradient id="colorRevenue" x1="0" y1="0" x2="0" y2="1">
-                          <stop offset="5%" stopColor="#1EB053" stopOpacity={0.3}/>
-                          <stop offset="95%" stopColor="#1EB053" stopOpacity={0}/>
-                        </linearGradient>
-                        <linearGradient id="colorExpense" x1="0" y1="0" x2="0" y2="1">
-                          <stop offset="5%" stopColor="#EF4444" stopOpacity={0.3}/>
-                          <stop offset="95%" stopColor="#EF4444" stopOpacity={0}/>
-                        </linearGradient>
-                      </defs>
-                      <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-                      <XAxis dataKey="date" stroke="#888" fontSize={12} />
-                      <YAxis stroke="#888" fontSize={12} />
-                      <Tooltip 
-                        contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}
-                        formatter={(value) => `Le ${value.toLocaleString()}`}
-                      />
-                      <Legend />
-                      <Area type="monotone" dataKey="revenue" stroke="#1EB053" strokeWidth={2} fillOpacity={1} fill="url(#colorRevenue)" />
-                      <Area type="monotone" dataKey="expense" stroke="#EF4444" strokeWidth={2} fillOpacity={1} fill="url(#colorExpense)" />
-                    </AreaChart>
+                <ResponsiveContainer width="100%" height={300}>
+                  <BarChart data={monthlyData}>
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis dataKey="month" />
+                    <YAxis />
+                    <Tooltip 
+                      formatter={(value) => [`Le ${value.toLocaleString()}`, 'Revenue']}
+                    />
+                    <Bar dataKey="revenue" fill="url(#colorGradient)" radius={[4, 4, 0, 0]} />
+                    <defs>
+                      <linearGradient id="colorGradient" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%" stopColor="#1EB053" />
+                        <stop offset="100%" stopColor="#1D5FC3" />
+                      </linearGradient>
+                    </defs>
+                  </BarChart>
+                </ResponsiveContainer>
+              </CardContent>
+            </Card>
+
+            {/* Expense Breakdown */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <PieChart className="w-5 h-5" />
+                  Expense Breakdown
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                {expensesByCategory.length === 0 ? (
+                  <div className="h-[300px] flex items-center justify-center text-gray-500">
+                    No expenses recorded
+                  </div>
+                ) : (
+                  <ResponsiveContainer width="100%" height={300}>
+                    <RePieChart>
+                      <Pie
+                        data={expensesByCategory}
+                        cx="50%"
+                        cy="50%"
+                        labelLine={false}
+                        outerRadius={100}
+                        fill="#8884d8"
+                        dataKey="value"
+                        label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                      >
+                        {expensesByCategory.map((entry, index) => (
+                          <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                        ))}
+                      </Pie>
+                      <Tooltip formatter={(value) => `Le ${value.toLocaleString()}`} />
+                    </RePieChart>
                   </ResponsiveContainer>
+                )}
+              </CardContent>
+            </Card>
+
+            {/* Revenue Sources */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Revenue Sources</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between p-4 bg-green-50 rounded-lg">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-full bg-green-100 flex items-center justify-center">
+                        <Receipt className="w-5 h-5 text-green-600" />
+                      </div>
+                      <div>
+                        <p className="font-medium">Sales Revenue</p>
+                        <p className="text-sm text-gray-500">{sales.length} transactions</p>
+                      </div>
+                    </div>
+                    <p className="font-bold text-green-600">Le {totalSalesRevenue.toLocaleString()}</p>
+                  </div>
+                  <div className="flex items-center justify-between p-4 bg-blue-50 rounded-lg">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center">
+                        <TrendingUp className="w-5 h-5 text-blue-600" />
+                      </div>
+                      <div>
+                        <p className="font-medium">Transport Revenue</p>
+                        <p className="text-sm text-gray-500">{trips.length} trips</p>
+                      </div>
+                    </div>
+                    <p className="font-bold text-blue-600">Le {totalTransportRevenue.toLocaleString()}</p>
+                  </div>
                 </div>
               </CardContent>
             </Card>
 
-            {/* Expense by Category */}
-            <Card className="border-0 shadow-sm">
+            {/* Recent Expenses */}
+            <Card>
               <CardHeader>
-                <CardTitle>Expenses by Category</CardTitle>
+                <CardTitle>Recent Expenses</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="h-64">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <RechartPie>
-                      <Pie
-                        data={expenseByCategory}
-                        cx="50%"
-                        cy="50%"
-                        innerRadius={60}
-                        outerRadius={80}
-                        paddingAngle={5}
-                        dataKey="value"
-                      >
-                        {expenseByCategory.map((entry, index) => (
-                          <Cell key={`cell-${index}`} fill={entry.color} />
-                        ))}
-                      </Pie>
-                      <Tooltip formatter={(value) => `Le ${value.toLocaleString()}`} />
-                    </RechartPie>
-                  </ResponsiveContainer>
-                </div>
-                <div className="grid grid-cols-2 gap-2 mt-4">
-                  {expenseByCategory.slice(0, 6).map((cat) => (
-                    <div key={cat.name} className="flex items-center gap-2 text-sm">
-                      <div className="w-3 h-3 rounded-full" style={{ backgroundColor: cat.color }} />
-                      <span className="capitalize truncate">{cat.name}</span>
+                <div className="space-y-3">
+                  {expenses.slice(0, 5).map((expense) => (
+                    <div key={expense.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                      <div>
+                        <p className="font-medium">{expense.description || expense.category}</p>
+                        <p className="text-sm text-gray-500">{format(new Date(expense.date), 'MMM d, yyyy')}</p>
+                      </div>
+                      <div className="text-right">
+                        <p className="font-bold text-red-500">-Le {expense.amount?.toLocaleString()}</p>
+                        <Badge variant={expense.status === 'approved' ? 'secondary' : 'outline'}>
+                          {expense.status}
+                        </Badge>
+                      </div>
                     </div>
                   ))}
                 </div>
               </CardContent>
             </Card>
           </div>
-
-          {/* Recent Transactions */}
-          <Card className="border-0 shadow-sm mt-6">
-            <CardHeader>
-              <CardTitle>Recent Expenses</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Date</TableHead>
-                    <TableHead>Category</TableHead>
-                    <TableHead>Description</TableHead>
-                    <TableHead>Vendor</TableHead>
-                    <TableHead>Amount</TableHead>
-                    <TableHead>Status</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {expenses.slice(0, 10).map((expense) => (
-                    <TableRow key={expense.id}>
-                      <TableCell>{expense.date && format(new Date(expense.date), 'MMM d, yyyy')}</TableCell>
-                      <TableCell>
-                        <Badge 
-                          style={{ backgroundColor: `${CATEGORY_COLORS[expense.category]}20`, color: CATEGORY_COLORS[expense.category] }}
-                          className="capitalize"
-                        >
-                          {expense.category?.replace(/_/g, ' ')}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>{expense.description}</TableCell>
-                      <TableCell>{expense.vendor || "-"}</TableCell>
-                      <TableCell className="font-medium">Le {expense.amount?.toLocaleString()}</TableCell>
-                      <TableCell>
-                        <Badge className={
-                          expense.status === 'approved' ? "bg-green-100 text-green-800" :
-                          expense.status === 'rejected' ? "bg-red-100 text-red-800" :
-                          "bg-yellow-100 text-yellow-800"
-                        }>
-                          {expense.status}
-                        </Badge>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </CardContent>
-          </Card>
         </TabsContent>
 
         <TabsContent value="expenses" className="mt-6">
-          <Card className="border-0 shadow-sm">
-            <CardHeader className="flex flex-row items-center justify-between">
-              <CardTitle>All Expenses</CardTitle>
-              <div className="flex gap-2">
-                <Select value={dateRange} onValueChange={setDateRange}>
-                  <SelectTrigger className="w-32">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="week">This Week</SelectItem>
-                    <SelectItem value="month">This Month</SelectItem>
-                    <SelectItem value="year">This Year</SelectItem>
-                    <SelectItem value="all">All Time</SelectItem>
-                  </SelectContent>
-                </Select>
-                <Button variant="outline">
-                  <Download className="w-4 h-4 mr-2" />
-                  Export
-                </Button>
+          <Card>
+            <CardHeader>
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                <CardTitle>All Expenses</CardTitle>
+                <div className="flex items-center gap-2">
+                  <Select value={categoryFilter} onValueChange={setCategoryFilter}>
+                    <SelectTrigger className="w-40">
+                      <Filter className="w-4 h-4 mr-2" />
+                      <SelectValue placeholder="Category" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All Categories</SelectItem>
+                      {expenseCategories.map(cat => (
+                        <SelectItem key={cat} value={cat}>
+                          {cat.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <Button onClick={() => setShowExpenseDialog(true)} className="sl-gradient">
+                    <Plus className="w-4 h-4 mr-2" />
+                    Add Expense
+                  </Button>
+                </div>
               </div>
             </CardHeader>
             <CardContent>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Date</TableHead>
-                    <TableHead>Category</TableHead>
-                    <TableHead>Description</TableHead>
-                    <TableHead>Vendor</TableHead>
-                    <TableHead>Payment</TableHead>
-                    <TableHead>Amount</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead></TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {expenses.map((expense) => (
-                    <TableRow key={expense.id}>
-                      <TableCell>{expense.date && format(new Date(expense.date), 'MMM d, yyyy')}</TableCell>
-                      <TableCell className="capitalize">{expense.category?.replace(/_/g, ' ')}</TableCell>
-                      <TableCell>{expense.description}</TableCell>
-                      <TableCell>{expense.vendor || "-"}</TableCell>
-                      <TableCell className="capitalize">{expense.payment_method?.replace(/_/g, ' ')}</TableCell>
-                      <TableCell className="font-medium">Le {expense.amount?.toLocaleString()}</TableCell>
-                      <TableCell>
-                        <Badge className={
-                          expense.status === 'approved' ? "bg-green-100 text-green-800" :
-                          expense.status === 'rejected' ? "bg-red-100 text-red-800" :
-                          "bg-yellow-100 text-yellow-800"
+              {loadingExpenses ? (
+                <div className="space-y-3">
+                  {[...Array(5)].map((_, i) => (
+                    <div key={i} className="h-16 bg-gray-100 rounded-lg animate-pulse" />
+                  ))}
+                </div>
+              ) : filteredExpenses.length === 0 ? (
+                <EmptyState
+                  icon={Receipt}
+                  title="No Expenses Found"
+                  description="Record your first expense to start tracking"
+                  action={() => setShowExpenseDialog(true)}
+                  actionLabel="Add Expense"
+                />
+              ) : (
+                <div className="space-y-3">
+                  {filteredExpenses.map((expense) => (
+                    <div key={expense.id} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
+                      <div className="flex items-center gap-4">
+                        <div className="w-10 h-10 rounded-full bg-red-100 flex items-center justify-center">
+                          <TrendingDown className="w-5 h-5 text-red-600" />
+                        </div>
+                        <div>
+                          <p className="font-medium">{expense.description || expense.vendor || 'Expense'}</p>
+                          <div className="flex items-center gap-2 text-sm text-gray-500">
+                            <Badge variant="outline" className="text-xs">
+                              {expense.category?.replace(/_/g, ' ')}
+                            </Badge>
+                            <span>•</span>
+                            <span>{format(new Date(expense.date), 'MMM d, yyyy')}</span>
+                          </div>
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <p className="font-bold text-red-500">-Le {expense.amount?.toLocaleString()}</p>
+                        <Badge variant={
+                          expense.status === 'approved' ? 'secondary' :
+                          expense.status === 'rejected' ? 'destructive' : 'outline'
                         }>
                           {expense.status}
                         </Badge>
-                      </TableCell>
-                      <TableCell>
-                        {expense.status === 'pending' && (
-                          <div className="flex gap-1">
-                            <Button 
-                              size="sm" 
-                              variant="outline"
-                              className="text-green-600 hover:bg-green-50"
-                              onClick={() => updateExpenseMutation.mutate({ 
-                                id: expense.id, 
-                                data: { status: 'approved', approved_by: currentEmployee?.full_name }
-                              })}
-                            >
-                              Approve
-                            </Button>
-                            <Button 
-                              size="sm" 
-                              variant="outline"
-                              className="text-red-600 hover:bg-red-50"
-                              onClick={() => updateExpenseMutation.mutate({ 
-                                id: expense.id, 
-                                data: { status: 'rejected' }
-                              })}
-                            >
-                              Reject
-                            </Button>
-                          </div>
-                        )}
-                      </TableCell>
-                    </TableRow>
+                      </div>
+                    </div>
                   ))}
-                </TableBody>
-              </Table>
+                </div>
+              )}
             </CardContent>
           </Card>
         </TabsContent>
 
         <TabsContent value="reports" className="mt-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <Card className="border-0 shadow-sm">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <BarChart3 className="w-5 h-5" />
-                  Profit Trend
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="h-64">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={last7Days}>
-                      <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-                      <XAxis dataKey="date" stroke="#888" fontSize={12} />
-                      <YAxis stroke="#888" fontSize={12} />
-                      <Tooltip formatter={(value) => `Le ${value.toLocaleString()}`} />
-                      <Bar dataKey="profit" fill="#1EB053" radius={[4, 4, 0, 0]} />
-                    </BarChart>
-                  </ResponsiveContainer>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card className="border-0 shadow-sm">
-              <CardHeader>
-                <CardTitle>Financial Summary</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="flex justify-between items-center p-4 bg-green-50 rounded-lg">
-                  <div className="flex items-center gap-3">
-                    <TrendingUp className="w-8 h-8 text-green-600" />
-                    <div>
-                      <p className="text-sm text-gray-600">Total Revenue</p>
-                      <p className="text-xl font-bold text-green-600">Le {totalRevenue.toLocaleString()}</p>
-                    </div>
-                  </div>
-                </div>
-                <div className="flex justify-between items-center p-4 bg-red-50 rounded-lg">
-                  <div className="flex items-center gap-3">
-                    <TrendingDown className="w-8 h-8 text-red-600" />
-                    <div>
-                      <p className="text-sm text-gray-600">Total Expenses</p>
-                      <p className="text-xl font-bold text-red-600">Le {totalExpenses.toLocaleString()}</p>
-                    </div>
-                  </div>
-                </div>
-                <div className="flex justify-between items-center p-4 bg-blue-50 rounded-lg">
-                  <div className="flex items-center gap-3">
-                    <DollarSign className="w-8 h-8 text-blue-600" />
-                    <div>
-                      <p className="text-sm text-gray-600">Net Profit</p>
-                      <p className="text-xl font-bold text-blue-600">Le {netProfit.toLocaleString()}</p>
-                    </div>
-                  </div>
-                </div>
-                <div className="pt-4 border-t">
-                  <div className="flex justify-between text-sm">
-                    <span className="text-gray-600">Profit Margin</span>
-                    <span className="font-bold">{profitMargin}%</span>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
+          <Card>
+            <CardHeader>
+              <CardTitle>Financial Reports</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {[
+                  { name: "Monthly P&L Report", icon: BarChart3, description: "Profit and loss summary" },
+                  { name: "Expense Report", icon: Receipt, description: "Detailed expense breakdown" },
+                  { name: "Revenue Report", icon: TrendingUp, description: "Sales and transport revenue" },
+                ].map((report) => (
+                  <Card key={report.name} className="hover:shadow-md cursor-pointer transition-shadow">
+                    <CardContent className="p-6">
+                      <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-[#1EB053] to-[#1D5FC3] flex items-center justify-center mb-4">
+                        <report.icon className="w-6 h-6 text-white" />
+                      </div>
+                      <h3 className="font-semibold mb-1">{report.name}</h3>
+                      <p className="text-sm text-gray-500 mb-4">{report.description}</p>
+                      <Button variant="outline" size="sm" className="w-full">
+                        <Download className="w-4 h-4 mr-2" />
+                        Generate
+                      </Button>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
         </TabsContent>
       </Tabs>
 
@@ -504,123 +441,71 @@ export default function Finance() {
       <Dialog open={showExpenseDialog} onOpenChange={setShowExpenseDialog}>
         <DialogContent className="max-w-lg">
           <DialogHeader>
-            <DialogTitle>Add Expense</DialogTitle>
+            <DialogTitle>Record New Expense</DialogTitle>
           </DialogHeader>
-          <ExpenseForm 
-            orgId={orgId}
-            employeeId={currentEmployee?.id}
-            employeeName={currentEmployee?.full_name}
-            onSave={(data) => createExpenseMutation.mutateAsync(data)}
-            onCancel={() => setShowExpenseDialog(false)}
-            isLoading={createExpenseMutation.isPending}
-          />
+          <form onSubmit={handleExpenseSubmit} className="space-y-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div className="col-span-2">
+                <Label>Category</Label>
+                <Select name="category" required>
+                  <SelectTrigger className="mt-1">
+                    <SelectValue placeholder="Select category" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {expenseCategories.map(cat => (
+                      <SelectItem key={cat} value={cat}>
+                        {cat.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="col-span-2">
+                <Label>Description</Label>
+                <Input name="description" required className="mt-1" placeholder="What was this expense for?" />
+              </div>
+              <div>
+                <Label>Amount (Le)</Label>
+                <Input name="amount" type="number" step="0.01" required className="mt-1" />
+              </div>
+              <div>
+                <Label>Date</Label>
+                <Input name="date" type="date" defaultValue={format(new Date(), 'yyyy-MM-dd')} required className="mt-1" />
+              </div>
+              <div>
+                <Label>Vendor</Label>
+                <Input name="vendor" className="mt-1" placeholder="Optional" />
+              </div>
+              <div>
+                <Label>Payment Method</Label>
+                <Select name="payment_method" defaultValue="cash">
+                  <SelectTrigger className="mt-1">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="cash">Cash</SelectItem>
+                    <SelectItem value="card">Card</SelectItem>
+                    <SelectItem value="bank_transfer">Bank Transfer</SelectItem>
+                    <SelectItem value="mobile_money">Mobile Money</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="col-span-2">
+                <Label>Notes</Label>
+                <Textarea name="notes" className="mt-1" placeholder="Additional details..." />
+              </div>
+            </div>
+            <DialogFooter>
+              <Button type="button" variant="outline" onClick={() => setShowExpenseDialog(false)}>
+                Cancel
+              </Button>
+              <Button type="submit" className="sl-gradient">
+                Record Expense
+              </Button>
+            </DialogFooter>
+          </form>
         </DialogContent>
       </Dialog>
-    </div>
-  );
-}
-
-function ExpenseForm({ orgId, employeeId, employeeName, onSave, onCancel, isLoading }) {
-  const [formData, setFormData] = useState({
-    category: "",
-    description: "",
-    amount: 0,
-    date: format(new Date(), 'yyyy-MM-dd'),
-    vendor: "",
-    payment_method: "cash",
-    notes: ""
-  });
-
-  return (
-    <div className="space-y-4">
-      <div>
-        <Label>Category</Label>
-        <Select value={formData.category} onValueChange={(v) => setFormData({ ...formData, category: v })}>
-          <SelectTrigger>
-            <SelectValue placeholder="Select category" />
-          </SelectTrigger>
-          <SelectContent>
-            {EXPENSE_CATEGORIES.map(cat => (
-              <SelectItem key={cat} value={cat} className="capitalize">
-                {cat.replace(/_/g, ' ')}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
-      <div>
-        <Label>Description</Label>
-        <Input 
-          value={formData.description}
-          onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-          placeholder="Expense description"
-        />
-      </div>
-      <div className="grid grid-cols-2 gap-4">
-        <div>
-          <Label>Amount (Le)</Label>
-          <Input 
-            type="number"
-            value={formData.amount}
-            onChange={(e) => setFormData({ ...formData, amount: Number(e.target.value) })}
-          />
-        </div>
-        <div>
-          <Label>Date</Label>
-          <Input 
-            type="date"
-            value={formData.date}
-            onChange={(e) => setFormData({ ...formData, date: e.target.value })}
-          />
-        </div>
-      </div>
-      <div className="grid grid-cols-2 gap-4">
-        <div>
-          <Label>Vendor</Label>
-          <Input 
-            value={formData.vendor}
-            onChange={(e) => setFormData({ ...formData, vendor: e.target.value })}
-            placeholder="Vendor name"
-          />
-        </div>
-        <div>
-          <Label>Payment Method</Label>
-          <Select value={formData.payment_method} onValueChange={(v) => setFormData({ ...formData, payment_method: v })}>
-            <SelectTrigger>
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="cash">Cash</SelectItem>
-              <SelectItem value="card">Card</SelectItem>
-              <SelectItem value="bank_transfer">Bank Transfer</SelectItem>
-              <SelectItem value="mobile_money">Mobile Money</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-      </div>
-      <div>
-        <Label>Notes (optional)</Label>
-        <Input 
-          value={formData.notes}
-          onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
-        />
-      </div>
-      <div className="flex justify-end gap-3 pt-4">
-        <Button variant="outline" onClick={onCancel}>Cancel</Button>
-        <Button 
-          onClick={() => onSave({
-            ...formData,
-            organisation_id: orgId,
-            recorded_by: employeeId,
-            recorded_by_name: employeeName,
-            status: "pending"
-          })}
-          disabled={isLoading || !formData.category || !formData.amount}
-          className="sl-gradient"
-        >
-          {isLoading ? "Saving..." : "Save Expense"}
-        </Button>
-      </div>
     </div>
   );
 }

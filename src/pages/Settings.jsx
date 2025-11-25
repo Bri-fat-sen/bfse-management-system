@@ -1,6 +1,19 @@
 import React, { useState } from "react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import {
+  Settings as SettingsIcon,
+  User,
+  Building2,
+  Bell,
+  Shield,
+  Palette,
+  Globe,
+  Moon,
+  Sun,
+  Save,
+  Camera
+} from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -14,21 +27,15 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Separator } from "@/components/ui/separator";
+import { useToast } from "@/components/ui/use-toast";
 import PageHeader from "@/components/ui/PageHeader";
-import {
-  Settings as SettingsIcon,
-  Building2,
-  Bell,
-  Shield,
-  Palette,
-  Globe,
-  Save,
-  Upload
-} from "lucide-react";
 
 export default function Settings() {
-  const [activeTab, setActiveTab] = useState("organisation");
+  const { toast } = useToast();
   const queryClient = useQueryClient();
+  const [activeTab, setActiveTab] = useState("profile");
 
   const { data: user } = useQuery({
     queryKey: ['currentUser'],
@@ -52,54 +59,39 @@ export default function Settings() {
 
   const currentOrg = organisation?.[0];
 
-  const [orgSettings, setOrgSettings] = useState({
-    name: currentOrg?.name || "",
-    currency: currentOrg?.currency || "SLE",
-    timezone: currentOrg?.timezone || "Africa/Freetown",
-    phone: currentOrg?.phone || "",
-    email: currentOrg?.email || "",
-    address: currentOrg?.address || ""
-  });
-
-  const [notifications, setNotifications] = useState({
-    email_notifications: true,
-    low_stock_alerts: true,
-    payroll_reminders: true,
-    meeting_reminders: true,
-    chat_notifications: true
-  });
-
-  const updateOrgMutation = useMutation({
-    mutationFn: (data) => base44.entities.Organisation.update(orgId, data),
+  const updateEmployeeMutation = useMutation({
+    mutationFn: (data) => base44.entities.Employee.update(currentEmployee?.id, data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['organisation'] });
+      queryClient.invalidateQueries({ queryKey: ['employee'] });
+      toast({ title: "Profile updated successfully" });
     },
   });
 
-  React.useEffect(() => {
-    if (currentOrg) {
-      setOrgSettings({
-        name: currentOrg.name || "",
-        currency: currentOrg.currency || "SLE",
-        timezone: currentOrg.timezone || "Africa/Freetown",
-        phone: currentOrg.phone || "",
-        email: currentOrg.email || "",
-        address: currentOrg.address || ""
-      });
-    }
-  }, [currentOrg]);
-
-  const canEdit = currentEmployee?.role === 'super_admin' || currentEmployee?.role === 'org_admin';
+  const handleProfileUpdate = (e) => {
+    e.preventDefault();
+    const formData = new FormData(e.target);
+    const data = {
+      phone: formData.get('phone'),
+      emergency_contact: formData.get('emergency_contact'),
+      emergency_phone: formData.get('emergency_phone'),
+      address: formData.get('address'),
+    };
+    updateEmployeeMutation.mutate(data);
+  };
 
   return (
     <div className="space-y-6">
-      <PageHeader 
-        title="Settings" 
-        subtitle="Manage your organisation and preferences"
+      <PageHeader
+        title="Settings"
+        subtitle="Manage your profile and preferences"
       />
 
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList>
+        <TabsList className="mb-6">
+          <TabsTrigger value="profile" className="flex items-center gap-2">
+            <User className="w-4 h-4" />
+            Profile
+          </TabsTrigger>
           <TabsTrigger value="organisation" className="flex items-center gap-2">
             <Building2 className="w-4 h-4" />
             Organisation
@@ -112,275 +104,257 @@ export default function Settings() {
             <Palette className="w-4 h-4" />
             Appearance
           </TabsTrigger>
-          <TabsTrigger value="security" className="flex items-center gap-2">
-            <Shield className="w-4 h-4" />
-            Security
-          </TabsTrigger>
         </TabsList>
 
-        <TabsContent value="organisation" className="mt-6">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <Card className="border-0 shadow-sm">
+        <TabsContent value="profile">
+          <div className="grid gap-6">
+            {/* Profile Photo */}
+            <Card>
               <CardHeader>
-                <CardTitle>Organisation Details</CardTitle>
-                <CardDescription>Update your organisation information</CardDescription>
+                <CardTitle>Profile Photo</CardTitle>
+                <CardDescription>Update your profile picture</CardDescription>
               </CardHeader>
-              <CardContent className="space-y-4">
-                <div>
-                  <Label>Organisation Name</Label>
-                  <Input 
-                    value={orgSettings.name}
-                    onChange={(e) => setOrgSettings({ ...orgSettings, name: e.target.value })}
-                    disabled={!canEdit}
-                  />
-                </div>
-                <div className="grid grid-cols-2 gap-4">
+              <CardContent>
+                <div className="flex items-center gap-6">
+                  <Avatar className="w-24 h-24">
+                    <AvatarImage src={currentEmployee?.profile_photo} />
+                    <AvatarFallback className="sl-gradient text-white text-2xl">
+                      {user?.full_name?.charAt(0) || 'U'}
+                    </AvatarFallback>
+                  </Avatar>
                   <div>
-                    <Label>Currency</Label>
-                    <Select 
-                      value={orgSettings.currency} 
-                      onValueChange={(v) => setOrgSettings({ ...orgSettings, currency: v })}
-                      disabled={!canEdit}
-                    >
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="SLE">Sierra Leonean Leone (SLE)</SelectItem>
-                        <SelectItem value="USD">US Dollar (USD)</SelectItem>
-                        <SelectItem value="GBP">British Pound (GBP)</SelectItem>
-                        <SelectItem value="EUR">Euro (EUR)</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div>
-                    <Label>Timezone</Label>
-                    <Select 
-                      value={orgSettings.timezone}
-                      onValueChange={(v) => setOrgSettings({ ...orgSettings, timezone: v })}
-                      disabled={!canEdit}
-                    >
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="Africa/Freetown">Africa/Freetown (GMT)</SelectItem>
-                        <SelectItem value="UTC">UTC</SelectItem>
-                        <SelectItem value="Europe/London">Europe/London</SelectItem>
-                      </SelectContent>
-                    </Select>
+                    <Button variant="outline" className="mb-2">
+                      <Camera className="w-4 h-4 mr-2" />
+                      Upload Photo
+                    </Button>
+                    <p className="text-sm text-gray-500">JPG, PNG or GIF. Max size 2MB.</p>
                   </div>
                 </div>
-                <div>
-                  <Label>Phone</Label>
-                  <Input 
-                    value={orgSettings.phone}
-                    onChange={(e) => setOrgSettings({ ...orgSettings, phone: e.target.value })}
-                    disabled={!canEdit}
-                  />
-                </div>
-                <div>
-                  <Label>Email</Label>
-                  <Input 
-                    type="email"
-                    value={orgSettings.email}
-                    onChange={(e) => setOrgSettings({ ...orgSettings, email: e.target.value })}
-                    disabled={!canEdit}
-                  />
-                </div>
-                <div>
-                  <Label>Address</Label>
-                  <Input 
-                    value={orgSettings.address}
-                    onChange={(e) => setOrgSettings({ ...orgSettings, address: e.target.value })}
-                    disabled={!canEdit}
-                  />
-                </div>
-                {canEdit && (
-                  <Button 
-                    onClick={() => updateOrgMutation.mutate(orgSettings)}
-                    disabled={updateOrgMutation.isPending}
-                    className="sl-gradient"
-                  >
-                    <Save className="w-4 h-4 mr-2" />
-                    {updateOrgMutation.isPending ? "Saving..." : "Save Changes"}
-                  </Button>
-                )}
               </CardContent>
             </Card>
 
-            <Card className="border-0 shadow-sm">
+            {/* Personal Information */}
+            <Card>
               <CardHeader>
-                <CardTitle>Organisation Logo</CardTitle>
-                <CardDescription>Upload your company logo</CardDescription>
+                <CardTitle>Personal Information</CardTitle>
+                <CardDescription>Your basic profile information</CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="flex flex-col items-center justify-center p-8 border-2 border-dashed rounded-xl">
-                  {currentOrg?.logo_url ? (
-                    <img 
-                      src={currentOrg.logo_url} 
-                      alt="Organisation Logo" 
-                      className="w-32 h-32 object-contain mb-4"
-                    />
-                  ) : (
-                    <div className="w-32 h-32 rounded-xl bg-gradient-to-br from-[#1EB053] to-[#1D5FC3] flex items-center justify-center mb-4">
-                      <span className="text-4xl font-bold text-white">
-                        {currentOrg?.name?.charAt(0) || 'B'}
-                      </span>
+                <form onSubmit={handleProfileUpdate} className="space-y-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <Label>Full Name</Label>
+                      <Input value={currentEmployee?.full_name || ''} disabled className="mt-1 bg-gray-50" />
+                      <p className="text-xs text-gray-500 mt-1">Contact admin to change your name</p>
                     </div>
-                  )}
-                  <Button variant="outline" disabled={!canEdit}>
-                    <Upload className="w-4 h-4 mr-2" />
-                    Upload Logo
-                  </Button>
-                  <p className="text-xs text-gray-500 mt-2">PNG, JPG up to 2MB</p>
-                </div>
+                    <div>
+                      <Label>Employee Code</Label>
+                      <Input value={currentEmployee?.employee_code || ''} disabled className="mt-1 bg-gray-50" />
+                    </div>
+                    <div>
+                      <Label>Email</Label>
+                      <Input value={currentEmployee?.email || user?.email || ''} disabled className="mt-1 bg-gray-50" />
+                    </div>
+                    <div>
+                      <Label>Phone</Label>
+                      <Input name="phone" defaultValue={currentEmployee?.phone} className="mt-1" />
+                    </div>
+                    <div>
+                      <Label>Department</Label>
+                      <Input value={currentEmployee?.department || ''} disabled className="mt-1 bg-gray-50" />
+                    </div>
+                    <div>
+                      <Label>Position</Label>
+                      <Input value={currentEmployee?.position || ''} disabled className="mt-1 bg-gray-50" />
+                    </div>
+                    <div className="md:col-span-2">
+                      <Label>Address</Label>
+                      <Input name="address" defaultValue={currentEmployee?.address} className="mt-1" />
+                    </div>
+                  </div>
+
+                  <Separator className="my-6" />
+
+                  <h3 className="font-semibold mb-4">Emergency Contact</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <Label>Contact Name</Label>
+                      <Input name="emergency_contact" defaultValue={currentEmployee?.emergency_contact} className="mt-1" />
+                    </div>
+                    <div>
+                      <Label>Contact Phone</Label>
+                      <Input name="emergency_phone" defaultValue={currentEmployee?.emergency_phone} className="mt-1" />
+                    </div>
+                  </div>
+
+                  <div className="flex justify-end pt-4">
+                    <Button type="submit" className="sl-gradient">
+                      <Save className="w-4 h-4 mr-2" />
+                      Save Changes
+                    </Button>
+                  </div>
+                </form>
               </CardContent>
             </Card>
           </div>
         </TabsContent>
 
-        <TabsContent value="notifications" className="mt-6">
-          <Card className="border-0 shadow-sm max-w-2xl">
+        <TabsContent value="organisation">
+          <Card>
+            <CardHeader>
+              <CardTitle>Organisation Details</CardTitle>
+              <CardDescription>Information about your organisation</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-6">
+                <div className="flex items-center gap-4">
+                  {currentOrg?.logo_url ? (
+                    <img src={currentOrg.logo_url} alt="Logo" className="w-16 h-16 rounded-xl object-cover" />
+                  ) : (
+                    <div className="w-16 h-16 rounded-xl sl-gradient flex items-center justify-center text-white text-2xl font-bold">
+                      {currentOrg?.name?.charAt(0) || 'O'}
+                    </div>
+                  )}
+                  <div>
+                    <h3 className="text-xl font-bold">{currentOrg?.name || 'Organisation'}</h3>
+                    <p className="text-gray-500">{currentOrg?.code}</p>
+                  </div>
+                </div>
+
+                <Separator />
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <Label className="text-gray-500">Owner</Label>
+                    <p className="font-medium">{currentOrg?.owner_name || '-'}</p>
+                  </div>
+                  <div>
+                    <Label className="text-gray-500">Email</Label>
+                    <p className="font-medium">{currentOrg?.email || '-'}</p>
+                  </div>
+                  <div>
+                    <Label className="text-gray-500">Phone</Label>
+                    <p className="font-medium">{currentOrg?.phone || '-'}</p>
+                  </div>
+                  <div>
+                    <Label className="text-gray-500">Currency</Label>
+                    <p className="font-medium">{currentOrg?.currency || 'SLE'}</p>
+                  </div>
+                  <div>
+                    <Label className="text-gray-500">Address</Label>
+                    <p className="font-medium">{currentOrg?.address || '-'}</p>
+                  </div>
+                  <div>
+                    <Label className="text-gray-500">City</Label>
+                    <p className="font-medium">{currentOrg?.city || '-'}</p>
+                  </div>
+                  <div>
+                    <Label className="text-gray-500">Country</Label>
+                    <p className="font-medium">{currentOrg?.country || 'Sierra Leone'}</p>
+                  </div>
+                  <div>
+                    <Label className="text-gray-500">Subscription</Label>
+                    <p className="font-medium capitalize">{currentOrg?.subscription_type || 'Free'}</p>
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="notifications">
+          <Card>
             <CardHeader>
               <CardTitle>Notification Preferences</CardTitle>
               <CardDescription>Manage how you receive notifications</CardDescription>
             </CardHeader>
-            <CardContent className="space-y-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="font-medium">Email Notifications</p>
-                  <p className="text-sm text-gray-500">Receive notifications via email</p>
-                </div>
-                <Switch 
-                  checked={notifications.email_notifications}
-                  onCheckedChange={(v) => setNotifications({ ...notifications, email_notifications: v })}
-                />
+            <CardContent>
+              <div className="space-y-6">
+                {[
+                  { id: 'chat', label: 'Chat Messages', description: 'Get notified when you receive new messages' },
+                  { id: 'meetings', label: 'Meeting Reminders', description: 'Receive reminders before scheduled meetings' },
+                  { id: 'sales', label: 'Sales Alerts', description: 'Get notified about sales activities' },
+                  { id: 'inventory', label: 'Low Stock Alerts', description: 'Be alerted when products are running low' },
+                  { id: 'payroll', label: 'Payroll Updates', description: 'Notifications about payroll processing' },
+                  { id: 'system', label: 'System Announcements', description: 'Important system updates and announcements' },
+                ].map((item) => (
+                  <div key={item.id} className="flex items-center justify-between">
+                    <div>
+                      <p className="font-medium">{item.label}</p>
+                      <p className="text-sm text-gray-500">{item.description}</p>
+                    </div>
+                    <Switch defaultChecked />
+                  </div>
+                ))}
               </div>
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="font-medium">Low Stock Alerts</p>
-                  <p className="text-sm text-gray-500">Get notified when products are running low</p>
-                </div>
-                <Switch 
-                  checked={notifications.low_stock_alerts}
-                  onCheckedChange={(v) => setNotifications({ ...notifications, low_stock_alerts: v })}
-                />
-              </div>
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="font-medium">Payroll Reminders</p>
-                  <p className="text-sm text-gray-500">Reminders for payroll processing</p>
-                </div>
-                <Switch 
-                  checked={notifications.payroll_reminders}
-                  onCheckedChange={(v) => setNotifications({ ...notifications, payroll_reminders: v })}
-                />
-              </div>
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="font-medium">Meeting Reminders</p>
-                  <p className="text-sm text-gray-500">Get reminded before scheduled meetings</p>
-                </div>
-                <Switch 
-                  checked={notifications.meeting_reminders}
-                  onCheckedChange={(v) => setNotifications({ ...notifications, meeting_reminders: v })}
-                />
-              </div>
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="font-medium">Chat Notifications</p>
-                  <p className="text-sm text-gray-500">Notifications for new messages</p>
-                </div>
-                <Switch 
-                  checked={notifications.chat_notifications}
-                  onCheckedChange={(v) => setNotifications({ ...notifications, chat_notifications: v })}
-                />
-              </div>
-              <Button className="sl-gradient">
-                <Save className="w-4 h-4 mr-2" />
-                Save Preferences
-              </Button>
             </CardContent>
           </Card>
         </TabsContent>
 
-        <TabsContent value="appearance" className="mt-6">
-          <Card className="border-0 shadow-sm max-w-2xl">
-            <CardHeader>
-              <CardTitle>Appearance Settings</CardTitle>
-              <CardDescription>Customize the look and feel</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              <div>
-                <Label>Theme</Label>
-                <div className="grid grid-cols-3 gap-4 mt-2">
+        <TabsContent value="appearance">
+          <div className="grid gap-6">
+            <Card>
+              <CardHeader>
+                <CardTitle>Theme</CardTitle>
+                <CardDescription>Customize the look and feel</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
                   <div className="p-4 border-2 border-[#1EB053] rounded-xl cursor-pointer bg-white">
-                    <div className="w-full h-20 bg-white border rounded mb-2" />
-                    <p className="text-center text-sm font-medium">Light</p>
+                    <div className="flex items-center justify-between mb-3">
+                      <Sun className="w-5 h-5" />
+                      <div className="w-4 h-4 rounded-full bg-[#1EB053]" />
+                    </div>
+                    <p className="font-medium">Light Mode</p>
+                    <p className="text-sm text-gray-500">Default theme</p>
                   </div>
-                  <div className="p-4 border-2 rounded-xl cursor-pointer hover:border-gray-400">
-                    <div className="w-full h-20 bg-[#0F1F3C] rounded mb-2" />
-                    <p className="text-center text-sm font-medium">Dark</p>
-                  </div>
-                  <div className="p-4 border-2 rounded-xl cursor-pointer hover:border-gray-400">
-                    <div className="w-full h-20 bg-gradient-to-b from-white to-[#0F1F3C] rounded mb-2" />
-                    <p className="text-center text-sm font-medium">System</p>
+                  <div className="p-4 border-2 rounded-xl cursor-pointer bg-[#0F1F3C] text-white">
+                    <div className="flex items-center justify-between mb-3">
+                      <Moon className="w-5 h-5" />
+                      <div className="w-4 h-4 rounded-full border-2 border-white" />
+                    </div>
+                    <p className="font-medium">Dark Mode</p>
+                    <p className="text-sm text-gray-400">Easy on the eyes</p>
                   </div>
                 </div>
-              </div>
-              <div>
-                <Label>Accent Color</Label>
-                <div className="flex gap-3 mt-2">
-                  {['#1EB053', '#1D5FC3', '#D4AF37', '#8B5CF6', '#EC4899'].map(color => (
-                    <button
-                      key={color}
-                      className={`w-10 h-10 rounded-full border-2 ${color === '#1EB053' ? 'border-gray-900' : 'border-transparent'}`}
-                      style={{ backgroundColor: color }}
-                    />
-                  ))}
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
+              </CardContent>
+            </Card>
 
-        <TabsContent value="security" className="mt-6">
-          <Card className="border-0 shadow-sm max-w-2xl">
-            <CardHeader>
-              <CardTitle>Security Settings</CardTitle>
-              <CardDescription>Manage your account security</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              <div className="p-4 bg-gray-50 rounded-xl">
-                <div className="flex items-center justify-between">
+            <Card>
+              <CardHeader>
+                <CardTitle>Language & Region</CardTitle>
+                <CardDescription>Set your language and regional preferences</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <p className="font-medium">Two-Factor Authentication</p>
-                    <p className="text-sm text-gray-500">Add an extra layer of security</p>
+                    <Label>Language</Label>
+                    <Select defaultValue="en">
+                      <SelectTrigger className="mt-1">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="en">English</SelectItem>
+                        <SelectItem value="fr">French</SelectItem>
+                      </SelectContent>
+                    </Select>
                   </div>
-                  <Button variant="outline">Enable</Button>
-                </div>
-              </div>
-              <div className="p-4 bg-gray-50 rounded-xl">
-                <div className="flex items-center justify-between">
                   <div>
-                    <p className="font-medium">Change Password</p>
-                    <p className="text-sm text-gray-500">Update your account password</p>
+                    <Label>Timezone</Label>
+                    <Select defaultValue="africa/freetown">
+                      <SelectTrigger className="mt-1">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="africa/freetown">Africa/Freetown (GMT+0)</SelectItem>
+                        <SelectItem value="utc">UTC</SelectItem>
+                      </SelectContent>
+                    </Select>
                   </div>
-                  <Button variant="outline">Change</Button>
                 </div>
-              </div>
-              <div className="p-4 bg-gray-50 rounded-xl">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="font-medium">Active Sessions</p>
-                    <p className="text-sm text-gray-500">Manage your logged in devices</p>
-                  </div>
-                  <Button variant="outline">View</Button>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+              </CardContent>
+            </Card>
+          </div>
         </TabsContent>
       </Tabs>
     </div>

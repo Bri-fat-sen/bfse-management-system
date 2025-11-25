@@ -1,139 +1,123 @@
 import React, { useState } from "react";
+import {
+  HelpCircle,
+  MessageSquare,
+  Book,
+  Video,
+  Phone,
+  Mail,
+  ChevronRight,
+  Search,
+  ExternalLink
+} from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Badge } from "@/components/ui/badge";
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
-import PageHeader from "@/components/ui/PageHeader";
+import { Label } from "@/components/ui/label";
 import {
-  HelpCircle,
-  MessageCircle,
-  Phone,
-  Mail,
-  BookOpen,
-  Send,
-  CheckCircle,
-  Clock,
-  Search
-} from "lucide-react";
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
+import { useToast } from "@/components/ui/use-toast";
+import PageHeader from "@/components/ui/PageHeader";
 
 const faqs = [
   {
-    question: "How do I clock in and out?",
-    answer: "Navigate to HR & Payroll from the sidebar menu. You'll see a large Clock In/Out card at the top. Simply click the 'Clock In' button when you start work and 'Clock Out' when you finish."
+    question: "How do I clock in/out?",
+    answer: "Navigate to the Dashboard and click the 'Clock In' button. When you're done for the day, click 'Clock Out'. Your attendance will be automatically recorded."
   },
   {
-    question: "How do I create a new sale?",
-    answer: "Go to Sales & POS from the sidebar. Select your sale type (Retail, Warehouse, or Vehicle), then click on products to add them to your cart. Once done, click Checkout to complete the sale."
+    question: "How do I process a sale?",
+    answer: "Go to Sales & POS from the sidebar, search or browse products, add them to cart, then click Checkout. Select the payment method and complete the sale."
   },
   {
-    question: "How can I view my attendance history?",
-    answer: "Go to My Profile to see your recent attendance records, or visit HR & Payroll and click on the Attendance tab to view detailed records."
+    question: "How do I view my payroll?",
+    answer: "Navigate to HR & Payroll > Payroll tab. You'll see all your payroll records including pending, approved, and paid salaries."
   },
   {
-    question: "How do I add a new product to inventory?",
-    answer: "Navigate to Inventory from the sidebar and click 'Add Product' button. Fill in the product details including name, prices, stock quantity, and save."
+    question: "How do I record a trip (for drivers)?",
+    answer: "Go to Transport > Trips, click 'New Trip', select your vehicle and route, enter passenger count and any expenses, then submit."
   },
   {
-    question: "How do I record a trip as a driver?",
-    answer: "Go to Transport & Drivers, click 'New Trip', select your assigned vehicle and route, enter the number of passengers, and submit."
+    question: "How do I start a chat with a colleague?",
+    answer: "Go to Communication Hub, click the + button in the chat list, search for the colleague you want to chat with, and start messaging."
   },
   {
-    question: "How can I send a message to a colleague?",
-    answer: "Navigate to Communication Hub, click the '+' button to start a new chat, select the colleague you want to message, and start typing."
+    question: "How do I update my profile?",
+    answer: "Go to Settings > Profile tab. You can update your phone number, address, and emergency contact information."
   },
   {
-    question: "How do I submit an expense?",
-    answer: "Go to Finance, click 'Add Expense', select the category, enter the amount and details, then submit for approval."
+    question: "What if I forget my PIN?",
+    answer: "Contact your Super Admin to reset your PIN. Only Super Admins have the authority to set or reset employee PINs."
   },
   {
-    question: "Where can I see all my activities?",
-    answer: "The Activity Log page shows a complete history of all your actions in the system. Navigate to it from the sidebar menu."
+    question: "How do I add an expense?",
+    answer: "Go to Finance > Expenses, click 'Add Expense', fill in the details including category, amount, and description, then submit for approval."
   }
 ];
 
 export default function Support() {
-  const [searchQuery, setSearchQuery] = useState("");
-  const [ticketForm, setTicketForm] = useState({
-    subject: "",
-    description: "",
-    priority: "normal"
-  });
-  const [submitted, setSubmitted] = useState(false);
+  const { toast } = useToast();
+  const [searchTerm, setSearchTerm] = useState("");
 
-  const filteredFaqs = faqs.filter(faq =>
-    faq.question.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    faq.answer.toLowerCase().includes(searchQuery.toLowerCase())
+  const filteredFaqs = faqs.filter(faq => 
+    faq.question.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    faq.answer.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  const handleSubmitTicket = () => {
-    // In a real app, this would create a support ticket
-    setSubmitted(true);
-    setTimeout(() => {
-      setSubmitted(false);
-      setTicketForm({ subject: "", description: "", priority: "normal" });
-    }, 3000);
+  const handleContactSubmit = (e) => {
+    e.preventDefault();
+    toast({
+      title: "Message Sent",
+      description: "Our support team will get back to you shortly.",
+    });
+    e.target.reset();
   };
 
   return (
     <div className="space-y-6">
-      <PageHeader 
-        title="Support & Help" 
-        subtitle="Get help and find answers to common questions"
+      <PageHeader
+        title="Support & Help"
+        subtitle="Get help and find answers to your questions"
       />
 
       {/* Quick Actions */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Card className="border-0 shadow-sm hover:shadow-lg transition-shadow cursor-pointer">
-          <CardContent className="p-6 flex items-center gap-4">
-            <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-[#1EB053] to-[#1EB053]/70 flex items-center justify-center">
-              <BookOpen className="w-7 h-7 text-white" />
-            </div>
-            <div>
-              <h3 className="font-semibold">User Guide</h3>
-              <p className="text-sm text-gray-500">Learn how to use the system</p>
-            </div>
-          </CardContent>
-        </Card>
-        <Card className="border-0 shadow-sm hover:shadow-lg transition-shadow cursor-pointer">
-          <CardContent className="p-6 flex items-center gap-4">
-            <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-[#1D5FC3] to-[#1D5FC3]/70 flex items-center justify-center">
-              <MessageCircle className="w-7 h-7 text-white" />
-            </div>
-            <div>
-              <h3 className="font-semibold">Live Chat</h3>
-              <p className="text-sm text-gray-500">Chat with support team</p>
-            </div>
-          </CardContent>
-        </Card>
-        <Card className="border-0 shadow-sm hover:shadow-lg transition-shadow cursor-pointer">
-          <CardContent className="p-6 flex items-center gap-4">
-            <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-[#D4AF37] to-[#D4AF37]/70 flex items-center justify-center">
-              <Phone className="w-7 h-7 text-white" />
-            </div>
-            <div>
-              <h3 className="font-semibold">Call Support</h3>
-              <p className="text-sm text-gray-500">+232 76 123 4567</p>
-            </div>
-          </CardContent>
-        </Card>
+        {[
+          { icon: Book, title: "Documentation", description: "Browse guides and tutorials", color: "from-[#1EB053] to-emerald-600" },
+          { icon: Video, title: "Video Tutorials", description: "Watch how-to videos", color: "from-[#1D5FC3] to-blue-600" },
+          { icon: MessageSquare, title: "Live Chat", description: "Chat with support team", color: "from-purple-500 to-purple-600" },
+        ].map((item) => (
+          <Card key={item.title} className="cursor-pointer hover:shadow-lg transition-shadow group">
+            <CardContent className="p-6">
+              <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${item.color} flex items-center justify-center mb-4 group-hover:scale-110 transition-transform`}>
+                <item.icon className="w-6 h-6 text-white" />
+              </div>
+              <h3 className="font-semibold mb-1">{item.title}</h3>
+              <p className="text-sm text-gray-500">{item.description}</p>
+              <ChevronRight className="w-5 h-5 text-gray-400 mt-2 group-hover:translate-x-1 transition-transform" />
+            </CardContent>
+          </Card>
+        ))}
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* FAQs */}
-        <Card className="border-0 shadow-sm">
+        <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <HelpCircle className="w-5 h-5 text-[#1D5FC3]" />
+              <HelpCircle className="w-5 h-5" />
               Frequently Asked Questions
             </CardTitle>
-            <div className="relative mt-2">
+            <div className="relative mt-4">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
               <Input
                 placeholder="Search FAQs..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
                 className="pl-10"
               />
             </div>
@@ -152,100 +136,92 @@ export default function Support() {
               ))}
             </Accordion>
             {filteredFaqs.length === 0 && (
-              <div className="text-center py-8 text-gray-500">
-                <HelpCircle className="w-12 h-12 mx-auto mb-3 opacity-50" />
-                <p>No matching questions found</p>
-              </div>
+              <p className="text-center text-gray-500 py-4">No FAQs match your search</p>
             )}
           </CardContent>
         </Card>
 
-        {/* Submit Ticket */}
-        <Card className="border-0 shadow-sm">
+        {/* Contact Form */}
+        <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <Mail className="w-5 h-5 text-[#1EB053]" />
-              Submit Support Ticket
+              <Mail className="w-5 h-5" />
+              Contact Support
             </CardTitle>
             <CardDescription>
-              Can't find what you're looking for? Send us a message
+              Can't find what you're looking for? Send us a message.
             </CardDescription>
           </CardHeader>
           <CardContent>
-            {submitted ? (
-              <div className="text-center py-12">
-                <div className="w-16 h-16 rounded-full bg-green-100 flex items-center justify-center mx-auto mb-4">
-                  <CheckCircle className="w-8 h-8 text-green-600" />
-                </div>
-                <h3 className="text-xl font-semibold mb-2">Ticket Submitted!</h3>
-                <p className="text-gray-500">We'll get back to you within 24 hours</p>
+            <form onSubmit={handleContactSubmit} className="space-y-4">
+              <div>
+                <Label>Subject</Label>
+                <Input name="subject" required className="mt-1" placeholder="What do you need help with?" />
               </div>
-            ) : (
-              <div className="space-y-4">
-                <div>
-                  <label className="text-sm font-medium">Subject</label>
-                  <Input
-                    value={ticketForm.subject}
-                    onChange={(e) => setTicketForm({ ...ticketForm, subject: e.target.value })}
-                    placeholder="Brief description of your issue"
-                  />
-                </div>
-                <div>
-                  <label className="text-sm font-medium">Priority</label>
-                  <div className="flex gap-2 mt-1">
-                    {['low', 'normal', 'high', 'urgent'].map(priority => (
-                      <Button
-                        key={priority}
-                        variant={ticketForm.priority === priority ? "default" : "outline"}
-                        size="sm"
-                        onClick={() => setTicketForm({ ...ticketForm, priority })}
-                        className={ticketForm.priority === priority ? "sl-gradient" : ""}
-                      >
-                        {priority.charAt(0).toUpperCase() + priority.slice(1)}
-                      </Button>
-                    ))}
-                  </div>
-                </div>
-                <div>
-                  <label className="text-sm font-medium">Description</label>
-                  <Textarea
-                    value={ticketForm.description}
-                    onChange={(e) => setTicketForm({ ...ticketForm, description: e.target.value })}
-                    placeholder="Please describe your issue in detail..."
-                    rows={5}
-                  />
-                </div>
-                <Button 
-                  onClick={handleSubmitTicket}
-                  disabled={!ticketForm.subject || !ticketForm.description}
-                  className="w-full sl-gradient"
-                >
-                  <Send className="w-4 h-4 mr-2" />
-                  Submit Ticket
-                </Button>
+              <div>
+                <Label>Category</Label>
+                <select className="w-full mt-1 p-2 border rounded-lg">
+                  <option>General Question</option>
+                  <option>Technical Issue</option>
+                  <option>Feature Request</option>
+                  <option>Billing</option>
+                  <option>Other</option>
+                </select>
               </div>
-            )}
+              <div>
+                <Label>Message</Label>
+                <Textarea 
+                  name="message" 
+                  required 
+                  className="mt-1" 
+                  rows={5}
+                  placeholder="Describe your issue or question in detail..."
+                />
+              </div>
+              <Button type="submit" className="w-full sl-gradient">
+                Send Message
+              </Button>
+            </form>
+
+            <div className="mt-6 pt-6 border-t">
+              <p className="text-sm text-gray-500 mb-4">Or reach us directly:</p>
+              <div className="space-y-3">
+                <div className="flex items-center gap-3 text-sm">
+                  <Phone className="w-4 h-4 text-[#1D5FC3]" />
+                  <span>+232 XX XXX XXXX</span>
+                </div>
+                <div className="flex items-center gap-3 text-sm">
+                  <Mail className="w-4 h-4 text-[#1D5FC3]" />
+                  <span>support@bfse.com</span>
+                </div>
+              </div>
+            </div>
           </CardContent>
         </Card>
       </div>
 
-      {/* Contact Info */}
-      <Card className="border-0 shadow-sm">
-        <CardContent className="p-6">
-          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-            <div>
-              <h3 className="font-semibold text-lg">Need immediate assistance?</h3>
-              <p className="text-gray-500">Our support team is available Monday to Friday, 8AM - 6PM GMT</p>
+      {/* System Info */}
+      <Card>
+        <CardHeader>
+          <CardTitle>System Information</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div className="p-4 bg-gray-50 rounded-lg">
+              <p className="text-sm text-gray-500">Version</p>
+              <p className="font-semibold">1.0.0</p>
             </div>
-            <div className="flex gap-4">
-              <div className="flex items-center gap-2">
-                <Phone className="w-5 h-5 text-[#1EB053]" />
-                <span className="font-medium">+232 76 123 4567</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <Mail className="w-5 h-5 text-[#1D5FC3]" />
-                <span className="font-medium">support@bfse.sl</span>
-              </div>
+            <div className="p-4 bg-gray-50 rounded-lg">
+              <p className="text-sm text-gray-500">Last Updated</p>
+              <p className="font-semibold">Dec 2024</p>
+            </div>
+            <div className="p-4 bg-gray-50 rounded-lg">
+              <p className="text-sm text-gray-500">Platform</p>
+              <p className="font-semibold">Base44</p>
+            </div>
+            <div className="p-4 bg-gray-50 rounded-lg">
+              <p className="text-sm text-gray-500">Status</p>
+              <p className="font-semibold text-green-600">Operational</p>
             </div>
           </div>
         </CardContent>
