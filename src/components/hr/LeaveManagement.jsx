@@ -145,10 +145,10 @@ export default function LeaveManagement({ orgId, currentEmployee }) {
         ) : (
           <div className="space-y-3">
             {filteredRequests.map((request) => (
-              <div key={request.id} className="p-4 bg-gray-50 rounded-lg">
-                <div className="flex items-start justify-between">
+              <div key={request.id} className="p-3 sm:p-4 bg-gray-50 rounded-lg">
+                <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
                   <div className="flex items-start gap-3">
-                    <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
+                    <div className={`w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 ${
                       request.status === 'pending' ? 'bg-amber-100' :
                       request.status === 'approved' ? 'bg-green-100' : 'bg-red-100'
                     }`}>
@@ -160,16 +160,16 @@ export default function LeaveManagement({ orgId, currentEmployee }) {
                         <X className="w-5 h-5 text-red-600" />
                       )}
                     </div>
-                    <div>
+                    <div className="min-w-0">
                       <p className="font-medium">{request.employee_name}</p>
                       <p className="text-sm text-gray-600">
                         {LEAVE_TYPE_LABELS[request.leave_type]} • {request.days_requested} day{request.days_requested !== 1 ? 's' : ''}
                       </p>
-                      <p className="text-sm text-gray-500">
+                      <p className="text-xs sm:text-sm text-gray-500">
                         {format(new Date(request.start_date), 'PP')} - {format(new Date(request.end_date), 'PP')}
                       </p>
                       {request.reason && (
-                        <p className="text-sm text-gray-500 mt-1">"{request.reason}"</p>
+                        <p className="text-sm text-gray-500 mt-1 line-clamp-2">"{request.reason}"</p>
                       )}
                       {request.rejection_reason && (
                         <p className="text-sm text-red-500 mt-1">
@@ -179,7 +179,7 @@ export default function LeaveManagement({ orgId, currentEmployee }) {
                       )}
                     </div>
                   </div>
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2 self-end sm:self-start">
                     <Badge className={STATUS_COLORS[request.status]}>
                       {request.status}
                     </Badge>

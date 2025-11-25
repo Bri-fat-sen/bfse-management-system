@@ -539,7 +539,7 @@ export default function HR() {
 
       {/* Edit Employee Dialog */}
       <Dialog open={showEmployeeDialog} onOpenChange={setShowEmployeeDialog}>
-        <DialogContent className="max-w-lg">
+        <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto w-[95vw] sm:w-full">
           <DialogHeader>
             <div className="flex h-1 w-16 rounded-full overflow-hidden mb-3">
               <div className="flex-1 bg-[#1EB053]" />
@@ -550,7 +550,7 @@ export default function HR() {
           </DialogHeader>
           {editingEmployee && (
             <form onSubmit={handleSubmit} className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <Label>First Name</Label>
                   <Input name="first_name" defaultValue={editingEmployee.first_name} required className="mt-1" />
@@ -630,11 +630,11 @@ export default function HR() {
                   <Input name="base_salary" type="number" defaultValue={editingEmployee.base_salary} className="mt-1" />
                 </div>
               </div>
-              <DialogFooter>
-                <Button type="button" variant="outline" onClick={() => setShowEmployeeDialog(false)}>
+              <DialogFooter className="flex-col sm:flex-row gap-2">
+                <Button type="button" variant="outline" onClick={() => setShowEmployeeDialog(false)} className="w-full sm:w-auto">
                   Cancel
                 </Button>
-                <Button type="submit" className="bg-gradient-to-r from-[#1EB053] to-[#0072C6] hover:from-[#178f43] hover:to-[#005a9e] text-white shadow-lg">
+                <Button type="submit" className="bg-gradient-to-r from-[#1EB053] to-[#0072C6] hover:from-[#178f43] hover:to-[#005a9e] text-white shadow-lg w-full sm:w-auto">
                   Update Employee
                 </Button>
               </DialogFooter>

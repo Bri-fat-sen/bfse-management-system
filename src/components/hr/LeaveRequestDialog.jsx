@@ -129,7 +129,7 @@ export default function LeaveRequestDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-md">
+      <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <div className="flex h-1 w-16 rounded-full overflow-hidden mb-3">
             <div className="flex-1 bg-[#1EB053]" />
@@ -155,17 +155,17 @@ export default function LeaveRequestDialog({
             </Select>
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <Label>Start Date</Label>
               <Popover>
                 <PopoverTrigger asChild>
-                  <Button variant="outline" className="w-full mt-1 justify-start">
-                    <CalendarIcon className="w-4 h-4 mr-2" />
-                    {startDate ? format(startDate, 'PP') : 'Select'}
+                  <Button variant="outline" className="w-full mt-1 justify-start text-sm">
+                    <CalendarIcon className="w-4 h-4 mr-2 flex-shrink-0" />
+                    <span className="truncate">{startDate ? format(startDate, 'PP') : 'Select'}</span>
                   </Button>
                 </PopoverTrigger>
-                <PopoverContent className="w-auto p-0">
+                <PopoverContent className="w-auto p-0" align="start">
                   <Calendar
                     mode="single"
                     selected={startDate}
@@ -179,12 +179,12 @@ export default function LeaveRequestDialog({
               <Label>End Date</Label>
               <Popover>
                 <PopoverTrigger asChild>
-                  <Button variant="outline" className="w-full mt-1 justify-start">
-                    <CalendarIcon className="w-4 h-4 mr-2" />
-                    {endDate ? format(endDate, 'PP') : 'Select'}
+                  <Button variant="outline" className="w-full mt-1 justify-start text-sm">
+                    <CalendarIcon className="w-4 h-4 mr-2 flex-shrink-0" />
+                    <span className="truncate">{endDate ? format(endDate, 'PP') : 'Select'}</span>
                   </Button>
                 </PopoverTrigger>
-                <PopoverContent className="w-auto p-0">
+                <PopoverContent className="w-auto p-0" align="start">
                   <Calendar
                     mode="single"
                     selected={endDate}

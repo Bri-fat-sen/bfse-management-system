@@ -162,7 +162,7 @@ export default function EmployeeDocuments({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto w-[95vw] sm:w-full">
         <DialogHeader>
           <div className="flex h-1 w-16 rounded-full overflow-hidden mb-3">
             <div className="flex-1 bg-[#1EB053]" />
@@ -203,15 +203,15 @@ export default function EmployeeDocuments({
               const expiryStatus = getExpiryStatus(doc.expiry_date);
               return (
                 <Card key={doc.id}>
-                  <CardContent className="p-4">
-                    <div className="flex items-start justify-between">
+                  <CardContent className="p-3 sm:p-4">
+                    <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
                       <div className="flex items-start gap-3">
-                        <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-[#1EB053]/20 to-[#0072C6]/20 flex items-center justify-center">
+                        <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-[#1EB053]/20 to-[#0072C6]/20 flex items-center justify-center flex-shrink-0">
                           <FileText className="w-5 h-5 text-[#0072C6]" />
                         </div>
-                        <div>
-                          <div className="flex items-center gap-2">
-                            <p className="font-medium">{doc.title}</p>
+                        <div className="min-w-0">
+                          <div className="flex flex-wrap items-center gap-2">
+                            <p className="font-medium truncate">{doc.title}</p>
                             {doc.is_verified && (
                               <Badge className="bg-green-500 text-xs">
                                 <CheckCircle className="w-3 h-3 mr-1" />
@@ -222,7 +222,7 @@ export default function EmployeeDocuments({
                           <p className="text-sm text-gray-500">
                             {DOCUMENT_TYPES.find(t => t.value === doc.document_type)?.label}
                           </p>
-                          <div className="flex items-center gap-2 mt-1">
+                          <div className="flex flex-wrap items-center gap-2 mt-1">
                             <span className="text-xs text-gray-400">
                               Uploaded {format(new Date(doc.created_date), 'PP')}
                             </span>
@@ -238,7 +238,7 @@ export default function EmployeeDocuments({
                           </div>
                         </div>
                       </div>
-                      <div className="flex items-center gap-1">
+                      <div className="flex items-center gap-1 self-end sm:self-start">
                         <Button
                           variant="ghost"
                           size="icon"

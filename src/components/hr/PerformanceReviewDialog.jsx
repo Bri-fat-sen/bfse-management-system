@@ -183,9 +183,9 @@ export default function PerformanceReviewDialog({
           {/* Rating Categories */}
           <div className="space-y-4">
             <Label>Performance Ratings</Label>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 gap-3">
               {RATING_CATEGORIES.map(category => (
-                <div key={category.key} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                <div key={category.key} className="flex flex-col sm:flex-row sm:items-center sm:justify-between p-3 bg-gray-50 rounded-lg gap-2">
                   <span className="text-sm font-medium">{category.label}</span>
                   <StarRating 
                     value={ratings[category.key]} 
@@ -229,14 +229,14 @@ export default function PerformanceReviewDialog({
             />
           </div>
 
-          <DialogFooter className="gap-2">
-            <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+          <DialogFooter className="flex-col sm:flex-row gap-2">
+            <Button type="button" variant="outline" onClick={() => onOpenChange(false)} className="w-full sm:w-auto">
               Cancel
             </Button>
             <Button 
               type="button" 
               variant="outline"
-              className="border-[#0072C6] text-[#0072C6] hover:bg-[#0072C6]/10"
+              className="border-[#0072C6] text-[#0072C6] hover:bg-[#0072C6]/10 w-full sm:w-auto"
               onClick={(e) => handleSubmit(e, "draft")}
               disabled={createMutation.isPending || updateMutation.isPending}
             >
@@ -244,7 +244,7 @@ export default function PerformanceReviewDialog({
             </Button>
             <Button 
               type="submit" 
-              className="bg-gradient-to-r from-[#1EB053] to-[#0072C6] hover:from-[#178f43] hover:to-[#005a9e] text-white shadow-lg"
+              className="bg-gradient-to-r from-[#1EB053] to-[#0072C6] hover:from-[#178f43] hover:to-[#005a9e] text-white shadow-lg w-full sm:w-auto"
               disabled={createMutation.isPending || updateMutation.isPending}
             >
               Submit Review
