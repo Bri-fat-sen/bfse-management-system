@@ -432,15 +432,9 @@ export default function Layout({ children, currentPageName }) {
                     {/* Toast notifications */}
                     <Toaster 
                       position="top-right" 
-                      closeButton={true}
                       richColors 
-                      duration={4000}
-                      toastOptions={{
-                        style: {
-                          background: 'white',
-                          border: '1px solid #e5e7eb',
-                        },
-                      }}
+                      expand={false}
+                      dismissible={true}
                     />
                     </div>
                     </div>
