@@ -429,12 +429,13 @@ export default function Layout({ children, currentPageName }) {
                       onClose={() => setSearchOpen(false)} 
                     />
 
-                    {/* Toast notifications */}
+                    {/* Toast notifications - using sonner library */}
                     <Toaster 
                       position="top-right" 
                       richColors 
                       expand={false}
-                      dismissible={true}
+                      visibleToasts={5}
+                      duration={4000}
                     />
                     </div>
                     </div>
