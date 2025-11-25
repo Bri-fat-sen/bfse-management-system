@@ -145,7 +145,7 @@ export default function OrganisationManage() {
 
   const handleInvite = async () => {
     if (!inviteEmail || !inviteFirstName) {
-      toast({ title: "Please fill in required fields", variant: "destructive" });
+      toast.error("Please fill in required fields");
       return;
     }
 
