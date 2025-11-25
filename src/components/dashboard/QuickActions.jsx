@@ -11,7 +11,8 @@ import {
   FileText,
   Bell,
   Calculator,
-  Warehouse
+  Warehouse,
+  ClipboardList
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
@@ -71,6 +72,13 @@ const actions = [
     page: "Suppliers", 
     color: "from-indigo-500 to-purple-600",
     description: "Manage vendors"
+  },
+  { 
+    icon: ClipboardList, 
+    label: "Forms", 
+    page: "Forms", 
+    color: "from-[#D4AF37] to-amber-600",
+    description: "Premium forms"
   },
 ];
 
