@@ -43,6 +43,7 @@ import PageHeader from "@/components/ui/PageHeader";
 import EmptyState from "@/components/ui/EmptyState";
 import StatCard from "@/components/ui/StatCard";
 import PayrollProcessDialog from "@/components/hr/PayrollProcessDialog";
+import PayslipGenerator from "@/components/hr/PayslipGenerator";
 
 const roles = [
   "org_admin", "hr_admin", "payroll_admin", "warehouse_manager",
@@ -75,6 +76,12 @@ export default function HR() {
 
   const currentEmployee = employee?.[0];
   const orgId = currentEmployee?.organisation_id;
+
+  const { data: organisation } = useQuery({
+    queryKey: ['organisation', orgId],
+    queryFn: () => base44.entities.Organisation.filter({ id: orgId }),
+    enabled: !!orgId,
+  });
 
   const { data: employees = [], isLoading } = useQuery({
     queryKey: ['employees', orgId],
@@ -369,14 +376,21 @@ export default function HR() {
                           </p>
                         </div>
                       </div>
-                      <div className="text-right">
-                        <p className="font-bold text-[#1EB053]">Le {payroll.net_pay?.toLocaleString()}</p>
-                        <Badge variant={
-                          payroll.status === 'paid' ? 'secondary' :
-                          payroll.status === 'approved' ? 'default' : 'outline'
-                        }>
-                          {payroll.status}
-                        </Badge>
+                      <div className="flex items-center gap-4">
+                        <div className="text-right">
+                          <p className="font-bold text-[#1EB053]">Le {payroll.net_pay?.toLocaleString()}</p>
+                          <Badge variant={
+                            payroll.status === 'paid' ? 'secondary' :
+                            payroll.status === 'approved' ? 'default' : 'outline'
+                          }>
+                            {payroll.status}
+                          </Badge>
+                        </div>
+                        <PayslipGenerator 
+                          payroll={payroll} 
+                          employee={employees.find(e => e.id === payroll.employee_id)}
+                          organisation={organisation?.[0]}
+                        />
                       </div>
                     </div>
                   ))}
