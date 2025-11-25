@@ -29,6 +29,8 @@ import RecentActivity from "@/components/dashboard/RecentActivity";
 import UpcomingMeetings from "@/components/dashboard/UpcomingMeetings";
 import LowStockAlert from "@/components/dashboard/LowStockAlert";
 import TodayAttendance from "@/components/dashboard/TodayAttendance";
+import TransportSummary from "@/components/dashboard/TransportSummary";
+import FinanceSummary from "@/components/dashboard/FinanceSummary";
 
 export default function Dashboard() {
   const { data: user } = useQuery({
@@ -99,6 +101,24 @@ export default function Dashboard() {
   const { data: meetings = [] } = useQuery({
     queryKey: ['meetings', orgId],
     queryFn: () => base44.entities.Meeting.filter({ organisation_id: orgId }, '-date', 20),
+    enabled: !!orgId,
+  });
+
+  const { data: expenses = [] } = useQuery({
+    queryKey: ['expenses', orgId],
+    queryFn: () => base44.entities.Expense.filter({ organisation_id: orgId }, '-created_date', 100),
+    enabled: !!orgId,
+  });
+
+  const { data: vehicles = [] } = useQuery({
+    queryKey: ['vehicles', orgId],
+    queryFn: () => base44.entities.Vehicle.filter({ organisation_id: orgId }),
+    enabled: !!orgId,
+  });
+
+  const { data: routes = [] } = useQuery({
+    queryKey: ['routes', orgId],
+    queryFn: () => base44.entities.Route.filter({ organisation_id: orgId, is_active: true }),
     enabled: !!orgId,
   });
 
@@ -327,10 +347,11 @@ export default function Dashboard() {
       <QuickActions />
 
       {/* Additional Dashboard Widgets */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        <TodayAttendance attendance={attendance} employees={activeEmployees} />
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <TodayAttendance attendance={attendance} employees={employees} />
         <UpcomingMeetings meetings={meetings} />
-        <LowStockAlert products={products} />
+        <TransportSummary trips={trips} vehicles={vehicles} routes={routes} />
+        <FinanceSummary sales={sales} expenses={expenses} />
       </div>
 
       {/* Footer with Sierra Leone Pride */}
