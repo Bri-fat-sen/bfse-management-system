@@ -314,8 +314,10 @@ export default function Dashboard() {
         </div>
       </div>
 
-      {/* Quick Actions */}
+      {/* Quick Actions Grid */}
       <QuickActions />
+
+      
 
       {/* Footer with Sierra Leone Pride */}
       <div className="text-center py-4">
