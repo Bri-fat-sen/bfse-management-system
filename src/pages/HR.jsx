@@ -1,18 +1,33 @@
 import React, { useState } from "react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { format } from "date-fns";
+import {
+  Users,
+  Search,
+  Plus,
+  Edit,
+  UserCheck,
+  UserX,
+  Mail,
+  Phone,
+  Calendar,
+  Clock,
+  DollarSign,
+  Building2,
+  Filter
+} from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogFooter,
 } from "@/components/ui/dialog";
 import {
   Select,
@@ -21,37 +36,29 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
+import { Label } from "@/components/ui/label";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { useToast } from "@/components/ui/use-toast";
 import PageHeader from "@/components/ui/PageHeader";
+import EmptyState from "@/components/ui/EmptyState";
 import StatCard from "@/components/ui/StatCard";
-import {
-  Users,
-  Clock,
-  Calendar,
-  DollarSign,
-  Search,
-  LogIn,
-  LogOut,
-  CheckCircle,
-  XCircle,
-  AlertCircle,
-  FileText,
-  Download
-} from "lucide-react";
-import { format, differenceInHours, differenceInMinutes } from "date-fns";
+
+const roles = [
+  "org_admin", "hr_admin", "payroll_admin", "warehouse_manager",
+  "retail_cashier", "vehicle_sales", "driver", "accountant",
+  "support_staff", "read_only"
+];
+
+const departments = ["Management", "Sales", "Operations", "Finance", "Transport", "Support"];
 
 export default function HR() {
-  const [activeTab, setActiveTab] = useState("attendance");
-  const [showPayrollDialog, setShowPayrollDialog] = useState(false);
-  const [selectedEmployee, setSelectedEmployee] = useState(null);
+  const { toast } = useToast();
   const queryClient = useQueryClient();
+  const [searchTerm, setSearchTerm] = useState("");
+  const [roleFilter, setRoleFilter] = useState("all");
+  const [showEmployeeDialog, setShowEmployeeDialog] = useState(false);
+  const [editingEmployee, setEditingEmployee] = useState(null);
+  const [activeTab, setActiveTab] = useState("employees");
 
   const { data: user } = useQuery({
     queryKey: ['currentUser'],
@@ -73,133 +80,77 @@ export default function HR() {
     enabled: !!orgId,
   });
 
-  const today = format(new Date(), 'yyyy-MM-dd');
-
-  const { data: todayAttendance = [] } = useQuery({
-    queryKey: ['attendance', orgId, today],
-    queryFn: () => base44.entities.Attendance.filter({ organisation_id: orgId, date: today }),
-    enabled: !!orgId,
-  });
-
-  const { data: myAttendance } = useQuery({
-    queryKey: ['myAttendance', currentEmployee?.id, today],
-    queryFn: () => base44.entities.Attendance.filter({ employee_id: currentEmployee?.id, date: today }),
-    enabled: !!currentEmployee?.id,
-  });
-
   const { data: payrolls = [] } = useQuery({
     queryKey: ['payrolls', orgId],
     queryFn: () => base44.entities.Payroll.filter({ organisation_id: orgId }, '-created_date', 50),
     enabled: !!orgId,
   });
 
-  const myTodayRecord = myAttendance?.[0];
+  const { data: attendance = [] } = useQuery({
+    queryKey: ['todayAttendance', orgId],
+    queryFn: () => base44.entities.Attendance.filter({ 
+      organisation_id: orgId,
+      date: format(new Date(), 'yyyy-MM-dd')
+    }),
+    enabled: !!orgId,
+  });
 
-  const clockInMutation = useMutation({
-    mutationFn: async () => {
-      const now = new Date();
-      return base44.entities.Attendance.create({
-        organisation_id: orgId,
-        employee_id: currentEmployee.id,
-        employee_name: currentEmployee.full_name,
-        date: today,
-        clock_in_time: format(now, 'HH:mm:ss'),
-        status: 'present'
-      });
-    },
+  const updateEmployeeMutation = useMutation({
+    mutationFn: ({ id, data }) => base44.entities.Employee.update(id, data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['attendance'] });
-      queryClient.invalidateQueries({ queryKey: ['myAttendance'] });
+      queryClient.invalidateQueries({ queryKey: ['employees'] });
+      setShowEmployeeDialog(false);
+      setEditingEmployee(null);
+      toast({ title: "Employee updated successfully" });
     },
   });
 
-  const clockOutMutation = useMutation({
-    mutationFn: async () => {
-      const now = new Date();
-      const clockIn = new Date(`${today}T${myTodayRecord.clock_in_time}`);
-      const hours = differenceInMinutes(now, clockIn) / 60;
-      
-      return base44.entities.Attendance.update(myTodayRecord.id, {
-        clock_out_time: format(now, 'HH:mm:ss'),
-        total_hours: Math.round(hours * 100) / 100
-      });
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['attendance'] });
-      queryClient.invalidateQueries({ queryKey: ['myAttendance'] });
-    },
+  const filteredEmployees = employees.filter(e => {
+    const matchesSearch = e.full_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         e.employee_code?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         e.email?.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesRole = roleFilter === "all" || e.role === roleFilter;
+    return matchesSearch && matchesRole;
   });
 
-  const activeEmployees = employees.filter(e => e.status === 'active').length;
-  const presentToday = todayAttendance.filter(a => a.clock_in_time).length;
-  const onLeave = todayAttendance.filter(a => a.status === 'leave').length;
+  const activeEmployees = employees.filter(e => e.status === 'active');
+  const presentToday = attendance.filter(a => a.clock_in_time);
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    const formData = new FormData(e.target);
+    const data = {
+      first_name: formData.get('first_name'),
+      last_name: formData.get('last_name'),
+      full_name: `${formData.get('first_name')} ${formData.get('last_name')}`,
+      role: formData.get('role'),
+      department: formData.get('department'),
+      position: formData.get('position'),
+      email: formData.get('email'),
+      phone: formData.get('phone'),
+      salary_type: formData.get('salary_type'),
+      base_salary: parseFloat(formData.get('base_salary')) || 0,
+      status: formData.get('status'),
+    };
+
+    updateEmployeeMutation.mutate({ id: editingEmployee.id, data });
+  };
+
+  const getStatusColor = (status) => {
+    switch(status) {
+      case 'active': return 'bg-green-100 text-green-800';
+      case 'inactive': return 'bg-gray-100 text-gray-800';
+      case 'suspended': return 'bg-red-100 text-red-800';
+      default: return 'bg-gray-100 text-gray-800';
+    }
+  };
 
   return (
     <div className="space-y-6">
-      <PageHeader 
-        title="HR & Payroll" 
+      <PageHeader
+        title="HR & Payroll"
         subtitle="Manage employees, attendance, and payroll"
       />
-
-      {/* Clock In/Out Card */}
-      <Card className="border-0 shadow-sm bg-gradient-to-r from-[#0F1F3C] to-[#1D5FC3] text-white">
-        <CardContent className="p-6">
-          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-6">
-            <div className="flex items-center gap-4">
-              <div className="w-16 h-16 rounded-full bg-white/10 flex items-center justify-center">
-                <Clock className="w-8 h-8" />
-              </div>
-              <div>
-                <p className="text-white/70 text-sm">Current Time</p>
-                <p className="text-3xl font-bold">{format(new Date(), 'HH:mm:ss')}</p>
-                <p className="text-white/70">{format(new Date(), 'EEEE, MMMM d, yyyy')}</p>
-              </div>
-            </div>
-            
-            <div className="flex items-center gap-4">
-              {myTodayRecord?.clock_in_time && (
-                <div className="text-right mr-6">
-                  <p className="text-white/70 text-sm">Clocked In</p>
-                  <p className="font-semibold">{myTodayRecord.clock_in_time}</p>
-                  {myTodayRecord.clock_out_time && (
-                    <>
-                      <p className="text-white/70 text-sm mt-1">Clocked Out</p>
-                      <p className="font-semibold">{myTodayRecord.clock_out_time}</p>
-                    </>
-                  )}
-                </div>
-              )}
-              
-              {!myTodayRecord?.clock_in_time ? (
-                <Button 
-                  size="lg"
-                  onClick={() => clockInMutation.mutate()}
-                  disabled={clockInMutation.isPending}
-                  className="bg-[#1EB053] hover:bg-[#18943f] text-white"
-                >
-                  <LogIn className="w-5 h-5 mr-2" />
-                  Clock In
-                </Button>
-              ) : !myTodayRecord?.clock_out_time ? (
-                <Button 
-                  size="lg"
-                  onClick={() => clockOutMutation.mutate()}
-                  disabled={clockOutMutation.isPending}
-                  className="bg-red-500 hover:bg-red-600 text-white"
-                >
-                  <LogOut className="w-5 h-5 mr-2" />
-                  Clock Out
-                </Button>
-              ) : (
-                <div className="flex items-center gap-2 bg-white/10 rounded-lg px-4 py-2">
-                  <CheckCircle className="w-5 h-5 text-[#1EB053]" />
-                  <span>Day Complete</span>
-                </div>
-              )}
-            </div>
-          </div>
-        </CardContent>
-      </Card>
 
       {/* Stats */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -210,222 +161,326 @@ export default function HR() {
           color="blue"
         />
         <StatCard
-          title="Present Today"
-          value={`${presentToday}/${activeEmployees}`}
-          icon={CheckCircle}
+          title="Active Staff"
+          value={activeEmployees.length}
+          icon={UserCheck}
           color="green"
         />
         <StatCard
-          title="On Leave"
-          value={onLeave}
-          icon={Calendar}
+          title="Present Today"
+          value={presentToday.length}
+          icon={Clock}
           color="gold"
         />
         <StatCard
-          title="Active Staff"
-          value={activeEmployees}
-          icon={Users}
+          title="Pending Payrolls"
+          value={payrolls.filter(p => p.status === 'pending_approval').length}
+          icon={DollarSign}
           color="navy"
         />
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab}>
         <TabsList>
-          <TabsTrigger value="attendance">Attendance</TabsTrigger>
           <TabsTrigger value="employees">Employees</TabsTrigger>
+          <TabsTrigger value="attendance">Attendance</TabsTrigger>
           <TabsTrigger value="payroll">Payroll</TabsTrigger>
         </TabsList>
 
-        <TabsContent value="attendance" className="mt-6">
-          <Card className="border-0 shadow-sm">
-            <CardHeader>
-              <CardTitle>Today's Attendance</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Employee</TableHead>
-                    <TableHead>Clock In</TableHead>
-                    <TableHead>Clock Out</TableHead>
-                    <TableHead>Hours</TableHead>
-                    <TableHead>Status</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {employees.filter(e => e.status === 'active').map((emp) => {
-                    const record = todayAttendance.find(a => a.employee_id === emp.id);
-                    return (
-                      <TableRow key={emp.id}>
-                        <TableCell>
-                          <div className="flex items-center gap-3">
-                            <Avatar className="w-8 h-8">
-                              <AvatarImage src={emp.profile_photo} />
-                              <AvatarFallback className="bg-gradient-to-br from-[#1EB053] to-[#1D5FC3] text-white text-xs">
-                                {emp.first_name?.[0]}{emp.last_name?.[0]}
-                              </AvatarFallback>
-                            </Avatar>
-                            <div>
-                              <p className="font-medium">{emp.full_name}</p>
-                              <p className="text-xs text-gray-500">{emp.position}</p>
-                            </div>
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          {record?.clock_in_time ? (
-                            <span className="text-green-600">{record.clock_in_time}</span>
-                          ) : (
-                            <span className="text-gray-400">-</span>
-                          )}
-                        </TableCell>
-                        <TableCell>
-                          {record?.clock_out_time ? (
-                            <span className="text-red-600">{record.clock_out_time}</span>
-                          ) : (
-                            <span className="text-gray-400">-</span>
-                          )}
-                        </TableCell>
-                        <TableCell>{record?.total_hours?.toFixed(2) || "-"}</TableCell>
-                        <TableCell>
-                          {record?.clock_in_time ? (
-                            record.clock_out_time ? (
-                              <Badge className="bg-blue-100 text-blue-800">Complete</Badge>
-                            ) : (
-                              <Badge className="bg-green-100 text-green-800">Present</Badge>
-                            )
-                          ) : record?.status === 'leave' ? (
-                            <Badge className="bg-yellow-100 text-yellow-800">On Leave</Badge>
-                          ) : (
-                            <Badge className="bg-gray-100 text-gray-800">Absent</Badge>
-                          )}
-                        </TableCell>
-                      </TableRow>
-                    );
-                  })}
-                </TableBody>
-              </Table>
+        <TabsContent value="employees" className="mt-6">
+          {/* Filters */}
+          <Card className="mb-6">
+            <CardContent className="p-4">
+              <div className="flex flex-col sm:flex-row gap-4">
+                <div className="relative flex-1">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                  <Input
+                    placeholder="Search employees..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="pl-10"
+                  />
+                </div>
+                <Select value={roleFilter} onValueChange={setRoleFilter}>
+                  <SelectTrigger className="w-48">
+                    <Filter className="w-4 h-4 mr-2" />
+                    <SelectValue placeholder="Filter by role" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Roles</SelectItem>
+                    {roles.map(role => (
+                      <SelectItem key={role} value={role}>
+                        {role.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
             </CardContent>
           </Card>
+
+          {/* Employees Grid */}
+          {isLoading ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {[...Array(6)].map((_, i) => (
+                <div key={i} className="h-48 bg-gray-100 rounded-xl animate-pulse" />
+              ))}
+            </div>
+          ) : filteredEmployees.length === 0 ? (
+            <EmptyState
+              icon={Users}
+              title="No Employees Found"
+              description="Employees are created by Super Admin"
+            />
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {filteredEmployees.map((emp) => (
+                <Card key={emp.id} className="hover:shadow-lg transition-shadow">
+                  <CardContent className="p-6">
+                    <div className="flex items-start justify-between mb-4">
+                      <div className="flex items-center gap-3">
+                        <Avatar className="w-12 h-12">
+                          <AvatarImage src={emp.profile_photo} />
+                          <AvatarFallback className="sl-gradient text-white">
+                            {emp.full_name?.charAt(0) || 'E'}
+                          </AvatarFallback>
+                        </Avatar>
+                        <div>
+                          <h3 className="font-semibold">{emp.full_name}</h3>
+                          <p className="text-sm text-gray-500">{emp.employee_code}</p>
+                        </div>
+                      </div>
+                      <Badge className={getStatusColor(emp.status)}>
+                        {emp.status}
+                      </Badge>
+                    </div>
+                    
+                    <div className="space-y-2 text-sm">
+                      <div className="flex items-center gap-2 text-gray-600">
+                        <Building2 className="w-4 h-4" />
+                        <span>{emp.department || 'No department'}</span>
+                      </div>
+                      <div className="flex items-center gap-2 text-gray-600">
+                        <Mail className="w-4 h-4" />
+                        <span>{emp.email || 'No email'}</span>
+                      </div>
+                      <div className="flex items-center gap-2 text-gray-600">
+                        <Phone className="w-4 h-4" />
+                        <span>{emp.phone || 'No phone'}</span>
+                      </div>
+                    </div>
+
+                    <div className="mt-4 pt-4 border-t flex items-center justify-between">
+                      <Badge variant="secondary">
+                        {emp.role?.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                      </Badge>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => {
+                          setEditingEmployee(emp);
+                          setShowEmployeeDialog(true);
+                        }}
+                      >
+                        <Edit className="w-4 h-4 mr-1" />
+                        Edit
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          )}
         </TabsContent>
 
-        <TabsContent value="employees" className="mt-6">
-          <Card className="border-0 shadow-sm">
-            <CardHeader className="flex flex-row items-center justify-between">
-              <CardTitle>All Employees</CardTitle>
-              <div className="relative w-64">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                <Input placeholder="Search employees..." className="pl-10" />
-              </div>
+        <TabsContent value="attendance" className="mt-6">
+          <Card>
+            <CardHeader>
+              <CardTitle>Today's Attendance - {format(new Date(), 'MMMM d, yyyy')}</CardTitle>
             </CardHeader>
             <CardContent>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Employee</TableHead>
-                    <TableHead>Code</TableHead>
-                    <TableHead>Role</TableHead>
-                    <TableHead>Department</TableHead>
-                    <TableHead>Salary Type</TableHead>
-                    <TableHead>Status</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {employees.map((emp) => (
-                    <TableRow key={emp.id}>
-                      <TableCell>
-                        <div className="flex items-center gap-3">
-                          <Avatar className="w-10 h-10">
-                            <AvatarImage src={emp.profile_photo} />
-                            <AvatarFallback className="bg-gradient-to-br from-[#1EB053] to-[#1D5FC3] text-white">
-                              {emp.first_name?.[0]}{emp.last_name?.[0]}
-                            </AvatarFallback>
-                          </Avatar>
-                          <div>
-                            <p className="font-medium">{emp.full_name}</p>
-                            <p className="text-sm text-gray-500">{emp.email}</p>
-                          </div>
+              {attendance.length === 0 ? (
+                <EmptyState
+                  icon={Clock}
+                  title="No Attendance Records"
+                  description="Attendance records will appear here when employees clock in"
+                />
+              ) : (
+                <div className="space-y-3">
+                  {attendance.map((record) => (
+                    <div key={record.id} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+                      <div className="flex items-center gap-3">
+                        <div className={`w-3 h-3 rounded-full ${
+                          record.clock_out_time ? 'bg-gray-400' : 'bg-green-500'
+                        }`} />
+                        <div>
+                          <p className="font-medium">{record.employee_name}</p>
+                          <p className="text-sm text-gray-500">
+                            In: {record.clock_in_time || '--:--'} | Out: {record.clock_out_time || '--:--'}
+                          </p>
                         </div>
-                      </TableCell>
-                      <TableCell className="font-mono">{emp.employee_code}</TableCell>
-                      <TableCell>
-                        <Badge variant="outline" className="capitalize">
-                          {emp.role?.replace(/_/g, ' ')}
+                      </div>
+                      <div className="text-right">
+                        <Badge variant={record.status === 'present' ? 'secondary' : 'destructive'}>
+                          {record.status}
                         </Badge>
-                      </TableCell>
-                      <TableCell>{emp.department || "-"}</TableCell>
-                      <TableCell className="capitalize">{emp.salary_type}</TableCell>
-                      <TableCell>
-                        <Badge className={
-                          emp.status === 'active' ? "bg-green-100 text-green-800" :
-                          emp.status === 'inactive' ? "bg-gray-100 text-gray-800" :
-                          "bg-red-100 text-red-800"
-                        }>
-                          {emp.status}
-                        </Badge>
-                      </TableCell>
-                    </TableRow>
+                        {record.total_hours && (
+                          <p className="text-sm text-gray-500 mt-1">{record.total_hours.toFixed(1)} hrs</p>
+                        )}
+                      </div>
+                    </div>
                   ))}
-                </TableBody>
-              </Table>
+                </div>
+              )}
             </CardContent>
           </Card>
         </TabsContent>
 
         <TabsContent value="payroll" className="mt-6">
-          <div className="flex justify-end mb-4">
-            <Button onClick={() => setShowPayrollDialog(true)} className="sl-gradient">
-              <DollarSign className="w-4 h-4 mr-2" />
-              Generate Payroll
-            </Button>
-          </div>
-
-          <Card className="border-0 shadow-sm">
+          <Card>
             <CardHeader>
               <CardTitle>Payroll Records</CardTitle>
             </CardHeader>
             <CardContent>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Employee</TableHead>
-                    <TableHead>Period</TableHead>
-                    <TableHead>Base Salary</TableHead>
-                    <TableHead>Allowances</TableHead>
-                    <TableHead>Deductions</TableHead>
-                    <TableHead>Net Pay</TableHead>
-                    <TableHead>Status</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
+              {payrolls.length === 0 ? (
+                <EmptyState
+                  icon={DollarSign}
+                  title="No Payroll Records"
+                  description="Payroll records will appear here once processed"
+                />
+              ) : (
+                <div className="space-y-3">
                   {payrolls.map((payroll) => (
-                    <TableRow key={payroll.id}>
-                      <TableCell className="font-medium">{payroll.employee_name}</TableCell>
-                      <TableCell>
-                        {payroll.period_start && format(new Date(payroll.period_start), 'MMM d')} - 
-                        {payroll.period_end && format(new Date(payroll.period_end), 'MMM d, yyyy')}
-                      </TableCell>
-                      <TableCell>Le {payroll.base_salary?.toLocaleString()}</TableCell>
-                      <TableCell className="text-green-600">+Le {payroll.total_allowances?.toLocaleString()}</TableCell>
-                      <TableCell className="text-red-600">-Le {payroll.total_deductions?.toLocaleString()}</TableCell>
-                      <TableCell className="font-bold">Le {payroll.net_pay?.toLocaleString()}</TableCell>
-                      <TableCell>
-                        <Badge className={
-                          payroll.status === 'paid' ? "bg-green-100 text-green-800" :
-                          payroll.status === 'approved' ? "bg-blue-100 text-blue-800" :
-                          payroll.status === 'pending_approval' ? "bg-yellow-100 text-yellow-800" :
-                          "bg-gray-100 text-gray-800"
+                    <div key={payroll.id} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[#1EB053] to-[#1D5FC3] flex items-center justify-center">
+                          <DollarSign className="w-5 h-5 text-white" />
+                        </div>
+                        <div>
+                          <p className="font-medium">{payroll.employee_name}</p>
+                          <p className="text-sm text-gray-500">
+                            {format(new Date(payroll.period_start), 'MMM d')} - {format(new Date(payroll.period_end), 'MMM d, yyyy')}
+                          </p>
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <p className="font-bold text-[#1EB053]">Le {payroll.net_pay?.toLocaleString()}</p>
+                        <Badge variant={
+                          payroll.status === 'paid' ? 'secondary' :
+                          payroll.status === 'approved' ? 'default' : 'outline'
                         }>
-                          {payroll.status?.replace(/_/g, ' ')}
+                          {payroll.status}
                         </Badge>
-                      </TableCell>
-                    </TableRow>
+                      </div>
+                    </div>
                   ))}
-                </TableBody>
-              </Table>
+                </div>
+              )}
             </CardContent>
           </Card>
         </TabsContent>
       </Tabs>
+
+      {/* Edit Employee Dialog */}
+      <Dialog open={showEmployeeDialog} onOpenChange={setShowEmployeeDialog}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Edit Employee</DialogTitle>
+          </DialogHeader>
+          {editingEmployee && (
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label>First Name</Label>
+                  <Input name="first_name" defaultValue={editingEmployee.first_name} required className="mt-1" />
+                </div>
+                <div>
+                  <Label>Last Name</Label>
+                  <Input name="last_name" defaultValue={editingEmployee.last_name} required className="mt-1" />
+                </div>
+                <div>
+                  <Label>Email</Label>
+                  <Input name="email" type="email" defaultValue={editingEmployee.email} className="mt-1" />
+                </div>
+                <div>
+                  <Label>Phone</Label>
+                  <Input name="phone" defaultValue={editingEmployee.phone} className="mt-1" />
+                </div>
+                <div>
+                  <Label>Department</Label>
+                  <Select name="department" defaultValue={editingEmployee.department}>
+                    <SelectTrigger className="mt-1">
+                      <SelectValue placeholder="Select department" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {departments.map(dept => (
+                        <SelectItem key={dept} value={dept}>{dept}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label>Position</Label>
+                  <Input name="position" defaultValue={editingEmployee.position} className="mt-1" />
+                </div>
+                <div>
+                  <Label>Role</Label>
+                  <Select name="role" defaultValue={editingEmployee.role}>
+                    <SelectTrigger className="mt-1">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {roles.map(role => (
+                        <SelectItem key={role} value={role}>
+                          {role.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label>Status</Label>
+                  <Select name="status" defaultValue={editingEmployee.status}>
+                    <SelectTrigger className="mt-1">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="active">Active</SelectItem>
+                      <SelectItem value="inactive">Inactive</SelectItem>
+                      <SelectItem value="suspended">Suspended</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label>Salary Type</Label>
+                  <Select name="salary_type" defaultValue={editingEmployee.salary_type}>
+                    <SelectTrigger className="mt-1">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="monthly">Monthly</SelectItem>
+                      <SelectItem value="hourly">Hourly</SelectItem>
+                      <SelectItem value="daily">Daily</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label>Base Salary (Le)</Label>
+                  <Input name="base_salary" type="number" defaultValue={editingEmployee.base_salary} className="mt-1" />
+                </div>
+              </div>
+              <DialogFooter>
+                <Button type="button" variant="outline" onClick={() => setShowEmployeeDialog(false)}>
+                  Cancel
+                </Button>
+                <Button type="submit" className="sl-gradient">
+                  Update Employee
+                </Button>
+              </DialogFooter>
+            </form>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
