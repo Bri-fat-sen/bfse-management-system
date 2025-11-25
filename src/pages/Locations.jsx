@@ -173,7 +173,7 @@ export default function Locations() {
     mutationFn: (id) => base44.entities.Vehicle.delete(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['vehicles'] });
-      toast({ title: "Vehicle deleted" });
+      toast.success("Vehicle deleted");
     },
   });
 
