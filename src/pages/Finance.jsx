@@ -39,6 +39,7 @@ import { useToast } from "@/components/ui/use-toast";
 import PageHeader from "@/components/ui/PageHeader";
 import EmptyState from "@/components/ui/EmptyState";
 import StatCard from "@/components/ui/StatCard";
+import ReportGenerator from "@/components/finance/ReportGenerator";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart as RePieChart, Pie, Cell } from 'recharts';
 
 const expenseCategories = [
@@ -84,6 +85,18 @@ export default function Finance() {
   const { data: trips = [] } = useQuery({
     queryKey: ['trips', orgId],
     queryFn: () => base44.entities.Trip.filter({ organisation_id: orgId }, '-date', 100),
+    enabled: !!orgId,
+  });
+
+  const { data: payrolls = [] } = useQuery({
+    queryKey: ['payrolls', orgId],
+    queryFn: () => base44.entities.Payroll.filter({ organisation_id: orgId }, '-period_start', 100),
+    enabled: !!orgId,
+  });
+
+  const { data: employees = [] } = useQuery({
+    queryKey: ['employees', orgId],
+    queryFn: () => base44.entities.Employee.filter({ organisation_id: orgId }),
     enabled: !!orgId,
   });
 
@@ -406,34 +419,13 @@ export default function Finance() {
         </TabsContent>
 
         <TabsContent value="reports" className="mt-6">
-          <Card>
-            <CardHeader>
-              <CardTitle>Financial Reports</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {[
-                  { name: "Monthly P&L Report", icon: BarChart3, description: "Profit and loss summary" },
-                  { name: "Expense Report", icon: Receipt, description: "Detailed expense breakdown" },
-                  { name: "Revenue Report", icon: TrendingUp, description: "Sales and transport revenue" },
-                ].map((report) => (
-                  <Card key={report.name} className="hover:shadow-md cursor-pointer transition-shadow">
-                    <CardContent className="p-6">
-                      <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-[#1EB053] to-[#1D5FC3] flex items-center justify-center mb-4">
-                        <report.icon className="w-6 h-6 text-white" />
-                      </div>
-                      <h3 className="font-semibold mb-1">{report.name}</h3>
-                      <p className="text-sm text-gray-500 mb-4">{report.description}</p>
-                      <Button variant="outline" size="sm" className="w-full">
-                        <Download className="w-4 h-4 mr-2" />
-                        Generate
-                      </Button>
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
+          <ReportGenerator 
+            sales={sales}
+            expenses={expenses}
+            payrolls={payrolls}
+            employees={employees}
+            trips={trips}
+          />
         </TabsContent>
       </Tabs>
 
