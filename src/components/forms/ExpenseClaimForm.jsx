@@ -124,11 +124,11 @@ export default function ExpenseClaimForm({ orgId, currentEmployee, onSuccess, on
         subtitle="Submit expenses for reimbursement"
         variant="gradient"
       />
-
       <FormWrapperContent className="p-6">
         <form onSubmit={handleSubmit} className="space-y-6">
           {/* Quick Category Select */}
-          <FormField label="Category">
+          <div>
+            <Label className="text-gray-700 font-medium mb-3 block">Category</Label>
             <div className="grid grid-cols-4 gap-2">
               {CATEGORIES.map((cat) => (
                 <button
@@ -146,19 +146,16 @@ export default function ExpenseClaimForm({ orgId, currentEmployee, onSuccess, on
                 </button>
               ))}
             </div>
-          </FormField>
+          </div>
 
           {/* Expense Items */}
-          <FormField 
-            label={
-              <div className="flex items-center justify-between w-full">
-                <span>Expense Items</span>
-                <Button type="button" variant="ghost" size="sm" onClick={addItem} className="text-[#1EB053] -mr-2">
-                  <Plus className="w-4 h-4 mr-1" /> Add Item
-                </Button>
-              </div>
-            }
-          >
+          <div className="space-y-3">
+            <div className="flex items-center justify-between">
+              <Label className="text-gray-700 font-medium">Expense Items</Label>
+              <Button type="button" variant="ghost" size="sm" onClick={addItem} className="text-[#1EB053]">
+                <Plus className="w-4 h-4 mr-1" /> Add Item
+              </Button>
+            </div>
             
             {items.map((item, index) => (
               <motion.div
@@ -206,7 +203,7 @@ export default function ExpenseClaimForm({ orgId, currentEmployee, onSuccess, on
                 )}
               </motion.div>
             ))}
-          </FormField>
+          </div>
 
           {/* Details */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -256,6 +253,7 @@ export default function ExpenseClaimForm({ orgId, currentEmployee, onSuccess, on
             )}
           </FormField>
 
+          {/* Notes */}
           <FormTextarea
             label="Additional Notes"
             value={formData.notes}
@@ -273,9 +271,9 @@ export default function ExpenseClaimForm({ orgId, currentEmployee, onSuccess, on
             
             <FormActions
               onCancel={onClose}
+              submitLabel={createMutation.isPending ? "Submitting..." : "Submit Claim"}
               isLoading={createMutation.isPending}
               disabled={totalAmount === 0}
-              submitLabel="Submit Claim"
             />
           </div>
         </form>

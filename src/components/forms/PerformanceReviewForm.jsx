@@ -142,7 +142,6 @@ export default function PerformanceReviewForm({ orgId, employees = [], currentEm
           </div>
         }
       />
-
       <FormWrapperContent className="p-6">
         {/* Step 1: Select Employee */}
         {step === 1 && (
@@ -154,6 +153,7 @@ export default function PerformanceReviewForm({ orgId, employees = [], currentEm
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <FormSelect
                   label="Employee"
+                  icon={User}
                   value={formData.employee_id}
                   onValueChange={(v) => updateField('employee_id', v)}
                   placeholder="Select employee"
@@ -172,8 +172,8 @@ export default function PerformanceReviewForm({ orgId, employees = [], currentEm
               </div>
 
               {selectedEmployee && (
-                <div className="p-4 bg-gradient-to-r from-[#1EB053]/10 to-[#0072C6]/10 rounded-xl flex items-center gap-4 mt-4">
-                  <Avatar className="w-16 h-16 border-2 border-white shadow">
+                <div className="p-4 bg-gradient-to-r from-[#1EB053]/10 to-[#0072C6]/10 rounded-xl flex items-center gap-4 mt-6">
+                  <Avatar className="w-16 h-16 border-2 border-white shadow-lg">
                     <AvatarImage src={selectedEmployee.profile_photo} />
                     <AvatarFallback className="bg-gradient-to-br from-[#1EB053] to-[#0072C6] text-white text-xl">
                       {selectedEmployee.full_name?.charAt(0)}
@@ -196,38 +196,37 @@ export default function PerformanceReviewForm({ orgId, employees = [], currentEm
             animate={{ opacity: 1, x: 0 }}
           >
             <FormSection title="Performance Ratings" description="Rate each category from 1-5 stars">
-
-            {/* Overall Score */}
-            <div className="p-4 bg-gradient-to-r from-[#D4AF37]/10 to-[#D4AF37]/5 rounded-xl flex items-center justify-between mb-6">
-              <span className="font-medium text-gray-700">Overall Score</span>
-              <div className="flex items-center gap-3">
-                <Progress value={parseFloat(overallRating) * 20} className="w-32 h-2" />
-                <span className="text-2xl font-bold text-[#D4AF37]">{overallRating}/5</span>
-              </div>
-            </div>
-
-            <div className="space-y-6">
-              {RATING_CATEGORIES.map((cat) => (
-                <div key={cat.key} className="p-4 bg-gray-50 rounded-xl">
-                  <div className="flex items-start justify-between gap-4 flex-wrap">
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 bg-white rounded-lg shadow-sm flex items-center justify-center">
-                        <cat.icon className="w-5 h-5 text-[#0072C6]" />
-                      </div>
-                      <div>
-                        <p className="font-medium text-gray-900">{cat.label}</p>
-                        <p className="text-sm text-gray-500">{cat.description}</p>
-                      </div>
-                    </div>
-                    <StarRating
-                      value={formData.ratings[cat.key]}
-                      onChange={updateRating}
-                      category={cat.key}
-                    />
-                  </div>
+              {/* Overall Score */}
+              <div className="p-4 bg-gradient-to-r from-[#D4AF37]/10 to-[#D4AF37]/5 rounded-xl flex items-center justify-between mb-6">
+                <span className="font-medium text-gray-700">Overall Score</span>
+                <div className="flex items-center gap-3">
+                  <Progress value={parseFloat(overallRating) * 20} className="w-32 h-2" />
+                  <span className="text-2xl font-bold text-[#D4AF37]">{overallRating}/5</span>
                 </div>
-              ))}
-            </div>
+              </div>
+
+              <div className="space-y-4">
+                {RATING_CATEGORIES.map((cat) => (
+                  <div key={cat.key} className="p-4 bg-gray-50/80 rounded-xl border border-gray-100 hover:shadow-md transition-shadow">
+                    <div className="flex items-start justify-between gap-4 flex-wrap">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 bg-white rounded-lg shadow-sm flex items-center justify-center">
+                          <cat.icon className="w-5 h-5 text-[#0072C6]" />
+                        </div>
+                        <div>
+                          <p className="font-medium text-gray-900">{cat.label}</p>
+                          <p className="text-sm text-gray-500">{cat.description}</p>
+                        </div>
+                      </div>
+                      <StarRating
+                        value={formData.ratings[cat.key]}
+                        onChange={updateRating}
+                        category={cat.key}
+                      />
+                    </div>
+                  </div>
+                ))}
+              </div>
             </FormSection>
           </motion.div>
         )}
@@ -239,24 +238,29 @@ export default function PerformanceReviewForm({ orgId, employees = [], currentEm
             animate={{ opacity: 1, x: 0 }}
           >
             <FormSection title="Written Feedback" description="Provide detailed comments">
-              <FormTextarea
-                label={<span className="flex items-center gap-2"><Star className="w-4 h-4 text-[#D4AF37]" /> Strengths</span>}
-                value={formData.strengths}
-                onChange={(e) => updateField('strengths', e.target.value)}
-                placeholder="What does this employee do well? What are their key strengths?"
-              />
-              <FormTextarea
-                label={<span className="flex items-center gap-2"><TrendingUp className="w-4 h-4 text-[#0072C6]" /> Areas for Improvement</span>}
-                value={formData.areas_for_improvement}
-                onChange={(e) => updateField('areas_for_improvement', e.target.value)}
-                placeholder="What areas need development? How can they improve?"
-              />
-              <FormTextarea
-                label={<span className="flex items-center gap-2"><Target className="w-4 h-4 text-[#1EB053]" /> Goals for Next Period</span>}
-                value={formData.goals}
-                onChange={(e) => updateField('goals', e.target.value)}
-                placeholder="What should they focus on achieving?"
-              />
+              <div className="space-y-5">
+                <FormTextarea
+                  label="Strengths"
+                  icon={Star}
+                  value={formData.strengths}
+                  onChange={(e) => updateField('strengths', e.target.value)}
+                  placeholder="What does this employee do well? What are their key strengths?"
+                />
+                <FormTextarea
+                  label="Areas for Improvement"
+                  icon={TrendingUp}
+                  value={formData.areas_for_improvement}
+                  onChange={(e) => updateField('areas_for_improvement', e.target.value)}
+                  placeholder="What areas need development? How can they improve?"
+                />
+                <FormTextarea
+                  label="Goals for Next Period"
+                  icon={Target}
+                  value={formData.goals}
+                  onChange={(e) => updateField('goals', e.target.value)}
+                  placeholder="What should they focus on achieving?"
+                />
+              </div>
             </FormSection>
           </motion.div>
         )}

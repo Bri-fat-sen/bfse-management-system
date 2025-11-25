@@ -3,14 +3,13 @@ import { base44 } from "@/api/base44Client";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { motion, AnimatePresence } from "framer-motion";
 import { ShoppingCart, User, Package, CreditCard, Truck, Plus, Minus, X, Search, Check, MapPin, Phone, Mail } from "lucide-react";
-import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/components/ui/use-toast";
 import { FormWrapper, FormWrapperContent } from "./FormWrapper";
-import { FormInput, FormTextarea, FormSelect, FormSection } from "./FormField";
+import { FormInput, FormTextarea, FormSelect, FormField, FormSection } from "./FormField";
 import { FormStepperNavigation } from "./FormStepper";
 
 const STEPS = [
@@ -148,17 +147,17 @@ export default function CustomerOrderForm({ orgId, products = [], currentEmploye
                 onClick={() => setStep(s.id)}
                 className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-all ${
                   step === s.id 
-                    ? 'bg-white text-[#0F1F3C]' 
+                    ? 'bg-white text-[#0F1F3C] shadow-lg' 
                     : step > s.id 
                       ? 'bg-[#1EB053]/20 text-[#1EB053]' 
-                      : 'bg-white/10 text-white/60'
+                      : 'bg-white/10 text-white/60 hover:bg-white/20'
                 }`}
               >
                 <s.icon className="w-4 h-4" />
                 <span className="font-medium hidden sm:inline">{s.title}</span>
               </button>
               {i < STEPS.length - 1 && (
-                <div className={`flex-1 h-0.5 mx-2 ${step > s.id ? 'bg-[#1EB053]' : 'bg-white/20'}`} />
+                <div className={`flex-1 h-0.5 mx-2 rounded-full ${step > s.id ? 'bg-[#1EB053]' : 'bg-white/20'}`} />
               )}
             </React.Fragment>
           ))}
@@ -209,7 +208,7 @@ export default function CustomerOrderForm({ orgId, products = [], currentEmploye
                   />
                 </div>
 
-                <div className="p-4 bg-gray-50/80 rounded-xl space-y-4 border border-gray-100">
+                <div className="p-4 bg-gray-50/80 rounded-xl border border-gray-100 space-y-4 mt-4">
                   <div className="flex items-center gap-3">
                     <Checkbox
                       id="delivery"
@@ -238,6 +237,7 @@ export default function CustomerOrderForm({ orgId, products = [], currentEmploye
                   value={customer.notes}
                   onChange={(e) => setCustomer({ ...customer, notes: e.target.value })}
                   placeholder="Any special instructions..."
+                  className="mt-4"
                 />
               </FormSection>
             </motion.div>
@@ -348,30 +348,32 @@ export default function CustomerOrderForm({ orgId, products = [], currentEmploye
               exit={{ opacity: 0, x: -20 }}
             >
               <FormSection title="Payment Details">
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                  {[
-                    { value: "cash", label: "Cash", icon: "💵" },
-                    { value: "card", label: "Card", icon: "💳" },
-                    { value: "mobile_money", label: "Mobile Money", icon: "📱" },
-                    { value: "credit", label: "Credit", icon: "📋" },
-                  ].map((method) => (
-                    <button
-                      key={method.value}
-                      type="button"
-                      onClick={() => setPayment({ ...payment, method: method.value })}
-                      className={`p-4 rounded-xl text-center transition-all border-2 ${
-                        payment.method === method.value
-                          ? 'border-[#1EB053] bg-[#1EB053]/10 shadow-sm'
-                          : 'border-gray-100 hover:border-gray-200 bg-gray-50/50'
-                      }`}
-                    >
-                      <span className="text-2xl block mb-1">{method.icon}</span>
-                      <span className="text-sm font-medium">{method.label}</span>
-                    </button>
-                  ))}
-                </div>
+                <FormField label="Payment Method">
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                    {[
+                      { value: "cash", label: "Cash", icon: "💵" },
+                      { value: "card", label: "Card", icon: "💳" },
+                      { value: "mobile_money", label: "Mobile Money", icon: "📱" },
+                      { value: "credit", label: "Credit", icon: "📋" },
+                    ].map((method) => (
+                      <button
+                        key={method.value}
+                        type="button"
+                        onClick={() => setPayment({ ...payment, method: method.value })}
+                        className={`p-4 rounded-xl text-center transition-all border-2 ${
+                          payment.method === method.value
+                            ? 'border-[#1EB053] bg-[#1EB053]/10 shadow-md scale-[1.02]'
+                            : 'border-gray-100 hover:border-gray-200 hover:shadow-sm'
+                        }`}
+                      >
+                        <span className="text-2xl block mb-1">{method.icon}</span>
+                        <span className="text-sm font-medium">{method.label}</span>
+                      </button>
+                    ))}
+                  </div>
+                </FormField>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-4">
                   <FormSelect
                     label="Payment Status"
                     value={payment.status}
@@ -390,7 +392,7 @@ export default function CustomerOrderForm({ orgId, products = [], currentEmploye
                   />
                 </div>
 
-                <div className="p-4 bg-gradient-to-r from-[#1EB053]/10 to-[#0072C6]/10 rounded-xl space-y-2">
+                <div className="p-4 bg-gradient-to-r from-[#1EB053]/10 to-[#0072C6]/10 rounded-xl space-y-2 mt-4">
                   <div className="flex justify-between">
                     <span>Subtotal</span>
                     <span>Le {subtotal.toLocaleString()}</span>
@@ -467,7 +469,7 @@ export default function CustomerOrderForm({ orgId, products = [], currentEmploye
           onNext={() => setStep(s => s + 1)}
           onSubmit={handleSubmit}
           onCancel={onClose}
-          canProceed={!(step === 1 && !customer.name) && !(step === 2 && cart.length === 0)}
+          canProceed={(step === 1 && customer.name) || (step === 2 && cart.length > 0) || step > 2}
           isLoading={createMutation.isPending}
           nextLabel="Continue"
           submitLabel="Place Order"
