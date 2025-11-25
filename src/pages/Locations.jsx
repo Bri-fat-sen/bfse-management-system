@@ -135,7 +135,7 @@ export default function Locations() {
     mutationFn: ({ id, data }) => base44.entities.Warehouse.update(id, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['warehouses'] });
-      toast({ title: "Location updated successfully" });
+      toast.success("Location updated successfully");
       setShowLocationDialog(false);
       setEditingLocation(null);
     },
