@@ -20,7 +20,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useToast } from "@/components/ui/use-toast";
-import { Package, Plus, Minus, ArrowLeftRight } from "lucide-react";
+import { Package, Plus, Minus, ArrowLeftRight, AlertTriangle } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
 
 export default function StockAdjustmentDialog({ 
   open, 
@@ -34,7 +35,6 @@ export default function StockAdjustmentDialog({
   const queryClient = useQueryClient();
   const [adjustmentType, setAdjustmentType] = useState("in");
   const [selectedProduct, setSelectedProduct] = useState("");
-  const [trackBatch, setTrackBatch] = useState(false);
 
   const createMovementMutation = useMutation({
     mutationFn: async (data) => {
@@ -44,11 +44,81 @@ export default function StockAdjustmentDialog({
       await base44.entities.Product.update(data.productId, { 
         stock_quantity: data.newStock 
       });
+      
+      // Create or update batch if batch number provided
+      if (data.batchNumber && data.movement.movement_type === 'in') {
+        const existingBatches = await base44.entities.InventoryBatch.filter({
+          organisation_id: orgId,
+          product_id: data.productId,
+          batch_number: data.batchNumber
+        });
+        
+        if (existingBatches.length > 0) {
+          // Update existing batch
+          await base44.entities.InventoryBatch.update(existingBatches[0].id, {
+            quantity: (existingBatches[0].quantity || 0) + data.movement.quantity
+          });
+        } else {
+          // Create new batch
+          await base44.entities.InventoryBatch.create({
+            organisation_id: orgId,
+            product_id: data.productId,
+            product_name: data.product?.name,
+            batch_number: data.batchNumber,
+            warehouse_id: data.warehouseId,
+            warehouse_name: data.warehouseName,
+            quantity: data.movement.quantity,
+            expiry_date: data.expiryDate,
+            status: 'active'
+          });
+        }
+      } else if (data.batchNumber && data.movement.movement_type === 'out') {
+        // Reduce batch quantity
+        const existingBatches = await base44.entities.InventoryBatch.filter({
+          organisation_id: orgId,
+          product_id: data.productId,
+          batch_number: data.batchNumber
+        });
+        
+        if (existingBatches.length > 0) {
+          const newQty = Math.max(0, (existingBatches[0].quantity || 0) - data.movement.quantity);
+          await base44.entities.InventoryBatch.update(existingBatches[0].id, {
+            quantity: newQty,
+            status: newQty === 0 ? 'depleted' : existingBatches[0].status
+          });
+        }
+      }
+      
+      // Create stock alert if needed
+      const threshold = data.product?.low_stock_threshold || 10;
+      if (data.newStock <= threshold) {
+        const existingAlerts = await base44.entities.StockAlert.filter({
+          organisation_id: orgId,
+          product_id: data.productId,
+          status: 'active'
+        });
+        
+        if (existingAlerts.length === 0) {
+          await base44.entities.StockAlert.create({
+            organisation_id: orgId,
+            product_id: data.productId,
+            product_name: data.product?.name,
+            warehouse_id: data.movement.warehouse_id,
+            alert_type: data.newStock === 0 ? 'out_of_stock' : 'low_stock',
+            current_quantity: data.newStock,
+            threshold_quantity: threshold,
+            status: 'active'
+          });
+        }
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['products'] });
       queryClient.invalidateQueries({ queryKey: ['stockMovements'] });
+      queryClient.invalidateQueries({ queryKey: ['stockAlerts'] });
+      queryClient.invalidateQueries({ queryKey: ['inventoryBatches'] });
       onOpenChange(false);
+      setSelectedProduct("");
       toast({ title: "Stock adjusted successfully" });
     },
   });
@@ -90,11 +160,35 @@ export default function StockAdjustmentDialog({
       notes: formData.get('notes'),
     };
 
+    const batchNumber = formData.get('batch_number');
+    const expiryDate = formData.get('expiry_date');
+
     createMovementMutation.mutate({
       movement: movementData,
       productId: productId,
-      newStock: newStock
+      newStock: newStock,
+      product: product,
+      batchNumber: batchNumber,
+      expiryDate: expiryDate,
+      warehouseId: formData.get('warehouse_id'),
+      warehouseName: warehouse?.name || 'Main'
     });
+  };
+
+  // Check if this would trigger a low stock alert
+  const getStockWarning = (productId, quantity) => {
+    const prod = products.find(p => p.id === productId);
+    if (!prod) return null;
+    
+    let newStock = prod.stock_quantity || 0;
+    if (adjustmentType === "in") newStock += quantity;
+    else if (adjustmentType === "out") newStock = Math.max(0, newStock - quantity);
+    else newStock = quantity;
+    
+    const threshold = prod.low_stock_threshold || 10;
+    if (newStock === 0) return { type: "out_of_stock", message: "This will result in OUT OF STOCK" };
+    if (newStock <= threshold) return { type: "low_stock", message: `This will result in LOW STOCK (below ${threshold})` };
+    return null;
   };
 
   const product = products.find(p => p.id === selectedProduct);
@@ -167,7 +261,32 @@ export default function StockAdjustmentDialog({
             <Label>
               {adjustmentType === "adjustment" ? "New Stock Quantity" : "Quantity"}
             </Label>
-            <Input name="quantity" type="number" min="0" required className="mt-1" />
+            <Input 
+              name="quantity" 
+              type="number" 
+              min="0" 
+              required 
+              className="mt-1" 
+              id="adjustment-quantity"
+              onChange={(e) => {
+                // Trigger re-render for warning
+                const form = e.target.closest('form');
+                if (form) {
+                  const qty = parseInt(e.target.value) || 0;
+                  const warning = getStockWarning(selectedProduct, qty);
+                  const warningEl = document.getElementById('stock-warning');
+                  if (warningEl && warning) {
+                    warningEl.classList.remove('hidden');
+                    warningEl.textContent = warning.message;
+                  } else if (warningEl) {
+                    warningEl.classList.add('hidden');
+                  }
+                }
+              }}
+            />
+            <p id="stock-warning" className="hidden text-sm text-amber-600 mt-1 flex items-center gap-1">
+              <AlertTriangle className="w-3 h-3" />
+            </p>
           </div>
 
           {warehouses.length > 0 && (
@@ -185,6 +304,20 @@ export default function StockAdjustmentDialog({
               </Select>
             </div>
           )}
+
+          <div className="border-t pt-4 mt-4">
+            <h4 className="font-medium mb-3">Batch Information (Optional)</h4>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <Label>Batch Number</Label>
+                <Input name="batch_number" className="mt-1" placeholder="e.g., BTH-001" />
+              </div>
+              <div>
+                <Label>Expiry Date</Label>
+                <Input name="expiry_date" type="date" className="mt-1" />
+              </div>
+            </div>
+          </div>
 
           <div>
             <Label>Reason / Notes</Label>
