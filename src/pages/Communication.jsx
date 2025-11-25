@@ -35,6 +35,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { useToast } from "@/components/ui/use-toast";
 import PageHeader from "@/components/ui/PageHeader";
 import EmptyState from "@/components/ui/EmptyState";
+import MeetingDialog from "@/components/communication/MeetingDialog";
 
 export default function Communication() {
   const { toast } = useToast();
@@ -44,6 +45,7 @@ export default function Communication() {
   const [messageText, setMessageText] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
   const [showNewChatDialog, setShowNewChatDialog] = useState(false);
+  const [showMeetingDialog, setShowMeetingDialog] = useState(false);
   const messagesEndRef = useRef(null);
 
   const { data: user } = useQuery({
@@ -361,8 +363,12 @@ export default function Communication() {
 
         <TabsContent value="meetings" className="mt-6">
           <Card>
-            <CardHeader>
+            <CardHeader className="flex flex-row items-center justify-between">
               <CardTitle>Upcoming Meetings</CardTitle>
+              <Button onClick={() => setShowMeetingDialog(true)} className="bg-[#0072C6] hover:bg-[#005a9e]">
+                <Plus className="w-4 h-4 mr-2" />
+                Schedule Meeting
+              </Button>
             </CardHeader>
             <CardContent>
               {meetings.length === 0 ? (
@@ -415,6 +421,15 @@ export default function Communication() {
           </Card>
         </TabsContent>
       </Tabs>
+
+      {/* Meeting Dialog */}
+      <MeetingDialog
+        open={showMeetingDialog}
+        onOpenChange={setShowMeetingDialog}
+        employees={employees}
+        orgId={orgId}
+        currentEmployee={currentEmployee}
+      />
 
       {/* New Chat Dialog */}
       <Dialog open={showNewChatDialog} onOpenChange={setShowNewChatDialog}>

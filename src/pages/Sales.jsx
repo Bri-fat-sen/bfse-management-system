@@ -37,6 +37,7 @@ import {
 import { useToast } from "@/components/ui/use-toast";
 import PageHeader from "@/components/ui/PageHeader";
 import EmptyState from "@/components/ui/EmptyState";
+import ReceiptDialog from "@/components/sales/ReceiptDialog";
 
 export default function Sales() {
   const { toast } = useToast();
@@ -48,6 +49,8 @@ export default function Sales() {
   const [customerName, setCustomerName] = useState("");
   const [showCheckout, setShowCheckout] = useState(false);
   const [activeTab, setActiveTab] = useState("pos");
+  const [showReceipt, setShowReceipt] = useState(false);
+  const [lastSale, setLastSale] = useState(null);
 
   const { data: user } = useQuery({
     queryKey: ['currentUser'],
@@ -63,6 +66,12 @@ export default function Sales() {
   const currentEmployee = employee?.[0];
   const orgId = currentEmployee?.organisation_id;
 
+  const { data: organisation } = useQuery({
+    queryKey: ['organisation', orgId],
+    queryFn: () => base44.entities.Organisation.filter({ id: orgId }),
+    enabled: !!orgId,
+  });
+
   const { data: products = [], isLoading: loadingProducts } = useQuery({
     queryKey: ['products', orgId],
     queryFn: () => base44.entities.Product.filter({ organisation_id: orgId, is_active: true }),
@@ -77,11 +86,13 @@ export default function Sales() {
 
   const createSaleMutation = useMutation({
     mutationFn: (saleData) => base44.entities.Sale.create(saleData),
-    onSuccess: () => {
+    onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['sales'] });
       queryClient.invalidateQueries({ queryKey: ['products'] });
+      setLastSale(data);
       setCart([]);
       setShowCheckout(false);
+      setShowReceipt(true);
       setCustomerName("");
       toast({
         title: "Sale Completed",
@@ -399,6 +410,14 @@ export default function Sales() {
           </Card>
         </TabsContent>
       </Tabs>
+
+      {/* Receipt Dialog */}
+      <ReceiptDialog
+        open={showReceipt}
+        onOpenChange={setShowReceipt}
+        sale={lastSale}
+        organisation={organisation?.[0]}
+      />
 
       {/* Checkout Dialog */}
       <Dialog open={showCheckout} onOpenChange={setShowCheckout}>
