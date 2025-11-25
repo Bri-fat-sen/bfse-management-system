@@ -10,6 +10,7 @@ import Settings from './pages/Settings';
 import Support from './pages/Support';
 import Attendance from './pages/Attendance';
 import Profile from './pages/Profile';
+import RolePermissions from './pages/RolePermissions';
 import __Layout from './Layout.jsx';
 
 
@@ -26,6 +27,7 @@ export const PAGES = {
     "Support": Support,
     "Attendance": Attendance,
     "Profile": Profile,
+    "RolePermissions": RolePermissions,
 }
 
 export const pagesConfig = {
