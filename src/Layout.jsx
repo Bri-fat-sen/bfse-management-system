@@ -135,11 +135,7 @@ export default function Layout({ children, currentPageName }) {
           return false;
         }
         
-        // Restrict Forms to staff who need them
-        if (item.page === 'Forms' && ['driver', 'support_staff', 'read_only'].includes(userRole)) {
-          return false;
-        }
-        
+
         // Check if user can view this module
         return permissions[item.module]?.can_view ?? false;
       })
