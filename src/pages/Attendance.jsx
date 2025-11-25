@@ -18,6 +18,7 @@ import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/components/ui/use-toast";
 import PageHeader from "@/components/ui/PageHeader";
 import StatCard from "@/components/ui/StatCard";
+import AttendanceReportExport from "@/components/attendance/AttendanceReportExport";
 
 export default function Attendance() {
   const { toast } = useToast();
@@ -42,6 +43,12 @@ export default function Attendance() {
 
   const currentEmployee = employee?.[0];
   const orgId = currentEmployee?.organisation_id;
+
+  const { data: organisation } = useQuery({
+    queryKey: ['organisation', orgId],
+    queryFn: () => base44.entities.Organisation.filter({ id: orgId }),
+    enabled: !!orgId,
+  });
 
   const { data: todayAttendance, refetch: refetchToday } = useQuery({
     queryKey: ['todayAttendance', currentEmployee?.id],
@@ -219,11 +226,16 @@ export default function Attendance() {
 
       {/* Recent Attendance */}
       <Card>
-        <CardHeader>
+        <CardHeader className="flex flex-row items-center justify-between">
           <CardTitle className="flex items-center gap-2">
             <Calendar className="w-5 h-5" />
             Recent Attendance
           </CardTitle>
+          <AttendanceReportExport 
+            attendance={monthlyAttendance}
+            employee={currentEmployee}
+            organisation={organisation?.[0]}
+          />
         </CardHeader>
         <CardContent>
           {monthlyAttendance.length === 0 ? (

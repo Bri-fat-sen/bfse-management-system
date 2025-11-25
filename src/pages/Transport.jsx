@@ -41,6 +41,7 @@ import PageHeader from "@/components/ui/PageHeader";
 import EmptyState from "@/components/ui/EmptyState";
 import StatCard from "@/components/ui/StatCard";
 import RouteDialog from "@/components/transport/RouteDialog";
+import TripReportExport from "@/components/transport/TripReportExport";
 
 export default function Transport() {
   const { toast } = useToast();
@@ -63,6 +64,12 @@ export default function Transport() {
 
   const currentEmployee = employee?.[0];
   const orgId = currentEmployee?.organisation_id;
+
+  const { data: organisation } = useQuery({
+    queryKey: ['organisation', orgId],
+    queryFn: () => base44.entities.Organisation.filter({ id: orgId }),
+    enabled: !!orgId,
+  });
 
   const { data: trips = [], isLoading: loadingTrips } = useQuery({
     queryKey: ['trips', orgId],
@@ -221,10 +228,18 @@ export default function Transport() {
           <Card>
             <CardHeader className="flex flex-row items-center justify-between">
               <CardTitle>Trip Records</CardTitle>
-              <Button onClick={() => setShowTripDialog(true)} className="sl-gradient">
-                <Plus className="w-4 h-4 mr-2" />
-                New Trip
-              </Button>
+              <div className="flex gap-2">
+                <TripReportExport 
+                  trips={trips} 
+                  routes={routes} 
+                  vehicles={vehicles}
+                  organisation={organisation?.[0]} 
+                />
+                <Button onClick={() => setShowTripDialog(true)} className="sl-gradient">
+                  <Plus className="w-4 h-4 mr-2" />
+                  New Trip
+                </Button>
+              </div>
             </CardHeader>
             <CardContent>
               {loadingTrips ? (
