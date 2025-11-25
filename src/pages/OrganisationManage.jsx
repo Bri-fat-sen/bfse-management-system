@@ -210,10 +210,10 @@ export default function OrganisationManage() {
 
     try {
       await base44.entities.Employee.delete(memberToRemove.id);
-      toast({ title: "Member removed", description: `${memberToRemove.full_name} has been removed from the organisation` });
+      toast.success("Member removed", { description: `${memberToRemove.full_name} has been removed from the organisation` });
       queryClient.invalidateQueries({ queryKey: ['orgEmployees'] });
     } catch (error) {
-      toast({ title: "Failed to remove member", variant: "destructive" });
+      toast.error("Failed to remove member");
     } finally {
       setMemberToRemove(null);
     }
