@@ -20,8 +20,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useToast } from "@/components/ui/use-toast";
-import { Package, Plus, Minus, ArrowLeftRight, AlertTriangle } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
+import { Package, Plus, Minus, ArrowLeftRight } from "lucide-react";
 
 export default function StockAdjustmentDialog({ 
   open, 
@@ -35,6 +34,7 @@ export default function StockAdjustmentDialog({
   const queryClient = useQueryClient();
   const [adjustmentType, setAdjustmentType] = useState("in");
   const [selectedProduct, setSelectedProduct] = useState("");
+  const [trackBatch, setTrackBatch] = useState(false);
 
   const createMovementMutation = useMutation({
     mutationFn: async (data) => {
@@ -44,36 +44,11 @@ export default function StockAdjustmentDialog({
       await base44.entities.Product.update(data.productId, { 
         stock_quantity: data.newStock 
       });
-      
-      // Create stock alert if needed
-      const threshold = data.product?.low_stock_threshold || 10;
-      if (data.newStock <= threshold) {
-        const existingAlerts = await base44.entities.StockAlert.filter({
-          organisation_id: orgId,
-          product_id: data.productId,
-          status: 'active'
-        });
-        
-        if (existingAlerts.length === 0) {
-          await base44.entities.StockAlert.create({
-            organisation_id: orgId,
-            product_id: data.productId,
-            product_name: data.product?.name,
-            warehouse_id: data.movement.warehouse_id,
-            alert_type: data.newStock === 0 ? 'out_of_stock' : 'low_stock',
-            current_quantity: data.newStock,
-            threshold_quantity: threshold,
-            status: 'active'
-          });
-        }
-      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['products'] });
       queryClient.invalidateQueries({ queryKey: ['stockMovements'] });
-      queryClient.invalidateQueries({ queryKey: ['stockAlerts'] });
       onOpenChange(false);
-      setSelectedProduct("");
       toast({ title: "Stock adjusted successfully" });
     },
   });
@@ -118,25 +93,8 @@ export default function StockAdjustmentDialog({
     createMovementMutation.mutate({
       movement: movementData,
       productId: productId,
-      newStock: newStock,
-      product: product
+      newStock: newStock
     });
-  };
-
-  // Check if this would trigger a low stock alert
-  const getStockWarning = (productId, quantity) => {
-    const prod = products.find(p => p.id === productId);
-    if (!prod) return null;
-    
-    let newStock = prod.stock_quantity || 0;
-    if (adjustmentType === "in") newStock += quantity;
-    else if (adjustmentType === "out") newStock = Math.max(0, newStock - quantity);
-    else newStock = quantity;
-    
-    const threshold = prod.low_stock_threshold || 10;
-    if (newStock === 0) return { type: "out_of_stock", message: "This will result in OUT OF STOCK" };
-    if (newStock <= threshold) return { type: "low_stock", message: `This will result in LOW STOCK (below ${threshold})` };
-    return null;
   };
 
   const product = products.find(p => p.id === selectedProduct);
@@ -209,32 +167,7 @@ export default function StockAdjustmentDialog({
             <Label>
               {adjustmentType === "adjustment" ? "New Stock Quantity" : "Quantity"}
             </Label>
-            <Input 
-              name="quantity" 
-              type="number" 
-              min="0" 
-              required 
-              className="mt-1" 
-              id="adjustment-quantity"
-              onChange={(e) => {
-                // Trigger re-render for warning
-                const form = e.target.closest('form');
-                if (form) {
-                  const qty = parseInt(e.target.value) || 0;
-                  const warning = getStockWarning(selectedProduct, qty);
-                  const warningEl = document.getElementById('stock-warning');
-                  if (warningEl && warning) {
-                    warningEl.classList.remove('hidden');
-                    warningEl.textContent = warning.message;
-                  } else if (warningEl) {
-                    warningEl.classList.add('hidden');
-                  }
-                }
-              }}
-            />
-            <p id="stock-warning" className="hidden text-sm text-amber-600 mt-1 flex items-center gap-1">
-              <AlertTriangle className="w-3 h-3" />
-            </p>
+            <Input name="quantity" type="number" min="0" required className="mt-1" />
           </div>
 
           {warehouses.length > 0 && (
