@@ -218,7 +218,14 @@ export function OfflineProvider({ children }) {
 }
 
 export function OfflineStatus() {
-  const { isOnline, pendingActions, syncPendingActions } = useOffline();
+  const context = useOffline();
+  
+  // Handle case where component is used outside of OfflineProvider
+  if (!context) {
+    return null;
+  }
+  
+  const { isOnline, pendingActions, syncPendingActions } = context;
 
   if (isOnline && pendingActions.length === 0) return null;
 
