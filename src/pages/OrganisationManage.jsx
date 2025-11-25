@@ -185,12 +185,12 @@ export default function OrganisationManage() {
         `
       });
 
-      toast({ title: "Member added successfully", description: `Invitation sent to ${inviteEmail}` });
+      toast.success("Member added successfully", { description: `Invitation sent to ${inviteEmail}` });
       setShowInviteDialog(false);
       resetInviteForm();
       queryClient.invalidateQueries({ queryKey: ['orgEmployees'] });
     } catch (error) {
-      toast({ title: "Failed to add member", variant: "destructive" });
+      toast.error("Failed to add member");
     } finally {
       setIsInviting(false);
     }
