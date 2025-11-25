@@ -133,9 +133,9 @@ export default function OrganisationManage() {
     try {
       const { file_url } = await base44.integrations.Core.UploadFile({ file });
       setFormData(prev => ({ ...prev, logo_url: file_url }));
-      toast({ title: "Logo uploaded successfully" });
+      toast.success("Logo uploaded successfully");
     } catch (error) {
-      toast({ title: "Upload failed", variant: "destructive" });
+      toast.error("Upload failed");
     }
   };
 
