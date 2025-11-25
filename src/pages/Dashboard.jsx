@@ -24,6 +24,8 @@ import { Badge } from "@/components/ui/badge";
 import { Link } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import StatCard from "@/components/ui/StatCard";
+import QuickActions from "@/components/dashboard/QuickActions";
+import RecentActivity from "@/components/dashboard/RecentActivity";
 
 export default function Dashboard() {
   const { data: user } = useQuery({
@@ -308,73 +310,12 @@ export default function Dashboard() {
           )}
 
           {/* Recent Activity */}
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-lg font-semibold flex items-center gap-2">
-                <Activity className="w-5 h-5 text-[#1D5FC3]" />
-                Recent Activity
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              {recentActivity.length === 0 ? (
-                <p className="text-center py-4 text-gray-500 text-sm">No recent activity</p>
-              ) : (
-                <div className="space-y-3">
-                  {recentActivity.slice(0, 5).map((log) => (
-                    <div key={log.id} className="flex items-start gap-3 text-sm">
-                      <div className="w-2 h-2 rounded-full bg-[#1EB053] mt-2" />
-                      <div className="flex-1">
-                        <p className="text-gray-700">{log.description}</p>
-                        <p className="text-xs text-gray-400">
-                          {log.employee_name} • {format(new Date(log.created_date), 'HH:mm')}
-                        </p>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-              <Link to={createPageUrl("ActivityLog")}>
-                <Button variant="ghost" size="sm" className="w-full mt-3">
-                  View All <ArrowRight className="w-4 h-4 ml-1" />
-                </Button>
-              </Link>
-            </CardContent>
-          </Card>
+          <RecentActivity activities={recentActivity} />
         </div>
       </div>
 
-      {/* Quick Access with SL Theme */}
-      <Card className="border-t-4 border-t-[#1EB053]">
-        <CardHeader>
-          <div className="flex items-center gap-3">
-            <div className="flex h-6 w-1 rounded-full overflow-hidden">
-              <div className="w-full bg-gradient-to-b from-[#1EB053] via-white to-[#0072C6]" />
-            </div>
-            <CardTitle className="text-lg font-semibold">Quick Access</CardTitle>
-          </div>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
-            {[
-              { name: "Point of Sale", icon: ShoppingCart, page: "Sales", color: "from-[#1EB053] to-[#16803d]", border: "border-[#1EB053]" },
-              { name: "Inventory", icon: Package, page: "Inventory", color: "from-[#0072C6] to-[#005a9e]", border: "border-[#0072C6]" },
-              { name: "HR & Staff", icon: Users, page: "HR", color: "from-[#1EB053] to-[#0072C6]", border: "border-[#1EB053]" },
-              { name: "Transport", icon: Truck, page: "Transport", color: "from-[#D4AF37] to-[#b8962e]", border: "border-[#D4AF37]" },
-              { name: "Finance", icon: DollarSign, page: "Finance", color: "from-[#1EB053] to-[#16803d]", border: "border-[#1EB053]" },
-              { name: "Clock In/Out", icon: Clock, page: "Attendance", color: "from-[#0072C6] to-[#005a9e]", border: "border-[#0072C6]" },
-            ].map((item) => (
-              <Link key={item.page} to={createPageUrl(item.page)}>
-                <div className={`p-4 rounded-xl bg-gray-50 hover:bg-white border-2 border-transparent hover:${item.border} transition-all hover:shadow-lg cursor-pointer group text-center`}>
-                  <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${item.color} flex items-center justify-center mx-auto mb-3 group-hover:scale-110 transition-transform shadow-md`}>
-                    <item.icon className="w-6 h-6 text-white" />
-                  </div>
-                  <p className="font-medium text-sm text-gray-700">{item.name}</p>
-                </div>
-              </Link>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
+      {/* Quick Actions */}
+      <QuickActions />
 
       {/* Footer with Sierra Leone Pride */}
       <div className="text-center py-4">
