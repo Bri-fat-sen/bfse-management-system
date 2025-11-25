@@ -79,6 +79,7 @@ const menuSections = [
     title: "System",
     items: [
       { name: "Activity Log", icon: Activity, page: "ActivityLog", module: "activity_log" },
+            { name: "Forms", icon: LayoutDashboard, page: "Forms", module: "settings" },
       { name: "Organisation", icon: Building2, page: "OrganisationManage", module: "settings", adminOnly: true },
       { name: "Role Permissions", icon: Shield, page: "RolePermissions", module: "settings", adminOnly: true },
       { name: "Support", icon: HelpCircle, page: "Support", module: "settings" },
