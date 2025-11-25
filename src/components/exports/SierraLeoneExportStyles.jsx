@@ -222,9 +222,55 @@ export const getSierraLeoneStyles = () => `
     color: #ccc;
   }
   @media print {
-    body { padding: 0; background: white; }
+    * { 
+      -webkit-print-color-adjust: exact !important; 
+      print-color-adjust: exact !important; 
+      color-adjust: exact !important; 
+    }
+    html, body { 
+      -webkit-print-color-adjust: exact !important; 
+      print-color-adjust: exact !important;
+      padding: 0; 
+      background: white !important; 
+    }
     .document { box-shadow: none; border-radius: 0; }
+    .flag-stripe { height: 8px !important; display: flex !important; }
+    .flag-stripe .green { background: #1EB053 !important; }
+    .flag-stripe .white { background: #FFFFFF !important; }
+    .flag-stripe .blue { background: #0072C6 !important; }
+    .header { 
+      background: linear-gradient(135deg, #1EB053 0%, #0072C6 100%) !important;
+      color: white !important;
+    }
+    .report-title {
+      background: #0F1F3C !important;
+      color: white !important;
+    }
+    thead { background: linear-gradient(135deg, #1EB053 0%, #0072C6 100%) !important; }
+    th { 
+      background: #1EB053 !important;
+      color: white !important;
+    }
+    tr:nth-child(even) { background-color: #f8f9fa !important; }
     tr:hover { background: inherit; }
+    .summary-card { 
+      background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%) !important; 
+      border-top: 4px solid #1EB053 !important;
+    }
+    .summary-card:nth-child(2) { border-top-color: #0072C6 !important; }
+    .summary-card:nth-child(3) { border-top-color: #D4AF37 !important; }
+    .summary-card:nth-child(4) { border-top-color: #0F1F3C !important; }
+    .summary-card.highlight-green { border-top-color: #1EB053 !important; background: #E8F5E9 !important; }
+    .summary-card.highlight-red { border-top-color: #EF4444 !important; background: #FEE2E2 !important; }
+    .footer { 
+      background: linear-gradient(135deg, #0F1F3C 0%, #1a3a5c 100%) !important;
+      color: white !important;
+    }
+    .totals-row { background: #0F1F3C !important; color: white !important; }
+    .status-badge.success { background: #E8F5E9 !important; color: #1EB053 !important; }
+    .status-badge.warning { background: #FFF3CD !important; color: #856404 !important; }
+    .status-badge.danger { background: #FEE2E2 !important; color: #DC2626 !important; }
+    .status-badge.info { background: #E3F2FD !important; color: #0072C6 !important; }
   }
   @page {
     margin: 0.5cm;
