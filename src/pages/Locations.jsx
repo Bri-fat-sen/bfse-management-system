@@ -181,7 +181,7 @@ export default function Locations() {
     mutationFn: ({ id, data }) => base44.entities.Employee.update(id, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['employees'] });
-      toast({ title: "Staff assignment updated" });
+      toast.success("Staff assignment updated");
     },
   });
 
