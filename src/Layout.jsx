@@ -47,6 +47,10 @@ import OrganisationSwitcher from "@/components/organisation/OrganisationSwitcher
 import NotificationCenter from "@/components/notifications/NotificationCenter";
 import MobileNav from "@/components/mobile/MobileNav";
 import { OfflineProvider, OfflineStatus } from "@/components/offline/OfflineManager";
+import GlobalSearch from "@/components/search/GlobalSearch";
+import OnboardingWizard from "@/components/onboarding/OnboardingWizard";
+
+import { BarChart3 } from "lucide-react";
 
 const menuSections = [
   {
@@ -54,7 +58,7 @@ const menuSections = [
     items: [
       { name: "Dashboard", icon: LayoutDashboard, page: "Dashboard", module: "dashboard" },
       { name: "My Dashboard", icon: User, page: "EmployeeDashboard", module: "dashboard" },
-
+      { name: "Analytics", icon: BarChart3, page: "Analytics", module: "dashboard" },
       { name: "Communication", icon: MessageSquare, page: "Communication", module: "communication", badge: "3" },
     ]
   },
@@ -91,6 +95,8 @@ export default function Layout({ children, currentPageName }) {
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [darkMode, setDarkMode] = useState(false);
+  const [searchOpen, setSearchOpen] = useState(false);
+  const [showOnboarding, setShowOnboarding] = useState(false);
 
   const { data: user } = useQuery({
     queryKey: ['currentUser'],
@@ -111,6 +117,13 @@ export default function Layout({ children, currentPageName }) {
   const currentEmployee = employee?.[0];
   const userRole = currentEmployee?.role || 'read_only';
   const orgId = currentEmployee?.organisation_id;
+
+  // Check if onboarding is needed (no organisation)
+  React.useEffect(() => {
+    if (user && employee && employee.length === 0) {
+      setShowOnboarding(true);
+    }
+  }, [user, employee]);
 
   // Get permissions for the user's role
   const permissions = useMemo(() => {
@@ -317,13 +330,15 @@ export default function Layout({ children, currentPageName }) {
               <Menu className="w-5 h-5" />
             </Button>
             
-            <div className="hidden md:flex relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-              <Input 
-                placeholder="Search..." 
-                className={`pl-10 w-64 ${darkMode ? 'bg-white/5 border-white/10 text-white' : ''}`}
-              />
-            </div>
+            <Button
+                            variant="outline"
+                            className={`hidden md:flex items-center gap-2 w-64 justify-start text-gray-500 ${darkMode ? 'bg-white/5 border-white/10' : ''}`}
+                            onClick={() => setSearchOpen(true)}
+                          >
+                            <Search className="w-4 h-4" />
+                            <span>Search...</span>
+                            <kbd className="ml-auto px-2 py-0.5 text-xs bg-gray-100 rounded">⌘K</kbd>
+                          </Button>
           </div>
 
           <div className="flex items-center gap-2">
@@ -396,8 +411,23 @@ export default function Layout({ children, currentPageName }) {
         </main>
 
         {/* Mobile Bottom Navigation */}
-        <MobileNav currentPageName={currentPageName} />
-        </div>
-        </div>
-        );
+                    <MobileNav currentPageName={currentPageName} />
+
+                    {/* Global Search Dialog */}
+                    <GlobalSearch 
+                      orgId={orgId} 
+                      isOpen={searchOpen} 
+                      onClose={() => setSearchOpen(false)} 
+                    />
+
+                    {/* Onboarding Wizard */}
+                    <OnboardingWizard
+                      isOpen={showOnboarding}
+                      onClose={() => setShowOnboarding(false)}
+                      user={user}
+                      orgId={orgId}
+                    />
+                    </div>
+                    </div>
+                    );
         }
