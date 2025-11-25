@@ -122,7 +122,7 @@ export default function OrganisationManage() {
     mutationFn: (data) => base44.entities.Organisation.update(orgId, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['organisation'] });
-      toast({ title: "Organisation updated successfully" });
+      toast.success("Organisation updated successfully");
     },
   });
 
