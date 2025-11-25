@@ -219,6 +219,9 @@ export default function Locations() {
     const formData = new FormData(e.target);
     
     if (locationType === 'vehicle') {
+      const parentWarehouseId = formData.get('parent_warehouse_id');
+      const parentWarehouse = parentWarehouseId ? warehouses.find(w => w.id === parentWarehouseId) : null;
+      
       const vehicleData = {
         organisation_id: orgId,
         registration_number: formData.get('registration_number'),
@@ -226,6 +229,8 @@ export default function Locations() {
         brand: formData.get('brand'),
         model: formData.get('model'),
         capacity: parseInt(formData.get('capacity')) || 0,
+        parent_warehouse_id: parentWarehouseId || null,
+        parent_warehouse_name: parentWarehouse?.name || null,
         status: 'active',
       };
       
