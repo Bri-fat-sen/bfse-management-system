@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
@@ -11,7 +11,12 @@ import {
   Warehouse,
   Filter,
   Download,
-  Upload
+  Upload,
+  FolderTree,
+  MapPin,
+  Bell,
+  FileText,
+  RefreshCw
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -39,8 +44,12 @@ import PageHeader from "@/components/ui/PageHeader";
 import EmptyState from "@/components/ui/EmptyState";
 import StatCard from "@/components/ui/StatCard";
 import StockAdjustmentDialog from "@/components/inventory/StockAdjustmentDialog";
+import CategoryManager from "@/components/inventory/CategoryManager";
+import StockLocations from "@/components/inventory/StockLocations";
+import StockAlerts from "@/components/inventory/StockAlerts";
+import InventoryReport from "@/components/inventory/InventoryReport";
 
-const categories = ["Water", "Beverages", "Food", "Electronics", "Clothing", "Other"];
+const DEFAULT_CATEGORIES = ["Water", "Beverages", "Food", "Electronics", "Clothing", "Other"];
 
 export default function Inventory() {
   const { toast } = useToast();
@@ -51,6 +60,10 @@ export default function Inventory() {
   const [editingProduct, setEditingProduct] = useState(null);
   const [activeTab, setActiveTab] = useState("products");
   const [showStockDialog, setShowStockDialog] = useState(false);
+  const [showCategoryDialog, setShowCategoryDialog] = useState(false);
+  const [showLocationsDialog, setShowLocationsDialog] = useState(false);
+  const [showAlertsDialog, setShowAlertsDialog] = useState(false);
+  const [showReportDialog, setShowReportDialog] = useState(false);
 
   const { data: user } = useQuery({
     queryKey: ['currentUser'],
@@ -83,6 +96,70 @@ export default function Inventory() {
     queryFn: () => base44.entities.StockMovement.filter({ organisation_id: orgId }, '-created_date', 50),
     enabled: !!orgId,
   });
+
+  const { data: categories = [] } = useQuery({
+    queryKey: ['categories', orgId],
+    queryFn: () => base44.entities.ProductCategory.filter({ organisation_id: orgId }),
+    enabled: !!orgId,
+  });
+
+  const { data: stockLevels = [] } = useQuery({
+    queryKey: ['stockLevels', orgId],
+    queryFn: () => base44.entities.StockLevel.filter({ organisation_id: orgId }),
+    enabled: !!orgId,
+  });
+
+  const { data: stockAlerts = [] } = useQuery({
+    queryKey: ['stockAlerts', orgId],
+    queryFn: () => base44.entities.StockAlert.filter({ organisation_id: orgId }, '-created_date', 100),
+    enabled: !!orgId,
+  });
+
+  const { data: organisation } = useQuery({
+    queryKey: ['organisation', orgId],
+    queryFn: () => base44.entities.Organisation.filter({ id: orgId }),
+    enabled: !!orgId,
+  });
+
+  // Auto-generate stock alerts for low stock items
+  useEffect(() => {
+    const checkStockAlerts = async () => {
+      if (!products.length || !orgId) return;
+      
+      for (const product of products) {
+        const threshold = product.low_stock_threshold || 10;
+        const existingAlert = stockAlerts.find(
+          a => a.product_id === product.id && a.status === 'active'
+        );
+        
+        if (product.stock_quantity === 0 && !existingAlert) {
+          await base44.entities.StockAlert.create({
+            organisation_id: orgId,
+            product_id: product.id,
+            product_name: product.name,
+            warehouse_id: product.warehouse_id,
+            alert_type: 'out_of_stock',
+            current_quantity: 0,
+            threshold_quantity: threshold,
+            status: 'active'
+          });
+        } else if (product.stock_quantity > 0 && product.stock_quantity <= threshold && !existingAlert) {
+          await base44.entities.StockAlert.create({
+            organisation_id: orgId,
+            product_id: product.id,
+            product_name: product.name,
+            warehouse_id: product.warehouse_id,
+            alert_type: 'low_stock',
+            current_quantity: product.stock_quantity,
+            threshold_quantity: threshold,
+            status: 'active'
+          });
+        }
+      }
+    };
+    
+    checkStockAlerts();
+  }, [products, stockAlerts, orgId]);
 
   const createProductMutation = useMutation({
     mutationFn: (data) => base44.entities.Product.create(data),
@@ -119,8 +196,11 @@ export default function Inventory() {
     return matchesSearch && matchesCategory;
   });
 
-  const lowStockProducts = products.filter(p => p.stock_quantity <= p.low_stock_threshold);
+  const lowStockProducts = products.filter(p => p.stock_quantity <= (p.low_stock_threshold || 10));
+  const outOfStockProducts = products.filter(p => p.stock_quantity === 0);
   const totalValue = products.reduce((sum, p) => sum + (p.stock_quantity * p.cost_price || 0), 0);
+  const activeAlerts = stockAlerts.filter(a => a.status === 'active');
+  const categoryList = categories.length > 0 ? categories.map(c => c.name) : DEFAULT_CATEGORIES;
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -157,12 +237,34 @@ export default function Inventory() {
           setShowProductDialog(true);
         }}
         actionLabel="Add Product"
-      >
-        <Button variant="outline" onClick={() => setShowStockDialog(true)}>
-          <Upload className="w-4 h-4 mr-2" />
-          Stock Adjustment
-        </Button>
-      </PageHeader>
+        >
+        <div className="flex flex-wrap gap-2">
+          <Button variant="outline" onClick={() => setShowStockDialog(true)}>
+            <Upload className="w-4 h-4 mr-2" />
+            Adjustment
+          </Button>
+          <Button variant="outline" onClick={() => setShowCategoryDialog(true)}>
+            <FolderTree className="w-4 h-4 mr-2" />
+            Categories
+          </Button>
+          <Button variant="outline" onClick={() => setShowLocationsDialog(true)}>
+            <MapPin className="w-4 h-4 mr-2" />
+            Locations
+          </Button>
+          <Button 
+            variant="outline" 
+            onClick={() => setShowAlertsDialog(true)}
+            className={activeAlerts.length > 0 ? "border-red-300 text-red-600" : ""}
+          >
+            <Bell className="w-4 h-4 mr-2" />
+            Alerts {activeAlerts.length > 0 && `(${activeAlerts.length})`}
+          </Button>
+          <Button variant="outline" onClick={() => setShowReportDialog(true)}>
+            <FileText className="w-4 h-4 mr-2" />
+            Reports
+          </Button>
+        </div>
+        </PageHeader>
 
       {/* Stats */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -177,6 +279,7 @@ export default function Inventory() {
           value={lowStockProducts.length}
           icon={AlertTriangle}
           color="gold"
+          subtitle={`${outOfStockProducts.length} out of stock`}
         />
         <StatCard
           title="Inventory Value"
@@ -219,11 +322,11 @@ export default function Inventory() {
                     <SelectValue placeholder="Category" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="all">All Categories</SelectItem>
-                    {categories.map(cat => (
-                      <SelectItem key={cat} value={cat}>{cat}</SelectItem>
-                    ))}
-                  </SelectContent>
+                      <SelectItem value="all">All Categories</SelectItem>
+                      {categoryList.map(cat => (
+                        <SelectItem key={cat} value={cat}>{cat}</SelectItem>
+                      ))}
+                    </SelectContent>
                 </Select>
               </div>
             </CardContent>
@@ -410,6 +513,45 @@ export default function Inventory() {
         currentEmployee={currentEmployee}
       />
 
+      {/* Category Manager Dialog */}
+      <CategoryManager
+        open={showCategoryDialog}
+        onOpenChange={setShowCategoryDialog}
+        categories={categories}
+        orgId={orgId}
+      />
+
+      {/* Stock Locations Dialog */}
+      <StockLocations
+        open={showLocationsDialog}
+        onOpenChange={setShowLocationsDialog}
+        products={products}
+        warehouses={warehouses}
+        stockLevels={stockLevels}
+        orgId={orgId}
+        currentEmployee={currentEmployee}
+      />
+
+      {/* Stock Alerts Dialog */}
+      <StockAlerts
+        open={showAlertsDialog}
+        onOpenChange={setShowAlertsDialog}
+        alerts={stockAlerts}
+        products={products}
+        currentEmployee={currentEmployee}
+      />
+
+      {/* Inventory Reports Dialog */}
+      <InventoryReport
+        open={showReportDialog}
+        onOpenChange={setShowReportDialog}
+        products={products}
+        stockMovements={stockMovements}
+        warehouses={warehouses}
+        categories={categories}
+        organisation={organisation?.[0]}
+      />
+
       {/* Product Dialog */}
       <Dialog open={showProductDialog} onOpenChange={setShowProductDialog}>
         <DialogContent className="max-w-lg">
@@ -433,7 +575,7 @@ export default function Inventory() {
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    {categories.map(cat => (
+                    {categoryList.map(cat => (
                       <SelectItem key={cat} value={cat}>{cat}</SelectItem>
                     ))}
                   </SelectContent>
