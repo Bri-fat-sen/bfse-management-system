@@ -322,9 +322,18 @@ export default function Locations() {
 
   const LocationCard = ({ location, type }) => {
     const staff = getLocationStaff(location.id);
-    const stockCount = getLocationStockCount(location.id);
     const Icon = type === 'vehicle' ? Truck : type === 'store' ? Store : Warehouse;
     const name = type === 'vehicle' ? location.registration_number : location.name;
+    
+    // For warehouses, get combined stock. For vehicles, get vehicle stock only.
+    const stockInfo = type === 'vehicle' 
+      ? { warehouseStock: getVehicleStockCount(location.id), vehicleStock: 0, total: getVehicleStockCount(location.id) }
+      : getCombinedStockCount(location.id);
+    
+    const linkedVehicles = type !== 'vehicle' ? getLinkedVehicles(location.id) : [];
+    const parentWarehouse = type === 'vehicle' && location.parent_warehouse_id 
+      ? warehouses.find(w => w.id === location.parent_warehouse_id)
+      : null;
     
     return (
       <Card className="hover:shadow-lg transition-all">
@@ -343,7 +352,15 @@ export default function Locations() {
               <div>
                 <h3 className="font-semibold text-lg">{name}</h3>
                 {type === 'vehicle' ? (
-                  <p className="text-sm text-gray-500">{location.brand} {location.model}</p>
+                  <div>
+                    <p className="text-sm text-gray-500">{location.brand} {location.model}</p>
+                    {parentWarehouse && (
+                      <p className="text-xs text-purple-600 flex items-center gap-1 mt-0.5">
+                        <Warehouse className="w-3 h-3" />
+                        Linked to {parentWarehouse.name}
+                      </p>
+                    )}
+                  </div>
                 ) : (
                   <p className="text-sm text-gray-500">{location.city || location.address}</p>
                 )}
@@ -375,18 +392,48 @@ export default function Locations() {
             </DropdownMenu>
           </div>
 
-          <div className="grid grid-cols-2 gap-3 mb-4">
-            <div className="bg-gray-50 rounded-lg p-3 text-center">
-              <Users className="w-4 h-4 mx-auto text-gray-500 mb-1" />
-              <p className="text-lg font-bold">{staff.length}</p>
-              <p className="text-xs text-gray-500">Staff</p>
+          {/* Stock display for warehouses with breakdown */}
+          {type !== 'vehicle' ? (
+            <div className="space-y-2 mb-4">
+              <div className="grid grid-cols-2 gap-2">
+                <div className="bg-gray-50 rounded-lg p-3 text-center">
+                  <Users className="w-4 h-4 mx-auto text-gray-500 mb-1" />
+                  <p className="text-lg font-bold">{staff.length}</p>
+                  <p className="text-xs text-gray-500">Staff</p>
+                </div>
+                <div className="bg-gradient-to-br from-[#1EB053]/10 to-[#0072C6]/10 rounded-lg p-3 text-center">
+                  <Package className="w-4 h-4 mx-auto text-[#1EB053] mb-1" />
+                  <p className="text-lg font-bold text-[#0072C6]">{stockInfo.total.toLocaleString()}</p>
+                  <p className="text-xs text-gray-500">Total Stock</p>
+                </div>
+              </div>
+              {stockInfo.vehicleStock > 0 && (
+                <div className="text-xs text-gray-500 bg-gray-50 rounded p-2 flex justify-between">
+                  <span>Warehouse: {stockInfo.warehouseStock.toLocaleString()}</span>
+                  <span className="text-purple-600">Vehicles: {stockInfo.vehicleStock.toLocaleString()}</span>
+                </div>
+              )}
+              {linkedVehicles.length > 0 && (
+                <div className="flex items-center gap-1 text-xs text-purple-600">
+                  <Truck className="w-3 h-3" />
+                  <span>{linkedVehicles.length} linked vehicle{linkedVehicles.length > 1 ? 's' : ''}</span>
+                </div>
+              )}
             </div>
-            <div className="bg-gray-50 rounded-lg p-3 text-center">
-              <Package className="w-4 h-4 mx-auto text-gray-500 mb-1" />
-              <p className="text-lg font-bold">{stockCount.toLocaleString()}</p>
-              <p className="text-xs text-gray-500">Stock Units</p>
+          ) : (
+            <div className="grid grid-cols-2 gap-3 mb-4">
+              <div className="bg-gray-50 rounded-lg p-3 text-center">
+                <Users className="w-4 h-4 mx-auto text-gray-500 mb-1" />
+                <p className="text-lg font-bold">{staff.length}</p>
+                <p className="text-xs text-gray-500">Staff</p>
+              </div>
+              <div className="bg-purple-50 rounded-lg p-3 text-center">
+                <Package className="w-4 h-4 mx-auto text-purple-500 mb-1" />
+                <p className="text-lg font-bold text-purple-700">{stockInfo.total.toLocaleString()}</p>
+                <p className="text-xs text-gray-500">Vehicle Stock</p>
+              </div>
             </div>
-          </div>
+          )}
 
           {staff.length > 0 && (
             <div className="flex -space-x-2">
