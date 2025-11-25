@@ -125,7 +125,7 @@ export default function HR() {
       queryClient.invalidateQueries({ queryKey: ['employees'] });
       setShowEmployeeDialog(false);
       setEditingEmployee(null);
-      toast({ title: "Employee updated successfully" });
+      toast.success("Employee updated successfully");
     },
   });
 
