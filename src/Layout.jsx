@@ -82,10 +82,13 @@ export default function Layout({ children, currentPageName }) {
       <style>{`
         :root {
           --sl-green: #1EB053;
-          --sl-blue: #1D5FC3;
+          --sl-white: #FFFFFF;
+          --sl-blue: #0072C6;
           --sl-navy: #0F1F3C;
           --sl-gold: #D4AF37;
           --sl-sky: #E3F1FF;
+          --sl-light-green: #E8F5E9;
+          --sl-light-blue: #E3F2FD;
         }
         .sl-gradient {
           background: linear-gradient(135deg, var(--sl-green) 0%, var(--sl-blue) 100%);
@@ -95,16 +98,36 @@ export default function Layout({ children, currentPageName }) {
           -webkit-background-clip: text;
           -webkit-text-fill-color: transparent;
         }
+        .sl-flag-stripe {
+          background: linear-gradient(to right, #1EB053 33.33%, #FFFFFF 33.33%, #FFFFFF 66.66%, #0072C6 66.66%);
+        }
+        .sl-flag-stripe-vertical {
+          background: linear-gradient(to bottom, #1EB053 33.33%, #FFFFFF 33.33%, #FFFFFF 66.66%, #0072C6 66.66%);
+        }
         .sidebar-item-active {
-          background: linear-gradient(90deg, rgba(30, 176, 83, 0.2) 0%, rgba(29, 95, 195, 0.2) 100%);
-          border-left: 3px solid var(--sl-green);
+          background: linear-gradient(90deg, rgba(30, 176, 83, 0.25) 0%, rgba(0, 114, 198, 0.15) 100%);
+          border-left: 4px solid var(--sl-green);
         }
         .sidebar-item:hover {
-          background: rgba(255, 255, 255, 0.05);
+          background: rgba(255, 255, 255, 0.08);
         }
         .dark .card-dark {
           background: rgba(255, 255, 255, 0.05);
           border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .sl-card-green {
+          border-top: 4px solid #1EB053;
+        }
+        .sl-card-blue {
+          border-top: 4px solid #0072C6;
+        }
+        .sl-pattern {
+          background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.05'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+        }
+        .sl-hero-pattern {
+          background-image: 
+            linear-gradient(135deg, rgba(30, 176, 83, 0.9) 0%, rgba(0, 114, 198, 0.9) 100%),
+            url("data:image/svg+xml,%3Csvg width='80' height='80' viewBox='0 0 80 80' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.1'%3E%3Cpath d='M50 50c0-5.523 4.477-10 10-10s10 4.477 10 10-4.477 10-10 10c0 5.523-4.477 10-10 10s-10-4.477-10-10 4.477-10 10-10zM10 10c0-5.523 4.477-10 10-10s10 4.477 10 10-4.477 10-10 10c0 5.523-4.477 10-10 10S0 25.523 0 20s4.477-10 10-10zm10 8c4.418 0 8-3.582 8-8s-3.582-8-8-8-8 3.582-8 8 3.582 8 8 8zm40 40c4.418 0 8-3.582 8-8s-3.582-8-8-8-8 3.582-8 8 3.582 8 8 8z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
         }
       `}</style>
 
@@ -122,14 +145,19 @@ export default function Layout({ children, currentPageName }) {
         ${sidebarOpen ? 'w-64' : 'w-20'}
         ${mobileMenuOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
       `}>
-        {/* Logo */}
+        {/* Logo with Sierra Leone Flag Colors */}
         <div className="h-16 flex items-center justify-between px-4 border-b border-white/10">
           {sidebarOpen && (
-            <div className="flex items-center gap-2">
-              <div className="w-10 h-10 sl-gradient rounded-xl flex items-center justify-center font-bold text-white">
-                BF
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl overflow-hidden flex flex-col">
+                <div className="flex-1 bg-[#1EB053]" />
+                <div className="flex-1 bg-white" />
+                <div className="flex-1 bg-[#0072C6]" />
               </div>
-              <span className="font-bold text-lg">BFSE</span>
+              <div>
+                <span className="font-bold text-lg tracking-wide">BFSE</span>
+                <p className="text-[10px] text-gray-400 -mt-1">Sierra Leone</p>
+              </div>
             </div>
           )}
           <Button
@@ -283,8 +311,8 @@ export default function Layout({ children, currentPageName }) {
           </div>
         </header>
 
-        {/* Gradient Line */}
-        <div className="h-1 sl-gradient" />
+        {/* Sierra Leone Flag Stripe */}
+        <div className="h-1.5 sl-flag-stripe" />
 
         {/* Page Content */}
         <main className={`p-4 lg:p-6 ${darkMode ? 'text-white' : ''}`}>

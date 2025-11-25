@@ -13,15 +13,24 @@ export default function StatCard({
 }) {
   const colorClasses = {
     green: "from-[#1EB053] to-[#16803d]",
-    blue: "from-[#1D5FC3] to-[#1548a0]",
+    blue: "from-[#0072C6] to-[#005a9e]",
     gold: "from-[#D4AF37] to-[#b8962e]",
     navy: "from-[#0F1F3C] to-[#1a2d52]",
     red: "from-red-500 to-red-600",
     purple: "from-purple-500 to-purple-600"
   };
 
+  const borderColors = {
+    green: "border-t-[#1EB053]",
+    blue: "border-t-[#0072C6]",
+    gold: "border-t-[#D4AF37]",
+    navy: "border-t-[#0F1F3C]",
+    red: "border-t-red-500",
+    purple: "border-t-purple-500"
+  };
+
   return (
-    <Card className="relative overflow-hidden p-6 bg-white hover:shadow-lg transition-all duration-300 border-0 shadow-sm">
+    <Card className={`relative overflow-hidden p-6 bg-white hover:shadow-lg transition-all duration-300 border-0 shadow-sm border-t-4 ${borderColors[color]}`}>
       <div className={`absolute top-0 right-0 w-32 h-32 bg-gradient-to-br ${colorClasses[color]} opacity-10 rounded-full transform translate-x-8 -translate-y-8`} />
       
       <div className="flex items-start justify-between relative">
@@ -32,7 +41,7 @@ export default function StatCard({
             <p className="text-sm text-gray-500">{subtitle}</p>
           )}
           {trend && (
-            <div className={`flex items-center gap-1 text-sm ${trend === 'up' ? 'text-green-600' : 'text-red-500'}`}>
+            <div className={`flex items-center gap-1 text-sm ${trend === 'up' ? 'text-[#1EB053]' : 'text-red-500'}`}>
               {trend === 'up' ? (
                 <TrendingUp className="w-4 h-4" />
               ) : (

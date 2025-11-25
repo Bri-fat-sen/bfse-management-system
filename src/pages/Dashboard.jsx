@@ -89,24 +89,40 @@ export default function Dashboard() {
 
   return (
     <div className="space-y-6">
-      {/* Welcome Header */}
-      <div className="bg-gradient-to-r from-[#1EB053] to-[#1D5FC3] rounded-2xl p-6 md:p-8 text-white">
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-          <div>
-            <h1 className="text-2xl md:text-3xl font-bold">
-              Welcome back, {user?.full_name?.split(' ')[0] || 'User'}!
-            </h1>
-            <p className="text-white/80 mt-1">
-              {format(new Date(), 'EEEE, MMMM d, yyyy')}
-            </p>
+      {/* Welcome Header with Sierra Leone Theme */}
+      <div className="relative overflow-hidden rounded-2xl">
+        {/* Flag stripe at top */}
+        <div className="h-2 flex">
+          <div className="flex-1 bg-[#1EB053]" />
+          <div className="flex-1 bg-white" />
+          <div className="flex-1 bg-[#0072C6]" />
+        </div>
+        <div className="sl-hero-pattern p-6 md:p-8 text-white">
+          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 relative z-10">
+            <div>
+              <p className="text-white/70 text-sm mb-1">🇸🇱 BRI-FAT-SEN Enterprise</p>
+              <h1 className="text-2xl md:text-3xl font-bold">
+                Welcome back, {user?.full_name?.split(' ')[0] || 'User'}!
+              </h1>
+              <p className="text-white/80 mt-1 flex items-center gap-2">
+                <Calendar className="w-4 h-4" />
+                {format(new Date(), 'EEEE, MMMM d, yyyy')}
+              </p>
+            </div>
+            <div className="flex items-center gap-3">
+              <Link to={createPageUrl("Sales")}>
+                <Button variant="secondary" className="bg-white text-[#0072C6] hover:bg-white/90 font-semibold shadow-lg">
+                  <ShoppingCart className="w-4 h-4 mr-2" />
+                  New Sale
+                </Button>
+              </Link>
+            </div>
           </div>
-          <div className="flex items-center gap-3">
-            <Link to={createPageUrl("Sales")}>
-              <Button variant="secondary" className="bg-white text-[#1D5FC3] hover:bg-white/90">
-                <ShoppingCart className="w-4 h-4 mr-2" />
-                New Sale
-              </Button>
-            </Link>
+          {/* Decorative cotton tree silhouette */}
+          <div className="absolute right-4 bottom-0 opacity-10">
+            <svg width="120" height="100" viewBox="0 0 120 100" fill="currentColor">
+              <path d="M60 100V60M60 60C60 60 40 50 40 35C40 20 50 15 60 15C70 15 80 20 80 35C80 50 60 60 60 60Z M60 15C60 15 45 10 45 5C45 0 52 0 60 0C68 0 75 0 75 5C75 10 60 15 60 15Z M40 35C40 35 25 30 20 35C15 40 25 50 40 45 M80 35C80 35 95 30 100 35C105 40 95 50 80 45"/>
+            </svg>
           </div>
         </div>
       </div>
@@ -115,7 +131,7 @@ export default function Dashboard() {
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <StatCard
           title="Today's Sales"
-          value={`Le ${totalRevenue.toLocaleString()}`}
+          value={`SLE ${totalRevenue.toLocaleString()}`}
           icon={DollarSign}
           color="green"
           trend="up"
@@ -137,7 +153,7 @@ export default function Dashboard() {
         />
         <StatCard
           title="Transport Revenue"
-          value={`Le ${transportRevenue.toLocaleString()}`}
+          value={`SLE ${transportRevenue.toLocaleString()}`}
           icon={Truck}
           color="gold"
           subtitle={`${todayTrips.length} trips today`}
@@ -147,7 +163,7 @@ export default function Dashboard() {
       {/* Main Content Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Recent Sales */}
-        <Card className="lg:col-span-2">
+        <Card className="lg:col-span-2 border-t-4 border-t-[#0072C6]">
           <CardHeader className="flex flex-row items-center justify-between">
             <CardTitle className="text-lg font-semibold">Recent Sales</CardTitle>
             <Link to={createPageUrl("Sales")}>
@@ -176,7 +192,7 @@ export default function Dashboard() {
                       </div>
                     </div>
                     <div className="text-right">
-                      <p className="font-semibold text-[#1EB053]">Le {sale.total_amount?.toLocaleString()}</p>
+                      <p className="font-semibold text-[#1EB053]">SLE {sale.total_amount?.toLocaleString()}</p>
                       <Badge variant="secondary" className="text-xs">
                         {sale.payment_method}
                       </Badge>
@@ -255,24 +271,29 @@ export default function Dashboard() {
         </div>
       </div>
 
-      {/* Quick Access */}
-      <Card>
+      {/* Quick Access with SL Theme */}
+      <Card className="border-t-4 border-t-[#1EB053]">
         <CardHeader>
-          <CardTitle className="text-lg font-semibold">Quick Access</CardTitle>
+          <div className="flex items-center gap-3">
+            <div className="flex h-6 w-1 rounded-full overflow-hidden">
+              <div className="w-full bg-gradient-to-b from-[#1EB053] via-white to-[#0072C6]" />
+            </div>
+            <CardTitle className="text-lg font-semibold">Quick Access</CardTitle>
+          </div>
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
             {[
-              { name: "Point of Sale", icon: ShoppingCart, page: "Sales", color: "from-[#1EB053] to-emerald-600" },
-              { name: "Inventory", icon: Package, page: "Inventory", color: "from-[#1D5FC3] to-blue-600" },
-              { name: "HR & Staff", icon: Users, page: "HR", color: "from-purple-500 to-purple-600" },
-              { name: "Transport", icon: Truck, page: "Transport", color: "from-amber-500 to-amber-600" },
-              { name: "Finance", icon: DollarSign, page: "Finance", color: "from-emerald-500 to-emerald-600" },
-              { name: "Clock In/Out", icon: Clock, page: "Attendance", color: "from-rose-500 to-rose-600" },
+              { name: "Point of Sale", icon: ShoppingCart, page: "Sales", color: "from-[#1EB053] to-[#16803d]", border: "border-[#1EB053]" },
+              { name: "Inventory", icon: Package, page: "Inventory", color: "from-[#0072C6] to-[#005a9e]", border: "border-[#0072C6]" },
+              { name: "HR & Staff", icon: Users, page: "HR", color: "from-[#1EB053] to-[#0072C6]", border: "border-[#1EB053]" },
+              { name: "Transport", icon: Truck, page: "Transport", color: "from-[#D4AF37] to-[#b8962e]", border: "border-[#D4AF37]" },
+              { name: "Finance", icon: DollarSign, page: "Finance", color: "from-[#1EB053] to-[#16803d]", border: "border-[#1EB053]" },
+              { name: "Clock In/Out", icon: Clock, page: "Attendance", color: "from-[#0072C6] to-[#005a9e]", border: "border-[#0072C6]" },
             ].map((item) => (
               <Link key={item.page} to={createPageUrl(item.page)}>
-                <div className="p-4 rounded-xl bg-gray-50 hover:bg-gray-100 transition-all hover:shadow-md cursor-pointer group text-center">
-                  <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${item.color} flex items-center justify-center mx-auto mb-3 group-hover:scale-110 transition-transform`}>
+                <div className={`p-4 rounded-xl bg-gray-50 hover:bg-white border-2 border-transparent hover:${item.border} transition-all hover:shadow-lg cursor-pointer group text-center`}>
+                  <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${item.color} flex items-center justify-center mx-auto mb-3 group-hover:scale-110 transition-transform shadow-md`}>
                     <item.icon className="w-6 h-6 text-white" />
                   </div>
                   <p className="font-medium text-sm text-gray-700">{item.name}</p>
@@ -282,6 +303,11 @@ export default function Dashboard() {
           </div>
         </CardContent>
       </Card>
+
+      {/* Footer with Sierra Leone Pride */}
+      <div className="text-center py-4">
+        <p className="text-sm text-gray-400">🇸🇱 Proudly serving businesses in Sierra Leone</p>
+      </div>
     </div>
   );
 }
