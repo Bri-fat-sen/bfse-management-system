@@ -15,6 +15,7 @@ import Suppliers from './pages/Suppliers';
 import OrganisationSetup from './pages/OrganisationSetup';
 import OrganisationManage from './pages/OrganisationManage';
 import EmployeeDashboard from './pages/EmployeeDashboard';
+import Analytics from './pages/Analytics';
 import __Layout from './Layout.jsx';
 
 
@@ -36,6 +37,7 @@ export const PAGES = {
     "OrganisationSetup": OrganisationSetup,
     "OrganisationManage": OrganisationManage,
     "EmployeeDashboard": EmployeeDashboard,
+    "Analytics": Analytics,
 }
 
 export const pagesConfig = {
