@@ -1,7 +1,7 @@
 import React from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery } from "@tanstack/react-query";
-import { format } from "date-fns";
+import { format, differenceInDays } from "date-fns";
 import {
   Users,
   ShoppingCart,
@@ -13,7 +13,10 @@ import {
   AlertTriangle,
   ArrowRight,
   Calendar,
-  Activity
+  Activity,
+  Layers,
+  Bell,
+  XCircle
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -76,6 +79,18 @@ export default function Dashboard() {
     enabled: !!orgId,
   });
 
+  const { data: stockAlerts = [] } = useQuery({
+    queryKey: ['stockAlerts', orgId],
+    queryFn: () => base44.entities.StockAlert.filter({ organisation_id: orgId, status: 'active' }),
+    enabled: !!orgId,
+  });
+
+  const { data: inventoryBatches = [] } = useQuery({
+    queryKey: ['inventoryBatches', orgId],
+    queryFn: () => base44.entities.InventoryBatch.filter({ organisation_id: orgId, status: 'active' }),
+    enabled: !!orgId,
+  });
+
   // Calculate statistics
   const todaySales = sales.filter(s => 
     s.created_date?.startsWith(format(new Date(), 'yyyy-MM-dd'))
@@ -86,6 +101,19 @@ export default function Dashboard() {
   const todayTrips = trips.filter(t => t.date === format(new Date(), 'yyyy-MM-dd'));
   const transportRevenue = todayTrips.reduce((sum, t) => sum + (t.total_revenue || 0), 0);
   const clockedIn = attendance.filter(a => a.clock_in_time && !a.clock_out_time);
+
+  // Expiry tracking
+  const today = new Date();
+  const expiringBatches = inventoryBatches.filter(batch => {
+    if (!batch.expiry_date) return false;
+    const daysUntilExpiry = differenceInDays(new Date(batch.expiry_date), today);
+    return daysUntilExpiry <= 30 && daysUntilExpiry >= 0;
+  });
+  const expiredBatches = inventoryBatches.filter(batch => {
+    if (!batch.expiry_date) return false;
+    return differenceInDays(new Date(batch.expiry_date), today) < 0;
+  });
+  const activeAlerts = stockAlerts.filter(a => a.status === 'active');
 
   return (
     <div className="space-y-6">
@@ -206,29 +234,73 @@ export default function Dashboard() {
 
         {/* Quick Actions & Alerts */}
         <div className="space-y-6">
-          {/* Low Stock Alerts */}
-          {lowStockProducts.length > 0 && (
-            <Card className="border-l-4 border-l-amber-500">
+          {/* Critical Alerts Section */}
+          {(lowStockProducts.length > 0 || expiredBatches.length > 0 || expiringBatches.length > 0) && (
+            <Card className="border-l-4 border-l-red-500">
               <CardHeader className="pb-2">
                 <CardTitle className="text-lg font-semibold flex items-center gap-2">
-                  <AlertTriangle className="w-5 h-5 text-amber-500" />
-                  Low Stock Alerts
+                  <Bell className="w-5 h-5 text-red-500" />
+                  Critical Alerts
                 </CardTitle>
               </CardHeader>
-              <CardContent>
-                <div className="space-y-2">
-                  {lowStockProducts.slice(0, 4).map((product) => (
-                    <div key={product.id} className="flex items-center justify-between text-sm">
-                      <span className="truncate flex-1">{product.name}</span>
-                      <Badge variant="destructive" className="ml-2">
-                        {product.stock_quantity} left
-                      </Badge>
+              <CardContent className="space-y-4">
+                {/* Expired Batches */}
+                {expiredBatches.length > 0 && (
+                  <div className="p-3 bg-red-50 rounded-lg border border-red-200">
+                    <div className="flex items-center gap-2 text-red-700 font-medium text-sm mb-2">
+                      <XCircle className="w-4 h-4" />
+                      {expiredBatches.length} Expired Batch{expiredBatches.length > 1 ? 'es' : ''}
                     </div>
-                  ))}
-                </div>
+                    <div className="space-y-1">
+                      {expiredBatches.slice(0, 2).map((batch) => (
+                        <p key={batch.id} className="text-xs text-red-600 truncate">
+                          {batch.product_name} - Batch {batch.batch_number}
+                        </p>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Expiring Soon */}
+                {expiringBatches.length > 0 && (
+                  <div className="p-3 bg-orange-50 rounded-lg border border-orange-200">
+                    <div className="flex items-center gap-2 text-orange-700 font-medium text-sm mb-2">
+                      <AlertTriangle className="w-4 h-4" />
+                      {expiringBatches.length} Expiring Within 30 Days
+                    </div>
+                    <div className="space-y-1">
+                      {expiringBatches.slice(0, 2).map((batch) => (
+                        <p key={batch.id} className="text-xs text-orange-600 truncate">
+                          {batch.product_name} - {differenceInDays(new Date(batch.expiry_date), today)} days left
+                        </p>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Low Stock */}
+                {lowStockProducts.length > 0 && (
+                  <div className="p-3 bg-amber-50 rounded-lg border border-amber-200">
+                    <div className="flex items-center gap-2 text-amber-700 font-medium text-sm mb-2">
+                      <Package className="w-4 h-4" />
+                      {lowStockProducts.length} Low Stock Item{lowStockProducts.length > 1 ? 's' : ''}
+                    </div>
+                    <div className="space-y-1">
+                      {lowStockProducts.slice(0, 3).map((product) => (
+                        <div key={product.id} className="flex items-center justify-between text-xs">
+                          <span className="truncate flex-1 text-amber-600">{product.name}</span>
+                          <Badge variant="destructive" className="ml-2 text-xs">
+                            {product.stock_quantity}
+                          </Badge>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
                 <Link to={createPageUrl("Inventory")}>
-                  <Button variant="ghost" size="sm" className="w-full mt-3">
-                    View All <ArrowRight className="w-4 h-4 ml-1" />
+                  <Button variant="ghost" size="sm" className="w-full">
+                    View Inventory <ArrowRight className="w-4 h-4 ml-1" />
                   </Button>
                 </Link>
               </CardContent>
