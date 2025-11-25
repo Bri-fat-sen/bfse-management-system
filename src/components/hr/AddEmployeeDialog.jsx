@@ -98,8 +98,13 @@ export default function AddEmployeeDialog({ open, onOpenChange, orgId, employeeC
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-lg">
+      <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto w-[95vw] sm:w-full">
         <DialogHeader>
+          <div className="flex h-1 w-16 rounded-full overflow-hidden mb-3">
+            <div className="flex-1 bg-[#1EB053]" />
+            <div className="flex-1 bg-white border-y border-gray-200" />
+            <div className="flex-1 bg-[#0072C6]" />
+          </div>
           <DialogTitle className="flex items-center gap-2">
             <User className="w-5 h-5 text-[#1EB053]" />
             Add New Employee
@@ -108,7 +113,7 @@ export default function AddEmployeeDialog({ open, onOpenChange, orgId, employeeC
 
         <form onSubmit={handleSubmit} className="space-y-4">
           {/* Personal Info */}
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <Label className="text-xs text-gray-500">First Name *</Label>
               <Input
@@ -129,7 +134,7 @@ export default function AddEmployeeDialog({ open, onOpenChange, orgId, employeeC
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <Label className="text-xs text-gray-500 flex items-center gap-1">
                 <Mail className="w-3 h-3" /> Email
@@ -154,7 +159,7 @@ export default function AddEmployeeDialog({ open, onOpenChange, orgId, employeeC
           </div>
 
           {/* Work Info */}
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <Label className="text-xs text-gray-500 flex items-center gap-1">
                 <Building2 className="w-3 h-3" /> Department
@@ -185,7 +190,7 @@ export default function AddEmployeeDialog({ open, onOpenChange, orgId, employeeC
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <Label className="text-xs text-gray-500">System Role *</Label>
               <Select 
@@ -213,7 +218,7 @@ export default function AddEmployeeDialog({ open, onOpenChange, orgId, employeeC
           </div>
 
           {/* Salary Info */}
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <Label className="text-xs text-gray-500">Salary Type</Label>
               <Select 
@@ -241,13 +246,13 @@ export default function AddEmployeeDialog({ open, onOpenChange, orgId, employeeC
             </div>
           </div>
 
-          <DialogFooter>
-            <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+          <DialogFooter className="flex-col sm:flex-row gap-2">
+            <Button type="button" variant="outline" onClick={() => onOpenChange(false)} className="w-full sm:w-auto">
               Cancel
             </Button>
             <Button 
               type="submit" 
-              className="sl-gradient"
+              className="bg-gradient-to-r from-[#1EB053] to-[#0072C6] hover:from-[#178f43] hover:to-[#005a9e] text-white shadow-lg w-full sm:w-auto"
               disabled={createEmployeeMutation.isPending}
             >
               {createEmployeeMutation.isPending && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}

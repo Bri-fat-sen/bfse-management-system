@@ -72,8 +72,13 @@ export default function RouteDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto w-[95vw] sm:w-full">
         <DialogHeader>
+          <div className="flex h-1 w-16 rounded-full overflow-hidden mb-3">
+            <div className="flex-1 bg-[#1EB053]" />
+            <div className="flex-1 bg-white border-y border-gray-200" />
+            <div className="flex-1 bg-[#0072C6]" />
+          </div>
           <DialogTitle className="flex items-center gap-2">
             <Route className="w-5 h-5 text-[#0072C6]" />
             {editingRoute ? 'Edit Route' : 'Add New Route'}
@@ -91,7 +96,7 @@ export default function RouteDialog({
             />
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <Label>Start Location</Label>
               <Input 
@@ -114,7 +119,7 @@ export default function RouteDialog({
             </div>
           </div>
 
-          <div className="grid grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <div>
               <Label>Distance (km)</Label>
               <Input 
@@ -185,13 +190,13 @@ export default function RouteDialog({
             </div>
           </div>
 
-          <DialogFooter>
-            <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+          <DialogFooter className="flex-col sm:flex-row gap-2">
+            <Button type="button" variant="outline" onClick={() => onOpenChange(false)} className="w-full sm:w-auto">
               Cancel
             </Button>
             <Button 
               type="submit" 
-              className="bg-[#0072C6] hover:bg-[#005a9e]"
+              className="bg-gradient-to-r from-[#1EB053] to-[#0072C6] hover:from-[#178f43] hover:to-[#005a9e] text-white shadow-lg w-full sm:w-auto"
               disabled={createRouteMutation.isPending}
             >
               {createRouteMutation.isPending ? "Saving..." : (editingRoute ? "Update Route" : "Create Route")}
