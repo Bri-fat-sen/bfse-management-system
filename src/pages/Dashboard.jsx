@@ -26,6 +26,9 @@ import { createPageUrl } from "@/utils";
 import StatCard from "@/components/ui/StatCard";
 import QuickActions from "@/components/dashboard/QuickActions";
 import RecentActivity from "@/components/dashboard/RecentActivity";
+import UpcomingMeetings from "@/components/dashboard/UpcomingMeetings";
+import LowStockAlert from "@/components/dashboard/LowStockAlert";
+import TodayAttendance from "@/components/dashboard/TodayAttendance";
 
 export default function Dashboard() {
   const { data: user } = useQuery({
@@ -90,6 +93,12 @@ export default function Dashboard() {
   const { data: inventoryBatches = [] } = useQuery({
     queryKey: ['inventoryBatches', orgId],
     queryFn: () => base44.entities.InventoryBatch.filter({ organisation_id: orgId, status: 'active' }),
+    enabled: !!orgId,
+  });
+
+  const { data: meetings = [] } = useQuery({
+    queryKey: ['meetings', orgId],
+    queryFn: () => base44.entities.Meeting.filter({ organisation_id: orgId }, '-date', 20),
     enabled: !!orgId,
   });
 
@@ -317,7 +326,12 @@ export default function Dashboard() {
       {/* Quick Actions Grid */}
       <QuickActions />
 
-      
+      {/* Additional Dashboard Widgets */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <TodayAttendance attendance={attendance} employees={activeEmployees} />
+        <UpcomingMeetings meetings={meetings} />
+        <LowStockAlert products={products} />
+      </div>
 
       {/* Footer with Sierra Leone Pride */}
       <div className="text-center py-4">
