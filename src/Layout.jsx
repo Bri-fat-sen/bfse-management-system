@@ -42,6 +42,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import OrganisationSwitcher from "@/components/organisation/OrganisationSwitcher";
 
 const menuSections = [
   {
@@ -56,7 +57,6 @@ const menuSections = [
     items: [
       { name: "Sales & POS", icon: ShoppingCart, page: "Sales", module: "sales" },
       { name: "Inventory", icon: Package, page: "Inventory", module: "inventory" },
-      { name: "Suppliers", icon: Building2, page: "Suppliers", module: "inventory" },
       { name: "Transport", icon: Truck, page: "Transport", module: "transport" },
     ]
   },
@@ -195,20 +195,10 @@ export default function Layout({ children, currentPageName }) {
         ${sidebarOpen ? 'w-64' : 'w-20'}
         ${mobileMenuOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
       `}>
-        {/* Logo with Sierra Leone Flag Colors */}
+        {/* Logo with Organisation Switcher */}
         <div className="h-16 flex items-center justify-between px-4 border-b border-white/10">
           {sidebarOpen ? (
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl overflow-hidden flex flex-col shadow-lg">
-                <div className="flex-1 bg-[#1EB053]" />
-                <div className="flex-1 bg-white" />
-                <div className="flex-1 bg-[#0072C6]" />
-              </div>
-              <div>
-                <span className="font-bold text-lg tracking-wide">BFSE</span>
-                <p className="text-[10px] text-gray-400 -mt-1">Management System</p>
-              </div>
-            </div>
+            <OrganisationSwitcher currentEmployee={currentEmployee} />
           ) : (
             <div className="w-10 h-10 rounded-xl overflow-hidden flex flex-col mx-auto shadow-lg">
               <div className="flex-1 bg-[#1EB053]" />
