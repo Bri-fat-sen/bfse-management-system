@@ -129,6 +129,17 @@ export default function Layout({ children, currentPageName }) {
         if (item.adminOnly && !['super_admin', 'org_admin'].includes(userRole)) {
           return false;
         }
+        
+        // Restrict Reports to specific roles
+        if (item.page === 'Reports' && !['super_admin', 'org_admin', 'accountant', 'hr_admin', 'warehouse_manager'].includes(userRole)) {
+          return false;
+        }
+        
+        // Restrict Forms to staff who need them
+        if (item.page === 'Forms' && ['driver', 'support_staff', 'read_only'].includes(userRole)) {
+          return false;
+        }
+        
         // Check if user can view this module
         return permissions[item.module]?.can_view ?? false;
       })
