@@ -109,6 +109,7 @@ export default function Layout({ children, currentPageName }) {
 
   const currentEmployee = employee?.[0];
   const userRole = currentEmployee?.role || 'read_only';
+  const orgId = currentEmployee?.organisation_id;
 
   // Get permissions for the user's role
   const permissions = useMemo(() => {
