@@ -49,7 +49,7 @@ export default function Settings() {
     mutationFn: (data) => base44.entities.Employee.update(currentEmployee?.id, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['employee'] });
-      toast({ title: "Profile updated successfully" });
+      toast.success("Profile updated successfully");
     },
   });
 
