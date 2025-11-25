@@ -195,10 +195,10 @@ export default function Layout({ children, currentPageName }) {
         ${sidebarOpen ? 'w-64' : 'w-20'}
         ${mobileMenuOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
       `}>
-        {/* Logo with Organisation Switcher */}
+        {/* Logo with Sierra Leone Flag Colors */}
         <div className="h-16 flex items-center justify-between px-4 border-b border-white/10">
           {sidebarOpen ? (
-            <OrganisationSwitcher currentEmployee={currentEmployee} />
+            <OrganisationSwitcher currentEmployee={currentEmployee} user={user} />
           ) : (
             <div className="w-10 h-10 rounded-xl overflow-hidden flex flex-col mx-auto shadow-lg">
               <div className="flex-1 bg-[#1EB053]" />
