@@ -156,7 +156,7 @@ export default function Settings() {
                     </div>
                   </div>
 
-                  <Separator className="my-6" />
+                  <div className="border-t my-6" />
 
                   <h3 className="font-semibold mb-4">Emergency Contact</h3>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
