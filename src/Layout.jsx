@@ -43,12 +43,10 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import OrganisationSwitcher from "@/components/organisation/OrganisationSwitcher";
 import NotificationCenter from "@/components/notifications/NotificationCenter";
 import MobileNav from "@/components/mobile/MobileNav";
 import { OfflineProvider, OfflineStatus } from "@/components/offline/OfflineManager";
 import GlobalSearch from "@/components/search/GlobalSearch";
-import OnboardingWizard from "@/components/onboarding/OnboardingWizard";
 
 const menuSections = [
   {
@@ -94,7 +92,6 @@ export default function Layout({ children, currentPageName }) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [darkMode, setDarkMode] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
-  const [showOnboarding, setShowOnboarding] = useState(false);
 
   const { data: user } = useQuery({
     queryKey: ['currentUser'],
@@ -115,13 +112,6 @@ export default function Layout({ children, currentPageName }) {
   const currentEmployee = employee?.[0];
   const userRole = currentEmployee?.role || 'read_only';
   const orgId = currentEmployee?.organisation_id;
-
-  // Check if onboarding is needed (no organisation)
-  React.useEffect(() => {
-    if (user && employee && employee.length === 0) {
-      setShowOnboarding(true);
-    }
-  }, [user, employee]);
 
   // Get permissions for the user's role
   const permissions = useMemo(() => {
@@ -218,7 +208,17 @@ export default function Layout({ children, currentPageName }) {
         {/* Logo with Sierra Leone Flag Colors */}
         <div className="h-16 flex items-center justify-between px-4 border-b border-white/10">
           {sidebarOpen ? (
-            <OrganisationSwitcher currentEmployee={currentEmployee} user={user} />
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl overflow-hidden flex flex-col shadow-lg">
+                <div className="flex-1 bg-[#1EB053]" />
+                <div className="flex-1 bg-white" />
+                <div className="flex-1 bg-[#0072C6]" />
+              </div>
+              <div>
+                <p className="font-bold text-sm text-white">BRI-FAT-SEN</p>
+                <p className="text-[10px] text-gray-400">Enterprise</p>
+              </div>
+            </div>
           ) : (
             <div className="w-10 h-10 rounded-xl overflow-hidden flex flex-col mx-auto shadow-lg">
               <div className="flex-1 bg-[#1EB053]" />
@@ -416,14 +416,6 @@ export default function Layout({ children, currentPageName }) {
                       orgId={orgId} 
                       isOpen={searchOpen} 
                       onClose={() => setSearchOpen(false)} 
-                    />
-
-                    {/* Onboarding Wizard */}
-                    <OnboardingWizard
-                      isOpen={showOnboarding}
-                      onClose={() => setShowOnboarding(false)}
-                      user={user}
-                      orgId={orgId}
                     />
                     </div>
                     </div>
