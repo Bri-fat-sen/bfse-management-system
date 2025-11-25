@@ -36,6 +36,7 @@ import { useToast } from "@/components/ui/use-toast";
 import PageHeader from "@/components/ui/PageHeader";
 import EmptyState from "@/components/ui/EmptyState";
 import MeetingDialog from "@/components/communication/MeetingDialog";
+import AnnouncementBanner from "@/components/communication/AnnouncementBanner";
 
 export default function Communication() {
   const { toast } = useToast();
@@ -165,6 +166,13 @@ export default function Communication() {
       <PageHeader
         title="Communication Hub"
         subtitle="Chat, calls, and meetings"
+      />
+
+      {/* Announcement Banner for Admins */}
+      <AnnouncementBanner 
+        employees={employees}
+        orgId={orgId}
+        currentEmployee={currentEmployee}
       />
 
       <Tabs value={activeTab} onValueChange={setActiveTab}>
