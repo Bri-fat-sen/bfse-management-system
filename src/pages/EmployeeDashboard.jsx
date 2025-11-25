@@ -30,6 +30,7 @@ import { Progress } from "@/components/ui/progress";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import PageHeader from "@/components/ui/PageHeader";
 import StatCard from "@/components/ui/StatCard";
+import QuickClockIn from "@/components/mobile/QuickClockIn";
 
 export default function EmployeeDashboard() {
   const { data: user } = useQuery({
@@ -73,6 +74,18 @@ export default function EmployeeDashboard() {
   const { data: attendance = [] } = useQuery({
     queryKey: ['myAttendance', currentEmployee?.id],
     queryFn: () => base44.entities.Attendance.filter({ employee_id: currentEmployee?.id }, '-date', 30),
+    enabled: !!currentEmployee?.id,
+  });
+
+  const { data: todayAttendanceData } = useQuery({
+    queryKey: ['todayAttendance', currentEmployee?.id],
+    queryFn: async () => {
+      const records = await base44.entities.Attendance.filter({ 
+        employee_id: currentEmployee?.id,
+        date: format(new Date(), 'yyyy-MM-dd')
+      });
+      return records[0];
+    },
     enabled: !!currentEmployee?.id,
   });
 
@@ -166,6 +179,13 @@ export default function EmployeeDashboard() {
           </div>
         </CardContent>
       </Card>
+
+      {/* Clock In/Out */}
+      <QuickClockIn 
+        currentEmployee={currentEmployee}
+        orgId={orgId}
+        todayAttendance={todayAttendanceData}
+      />
 
       {/* Quick Stats */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
