@@ -48,6 +48,9 @@ import CategoryManager from "@/components/inventory/CategoryManager";
 import StockLocations from "@/components/inventory/StockLocations";
 import StockAlerts from "@/components/inventory/StockAlerts";
 import InventoryReport from "@/components/inventory/InventoryReport";
+import BatchManagement from "@/components/inventory/BatchManagement";
+import ExpiryAlerts from "@/components/inventory/ExpiryAlerts";
+import BatchReports from "@/components/inventory/BatchReports";
 
 const DEFAULT_CATEGORIES = ["Water", "Beverages", "Food", "Electronics", "Clothing", "Other"];
 
@@ -112,6 +115,12 @@ export default function Inventory() {
   const { data: stockAlerts = [] } = useQuery({
     queryKey: ['stockAlerts', orgId],
     queryFn: () => base44.entities.StockAlert.filter({ organisation_id: orgId }, '-created_date', 100),
+    enabled: !!orgId,
+  });
+
+  const { data: inventoryBatches = [] } = useQuery({
+    queryKey: ['inventoryBatches', orgId],
+    queryFn: () => base44.entities.InventoryBatch.filter({ organisation_id: orgId }),
     enabled: !!orgId,
   });
 
@@ -508,6 +517,24 @@ export default function Inventory() {
               )}
             </CardContent>
           </Card>
+        </TabsContent>
+
+        {/* Batches Tab */}
+        <TabsContent value="batches" className="mt-6">
+          <BatchManagement
+            products={products}
+            warehouses={warehouses}
+            orgId={orgId}
+            currentEmployee={currentEmployee}
+          />
+        </TabsContent>
+
+        {/* Expiry Tab */}
+        <TabsContent value="expiry" className="mt-6">
+          <ExpiryAlerts orgId={orgId} currentEmployee={currentEmployee} />
+          <div className="mt-6">
+            <BatchReports batches={inventoryBatches} products={products} warehouses={warehouses} />
+          </div>
         </TabsContent>
       </Tabs>
 
