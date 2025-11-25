@@ -44,6 +44,7 @@ import EmptyState from "@/components/ui/EmptyState";
 import StatCard from "@/components/ui/StatCard";
 import PayrollProcessDialog from "@/components/hr/PayrollProcessDialog";
 import PayslipGenerator from "@/components/hr/PayslipGenerator";
+import AddEmployeeDialog from "@/components/hr/AddEmployeeDialog";
 
 const roles = [
   "org_admin", "hr_admin", "payroll_admin", "warehouse_manager",
@@ -62,6 +63,7 @@ export default function HR() {
   const [editingEmployee, setEditingEmployee] = useState(null);
   const [activeTab, setActiveTab] = useState("employees");
   const [showPayrollDialog, setShowPayrollDialog] = useState(false);
+  const [showAddEmployeeDialog, setShowAddEmployeeDialog] = useState(false);
 
   const { data: user } = useQuery({
     queryKey: ['currentUser'],
@@ -159,6 +161,8 @@ export default function HR() {
       <PageHeader
         title="HR & Payroll"
         subtitle="Manage employees, attendance, and payroll"
+        action={() => setShowAddEmployeeDialog(true)}
+        actionLabel="Add Employee"
       />
 
       {/* Stats */}
@@ -408,6 +412,14 @@ export default function HR() {
         employees={employees}
         orgId={orgId}
         currentEmployee={currentEmployee}
+      />
+
+      {/* Add Employee Dialog */}
+      <AddEmployeeDialog
+        open={showAddEmployeeDialog}
+        onOpenChange={setShowAddEmployeeDialog}
+        orgId={orgId}
+        employeeCount={employees.length}
       />
 
       {/* Edit Employee Dialog */}
