@@ -533,7 +533,7 @@ export default function Inventory() {
         <TabsContent value="expiry" className="mt-6">
           <ExpiryAlerts orgId={orgId} currentEmployee={currentEmployee} />
           <div className="mt-6">
-            <BatchReports batches={inventoryBatches} products={products} warehouses={warehouses} />
+            <BatchReports batches={inventoryBatches} products={products} warehouses={warehouses} organisation={organisation?.[0]} />
           </div>
         </TabsContent>
       </Tabs>
