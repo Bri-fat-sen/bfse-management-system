@@ -251,7 +251,7 @@ export default function OrganisationSetup() {
               />
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
                 <Label>City *</Label>
                 <Input
@@ -272,7 +272,7 @@ export default function OrganisationSetup() {
               </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
                 <Label>Phone</Label>
                 <Input
@@ -341,7 +341,7 @@ export default function OrganisationSetup() {
 
             <div>
               <Label>Color Scheme</Label>
-              <div className="grid grid-cols-5 gap-3 mt-2">
+              <div className="grid grid-cols-3 sm:grid-cols-5 gap-3 mt-2">
                 {COLOR_PRESETS.map((preset) => (
                   <button
                     key={preset.name}
@@ -377,7 +377,7 @@ export default function OrganisationSetup() {
               </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
                 <Label>Primary Color</Label>
                 <div className="flex gap-2 mt-1">
@@ -507,15 +507,15 @@ export default function OrganisationSetup() {
         </div>
 
         {/* Progress Steps */}
-        <div className="flex justify-between mb-8">
+        <div className="flex justify-between mb-8 overflow-x-auto pb-2">
           {STEPS.map((step, index) => (
             <div
               key={step.id}
               className={`flex-1 ${index < STEPS.length - 1 ? 'relative' : ''}`}
             >
-              <div className="flex flex-col items-center">
+              <div className="flex flex-col items-center min-w-[60px]">
                 <div
-                  className={`w-12 h-12 rounded-full flex items-center justify-center transition-all ${
+                  className={`w-10 h-10 sm:w-12 sm:h-12 rounded-full flex items-center justify-center transition-all ${
                     index < currentStep
                       ? 'bg-[#1EB053] text-white'
                       : index === currentStep
@@ -559,11 +559,12 @@ export default function OrganisationSetup() {
             {renderStepContent()}
 
             {/* Navigation */}
-            <div className="flex justify-between mt-8 pt-6 border-t">
+            <div className="flex flex-col-reverse sm:flex-row justify-between gap-3 mt-8 pt-6 border-t">
               <Button
                 variant="outline"
                 onClick={() => setCurrentStep(prev => prev - 1)}
                 disabled={currentStep === 0}
+                className="w-full sm:w-auto"
               >
                 <ChevronLeft className="w-4 h-4 mr-1" />
                 Back
@@ -573,7 +574,7 @@ export default function OrganisationSetup() {
                 <Button
                   onClick={() => setCurrentStep(prev => prev + 1)}
                   disabled={!canProceed()}
-                  className="bg-gradient-to-r from-[#1EB053] to-[#0072C6] hover:opacity-90"
+                  className="bg-gradient-to-r from-[#1EB053] to-[#0072C6] hover:opacity-90 w-full sm:w-auto"
                 >
                   Next
                   <ChevronRight className="w-4 h-4 ml-1" />
@@ -582,7 +583,7 @@ export default function OrganisationSetup() {
                 <Button
                   onClick={handleSubmit}
                   disabled={isSubmitting}
-                  className="bg-gradient-to-r from-[#1EB053] to-[#0072C6] hover:opacity-90"
+                  className="bg-gradient-to-r from-[#1EB053] to-[#0072C6] hover:opacity-90 w-full sm:w-auto"
                 >
                   {isSubmitting ? (
                     <>

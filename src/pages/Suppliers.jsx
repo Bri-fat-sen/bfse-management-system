@@ -227,13 +227,13 @@ export default function Suppliers() {
         </div>
 
         <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList>
-            <TabsTrigger value="suppliers">Suppliers</TabsTrigger>
-            <TabsTrigger value="orders">Purchase Orders</TabsTrigger>
+          <TabsList className="bg-gray-100 p-1">
+            <TabsTrigger value="suppliers" className="text-xs sm:text-sm data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#1EB053] data-[state=active]:to-[#0072C6] data-[state=active]:text-white">Suppliers</TabsTrigger>
+            <TabsTrigger value="orders" className="text-xs sm:text-sm data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#1EB053] data-[state=active]:to-[#0072C6] data-[state=active]:text-white">Purchase Orders</TabsTrigger>
           </TabsList>
 
           {/* Filters */}
-          <div className="flex flex-col sm:flex-row gap-4 mt-6 mb-4">
+          <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 mt-4 sm:mt-6 mb-4">
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
               <Input
@@ -244,7 +244,7 @@ export default function Suppliers() {
               />
             </div>
             <Select value={statusFilter} onValueChange={setStatusFilter}>
-              <SelectTrigger className="w-40">
+              <SelectTrigger className="w-full sm:w-40">
                 <SelectValue placeholder="Status" />
               </SelectTrigger>
               <SelectContent>
