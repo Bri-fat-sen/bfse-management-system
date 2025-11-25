@@ -434,7 +434,12 @@ export default function Layout({ children, currentPageName }) {
                       position="top-right" 
                       richColors 
                       expand={false}
-                      dismissible={true}
+                      closeButton
+                      toastOptions={{
+                        classNames: {
+                          closeButton: 'bg-white hover:bg-gray-100 border border-gray-200 text-gray-500 hover:text-gray-900',
+                        },
+                      }}
                     />
                     </div>
                     </div>
