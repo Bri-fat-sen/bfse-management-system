@@ -54,7 +54,7 @@ const menuSections = [
     items: [
       { name: "Dashboard", icon: LayoutDashboard, page: "Dashboard", module: "dashboard" },
       { name: "My Dashboard", icon: User, page: "EmployeeDashboard", module: "dashboard" },
-      { name: "Mobile Hub", icon: Smartphone, page: "MobileHub", module: "dashboard", mobileOnly: true },
+
       { name: "Communication", icon: MessageSquare, page: "Communication", module: "communication", badge: "3" },
     ]
   },
