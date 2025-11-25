@@ -71,15 +71,15 @@ export default function Profile() {
       <Card className="overflow-hidden">
         <div className="h-32 sl-gradient" />
         <CardContent className="relative pt-0">
-          <div className="flex flex-col md:flex-row md:items-end gap-6 -mt-16">
-            <Avatar className="w-32 h-32 border-4 border-white shadow-lg">
+          <div className="flex flex-col items-center md:items-start md:flex-row md:items-end gap-4 md:gap-6 -mt-16">
+            <Avatar className="w-24 h-24 sm:w-32 sm:h-32 border-4 border-white shadow-lg">
               <AvatarImage src={currentEmployee?.profile_photo} />
               <AvatarFallback className="sl-gradient text-white text-4xl">
                 {user?.full_name?.charAt(0) || 'U'}
               </AvatarFallback>
             </Avatar>
-            <div className="flex-1 pb-4">
-              <h1 className="text-2xl font-bold">{currentEmployee?.full_name || user?.full_name}</h1>
+            <div className="flex-1 pb-4 text-center md:text-left">
+              <h1 className="text-xl sm:text-2xl font-bold">{currentEmployee?.full_name || user?.full_name}</h1>
               <p className="text-gray-500">{currentEmployee?.position || 'Employee'}</p>
               <div className="flex flex-wrap items-center gap-2 mt-2">
                 <Badge className="sl-gradient">

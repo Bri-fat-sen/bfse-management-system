@@ -234,7 +234,7 @@ export default function Transport() {
 
         <TabsContent value="trips" className="mt-6">
           <Card>
-            <CardHeader className="flex flex-row items-center justify-between">
+            <CardHeader className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
               <CardTitle>Trip Records</CardTitle>
               <div className="flex gap-2">
                 <TripReportExport 
@@ -267,9 +267,9 @@ export default function Transport() {
               ) : (
                 <div className="space-y-3">
                   {trips.map((trip) => (
-                    <div key={trip.id} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
-                      <div className="flex items-center gap-4">
-                        <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${
+                    <div key={trip.id} className="flex flex-col sm:flex-row sm:items-center justify-between p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors gap-3">
+                      <div className="flex items-center gap-3 sm:gap-4">
+                        <div className={`w-10 h-10 sm:w-12 sm:h-12 rounded-xl flex items-center justify-center ${
                           trip.status === 'completed' ? 'bg-green-100' : 'bg-blue-100'
                         }`}>
                           {trip.status === 'completed' ? (
@@ -310,9 +310,9 @@ export default function Transport() {
 
         <TabsContent value="vehicles" className="mt-6">
           <Card>
-            <CardHeader className="flex flex-row items-center justify-between">
+            <CardHeader className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
               <CardTitle>Vehicles</CardTitle>
-              <Button onClick={() => setShowVehicleDialog(true)} className="sl-gradient">
+              <Button onClick={() => setShowVehicleDialog(true)} className="bg-gradient-to-r from-[#1EB053] to-[#0072C6] hover:from-[#178f43] hover:to-[#005a9e] w-full sm:w-auto">
                 <Plus className="w-4 h-4 mr-2" />
                 Add Vehicle
               </Button>
@@ -367,9 +367,9 @@ export default function Transport() {
 
         <TabsContent value="routes" className="mt-6">
           <Card>
-            <CardHeader className="flex flex-row items-center justify-between">
+            <CardHeader className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
               <CardTitle>Routes</CardTitle>
-              <Button onClick={() => setShowRouteDialog(true)} className="bg-[#0072C6] hover:bg-[#005a9e]">
+              <Button onClick={() => setShowRouteDialog(true)} className="bg-gradient-to-r from-[#1EB053] to-[#0072C6] hover:from-[#178f43] hover:to-[#005a9e] w-full sm:w-auto">
                 <Plus className="w-4 h-4 mr-2" />
                 Add Route
               </Button>
@@ -449,12 +449,17 @@ export default function Transport() {
 
       {/* Trip Dialog */}
       <Dialog open={showTripDialog} onOpenChange={setShowTripDialog}>
-        <DialogContent className="max-w-lg">
+        <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto w-[95vw] sm:w-full">
           <DialogHeader>
+            <div className="flex h-1 w-16 rounded-full overflow-hidden mb-3">
+              <div className="flex-1 bg-[#1EB053]" />
+              <div className="flex-1 bg-white border-y border-gray-200" />
+              <div className="flex-1 bg-[#0072C6]" />
+            </div>
             <DialogTitle>Record New Trip</DialogTitle>
           </DialogHeader>
           <form onSubmit={handleTripSubmit} className="space-y-4">
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
                 <Label>Vehicle</Label>
                 <Select name="vehicle_id" required>
@@ -510,11 +515,11 @@ export default function Transport() {
                 <Input name="notes" className="mt-1" />
               </div>
             </div>
-            <DialogFooter>
-              <Button type="button" variant="outline" onClick={() => setShowTripDialog(false)}>
+            <DialogFooter className="flex-col sm:flex-row gap-2">
+              <Button type="button" variant="outline" onClick={() => setShowTripDialog(false)} className="w-full sm:w-auto">
                 Cancel
               </Button>
-              <Button type="submit" className="sl-gradient">
+              <Button type="submit" className="bg-gradient-to-r from-[#1EB053] to-[#0072C6] hover:from-[#178f43] hover:to-[#005a9e] w-full sm:w-auto">
                 Record Trip
               </Button>
             </DialogFooter>
@@ -531,12 +536,17 @@ export default function Transport() {
 
       {/* Vehicle Dialog */}
       <Dialog open={showVehicleDialog} onOpenChange={setShowVehicleDialog}>
-        <DialogContent className="max-w-lg">
+        <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto w-[95vw] sm:w-full">
           <DialogHeader>
+            <div className="flex h-1 w-16 rounded-full overflow-hidden mb-3">
+              <div className="flex-1 bg-[#1EB053]" />
+              <div className="flex-1 bg-white border-y border-gray-200" />
+              <div className="flex-1 bg-[#0072C6]" />
+            </div>
             <DialogTitle>Add New Vehicle</DialogTitle>
           </DialogHeader>
           <form onSubmit={handleVehicleSubmit} className="space-y-4">
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="col-span-2">
                 <Label>Registration Number</Label>
                 <Input name="registration_number" required className="mt-1" placeholder="e.g., ABC-123" />
@@ -582,11 +592,11 @@ export default function Transport() {
                 </Select>
               </div>
             </div>
-            <DialogFooter>
-              <Button type="button" variant="outline" onClick={() => setShowVehicleDialog(false)}>
+            <DialogFooter className="flex-col sm:flex-row gap-2">
+              <Button type="button" variant="outline" onClick={() => setShowVehicleDialog(false)} className="w-full sm:w-auto">
                 Cancel
               </Button>
-              <Button type="submit" className="sl-gradient">
+              <Button type="submit" className="bg-gradient-to-r from-[#1EB053] to-[#0072C6] hover:from-[#178f43] hover:to-[#005a9e] w-full sm:w-auto">
                 Add Vehicle
               </Button>
             </DialogFooter>

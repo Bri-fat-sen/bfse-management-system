@@ -168,7 +168,7 @@ export default function EmployeeDashboard() {
       </Card>
 
       {/* Quick Stats */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <StatCard
           title="Leave Balance"
           value={`${pendingLeaves.length} Pending`}
@@ -225,7 +225,7 @@ export default function EmployeeDashboard() {
                 <ScrollArea className="h-64">
                   <div className="space-y-3">
                     {leaveRequests.slice(0, 5).map((leave) => (
-                      <div key={leave.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
+                      <div key={leave.id} className="flex flex-col sm:flex-row sm:items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors gap-2 sm:gap-3">
                         <div className="flex items-center gap-3">
                           <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
                             leave.status === 'pending' ? 'bg-amber-100' : 

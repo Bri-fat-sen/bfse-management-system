@@ -559,8 +559,8 @@ export default function Sales() {
               ) : (
                 <div className="space-y-3">
                   {sales.map((sale) => (
-                    <div key={sale.id} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
-                      <div className="flex items-center gap-4">
+                    <div key={sale.id} className="flex flex-col sm:flex-row sm:items-center justify-between p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors gap-3">
+                      <div className="flex items-center gap-3 sm:gap-4">
                         <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[#1EB053] to-[#1D5FC3] flex items-center justify-center">
                           <Receipt className="w-5 h-5 text-white" />
                         </div>
@@ -605,7 +605,7 @@ export default function Sales() {
 
       {/* Checkout Dialog */}
       <Dialog open={showCheckout} onOpenChange={setShowCheckout}>
-        <DialogContent className="max-w-md">
+        <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto w-[95vw] sm:w-full">
           <DialogHeader>
             <DialogTitle>Complete Sale</DialogTitle>
           </DialogHeader>

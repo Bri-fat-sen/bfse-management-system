@@ -614,12 +614,17 @@ export default function Inventory() {
 
       {/* Product Dialog */}
       <Dialog open={showProductDialog} onOpenChange={setShowProductDialog}>
-        <DialogContent className="max-w-lg">
+        <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto w-[95vw] sm:w-full">
           <DialogHeader>
+            <div className="flex h-1 w-16 rounded-full overflow-hidden mb-3">
+              <div className="flex-1 bg-[#1EB053]" />
+              <div className="flex-1 bg-white border-y border-gray-200" />
+              <div className="flex-1 bg-[#0072C6]" />
+            </div>
             <DialogTitle>{editingProduct ? 'Edit Product' : 'Add New Product'}</DialogTitle>
           </DialogHeader>
           <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="col-span-2">
                 <Label>Product Name</Label>
                 <Input name="name" defaultValue={editingProduct?.name} required className="mt-1" />
@@ -670,11 +675,11 @@ export default function Inventory() {
                 <Textarea name="description" defaultValue={editingProduct?.description} className="mt-1" />
               </div>
             </div>
-            <DialogFooter>
-              <Button type="button" variant="outline" onClick={() => setShowProductDialog(false)}>
+            <DialogFooter className="flex-col sm:flex-row gap-2">
+              <Button type="button" variant="outline" onClick={() => setShowProductDialog(false)} className="w-full sm:w-auto">
                 Cancel
               </Button>
-              <Button type="submit" className="sl-gradient">
+              <Button type="submit" className="bg-gradient-to-r from-[#1EB053] to-[#0072C6] hover:from-[#178f43] hover:to-[#005a9e] w-full sm:w-auto">
                 {editingProduct ? 'Update' : 'Create'} Product
               </Button>
             </DialogFooter>

@@ -402,9 +402,9 @@ export default function HR() {
 
         <TabsContent value="payroll" className="mt-6">
           <Card>
-            <CardHeader className="flex flex-row items-center justify-between">
+            <CardHeader className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
               <CardTitle>Payroll Records</CardTitle>
-              <Button onClick={() => setShowPayrollDialog(true)} className="bg-[#1EB053] hover:bg-[#178f43]">
+              <Button onClick={() => setShowPayrollDialog(true)} className="bg-gradient-to-r from-[#1EB053] to-[#0072C6] hover:from-[#178f43] hover:to-[#005a9e] w-full sm:w-auto">
                 <Plus className="w-4 h-4 mr-2" />
                 Process Payroll
               </Button>
@@ -419,7 +419,7 @@ export default function HR() {
               ) : (
                 <div className="space-y-3">
                   {payrolls.map((payroll) => (
-                    <div key={payroll.id} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+                    <div key={payroll.id} className="flex flex-col sm:flex-row sm:items-center justify-between p-4 bg-gray-50 rounded-lg gap-3">
                       <div className="flex items-center gap-3">
                         <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[#1EB053] to-[#1D5FC3] flex items-center justify-center">
                           <DollarSign className="w-5 h-5 text-white" />
