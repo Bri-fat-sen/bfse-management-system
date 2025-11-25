@@ -31,6 +31,9 @@ import LowStockAlert from "@/components/dashboard/LowStockAlert";
 import TodayAttendance from "@/components/dashboard/TodayAttendance";
 import TransportSummary from "@/components/dashboard/TransportSummary";
 import FinanceSummary from "@/components/dashboard/FinanceSummary";
+import DriverDashboard from "@/components/dashboard/DriverDashboard";
+import SalesDashboard from "@/components/dashboard/SalesDashboard";
+import ManagerDashboard from "@/components/dashboard/ManagerDashboard";
 
 export default function Dashboard() {
   const { data: user } = useQuery({
@@ -46,6 +49,25 @@ export default function Dashboard() {
 
   const currentEmployee = employee?.[0];
   const orgId = currentEmployee?.organisation_id;
+  const userRole = currentEmployee?.role || 'read_only';
+
+  // Role-based dashboard routing
+  const isDriver = userRole === 'driver';
+  const isSalesStaff = ['retail_cashier', 'vehicle_sales'].includes(userRole);
+  const isManager = ['super_admin', 'org_admin', 'hr_admin', 'payroll_admin', 'warehouse_manager', 'accountant'].includes(userRole);
+
+  // Show role-specific dashboards
+  if (isDriver) {
+    return <DriverDashboard user={user} currentEmployee={currentEmployee} orgId={orgId} />;
+  }
+
+  if (isSalesStaff) {
+    return <SalesDashboard user={user} currentEmployee={currentEmployee} orgId={orgId} />;
+  }
+
+  if (isManager) {
+    return <ManagerDashboard user={user} currentEmployee={currentEmployee} orgId={orgId} />;
+  }
 
   const { data: employees = [] } = useQuery({
     queryKey: ['employees', orgId],
