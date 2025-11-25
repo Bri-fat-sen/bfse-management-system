@@ -100,6 +100,25 @@ export default function Sales() {
     enabled: !!orgId,
   });
 
+  // Fetch stock levels for the selected location
+  const { data: stockLevels = [] } = useQuery({
+    queryKey: ['stockLevels', orgId, selectedLocation],
+    queryFn: () => base44.entities.StockLevel.filter({ 
+      organisation_id: orgId, 
+      warehouse_id: selectedLocation 
+    }),
+    enabled: !!orgId && !!selectedLocation,
+  });
+
+  // Create a map of product stock at selected location
+  const locationStockMap = React.useMemo(() => {
+    const map = {};
+    stockLevels.forEach(sl => {
+      map[sl.product_id] = sl.available_quantity ?? sl.quantity ?? 0;
+    });
+    return map;
+  }, [stockLevels]);
+
   // Get location options based on sale type
   const getLocationOptions = () => {
     switch (saleType) {
@@ -118,10 +137,18 @@ export default function Sales() {
   const locationOptions = getLocationOptions();
   const selectedLocationData = locationOptions.find(l => l.id === selectedLocation);
 
-  // Reset location when sale type changes
+  // Reset location and cart when sale type changes
   React.useEffect(() => {
     setSelectedLocation("");
+    setCart([]);
   }, [saleType]);
+
+  // Clear cart when location changes (stock is location-specific)
+  React.useEffect(() => {
+    if (cart.length > 0) {
+      setCart([]);
+    }
+  }, [selectedLocation]);
 
   const createSaleMutation = useMutation({
     mutationFn: (saleData) => base44.entities.Sale.create(saleData),
@@ -151,18 +178,38 @@ export default function Sales() {
     },
   });
 
-  const filteredProducts = products.filter(p => 
-    p.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    p.sku?.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  // Filter products and add location-specific stock
+  const filteredProducts = React.useMemo(() => {
+    return products
+      .filter(p => 
+        p.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        p.sku?.toLowerCase().includes(searchTerm.toLowerCase())
+      )
+      .map(p => ({
+        ...p,
+        // Use location-specific stock if a location is selected, otherwise use product's general stock
+        location_stock: selectedLocation ? (locationStockMap[p.id] ?? 0) : p.stock_quantity
+      }));
+  }, [products, searchTerm, selectedLocation, locationStockMap]);
 
   const addToCart = (product) => {
+    if (!selectedLocation) {
+      toast({
+        title: "Select Location",
+        description: `Please select a ${saleType === 'vehicle' ? 'vehicle' : saleType === 'warehouse' ? 'warehouse' : 'store'} first.`,
+        variant: "destructive"
+      });
+      return;
+    }
+
+    const availableStock = product.location_stock;
     const existing = cart.find(item => item.product_id === product.id);
+    
     if (existing) {
-      if (existing.quantity >= product.stock_quantity) {
+      if (existing.quantity >= availableStock) {
         toast({
           title: "Stock Limit",
-          description: "Cannot add more than available stock.",
+          description: `Only ${availableStock} available at this location.`,
           variant: "destructive"
         });
         return;
@@ -173,10 +220,10 @@ export default function Sales() {
           : item
       ));
     } else {
-      if (product.stock_quantity < 1) {
+      if (availableStock < 1) {
         toast({
           title: "Out of Stock",
-          description: "This product is out of stock.",
+          description: "This product is not available at this location.",
           variant: "destructive"
         });
         return;
@@ -185,18 +232,27 @@ export default function Sales() {
         product_id: product.id,
         product_name: product.name,
         quantity: 1,
-        unit_price: saleType === 'wholesale' ? (product.wholesale_price || product.unit_price) : product.unit_price,
-        total: saleType === 'wholesale' ? (product.wholesale_price || product.unit_price) : product.unit_price
+        unit_price: saleType === 'warehouse' ? (product.wholesale_price || product.unit_price) : product.unit_price,
+        total: saleType === 'warehouse' ? (product.wholesale_price || product.unit_price) : product.unit_price
       }]);
     }
   };
 
   const updateQuantity = (productId, delta) => {
-    const product = products.find(p => p.id === productId);
+    const product = filteredProducts.find(p => p.id === productId);
+    const availableStock = product?.location_stock ?? 0;
+    
     setCart(cart.map(item => {
       if (item.product_id === productId) {
         const newQty = Math.max(1, item.quantity + delta);
-        if (newQty > product?.stock_quantity) return item;
+        if (newQty > availableStock) {
+          toast({
+            title: "Stock Limit",
+            description: `Only ${availableStock} available at this location.`,
+            variant: "destructive"
+          });
+          return item;
+        }
         return { ...item, quantity: newQty, total: newQty * item.unit_price };
       }
       return item;
@@ -237,15 +293,27 @@ export default function Sales() {
     
     createSaleMutation.mutate(saleData);
 
-    // Update stock quantities and create stock movements
+    // Update stock quantities at the location and create stock movements
     for (const item of cart) {
       const product = products.find(p => p.id === item.product_id);
+      const currentLocationStock = locationStockMap[item.product_id] ?? 0;
+      
       if (product) {
-        const newQuantity = Math.max(0, product.stock_quantity - item.quantity);
+        const newLocationStock = Math.max(0, currentLocationStock - item.quantity);
         
-        // Update product stock
+        // Update stock level at the specific location
+        const existingStockLevel = stockLevels.find(sl => sl.product_id === item.product_id);
+        if (existingStockLevel) {
+          await base44.entities.StockLevel.update(existingStockLevel.id, {
+            quantity: newLocationStock,
+            available_quantity: newLocationStock
+          });
+        }
+        
+        // Also update product's total stock
+        const newTotalStock = Math.max(0, product.stock_quantity - item.quantity);
         await base44.entities.Product.update(item.product_id, {
-          stock_quantity: newQuantity
+          stock_quantity: newTotalStock
         });
 
         // Create stock movement record
@@ -253,21 +321,22 @@ export default function Sales() {
           organisation_id: orgId,
           product_id: item.product_id,
           product_name: item.product_name,
-          warehouse_id: product.warehouse_id,
+          warehouse_id: selectedLocation,
+          warehouse_name: selectedLocationData?.name,
           movement_type: "out",
           quantity: item.quantity,
-          previous_stock: product.stock_quantity,
-          new_stock: newQuantity,
+          previous_stock: currentLocationStock,
+          new_stock: newLocationStock,
           reference_type: "sale",
           reference_id: saleData.sale_number,
           recorded_by: currentEmployee?.id,
           recorded_by_name: currentEmployee?.full_name,
-          notes: `Sale to ${customerName || 'Walk-in Customer'}`
+          notes: `${saleType} sale to ${customerName || 'Walk-in Customer'} from ${selectedLocationData?.name}`
         });
 
         // Check and create low stock alert if needed
         const threshold = product.low_stock_threshold || 10;
-        if (newQuantity <= threshold && newQuantity > 0) {
+        if (newLocationStock <= threshold && newLocationStock > 0) {
           const existingAlerts = await base44.entities.StockAlert.filter({
             organisation_id: orgId,
             product_id: item.product_id,
@@ -280,14 +349,15 @@ export default function Sales() {
               organisation_id: orgId,
               product_id: item.product_id,
               product_name: item.product_name,
-              warehouse_id: product.warehouse_id,
+              warehouse_id: selectedLocation,
+              warehouse_name: selectedLocationData?.name,
               alert_type: 'low_stock',
-              current_quantity: newQuantity,
+              current_quantity: newLocationStock,
               threshold_quantity: threshold,
               status: 'active'
             });
           }
-        } else if (newQuantity === 0) {
+        } else if (newLocationStock === 0) {
           const existingAlerts = await base44.entities.StockAlert.filter({
             organisation_id: orgId,
             product_id: item.product_id,
@@ -299,7 +369,8 @@ export default function Sales() {
               organisation_id: orgId,
               product_id: item.product_id,
               product_name: item.product_name,
-              warehouse_id: product.warehouse_id,
+              warehouse_id: selectedLocation,
+              warehouse_name: selectedLocationData?.name,
               alert_type: 'out_of_stock',
               current_quantity: 0,
               threshold_quantity: threshold,
@@ -309,6 +380,9 @@ export default function Sales() {
         }
       }
     }
+    
+    // Invalidate stock levels query
+    queryClient.invalidateQueries({ queryKey: ['stockLevels'] });
 
     // Log activity
     await base44.entities.ActivityLog.create({
@@ -437,38 +511,47 @@ export default function Sales() {
                 />
               ) : (
                 <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
-                  {filteredProducts.map((product) => (
-                    <Card
-                      key={product.id}
-                      className={`cursor-pointer hover:shadow-lg transition-all hover:scale-105 ${
-                        product.stock_quantity < 1 ? 'opacity-50' : ''
-                      }`}
-                      onClick={() => addToCart(product)}
-                    >
-                      <CardContent className="p-4">
-                        {product.image_url ? (
-                          <img
-                            src={product.image_url}
-                            alt={product.name}
-                            className="w-full h-20 object-cover rounded-lg mb-2"
-                          />
-                        ) : (
-                          <div className="w-full h-20 bg-gradient-to-br from-[#1EB053]/20 to-[#1D5FC3]/20 rounded-lg mb-2 flex items-center justify-center">
-                            <Package className="w-8 h-8 text-[#1D5FC3]" />
+                  {filteredProducts.map((product) => {
+                    const stockAtLocation = product.location_stock;
+                    const isOutOfStock = stockAtLocation < 1;
+                    
+                    return (
+                      <Card
+                        key={product.id}
+                        className={`cursor-pointer hover:shadow-lg transition-all hover:scale-105 ${
+                          isOutOfStock ? 'opacity-50' : ''
+                        }`}
+                        onClick={() => addToCart(product)}
+                      >
+                        <CardContent className="p-4">
+                          {product.image_url ? (
+                            <img
+                              src={product.image_url}
+                              alt={product.name}
+                              className="w-full h-20 object-cover rounded-lg mb-2"
+                            />
+                          ) : (
+                            <div className="w-full h-20 bg-gradient-to-br from-[#1EB053]/20 to-[#1D5FC3]/20 rounded-lg mb-2 flex items-center justify-center">
+                              <Package className="w-8 h-8 text-[#1D5FC3]" />
+                            </div>
+                          )}
+                          <h3 className="font-medium text-sm truncate">{product.name}</h3>
+                          <div className="flex items-center justify-between mt-1">
+                            <p className="text-[#1EB053] font-bold">
+                              Le {(saleType === 'warehouse' ? (product.wholesale_price || product.unit_price) : product.unit_price)?.toLocaleString()}
+                            </p>
+                            <Badge 
+                              variant={stockAtLocation > 0 ? "secondary" : "destructive"} 
+                              className="text-xs"
+                              title={selectedLocation ? "Stock at this location" : "Total stock"}
+                            >
+                              {stockAtLocation}
+                            </Badge>
                           </div>
-                        )}
-                        <h3 className="font-medium text-sm truncate">{product.name}</h3>
-                        <div className="flex items-center justify-between mt-1">
-                          <p className="text-[#1EB053] font-bold">
-                            Le {(saleType === 'warehouse' ? (product.wholesale_price || product.unit_price) : product.unit_price)?.toLocaleString()}
-                          </p>
-                          <Badge variant={product.stock_quantity > 0 ? "secondary" : "destructive"} className="text-xs">
-                            {product.stock_quantity}
-                          </Badge>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  ))}
+                        </CardContent>
+                      </Card>
+                    );
+                  })}
                 </div>
               )}
             </div>
