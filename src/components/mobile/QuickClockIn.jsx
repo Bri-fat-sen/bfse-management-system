@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { format } from "date-fns";
@@ -12,6 +12,13 @@ export default function QuickClockIn({ currentEmployee, orgId, todayAttendance }
   const queryClient = useQueryClient();
   const [location, setLocation] = useState(null);
   const [isLocating, setIsLocating] = useState(false);
+  const [currentTime, setCurrentTime] = useState(new Date());
+
+  // Update time every second
+  useEffect(() => {
+    const timer = setInterval(() => setCurrentTime(new Date()), 1000);
+    return () => clearInterval(timer);
+  }, []);
 
   const isClockedIn = todayAttendance?.clock_in_time && !todayAttendance?.clock_out_time;
   const isClockedOut = todayAttendance?.clock_out_time;
@@ -51,8 +58,12 @@ export default function QuickClockIn({ currentEmployee, orgId, todayAttendance }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['todayAttendance'] });
+      queryClient.invalidateQueries({ queryKey: ['myAttendance'] });
       queryClient.invalidateQueries({ queryKey: ['attendance'] });
       toast({ title: "Clocked In!", description: `Welcome, ${currentEmployee.first_name}!` });
+    },
+    onError: (error) => {
+      toast({ title: "Clock In Failed", description: error.message || "Please try again", variant: "destructive" });
     }
   });
 
@@ -74,12 +85,16 @@ export default function QuickClockIn({ currentEmployee, orgId, todayAttendance }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['todayAttendance'] });
+      queryClient.invalidateQueries({ queryKey: ['myAttendance'] });
       queryClient.invalidateQueries({ queryKey: ['attendance'] });
       toast({ title: "Clocked Out!", description: "Have a great day!" });
+    },
+    onError: (error) => {
+      toast({ title: "Clock Out Failed", description: error.message || "Please try again", variant: "destructive" });
     }
   });
 
-  React.useEffect(() => {
+  useEffect(() => {
     getLocation();
   }, []);
 
@@ -89,10 +104,10 @@ export default function QuickClockIn({ currentEmployee, orgId, todayAttendance }
         <div className="flex items-center justify-between mb-4">
           <div>
             <h3 className="font-semibold text-lg">Quick Clock</h3>
-            <p className="text-sm text-gray-500">{format(new Date(), 'EEEE, MMM d')}</p>
+            <p className="text-sm text-gray-500">{format(currentTime, 'EEEE, MMM d')}</p>
           </div>
           <div className="text-right">
-            <p className="text-2xl font-bold text-[#0F1F3C]">{format(new Date(), 'HH:mm')}</p>
+            <p className="text-2xl font-bold text-[#0F1F3C]">{format(currentTime, 'HH:mm:ss')}</p>
           </div>
         </div>
 
