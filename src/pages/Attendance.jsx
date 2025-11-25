@@ -148,7 +148,7 @@ export default function Attendance() {
           <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-6">
             <div>
               <p className="text-white/70 mb-2">{format(currentTime, 'EEEE, MMMM d, yyyy')}</p>
-              <div className="text-6xl md:text-7xl font-bold tracking-tight">
+              <div className="text-4xl sm:text-6xl md:text-7xl font-bold tracking-tight">
                 {format(currentTime, 'HH:mm:ss')}
               </div>
               <div className="flex items-center gap-2 mt-4">
@@ -169,7 +169,7 @@ export default function Attendance() {
               size="lg"
               onClick={handleClockAction}
               disabled={todayRecord?.clock_out_time || clockInMutation.isPending || clockOutMutation.isPending}
-              className={`h-32 w-32 rounded-full text-lg font-bold transition-all ${
+              className={`h-24 w-24 sm:h-32 sm:w-32 rounded-full text-base sm:text-lg font-bold transition-all ${
                 isClockedIn 
                   ? 'bg-red-500 hover:bg-red-600 hover:scale-105' 
                   : 'bg-[#1EB053] hover:bg-green-600 hover:scale-105'
@@ -246,8 +246,8 @@ export default function Attendance() {
           ) : (
             <div className="space-y-3">
               {monthlyAttendance.slice(0, 10).map((record) => (
-                <div key={record.id} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
-                  <div className="flex items-center gap-4">
+                <div key={record.id} className="flex flex-col sm:flex-row sm:items-center justify-between p-4 bg-gray-50 rounded-lg gap-3">
+                  <div className="flex items-center gap-3 sm:gap-4">
                     <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
                       record.status === 'present' ? 'bg-green-100' :
                       record.status === 'late' ? 'bg-amber-100' : 'bg-red-100'

@@ -181,7 +181,7 @@ export default function RolePermissions() {
           actionIcon={Shield}
         />
 
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 sm:gap-6">
           {/* Role Selector */}
           <Card className="lg:col-span-1">
             <CardHeader>
@@ -219,29 +219,29 @@ export default function RolePermissions() {
 
           {/* Permissions Matrix */}
           <Card className="lg:col-span-3">
-            <CardHeader className="flex flex-row items-center justify-between">
+            <CardHeader className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
               <div>
-                <CardTitle className="text-lg flex items-center gap-2">
-                  <Shield className="w-5 h-5 text-[#1EB053]" />
+                <CardTitle className="text-base sm:text-lg flex items-center gap-2">
+                  <Shield className="w-4 h-4 sm:w-5 sm:h-5 text-[#1EB053]" />
                   {selectedRoleInfo?.name} Permissions
                 </CardTitle>
-                <p className="text-sm text-gray-500 mt-1">{selectedRoleInfo?.description}</p>
+                <p className="text-xs sm:text-sm text-gray-500 mt-1">{selectedRoleInfo?.description}</p>
               </div>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 w-full sm:w-auto">
                 {hasChanges && (
                   <>
-                    <Button variant="outline" size="sm" onClick={handleReset}>
-                      <RefreshCw className="w-4 h-4 mr-1" />
-                      Reset
+                    <Button variant="outline" size="sm" onClick={handleReset} className="flex-1 sm:flex-none">
+                      <RefreshCw className="w-4 h-4 sm:mr-1" />
+                      <span className="hidden sm:inline">Reset</span>
                     </Button>
                     <Button 
                       size="sm" 
                       onClick={handleSaveAll}
-                      className="bg-[#1EB053] hover:bg-[#178f43]"
+                      className="bg-gradient-to-r from-[#1EB053] to-[#0072C6] hover:from-[#178f43] hover:to-[#005a9e] flex-1 sm:flex-none"
                       disabled={savePermissionMutation.isPending}
                     >
-                      <Save className="w-4 h-4 mr-1" />
-                      Save Changes
+                      <Save className="w-4 h-4 sm:mr-1" />
+                      <span className="hidden sm:inline">Save</span>
                     </Button>
                   </>
                 )}
@@ -326,9 +326,9 @@ export default function RolePermissions() {
           </CardHeader>
           <CardContent>
             {employees.filter(e => e.role === selectedRole).length === 0 ? (
-              <p className="text-gray-500 text-center py-8">No employees assigned to this role</p>
+            <p className="text-gray-500 text-center py-8">No employees assigned to this role</p>
             ) : (
-              <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-3">
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3">
                 {employees
                   .filter(e => e.role === selectedRole)
                   .map((emp) => (

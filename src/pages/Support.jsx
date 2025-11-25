@@ -85,7 +85,7 @@ export default function Support() {
       />
 
       {/* Quick Actions */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
         {[
           { icon: Book, title: "Documentation", description: "Browse guides and tutorials", color: "from-[#1EB053] to-emerald-600" },
           { icon: Video, title: "Video Tutorials", description: "Watch how-to videos", color: "from-[#1D5FC3] to-blue-600" },
@@ -178,7 +178,7 @@ export default function Support() {
                   placeholder="Describe your issue or question in detail..."
                 />
               </div>
-              <Button type="submit" className="w-full sl-gradient">
+              <Button type="submit" className="w-full bg-gradient-to-r from-[#1EB053] to-[#0072C6] hover:from-[#178f43] hover:to-[#005a9e]">
                 Send Message
               </Button>
             </form>

@@ -197,8 +197,8 @@ export default function ActivityLog() {
       {/* Filters */}
       <Card>
         <CardContent className="p-4">
-          <div className="flex flex-col md:flex-row gap-4">
-            <div className="relative flex-1">
+          <div className="flex flex-col gap-3 sm:gap-4">
+            <div className="relative">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
               <Input
                 placeholder="Search activities..."
@@ -207,26 +207,28 @@ export default function ActivityLog() {
                 className="pl-10"
               />
             </div>
-            <Select value={typeFilter} onValueChange={setTypeFilter}>
-              <SelectTrigger className="w-48">
-                <Filter className="w-4 h-4 mr-2" />
-                <SelectValue placeholder="Filter by type" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Types</SelectItem>
-                {actionTypes.map(type => (
-                  <SelectItem key={type} value={type}>
-                    {type.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <Input
-              type="date"
-              value={dateFilter}
-              onChange={(e) => setDateFilter(e.target.value)}
-              className="w-48"
-            />
+            <div className="flex flex-col sm:flex-row gap-3">
+              <Select value={typeFilter} onValueChange={setTypeFilter}>
+                <SelectTrigger className="w-full sm:w-48">
+                  <Filter className="w-4 h-4 mr-2" />
+                  <SelectValue placeholder="Filter by type" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Types</SelectItem>
+                  {actionTypes.map(type => (
+                    <SelectItem key={type} value={type}>
+                      {type.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <Input
+                type="date"
+                value={dateFilter}
+                onChange={(e) => setDateFilter(e.target.value)}
+                className="w-full sm:w-48"
+              />
+            </div>
           </div>
         </CardContent>
       </Card>
@@ -277,37 +279,31 @@ export default function ActivityLog() {
                         <div key={activity.id} className="relative">
                           <div className={`absolute -left-[34px] w-4 h-4 rounded-full ${colorClass.split(' ')[0]} border-2 border-white`} />
                           <div className="bg-gray-50 rounded-lg p-4 hover:bg-gray-100 transition-colors">
-                            <div className="flex items-start justify-between">
+                            <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3">
                               <div className="flex items-start gap-3">
-                                <div className={`w-10 h-10 rounded-lg ${colorClass} flex items-center justify-center`}>
-                                  <Icon className="w-5 h-5" />
+                                <div className={`w-8 h-8 sm:w-10 sm:h-10 rounded-lg ${colorClass} flex items-center justify-center shrink-0`}>
+                                  <Icon className="w-4 h-4 sm:w-5 sm:h-5" />
                                 </div>
-                                <div>
-                                  <p className="font-medium">{activity.description}</p>
-                                  <div className="flex items-center gap-2 mt-1 text-sm text-gray-500">
+                                <div className="min-w-0">
+                                  <p className="font-medium text-sm sm:text-base">{activity.description}</p>
+                                  <div className="flex flex-wrap items-center gap-1 sm:gap-2 mt-1 text-xs sm:text-sm text-gray-500">
                                     <span>{activity.employee_name || 'System'}</span>
                                     <span>•</span>
                                     <span>{activity.module || activity.action_type}</span>
                                     {activity.entity_type && (
                                       <>
-                                        <span>•</span>
+                                        <span className="hidden sm:inline">•</span>
                                         <Badge variant="outline" className="text-xs">{activity.entity_type}</Badge>
                                       </>
                                     )}
                                   </div>
-                                  {(activity.ip_address || activity.device_info) && (
-                                    <p className="text-xs text-gray-400 mt-1">
-                                      {activity.ip_address && `IP: ${activity.ip_address}`}
-                                      {activity.device_info && ` • ${activity.device_info}`}
-                                    </p>
-                                  )}
                                 </div>
                               </div>
-                              <div className="text-right">
-                                <p className="text-sm text-gray-500">
+                              <div className="text-left sm:text-right flex sm:flex-col items-center sm:items-end gap-2 sm:gap-0">
+                                <p className="text-xs sm:text-sm text-gray-500">
                                   {format(new Date(activity.created_date), 'HH:mm')}
                                 </p>
-                                <Badge variant="secondary" className="text-xs mt-1">
+                                <Badge variant="secondary" className="text-xs sm:mt-1">
                                   {activity.action_type?.replace(/_/g, ' ')}
                                 </Badge>
                               </div>

@@ -36,7 +36,6 @@ import { useToast } from "@/components/ui/use-toast";
 import PageHeader from "@/components/ui/PageHeader";
 import EmptyState from "@/components/ui/EmptyState";
 import MeetingDialog from "@/components/communication/MeetingDialog";
-import AnnouncementBanner from "@/components/communication/AnnouncementBanner";
 
 export default function Communication() {
   const { toast } = useToast();
@@ -168,27 +167,20 @@ export default function Communication() {
         subtitle="Chat, calls, and meetings"
       />
 
-      {/* Announcement Banner for Admins */}
-      <AnnouncementBanner 
-        employees={employees}
-        orgId={orgId}
-        currentEmployee={currentEmployee}
-      />
-
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList>
-          <TabsTrigger value="chat" className="flex items-center gap-2">
-            <MessageSquare className="w-4 h-4" />
+        <TabsList className="bg-gray-100 p-1">
+          <TabsTrigger value="chat" className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#1EB053] data-[state=active]:to-[#0072C6] data-[state=active]:text-white">
+            <MessageSquare className="w-3 h-3 sm:w-4 sm:h-4" />
             Chat
           </TabsTrigger>
-          <TabsTrigger value="meetings" className="flex items-center gap-2">
-            <Calendar className="w-4 h-4" />
+          <TabsTrigger value="meetings" className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#1EB053] data-[state=active]:to-[#0072C6] data-[state=active]:text-white">
+            <Calendar className="w-3 h-3 sm:w-4 sm:h-4" />
             Meetings
           </TabsTrigger>
         </TabsList>
 
-        <TabsContent value="chat" className="mt-6">
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 h-[600px]">
+        <TabsContent value="chat" className="mt-4 sm:mt-6">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6 h-auto lg:h-[600px]">
             {/* Chat List */}
             <Card className="lg:col-span-1 flex flex-col">
               <CardHeader className="pb-3">
@@ -371,9 +363,9 @@ export default function Communication() {
 
         <TabsContent value="meetings" className="mt-6">
           <Card>
-            <CardHeader className="flex flex-row items-center justify-between">
+            <CardHeader className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
               <CardTitle>Upcoming Meetings</CardTitle>
-              <Button onClick={() => setShowMeetingDialog(true)} className="bg-[#0072C6] hover:bg-[#005a9e]">
+              <Button onClick={() => setShowMeetingDialog(true)} className="bg-gradient-to-r from-[#1EB053] to-[#0072C6] hover:from-[#178f43] hover:to-[#005a9e] w-full sm:w-auto">
                 <Plus className="w-4 h-4 mr-2" />
                 Schedule Meeting
               </Button>
@@ -388,9 +380,9 @@ export default function Communication() {
               ) : (
                 <div className="space-y-4">
                   {meetings.map((meeting) => (
-                    <div key={meeting.id} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
-                      <div className="flex items-center gap-4">
-                        <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${
+                    <div key={meeting.id} className="flex flex-col sm:flex-row sm:items-center justify-between p-4 bg-gray-50 rounded-lg gap-3">
+                      <div className="flex items-center gap-3 sm:gap-4">
+                        <div className={`w-10 h-10 sm:w-12 sm:h-12 rounded-xl flex items-center justify-center ${
                           meeting.meeting_type === 'video' ? 'bg-blue-100' : 
                           meeting.meeting_type === 'audio' ? 'bg-green-100' : 'bg-purple-100'
                         }`}>

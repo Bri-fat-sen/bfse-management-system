@@ -179,10 +179,10 @@ export default function OrganisationManage() {
       />
 
       <Tabs defaultValue="general">
-        <TabsList>
-          <TabsTrigger value="general">General</TabsTrigger>
-          <TabsTrigger value="branding">Branding</TabsTrigger>
-          <TabsTrigger value="members">Members</TabsTrigger>
+        <TabsList className="flex flex-wrap h-auto gap-1 p-1 bg-gray-100">
+          <TabsTrigger value="general" className="text-xs sm:text-sm data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#1EB053] data-[state=active]:to-[#0072C6] data-[state=active]:text-white">General</TabsTrigger>
+          <TabsTrigger value="branding" className="text-xs sm:text-sm data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#1EB053] data-[state=active]:to-[#0072C6] data-[state=active]:text-white">Branding</TabsTrigger>
+          <TabsTrigger value="members" className="text-xs sm:text-sm data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#1EB053] data-[state=active]:to-[#0072C6] data-[state=active]:text-white">Members</TabsTrigger>
         </TabsList>
 
         {/* General Tab */}
@@ -327,7 +327,7 @@ export default function OrganisationManage() {
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <Label>Primary Color</Label>
                   <div className="flex gap-2 mt-1">
@@ -402,13 +402,13 @@ export default function OrganisationManage() {
         {/* Members Tab */}
         <TabsContent value="members" className="mt-6">
           <Card>
-            <CardHeader className="flex flex-row items-center justify-between">
+            <CardHeader className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
               <div>
                 <CardTitle>Team Members</CardTitle>
                 <CardDescription>{employees.length} members in this organisation</CardDescription>
               </div>
               {isAdmin && (
-                <Button onClick={() => setShowInviteDialog(true)} className="sl-gradient">
+                <Button onClick={() => setShowInviteDialog(true)} className="bg-gradient-to-r from-[#1EB053] to-[#0072C6] hover:from-[#178f43] hover:to-[#005a9e] w-full sm:w-auto">
                   <UserPlus className="w-4 h-4 mr-2" />
                   Invite Member
                 </Button>
@@ -417,7 +417,7 @@ export default function OrganisationManage() {
             <CardContent>
               <div className="space-y-3">
                 {employees.map((emp) => (
-                  <div key={emp.id} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+                  <div key={emp.id} className="flex flex-col sm:flex-row sm:items-center justify-between p-4 bg-gray-50 rounded-lg gap-3">
                     <div className="flex items-center gap-3">
                       <Avatar>
                         <AvatarImage src={emp.profile_photo} />
@@ -446,7 +446,7 @@ export default function OrganisationManage() {
 
       {/* Invite Dialog */}
       <Dialog open={showInviteDialog} onOpenChange={setShowInviteDialog}>
-        <DialogContent>
+        <DialogContent className="max-w-md w-[95vw] sm:w-full">
           <DialogHeader>
             <DialogTitle>Invite Team Member</DialogTitle>
           </DialogHeader>
@@ -479,9 +479,9 @@ export default function OrganisationManage() {
               </Select>
             </div>
           </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setShowInviteDialog(false)}>Cancel</Button>
-            <Button onClick={handleInvite} className="sl-gradient">Send Invitation</Button>
+          <DialogFooter className="flex-col sm:flex-row gap-2">
+            <Button variant="outline" onClick={() => setShowInviteDialog(false)} className="w-full sm:w-auto">Cancel</Button>
+            <Button onClick={handleInvite} className="bg-gradient-to-r from-[#1EB053] to-[#0072C6] hover:from-[#178f43] hover:to-[#005a9e] w-full sm:w-auto">Send Invitation</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
