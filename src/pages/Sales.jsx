@@ -125,7 +125,7 @@ export default function Sales() {
 
   const createSaleMutation = useMutation({
     mutationFn: (saleData) => base44.entities.Sale.create(saleData),
-    onSuccess: (data) => {
+    onSuccess: async (data) => {
       queryClient.invalidateQueries({ queryKey: ['sales'] });
       queryClient.invalidateQueries({ queryKey: ['products'] });
       setLastSale(data);
@@ -137,6 +137,17 @@ export default function Sales() {
         title: "Sale Completed",
         description: "The sale has been recorded successfully.",
       });
+
+      // Send auto sale report to admins
+      try {
+        await base44.functions.invoke('sendSaleReport', {
+          sale: data,
+          organisation: organisation?.[0],
+          employeeName: currentEmployee?.full_name
+        });
+      } catch (error) {
+        console.log('Sale report notification skipped:', error.message);
+      }
     },
   });
 
