@@ -86,8 +86,13 @@ export default function MeetingDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-lg">
+      <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto w-[95vw] sm:w-full">
         <DialogHeader>
+          <div className="flex h-1 w-16 rounded-full overflow-hidden mb-3">
+            <div className="flex-1 bg-[#1EB053]" />
+            <div className="flex-1 bg-white border-y border-gray-200" />
+            <div className="flex-1 bg-[#0072C6]" />
+          </div>
           <DialogTitle className="flex items-center gap-2">
             <Calendar className="w-5 h-5 text-[#0072C6]" />
             Schedule Meeting
@@ -105,7 +110,7 @@ export default function MeetingDialog({
             <Textarea name="description" placeholder="Meeting agenda and notes..." className="mt-1" />
           </div>
 
-          <div className="grid grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <div>
               <Label>Date</Label>
               <Input 
@@ -128,21 +133,21 @@ export default function MeetingDialog({
 
           <div>
             <Label>Meeting Type</Label>
-            <div className="flex gap-2 mt-2">
+            <div className="grid grid-cols-3 gap-2 mt-2">
               {[
                 { value: 'in_person', icon: Users, label: 'In Person' },
-                { value: 'video', icon: Video, label: 'Video Call' },
-                { value: 'audio', icon: Phone, label: 'Audio Call' },
+                { value: 'video', icon: Video, label: 'Video' },
+                { value: 'audio', icon: Phone, label: 'Audio' },
               ].map((type) => (
                 <Button
                   key={type.value}
                   type="button"
                   variant={meetingType === type.value ? "default" : "outline"}
-                  className={meetingType === type.value ? "bg-[#0072C6]" : ""}
+                  className={`${meetingType === type.value ? "bg-gradient-to-r from-[#1EB053] to-[#0072C6]" : ""} text-xs sm:text-sm px-2 sm:px-4`}
                   onClick={() => setMeetingType(type.value)}
                 >
-                  <type.icon className="w-4 h-4 mr-1" />
-                  {type.label}
+                  <type.icon className="w-4 h-4 sm:mr-1" />
+                  <span className="hidden sm:inline">{type.label}</span>
                 </Button>
               ))}
             </div>
@@ -197,11 +202,11 @@ export default function MeetingDialog({
             )}
           </div>
 
-          <DialogFooter>
-            <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+          <DialogFooter className="flex-col sm:flex-row gap-2">
+            <Button type="button" variant="outline" onClick={() => onOpenChange(false)} className="w-full sm:w-auto">
               Cancel
             </Button>
-            <Button type="submit" className="bg-[#0072C6] hover:bg-[#005a9e]" disabled={createMeetingMutation.isPending}>
+            <Button type="submit" className="bg-gradient-to-r from-[#1EB053] to-[#0072C6] hover:from-[#178f43] hover:to-[#005a9e] text-white shadow-lg w-full sm:w-auto" disabled={createMeetingMutation.isPending}>
               {createMeetingMutation.isPending ? "Scheduling..." : "Schedule Meeting"}
             </Button>
           </DialogFooter>
