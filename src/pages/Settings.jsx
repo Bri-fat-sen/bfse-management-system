@@ -29,7 +29,6 @@ import { toast } from "sonner";
 import PageHeader from "@/components/ui/PageHeader";
 
 export default function Settings() {
-  const { toast } = useToast();
   const queryClient = useQueryClient();
   const [activeTab, setActiveTab] = useState("profile");
 
