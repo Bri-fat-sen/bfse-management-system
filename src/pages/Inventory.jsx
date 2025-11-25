@@ -16,7 +16,9 @@ import {
   ArrowRightLeft,
   FileText,
   Bell,
-  MapPin
+  MapPin,
+  Calendar,
+  Layers
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -49,6 +51,9 @@ import StockLevelsView from "@/components/inventory/StockLevelsView";
 import StockAlerts from "@/components/inventory/StockAlerts";
 import InventoryReports from "@/components/inventory/InventoryReports";
 import StockTransferDialog from "@/components/inventory/StockTransferDialog";
+import BatchTrackingTab from "@/components/inventory/BatchTrackingTab";
+import ExpiryAlertsCard from "@/components/inventory/ExpiryAlertsCard";
+import BatchReportsTab from "@/components/inventory/BatchReportsTab";
 import { PermissionGate } from "@/components/permissions/PermissionGate";
 
 export default function Inventory() {
@@ -110,6 +115,12 @@ export default function Inventory() {
   const { data: stockAlerts = [] } = useQuery({
     queryKey: ['stockAlerts', orgId],
     queryFn: () => base44.entities.StockAlert.filter({ organisation_id: orgId }),
+    enabled: !!orgId,
+  });
+
+  const { data: inventoryBatches = [] } = useQuery({
+    queryKey: ['inventoryBatches', orgId],
+    queryFn: () => base44.entities.InventoryBatch.filter({ organisation_id: orgId }),
     enabled: !!orgId,
   });
 
@@ -264,9 +275,17 @@ export default function Inventory() {
                 </span>
               )}
             </TabsTrigger>
+            <TabsTrigger value="batches">
+              <Layers className="w-4 h-4 mr-1" />
+              Batches
+            </TabsTrigger>
             <TabsTrigger value="reports">
               <FileText className="w-4 h-4 mr-1" />
               Reports
+            </TabsTrigger>
+            <TabsTrigger value="batch_reports">
+              <Calendar className="w-4 h-4 mr-1" />
+              Expiry Reports
             </TabsTrigger>
             <TabsTrigger value="warehouses">Warehouses</TabsTrigger>
           </TabsList>
@@ -478,9 +497,25 @@ export default function Inventory() {
 
           {/* Alerts Tab */}
           <TabsContent value="alerts" className="mt-6">
-            <StockAlerts
-              alerts={stockAlerts}
+            <div className="space-y-4">
+              <ExpiryAlertsCard
+                orgId={orgId}
+                currentEmployee={currentEmployee}
+              />
+              <StockAlerts
+                alerts={stockAlerts}
+                products={products}
+                orgId={orgId}
+                currentEmployee={currentEmployee}
+              />
+            </div>
+          </TabsContent>
+
+          {/* Batches Tab */}
+          <TabsContent value="batches" className="mt-6">
+            <BatchTrackingTab
               products={products}
+              warehouses={warehouses}
               orgId={orgId}
               currentEmployee={currentEmployee}
             />
@@ -492,6 +527,15 @@ export default function Inventory() {
               products={products}
               stockMovements={stockMovements}
               categories={categories}
+              warehouses={warehouses}
+            />
+          </TabsContent>
+
+          {/* Batch Reports Tab */}
+          <TabsContent value="batch_reports" className="mt-6">
+            <BatchReportsTab
+              batches={inventoryBatches}
+              products={products}
               warehouses={warehouses}
             />
           </TabsContent>
