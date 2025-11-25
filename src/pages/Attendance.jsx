@@ -1,34 +1,73 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useMemo } from "react";
 import { base44 } from "@/api/base44Client";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { format } from "date-fns";
+import { useQuery } from "@tanstack/react-query";
+import { format, subDays, startOfMonth, endOfMonth, parseISO } from "date-fns";
 import {
   Clock,
-  LogIn,
-  LogOut,
+  Users,
   MapPin,
   Calendar,
   CheckCircle,
   XCircle,
-  Timer
+  AlertCircle,
+  TrendingUp,
+  Building2,
+  Filter,
+  Download,
+  BarChart3
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { useToast } from "@/components/ui/use-toast";
+import { Input } from "@/components/ui/input";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+  PieChart,
+  Pie,
+  Cell,
+  LineChart,
+  Line,
+  Legend
+} from 'recharts';
 import PageHeader from "@/components/ui/PageHeader";
 import StatCard from "@/components/ui/StatCard";
+import ProtectedPage from "@/components/permissions/ProtectedPage";
+import QuickClockIn from "@/components/mobile/QuickClockIn";
 import AttendanceReportExport from "@/components/attendance/AttendanceReportExport";
 
-export default function Attendance() {
-  const { toast } = useToast();
-  const queryClient = useQueryClient();
-  const [currentTime, setCurrentTime] = useState(new Date());
+const COLORS = ['#1EB053', '#0072C6', '#D4AF37', '#EF4444', '#9333EA', '#F59E0B'];
 
-  useEffect(() => {
-    const timer = setInterval(() => setCurrentTime(new Date()), 1000);
-    return () => clearInterval(timer);
-  }, []);
+export default function Attendance() {
+  const [activeTab, setActiveTab] = useState("overview");
+  const [dateRange, setDateRange] = useState("month");
+  const [startDate, setStartDate] = useState(format(startOfMonth(new Date()), 'yyyy-MM-dd'));
+  const [endDate, setEndDate] = useState(format(new Date(), 'yyyy-MM-dd'));
+  const [selectedDepartment, setSelectedDepartment] = useState("all");
+  const [selectedLocation, setSelectedLocation] = useState("all");
+  const [searchTerm, setSearchTerm] = useState("");
 
   const { data: user } = useQuery({
     queryKey: ['currentUser'],
@@ -50,240 +89,558 @@ export default function Attendance() {
     enabled: !!orgId,
   });
 
-  const { data: todayAttendance, refetch: refetchToday } = useQuery({
+  const { data: employees = [] } = useQuery({
+    queryKey: ['allEmployees', orgId],
+    queryFn: () => base44.entities.Employee.filter({ organisation_id: orgId }),
+    enabled: !!orgId,
+  });
+
+  const { data: allAttendance = [] } = useQuery({
+    queryKey: ['allAttendance', orgId],
+    queryFn: () => base44.entities.Attendance.filter({ organisation_id: orgId }, '-date', 1000),
+    enabled: !!orgId,
+  });
+
+  const { data: todayAttendanceData } = useQuery({
     queryKey: ['todayAttendance', currentEmployee?.id],
-    queryFn: () => base44.entities.Attendance.filter({ 
-      employee_id: currentEmployee?.id,
-      date: format(new Date(), 'yyyy-MM-dd')
-    }),
+    queryFn: async () => {
+      const records = await base44.entities.Attendance.filter({ 
+        employee_id: currentEmployee?.id,
+        date: format(new Date(), 'yyyy-MM-dd')
+      });
+      return records[0];
+    },
     enabled: !!currentEmployee?.id,
   });
 
-  const { data: monthlyAttendance = [] } = useQuery({
-    queryKey: ['monthlyAttendance', currentEmployee?.id],
-    queryFn: () => base44.entities.Attendance.filter({ 
-      employee_id: currentEmployee?.id
-    }, '-date', 30),
-    enabled: !!currentEmployee?.id,
+  const { data: warehouses = [] } = useQuery({
+    queryKey: ['warehouses', orgId],
+    queryFn: () => base44.entities.Warehouse.filter({ organisation_id: orgId }),
+    enabled: !!orgId,
   });
 
-  const todayRecord = todayAttendance?.[0];
-  const isClockedIn = todayRecord?.clock_in_time && !todayRecord?.clock_out_time;
+  // Get unique departments and locations
+  const departments = useMemo(() => {
+    const deps = [...new Set(employees.map(e => e.department).filter(Boolean))];
+    return deps;
+  }, [employees]);
 
-  const clockInMutation = useMutation({
-    mutationFn: () => base44.entities.Attendance.create({
-      organisation_id: orgId,
-      employee_id: currentEmployee?.id,
-      employee_name: currentEmployee?.full_name,
-      date: format(new Date(), 'yyyy-MM-dd'),
-      clock_in_time: format(new Date(), 'HH:mm:ss'),
-      status: 'present',
-      clock_in_device: navigator.userAgent.slice(0, 100),
-    }),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['todayAttendance'] });
-      // Log activity
-      base44.entities.ActivityLog.create({
-        organisation_id: orgId,
-        employee_id: currentEmployee?.id,
-        employee_name: currentEmployee?.full_name,
-        action_type: 'clock_in',
-        module: 'Attendance',
-        description: `Clocked in at ${format(new Date(), 'HH:mm')}`,
-      });
-      toast({ title: "Clocked In", description: `Welcome! You clocked in at ${format(new Date(), 'HH:mm')}` });
-    },
-  });
+  const locations = useMemo(() => {
+    const locs = [...new Set(allAttendance.map(a => a.clock_in_location).filter(Boolean))];
+    return locs.slice(0, 20); // Limit to 20 unique locations
+  }, [allAttendance]);
 
-  const clockOutMutation = useMutation({
-    mutationFn: () => {
-      const clockInTime = new Date(`${todayRecord.date}T${todayRecord.clock_in_time}`);
-      const clockOutTime = new Date();
-      const hoursWorked = (clockOutTime - clockInTime) / (1000 * 60 * 60);
-      
-      return base44.entities.Attendance.update(todayRecord.id, {
-        clock_out_time: format(clockOutTime, 'HH:mm:ss'),
-        total_hours: parseFloat(hoursWorked.toFixed(2)),
-        clock_out_device: navigator.userAgent.slice(0, 100),
-      });
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['todayAttendance'] });
-      // Log activity
-      base44.entities.ActivityLog.create({
-        organisation_id: orgId,
-        employee_id: currentEmployee?.id,
-        employee_name: currentEmployee?.full_name,
-        action_type: 'clock_out',
-        module: 'Attendance',
-        description: `Clocked out at ${format(new Date(), 'HH:mm')}`,
-      });
-      toast({ title: "Clocked Out", description: `Goodbye! You clocked out at ${format(new Date(), 'HH:mm')}` });
-    },
-  });
-
-  const handleClockAction = () => {
-    if (isClockedIn) {
-      clockOutMutation.mutate();
-    } else if (!todayRecord) {
-      clockInMutation.mutate();
+  // Handle date range changes
+  const handleDateRangeChange = (range) => {
+    setDateRange(range);
+    const today = new Date();
+    switch (range) {
+      case 'today':
+        setStartDate(format(today, 'yyyy-MM-dd'));
+        setEndDate(format(today, 'yyyy-MM-dd'));
+        break;
+      case 'week':
+        setStartDate(format(subDays(today, 7), 'yyyy-MM-dd'));
+        setEndDate(format(today, 'yyyy-MM-dd'));
+        break;
+      case 'month':
+        setStartDate(format(startOfMonth(today), 'yyyy-MM-dd'));
+        setEndDate(format(today, 'yyyy-MM-dd'));
+        break;
+      case 'custom':
+        break;
     }
   };
 
-  // Calculate stats
-  const presentDays = monthlyAttendance.filter(a => a.status === 'present').length;
-  const totalHours = monthlyAttendance.reduce((sum, a) => sum + (a.total_hours || 0), 0);
-  const avgHours = monthlyAttendance.length > 0 ? (totalHours / monthlyAttendance.length).toFixed(1) : 0;
+  // Filter attendance by date range, department, and location
+  const filteredAttendance = useMemo(() => {
+    return allAttendance.filter(a => {
+      if (a.date < startDate || a.date > endDate) return false;
+      
+      if (selectedDepartment !== 'all') {
+        const emp = employees.find(e => e.id === a.employee_id);
+        if (emp?.department !== selectedDepartment) return false;
+      }
+      
+      if (selectedLocation !== 'all') {
+        if (a.clock_in_location !== selectedLocation) return false;
+      }
+      
+      if (searchTerm) {
+        const emp = employees.find(e => e.id === a.employee_id);
+        if (!emp?.full_name?.toLowerCase().includes(searchTerm.toLowerCase())) return false;
+      }
+      
+      return true;
+    });
+  }, [allAttendance, startDate, endDate, selectedDepartment, selectedLocation, searchTerm, employees]);
+
+  // Calculate analytics
+  const analytics = useMemo(() => {
+    const today = format(new Date(), 'yyyy-MM-dd');
+    const todayRecords = allAttendance.filter(a => a.date === today);
+    const presentToday = todayRecords.filter(a => a.status === 'present' || a.clock_in_time);
+    const lateToday = todayRecords.filter(a => a.status === 'late');
+    const absentToday = employees.filter(e => 
+      e.status === 'active' && !todayRecords.some(a => a.employee_id === e.id)
+    );
+
+    // Average hours
+    const totalHours = filteredAttendance.reduce((sum, a) => sum + (a.total_hours || 0), 0);
+    const avgHours = filteredAttendance.length > 0 ? totalHours / filteredAttendance.length : 0;
+
+    // By status
+    const byStatus = {
+      present: filteredAttendance.filter(a => a.status === 'present').length,
+      late: filteredAttendance.filter(a => a.status === 'late').length,
+      absent: filteredAttendance.filter(a => a.status === 'absent').length,
+      leave: filteredAttendance.filter(a => a.status === 'leave').length,
+    };
+
+    // By department
+    const byDepartment = {};
+    filteredAttendance.forEach(a => {
+      const emp = employees.find(e => e.id === a.employee_id);
+      const dept = emp?.department || 'Unknown';
+      if (!byDepartment[dept]) byDepartment[dept] = { present: 0, late: 0, absent: 0, hours: 0 };
+      if (a.status === 'present') byDepartment[dept].present++;
+      if (a.status === 'late') byDepartment[dept].late++;
+      if (a.status === 'absent') byDepartment[dept].absent++;
+      byDepartment[dept].hours += a.total_hours || 0;
+    });
+
+    // By location
+    const byLocation = {};
+    filteredAttendance.forEach(a => {
+      const loc = a.clock_in_location || 'Unknown';
+      byLocation[loc] = (byLocation[loc] || 0) + 1;
+    });
+
+    // Daily trend
+    const dailyTrend = {};
+    filteredAttendance.forEach(a => {
+      if (!dailyTrend[a.date]) dailyTrend[a.date] = { date: a.date, present: 0, late: 0, absent: 0 };
+      if (a.status === 'present') dailyTrend[a.date].present++;
+      else if (a.status === 'late') dailyTrend[a.date].late++;
+      else dailyTrend[a.date].absent++;
+    });
+
+    return {
+      presentToday: presentToday.length,
+      lateToday: lateToday.length,
+      absentToday: absentToday.length,
+      totalEmployees: employees.filter(e => e.status === 'active').length,
+      avgHours: avgHours.toFixed(1),
+      totalHours: totalHours.toFixed(1),
+      byStatus,
+      byDepartment: Object.entries(byDepartment).map(([name, data]) => ({ name, ...data })),
+      byLocation: Object.entries(byLocation).map(([name, value]) => ({ name: name.substring(0, 20), value })).slice(0, 10),
+      dailyTrend: Object.values(dailyTrend).sort((a, b) => a.date.localeCompare(b.date)),
+    };
+  }, [allAttendance, filteredAttendance, employees]);
+
+  const statusPieData = [
+    { name: 'Present', value: analytics.byStatus.present, color: '#1EB053' },
+    { name: 'Late', value: analytics.byStatus.late, color: '#F59E0B' },
+    { name: 'Absent', value: analytics.byStatus.absent, color: '#EF4444' },
+    { name: 'On Leave', value: analytics.byStatus.leave, color: '#0072C6' },
+  ].filter(d => d.value > 0);
 
   return (
-    <div className="space-y-6">
-      <PageHeader
-        title="Clock In / Out"
-        subtitle="Track your attendance and working hours"
-      />
+    <ProtectedPage module="attendance">
+      <div className="space-y-6">
+        <PageHeader
+          title="Attendance Analytics"
+          subtitle="Monitor staff attendance across all locations"
+        />
 
-      {/* Live Clock */}
-      <Card className="bg-gradient-to-r from-[#0F1F3C] to-[#1D5FC3] text-white overflow-hidden">
-        <CardContent className="p-8">
-          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-6">
-            <div>
-              <p className="text-white/70 mb-2">{format(currentTime, 'EEEE, MMMM d, yyyy')}</p>
-              <div className="text-4xl sm:text-6xl md:text-7xl font-bold tracking-tight">
-                {format(currentTime, 'HH:mm:ss')}
-              </div>
-              <div className="flex items-center gap-2 mt-4">
-                <div className={`w-3 h-3 rounded-full ${isClockedIn ? 'bg-green-400 animate-pulse' : 'bg-gray-400'}`} />
-                <span className="text-lg">
-                  {isClockedIn ? 'Currently Clocked In' : todayRecord?.clock_out_time ? 'Clocked Out for Today' : 'Not Clocked In'}
-                </span>
-              </div>
-              {todayRecord?.clock_in_time && (
-                <p className="text-white/70 mt-2">
-                  Clocked in at: {todayRecord.clock_in_time}
-                  {todayRecord.clock_out_time && ` • Out at: ${todayRecord.clock_out_time}`}
-                </p>
-              )}
-            </div>
-            
-            <Button
-              size="lg"
-              onClick={handleClockAction}
-              disabled={todayRecord?.clock_out_time || clockInMutation.isPending || clockOutMutation.isPending}
-              className={`h-24 w-24 sm:h-32 sm:w-32 rounded-full text-base sm:text-lg font-bold transition-all ${
-                isClockedIn 
-                  ? 'bg-red-500 hover:bg-red-600 hover:scale-105' 
-                  : 'bg-[#1EB053] hover:bg-green-600 hover:scale-105'
-              } ${todayRecord?.clock_out_time ? 'opacity-50 cursor-not-allowed' : ''}`}
-            >
-              {isClockedIn ? (
-                <div className="flex flex-col items-center">
-                  <LogOut className="w-8 h-8 mb-1" />
-                  Clock Out
-                </div>
-              ) : todayRecord?.clock_out_time ? (
-                <div className="flex flex-col items-center">
-                  <CheckCircle className="w-8 h-8 mb-1" />
-                  Done
-                </div>
-              ) : (
-                <div className="flex flex-col items-center">
-                  <LogIn className="w-8 h-8 mb-1" />
-                  Clock In
-                </div>
-              )}
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Stats */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <StatCard
-          title="Days Present (This Month)"
-          value={presentDays}
-          icon={Calendar}
-          color="green"
-        />
-        <StatCard
-          title="Total Hours (This Month)"
-          value={`${totalHours.toFixed(1)} hrs`}
-          icon={Clock}
-          color="blue"
-        />
-        <StatCard
-          title="Average Hours/Day"
-          value={`${avgHours} hrs`}
-          icon={Timer}
-          color="gold"
-        />
-        <StatCard
-          title="Today's Hours"
-          value={todayRecord?.total_hours ? `${todayRecord.total_hours.toFixed(1)} hrs` : '-'}
-          icon={CheckCircle}
-          color="navy"
-        />
-      </div>
-
-      {/* Recent Attendance */}
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between">
-          <CardTitle className="flex items-center gap-2">
-            <Calendar className="w-5 h-5" />
-            Recent Attendance
-          </CardTitle>
-          <AttendanceReportExport 
-            attendance={monthlyAttendance}
-            employee={currentEmployee}
-            organisation={organisation?.[0]}
+        {/* My Clock In/Out Section */}
+        {currentEmployee && orgId && (
+          <QuickClockIn 
+            currentEmployee={currentEmployee}
+            orgId={orgId}
+            todayAttendance={todayAttendanceData}
           />
-        </CardHeader>
-        <CardContent>
-          {monthlyAttendance.length === 0 ? (
-            <div className="text-center py-8 text-gray-500">
-              <Clock className="w-12 h-12 mx-auto mb-3 text-gray-300" />
-              <p>No attendance records yet</p>
+        )}
+
+        {/* Today's Summary */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <StatCard
+            title="Present Today"
+            value={analytics.presentToday}
+            subtitle={`of ${analytics.totalEmployees} employees`}
+            icon={CheckCircle}
+            color="green"
+          />
+          <StatCard
+            title="Late Today"
+            value={analytics.lateToday}
+            icon={AlertCircle}
+            color="gold"
+          />
+          <StatCard
+            title="Absent Today"
+            value={analytics.absentToday}
+            icon={XCircle}
+            color="red"
+          />
+          <StatCard
+            title="Avg. Hours/Day"
+            value={`${analytics.avgHours} hrs`}
+            icon={Clock}
+            color="blue"
+          />
+        </div>
+
+        {/* Filters */}
+        <Card>
+          <CardContent className="p-4">
+            <div className="flex flex-wrap items-center gap-4">
+              <div className="flex items-center gap-2">
+                <Filter className="w-4 h-4 text-gray-500" />
+                <span className="font-medium text-sm">Period:</span>
+              </div>
+              <div className="flex gap-2">
+                {['today', 'week', 'month', 'custom'].map((range) => (
+                  <Button
+                    key={range}
+                    variant={dateRange === range ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => handleDateRangeChange(range)}
+                    className={dateRange === range ? "bg-[#1EB053] hover:bg-[#178f43]" : ""}
+                  >
+                    {range.charAt(0).toUpperCase() + range.slice(1)}
+                  </Button>
+                ))}
+              </div>
+              
+              {dateRange === 'custom' && (
+                <div className="flex items-center gap-2">
+                  <Input
+                    type="date"
+                    value={startDate}
+                    onChange={(e) => setStartDate(e.target.value)}
+                    className="w-36"
+                  />
+                  <span className="text-gray-500">to</span>
+                  <Input
+                    type="date"
+                    value={endDate}
+                    onChange={(e) => setEndDate(e.target.value)}
+                    className="w-36"
+                  />
+                </div>
+              )}
+
+              <Select value={selectedDepartment} onValueChange={setSelectedDepartment}>
+                <SelectTrigger className="w-40">
+                  <Building2 className="w-4 h-4 mr-2" />
+                  <SelectValue placeholder="Department" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Departments</SelectItem>
+                  {departments.map(dept => (
+                    <SelectItem key={dept} value={dept}>{dept}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+
+              <Select value={selectedLocation} onValueChange={setSelectedLocation}>
+                <SelectTrigger className="w-48">
+                  <MapPin className="w-4 h-4 mr-2" />
+                  <SelectValue placeholder="Location" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Locations</SelectItem>
+                  {locations.map(loc => (
+                    <SelectItem key={loc} value={loc}>{loc.substring(0, 30)}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+
+              <Input
+                placeholder="Search employee..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="w-48 ml-auto"
+              />
             </div>
-          ) : (
-            <div className="space-y-3">
-              {monthlyAttendance.slice(0, 10).map((record) => (
-                <div key={record.id} className="flex flex-col sm:flex-row sm:items-center justify-between p-4 bg-gray-50 rounded-lg gap-3">
-                  <div className="flex items-center gap-3 sm:gap-4">
-                    <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
-                      record.status === 'present' ? 'bg-green-100' :
-                      record.status === 'late' ? 'bg-amber-100' : 'bg-red-100'
-                    }`}>
-                      {record.status === 'present' ? (
-                        <CheckCircle className="w-5 h-5 text-green-600" />
-                      ) : record.status === 'late' ? (
-                        <Clock className="w-5 h-5 text-amber-600" />
-                      ) : (
-                        <XCircle className="w-5 h-5 text-red-600" />
-                      )}
-                    </div>
-                    <div>
-                      <p className="font-medium">{format(new Date(record.date), 'EEEE, MMMM d')}</p>
-                      <p className="text-sm text-gray-500">
-                        {record.clock_in_time || '--:--'} - {record.clock_out_time || '--:--'}
-                      </p>
-                    </div>
+          </CardContent>
+        </Card>
+
+        <Tabs value={activeTab} onValueChange={setActiveTab}>
+          <TabsList className="bg-gray-100 p-1">
+            <TabsTrigger value="overview" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#1EB053] data-[state=active]:to-[#0072C6] data-[state=active]:text-white">
+              <BarChart3 className="w-4 h-4 mr-1" />
+              Overview
+            </TabsTrigger>
+            <TabsTrigger value="by-department" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#1EB053] data-[state=active]:to-[#0072C6] data-[state=active]:text-white">
+              <Building2 className="w-4 h-4 mr-1" />
+              By Department
+            </TabsTrigger>
+            <TabsTrigger value="by-location" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#1EB053] data-[state=active]:to-[#0072C6] data-[state=active]:text-white">
+              <MapPin className="w-4 h-4 mr-1" />
+              By Location
+            </TabsTrigger>
+            <TabsTrigger value="records" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#1EB053] data-[state=active]:to-[#0072C6] data-[state=active]:text-white">
+              <Calendar className="w-4 h-4 mr-1" />
+              Records
+            </TabsTrigger>
+          </TabsList>
+
+          {/* Overview Tab */}
+          <TabsContent value="overview" className="mt-6 space-y-6">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              {/* Status Distribution */}
+              <Card>
+                <CardHeader>
+                  <CardTitle>Attendance Status Distribution</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <ResponsiveContainer width="100%" height={300}>
+                    <PieChart>
+                      <Pie
+                        data={statusPieData}
+                        cx="50%"
+                        cy="50%"
+                        innerRadius={60}
+                        outerRadius={100}
+                        dataKey="value"
+                        label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                      >
+                        {statusPieData.map((entry, index) => (
+                          <Cell key={index} fill={entry.color} />
+                        ))}
+                      </Pie>
+                      <Tooltip />
+                    </PieChart>
+                  </ResponsiveContainer>
+                </CardContent>
+              </Card>
+
+              {/* Daily Trend */}
+              <Card>
+                <CardHeader>
+                  <CardTitle>Daily Attendance Trend</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <ResponsiveContainer width="100%" height={300}>
+                    <LineChart data={analytics.dailyTrend.slice(-14)}>
+                      <CartesianGrid strokeDasharray="3 3" />
+                      <XAxis dataKey="date" tickFormatter={(d) => format(parseISO(d), 'MMM d')} />
+                      <YAxis />
+                      <Tooltip labelFormatter={(d) => format(parseISO(d), 'MMM d, yyyy')} />
+                      <Legend />
+                      <Line type="monotone" dataKey="present" stroke="#1EB053" strokeWidth={2} name="Present" />
+                      <Line type="monotone" dataKey="late" stroke="#F59E0B" strokeWidth={2} name="Late" />
+                    </LineChart>
+                  </ResponsiveContainer>
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* Summary Stats */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Period Summary</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                  <div className="text-center p-4 bg-green-50 rounded-xl">
+                    <p className="text-3xl font-bold text-[#1EB053]">{analytics.byStatus.present}</p>
+                    <p className="text-sm text-gray-600">Present Days</p>
                   </div>
-                  <div className="text-right">
-                    <Badge variant={
-                      record.status === 'present' ? 'secondary' :
-                      record.status === 'late' ? 'outline' : 'destructive'
-                    }>
-                      {record.status}
-                    </Badge>
-                    {record.total_hours && (
-                      <p className="text-sm text-gray-500 mt-1">{record.total_hours.toFixed(1)} hours</p>
-                    )}
+                  <div className="text-center p-4 bg-amber-50 rounded-xl">
+                    <p className="text-3xl font-bold text-amber-600">{analytics.byStatus.late}</p>
+                    <p className="text-sm text-gray-600">Late Arrivals</p>
+                  </div>
+                  <div className="text-center p-4 bg-red-50 rounded-xl">
+                    <p className="text-3xl font-bold text-red-600">{analytics.byStatus.absent}</p>
+                    <p className="text-sm text-gray-600">Absent Days</p>
+                  </div>
+                  <div className="text-center p-4 bg-blue-50 rounded-xl">
+                    <p className="text-3xl font-bold text-[#0072C6]">{analytics.totalHours}</p>
+                    <p className="text-sm text-gray-600">Total Hours</p>
                   </div>
                 </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* By Department Tab */}
+          <TabsContent value="by-department" className="mt-6 space-y-6">
+            <Card>
+              <CardHeader>
+                <CardTitle>Attendance by Department</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <ResponsiveContainer width="100%" height={400}>
+                  <BarChart data={analytics.byDepartment} layout="vertical">
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis type="number" />
+                    <YAxis dataKey="name" type="category" width={120} />
+                    <Tooltip />
+                    <Legend />
+                    <Bar dataKey="present" fill="#1EB053" name="Present" />
+                    <Bar dataKey="late" fill="#F59E0B" name="Late" />
+                    <Bar dataKey="absent" fill="#EF4444" name="Absent" />
+                  </BarChart>
+                </ResponsiveContainer>
+              </CardContent>
+            </Card>
+
+            {/* Department Cards */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {analytics.byDepartment.map((dept) => (
+                <Card key={dept.name} className="border-t-4 border-t-[#1EB053]">
+                  <CardContent className="p-4">
+                    <h3 className="font-semibold text-lg mb-3">{dept.name}</h3>
+                    <div className="space-y-2">
+                      <div className="flex justify-between">
+                        <span className="text-gray-600">Present</span>
+                        <Badge className="bg-green-100 text-green-800">{dept.present}</Badge>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-gray-600">Late</span>
+                        <Badge className="bg-amber-100 text-amber-800">{dept.late}</Badge>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-gray-600">Total Hours</span>
+                        <span className="font-semibold">{dept.hours.toFixed(1)} hrs</span>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
               ))}
             </div>
-          )}
-        </CardContent>
-      </Card>
-    </div>
+          </TabsContent>
+
+          {/* By Location Tab */}
+          <TabsContent value="by-location" className="mt-6 space-y-6">
+            <Card>
+              <CardHeader>
+                <CardTitle>Clock-ins by Location</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <ResponsiveContainer width="100%" height={400}>
+                  <BarChart data={analytics.byLocation}>
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis dataKey="name" angle={-45} textAnchor="end" height={100} />
+                    <YAxis />
+                    <Tooltip />
+                    <Bar dataKey="value" fill="url(#colorGradient)" radius={[4, 4, 0, 0]} />
+                    <defs>
+                      <linearGradient id="colorGradient" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%" stopColor="#1EB053" />
+                        <stop offset="100%" stopColor="#0072C6" />
+                      </linearGradient>
+                    </defs>
+                  </BarChart>
+                </ResponsiveContainer>
+              </CardContent>
+            </Card>
+
+            {/* Location Summary */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+              {analytics.byLocation.slice(0, 8).map((loc, idx) => (
+                <Card key={loc.name}>
+                  <CardContent className="p-4">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-full flex items-center justify-center" 
+                           style={{ backgroundColor: `${COLORS[idx % COLORS.length]}20` }}>
+                        <MapPin className="w-5 h-5" style={{ color: COLORS[idx % COLORS.length] }} />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="font-medium truncate">{loc.name}</p>
+                        <p className="text-sm text-gray-500">{loc.value} clock-ins</p>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          </TabsContent>
+
+          {/* Records Tab */}
+          <TabsContent value="records" className="mt-6">
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between">
+                <CardTitle>Attendance Records</CardTitle>
+                <AttendanceReportExport 
+                  attendance={filteredAttendance}
+                  employees={employees}
+                  organisation={organisation?.[0]}
+                />
+              </CardHeader>
+              <CardContent>
+                {filteredAttendance.length === 0 ? (
+                  <div className="text-center py-12 text-gray-500">
+                    <Calendar className="w-12 h-12 mx-auto mb-3 text-gray-300" />
+                    <p>No attendance records found</p>
+                  </div>
+                ) : (
+                  <div className="overflow-x-auto">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Employee</TableHead>
+                          <TableHead>Date</TableHead>
+                          <TableHead>Clock In</TableHead>
+                          <TableHead>Clock Out</TableHead>
+                          <TableHead>Hours</TableHead>
+                          <TableHead>Location</TableHead>
+                          <TableHead>Status</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {filteredAttendance.slice(0, 50).map((record) => {
+                          const emp = employees.find(e => e.id === record.employee_id);
+                          return (
+                            <TableRow key={record.id}>
+                              <TableCell>
+                                <div className="flex items-center gap-2">
+                                  <Avatar className="w-8 h-8">
+                                    <AvatarImage src={emp?.profile_photo} />
+                                    <AvatarFallback className="text-xs bg-gray-200">
+                                      {record.employee_name?.charAt(0) || 'E'}
+                                    </AvatarFallback>
+                                  </Avatar>
+                                  <div>
+                                    <p className="font-medium text-sm">{record.employee_name}</p>
+                                    <p className="text-xs text-gray-500">{emp?.department}</p>
+                                  </div>
+                                </div>
+                              </TableCell>
+                              <TableCell>{format(parseISO(record.date), 'MMM d, yyyy')}</TableCell>
+                              <TableCell>{record.clock_in_time || '-'}</TableCell>
+                              <TableCell>{record.clock_out_time || '-'}</TableCell>
+                              <TableCell>{record.total_hours?.toFixed(1) || '-'}</TableCell>
+                              <TableCell className="max-w-32 truncate">{record.clock_in_location || '-'}</TableCell>
+                              <TableCell>
+                                <Badge variant={
+                                  record.status === 'present' ? 'secondary' :
+                                  record.status === 'late' ? 'outline' : 'destructive'
+                                }>
+                                  {record.status}
+                                </Badge>
+                              </TableCell>
+                            </TableRow>
+                          );
+                        })}
+                      </TableBody>
+                    </Table>
+                    {filteredAttendance.length > 50 && (
+                      <p className="text-center text-sm text-gray-500 mt-4">
+                        Showing 50 of {filteredAttendance.length} records
+                      </p>
+                    )}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+        </Tabs>
+      </div>
+    </ProtectedPage>
   );
 }
