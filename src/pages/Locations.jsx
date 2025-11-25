@@ -597,6 +597,21 @@ export default function Locations() {
                     />
                   </div>
                 </div>
+                <div>
+                  <Label>Link to Warehouse (Optional)</Label>
+                  <Select name="parent_warehouse_id" defaultValue={editingLocation?.parent_warehouse_id || ""}>
+                    <SelectTrigger className="mt-1">
+                      <SelectValue placeholder="Select warehouse to link" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value={null}>No linked warehouse</SelectItem>
+                      {warehouses.map(wh => (
+                        <SelectItem key={wh.id} value={wh.id}>{wh.name}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <p className="text-xs text-gray-500 mt-1">Link to a warehouse to track combined stock</p>
+                </div>
               </>
             ) : (
               <>
