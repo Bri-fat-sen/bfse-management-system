@@ -53,20 +53,20 @@ export default function Dashboard() {
 
   // Role-based dashboard routing
   const isDriver = userRole === 'driver';
-  const isSalesStaff = ['retail_cashier', 'vehicle_sales'].includes(userRole);
-  const isManager = ['super_admin', 'org_admin', 'hr_admin', 'payroll_admin', 'warehouse_manager', 'accountant'].includes(userRole);
+  const isSalesStaff = ['retail_cashier', 'vehicle_sales', 'warehouse_manager'].includes(userRole);
+  const isManager = ['super_admin', 'org_admin', 'hr_admin', 'payroll_admin', 'accountant'].includes(userRole);
 
-  // Show role-specific dashboards
+  // Show role-specific dashboard
   if (isDriver) {
-    return <DriverDashboard user={user} currentEmployee={currentEmployee} orgId={orgId} />;
+    return <DriverDashboard currentEmployee={currentEmployee} orgId={orgId} />;
   }
 
   if (isSalesStaff) {
-    return <SalesDashboard user={user} currentEmployee={currentEmployee} orgId={orgId} />;
+    return <SalesDashboard currentEmployee={currentEmployee} orgId={orgId} />;
   }
 
   if (isManager) {
-    return <ManagerDashboard user={user} currentEmployee={currentEmployee} orgId={orgId} />;
+    return <ManagerDashboard currentEmployee={currentEmployee} orgId={orgId} user={user} />;
   }
 
   const { data: employees = [] } = useQuery({

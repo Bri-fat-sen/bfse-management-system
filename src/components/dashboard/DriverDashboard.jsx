@@ -10,26 +10,26 @@ import {
   Users,
   Clock,
   MapPin,
+  Play,
   CheckCircle,
-  PlayCircle,
   Calendar,
   TrendingUp,
-  ArrowRight,
-  Fuel
+  Fuel,
+  Navigation
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Progress } from "@/components/ui/progress";
 import StatCard from "@/components/ui/StatCard";
-import QuickClockIn from "@/components/mobile/QuickClockIn";
 
-export default function DriverDashboard({ user, currentEmployee, orgId }) {
+export default function DriverDashboard({ currentEmployee, orgId }) {
   const today = format(new Date(), 'yyyy-MM-dd');
 
   const { data: todayAttendance } = useQuery({
-    queryKey: ['todayAttendance', currentEmployee?.id],
+    queryKey: ['driverAttendance', currentEmployee?.id, today],
     queryFn: async () => {
-      const records = await base44.entities.Attendance.filter({ 
+      const records = await base44.entities.Attendance.filter({
         employee_id: currentEmployee?.id,
         date: today
       });
@@ -39,17 +39,17 @@ export default function DriverDashboard({ user, currentEmployee, orgId }) {
   });
 
   const { data: todayTrips = [] } = useQuery({
-    queryKey: ['driverTodayTrips', currentEmployee?.id],
-    queryFn: () => base44.entities.Trip.filter({ 
+    queryKey: ['driverTodayTrips', currentEmployee?.id, today],
+    queryFn: () => base44.entities.Trip.filter({
       driver_id: currentEmployee?.id,
       date: today
-    }),
+    }, '-start_time'),
     enabled: !!currentEmployee?.id,
   });
 
   const { data: weekTrips = [] } = useQuery({
     queryKey: ['driverWeekTrips', currentEmployee?.id],
-    queryFn: () => base44.entities.Trip.filter({ 
+    queryFn: () => base44.entities.Trip.filter({
       driver_id: currentEmployee?.id
     }, '-date', 50),
     enabled: !!currentEmployee?.id,
@@ -58,7 +58,7 @@ export default function DriverDashboard({ user, currentEmployee, orgId }) {
   const { data: assignedVehicle } = useQuery({
     queryKey: ['assignedVehicle', currentEmployee?.id],
     queryFn: async () => {
-      const vehicles = await base44.entities.Vehicle.filter({ 
+      const vehicles = await base44.entities.Vehicle.filter({
         assigned_driver_id: currentEmployee?.id
       });
       return vehicles[0];
@@ -66,53 +66,51 @@ export default function DriverDashboard({ user, currentEmployee, orgId }) {
     enabled: !!currentEmployee?.id,
   });
 
-  const { data: routes = [] } = useQuery({
-    queryKey: ['routes', orgId],
-    queryFn: () => base44.entities.Route.filter({ organisation_id: orgId, is_active: true }),
-    enabled: !!orgId,
-  });
-
-  // Calculate stats
+  const isClockedIn = todayAttendance?.clock_in_time && !todayAttendance?.clock_out_time;
   const todayRevenue = todayTrips.reduce((sum, t) => sum + (t.total_revenue || 0), 0);
   const todayPassengers = todayTrips.reduce((sum, t) => sum + (t.passengers_count || 0), 0);
-  const todayFuelCost = todayTrips.reduce((sum, t) => sum + (t.fuel_cost || 0), 0);
-  const completedTrips = todayTrips.filter(t => t.status === 'completed').length;
+  const weekRevenue = weekTrips.filter(t => {
+    const tripDate = new Date(t.date);
+    const weekAgo = new Date();
+    weekAgo.setDate(weekAgo.getDate() - 7);
+    return tripDate >= weekAgo;
+  }).reduce((sum, t) => sum + (t.total_revenue || 0), 0);
+
   const scheduledTrips = todayTrips.filter(t => t.status === 'scheduled');
-
-  // Week stats
-  const weekRevenue = weekTrips
-    .filter(t => new Date(t.date) >= new Date(Date.now() - 7 * 24 * 60 * 60 * 1000))
-    .reduce((sum, t) => sum + (t.total_revenue || 0), 0);
-
-  const isClockedIn = todayAttendance?.clock_in_time && !todayAttendance?.clock_out_time;
+  const completedTrips = todayTrips.filter(t => t.status === 'completed');
 
   return (
     <div className="space-y-6">
-      {/* Welcome Header */}
-      <div className="sl-hero-pattern rounded-2xl p-6 text-white">
-        <div className="flex items-center justify-between">
-          <div>
-            <p className="text-white/70 text-sm">🇸🇱 Driver Dashboard</p>
-            <h1 className="text-2xl font-bold">Hello, {currentEmployee?.first_name || 'Driver'}!</h1>
-            <p className="text-white/80 mt-1">{format(new Date(), 'EEEE, MMMM d, yyyy')}</p>
-          </div>
-          <div className="text-right">
-            <div className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full ${isClockedIn ? 'bg-green-500' : 'bg-gray-500'}`}>
-              <div className={`w-2 h-2 rounded-full ${isClockedIn ? 'bg-white animate-pulse' : 'bg-gray-300'}`} />
-              <span className="text-sm font-medium">{isClockedIn ? 'On Duty' : 'Off Duty'}</span>
+      {/* Clock Status Banner */}
+      <Card className={`border-l-4 ${isClockedIn ? 'border-l-green-500 bg-green-50' : 'border-l-amber-500 bg-amber-50'}`}>
+        <CardContent className="p-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className={`w-12 h-12 rounded-full flex items-center justify-center ${isClockedIn ? 'bg-green-100' : 'bg-amber-100'}`}>
+                <Clock className={`w-6 h-6 ${isClockedIn ? 'text-green-600' : 'text-amber-600'}`} />
+              </div>
+              <div>
+                <p className={`font-semibold ${isClockedIn ? 'text-green-700' : 'text-amber-700'}`}>
+                  {isClockedIn ? 'Currently On Duty' : todayAttendance?.clock_out_time ? 'Shift Complete' : 'Not Clocked In'}
+                </p>
+                <p className="text-sm text-gray-500">
+                  {todayAttendance?.clock_in_time 
+                    ? `Clocked in at ${todayAttendance.clock_in_time}${todayAttendance.clock_out_time ? ` - Out at ${todayAttendance.clock_out_time}` : ''}`
+                    : 'Clock in to start your shift'
+                  }
+                </p>
+              </div>
             </div>
+            <Link to={createPageUrl("Attendance")}>
+              <Button className={isClockedIn ? 'bg-red-500 hover:bg-red-600' : 'bg-[#1EB053] hover:bg-green-600'}>
+                {isClockedIn ? 'Clock Out' : 'Clock In'}
+              </Button>
+            </Link>
           </div>
-        </div>
-      </div>
+        </CardContent>
+      </Card>
 
-      {/* Quick Clock In */}
-      <QuickClockIn 
-        currentEmployee={currentEmployee}
-        orgId={orgId}
-        todayAttendance={todayAttendance}
-      />
-
-      {/* Stats Grid */}
+      {/* Quick Stats */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         <StatCard
           title="Today's Revenue"
@@ -121,9 +119,9 @@ export default function DriverDashboard({ user, currentEmployee, orgId }) {
           color="green"
         />
         <StatCard
-          title="Trips Completed"
-          value={completedTrips}
-          icon={CheckCircle}
+          title="Trips Today"
+          value={completedTrips.length}
+          icon={Truck}
           color="blue"
           subtitle={`${scheduledTrips.length} scheduled`}
         />
@@ -134,143 +132,99 @@ export default function DriverDashboard({ user, currentEmployee, orgId }) {
           color="gold"
         />
         <StatCard
-          title="Fuel Cost"
-          value={`Le ${todayFuelCost.toLocaleString()}`}
-          icon={Fuel}
+          title="Week Revenue"
+          value={`Le ${weekRevenue.toLocaleString()}`}
+          icon={TrendingUp}
           color="navy"
         />
       </div>
 
-      {/* Assigned Vehicle & Week Performance */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Assigned Vehicle */}
         <Card className="border-t-4 border-t-[#0072C6]">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Truck className="w-5 h-5" />
+          <CardHeader className="pb-2">
+            <CardTitle className="flex items-center gap-2 text-lg">
+              <Truck className="w-5 h-5 text-[#0072C6]" />
               My Vehicle
             </CardTitle>
           </CardHeader>
           <CardContent>
             {assignedVehicle ? (
               <div className="space-y-3">
-                <div className="flex items-center justify-between p-4 bg-gradient-to-r from-[#0072C6]/10 to-[#1EB053]/10 rounded-lg">
-                  <div>
-                    <p className="text-2xl font-bold">{assignedVehicle.registration_number}</p>
-                    <p className="text-sm text-gray-500">{assignedVehicle.brand} {assignedVehicle.model}</p>
-                  </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-2xl font-bold">{assignedVehicle.registration_number}</span>
                   <Badge className={assignedVehicle.status === 'active' ? 'bg-green-500' : 'bg-amber-500'}>
                     {assignedVehicle.status}
                   </Badge>
                 </div>
-                <div className="grid grid-cols-2 gap-3 text-sm">
-                  <div className="p-2 bg-gray-50 rounded">
-                    <p className="text-gray-500">Type</p>
-                    <p className="font-medium">{assignedVehicle.vehicle_type}</p>
-                  </div>
-                  <div className="p-2 bg-gray-50 rounded">
-                    <p className="text-gray-500">Capacity</p>
-                    <p className="font-medium">{assignedVehicle.capacity} seats</p>
-                  </div>
+                <div className="text-sm text-gray-500 space-y-1">
+                  <p>{assignedVehicle.brand} {assignedVehicle.model}</p>
+                  <p className="flex items-center gap-1">
+                    <Fuel className="w-4 h-4" /> {assignedVehicle.fuel_type}
+                  </p>
+                  <p className="flex items-center gap-1">
+                    <Users className="w-4 h-4" /> Capacity: {assignedVehicle.capacity} seats
+                  </p>
                 </div>
               </div>
             ) : (
-              <div className="text-center py-6 text-gray-500">
-                <Truck className="w-10 h-10 mx-auto mb-2 text-gray-300" />
-                <p>No vehicle assigned</p>
-              </div>
+              <p className="text-gray-500 text-center py-4">No vehicle assigned</p>
             )}
           </CardContent>
         </Card>
 
-        {/* Week Performance */}
-        <Card className="border-t-4 border-t-[#1EB053]">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <TrendingUp className="w-5 h-5" />
-              This Week
+        {/* Today's Trips */}
+        <Card className="lg:col-span-2 border-t-4 border-t-[#1EB053]">
+          <CardHeader className="pb-2 flex flex-row items-center justify-between">
+            <CardTitle className="flex items-center gap-2 text-lg">
+              <Navigation className="w-5 h-5 text-[#1EB053]" />
+              Today's Trips
             </CardTitle>
+            <Link to={createPageUrl("Transport")}>
+              <Button variant="ghost" size="sm">View All</Button>
+            </Link>
           </CardHeader>
           <CardContent>
-            <div className="text-center p-4 bg-gradient-to-r from-[#1EB053]/10 to-[#0072C6]/10 rounded-lg mb-4">
-              <p className="text-3xl font-bold text-[#1EB053]">Le {weekRevenue.toLocaleString()}</p>
-              <p className="text-sm text-gray-500">Total Revenue (7 days)</p>
-            </div>
-            <div className="grid grid-cols-2 gap-3 text-sm">
-              <div className="p-3 bg-gray-50 rounded text-center">
-                <p className="text-xl font-bold">{weekTrips.filter(t => new Date(t.date) >= new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)).length}</p>
-                <p className="text-gray-500">Trips</p>
+            {todayTrips.length === 0 ? (
+              <div className="text-center py-8 text-gray-500">
+                <Truck className="w-12 h-12 mx-auto mb-2 text-gray-300" />
+                <p>No trips scheduled for today</p>
               </div>
-              <div className="p-3 bg-gray-50 rounded text-center">
-                <p className="text-xl font-bold">
-                  {weekTrips.filter(t => new Date(t.date) >= new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)).reduce((sum, t) => sum + (t.passengers_count || 0), 0)}
-                </p>
-                <p className="text-gray-500">Passengers</p>
+            ) : (
+              <div className="space-y-3">
+                {todayTrips.slice(0, 5).map((trip) => (
+                  <div key={trip.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                    <div className="flex items-center gap-3">
+                      <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
+                        trip.status === 'completed' ? 'bg-green-100' : 
+                        trip.status === 'in_progress' ? 'bg-blue-100' : 'bg-gray-100'
+                      }`}>
+                        {trip.status === 'completed' ? (
+                          <CheckCircle className="w-5 h-5 text-green-600" />
+                        ) : trip.status === 'in_progress' ? (
+                          <Play className="w-5 h-5 text-blue-600" />
+                        ) : (
+                          <Clock className="w-5 h-5 text-gray-600" />
+                        )}
+                      </div>
+                      <div>
+                        <p className="font-medium">{trip.route_name}</p>
+                        <p className="text-sm text-gray-500">
+                          {trip.start_time} • {trip.passengers_count} passengers
+                        </p>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <p className="font-bold text-[#1EB053]">Le {trip.total_revenue?.toLocaleString()}</p>
+                      <Badge variant="outline" className="text-xs">{trip.status}</Badge>
+                    </div>
+                  </div>
+                ))}
               </div>
-            </div>
+            )}
           </CardContent>
         </Card>
       </div>
-
-      {/* Today's Trips */}
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between">
-          <CardTitle className="flex items-center gap-2">
-            <Calendar className="w-5 h-5" />
-            Today's Trips
-          </CardTitle>
-          <Link to={createPageUrl("Transport")}>
-            <Button variant="ghost" size="sm">
-              View All <ArrowRight className="w-4 h-4 ml-1" />
-            </Button>
-          </Link>
-        </CardHeader>
-        <CardContent>
-          {todayTrips.length === 0 ? (
-            <div className="text-center py-8 text-gray-500">
-              <Truck className="w-12 h-12 mx-auto mb-3 text-gray-300" />
-              <p>No trips recorded today</p>
-              <Link to={createPageUrl("Transport")}>
-                <Button className="mt-4 bg-gradient-to-r from-[#1EB053] to-[#0072C6]">
-                  Record Trip
-                </Button>
-              </Link>
-            </div>
-          ) : (
-            <div className="space-y-3">
-              {todayTrips.map((trip) => (
-                <div key={trip.id} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
-                  <div className="flex items-center gap-3">
-                    <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
-                      trip.status === 'completed' ? 'bg-green-100' : 
-                      trip.status === 'in_progress' ? 'bg-blue-100' : 'bg-gray-100'
-                    }`}>
-                      {trip.status === 'completed' ? (
-                        <CheckCircle className="w-5 h-5 text-green-600" />
-                      ) : trip.status === 'in_progress' ? (
-                        <PlayCircle className="w-5 h-5 text-blue-600" />
-                      ) : (
-                        <Clock className="w-5 h-5 text-gray-600" />
-                      )}
-                    </div>
-                    <div>
-                      <p className="font-medium">{trip.route_name}</p>
-                      <p className="text-sm text-gray-500 flex items-center gap-1">
-                        <Clock className="w-3 h-3" />
-                        {trip.start_time} • {trip.passengers_count} passengers
-                      </p>
-                    </div>
-                  </div>
-                  <div className="text-right">
-                    <p className="font-bold text-[#1EB053]">Le {trip.total_revenue?.toLocaleString()}</p>
-                    <Badge variant="secondary" className="text-xs">{trip.status}</Badge>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </CardContent>
-      </Card>
     </div>
   );
 }

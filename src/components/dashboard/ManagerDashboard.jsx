@@ -10,14 +10,14 @@ import {
   Package,
   Truck,
   DollarSign,
-  TrendingUp,
   AlertTriangle,
+  TrendingUp,
   Clock,
   Calendar,
-  Bell,
-  ArrowRight,
   CheckCircle,
   XCircle,
+  Bell,
+  ArrowRight,
   Activity
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -27,7 +27,7 @@ import StatCard from "@/components/ui/StatCard";
 import QuickActions from "@/components/dashboard/QuickActions";
 import RecentActivity from "@/components/dashboard/RecentActivity";
 
-export default function ManagerDashboard({ user, currentEmployee, orgId }) {
+export default function ManagerDashboard({ currentEmployee, orgId, user }) {
   const today = format(new Date(), 'yyyy-MM-dd');
 
   const { data: employees = [] } = useQuery({
@@ -55,7 +55,7 @@ export default function ManagerDashboard({ user, currentEmployee, orgId }) {
   });
 
   const { data: attendance = [] } = useQuery({
-    queryKey: ['todayAttendance', orgId],
+    queryKey: ['todayAttendance', orgId, today],
     queryFn: () => base44.entities.Attendance.filter({ organisation_id: orgId, date: today }),
     enabled: !!orgId,
   });
@@ -63,6 +63,12 @@ export default function ManagerDashboard({ user, currentEmployee, orgId }) {
   const { data: expenses = [] } = useQuery({
     queryKey: ['expenses', orgId],
     queryFn: () => base44.entities.Expense.filter({ organisation_id: orgId }, '-created_date', 100),
+    enabled: !!orgId,
+  });
+
+  const { data: pendingPayrolls = [] } = useQuery({
+    queryKey: ['pendingPayrolls', orgId],
+    queryFn: () => base44.entities.Payroll.filter({ organisation_id: orgId, status: 'pending_approval' }),
     enabled: !!orgId,
   });
 
@@ -78,71 +84,83 @@ export default function ManagerDashboard({ user, currentEmployee, orgId }) {
     enabled: !!orgId,
   });
 
-  const { data: pendingPayrolls = [] } = useQuery({
-    queryKey: ['pendingPayrolls', orgId],
-    queryFn: () => base44.entities.Payroll.filter({ organisation_id: orgId, status: 'pending_approval' }),
-    enabled: !!orgId,
-  });
-
   const { data: recentActivity = [] } = useQuery({
     queryKey: ['activity', orgId],
     queryFn: () => base44.entities.ActivityLog.filter({ organisation_id: orgId }, '-created_date', 10),
     enabled: !!orgId,
   });
 
-  // Calculate stats
+  // Calculate metrics
   const todaySales = sales.filter(s => s.created_date?.startsWith(today));
-  const totalRevenue = todaySales.reduce((sum, s) => sum + (s.total_amount || 0), 0);
+  const todayRevenue = todaySales.reduce((sum, s) => sum + (s.total_amount || 0), 0);
+  
   const todayTrips = trips.filter(t => t.date === today);
   const transportRevenue = todayTrips.reduce((sum, t) => sum + (t.total_revenue || 0), 0);
+  
   const activeEmployees = employees.filter(e => e.status === 'active');
   const clockedIn = attendance.filter(a => a.clock_in_time && !a.clock_out_time);
+  
   const lowStockProducts = products.filter(p => p.stock_quantity <= (p.low_stock_threshold || 10));
-
-  // Expiring batches
+  
   const expiringBatches = batches.filter(b => {
     if (!b.expiry_date) return false;
     const daysLeft = differenceInDays(new Date(b.expiry_date), new Date());
     return daysLeft <= 30 && daysLeft >= 0;
   });
-
+  
   const expiredBatches = batches.filter(b => {
     if (!b.expiry_date) return false;
     return differenceInDays(new Date(b.expiry_date), new Date()) < 0;
   });
 
-  // Month expenses
-  const monthExpenses = expenses
-    .filter(e => e.created_date?.startsWith(format(new Date(), 'yyyy-MM')))
-    .reduce((sum, e) => sum + (e.amount || 0), 0);
+  const monthExpenses = expenses.filter(e => {
+    const expDate = new Date(e.date);
+    const now = new Date();
+    return expDate.getMonth() === now.getMonth() && expDate.getFullYear() === now.getFullYear();
+  }).reduce((sum, e) => sum + (e.amount || 0), 0);
+
+  const monthSales = sales.filter(s => {
+    const saleDate = new Date(s.created_date);
+    const now = new Date();
+    return saleDate.getMonth() === now.getMonth() && saleDate.getFullYear() === now.getFullYear();
+  }).reduce((sum, s) => sum + (s.total_amount || 0), 0);
 
   const criticalAlerts = [
-    ...(lowStockProducts.length > 0 ? [{ type: 'low_stock', count: lowStockProducts.length, label: 'Low Stock Items', color: 'amber', link: 'Inventory' }] : []),
-    ...(expiredBatches.length > 0 ? [{ type: 'expired', count: expiredBatches.length, label: 'Expired Batches', color: 'red', link: 'Inventory' }] : []),
-    ...(expiringBatches.length > 0 ? [{ type: 'expiring', count: expiringBatches.length, label: 'Expiring Soon', color: 'orange', link: 'Inventory' }] : []),
-    ...(pendingPayrolls.length > 0 ? [{ type: 'payroll', count: pendingPayrolls.length, label: 'Pending Payrolls', color: 'blue', link: 'HR' }] : []),
+    ...(expiredBatches.length > 0 ? [{ type: 'danger', title: `${expiredBatches.length} Expired Batches`, link: 'Inventory' }] : []),
+    ...(expiringBatches.length > 0 ? [{ type: 'warning', title: `${expiringBatches.length} Batches Expiring Soon`, link: 'Inventory' }] : []),
+    ...(lowStockProducts.length > 0 ? [{ type: 'warning', title: `${lowStockProducts.length} Low Stock Items`, link: 'Inventory' }] : []),
+    ...(pendingPayrolls.length > 0 ? [{ type: 'info', title: `${pendingPayrolls.length} Payrolls Pending Approval`, link: 'HR' }] : []),
   ];
 
   return (
     <div className="space-y-6">
       {/* Welcome Header */}
-      <div className="sl-hero-pattern rounded-2xl p-6 text-white">
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-          <div>
-            <p className="text-white/70 text-sm">🇸🇱 BRI-FAT-SEN Enterprise</p>
-            <h1 className="text-2xl md:text-3xl font-bold">Welcome back, {user?.full_name?.split(' ')[0] || 'Manager'}!</h1>
-            <p className="text-white/80 mt-1 flex items-center gap-2">
-              <Calendar className="w-4 h-4" />
-              {format(new Date(), 'EEEE, MMMM d, yyyy')}
-            </p>
-          </div>
-          <div className="flex items-center gap-3">
-            <Link to={createPageUrl("Sales")}>
-              <Button className="bg-white text-[#0072C6] hover:bg-white/90">
-                <ShoppingCart className="w-4 h-4 mr-2" />
-                New Sale
-              </Button>
-            </Link>
+      <div className="relative overflow-hidden rounded-2xl">
+        <div className="h-2 flex">
+          <div className="flex-1 bg-[#1EB053]" />
+          <div className="flex-1 bg-white" />
+          <div className="flex-1 bg-[#0072C6]" />
+        </div>
+        <div className="sl-hero-pattern p-6 text-white">
+          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+            <div>
+              <p className="text-white/70 text-sm mb-1">🇸🇱 BRI-FAT-SEN Enterprise</p>
+              <h1 className="text-2xl md:text-3xl font-bold">
+                Welcome back, {user?.full_name?.split(' ')[0] || 'Manager'}!
+              </h1>
+              <p className="text-white/80 mt-1 flex items-center gap-2">
+                <Calendar className="w-4 h-4" />
+                {format(new Date(), 'EEEE, MMMM d, yyyy')}
+              </p>
+            </div>
+            <div className="flex items-center gap-3">
+              <Link to={createPageUrl("Sales")}>
+                <Button variant="secondary" className="bg-white text-[#0072C6] hover:bg-white/90">
+                  <ShoppingCart className="w-4 h-4 mr-2" />
+                  New Sale
+                </Button>
+              </Link>
+            </div>
           </div>
         </div>
       </div>
@@ -151,23 +169,21 @@ export default function ManagerDashboard({ user, currentEmployee, orgId }) {
       {criticalAlerts.length > 0 && (
         <Card className="border-l-4 border-l-red-500">
           <CardHeader className="pb-2">
-            <CardTitle className="flex items-center gap-2">
+            <CardTitle className="flex items-center gap-2 text-lg">
               <Bell className="w-5 h-5 text-red-500" />
-              Critical Alerts
+              Attention Required
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-              {criticalAlerts.map((alert) => (
-                <Link key={alert.type} to={createPageUrl(alert.link)}>
-                  <div className={`p-3 rounded-lg border-2 hover:shadow-md transition-all cursor-pointer ${
-                    alert.color === 'red' ? 'bg-red-50 border-red-200' :
-                    alert.color === 'orange' ? 'bg-orange-50 border-orange-200' :
-                    alert.color === 'amber' ? 'bg-amber-50 border-amber-200' :
-                    'bg-blue-50 border-blue-200'
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+              {criticalAlerts.map((alert, idx) => (
+                <Link key={idx} to={createPageUrl(alert.link)}>
+                  <div className={`p-3 rounded-lg flex items-center gap-3 cursor-pointer hover:opacity-80 ${
+                    alert.type === 'danger' ? 'bg-red-100 text-red-700' :
+                    alert.type === 'warning' ? 'bg-amber-100 text-amber-700' : 'bg-blue-100 text-blue-700'
                   }`}>
-                    <p className="text-2xl font-bold">{alert.count}</p>
-                    <p className="text-sm text-gray-600">{alert.label}</p>
+                    <AlertTriangle className="w-5 h-5 flex-shrink-0" />
+                    <span className="text-sm font-medium">{alert.title}</span>
                   </div>
                 </Link>
               ))}
@@ -176,165 +192,113 @@ export default function ManagerDashboard({ user, currentEmployee, orgId }) {
         </Card>
       )}
 
-      {/* Stats Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      {/* Main Stats */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         <StatCard
-          title="Today's Sales"
-          value={`Le ${totalRevenue.toLocaleString()}`}
+          title="Today's Revenue"
+          value={`Le ${todayRevenue.toLocaleString()}`}
           icon={DollarSign}
           color="green"
-          subtitle={`${todaySales.length} transactions`}
+          trend="up"
+          trendValue={`${todaySales.length} sales`}
         />
         <StatCard
-          title="Active Staff"
-          value={activeEmployees.length}
+          title="Staff Present"
+          value={`${clockedIn.length}/${activeEmployees.length}`}
           icon={Users}
           color="blue"
-          subtitle={`${clockedIn.length} clocked in`}
+          subtitle="Clocked in today"
         />
         <StatCard
           title="Transport Revenue"
           value={`Le ${transportRevenue.toLocaleString()}`}
           icon={Truck}
           color="gold"
-          subtitle={`${todayTrips.length} trips today`}
+          subtitle={`${todayTrips.length} trips`}
         />
         <StatCard
-          title="Month Expenses"
-          value={`Le ${monthExpenses.toLocaleString()}`}
+          title="Month Profit"
+          value={`Le ${(monthSales - monthExpenses).toLocaleString()}`}
           icon={TrendingUp}
           color="navy"
+          subtitle={monthSales - monthExpenses >= 0 ? 'Positive' : 'Negative'}
         />
       </div>
 
-      {/* Main Content Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Recent Sales */}
-        <Card className="lg:col-span-2 border-t-4 border-t-[#0072C6]">
-          <CardHeader className="flex flex-row items-center justify-between">
-            <CardTitle>Today's Sales</CardTitle>
-            <Link to={createPageUrl("Sales")}>
-              <Button variant="ghost" size="sm">
-                View All <ArrowRight className="w-4 h-4 ml-1" />
-              </Button>
-            </Link>
-          </CardHeader>
-          <CardContent>
-            {todaySales.length === 0 ? (
-              <div className="text-center py-8 text-gray-500">
-                <ShoppingCart className="w-12 h-12 mx-auto mb-3 text-gray-300" />
-                <p>No sales recorded today</p>
+      {/* Department Overview */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <Link to={createPageUrl("Sales")}>
+          <Card className="hover:shadow-lg transition-shadow cursor-pointer border-t-4 border-t-[#1EB053]">
+            <CardContent className="p-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-gray-500">Sales</p>
+                  <p className="text-xl font-bold">{todaySales.length} today</p>
+                </div>
+                <ShoppingCart className="w-8 h-8 text-[#1EB053]" />
               </div>
-            ) : (
-              <div className="space-y-3">
-                {todaySales.slice(0, 5).map((sale) => (
-                  <div key={sale.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[#1EB053] to-[#0072C6] flex items-center justify-center">
-                        <ShoppingCart className="w-5 h-5 text-white" />
-                      </div>
-                      <div>
-                        <p className="font-medium">{sale.sale_number || `Sale #${sale.id.slice(-6)}`}</p>
-                        <p className="text-sm text-gray-500">{sale.employee_name || 'Staff'}</p>
-                      </div>
-                    </div>
-                    <div className="text-right">
-                      <p className="font-semibold text-[#1EB053]">Le {sale.total_amount?.toLocaleString()}</p>
-                      <Badge variant="secondary" className="text-xs">{sale.payment_method}</Badge>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </CardContent>
-        </Card>
+              <p className="text-xs text-gray-400 mt-2">Le {todayRevenue.toLocaleString()} revenue</p>
+            </CardContent>
+          </Card>
+        </Link>
 
-        {/* Attendance Overview */}
-        <Card className="border-t-4 border-t-[#1EB053]">
-          <CardHeader className="flex flex-row items-center justify-between">
-            <CardTitle className="flex items-center gap-2">
-              <Clock className="w-5 h-5" />
-              Today's Attendance
-            </CardTitle>
-            <Link to={createPageUrl("Attendance")}>
-              <Button variant="ghost" size="sm">
-                <ArrowRight className="w-4 h-4" />
-              </Button>
-            </Link>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              <div className="flex items-center justify-between p-3 bg-green-50 rounded-lg">
-                <div className="flex items-center gap-2">
-                  <CheckCircle className="w-5 h-5 text-green-600" />
-                  <span>Clocked In</span>
+        <Link to={createPageUrl("Inventory")}>
+          <Card className="hover:shadow-lg transition-shadow cursor-pointer border-t-4 border-t-[#0072C6]">
+            <CardContent className="p-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-gray-500">Inventory</p>
+                  <p className="text-xl font-bold">{products.length} products</p>
                 </div>
-                <span className="text-xl font-bold text-green-600">{clockedIn.length}</span>
+                <Package className="w-8 h-8 text-[#0072C6]" />
               </div>
-              <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                <div className="flex items-center gap-2">
-                  <XCircle className="w-5 h-5 text-gray-400" />
-                  <span>Not Clocked In</span>
+              <p className="text-xs text-gray-400 mt-2">{lowStockProducts.length} low stock alerts</p>
+            </CardContent>
+          </Card>
+        </Link>
+
+        <Link to={createPageUrl("Transport")}>
+          <Card className="hover:shadow-lg transition-shadow cursor-pointer border-t-4 border-t-[#D4AF37]">
+            <CardContent className="p-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-gray-500">Transport</p>
+                  <p className="text-xl font-bold">{todayTrips.length} trips</p>
                 </div>
-                <span className="text-xl font-bold text-gray-600">{activeEmployees.length - clockedIn.length}</span>
+                <Truck className="w-8 h-8 text-[#D4AF37]" />
               </div>
-              <div className="text-center pt-2">
-                <p className="text-sm text-gray-500">
-                  {((clockedIn.length / activeEmployees.length) * 100 || 0).toFixed(0)}% attendance rate
-                </p>
+              <p className="text-xs text-gray-400 mt-2">Le {transportRevenue.toLocaleString()} revenue</p>
+            </CardContent>
+          </Card>
+        </Link>
+
+        <Link to={createPageUrl("HR")}>
+          <Card className="hover:shadow-lg transition-shadow cursor-pointer border-t-4 border-t-[#0F1F3C]">
+            <CardContent className="p-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-gray-500">HR</p>
+                  <p className="text-xl font-bold">{activeEmployees.length} staff</p>
+                </div>
+                <Users className="w-8 h-8 text-[#0F1F3C]" />
               </div>
-            </div>
-          </CardContent>
-        </Card>
+              <p className="text-xs text-gray-400 mt-2">{pendingPayrolls.length} payrolls pending</p>
+            </CardContent>
+          </Card>
+        </Link>
       </div>
 
-      {/* Quick Actions */}
-      <QuickActions />
-
-      {/* Activity & Transport */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      {/* Quick Actions & Activity */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="lg:col-span-2">
+          <QuickActions />
+        </div>
         <RecentActivity activities={recentActivity} />
-        
-        {/* Transport Summary */}
-        <Card className="border-t-4 border-t-[#D4AF37]">
-          <CardHeader className="flex flex-row items-center justify-between">
-            <CardTitle className="flex items-center gap-2">
-              <Truck className="w-5 h-5" />
-              Today's Trips
-            </CardTitle>
-            <Link to={createPageUrl("Transport")}>
-              <Button variant="ghost" size="sm">
-                <ArrowRight className="w-4 h-4" />
-              </Button>
-            </Link>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-3 gap-3 mb-4">
-              <div className="text-center p-3 bg-green-50 rounded-lg">
-                <p className="text-xl font-bold text-green-600">
-                  {todayTrips.filter(t => t.status === 'completed').length}
-                </p>
-                <p className="text-xs text-gray-500">Completed</p>
-              </div>
-              <div className="text-center p-3 bg-blue-50 rounded-lg">
-                <p className="text-xl font-bold text-blue-600">
-                  {todayTrips.filter(t => t.status === 'in_progress').length}
-                </p>
-                <p className="text-xs text-gray-500">In Progress</p>
-              </div>
-              <div className="text-center p-3 bg-gray-50 rounded-lg">
-                <p className="text-xl font-bold text-gray-600">
-                  {todayTrips.filter(t => t.status === 'scheduled').length}
-                </p>
-                <p className="text-xs text-gray-500">Scheduled</p>
-              </div>
-            </div>
-            <div className="p-3 bg-gradient-to-r from-[#1EB053]/10 to-[#0072C6]/10 rounded-lg text-center">
-              <p className="text-sm text-gray-500">Total Passengers Today</p>
-              <p className="text-2xl font-bold">{todayTrips.reduce((sum, t) => sum + (t.passengers_count || 0), 0)}</p>
-            </div>
-          </CardContent>
-        </Card>
+      </div>
+
+      {/* Footer */}
+      <div className="text-center py-4">
+        <p className="text-sm text-gray-400">🇸🇱 Proudly serving businesses in Sierra Leone</p>
       </div>
     </div>
   );
