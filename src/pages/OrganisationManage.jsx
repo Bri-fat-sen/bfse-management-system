@@ -7,13 +7,12 @@ import {
   Mail,
   Phone,
   MapPin,
-  Globe,
-  Palette,
-  Upload,
   Loader2,
   Save,
   Trash2,
-  UserPlus
+  UserPlus,
+  MoreVertical,
+  UserMinus
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -35,7 +34,24 @@ import {
   DialogHeader,
   DialogTitle,
   DialogFooter,
+  DialogDescription,
 } from "@/components/ui/dialog";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { useToast } from "@/components/ui/use-toast";
 import PageHeader from "@/components/ui/PageHeader";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -46,6 +62,12 @@ export default function OrganisationManage() {
   const [showInviteDialog, setShowInviteDialog] = useState(false);
   const [inviteEmail, setInviteEmail] = useState('');
   const [inviteRole, setInviteRole] = useState('read_only');
+  const [inviteFirstName, setInviteFirstName] = useState('');
+  const [inviteLastName, setInviteLastName] = useState('');
+  const [inviteDepartment, setInviteDepartment] = useState('');
+  const [invitePosition, setInvitePosition] = useState('');
+  const [memberToRemove, setMemberToRemove] = useState(null);
+  const [isInviting, setIsInviting] = useState(false);
 
   const { data: user } = useQuery({
     queryKey: ['currentUser'],
@@ -124,20 +146,28 @@ export default function OrganisationManage() {
   };
 
   const handleInvite = async () => {
-    if (!inviteEmail) return;
+    if (!inviteEmail || !inviteFirstName) {
+      toast({ title: "Please fill in required fields", variant: "destructive" });
+      return;
+    }
 
+    setIsInviting(true);
     try {
       // Create employee record for invited user
       const employeeCode = `EMP${String(employees.length + 1).padStart(3, '0')}`;
+      const fullName = `${inviteFirstName} ${inviteLastName}`.trim();
+      
       await base44.entities.Employee.create({
         organisation_id: orgId,
         employee_code: employeeCode,
         user_email: inviteEmail,
-        first_name: inviteEmail.split('@')[0],
-        last_name: '',
-        full_name: inviteEmail.split('@')[0],
+        first_name: inviteFirstName,
+        last_name: inviteLastName,
+        full_name: fullName,
         role: inviteRole,
         email: inviteEmail,
+        department: inviteDepartment,
+        position: invitePosition,
         status: 'active',
         hire_date: new Date().toISOString().split('T')[0],
       });
@@ -148,18 +178,46 @@ export default function OrganisationManage() {
         subject: `You've been invited to ${organisation?.name}`,
         body: `
           <h2>Welcome to ${organisation?.name}!</h2>
+          <p>Hi ${inviteFirstName},</p>
           <p>You've been invited to join ${organisation?.name} on BFSE Management System.</p>
-          <p>Your role: ${inviteRole}</p>
+          <p><strong>Role:</strong> ${inviteRole.replace(/_/g, ' ')}</p>
+          ${inviteDepartment ? `<p><strong>Department:</strong> ${inviteDepartment}</p>` : ''}
+          ${invitePosition ? `<p><strong>Position:</strong> ${invitePosition}</p>` : ''}
           <p>Please log in to access the system.</p>
         `
       });
 
-      toast({ title: "Invitation sent successfully" });
+      toast({ title: "Member added successfully", description: `Invitation sent to ${inviteEmail}` });
       setShowInviteDialog(false);
-      setInviteEmail('');
+      resetInviteForm();
       queryClient.invalidateQueries({ queryKey: ['orgEmployees'] });
     } catch (error) {
-      toast({ title: "Failed to send invitation", variant: "destructive" });
+      toast({ title: "Failed to add member", variant: "destructive" });
+    } finally {
+      setIsInviting(false);
+    }
+  };
+
+  const resetInviteForm = () => {
+    setInviteEmail('');
+    setInviteFirstName('');
+    setInviteLastName('');
+    setInviteRole('read_only');
+    setInviteDepartment('');
+    setInvitePosition('');
+  };
+
+  const handleRemoveMember = async () => {
+    if (!memberToRemove) return;
+
+    try {
+      await base44.entities.Employee.delete(memberToRemove.id);
+      toast({ title: "Member removed", description: `${memberToRemove.full_name} has been removed from the organisation` });
+      queryClient.invalidateQueries({ queryKey: ['orgEmployees'] });
+    } catch (error) {
+      toast({ title: "Failed to remove member", variant: "destructive" });
+    } finally {
+      setMemberToRemove(null);
     }
   };
 
@@ -416,28 +474,53 @@ export default function OrganisationManage() {
             </CardHeader>
             <CardContent>
               <div className="space-y-3">
-                {employees.map((emp) => (
-                  <div key={emp.id} className="flex flex-col sm:flex-row sm:items-center justify-between p-4 bg-gray-50 rounded-lg gap-3">
-                    <div className="flex items-center gap-3">
-                      <Avatar>
-                        <AvatarImage src={emp.profile_photo} />
-                        <AvatarFallback className="bg-gradient-to-br from-[#1EB053] to-[#0072C6] text-white">
-                          {emp.full_name?.charAt(0)}
-                        </AvatarFallback>
-                      </Avatar>
-                      <div>
-                        <p className="font-medium">{emp.full_name}</p>
-                        <p className="text-sm text-gray-500">{emp.email}</p>
+                {employees.map((emp) => {
+                  const isCurrentUser = emp.user_email === user?.email;
+                  return (
+                    <div key={emp.id} className="flex flex-col sm:flex-row sm:items-center justify-between p-4 bg-gray-50 rounded-lg gap-3">
+                      <div className="flex items-center gap-3">
+                        <Avatar>
+                          <AvatarImage src={emp.profile_photo} />
+                          <AvatarFallback className="bg-gradient-to-br from-[#1EB053] to-[#0072C6] text-white">
+                            {emp.full_name?.charAt(0)}
+                          </AvatarFallback>
+                        </Avatar>
+                        <div>
+                          <p className="font-medium">
+                            {emp.full_name}
+                            {isCurrentUser && <span className="text-xs text-gray-500 ml-2">(You)</span>}
+                          </p>
+                          <p className="text-sm text-gray-500">{emp.email}</p>
+                          {emp.department && <p className="text-xs text-gray-400">{emp.department} • {emp.position}</p>}
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Badge variant="secondary" className="capitalize">{emp.role?.replace(/_/g, ' ')}</Badge>
+                        <Badge variant={emp.status === 'active' ? 'outline' : 'destructive'}>
+                          {emp.status}
+                        </Badge>
+                        {isAdmin && !isCurrentUser && (
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button variant="ghost" size="icon" className="h-8 w-8">
+                                <MoreVertical className="h-4 w-4" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                              <DropdownMenuItem 
+                                className="text-red-600"
+                                onClick={() => setMemberToRemove(emp)}
+                              >
+                                <UserMinus className="w-4 h-4 mr-2" />
+                                Remove Member
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        )}
                       </div>
                     </div>
-                    <div className="flex items-center gap-2">
-                      <Badge variant="secondary">{emp.role?.replace('_', ' ')}</Badge>
-                      <Badge variant={emp.status === 'active' ? 'outline' : 'destructive'}>
-                        {emp.status}
-                      </Badge>
-                    </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             </CardContent>
           </Card>
@@ -445,14 +528,35 @@ export default function OrganisationManage() {
       </Tabs>
 
       {/* Invite Dialog */}
-      <Dialog open={showInviteDialog} onOpenChange={setShowInviteDialog}>
-        <DialogContent className="max-w-md w-[95vw] sm:w-full">
+      <Dialog open={showInviteDialog} onOpenChange={(open) => { setShowInviteDialog(open); if (!open) resetInviteForm(); }}>
+        <DialogContent className="max-w-lg w-[95vw] sm:w-full">
           <DialogHeader>
-            <DialogTitle>Invite Team Member</DialogTitle>
+            <DialogTitle>Add Team Member</DialogTitle>
+            <DialogDescription>Add a new member to your organisation. They will receive an email invitation.</DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label>First Name *</Label>
+                <Input
+                  value={inviteFirstName}
+                  onChange={(e) => setInviteFirstName(e.target.value)}
+                  placeholder="John"
+                  className="mt-1"
+                />
+              </div>
+              <div>
+                <Label>Last Name</Label>
+                <Input
+                  value={inviteLastName}
+                  onChange={(e) => setInviteLastName(e.target.value)}
+                  placeholder="Doe"
+                  className="mt-1"
+                />
+              </div>
+            </div>
             <div>
-              <Label>Email Address</Label>
+              <Label>Email Address *</Label>
               <Input
                 type="email"
                 value={inviteEmail}
@@ -461,8 +565,28 @@ export default function OrganisationManage() {
                 className="mt-1"
               />
             </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label>Department</Label>
+                <Input
+                  value={inviteDepartment}
+                  onChange={(e) => setInviteDepartment(e.target.value)}
+                  placeholder="e.g. Sales"
+                  className="mt-1"
+                />
+              </div>
+              <div>
+                <Label>Position</Label>
+                <Input
+                  value={invitePosition}
+                  onChange={(e) => setInvitePosition(e.target.value)}
+                  placeholder="e.g. Manager"
+                  className="mt-1"
+                />
+              </div>
+            </div>
             <div>
-              <Label>Role</Label>
+              <Label>Role *</Label>
               <Select value={inviteRole} onValueChange={setInviteRole}>
                 <SelectTrigger className="mt-1">
                   <SelectValue />
@@ -471,8 +595,11 @@ export default function OrganisationManage() {
                   <SelectItem value="read_only">Read Only</SelectItem>
                   <SelectItem value="support_staff">Support Staff</SelectItem>
                   <SelectItem value="retail_cashier">Retail Cashier</SelectItem>
+                  <SelectItem value="driver">Driver</SelectItem>
+                  <SelectItem value="vehicle_sales">Vehicle Sales</SelectItem>
                   <SelectItem value="warehouse_manager">Warehouse Manager</SelectItem>
                   <SelectItem value="accountant">Accountant</SelectItem>
+                  <SelectItem value="payroll_admin">Payroll Admin</SelectItem>
                   <SelectItem value="hr_admin">HR Admin</SelectItem>
                   <SelectItem value="org_admin">Organisation Admin</SelectItem>
                 </SelectContent>
@@ -481,10 +608,39 @@ export default function OrganisationManage() {
           </div>
           <DialogFooter className="flex-col sm:flex-row gap-2">
             <Button variant="outline" onClick={() => setShowInviteDialog(false)} className="w-full sm:w-auto">Cancel</Button>
-            <Button onClick={handleInvite} className="bg-gradient-to-r from-[#1EB053] to-[#0072C6] hover:from-[#178f43] hover:to-[#005a9e] w-full sm:w-auto">Send Invitation</Button>
+            <Button 
+              onClick={handleInvite} 
+              disabled={isInviting || !inviteEmail || !inviteFirstName}
+              className="bg-gradient-to-r from-[#1EB053] to-[#0072C6] hover:from-[#178f43] hover:to-[#005a9e] w-full sm:w-auto"
+            >
+              {isInviting ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <UserPlus className="w-4 h-4 mr-2" />}
+              Add Member
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Remove Member Confirmation */}
+      <AlertDialog open={!!memberToRemove} onOpenChange={(open) => !open && setMemberToRemove(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Remove Team Member</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to remove <strong>{memberToRemove?.full_name}</strong> from the organisation? 
+              This action cannot be undone and they will lose access to all organisation data.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={handleRemoveMember}
+              className="bg-red-600 hover:bg-red-700"
+            >
+              Remove Member
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
