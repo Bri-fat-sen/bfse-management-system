@@ -64,7 +64,6 @@ const roles = [
 const departments = ["Management", "Sales", "Operations", "Finance", "Transport", "Support"];
 
 export default function HR() {
-  const { toast } = useToast();
   const queryClient = useQueryClient();
   const [searchTerm, setSearchTerm] = useState("");
   const [roleFilter, setRoleFilter] = useState("all");

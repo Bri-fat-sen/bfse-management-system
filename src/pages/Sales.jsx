@@ -43,7 +43,6 @@ import EmptyState from "@/components/ui/EmptyState";
 import ReceiptDialog from "@/components/sales/ReceiptDialog";
 
 export default function Sales() {
-  const { toast } = useToast();
   const queryClient = useQueryClient();
   const [cart, setCart] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
