@@ -239,57 +239,54 @@ export default function Inventory() {
   return (
     <div className="space-y-6">
       <PageHeader
-        title="Inventory Management"
-        subtitle="Manage products, stock levels, and warehouses"
+        title="Inventory"
+        subtitle="Manage products and stock"
         action={() => {
           setEditingProduct(null);
           setShowProductDialog(true);
         }}
         actionLabel="Add Product"
         >
-        <div className="flex flex-wrap gap-2">
+        <div className="flex flex-wrap gap-1 sm:gap-2">
           <Button 
             variant="outline" 
+            size="sm"
             onClick={() => setShowStockDialog(true)}
-            className="border-[#1EB053]/30 hover:border-[#1EB053] hover:bg-[#1EB053]/10 hover:text-[#1EB053] transition-all"
+            className="text-xs sm:text-sm border-[#1EB053]/30 hover:border-[#1EB053] hover:bg-[#1EB053]/10 hover:text-[#1EB053]"
           >
-            <Upload className="w-4 h-4 mr-2" />
-            Adjustment
+            <Upload className="w-3 h-3 sm:w-4 sm:h-4 sm:mr-2" />
+            <span className="hidden sm:inline">Adjust</span>
           </Button>
           <Button 
             variant="outline" 
+            size="sm"
             onClick={() => setShowCategoryDialog(true)}
-            className="border-[#0072C6]/30 hover:border-[#0072C6] hover:bg-[#0072C6]/10 hover:text-[#0072C6] transition-all"
+            className="text-xs sm:text-sm border-[#0072C6]/30 hover:border-[#0072C6] hover:bg-[#0072C6]/10 hover:text-[#0072C6]"
           >
-            <FolderTree className="w-4 h-4 mr-2" />
-            Categories
+            <FolderTree className="w-3 h-3 sm:w-4 sm:h-4 sm:mr-2" />
+            <span className="hidden sm:inline">Categories</span>
           </Button>
           <Button 
             variant="outline" 
-            onClick={() => setShowLocationsDialog(true)}
-            className="border-[#0F1F3C]/30 hover:border-[#0F1F3C] hover:bg-[#0F1F3C]/10 hover:text-[#0F1F3C] transition-all"
-          >
-            <MapPin className="w-4 h-4 mr-2" />
-            Locations
-          </Button>
-          <Button 
-            variant="outline" 
+            size="sm"
             onClick={() => setShowAlertsDialog(true)}
-            className={activeAlerts.length > 0 
+            className={`text-xs sm:text-sm ${activeAlerts.length > 0 
               ? "border-red-400 bg-red-50 text-red-600 hover:bg-red-100" 
-              : "border-[#D4AF37]/30 hover:border-[#D4AF37] hover:bg-[#D4AF37]/10 hover:text-[#D4AF37] transition-all"
-            }
+              : "border-[#D4AF37]/30 hover:border-[#D4AF37] hover:bg-[#D4AF37]/10 hover:text-[#D4AF37]"
+            }`}
           >
-            <Bell className="w-4 h-4 mr-2" />
-            Alerts {activeAlerts.length > 0 && `(${activeAlerts.length})`}
+            <Bell className="w-3 h-3 sm:w-4 sm:h-4 sm:mr-2" />
+            <span className="hidden sm:inline">Alerts</span>
+            {activeAlerts.length > 0 && <Badge variant="destructive" className="ml-1 h-5 text-[10px]">{activeAlerts.length}</Badge>}
           </Button>
           <Button 
             variant="outline" 
+            size="sm"
             onClick={() => setShowReportDialog(true)}
-            className="border-[#1EB053]/30 hover:border-[#1EB053] hover:bg-[#1EB053]/10 hover:text-[#1EB053] transition-all"
+            className="text-xs sm:text-sm border-[#1EB053]/30 hover:border-[#1EB053] hover:bg-[#1EB053]/10 hover:text-[#1EB053]"
           >
-            <FileText className="w-4 h-4 mr-2" />
-            Reports
+            <FileText className="w-3 h-3 sm:w-4 sm:h-4 sm:mr-2" />
+            <span className="hidden sm:inline">Reports</span>
           </Button>
         </div>
         </PageHeader>
@@ -324,22 +321,20 @@ export default function Inventory() {
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="bg-gray-100 p-1">
-          <TabsTrigger value="products" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#1EB053] data-[state=active]:to-[#0072C6] data-[state=active]:text-white">
+        <TabsList className="bg-gray-100 p-1 flex flex-wrap h-auto gap-1">
+          <TabsTrigger value="products" className="text-xs sm:text-sm px-2 sm:px-3 data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#1EB053] data-[state=active]:to-[#0072C6] data-[state=active]:text-white">
             Products
           </TabsTrigger>
-          <TabsTrigger value="movements" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#1EB053] data-[state=active]:to-[#0072C6] data-[state=active]:text-white">
-            Stock Movements
+          <TabsTrigger value="movements" className="text-xs sm:text-sm px-2 sm:px-3 data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#1EB053] data-[state=active]:to-[#0072C6] data-[state=active]:text-white">
+            Movements
           </TabsTrigger>
-          <TabsTrigger value="warehouses" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#1EB053] data-[state=active]:to-[#0072C6] data-[state=active]:text-white">
+          <TabsTrigger value="warehouses" className="text-xs sm:text-sm px-2 sm:px-3 data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#1EB053] data-[state=active]:to-[#0072C6] data-[state=active]:text-white">
             Warehouses
           </TabsTrigger>
-          <TabsTrigger value="batches" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#1EB053] data-[state=active]:to-[#0072C6] data-[state=active]:text-white">
-            <Package className="w-4 h-4 mr-1" />
+          <TabsTrigger value="batches" className="text-xs sm:text-sm px-2 sm:px-3 data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#1EB053] data-[state=active]:to-[#0072C6] data-[state=active]:text-white">
             Batches
           </TabsTrigger>
-          <TabsTrigger value="expiry" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#1EB053] data-[state=active]:to-[#0072C6] data-[state=active]:text-white">
-            <AlertTriangle className="w-4 h-4 mr-1" />
+          <TabsTrigger value="expiry" className="text-xs sm:text-sm px-2 sm:px-3 data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#1EB053] data-[state=active]:to-[#0072C6] data-[state=active]:text-white">
             Expiry
           </TabsTrigger>
         </TabsList>
@@ -374,7 +369,7 @@ export default function Inventory() {
             </CardContent>
           </Card>
 
-          {/* Products Table */}
+          {/* Products - Mobile Cards & Desktop Table */}
           {isLoading ? (
             <div className="space-y-3">
               {[...Array(5)].map((_, i) => (
@@ -390,50 +385,40 @@ export default function Inventory() {
               actionLabel="Add Product"
             />
           ) : (
-            <Card>
-              <CardContent className="p-0">
-                <div className="overflow-x-auto">
-                  <table className="w-full">
-                    <thead className="bg-gray-50 border-b">
-                      <tr>
-                        <th className="text-left p-4 font-medium">Product</th>
-                        <th className="text-left p-4 font-medium">SKU</th>
-                        <th className="text-left p-4 font-medium">Category</th>
-                        <th className="text-right p-4 font-medium">Price</th>
-                        <th className="text-right p-4 font-medium">Stock</th>
-                        <th className="text-right p-4 font-medium">Actions</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {filteredProducts.map((product) => (
-                        <tr key={product.id} className="border-b hover:bg-gray-50">
-                          <td className="p-4">
-                            <div className="flex items-center gap-3">
-                              {product.image_url ? (
-                                <img src={product.image_url} alt="" className="w-10 h-10 rounded-lg object-cover" />
-                              ) : (
-                                <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-[#1EB053]/20 to-[#1D5FC3]/20 flex items-center justify-center">
-                                  <Package className="w-5 h-5 text-[#1D5FC3]" />
-                                </div>
-                              )}
-                              <span className="font-medium">{product.name}</span>
+            <>
+              {/* Mobile Cards */}
+              <div className="block md:hidden space-y-3">
+                {filteredProducts.map((product) => (
+                  <Card key={product.id} className="overflow-hidden">
+                    <CardContent className="p-3">
+                      <div className="flex items-start gap-3">
+                        {product.image_url ? (
+                          <img src={product.image_url} alt="" className="w-12 h-12 rounded-lg object-cover flex-shrink-0" />
+                        ) : (
+                          <div className="w-12 h-12 rounded-lg bg-gradient-to-br from-[#1EB053]/20 to-[#1D5FC3]/20 flex items-center justify-center flex-shrink-0">
+                            <Package className="w-6 h-6 text-[#1D5FC3]" />
+                          </div>
+                        )}
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-start justify-between gap-2">
+                            <div className="min-w-0">
+                              <p className="font-semibold truncate">{product.name}</p>
+                              <p className="text-xs text-gray-500">{product.sku || 'No SKU'}</p>
                             </div>
-                          </td>
-                          <td className="p-4 text-gray-600">{product.sku || '-'}</td>
-                          <td className="p-4">
-                            <Badge variant="secondary">{product.category || 'Other'}</Badge>
-                          </td>
-                          <td className="p-4 text-right font-medium">Le {product.unit_price?.toLocaleString()}</td>
-                          <td className="p-4 text-right">
-                            <Badge variant={product.stock_quantity <= product.low_stock_threshold ? "destructive" : "secondary"}>
-                              {product.stock_quantity} {product.unit}
+                            <Badge variant={product.stock_quantity <= product.low_stock_threshold ? "destructive" : "secondary"} className="flex-shrink-0">
+                              {product.stock_quantity}
                             </Badge>
-                          </td>
-                          <td className="p-4 text-right">
-                            <div className="flex items-center justify-end gap-2">
+                          </div>
+                          <div className="flex items-center justify-between mt-2">
+                            <div className="flex items-center gap-2">
+                              <Badge variant="outline" className="text-xs">{product.category || 'Other'}</Badge>
+                              <span className="font-semibold text-[#1EB053]">Le {product.unit_price?.toLocaleString()}</span>
+                            </div>
+                            <div className="flex items-center gap-1">
                               <Button
                                 variant="ghost"
                                 size="icon"
+                                className="h-8 w-8"
                                 onClick={() => {
                                   setEditingProduct(product);
                                   setShowProductDialog(true);
@@ -444,20 +429,90 @@ export default function Inventory() {
                               <Button
                                 variant="ghost"
                                 size="icon"
-                                className="text-red-500"
+                                className="h-8 w-8 text-red-500"
                                 onClick={() => deleteProductMutation.mutate(product.id)}
                               >
                                 <Trash2 className="w-4 h-4" />
                               </Button>
                             </div>
-                          </td>
+                          </div>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+
+              {/* Desktop Table */}
+              <Card className="hidden md:block">
+                <CardContent className="p-0">
+                  <div className="overflow-x-auto">
+                    <table className="w-full">
+                      <thead className="bg-gray-50 border-b">
+                        <tr>
+                          <th className="text-left p-4 font-medium">Product</th>
+                          <th className="text-left p-4 font-medium">SKU</th>
+                          <th className="text-left p-4 font-medium">Category</th>
+                          <th className="text-right p-4 font-medium">Price</th>
+                          <th className="text-right p-4 font-medium">Stock</th>
+                          <th className="text-right p-4 font-medium">Actions</th>
                         </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              </CardContent>
-            </Card>
+                      </thead>
+                      <tbody>
+                        {filteredProducts.map((product) => (
+                          <tr key={product.id} className="border-b hover:bg-gray-50">
+                            <td className="p-4">
+                              <div className="flex items-center gap-3">
+                                {product.image_url ? (
+                                  <img src={product.image_url} alt="" className="w-10 h-10 rounded-lg object-cover" />
+                                ) : (
+                                  <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-[#1EB053]/20 to-[#1D5FC3]/20 flex items-center justify-center">
+                                    <Package className="w-5 h-5 text-[#1D5FC3]" />
+                                  </div>
+                                )}
+                                <span className="font-medium">{product.name}</span>
+                              </div>
+                            </td>
+                            <td className="p-4 text-gray-600">{product.sku || '-'}</td>
+                            <td className="p-4">
+                              <Badge variant="secondary">{product.category || 'Other'}</Badge>
+                            </td>
+                            <td className="p-4 text-right font-medium">Le {product.unit_price?.toLocaleString()}</td>
+                            <td className="p-4 text-right">
+                              <Badge variant={product.stock_quantity <= product.low_stock_threshold ? "destructive" : "secondary"}>
+                                {product.stock_quantity} {product.unit}
+                              </Badge>
+                            </td>
+                            <td className="p-4 text-right">
+                              <div className="flex items-center justify-end gap-2">
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  onClick={() => {
+                                    setEditingProduct(product);
+                                    setShowProductDialog(true);
+                                  }}
+                                >
+                                  <Edit className="w-4 h-4" />
+                                </Button>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="text-red-500"
+                                  onClick={() => deleteProductMutation.mutate(product.id)}
+                                >
+                                  <Trash2 className="w-4 h-4" />
+                                </Button>
+                              </div>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </CardContent>
+              </Card>
+            </>
           )}
         </TabsContent>
 
