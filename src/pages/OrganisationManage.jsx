@@ -292,7 +292,7 @@ export default function OrganisationManage() {
               </div>
 
               {isAdmin && (
-                <Button onClick={handleSave} disabled={updateOrgMutation.isPending} className="sl-gradient">
+                <Button onClick={handleSave} disabled={updateOrgMutation.isPending} className="bg-gradient-to-r from-[#1EB053] to-[#0072C6] hover:from-[#178f43] hover:to-[#005a9e] w-full sm:w-auto">
                   {updateOrgMutation.isPending ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Save className="w-4 h-4 mr-2" />}
                   Save Changes
                 </Button>
@@ -390,7 +390,7 @@ export default function OrganisationManage() {
               </div>
 
               {isAdmin && (
-                <Button onClick={handleSave} disabled={updateOrgMutation.isPending} className="sl-gradient">
+                <Button onClick={handleSave} disabled={updateOrgMutation.isPending} className="bg-gradient-to-r from-[#1EB053] to-[#0072C6] hover:from-[#178f43] hover:to-[#005a9e] w-full sm:w-auto">
                   {updateOrgMutation.isPending ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Save className="w-4 h-4 mr-2" />}
                   Save Changes
                 </Button>
