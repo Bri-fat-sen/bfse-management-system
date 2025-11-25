@@ -14,7 +14,10 @@ import {
   Receipt,
   X,
   Package,
-  Filter
+  Filter,
+  Truck,
+  Warehouse,
+  Store
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -51,6 +54,7 @@ export default function Sales() {
   const [activeTab, setActiveTab] = useState("pos");
   const [showReceipt, setShowReceipt] = useState(false);
   const [lastSale, setLastSale] = useState(null);
+  const [selectedLocation, setSelectedLocation] = useState("");
 
   const { data: user } = useQuery({
     queryKey: ['currentUser'],
@@ -83,6 +87,41 @@ export default function Sales() {
     queryFn: () => base44.entities.Sale.filter({ organisation_id: orgId }, '-created_date', 100),
     enabled: !!orgId,
   });
+
+  const { data: vehicles = [] } = useQuery({
+    queryKey: ['vehicles', orgId],
+    queryFn: () => base44.entities.Vehicle.filter({ organisation_id: orgId, status: 'active' }),
+    enabled: !!orgId,
+  });
+
+  const { data: warehouses = [] } = useQuery({
+    queryKey: ['warehouses', orgId],
+    queryFn: () => base44.entities.Warehouse.filter({ organisation_id: orgId, is_active: true }),
+    enabled: !!orgId,
+  });
+
+  // Get location options based on sale type
+  const getLocationOptions = () => {
+    switch (saleType) {
+      case 'vehicle':
+        return vehicles.map(v => ({ id: v.id, name: `${v.registration_number} - ${v.brand || ''} ${v.model || ''}`.trim(), type: 'vehicle' }));
+      case 'warehouse':
+        return warehouses.map(w => ({ id: w.id, name: w.name, type: 'warehouse' }));
+      case 'retail':
+      default:
+        return warehouses.length > 0 
+          ? warehouses.map(w => ({ id: w.id, name: w.name, type: 'store' }))
+          : [{ id: 'main_store', name: 'Main Store', type: 'store' }];
+    }
+  };
+
+  const locationOptions = getLocationOptions();
+  const selectedLocationData = locationOptions.find(l => l.id === selectedLocation);
+
+  // Reset location when sale type changes
+  React.useEffect(() => {
+    setSelectedLocation("");
+  }, [saleType]);
 
   const createSaleMutation = useMutation({
     mutationFn: (saleData) => base44.entities.Sale.create(saleData),
@@ -160,10 +199,18 @@ export default function Sales() {
   const cartTotal = cart.reduce((sum, item) => sum + item.total, 0);
 
   const completeSale = async () => {
-    const saleNumber = `SL-${Date.now().toString(36).toUpperCase()}`;
+    if (!selectedLocation) {
+      toast({
+        title: "Location Required",
+        description: `Please select a ${saleType === 'vehicle' ? 'vehicle' : saleType === 'warehouse' ? 'warehouse' : 'store'} for this sale.`,
+        variant: "destructive"
+      });
+      return;
+    }
+
     const saleData = {
       organisation_id: orgId,
-      sale_number: saleNumber,
+      sale_number: `SL-${Date.now().toString(36).toUpperCase()}`,
       sale_type: saleType,
       employee_id: currentEmployee?.id,
       employee_name: currentEmployee?.full_name,
@@ -172,19 +219,22 @@ export default function Sales() {
       subtotal: cartTotal,
       total_amount: cartTotal,
       payment_method: paymentMethod,
-      payment_status: "paid"
+      payment_status: "paid",
+      vehicle_id: saleType === 'vehicle' ? selectedLocation : null,
+      location: selectedLocationData?.name || ''
     };
     
+    createSaleMutation.mutate(saleData);
+
     // Update stock quantities and create stock movements
     for (const item of cart) {
       const product = products.find(p => p.id === item.product_id);
       if (product) {
-        const previousStock = product.stock_quantity || 0;
-        const newStock = Math.max(0, previousStock - item.quantity);
+        const newQuantity = Math.max(0, product.stock_quantity - item.quantity);
         
         // Update product stock
         await base44.entities.Product.update(item.product_id, {
-          stock_quantity: newStock
+          stock_quantity: newQuantity
         });
 
         // Create stock movement record
@@ -192,43 +242,62 @@ export default function Sales() {
           organisation_id: orgId,
           product_id: item.product_id,
           product_name: item.product_name,
-          movement_type: 'out',
+          warehouse_id: product.warehouse_id,
+          movement_type: "out",
           quantity: item.quantity,
-          previous_stock: previousStock,
-          new_stock: newStock,
-          reference_type: 'sale',
-          reference_id: saleNumber,
+          previous_stock: product.stock_quantity,
+          new_stock: newQuantity,
+          reference_type: "sale",
+          reference_id: saleData.sale_number,
           recorded_by: currentEmployee?.id,
           recorded_by_name: currentEmployee?.full_name,
-          notes: `${saleType} sale - ${saleNumber}`
+          notes: `Sale to ${customerName || 'Walk-in Customer'}`
         });
 
         // Check and create low stock alert if needed
-        if (newStock <= (product.low_stock_threshold || 10) && newStock > 0) {
-          await base44.entities.StockAlert.create({
+        const threshold = product.low_stock_threshold || 10;
+        if (newQuantity <= threshold && newQuantity > 0) {
+          const existingAlerts = await base44.entities.StockAlert.filter({
             organisation_id: orgId,
             product_id: item.product_id,
-            product_name: item.product_name,
-            alert_type: 'low_stock',
-            current_quantity: newStock,
-            threshold_quantity: product.low_stock_threshold || 10,
-            status: 'active'
+            status: 'active',
+            alert_type: 'low_stock'
           });
-        } else if (newStock === 0) {
-          await base44.entities.StockAlert.create({
+          
+          if (existingAlerts.length === 0) {
+            await base44.entities.StockAlert.create({
+              organisation_id: orgId,
+              product_id: item.product_id,
+              product_name: item.product_name,
+              warehouse_id: product.warehouse_id,
+              alert_type: 'low_stock',
+              current_quantity: newQuantity,
+              threshold_quantity: threshold,
+              status: 'active'
+            });
+          }
+        } else if (newQuantity === 0) {
+          const existingAlerts = await base44.entities.StockAlert.filter({
             organisation_id: orgId,
             product_id: item.product_id,
-            product_name: item.product_name,
-            alert_type: 'out_of_stock',
-            current_quantity: 0,
-            threshold_quantity: product.low_stock_threshold || 10,
             status: 'active'
           });
+          
+          if (existingAlerts.length === 0) {
+            await base44.entities.StockAlert.create({
+              organisation_id: orgId,
+              product_id: item.product_id,
+              product_name: item.product_name,
+              warehouse_id: product.warehouse_id,
+              alert_type: 'out_of_stock',
+              current_quantity: 0,
+              threshold_quantity: threshold,
+              status: 'active'
+            });
+          }
         }
       }
     }
-
-    createSaleMutation.mutate(saleData);
 
     // Log activity
     await base44.entities.ActivityLog.create({
@@ -258,26 +327,85 @@ export default function Sales() {
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             {/* Products Grid */}
             <div className="lg:col-span-2 space-y-4">
-              <div className="flex flex-col sm:flex-row gap-4">
-                <div className="relative flex-1">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                  <Input
-                    placeholder="Search products..."
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    className="pl-10"
-                  />
+              {/* Sale Type & Location Selection */}
+              <div className="bg-white rounded-xl p-4 border shadow-sm mb-4">
+                <div className="flex flex-col sm:flex-row gap-4">
+                  <div className="flex-1">
+                    <label className="text-xs font-medium text-gray-500 uppercase mb-1 block">Sale Type</label>
+                    <Select value={saleType} onValueChange={setSaleType}>
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="retail">
+                          <div className="flex items-center gap-2">
+                            <Store className="w-4 h-4 text-green-600" />
+                            Retail (Store)
+                          </div>
+                        </SelectItem>
+                        <SelectItem value="warehouse">
+                          <div className="flex items-center gap-2">
+                            <Warehouse className="w-4 h-4 text-blue-600" />
+                            Wholesale
+                          </div>
+                        </SelectItem>
+                        <SelectItem value="vehicle">
+                          <div className="flex items-center gap-2">
+                            <Truck className="w-4 h-4 text-purple-600" />
+                            Vehicle Sales
+                          </div>
+                        </SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="flex-1">
+                    <label className="text-xs font-medium text-gray-500 uppercase mb-1 block">
+                      {saleType === 'vehicle' ? 'Select Vehicle' : saleType === 'warehouse' ? 'Select Warehouse' : 'Select Store'}
+                    </label>
+                    <Select value={selectedLocation} onValueChange={setSelectedLocation}>
+                      <SelectTrigger className={!selectedLocation ? "border-amber-300 bg-amber-50" : ""}>
+                        <SelectValue placeholder={`Choose ${saleType === 'vehicle' ? 'vehicle' : saleType === 'warehouse' ? 'warehouse' : 'store'}...`} />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {locationOptions.length === 0 ? (
+                          <div className="p-2 text-sm text-gray-500 text-center">
+                            No {saleType === 'vehicle' ? 'vehicles' : 'warehouses'} available
+                          </div>
+                        ) : (
+                          locationOptions.map((loc) => (
+                            <SelectItem key={loc.id} value={loc.id}>
+                              <div className="flex items-center gap-2">
+                                {loc.type === 'vehicle' && <Truck className="w-4 h-4 text-purple-500" />}
+                                {loc.type === 'warehouse' && <Warehouse className="w-4 h-4 text-blue-500" />}
+                                {loc.type === 'store' && <Store className="w-4 h-4 text-green-500" />}
+                                {loc.name}
+                              </div>
+                            </SelectItem>
+                          ))
+                        )}
+                      </SelectContent>
+                    </Select>
+                  </div>
                 </div>
-                <Select value={saleType} onValueChange={setSaleType}>
-                  <SelectTrigger className="w-40">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="retail">Retail</SelectItem>
-                    <SelectItem value="warehouse">Wholesale</SelectItem>
-                    <SelectItem value="vehicle">Vehicle</SelectItem>
-                  </SelectContent>
-                </Select>
+                {selectedLocationData && (
+                  <div className="mt-3 p-2 bg-green-50 rounded-lg flex items-center gap-2 text-sm text-green-700">
+                    {saleType === 'vehicle' && <Truck className="w-4 h-4" />}
+                    {saleType === 'warehouse' && <Warehouse className="w-4 h-4" />}
+                    {saleType === 'retail' && <Store className="w-4 h-4" />}
+                    <span>Selling from: <strong>{selectedLocationData.name}</strong></span>
+                  </div>
+                )}
+              </div>
+
+              {/* Search */}
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                <Input
+                  placeholder="Search products..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="pl-10"
+                />
               </div>
 
               {loadingProducts ? (
@@ -441,9 +569,17 @@ export default function Sales() {
                       </div>
                       <div className="text-right">
                         <p className="font-bold text-[#1EB053]">Le {sale.total_amount?.toLocaleString()}</p>
-                        <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-2 flex-wrap">
                           <Badge variant="secondary">{sale.sale_type}</Badge>
                           <Badge variant="outline">{sale.payment_method}</Badge>
+                          {sale.location && (
+                            <Badge variant="outline" className="text-xs">
+                              {sale.sale_type === 'vehicle' && <Truck className="w-3 h-3 mr-1" />}
+                              {sale.sale_type === 'warehouse' && <Warehouse className="w-3 h-3 mr-1" />}
+                              {sale.sale_type === 'retail' && <Store className="w-3 h-3 mr-1" />}
+                              {sale.location}
+                            </Badge>
+                          )}
                         </div>
                       </div>
                     </div>
@@ -478,6 +614,19 @@ export default function Sales() {
                 onChange={(e) => setCustomerName(e.target.value)}
                 className="mt-1"
               />
+            </div>
+
+            {/* Location Info */}
+            <div className="p-3 bg-gray-100 rounded-lg">
+              <div className="flex items-center gap-2 text-sm">
+                {saleType === 'vehicle' && <Truck className="w-4 h-4 text-purple-600" />}
+                {saleType === 'warehouse' && <Warehouse className="w-4 h-4 text-blue-600" />}
+                {saleType === 'retail' && <Store className="w-4 h-4 text-green-600" />}
+                <span className="text-gray-600">
+                  {saleType === 'vehicle' ? 'Vehicle' : saleType === 'warehouse' ? 'Warehouse' : 'Store'}:
+                </span>
+                <span className="font-medium">{selectedLocationData?.name || 'Not selected'}</span>
+              </div>
             </div>
 
             <div>
