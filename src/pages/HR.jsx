@@ -15,7 +15,10 @@ import {
   Clock,
   DollarSign,
   Building2,
-  Filter
+  Filter,
+  FileText,
+  Star,
+  FolderOpen
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -45,6 +48,11 @@ import StatCard from "@/components/ui/StatCard";
 import PayrollProcessDialog from "@/components/hr/PayrollProcessDialog";
 import PayslipGenerator from "@/components/hr/PayslipGenerator";
 import AddEmployeeDialog from "@/components/hr/AddEmployeeDialog";
+import LeaveRequestDialog from "@/components/hr/LeaveRequestDialog";
+import LeaveManagement from "@/components/hr/LeaveManagement";
+import PerformanceReviewDialog from "@/components/hr/PerformanceReviewDialog";
+import PerformanceOverview from "@/components/hr/PerformanceOverview";
+import EmployeeDocuments from "@/components/hr/EmployeeDocuments";
 
 const roles = [
   "org_admin", "hr_admin", "payroll_admin", "warehouse_manager",
@@ -64,6 +72,11 @@ export default function HR() {
   const [activeTab, setActiveTab] = useState("employees");
   const [showPayrollDialog, setShowPayrollDialog] = useState(false);
   const [showAddEmployeeDialog, setShowAddEmployeeDialog] = useState(false);
+  const [showLeaveDialog, setShowLeaveDialog] = useState(false);
+  const [showPerformanceDialog, setShowPerformanceDialog] = useState(false);
+  const [selectedEmployeeForReview, setSelectedEmployeeForReview] = useState(null);
+  const [showDocumentsDialog, setShowDocumentsDialog] = useState(false);
+  const [selectedEmployeeForDocs, setSelectedEmployeeForDocs] = useState(null);
 
   const { data: user } = useQuery({
     queryKey: ['currentUser'],
@@ -194,7 +207,7 @@ export default function HR() {
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="bg-gray-100 p-1">
+        <TabsList className="bg-gray-100 p-1 flex-wrap">
           <TabsTrigger value="employees" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#1EB053] data-[state=active]:to-[#0072C6] data-[state=active]:text-white">
             Employees
           </TabsTrigger>
@@ -203,6 +216,14 @@ export default function HR() {
           </TabsTrigger>
           <TabsTrigger value="payroll" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#1EB053] data-[state=active]:to-[#0072C6] data-[state=active]:text-white">
             Payroll
+          </TabsTrigger>
+          <TabsTrigger value="leave" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#1EB053] data-[state=active]:to-[#0072C6] data-[state=active]:text-white">
+            <Calendar className="w-4 h-4 mr-1" />
+            Leave
+          </TabsTrigger>
+          <TabsTrigger value="performance" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#1EB053] data-[state=active]:to-[#0072C6] data-[state=active]:text-white">
+            <Star className="w-4 h-4 mr-1" />
+            Performance
           </TabsTrigger>
         </TabsList>
 
@@ -293,17 +314,41 @@ export default function HR() {
                       <Badge variant="secondary">
                         {emp.role?.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
                       </Badge>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => {
-                          setEditingEmployee(emp);
-                          setShowEmployeeDialog(true);
-                        }}
-                      >
-                        <Edit className="w-4 h-4 mr-1" />
-                        Edit
-                      </Button>
+                      <div className="flex items-center gap-1">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => {
+                            setSelectedEmployeeForDocs(emp);
+                            setShowDocumentsDialog(true);
+                          }}
+                          title="Documents"
+                        >
+                          <FolderOpen className="w-4 h-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => {
+                            setSelectedEmployeeForReview(emp);
+                            setShowPerformanceDialog(true);
+                          }}
+                          title="Performance Review"
+                        >
+                          <Star className="w-4 h-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => {
+                            setEditingEmployee(emp);
+                            setShowEmployeeDialog(true);
+                          }}
+                        >
+                          <Edit className="w-4 h-4 mr-1" />
+                          Edit
+                        </Button>
+                      </div>
                     </div>
                   </CardContent>
                 </Card>
@@ -409,6 +454,34 @@ export default function HR() {
             </CardContent>
           </Card>
         </TabsContent>
+
+        {/* Leave Tab */}
+        <TabsContent value="leave" className="mt-6">
+          <div className="flex justify-end mb-4">
+            <Button 
+              className="bg-[#1EB053] hover:bg-green-600"
+              onClick={() => setShowLeaveDialog(true)}
+            >
+              <Plus className="w-4 h-4 mr-2" />
+              Request Leave
+            </Button>
+          </div>
+          <LeaveManagement orgId={orgId} currentEmployee={currentEmployee} />
+        </TabsContent>
+
+        {/* Performance Tab */}
+        <TabsContent value="performance" className="mt-6">
+          <PerformanceOverview 
+            orgId={orgId} 
+            onViewReview={(review) => {
+              const emp = employees.find(e => e.id === review.employee_id);
+              if (emp) {
+                setSelectedEmployeeForReview(emp);
+                setShowPerformanceDialog(true);
+              }
+            }}
+          />
+        </TabsContent>
       </Tabs>
 
       {/* Payroll Process Dialog */}
@@ -427,6 +500,42 @@ export default function HR() {
         orgId={orgId}
         employeeCount={employees.length}
       />
+
+      {/* Leave Request Dialog */}
+      <LeaveRequestDialog
+        open={showLeaveDialog}
+        onOpenChange={setShowLeaveDialog}
+        currentEmployee={currentEmployee}
+        orgId={orgId}
+      />
+
+      {/* Performance Review Dialog */}
+      {selectedEmployeeForReview && (
+        <PerformanceReviewDialog
+          open={showPerformanceDialog}
+          onOpenChange={(open) => {
+            setShowPerformanceDialog(open);
+            if (!open) setSelectedEmployeeForReview(null);
+          }}
+          employee={selectedEmployeeForReview}
+          currentEmployee={currentEmployee}
+          orgId={orgId}
+        />
+      )}
+
+      {/* Employee Documents Dialog */}
+      {selectedEmployeeForDocs && (
+        <EmployeeDocuments
+          open={showDocumentsDialog}
+          onOpenChange={(open) => {
+            setShowDocumentsDialog(open);
+            if (!open) setSelectedEmployeeForDocs(null);
+          }}
+          employee={selectedEmployeeForDocs}
+          currentEmployee={currentEmployee}
+          orgId={orgId}
+        />
+      )}
 
       {/* Edit Employee Dialog */}
       <Dialog open={showEmployeeDialog} onOpenChange={setShowEmployeeDialog}>
