@@ -27,7 +27,9 @@ import {
   Moon,
   Sun,
   Clock,
-  Shield
+  Shield,
+  Wifi,
+  WifiOff
 } from "lucide-react";
 import { PermissionsProvider } from "@/components/permissions/PermissionsContext";
 import { DEFAULT_ROLE_PERMISSIONS } from "@/components/permissions/PermissionsContext";
@@ -43,6 +45,9 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import OrganisationSwitcher from "@/components/organisation/OrganisationSwitcher";
+import OfflineIndicator from "@/components/offline/OfflineIndicator";
+import { OfflineStorageProvider } from "@/components/offline/OfflineStorage";
+import PushNotificationManager from "@/components/notifications/PushNotificationManager";
 
 const menuSections = [
   {
@@ -130,7 +135,19 @@ export default function Layout({ children, currentPageName }) {
   };
 
   return (
+    <OfflineStorageProvider>
     <div className={`min-h-screen ${darkMode ? 'dark bg-[#0F1F3C]' : 'bg-gray-50'}`}>
+      {/* Offline Indicator */}
+      <OfflineIndicator />
+      
+      {/* Push Notification Manager */}
+      {currentEmployee && (
+        <PushNotificationManager 
+          orgId={currentEmployee?.organisation_id} 
+          currentEmployee={currentEmployee} 
+        />
+      )}
+      
       <style>{`
         :root {
           --sl-green: #1EB053;
@@ -180,6 +197,20 @@ export default function Layout({ children, currentPageName }) {
           background-image: 
             linear-gradient(135deg, rgba(30, 176, 83, 0.9) 0%, rgba(0, 114, 198, 0.9) 100%),
             url("data:image/svg+xml,%3Csvg width='80' height='80' viewBox='0 0 80 80' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.1'%3E%3Cpath d='M50 50c0-5.523 4.477-10 10-10s10 4.477 10 10-4.477 10-10 10c0 5.523-4.477 10-10 10s-10-4.477-10-10 4.477-10 10-10zM10 10c0-5.523 4.477-10 10-10s10 4.477 10 10-4.477 10-10 10c0 5.523-4.477 10-10 10S0 25.523 0 20s4.477-10 10-10zm10 8c4.418 0 8-3.582 8-8s-3.582-8-8-8-8 3.582-8 8 3.582 8 8 8zm40 40c4.418 0 8-3.582 8-8s-3.582-8-8-8-8 3.582-8 8 3.582 8 8 8z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+        }
+        /* Mobile optimizations */
+        @media (max-width: 768px) {
+          .mobile-touch-target {
+            min-height: 44px;
+            min-width: 44px;
+          }
+        }
+        /* Safe area for mobile devices with notches */
+        .safe-area-bottom {
+          padding-bottom: env(safe-area-inset-bottom, 0);
+        }
+        .safe-area-top {
+          padding-top: env(safe-area-inset-top, 0);
         }
       `}</style>
 
@@ -407,12 +438,42 @@ export default function Layout({ children, currentPageName }) {
         <div className="h-1.5 sl-flag-stripe" />
 
         {/* Page Content */}
-        <main className={`p-4 lg:p-6 ${darkMode ? 'text-white' : ''}`}>
+        <main className={`p-4 lg:p-6 pb-20 lg:pb-6 ${darkMode ? 'text-white' : ''}`}>
           <PermissionsProvider>
             {children}
           </PermissionsProvider>
         </main>
+        
+        {/* Mobile Bottom Navigation */}
+        <nav className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 z-50 lg:hidden safe-area-bottom">
+          <div className="flex items-center justify-around py-2">
+            {[
+              { icon: LayoutDashboard, label: "Home", page: "Dashboard" },
+              { icon: ShoppingCart, label: "Sales", page: "Sales" },
+              { icon: Clock, label: "Clock", page: "Attendance" },
+              { icon: Truck, label: "Trips", page: "Transport" },
+            ].map((item) => {
+              const isActive = currentPageName === item.page;
+              return (
+                <Link
+                  key={item.label}
+                  to={createPageUrl(item.page)}
+                  className={`flex flex-col items-center py-2 px-4 rounded-lg transition-colors relative ${
+                    isActive ? "text-[#1EB053]" : "text-gray-500"
+                  }`}
+                >
+                  <item.icon className={`w-6 h-6 ${isActive ? "stroke-[2.5px]" : ""}`} />
+                  <span className="text-xs mt-1 font-medium">{item.label}</span>
+                  {isActive && (
+                    <div className="absolute bottom-0 w-12 h-1 bg-gradient-to-r from-[#1EB053] to-[#0072C6] rounded-t-full" />
+                  )}
+                </Link>
+              );
+            })}
+          </div>
+        </nav>
       </div>
     </div>
+    </OfflineStorageProvider>
   );
 }
