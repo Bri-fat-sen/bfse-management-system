@@ -163,7 +163,7 @@ export default function Locations() {
     mutationFn: ({ id, data }) => base44.entities.Vehicle.update(id, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['vehicles'] });
-      toast({ title: "Vehicle updated successfully" });
+      toast.success("Vehicle updated successfully");
       setShowLocationDialog(false);
       setEditingLocation(null);
     },
