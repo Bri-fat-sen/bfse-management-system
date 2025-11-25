@@ -21,6 +21,8 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Link } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import PageHeader from "@/components/ui/PageHeader";
+import EmployeeSkillsSection from "@/components/hr/EmployeeSkillsSection";
+import EmployeePerformanceSection from "@/components/hr/EmployeePerformanceSection";
 
 export default function Profile() {
   const { data: user } = useQuery({
@@ -272,8 +274,23 @@ export default function Profile() {
               )}
             </CardContent>
           </Card>
-        </div>
-      </div>
-    </div>
-  );
-}
+          </div>
+          </div>
+
+          {/* Skills & Development Section */}
+          {currentEmployee && (
+          <EmployeeSkillsSection employee={currentEmployee} canEdit={true} />
+          )}
+
+          {/* Performance Reviews Section */}
+          {currentEmployee && (
+          <EmployeePerformanceSection 
+          employee={currentEmployee} 
+          currentEmployee={currentEmployee}
+          orgId={orgId}
+          canEdit={['super_admin', 'org_admin', 'hr_admin'].includes(currentEmployee?.role)}
+          />
+          )}
+          </div>
+          );
+          }

@@ -20,7 +20,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { format } from "date-fns";
-import { useToast } from "@/components/ui/use-toast";
+import { toast } from "sonner";
 
 const RATING_CATEGORIES = [
   { key: "productivity", label: "Productivity" },
@@ -58,7 +58,6 @@ export default function PerformanceReviewDialog({
   orgId,
   editingReview = null 
 }) {
-  const { toast } = useToast();
   const queryClient = useQueryClient();
   
   const [reviewPeriod, setReviewPeriod] = useState(editingReview?.review_period || "");
@@ -80,7 +79,7 @@ export default function PerformanceReviewDialog({
     mutationFn: (data) => base44.entities.PerformanceReview.create(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['performanceReviews'] });
-      toast({ title: "Performance review saved successfully" });
+      toast.success("Performance review saved successfully");
       onOpenChange(false);
     },
   });
@@ -89,7 +88,7 @@ export default function PerformanceReviewDialog({
     mutationFn: ({ id, data }) => base44.entities.PerformanceReview.update(id, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['performanceReviews'] });
-      toast({ title: "Performance review updated successfully" });
+      toast.success("Performance review updated successfully");
       onOpenChange(false);
     },
   });
@@ -102,7 +101,7 @@ export default function PerformanceReviewDialog({
     e.preventDefault();
     
     if (!reviewPeriod) {
-      toast({ title: "Please select a review period", variant: "destructive" });
+      toast.error("Please select a review period");
       return;
     }
 
