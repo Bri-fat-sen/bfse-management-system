@@ -115,7 +115,6 @@ export default function OrganisationManage() {
         primary_color: organisation.primary_color || '#1EB053',
         secondary_color: organisation.secondary_color || '#0072C6',
         logo_url: organisation.logo_url || '',
-        subscription_type: organisation.subscription_type || 'free',
       });
     }
   }, [organisation, formData]);
@@ -278,24 +277,7 @@ export default function OrganisationManage() {
                     className="mt-1"
                   />
                 </div>
-                <div>
-                  <Label>Subscription</Label>
-                  <Select
-                    value={formData.subscription_type}
-                    onValueChange={(v) => setFormData(prev => ({ ...prev, subscription_type: v }))}
-                    disabled={!isAdmin}
-                  >
-                    <SelectTrigger className="mt-1">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="free">Free</SelectItem>
-                      <SelectItem value="basic">Basic</SelectItem>
-                      <SelectItem value="professional">Professional</SelectItem>
-                      <SelectItem value="enterprise">Enterprise</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
+
               </div>
 
               <div>
