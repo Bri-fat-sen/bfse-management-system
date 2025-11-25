@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { Link } from "react-router-dom";
 import { createPageUrl } from "./utils";
 import { base44 } from "@/api/base44Client";
@@ -26,8 +26,11 @@ import {
   Building2,
   Moon,
   Sun,
-  Clock
+  Clock,
+  Shield
 } from "lucide-react";
+import { PermissionsProvider } from "@/components/permissions/PermissionsContext";
+import { DEFAULT_ROLE_PERMISSIONS } from "@/components/permissions/PermissionsContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -44,32 +47,33 @@ const menuSections = [
   {
     title: "Main",
     items: [
-      { name: "Dashboard", icon: LayoutDashboard, page: "Dashboard" },
-      { name: "Communication", icon: MessageSquare, page: "Communication", badge: "3" },
+      { name: "Dashboard", icon: LayoutDashboard, page: "Dashboard", module: "dashboard" },
+      { name: "Communication", icon: MessageSquare, page: "Communication", module: "communication", badge: "3" },
     ]
   },
   {
     title: "Business",
     items: [
-      { name: "Sales & POS", icon: ShoppingCart, page: "Sales" },
-      { name: "Inventory", icon: Package, page: "Inventory" },
-      { name: "Transport", icon: Truck, page: "Transport" },
+      { name: "Sales & POS", icon: ShoppingCart, page: "Sales", module: "sales" },
+      { name: "Inventory", icon: Package, page: "Inventory", module: "inventory" },
+      { name: "Transport", icon: Truck, page: "Transport", module: "transport" },
     ]
   },
   {
     title: "Management",
     items: [
-      { name: "HR & Payroll", icon: Users, page: "HR" },
-      { name: "Finance", icon: DollarSign, page: "Finance" },
-      { name: "Attendance", icon: Clock, page: "Attendance" },
+      { name: "HR & Payroll", icon: Users, page: "HR", module: "hr" },
+      { name: "Finance", icon: DollarSign, page: "Finance", module: "finance" },
+      { name: "Attendance", icon: Clock, page: "Attendance", module: "attendance" },
     ]
   },
   {
     title: "System",
     items: [
-      { name: "Activity Log", icon: Activity, page: "ActivityLog" },
-      { name: "Support", icon: HelpCircle, page: "Support" },
-      { name: "Settings", icon: Settings, page: "Settings" },
+      { name: "Activity Log", icon: Activity, page: "ActivityLog", module: "activity_log" },
+      { name: "Role Permissions", icon: Shield, page: "RolePermissions", module: "settings", adminOnly: true },
+      { name: "Support", icon: HelpCircle, page: "Support", module: "settings" },
+      { name: "Settings", icon: Settings, page: "Settings", module: "settings" },
     ]
   }
 ];
@@ -96,6 +100,27 @@ export default function Layout({ children, currentPageName }) {
   });
 
   const currentEmployee = employee?.[0];
+  const userRole = currentEmployee?.role || 'read_only';
+
+  // Get permissions for the user's role
+  const permissions = useMemo(() => {
+    return DEFAULT_ROLE_PERMISSIONS[userRole] || DEFAULT_ROLE_PERMISSIONS.read_only;
+  }, [userRole]);
+
+  // Filter menu items based on permissions
+  const filteredMenuSections = useMemo(() => {
+    return menuSections.map(section => ({
+      ...section,
+      items: section.items.filter(item => {
+        // Admin-only items
+        if (item.adminOnly && !['super_admin', 'org_admin'].includes(userRole)) {
+          return false;
+        }
+        // Check if user can view this module
+        return permissions[item.module]?.can_view ?? false;
+      })
+    })).filter(section => section.items.length > 0);
+  }, [userRole, permissions]);
 
   const handleLogout = () => {
     base44.auth.logout();
@@ -210,7 +235,7 @@ export default function Layout({ children, currentPageName }) {
 
         {/* Navigation with Sections */}
         <nav className="p-3 space-y-4 overflow-y-auto h-[calc(100%-8rem)]">
-          {menuSections.map((section, sectionIndex) => (
+          {filteredMenuSections.map((section, sectionIndex) => (
             <div key={section.title}>
               {sidebarOpen && (
                 <p className="px-3 mb-2 text-[10px] font-semibold uppercase tracking-wider text-gray-500">
@@ -390,7 +415,9 @@ export default function Layout({ children, currentPageName }) {
 
         {/* Page Content */}
         <main className={`p-4 lg:p-6 ${darkMode ? 'text-white' : ''}`}>
-          {children}
+          <PermissionsProvider>
+            {children}
+          </PermissionsProvider>
         </main>
       </div>
     </div>
