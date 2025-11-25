@@ -87,22 +87,22 @@ export default function Settings() {
       />
 
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="mb-6">
-          <TabsTrigger value="profile" className="flex items-center gap-2">
-            <User className="w-4 h-4" />
-            Profile
+        <TabsList className="mb-6 flex flex-wrap h-auto gap-1 p-1 bg-gray-100">
+          <TabsTrigger value="profile" className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm px-2 sm:px-3 py-1.5 sm:py-2 data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#1EB053] data-[state=active]:to-[#0072C6] data-[state=active]:text-white">
+            <User className="w-3 h-3 sm:w-4 sm:h-4" />
+            <span className="hidden xs:inline">Profile</span>
           </TabsTrigger>
-          <TabsTrigger value="organisation" className="flex items-center gap-2">
-            <Building2 className="w-4 h-4" />
-            Organisation
+          <TabsTrigger value="organisation" className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm px-2 sm:px-3 py-1.5 sm:py-2 data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#1EB053] data-[state=active]:to-[#0072C6] data-[state=active]:text-white">
+            <Building2 className="w-3 h-3 sm:w-4 sm:h-4" />
+            <span className="hidden xs:inline">Organisation</span>
           </TabsTrigger>
-          <TabsTrigger value="notifications" className="flex items-center gap-2">
-            <Bell className="w-4 h-4" />
-            Notifications
+          <TabsTrigger value="notifications" className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm px-2 sm:px-3 py-1.5 sm:py-2 data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#1EB053] data-[state=active]:to-[#0072C6] data-[state=active]:text-white">
+            <Bell className="w-3 h-3 sm:w-4 sm:h-4" />
+            <span className="hidden xs:inline">Alerts</span>
           </TabsTrigger>
-          <TabsTrigger value="appearance" className="flex items-center gap-2">
-            <Palette className="w-4 h-4" />
-            Appearance
+          <TabsTrigger value="appearance" className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm px-2 sm:px-3 py-1.5 sm:py-2 data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#1EB053] data-[state=active]:to-[#0072C6] data-[state=active]:text-white">
+            <Palette className="w-3 h-3 sm:w-4 sm:h-4" />
+            <span className="hidden xs:inline">Theme</span>
           </TabsTrigger>
         </TabsList>
 
@@ -115,14 +115,14 @@ export default function Settings() {
                 <CardDescription>Update your profile picture</CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="flex items-center gap-6">
-                  <Avatar className="w-24 h-24">
+                <div className="flex flex-col sm:flex-row items-center gap-4 sm:gap-6">
+                  <Avatar className="w-20 h-20 sm:w-24 sm:h-24">
                     <AvatarImage src={currentEmployee?.profile_photo} />
-                    <AvatarFallback className="sl-gradient text-white text-2xl">
+                    <AvatarFallback className="bg-gradient-to-r from-[#1EB053] to-[#0072C6] text-white text-xl sm:text-2xl">
                       {user?.full_name?.charAt(0) || 'U'}
                     </AvatarFallback>
                   </Avatar>
-                  <div>
+                  <div className="text-center sm:text-left">
                     <Button variant="outline" className="mb-2">
                       <Camera className="w-4 h-4 mr-2" />
                       Upload Photo
@@ -187,8 +187,8 @@ export default function Settings() {
                     </div>
                   </div>
 
-                  <div className="flex justify-end pt-4">
-                    <Button type="submit" className="sl-gradient">
+                  <div className="flex justify-center sm:justify-end pt-4">
+                    <Button type="submit" className="bg-gradient-to-r from-[#1EB053] to-[#0072C6] hover:from-[#178f43] hover:to-[#005a9e] text-white shadow-lg w-full sm:w-auto">
                       <Save className="w-4 h-4 mr-2" />
                       Save Changes
                     </Button>
@@ -207,16 +207,16 @@ export default function Settings() {
             </CardHeader>
             <CardContent>
               <div className="space-y-6">
-                <div className="flex items-center gap-4">
+                <div className="flex flex-col sm:flex-row items-center gap-4 text-center sm:text-left">
                   {currentOrg?.logo_url ? (
-                    <img src={currentOrg.logo_url} alt="Logo" className="w-16 h-16 rounded-xl object-cover" />
+                    <img src={currentOrg.logo_url} alt="Logo" className="w-14 h-14 sm:w-16 sm:h-16 rounded-xl object-cover" />
                   ) : (
-                    <div className="w-16 h-16 rounded-xl sl-gradient flex items-center justify-center text-white text-2xl font-bold">
+                    <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-xl bg-gradient-to-r from-[#1EB053] to-[#0072C6] flex items-center justify-center text-white text-xl sm:text-2xl font-bold">
                       {currentOrg?.name?.charAt(0) || 'O'}
                     </div>
                   )}
                   <div>
-                    <h3 className="text-xl font-bold">{currentOrg?.name || 'Organisation'}</h3>
+                    <h3 className="text-lg sm:text-xl font-bold">{currentOrg?.name || 'Organisation'}</h3>
                     <p className="text-gray-500">{currentOrg?.code}</p>
                   </div>
                 </div>
@@ -269,7 +269,7 @@ export default function Settings() {
               <CardDescription>Manage how you receive notifications</CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="space-y-6">
+              <div className="space-y-4 sm:space-y-6">
                 {[
                   { id: 'chat', label: 'Chat Messages', description: 'Get notified when you receive new messages' },
                   { id: 'meetings', label: 'Meeting Reminders', description: 'Receive reminders before scheduled meetings' },
@@ -278,12 +278,12 @@ export default function Settings() {
                   { id: 'payroll', label: 'Payroll Updates', description: 'Notifications about payroll processing' },
                   { id: 'system', label: 'System Announcements', description: 'Important system updates and announcements' },
                 ].map((item) => (
-                  <div key={item.id} className="flex items-center justify-between">
-                    <div>
-                      <p className="font-medium">{item.label}</p>
-                      <p className="text-sm text-gray-500">{item.description}</p>
+                  <div key={item.id} className="flex items-start sm:items-center justify-between gap-3 p-3 sm:p-0 bg-gray-50 sm:bg-transparent rounded-lg">
+                    <div className="flex-1 min-w-0">
+                      <p className="font-medium text-sm sm:text-base">{item.label}</p>
+                      <p className="text-xs sm:text-sm text-gray-500 truncate sm:whitespace-normal">{item.description}</p>
                     </div>
-                    <Switch defaultChecked />
+                    <Switch defaultChecked className="shrink-0" />
                   </div>
                 ))}
               </div>
@@ -299,22 +299,22 @@ export default function Settings() {
                 <CardDescription>Customize the look and feel</CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                  <div className="p-4 border-2 border-[#1EB053] rounded-xl cursor-pointer bg-white">
-                    <div className="flex items-center justify-between mb-3">
-                      <Sun className="w-5 h-5" />
-                      <div className="w-4 h-4 rounded-full bg-[#1EB053]" />
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 sm:gap-4">
+                  <div className="p-3 sm:p-4 border-2 border-[#1EB053] rounded-xl cursor-pointer bg-white">
+                    <div className="flex items-center justify-between mb-2 sm:mb-3">
+                      <Sun className="w-4 h-4 sm:w-5 sm:h-5" />
+                      <div className="w-3 h-3 sm:w-4 sm:h-4 rounded-full bg-[#1EB053]" />
                     </div>
-                    <p className="font-medium">Light Mode</p>
-                    <p className="text-sm text-gray-500">Default theme</p>
+                    <p className="font-medium text-sm sm:text-base">Light Mode</p>
+                    <p className="text-xs sm:text-sm text-gray-500">Default theme</p>
                   </div>
-                  <div className="p-4 border-2 rounded-xl cursor-pointer bg-[#0F1F3C] text-white">
-                    <div className="flex items-center justify-between mb-3">
-                      <Moon className="w-5 h-5" />
-                      <div className="w-4 h-4 rounded-full border-2 border-white" />
+                  <div className="p-3 sm:p-4 border-2 rounded-xl cursor-pointer bg-[#0F1F3C] text-white">
+                    <div className="flex items-center justify-between mb-2 sm:mb-3">
+                      <Moon className="w-4 h-4 sm:w-5 sm:h-5" />
+                      <div className="w-3 h-3 sm:w-4 sm:h-4 rounded-full border-2 border-white" />
                     </div>
-                    <p className="font-medium">Dark Mode</p>
-                    <p className="text-sm text-gray-400">Easy on the eyes</p>
+                    <p className="font-medium text-sm sm:text-base">Dark Mode</p>
+                    <p className="text-xs sm:text-sm text-gray-400">Easy on the eyes</p>
                   </div>
                 </div>
               </CardContent>
