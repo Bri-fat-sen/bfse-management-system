@@ -172,6 +172,7 @@ export default function Finance() {
   };
 
   return (
+    <ProtectedPage module="finance">
     <div className="space-y-6">
       <PageHeader
         title="Finance"
@@ -518,5 +519,6 @@ export default function Finance() {
         </DialogContent>
       </Dialog>
     </div>
+    </ProtectedPage>
   );
 }

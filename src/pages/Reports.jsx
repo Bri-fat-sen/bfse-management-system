@@ -272,6 +272,7 @@ export default function Reports() {
   };
 
   return (
+    <ProtectedPage module="finance">
     <div className="space-y-6">
       <PageHeader
         title="Reports & Analytics"
@@ -603,5 +604,6 @@ export default function Reports() {
         </TabsContent>
       </Tabs>
     </div>
+    </ProtectedPage>
   );
 }

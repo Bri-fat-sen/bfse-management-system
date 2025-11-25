@@ -171,6 +171,7 @@ export default function HR() {
   };
 
   return (
+    <ProtectedPage module="hr">
     <div className="space-y-6">
       <PageHeader
         title="HR & Payroll"
@@ -644,5 +645,6 @@ export default function HR() {
         </DialogContent>
       </Dialog>
     </div>
+    </ProtectedPage>
   );
 }
