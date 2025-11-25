@@ -60,7 +60,6 @@ import PageHeader from "@/components/ui/PageHeader";
 import EmptyState from "@/components/ui/EmptyState";
 
 export default function Locations() {
-  const { toast } = useToast();
   const queryClient = useQueryClient();
   const [activeTab, setActiveTab] = useState("warehouses");
   const [showLocationDialog, setShowLocationDialog] = useState(false);
