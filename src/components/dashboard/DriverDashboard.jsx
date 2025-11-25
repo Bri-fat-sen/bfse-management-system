@@ -81,35 +81,6 @@ export default function DriverDashboard({ currentEmployee, orgId }) {
 
   return (
     <div className="space-y-6">
-      {/* Clock Status Banner */}
-      <Card className={`border-l-4 ${isClockedIn ? 'border-l-green-500 bg-green-50' : 'border-l-amber-500 bg-amber-50'}`}>
-        <CardContent className="p-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className={`w-12 h-12 rounded-full flex items-center justify-center ${isClockedIn ? 'bg-green-100' : 'bg-amber-100'}`}>
-                <Clock className={`w-6 h-6 ${isClockedIn ? 'text-green-600' : 'text-amber-600'}`} />
-              </div>
-              <div>
-                <p className={`font-semibold ${isClockedIn ? 'text-green-700' : 'text-amber-700'}`}>
-                  {isClockedIn ? 'Currently On Duty' : todayAttendance?.clock_out_time ? 'Shift Complete' : 'Not Clocked In'}
-                </p>
-                <p className="text-sm text-gray-500">
-                  {todayAttendance?.clock_in_time 
-                    ? `Clocked in at ${todayAttendance.clock_in_time}${todayAttendance.clock_out_time ? ` - Out at ${todayAttendance.clock_out_time}` : ''}`
-                    : 'Clock in to start your shift'
-                  }
-                </p>
-              </div>
-            </div>
-            <Link to={createPageUrl("Attendance")}>
-              <Button className={isClockedIn ? 'bg-red-500 hover:bg-red-600' : 'bg-[#1EB053] hover:bg-green-600'}>
-                {isClockedIn ? 'Clock Out' : 'Clock In'}
-              </Button>
-            </Link>
-          </div>
-        </CardContent>
-      </Card>
-
       {/* Quick Stats */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         <StatCard

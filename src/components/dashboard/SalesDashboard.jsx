@@ -84,26 +84,8 @@ export default function SalesDashboard({ currentEmployee, orgId }) {
 
   return (
     <div className="space-y-6">
-      {/* Clock Status & Quick Actions */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-        <Card className={`border-l-4 ${isClockedIn ? 'border-l-green-500 bg-green-50' : 'border-l-amber-500 bg-amber-50'}`}>
-          <CardContent className="p-4">
-            <div className="flex items-center gap-3">
-              <div className={`w-10 h-10 rounded-full flex items-center justify-center ${isClockedIn ? 'bg-green-100' : 'bg-amber-100'}`}>
-                <Clock className={`w-5 h-5 ${isClockedIn ? 'text-green-600' : 'text-amber-600'}`} />
-              </div>
-              <div className="flex-1">
-                <p className={`font-semibold ${isClockedIn ? 'text-green-700' : 'text-amber-700'}`}>
-                  {isClockedIn ? 'On Shift' : 'Off Duty'}
-                </p>
-                <p className="text-xs text-gray-500">
-                  {todayAttendance?.clock_in_time || 'Not clocked in'}
-                </p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
+      {/* Quick Actions */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         <Link to={createPageUrl("Sales")} className="block">
           <Card className="hover:shadow-lg transition-shadow cursor-pointer bg-gradient-to-r from-[#1EB053] to-[#0072C6] text-white h-full">
             <CardContent className="p-4 flex items-center justify-between h-full">
