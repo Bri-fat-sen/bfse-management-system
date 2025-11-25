@@ -35,6 +35,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { generateExportHTML, printDocument, exportToCSV as exportCSVUtil } from "@/components/exports/SierraLeoneExportStyles";
 
 const REPORT_TYPES = [
   { value: "stock_summary", label: "Stock Summary", icon: Package },
@@ -160,67 +161,31 @@ export default function InventoryReport({
   }, [reportType, filteredProducts, stockMovements]);
 
   const exportCSV = () => {
-    const headers = reportData.columns.join(",");
-    const rows = reportData.rows.map(row => Object.values(row).join(",")).join("\n");
-    const csv = `${headers}\n${rows}`;
-    
-    const blob = new Blob([csv], { type: 'text/csv' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `${reportType}_${format(new Date(), 'yyyy-MM-dd')}.csv`;
-    a.click();
+    exportCSVUtil(
+      reportData.columns,
+      reportData.rows.map(row => Object.values(row)),
+      `${reportType}_${format(new Date(), 'yyyy-MM-dd')}.csv`
+    );
   };
 
   const printReport = () => {
-    const printContent = `
-      <html>
-        <head>
-          <title>${reportData.title}</title>
-          <style>
-            body { font-family: Arial, sans-serif; padding: 20px; }
-            h1 { color: #1EB053; }
-            table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-            th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
-            th { background-color: #0F1F3C; color: white; }
-            tr:nth-child(even) { background-color: #f9f9f9; }
-            .summary { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin: 20px 0; }
-            .summary-item { background: #f0f0f0; padding: 15px; border-radius: 8px; text-align: center; }
-            .summary-value { font-size: 24px; font-weight: bold; color: #1EB053; }
-            .header { border-bottom: 4px solid; border-image: linear-gradient(to right, #1EB053 33%, white 33%, white 66%, #0072C6 66%) 1; padding-bottom: 10px; }
-          </style>
-        </head>
-        <body>
-          <div class="header">
-            <h1>${organisation?.name || 'BFSE'} - ${reportData.title}</h1>
-            <p>Generated: ${format(new Date(), 'MMMM d, yyyy h:mm a')}</p>
-          </div>
-          <div class="summary">
-            ${Object.entries(reportData.summary).map(([key, value]) => `
-              <div class="summary-item">
-                <div class="summary-value">${typeof value === 'number' && key.includes('Value') ? 'SLE ' + value.toLocaleString() : value.toLocaleString()}</div>
-                <div>${key.replace(/([A-Z])/g, ' $1').trim()}</div>
-              </div>
-            `).join('')}
-          </div>
-          <table>
-            <thead>
-              <tr>${reportData.columns.map(col => `<th>${col}</th>`).join('')}</tr>
-            </thead>
-            <tbody>
-              ${reportData.rows.map(row => `
-                <tr>${Object.values(row).map(val => `<td>${typeof val === 'number' ? val.toLocaleString() : val}</td>`).join('')}</tr>
-              `).join('')}
-            </tbody>
-          </table>
-        </body>
-      </html>
-    `;
+    // Convert summary object to array format
+    const summaryArray = Object.entries(reportData.summary).map(([key, value]) => ({
+      label: key.replace(/([A-Z])/g, ' $1').trim(),
+      value: typeof value === 'number' && key.toLowerCase().includes('value') 
+        ? `SLE ${value.toLocaleString()}` 
+        : value.toLocaleString()
+    }));
+
+    const html = generateExportHTML({
+      title: reportData.title,
+      organisation: organisation,
+      summary: summaryArray,
+      columns: reportData.columns,
+      rows: reportData.rows.map(row => Object.values(row))
+    });
     
-    const printWindow = window.open('', '_blank');
-    printWindow.document.write(printContent);
-    printWindow.document.close();
-    printWindow.print();
+    printDocument(html);
   };
 
   return (
