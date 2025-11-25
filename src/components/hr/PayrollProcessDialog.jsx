@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { format, startOfMonth, endOfMonth, subMonths } from "date-fns";
@@ -19,9 +19,55 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/components/ui/use-toast";
-import { DollarSign, Plus, Minus, Calculator } from "lucide-react";
+import { DollarSign, Plus, Minus, Calculator, Info } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+
+// Sierra Leone Statutory Deductions (2024 rates)
+const SL_TAX_BRACKETS = [
+  { min: 0, max: 500000, rate: 0 },           // First SLE 500,000 - 0%
+  { min: 500001, max: 1000000, rate: 0.15 },  // Next SLE 500,000 - 15%
+  { min: 1000001, max: 1500000, rate: 0.20 }, // Next SLE 500,000 - 20%
+  { min: 1500001, max: 2000000, rate: 0.25 }, // Next SLE 500,000 - 25%
+  { min: 2000001, max: Infinity, rate: 0.30 } // Above SLE 2,000,000 - 30%
+];
+
+const NASSIT_EMPLOYEE_RATE = 0.05;  // 5% employee contribution
+const NASSIT_EMPLOYER_RATE = 0.10;  // 10% employer contribution (for reference)
+
+// Common Sierra Leone allowances
+const SL_COMMON_ALLOWANCES = [
+  { name: "Transport Allowance", description: "Monthly transport to work" },
+  { name: "Housing Allowance", description: "Accommodation support" },
+  { name: "Medical Allowance", description: "Health care support" },
+  { name: "Risk Allowance", description: "For hazardous work conditions" },
+  { name: "Meal Allowance", description: "Daily meal subsidy" },
+  { name: "Communication Allowance", description: "Phone/internet allowance" },
+  { name: "Leave Allowance", description: "Annual leave bonus" },
+];
+
+// Calculate PAYE Tax for Sierra Leone
+const calculatePAYE = (annualIncome) => {
+  let tax = 0;
+  let remainingIncome = annualIncome;
+  
+  for (const bracket of SL_TAX_BRACKETS) {
+    if (remainingIncome <= 0) break;
+    const taxableInBracket = Math.min(remainingIncome, bracket.max - bracket.min + 1);
+    if (annualIncome > bracket.min) {
+      tax += Math.max(0, Math.min(taxableInBracket, remainingIncome)) * bracket.rate;
+      remainingIncome -= taxableInBracket;
+    }
+  }
+  return tax / 12; // Monthly PAYE
+};
 
 export default function PayrollProcessDialog({ 
   open, 
@@ -35,6 +81,8 @@ export default function PayrollProcessDialog({
   const [selectedEmployee, setSelectedEmployee] = useState("");
   const [allowances, setAllowances] = useState([]);
   const [deductions, setDeductions] = useState([]);
+  const [applyNASSIT, setApplyNASSIT] = useState(true);
+  const [applyPAYE, setApplyPAYE] = useState(true);
 
   const lastMonth = subMonths(new Date(), 1);
   const defaultPeriodStart = format(startOfMonth(lastMonth), 'yyyy-MM-dd');
@@ -55,12 +103,24 @@ export default function PayrollProcessDialog({
   const employee = employees.find(e => e.id === selectedEmployee);
   const baseSalary = employee?.base_salary || 0;
   const totalAllowances = allowances.reduce((sum, a) => sum + (parseFloat(a.amount) || 0), 0);
-  const totalDeductions = deductions.reduce((sum, d) => sum + (parseFloat(d.amount) || 0), 0);
+  const manualDeductions = deductions.reduce((sum, d) => sum + (parseFloat(d.amount) || 0), 0);
   const grossPay = baseSalary + totalAllowances;
+  
+  // Calculate statutory deductions
+  const nassitDeduction = applyNASSIT ? grossPay * NASSIT_EMPLOYEE_RATE : 0;
+  const annualGross = grossPay * 12;
+  const payeDeduction = applyPAYE ? calculatePAYE(annualGross) : 0;
+  
+  const totalStatutory = nassitDeduction + payeDeduction;
+  const totalDeductions = manualDeductions + totalStatutory;
   const netPay = grossPay - totalDeductions;
 
-  const addAllowance = () => {
-    setAllowances([...allowances, { name: "", amount: 0 }]);
+  const addAllowance = (preset = null) => {
+    if (preset) {
+      setAllowances([...allowances, { name: preset.name, amount: 0 }]);
+    } else {
+      setAllowances([...allowances, { name: "", amount: 0 }]);
+    }
   };
 
   const addDeduction = () => {
@@ -91,6 +151,15 @@ export default function PayrollProcessDialog({
     e.preventDefault();
     const formData = new FormData(e.target);
     
+    // Build deductions array including statutory
+    const allDeductions = [...deductions.filter(d => d.name && d.amount)];
+    if (applyNASSIT && nassitDeduction > 0) {
+      allDeductions.push({ name: "NASSIT (5%)", amount: nassitDeduction, statutory: true });
+    }
+    if (applyPAYE && payeDeduction > 0) {
+      allDeductions.push({ name: "PAYE Tax", amount: payeDeduction, statutory: true });
+    }
+    
     const data = {
       organisation_id: orgId,
       employee_id: selectedEmployee,
@@ -103,7 +172,7 @@ export default function PayrollProcessDialog({
       overtime_pay: (parseFloat(formData.get('overtime_hours')) || 0) * (parseFloat(formData.get('overtime_rate')) || 0),
       allowances: allowances.filter(a => a.name && a.amount),
       total_allowances: totalAllowances,
-      deductions: deductions.filter(d => d.name && d.amount),
+      deductions: allDeductions,
       total_deductions: totalDeductions,
       gross_pay: grossPay,
       net_pay: netPay,
@@ -197,9 +266,23 @@ export default function PayrollProcessDialog({
           <div>
             <div className="flex items-center justify-between mb-2">
               <Label className="text-green-600">Allowances</Label>
-              <Button type="button" variant="outline" size="sm" onClick={addAllowance}>
-                <Plus className="w-4 h-4 mr-1" /> Add
-              </Button>
+              <div className="flex gap-2">
+                <Select onValueChange={(v) => addAllowance(SL_COMMON_ALLOWANCES.find(a => a.name === v))}>
+                  <SelectTrigger className="w-40 h-8 text-xs">
+                    <SelectValue placeholder="Quick add..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {SL_COMMON_ALLOWANCES.map(a => (
+                      <SelectItem key={a.name} value={a.name} className="text-xs">
+                        {a.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <Button type="button" variant="outline" size="sm" onClick={() => addAllowance()}>
+                  <Plus className="w-4 h-4 mr-1" /> Custom
+                </Button>
+              </div>
             </div>
             <div className="space-y-2">
               {allowances.map((allowance, index) => (
@@ -228,10 +311,50 @@ export default function PayrollProcessDialog({
             </div>
           </div>
 
-          {/* Deductions */}
+          {/* Statutory Deductions (Sierra Leone) */}
+          <div className="p-4 bg-blue-50 rounded-lg border border-blue-200">
+            <div className="flex items-center gap-2 mb-3">
+              <h4 className="font-semibold text-[#0072C6]">🇸🇱 Sierra Leone Statutory Deductions</h4>
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger>
+                    <Info className="w-4 h-4 text-gray-400" />
+                  </TooltipTrigger>
+                  <TooltipContent className="max-w-xs">
+                    <p className="text-xs">NASSIT: 5% employee, 10% employer</p>
+                    <p className="text-xs mt-1">PAYE: Progressive tax from 0% to 30%</p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            </div>
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="font-medium text-sm">NASSIT Contribution (5%)</p>
+                  <p className="text-xs text-gray-500">National Social Security</p>
+                </div>
+                <div className="flex items-center gap-3">
+                  <span className="text-sm font-medium">SLE {nassitDeduction.toLocaleString()}</span>
+                  <Switch checked={applyNASSIT} onCheckedChange={setApplyNASSIT} />
+                </div>
+              </div>
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="font-medium text-sm">PAYE Tax</p>
+                  <p className="text-xs text-gray-500">Pay As You Earn Income Tax</p>
+                </div>
+                <div className="flex items-center gap-3">
+                  <span className="text-sm font-medium">SLE {payeDeduction.toLocaleString()}</span>
+                  <Switch checked={applyPAYE} onCheckedChange={setApplyPAYE} />
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Other Deductions */}
           <div>
             <div className="flex items-center justify-between mb-2">
-              <Label className="text-red-600">Deductions</Label>
+              <Label className="text-red-600">Other Deductions</Label>
               <Button type="button" variant="outline" size="sm" onClick={addDeduction}>
                 <Plus className="w-4 h-4 mr-1" /> Add
               </Button>
@@ -240,7 +363,7 @@ export default function PayrollProcessDialog({
               {deductions.map((deduction, index) => (
                 <div key={index} className="flex gap-2">
                   <Input 
-                    placeholder="Deduction name" 
+                    placeholder="e.g., Loan repayment, Advance" 
                     value={deduction.name}
                     onChange={(e) => updateDeduction(index, 'name', e.target.value)}
                     className="flex-1"
@@ -258,7 +381,7 @@ export default function PayrollProcessDialog({
                 </div>
               ))}
               {deductions.length === 0 && (
-                <p className="text-sm text-gray-400 text-center py-2">No deductions added</p>
+                <p className="text-sm text-gray-400 text-center py-2">No other deductions</p>
               )}
             </div>
           </div>
@@ -273,15 +396,33 @@ export default function PayrollProcessDialog({
               <span>+ Allowances</span>
               <span>SLE {totalAllowances.toLocaleString()}</span>
             </div>
-            <div className="flex justify-between font-medium">
+            <div className="flex justify-between font-medium border-t pt-2">
               <span>Gross Pay</span>
               <span>SLE {grossPay.toLocaleString()}</span>
             </div>
+            {applyNASSIT && (
+              <div className="flex justify-between text-red-500 text-sm">
+                <span>- NASSIT (5%)</span>
+                <span>SLE {nassitDeduction.toLocaleString()}</span>
+              </div>
+            )}
+            {applyPAYE && (
+              <div className="flex justify-between text-red-500 text-sm">
+                <span>- PAYE Tax</span>
+                <span>SLE {payeDeduction.toLocaleString()}</span>
+              </div>
+            )}
+            {manualDeductions > 0 && (
+              <div className="flex justify-between text-red-500 text-sm">
+                <span>- Other Deductions</span>
+                <span>SLE {manualDeductions.toLocaleString()}</span>
+              </div>
+            )}
             <div className="flex justify-between text-red-600">
-              <span>- Deductions</span>
+              <span>Total Deductions</span>
               <span>SLE {totalDeductions.toLocaleString()}</span>
             </div>
-            <div className="flex justify-between text-xl font-bold pt-2 border-t">
+            <div className="flex justify-between text-xl font-bold pt-2 border-t bg-gradient-to-r from-[#1EB053]/10 to-[#0072C6]/10 -mx-4 px-4 py-3 rounded-lg">
               <span>Net Pay</span>
               <span className="text-[#1EB053]">SLE {netPay.toLocaleString()}</span>
             </div>
