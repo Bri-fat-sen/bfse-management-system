@@ -36,6 +36,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { useToast } from "@/components/ui/use-toast";
+import { generateExportHTML, printDocument, downloadHTML, exportToCSV } from "@/components/exports/SierraLeoneExportStyles";
 
 const reportTypes = [
   { id: "sales", name: "Sales Report", icon: ShoppingCart, color: "green" },
@@ -49,7 +50,7 @@ const expenseCategories = [
   "salaries", "transport", "marketing", "insurance", "petty_cash", "other"
 ];
 
-export default function ReportGenerator({ sales = [], expenses = [], payrolls = [], employees = [], trips = [] }) {
+export default function ReportGenerator({ sales = [], expenses = [], payrolls = [], employees = [], trips = [], organisation }) {
   const { toast } = useToast();
   const [reportType, setReportType] = useState("sales");
   const [dateFrom, setDateFrom] = useState(format(startOfMonth(subMonths(new Date(), 1)), 'yyyy-MM-dd'));
@@ -216,92 +217,30 @@ export default function ReportGenerator({ sales = [], expenses = [], payrolls = 
     }, 500);
   };
 
-  const exportToCSV = () => {
+  const handleExportCSV = () => {
     if (!reportData) return;
-    
-    let csvContent = `${reportData.title}\n`;
-    csvContent += `Generated: ${format(new Date(), 'PPpp')}\n`;
-    csvContent += `Period: ${format(parseISO(dateFrom), 'MMM d, yyyy')} - ${format(parseISO(dateTo), 'MMM d, yyyy')}\n\n`;
-    
-    // Summary
-    csvContent += "Summary\n";
-    reportData.summary.forEach(s => {
-      csvContent += `${s.label},${s.value}\n`;
-    });
-    csvContent += "\n";
-    
-    // Data table
-    csvContent += reportData.columns.join(",") + "\n";
-    reportData.rows.forEach(row => {
-      csvContent += row.map(cell => `"${cell}"`).join(",") + "\n";
-    });
-    
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-    const link = document.createElement('a');
-    link.href = URL.createObjectURL(blob);
-    link.download = `${reportType}_report_${format(new Date(), 'yyyy-MM-dd')}.csv`;
-    link.click();
+    exportToCSV(
+      reportData.columns,
+      reportData.rows,
+      `${reportType}_report_${format(new Date(), 'yyyy-MM-dd')}.csv`
+    );
     toast({ title: "CSV exported successfully" });
   };
 
-  const exportToPDF = () => {
-    // Create a printable version
-    const printContent = document.getElementById('report-content');
-    if (!printContent) return;
+  const handleExportPDF = () => {
+    if (!reportData) return;
     
-    const printWindow = window.open('', '_blank');
-    printWindow.document.write(`
-      <html>
-        <head>
-          <title>${reportData?.title || 'Report'}</title>
-          <style>
-            body { font-family: Arial, sans-serif; padding: 40px; }
-            h1 { color: #1EB053; border-bottom: 3px solid; border-image: linear-gradient(to right, #1EB053, #fff, #0072C6) 1; padding-bottom: 10px; }
-            .header { margin-bottom: 20px; }
-            .summary { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; margin-bottom: 30px; }
-            .summary-item { background: #f5f5f5; padding: 15px; border-radius: 8px; border-top: 3px solid #1EB053; }
-            .summary-item.green { border-color: #1EB053; }
-            .summary-item.red { border-color: #ef4444; }
-            .summary-label { font-size: 12px; color: #666; }
-            .summary-value { font-size: 18px; font-weight: bold; color: #333; }
-            table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-            th { background: linear-gradient(135deg, #1EB053, #0072C6); color: white; padding: 12px 8px; text-align: left; }
-            td { padding: 10px 8px; border-bottom: 1px solid #eee; }
-            tr:nth-child(even) { background: #f9f9f9; }
-            .footer { margin-top: 40px; text-align: center; color: #999; font-size: 12px; }
-            @media print { body { padding: 20px; } }
-          </style>
-        </head>
-        <body>
-          <div class="header">
-            <h1>${reportData?.title}</h1>
-            <p>Generated: ${format(new Date(), 'PPpp')}</p>
-            <p>Period: ${format(parseISO(dateFrom), 'MMMM d, yyyy')} - ${format(parseISO(dateTo), 'MMMM d, yyyy')}</p>
-          </div>
-          <div class="summary">
-            ${reportData?.summary.map(s => `
-              <div class="summary-item ${s.highlight || ''}">
-                <div class="summary-label">${s.label}</div>
-                <div class="summary-value">${s.value}</div>
-              </div>
-            `).join('')}
-          </div>
-          <table>
-            <thead>
-              <tr>${reportData?.columns.map(c => `<th>${c}</th>`).join('')}</tr>
-            </thead>
-            <tbody>
-              ${reportData?.rows.map(row => `<tr>${row.map(cell => `<td>${cell}</td>`).join('')}</tr>`).join('')}
-            </tbody>
-          </table>
-          <div class="footer">
-            <p>🇸🇱 BFSE Management System - Sierra Leone</p>
-          </div>
-        </body>
-      </html>
-    `);
-    printWindow.document.close();
-    printWindow.print();
+    const html = generateExportHTML({
+      title: reportData.title,
+      organisation: organisation,
+      summary: reportData.summary,
+      columns: reportData.columns,
+      rows: reportData.rows,
+      categoryBreakdown: reportData.categoryBreakdown,
+      dateRange: `Period: ${format(parseISO(dateFrom), 'MMMM d, yyyy')} - ${format(parseISO(dateTo), 'MMMM d, yyyy')}`
+    });
+    
+    printDocument(html);
     toast({ title: "PDF export ready - use Print dialog to save as PDF" });
   };
 
@@ -428,11 +367,11 @@ export default function ReportGenerator({ sales = [], expenses = [], payrolls = 
                 </p>
               </div>
               <div className="flex items-center gap-2">
-                <Button variant="outline" size="sm" onClick={exportToCSV}>
+                <Button variant="outline" size="sm" onClick={handleExportCSV}>
                   <FileSpreadsheet className="w-4 h-4 mr-2" />
                   Export CSV
                 </Button>
-                <Button variant="outline" size="sm" onClick={exportToPDF}>
+                <Button variant="outline" size="sm" onClick={handleExportPDF}>
                   <Download className="w-4 h-4 mr-2" />
                   Export PDF
                 </Button>
