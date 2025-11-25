@@ -181,11 +181,13 @@ export default function EmployeeDashboard() {
       </Card>
 
       {/* Clock In/Out */}
-      <QuickClockIn 
-        currentEmployee={currentEmployee}
-        orgId={orgId}
-        todayAttendance={todayAttendanceData}
-      />
+      {currentEmployee && orgId && (
+        <QuickClockIn 
+          currentEmployee={currentEmployee}
+          orgId={orgId}
+          todayAttendance={todayAttendanceData}
+        />
+      )}
 
       {/* Quick Stats */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
