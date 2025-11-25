@@ -194,10 +194,16 @@ export default function HR() {
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList>
-          <TabsTrigger value="employees">Employees</TabsTrigger>
-          <TabsTrigger value="attendance">Attendance</TabsTrigger>
-          <TabsTrigger value="payroll">Payroll</TabsTrigger>
+        <TabsList className="bg-gray-100 p-1">
+          <TabsTrigger value="employees" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#1EB053] data-[state=active]:to-[#0072C6] data-[state=active]:text-white">
+            Employees
+          </TabsTrigger>
+          <TabsTrigger value="attendance" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#1EB053] data-[state=active]:to-[#0072C6] data-[state=active]:text-white">
+            Attendance
+          </TabsTrigger>
+          <TabsTrigger value="payroll" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#1EB053] data-[state=active]:to-[#0072C6] data-[state=active]:text-white">
+            Payroll
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="employees" className="mt-6">

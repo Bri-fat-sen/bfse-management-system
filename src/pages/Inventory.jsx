@@ -248,27 +248,46 @@ export default function Inventory() {
         actionLabel="Add Product"
         >
         <div className="flex flex-wrap gap-2">
-          <Button variant="outline" onClick={() => setShowStockDialog(true)}>
+          <Button 
+            variant="outline" 
+            onClick={() => setShowStockDialog(true)}
+            className="border-[#1EB053]/30 hover:border-[#1EB053] hover:bg-[#1EB053]/10 hover:text-[#1EB053] transition-all"
+          >
             <Upload className="w-4 h-4 mr-2" />
             Adjustment
           </Button>
-          <Button variant="outline" onClick={() => setShowCategoryDialog(true)}>
+          <Button 
+            variant="outline" 
+            onClick={() => setShowCategoryDialog(true)}
+            className="border-[#0072C6]/30 hover:border-[#0072C6] hover:bg-[#0072C6]/10 hover:text-[#0072C6] transition-all"
+          >
             <FolderTree className="w-4 h-4 mr-2" />
             Categories
           </Button>
-          <Button variant="outline" onClick={() => setShowLocationsDialog(true)}>
+          <Button 
+            variant="outline" 
+            onClick={() => setShowLocationsDialog(true)}
+            className="border-[#0F1F3C]/30 hover:border-[#0F1F3C] hover:bg-[#0F1F3C]/10 hover:text-[#0F1F3C] transition-all"
+          >
             <MapPin className="w-4 h-4 mr-2" />
             Locations
           </Button>
           <Button 
             variant="outline" 
             onClick={() => setShowAlertsDialog(true)}
-            className={activeAlerts.length > 0 ? "border-red-300 text-red-600" : ""}
+            className={activeAlerts.length > 0 
+              ? "border-red-400 bg-red-50 text-red-600 hover:bg-red-100" 
+              : "border-[#D4AF37]/30 hover:border-[#D4AF37] hover:bg-[#D4AF37]/10 hover:text-[#D4AF37] transition-all"
+            }
           >
             <Bell className="w-4 h-4 mr-2" />
             Alerts {activeAlerts.length > 0 && `(${activeAlerts.length})`}
           </Button>
-          <Button variant="outline" onClick={() => setShowReportDialog(true)}>
+          <Button 
+            variant="outline" 
+            onClick={() => setShowReportDialog(true)}
+            className="border-[#1EB053]/30 hover:border-[#1EB053] hover:bg-[#1EB053]/10 hover:text-[#1EB053] transition-all"
+          >
             <FileText className="w-4 h-4 mr-2" />
             Reports
           </Button>
@@ -305,19 +324,25 @@ export default function Inventory() {
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList>
-          <TabsTrigger value="products">Products</TabsTrigger>
-          <TabsTrigger value="movements">Stock Movements</TabsTrigger>
-          <TabsTrigger value="warehouses">Warehouses</TabsTrigger>
-          <TabsTrigger value="batches">
+        <TabsList className="bg-gray-100 p-1">
+          <TabsTrigger value="products" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#1EB053] data-[state=active]:to-[#0072C6] data-[state=active]:text-white">
+            Products
+          </TabsTrigger>
+          <TabsTrigger value="movements" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#1EB053] data-[state=active]:to-[#0072C6] data-[state=active]:text-white">
+            Stock Movements
+          </TabsTrigger>
+          <TabsTrigger value="warehouses" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#1EB053] data-[state=active]:to-[#0072C6] data-[state=active]:text-white">
+            Warehouses
+          </TabsTrigger>
+          <TabsTrigger value="batches" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#1EB053] data-[state=active]:to-[#0072C6] data-[state=active]:text-white">
             <Package className="w-4 h-4 mr-1" />
             Batches
           </TabsTrigger>
-          <TabsTrigger value="expiry">
+          <TabsTrigger value="expiry" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#1EB053] data-[state=active]:to-[#0072C6] data-[state=active]:text-white">
             <AlertTriangle className="w-4 h-4 mr-1" />
             Expiry
           </TabsTrigger>
-          </TabsList>
+        </TabsList>
 
         <TabsContent value="products" className="mt-6">
           {/* Filters */}

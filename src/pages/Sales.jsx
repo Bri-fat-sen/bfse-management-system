@@ -318,9 +318,13 @@ export default function Sales() {
       />
 
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="mb-6">
-          <TabsTrigger value="pos">Point of Sale</TabsTrigger>
-          <TabsTrigger value="history">Sales History</TabsTrigger>
+        <TabsList className="mb-6 bg-gray-100 p-1">
+          <TabsTrigger value="pos" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#1EB053] data-[state=active]:to-[#0072C6] data-[state=active]:text-white">
+            Point of Sale
+          </TabsTrigger>
+          <TabsTrigger value="history" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#1EB053] data-[state=active]:to-[#0072C6] data-[state=active]:text-white">
+            Sales History
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="pos">

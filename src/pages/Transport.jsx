@@ -217,11 +217,19 @@ export default function Transport() {
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList>
-          <TabsTrigger value="trips">Trips</TabsTrigger>
-          <TabsTrigger value="vehicles">Vehicles</TabsTrigger>
-          <TabsTrigger value="routes">Routes</TabsTrigger>
-          <TabsTrigger value="drivers">Drivers</TabsTrigger>
+        <TabsList className="bg-gray-100 p-1">
+          <TabsTrigger value="trips" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#1EB053] data-[state=active]:to-[#0072C6] data-[state=active]:text-white">
+            Trips
+          </TabsTrigger>
+          <TabsTrigger value="vehicles" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#1EB053] data-[state=active]:to-[#0072C6] data-[state=active]:text-white">
+            Vehicles
+          </TabsTrigger>
+          <TabsTrigger value="routes" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#1EB053] data-[state=active]:to-[#0072C6] data-[state=active]:text-white">
+            Routes
+          </TabsTrigger>
+          <TabsTrigger value="drivers" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#1EB053] data-[state=active]:to-[#0072C6] data-[state=active]:text-white">
+            Drivers
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="trips" className="mt-6">
