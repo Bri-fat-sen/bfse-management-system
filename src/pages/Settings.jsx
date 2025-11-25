@@ -25,7 +25,7 @@ import {
 } from "@/components/ui/select";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
-import { useToast } from "@/components/ui/use-toast";
+import { toast } from "sonner";
 import PageHeader from "@/components/ui/PageHeader";
 
 export default function Settings() {
