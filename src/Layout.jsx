@@ -48,6 +48,7 @@ import NotificationCenter from "@/components/notifications/NotificationCenter";
 import MobileNav from "@/components/mobile/MobileNav";
 import { OfflineProvider, OfflineStatus } from "@/components/offline/OfflineManager";
 import GlobalSearch from "@/components/search/GlobalSearch";
+import { Toaster } from "@/components/ui/sonner";
 
 const menuSections = [
   {
@@ -427,6 +428,9 @@ export default function Layout({ children, currentPageName }) {
                       isOpen={searchOpen} 
                       onClose={() => setSearchOpen(false)} 
                     />
+
+                    {/* Toast notifications */}
+                    <Toaster position="top-right" closeButton richColors duration={4000} />
                     </div>
                     </div>
                     );
