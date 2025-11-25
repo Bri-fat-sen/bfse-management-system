@@ -28,7 +28,8 @@ import {
   Sun,
   Clock,
   Shield,
-  BarChart3
+  BarChart3,
+  MapPin
 } from "lucide-react";
 import { PermissionsProvider } from "@/components/permissions/PermissionsContext";
 import { DEFAULT_ROLE_PERMISSIONS } from "@/components/permissions/PermissionsContext";
@@ -80,7 +81,7 @@ const menuSections = [
     items: [
       { name: "Activity Log", icon: Activity, page: "ActivityLog", module: "activity_log" },
       { name: "Reports", icon: BarChart3, page: "Reports", module: "finance" },
-      { name: "Locations", icon: Building2, page: "Locations", module: "settings", adminOnly: true },
+      { name: "Locations", icon: MapPin, page: "Locations", module: "settings", adminOnly: true },
       { name: "Organisation", icon: Building2, page: "OrganisationManage", module: "settings", adminOnly: true },
       { name: "Role Permissions", icon: Shield, page: "RolePermissions", module: "settings", adminOnly: true },
       { name: "Support", icon: HelpCircle, page: "Support", module: "settings" },
