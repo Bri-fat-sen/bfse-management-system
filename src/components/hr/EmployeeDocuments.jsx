@@ -2,20 +2,16 @@ import React, { useState } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { format, differenceInDays } from "date-fns";
-import {
-  FileText,
-  Upload,
-  Trash2,
-  Download,
+import { 
+  FileText, 
+  Upload, 
+  Download, 
+  Trash2, 
+  Eye,
   AlertTriangle,
-  Plus,
-  Eye
+  CheckCircle,
+  Clock
 } from "lucide-react";
-import { Card, CardContent } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import {
   Dialog,
   DialogContent,
@@ -23,6 +19,10 @@ import {
   DialogTitle,
   DialogFooter,
 } from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Badge } from "@/components/ui/badge";
 import {
   Select,
   SelectContent,
@@ -30,32 +30,38 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Textarea } from "@/components/ui/textarea";
+import { Card, CardContent } from "@/components/ui/card";
 import { useToast } from "@/components/ui/use-toast";
-import EmptyState from "@/components/ui/EmptyState";
 
 const DOCUMENT_TYPES = [
-  { value: "id_card", label: "ID Card", icon: "🪪" },
-  { value: "passport", label: "Passport", icon: "📕" },
-  { value: "contract", label: "Employment Contract", icon: "📋" },
-  { value: "certificate", label: "Certificate", icon: "📜" },
-  { value: "resume", label: "Resume/CV", icon: "📄" },
-  { value: "medical", label: "Medical Document", icon: "🏥" },
-  { value: "other", label: "Other", icon: "📁" },
+  { value: "contract", label: "Employment Contract" },
+  { value: "id_card", label: "ID Card" },
+  { value: "passport", label: "Passport" },
+  { value: "certificate", label: "Certificate" },
+  { value: "resume", label: "Resume/CV" },
+  { value: "medical", label: "Medical Record" },
+  { value: "other", label: "Other" },
 ];
 
-export default function EmployeeDocuments({ employee, currentEmployee, orgId }) {
+export default function EmployeeDocuments({ 
+  open, 
+  onOpenChange, 
+  employee,
+  currentEmployee,
+  orgId 
+}) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [showUploadDialog, setShowUploadDialog] = useState(false);
   const [uploading, setUploading] = useState(false);
-  const [formData, setFormData] = useState({
+  const [uploadForm, setUploadForm] = useState({
     document_type: "other",
-    document_name: "",
+    title: "",
+    description: "",
     expiry_date: "",
-    notes: "",
+    file: null,
+    file_url: ""
   });
-  const [fileUrl, setFileUrl] = useState("");
 
   const { data: documents = [], isLoading } = useQuery({
     queryKey: ['employeeDocuments', employee?.id],
@@ -69,7 +75,7 @@ export default function EmployeeDocuments({ employee, currentEmployee, orgId }) 
       queryClient.invalidateQueries({ queryKey: ['employeeDocuments'] });
       toast({ title: "Document uploaded successfully" });
       setShowUploadDialog(false);
-      resetForm();
+      resetUploadForm();
     },
   });
 
@@ -81,27 +87,49 @@ export default function EmployeeDocuments({ employee, currentEmployee, orgId }) 
     },
   });
 
-  const resetForm = () => {
-    setFormData({ document_type: "other", document_name: "", expiry_date: "", notes: "" });
-    setFileUrl("");
+  const verifyMutation = useMutation({
+    mutationFn: ({ id, verified }) => base44.entities.EmployeeDocument.update(id, { is_verified: verified }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['employeeDocuments'] });
+      toast({ title: "Document verification updated" });
+    },
+  });
+
+  const resetUploadForm = () => {
+    setUploadForm({
+      document_type: "other",
+      title: "",
+      description: "",
+      expiry_date: "",
+      file: null,
+      file_url: ""
+    });
   };
 
-  const handleFileUpload = async (e) => {
+  const handleFileSelect = async (e) => {
     const file = e.target.files[0];
     if (!file) return;
 
     setUploading(true);
-    const { file_url } = await base44.integrations.Core.UploadFile({ file });
-    setFileUrl(file_url);
-    if (!formData.document_name) {
-      setFormData({ ...formData, document_name: file.name });
+    try {
+      const { file_url } = await base44.integrations.Core.UploadFile({ file });
+      setUploadForm(prev => ({ 
+        ...prev, 
+        file_url, 
+        file_name: file.name,
+        title: prev.title || file.name.split('.')[0]
+      }));
+      toast({ title: "File uploaded" });
+    } catch (error) {
+      toast({ title: "Failed to upload file", variant: "destructive" });
     }
     setUploading(false);
   };
 
-  const handleSubmit = (e) => {
+  const handleUploadSubmit = (e) => {
     e.preventDefault();
-    if (!fileUrl) {
+    
+    if (!uploadForm.file_url) {
       toast({ title: "Please upload a file", variant: "destructive" });
       return;
     }
@@ -110,92 +138,149 @@ export default function EmployeeDocuments({ employee, currentEmployee, orgId }) 
       organisation_id: orgId,
       employee_id: employee.id,
       employee_name: employee.full_name || `${employee.first_name} ${employee.last_name}`,
-      document_type: formData.document_type,
-      document_name: formData.document_name,
-      file_url: fileUrl,
-      expiry_date: formData.expiry_date || null,
-      notes: formData.notes,
+      document_type: uploadForm.document_type,
+      title: uploadForm.title,
+      description: uploadForm.description,
+      file_url: uploadForm.file_url,
+      file_name: uploadForm.file_name,
+      expiry_date: uploadForm.expiry_date || null,
       uploaded_by: currentEmployee.id,
+      uploaded_by_name: currentEmployee.full_name || `${currentEmployee.first_name} ${currentEmployee.last_name}`,
+      is_verified: false
     });
   };
 
   const getExpiryStatus = (expiryDate) => {
     if (!expiryDate) return null;
-    const daysLeft = differenceInDays(new Date(expiryDate), new Date());
-    if (daysLeft < 0) return { status: "expired", color: "bg-red-100 text-red-700" };
-    if (daysLeft <= 30) return { status: "expiring", color: "bg-amber-100 text-amber-700" };
-    return { status: "valid", color: "bg-green-100 text-green-700" };
+    const daysUntil = differenceInDays(new Date(expiryDate), new Date());
+    if (daysUntil < 0) return { status: "expired", color: "destructive" };
+    if (daysUntil <= 30) return { status: "expiring", color: "warning" };
+    return { status: "valid", color: "success" };
   };
 
-  return (
-    <div className="space-y-4">
-      <div className="flex justify-between items-center">
-        <h3 className="font-semibold">Documents</h3>
-        <Button size="sm" onClick={() => setShowUploadDialog(true)} className="bg-[#1EB053] hover:bg-green-600">
-          <Plus className="w-4 h-4 mr-1" />
-          Upload
-        </Button>
-      </div>
+  const canManageDocuments = ['super_admin', 'org_admin', 'hr_admin'].includes(currentEmployee?.role);
 
-      {isLoading ? (
-        <div className="space-y-2">
-          {[...Array(2)].map((_, i) => (
-            <div key={i} className="h-16 bg-gray-100 rounded-lg animate-pulse" />
-          ))}
-        </div>
-      ) : documents.length === 0 ? (
-        <div className="text-center py-8 text-gray-500">
-          <FileText className="w-10 h-10 mx-auto mb-2 text-gray-300" />
-          <p className="text-sm">No documents uploaded</p>
-        </div>
-      ) : (
-        <div className="space-y-2">
-          {documents.map((doc) => {
-            const docType = DOCUMENT_TYPES.find(t => t.value === doc.document_type);
-            const expiry = getExpiryStatus(doc.expiry_date);
-            return (
-              <Card key={doc.id} className="hover:shadow-sm transition-shadow">
-                <CardContent className="p-3">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <span className="text-2xl">{docType?.icon || "📁"}</span>
-                      <div>
-                        <p className="font-medium text-sm">{doc.document_name}</p>
-                        <div className="flex items-center gap-2 mt-1">
-                          <Badge variant="outline" className="text-xs">
-                            {docType?.label || doc.document_type}
-                          </Badge>
-                          {expiry && (
-                            <Badge className={`text-xs ${expiry.color}`}>
-                              {expiry.status === "expired" ? "Expired" : 
-                               expiry.status === "expiring" ? "Expiring Soon" : "Valid"}
-                            </Badge>
-                          )}
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle className="flex items-center justify-between">
+            <span>Documents - {employee?.full_name || `${employee?.first_name} ${employee?.last_name}`}</span>
+            <Button 
+              size="sm" 
+              className="bg-[#1EB053] hover:bg-green-600"
+              onClick={() => setShowUploadDialog(true)}
+            >
+              <Upload className="w-4 h-4 mr-2" />
+              Upload
+            </Button>
+          </DialogTitle>
+        </DialogHeader>
+
+        {isLoading ? (
+          <div className="py-8 text-center text-gray-500">Loading documents...</div>
+        ) : documents.length === 0 ? (
+          <div className="py-12 text-center">
+            <FileText className="w-12 h-12 mx-auto mb-3 text-gray-300" />
+            <p className="text-gray-500">No documents uploaded yet</p>
+            <Button 
+              className="mt-4"
+              variant="outline"
+              onClick={() => setShowUploadDialog(true)}
+            >
+              <Upload className="w-4 h-4 mr-2" />
+              Upload First Document
+            </Button>
+          </div>
+        ) : (
+          <div className="space-y-3">
+            {documents.map((doc) => {
+              const expiryStatus = getExpiryStatus(doc.expiry_date);
+              return (
+                <Card key={doc.id}>
+                  <CardContent className="p-4">
+                    <div className="flex items-start justify-between">
+                      <div className="flex items-start gap-3">
+                        <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-[#1EB053]/20 to-[#0072C6]/20 flex items-center justify-center">
+                          <FileText className="w-5 h-5 text-[#0072C6]" />
+                        </div>
+                        <div>
+                          <div className="flex items-center gap-2">
+                            <p className="font-medium">{doc.title}</p>
+                            {doc.is_verified && (
+                              <Badge className="bg-green-500 text-xs">
+                                <CheckCircle className="w-3 h-3 mr-1" />
+                                Verified
+                              </Badge>
+                            )}
+                          </div>
+                          <p className="text-sm text-gray-500">
+                            {DOCUMENT_TYPES.find(t => t.value === doc.document_type)?.label}
+                          </p>
+                          <div className="flex items-center gap-2 mt-1">
+                            <span className="text-xs text-gray-400">
+                              Uploaded {format(new Date(doc.created_date), 'PP')}
+                            </span>
+                            {expiryStatus && (
+                              <Badge variant={expiryStatus.color === 'destructive' ? 'destructive' : 'outline'} className="text-xs">
+                                {expiryStatus.status === 'expired' ? (
+                                  <><AlertTriangle className="w-3 h-3 mr-1" /> Expired</>
+                                ) : expiryStatus.status === 'expiring' ? (
+                                  <><Clock className="w-3 h-3 mr-1" /> Expiring Soon</>
+                                ) : null}
+                              </Badge>
+                            )}
+                          </div>
                         </div>
                       </div>
-                    </div>
-                    <div className="flex items-center gap-1">
-                      <Button variant="ghost" size="icon" asChild>
-                        <a href={doc.file_url} target="_blank" rel="noopener noreferrer">
+                      <div className="flex items-center gap-1">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => window.open(doc.file_url, '_blank')}
+                        >
                           <Eye className="w-4 h-4" />
-                        </a>
-                      </Button>
-                      <Button 
-                        variant="ghost" 
-                        size="icon" 
-                        className="text-red-500"
-                        onClick={() => deleteMutation.mutate(doc.id)}
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </Button>
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => {
+                            const link = document.createElement('a');
+                            link.href = doc.file_url;
+                            link.download = doc.file_name || doc.title;
+                            link.click();
+                          }}
+                        >
+                          <Download className="w-4 h-4" />
+                        </Button>
+                        {canManageDocuments && (
+                          <>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => verifyMutation.mutate({ id: doc.id, verified: !doc.is_verified })}
+                            >
+                              <CheckCircle className={`w-4 h-4 ${doc.is_verified ? 'text-green-500' : 'text-gray-400'}`} />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="text-red-500"
+                              onClick={() => deleteMutation.mutate(doc.id)}
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </Button>
+                          </>
+                        )}
+                      </div>
                     </div>
-                  </div>
-                </CardContent>
-              </Card>
-            );
-          })}
-        </div>
-      )}
+                  </CardContent>
+                </Card>
+              );
+            })}
+          </div>
+        )}
+      </DialogContent>
 
       {/* Upload Dialog */}
       <Dialog open={showUploadDialog} onOpenChange={setShowUploadDialog}>
@@ -203,20 +288,20 @@ export default function EmployeeDocuments({ employee, currentEmployee, orgId }) 
           <DialogHeader>
             <DialogTitle>Upload Document</DialogTitle>
           </DialogHeader>
-          <form onSubmit={handleSubmit} className="space-y-4">
+          <form onSubmit={handleUploadSubmit} className="space-y-4">
             <div>
               <Label>Document Type</Label>
               <Select 
-                value={formData.document_type} 
-                onValueChange={(v) => setFormData({ ...formData, document_type: v })}
+                value={uploadForm.document_type} 
+                onValueChange={(val) => setUploadForm(prev => ({ ...prev, document_type: val }))}
               >
                 <SelectTrigger className="mt-1">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  {DOCUMENT_TYPES.map((type) => (
+                  {DOCUMENT_TYPES.map(type => (
                     <SelectItem key={type.value} value={type.value}>
-                      {type.icon} {type.label}
+                      {type.label}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -224,39 +309,54 @@ export default function EmployeeDocuments({ employee, currentEmployee, orgId }) 
             </div>
 
             <div>
-              <Label>Document Name</Label>
-              <Input
-                value={formData.document_name}
-                onChange={(e) => setFormData({ ...formData, document_name: e.target.value })}
-                placeholder="e.g., National ID Card"
+              <Label>Title</Label>
+              <Input 
+                value={uploadForm.title}
+                onChange={(e) => setUploadForm(prev => ({ ...prev, title: e.target.value }))}
+                placeholder="Document title"
+                className="mt-1"
+                required
+              />
+            </div>
+
+            <div>
+              <Label>Expiry Date (Optional)</Label>
+              <Input 
+                type="date"
+                value={uploadForm.expiry_date}
+                onChange={(e) => setUploadForm(prev => ({ ...prev, expiry_date: e.target.value }))}
                 className="mt-1"
               />
             </div>
 
             <div>
               <Label>File</Label>
-              <Input type="file" onChange={handleFileUpload} disabled={uploading} className="mt-1" />
-              {fileUrl && <p className="text-xs text-green-600 mt-1">File uploaded successfully</p>}
-            </div>
-
-            <div>
-              <Label>Expiry Date (Optional)</Label>
-              <Input
-                type="date"
-                value={formData.expiry_date}
-                onChange={(e) => setFormData({ ...formData, expiry_date: e.target.value })}
-                className="mt-1"
-              />
-            </div>
-
-            <div>
-              <Label>Notes (Optional)</Label>
-              <Textarea
-                value={formData.notes}
-                onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
-                placeholder="Any additional notes..."
-                className="mt-1"
-              />
+              {uploadForm.file_url ? (
+                <div className="mt-1 p-3 bg-green-50 rounded-lg flex items-center justify-between">
+                  <span className="text-sm text-green-700 truncate">{uploadForm.file_name}</span>
+                  <Button 
+                    type="button" 
+                    variant="ghost" 
+                    size="sm"
+                    onClick={() => setUploadForm(prev => ({ ...prev, file_url: "", file_name: "" }))}
+                  >
+                    Remove
+                  </Button>
+                </div>
+              ) : (
+                <label className="mt-1 flex items-center justify-center gap-2 p-6 border-2 border-dashed rounded-lg cursor-pointer hover:border-[#1EB053] transition-colors">
+                  <Upload className="w-6 h-6 text-gray-400" />
+                  <span className="text-sm text-gray-500">
+                    {uploading ? "Uploading..." : "Click to select file"}
+                  </span>
+                  <input 
+                    type="file" 
+                    className="hidden" 
+                    onChange={handleFileSelect}
+                    disabled={uploading}
+                  />
+                </label>
+              )}
             </div>
 
             <DialogFooter>
@@ -266,14 +366,14 @@ export default function EmployeeDocuments({ employee, currentEmployee, orgId }) 
               <Button 
                 type="submit" 
                 className="bg-[#1EB053] hover:bg-green-600"
-                disabled={!fileUrl || !formData.document_name || createMutation.isPending}
+                disabled={createMutation.isPending || !uploadForm.file_url}
               >
-                {uploading ? "Uploading..." : "Upload Document"}
+                Upload Document
               </Button>
             </DialogFooter>
           </form>
         </DialogContent>
       </Dialog>
-    </div>
+    </Dialog>
   );
 }

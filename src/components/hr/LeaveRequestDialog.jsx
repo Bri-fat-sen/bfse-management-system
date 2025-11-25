@@ -23,8 +23,8 @@ import {
 } from "@/components/ui/select";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { useToast } from "@/components/ui/use-toast";
 import { format } from "date-fns";
+import { useToast } from "@/components/ui/use-toast";
 
 const LEAVE_TYPES = [
   { value: "annual", label: "Annual Leave" },
@@ -45,15 +45,16 @@ export default function LeaveRequestDialog({
 }) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  
-  const [formData, setFormData] = useState({
-    leave_type: editingRequest?.leave_type || "annual",
-    start_date: editingRequest?.start_date || "",
-    end_date: editingRequest?.end_date || "",
-    reason: editingRequest?.reason || "",
-  });
+  const [leaveType, setLeaveType] = useState(editingRequest?.leave_type || "annual");
+  const [startDate, setStartDate] = useState(editingRequest?.start_date ? new Date(editingRequest.start_date) : null);
+  const [endDate, setEndDate] = useState(editingRequest?.end_date ? new Date(editingRequest.end_date) : null);
+  const [reason, setReason] = useState(editingRequest?.reason || "");
   const [uploading, setUploading] = useState(false);
   const [attachmentUrl, setAttachmentUrl] = useState(editingRequest?.attachment_url || "");
+
+  const daysRequested = startDate && endDate 
+    ? differenceInDays(endDate, startDate) + 1 
+    : 0;
 
   const createMutation = useMutation({
     mutationFn: (data) => base44.entities.LeaveRequest.create(data),
@@ -61,6 +62,7 @@ export default function LeaveRequestDialog({
       queryClient.invalidateQueries({ queryKey: ['leaveRequests'] });
       toast({ title: "Leave request submitted successfully" });
       onOpenChange(false);
+      resetForm();
     },
   });
 
@@ -70,37 +72,52 @@ export default function LeaveRequestDialog({
       queryClient.invalidateQueries({ queryKey: ['leaveRequests'] });
       toast({ title: "Leave request updated successfully" });
       onOpenChange(false);
+      resetForm();
     },
   });
+
+  const resetForm = () => {
+    setLeaveType("annual");
+    setStartDate(null);
+    setEndDate(null);
+    setReason("");
+    setAttachmentUrl("");
+  };
 
   const handleFileUpload = async (e) => {
     const file = e.target.files[0];
     if (!file) return;
-    
+
     setUploading(true);
-    const { file_url } = await base44.integrations.Core.UploadFile({ file });
-    setAttachmentUrl(file_url);
+    try {
+      const { file_url } = await base44.integrations.Core.UploadFile({ file });
+      setAttachmentUrl(file_url);
+      toast({ title: "File uploaded successfully" });
+    } catch (error) {
+      toast({ title: "Failed to upload file", variant: "destructive" });
+    }
     setUploading(false);
   };
 
   const handleSubmit = (e) => {
     e.preventDefault();
     
-    const daysRequested = formData.start_date && formData.end_date 
-      ? differenceInDays(new Date(formData.end_date), new Date(formData.start_date)) + 1
-      : 1;
+    if (!startDate || !endDate) {
+      toast({ title: "Please select start and end dates", variant: "destructive" });
+      return;
+    }
 
     const data = {
       organisation_id: orgId,
       employee_id: currentEmployee.id,
       employee_name: currentEmployee.full_name || `${currentEmployee.first_name} ${currentEmployee.last_name}`,
-      leave_type: formData.leave_type,
-      start_date: formData.start_date,
-      end_date: formData.end_date,
+      leave_type: leaveType,
+      start_date: format(startDate, 'yyyy-MM-dd'),
+      end_date: format(endDate, 'yyyy-MM-dd'),
       days_requested: daysRequested,
-      reason: formData.reason,
+      reason,
       attachment_url: attachmentUrl,
-      status: "pending",
+      status: "pending"
     };
 
     if (editingRequest) {
@@ -114,20 +131,17 @@ export default function LeaveRequestDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-md">
         <DialogHeader>
-          <DialogTitle>{editingRequest ? "Edit Leave Request" : "Request Leave"}</DialogTitle>
+          <DialogTitle>{editingRequest ? 'Edit Leave Request' : 'Request Leave'}</DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <Label>Leave Type</Label>
-            <Select 
-              value={formData.leave_type} 
-              onValueChange={(v) => setFormData({ ...formData, leave_type: v })}
-            >
+            <Select value={leaveType} onValueChange={setLeaveType}>
               <SelectTrigger className="mt-1">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                {LEAVE_TYPES.map((type) => (
+                {LEAVE_TYPES.map(type => (
                   <SelectItem key={type.value} value={type.value}>
                     {type.label}
                   </SelectItem>
@@ -143,20 +157,15 @@ export default function LeaveRequestDialog({
                 <PopoverTrigger asChild>
                   <Button variant="outline" className="w-full mt-1 justify-start">
                     <CalendarIcon className="w-4 h-4 mr-2" />
-                    {formData.start_date ? format(new Date(formData.start_date), "PP") : "Select"}
+                    {startDate ? format(startDate, 'PP') : 'Select'}
                   </Button>
                 </PopoverTrigger>
                 <PopoverContent className="w-auto p-0">
                   <Calendar
                     mode="single"
-                    selected={formData.start_date ? new Date(formData.start_date) : undefined}
-                    onSelect={(date) => setFormData({ 
-                      ...formData, 
-                      start_date: date ? format(date, "yyyy-MM-dd") : "",
-                      end_date: formData.end_date && new Date(formData.end_date) < date 
-                        ? format(date, "yyyy-MM-dd") 
-                        : formData.end_date
-                    })}
+                    selected={startDate}
+                    onSelect={setStartDate}
+                    disabled={(date) => date < new Date()}
                   />
                 </PopoverContent>
               </Popover>
@@ -167,52 +176,66 @@ export default function LeaveRequestDialog({
                 <PopoverTrigger asChild>
                   <Button variant="outline" className="w-full mt-1 justify-start">
                     <CalendarIcon className="w-4 h-4 mr-2" />
-                    {formData.end_date ? format(new Date(formData.end_date), "PP") : "Select"}
+                    {endDate ? format(endDate, 'PP') : 'Select'}
                   </Button>
                 </PopoverTrigger>
                 <PopoverContent className="w-auto p-0">
                   <Calendar
                     mode="single"
-                    selected={formData.end_date ? new Date(formData.end_date) : undefined}
-                    onSelect={(date) => setFormData({ 
-                      ...formData, 
-                      end_date: date ? format(date, "yyyy-MM-dd") : "" 
-                    })}
-                    disabled={(date) => formData.start_date && date < new Date(formData.start_date)}
+                    selected={endDate}
+                    onSelect={setEndDate}
+                    disabled={(date) => date < (startDate || new Date())}
                   />
                 </PopoverContent>
               </Popover>
             </div>
           </div>
 
-          {formData.start_date && formData.end_date && (
-            <p className="text-sm text-gray-500">
-              Total days: {differenceInDays(new Date(formData.end_date), new Date(formData.start_date)) + 1}
-            </p>
+          {daysRequested > 0 && (
+            <div className="p-3 bg-blue-50 rounded-lg text-sm text-blue-700">
+              Total days requested: <strong>{daysRequested}</strong>
+            </div>
           )}
 
           <div>
             <Label>Reason</Label>
             <Textarea 
-              value={formData.reason}
-              onChange={(e) => setFormData({ ...formData, reason: e.target.value })}
-              placeholder="Please provide a reason for your leave request"
+              value={reason}
+              onChange={(e) => setReason(e.target.value)}
+              placeholder="Please provide a reason for your leave request..."
               className="mt-1"
+              rows={3}
             />
           </div>
 
           <div>
-            <Label>Attachment (Optional)</Label>
+            <Label>Supporting Document (Optional)</Label>
             <div className="mt-1">
-              <Input 
-                type="file" 
-                onChange={handleFileUpload}
-                disabled={uploading}
-              />
-              {attachmentUrl && (
-                <a href={attachmentUrl} target="_blank" rel="noopener noreferrer" className="text-sm text-blue-600 mt-1 block">
-                  View uploaded file
-                </a>
+              {attachmentUrl ? (
+                <div className="flex items-center gap-2 p-2 bg-green-50 rounded-lg">
+                  <span className="text-sm text-green-700 flex-1 truncate">Document attached</span>
+                  <Button 
+                    type="button" 
+                    variant="ghost" 
+                    size="sm"
+                    onClick={() => setAttachmentUrl("")}
+                  >
+                    Remove
+                  </Button>
+                </div>
+              ) : (
+                <label className="flex items-center justify-center gap-2 p-4 border-2 border-dashed rounded-lg cursor-pointer hover:border-[#1EB053] transition-colors">
+                  <Upload className="w-5 h-5 text-gray-400" />
+                  <span className="text-sm text-gray-500">
+                    {uploading ? "Uploading..." : "Click to upload"}
+                  </span>
+                  <input 
+                    type="file" 
+                    className="hidden" 
+                    onChange={handleFileUpload}
+                    disabled={uploading}
+                  />
+                </label>
               )}
             </div>
           </div>
@@ -224,9 +247,9 @@ export default function LeaveRequestDialog({
             <Button 
               type="submit" 
               className="bg-[#1EB053] hover:bg-green-600"
-              disabled={!formData.start_date || !formData.end_date || createMutation.isPending || updateMutation.isPending}
+              disabled={createMutation.isPending || updateMutation.isPending}
             >
-              {editingRequest ? "Update" : "Submit"} Request
+              {editingRequest ? 'Update Request' : 'Submit Request'}
             </Button>
           </DialogFooter>
         </form>

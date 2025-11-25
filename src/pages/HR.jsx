@@ -15,9 +15,7 @@ import {
   Clock,
   DollarSign,
   Building2,
-  Filter,
-  Star,
-  FileText
+  Filter
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -47,9 +45,6 @@ import StatCard from "@/components/ui/StatCard";
 import PayrollProcessDialog from "@/components/hr/PayrollProcessDialog";
 import PayslipGenerator from "@/components/hr/PayslipGenerator";
 import AddEmployeeDialog from "@/components/hr/AddEmployeeDialog";
-import LeaveManagement from "@/components/hr/LeaveManagement";
-import PerformanceList from "@/components/hr/PerformanceList";
-import EmployeeDocuments from "@/components/hr/EmployeeDocuments";
 
 const roles = [
   "org_admin", "hr_admin", "payroll_admin", "warehouse_manager",
@@ -69,7 +64,6 @@ export default function HR() {
   const [activeTab, setActiveTab] = useState("employees");
   const [showPayrollDialog, setShowPayrollDialog] = useState(false);
   const [showAddEmployeeDialog, setShowAddEmployeeDialog] = useState(false);
-  const [selectedEmployeeForDocs, setSelectedEmployeeForDocs] = useState(null);
 
   const { data: user } = useQuery({
     queryKey: ['currentUser'],
@@ -200,7 +194,7 @@ export default function HR() {
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="bg-gray-100 p-1 flex-wrap">
+        <TabsList className="bg-gray-100 p-1">
           <TabsTrigger value="employees" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#1EB053] data-[state=active]:to-[#0072C6] data-[state=active]:text-white">
             Employees
           </TabsTrigger>
@@ -209,14 +203,6 @@ export default function HR() {
           </TabsTrigger>
           <TabsTrigger value="payroll" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#1EB053] data-[state=active]:to-[#0072C6] data-[state=active]:text-white">
             Payroll
-          </TabsTrigger>
-          <TabsTrigger value="leave" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#1EB053] data-[state=active]:to-[#0072C6] data-[state=active]:text-white">
-            <Calendar className="w-4 h-4 mr-1" />
-            Leave
-          </TabsTrigger>
-          <TabsTrigger value="performance" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#1EB053] data-[state=active]:to-[#0072C6] data-[state=active]:text-white">
-            <Star className="w-4 h-4 mr-1" />
-            Performance
           </TabsTrigger>
         </TabsList>
 
@@ -307,25 +293,17 @@ export default function HR() {
                       <Badge variant="secondary">
                         {emp.role?.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
                       </Badge>
-                      <div className="flex gap-1">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => setSelectedEmployeeForDocs(emp)}
-                        >
-                          <FileText className="w-4 h-4" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => {
-                            setEditingEmployee(emp);
-                            setShowEmployeeDialog(true);
-                          }}
-                        >
-                          <Edit className="w-4 h-4" />
-                        </Button>
-                      </div>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => {
+                          setEditingEmployee(emp);
+                          setShowEmployeeDialog(true);
+                        }}
+                      >
+                        <Edit className="w-4 h-4 mr-1" />
+                        Edit
+                      </Button>
                     </div>
                   </CardContent>
                 </Card>
@@ -430,23 +408,6 @@ export default function HR() {
               )}
             </CardContent>
           </Card>
-        </TabsContent>
-
-        <TabsContent value="leave" className="mt-6">
-          <LeaveManagement 
-            currentEmployee={currentEmployee} 
-            orgId={orgId} 
-            isManager={['super_admin', 'org_admin', 'hr_admin'].includes(currentEmployee?.role)}
-          />
-        </TabsContent>
-
-        <TabsContent value="performance" className="mt-6">
-          <PerformanceList 
-            employees={employees}
-            currentEmployee={currentEmployee} 
-            orgId={orgId}
-            isManager={['super_admin', 'org_admin', 'hr_admin'].includes(currentEmployee?.role)}
-          />
         </TabsContent>
       </Tabs>
 
@@ -564,24 +525,6 @@ export default function HR() {
                 </Button>
               </DialogFooter>
             </form>
-          )}
-        </DialogContent>
-      </Dialog>
-
-      {/* Employee Documents Dialog */}
-      <Dialog open={!!selectedEmployeeForDocs} onOpenChange={() => setSelectedEmployeeForDocs(null)}>
-        <DialogContent className="max-w-lg">
-          <DialogHeader>
-            <DialogTitle>
-              Documents - {selectedEmployeeForDocs?.full_name || `${selectedEmployeeForDocs?.first_name} ${selectedEmployeeForDocs?.last_name}`}
-            </DialogTitle>
-          </DialogHeader>
-          {selectedEmployeeForDocs && (
-            <EmployeeDocuments 
-              employee={selectedEmployeeForDocs}
-              currentEmployee={currentEmployee}
-              orgId={orgId}
-            />
           )}
         </DialogContent>
       </Dialog>

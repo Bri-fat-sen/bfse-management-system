@@ -1,7 +1,6 @@
 import React, { useState } from "react";
 import { base44 } from "@/api/base44Client";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { format } from "date-fns";
 import { Star } from "lucide-react";
 import {
   Dialog,
@@ -11,7 +10,6 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import {
@@ -21,6 +19,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { format } from "date-fns";
 import { useToast } from "@/components/ui/use-toast";
 
 const RATING_CATEGORIES = [
@@ -40,12 +39,10 @@ function StarRating({ value, onChange }) {
           key={star}
           type="button"
           onClick={() => onChange(star)}
-          className="focus:outline-none"
+          className="p-1 hover:scale-110 transition-transform"
         >
-          <Star
-            className={`w-6 h-6 ${
-              star <= value ? "fill-yellow-400 text-yellow-400" : "text-gray-300"
-            }`}
+          <Star 
+            className={`w-5 h-5 ${star <= value ? 'text-yellow-400 fill-yellow-400' : 'text-gray-300'}`} 
           />
         </button>
       ))}
@@ -53,37 +50,37 @@ function StarRating({ value, onChange }) {
   );
 }
 
-export default function PerformanceReviewDialog({
-  open,
-  onOpenChange,
+export default function PerformanceReviewDialog({ 
+  open, 
+  onOpenChange, 
   employee,
   currentEmployee,
   orgId,
-  editingReview = null,
+  editingReview = null 
 }) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
-
-  const [formData, setFormData] = useState({
-    review_period: editingReview?.review_period || "",
-    ratings: editingReview?.ratings || {
-      productivity: 0,
-      quality: 0,
-      attendance: 0,
-      teamwork: 0,
-      communication: 0,
-      initiative: 0,
-    },
-    strengths: editingReview?.strengths || "",
-    areas_for_improvement: editingReview?.areas_for_improvement || "",
-    goals: editingReview?.goals || "",
+  
+  const [reviewPeriod, setReviewPeriod] = useState(editingReview?.review_period || "");
+  const [ratings, setRatings] = useState(editingReview?.ratings || {
+    productivity: 3,
+    quality: 3,
+    attendance: 3,
+    teamwork: 3,
+    communication: 3,
+    initiative: 3
   });
+  const [strengths, setStrengths] = useState(editingReview?.strengths || "");
+  const [improvements, setImprovements] = useState(editingReview?.areas_for_improvement || "");
+  const [goals, setGoals] = useState(editingReview?.goals || "");
+
+  const overallRating = Object.values(ratings).reduce((a, b) => a + b, 0) / Object.values(ratings).length;
 
   const createMutation = useMutation({
     mutationFn: (data) => base44.entities.PerformanceReview.create(data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["performanceReviews"] });
-      toast({ title: "Performance review saved" });
+      queryClient.invalidateQueries({ queryKey: ['performanceReviews'] });
+      toast({ title: "Performance review saved successfully" });
       onOpenChange(false);
     },
   });
@@ -91,27 +88,23 @@ export default function PerformanceReviewDialog({
   const updateMutation = useMutation({
     mutationFn: ({ id, data }) => base44.entities.PerformanceReview.update(id, data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["performanceReviews"] });
-      toast({ title: "Performance review updated" });
+      queryClient.invalidateQueries({ queryKey: ['performanceReviews'] });
+      toast({ title: "Performance review updated successfully" });
       onOpenChange(false);
     },
   });
 
-  const updateRating = (key, value) => {
-    setFormData({
-      ...formData,
-      ratings: { ...formData.ratings, [key]: value },
-    });
-  };
-
-  const calculateOverall = () => {
-    const values = Object.values(formData.ratings).filter((v) => v > 0);
-    if (values.length === 0) return 0;
-    return (values.reduce((a, b) => a + b, 0) / values.length).toFixed(1);
+  const handleRatingChange = (key, value) => {
+    setRatings(prev => ({ ...prev, [key]: value }));
   };
 
   const handleSubmit = (e, status = "draft") => {
     e.preventDefault();
+    
+    if (!reviewPeriod) {
+      toast({ title: "Please select a review period", variant: "destructive" });
+      return;
+    }
 
     const data = {
       organisation_id: orgId,
@@ -119,14 +112,14 @@ export default function PerformanceReviewDialog({
       employee_name: employee.full_name || `${employee.first_name} ${employee.last_name}`,
       reviewer_id: currentEmployee.id,
       reviewer_name: currentEmployee.full_name || `${currentEmployee.first_name} ${currentEmployee.last_name}`,
-      review_period: formData.review_period,
-      review_date: format(new Date(), "yyyy-MM-dd"),
-      ratings: formData.ratings,
-      overall_rating: parseFloat(calculateOverall()),
-      strengths: formData.strengths,
-      areas_for_improvement: formData.areas_for_improvement,
-      goals: formData.goals,
-      status,
+      review_period: reviewPeriod,
+      review_date: format(new Date(), 'yyyy-MM-dd'),
+      overall_rating: Math.round(overallRating * 10) / 10,
+      ratings,
+      strengths,
+      areas_for_improvement: improvements,
+      goals,
+      status
     };
 
     if (editingReview) {
@@ -136,6 +129,16 @@ export default function PerformanceReviewDialog({
     }
   };
 
+  const getRatingLabel = (rating) => {
+    if (rating >= 4.5) return { text: "Outstanding", color: "text-green-600" };
+    if (rating >= 3.5) return { text: "Exceeds Expectations", color: "text-blue-600" };
+    if (rating >= 2.5) return { text: "Meets Expectations", color: "text-gray-600" };
+    if (rating >= 1.5) return { text: "Needs Improvement", color: "text-amber-600" };
+    return { text: "Unsatisfactory", color: "text-red-600" };
+  };
+
+  const ratingLabel = getRatingLabel(overallRating);
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
@@ -144,77 +147,80 @@ export default function PerformanceReviewDialog({
             Performance Review - {employee?.full_name || `${employee?.first_name} ${employee?.last_name}`}
           </DialogTitle>
         </DialogHeader>
-        <form className="space-y-6">
+        <form onSubmit={(e) => handleSubmit(e, "submitted")} className="space-y-6">
           <div>
             <Label>Review Period</Label>
-            <Select
-              value={formData.review_period}
-              onValueChange={(v) => setFormData({ ...formData, review_period: v })}
-            >
+            <Select value={reviewPeriod} onValueChange={setReviewPeriod}>
               <SelectTrigger className="mt-1">
                 <SelectValue placeholder="Select period" />
               </SelectTrigger>
               <SelectContent>
+                <SelectItem value="Q1 2024">Q1 2024</SelectItem>
+                <SelectItem value="Q2 2024">Q2 2024</SelectItem>
+                <SelectItem value="Q3 2024">Q3 2024</SelectItem>
+                <SelectItem value="Q4 2024">Q4 2024</SelectItem>
+                <SelectItem value="Annual 2024">Annual 2024</SelectItem>
                 <SelectItem value="Q1 2025">Q1 2025</SelectItem>
                 <SelectItem value="Q2 2025">Q2 2025</SelectItem>
                 <SelectItem value="Q3 2025">Q3 2025</SelectItem>
                 <SelectItem value="Q4 2025">Q4 2025</SelectItem>
-                <SelectItem value="Annual 2024">Annual 2024</SelectItem>
-                <SelectItem value="Annual 2025">Annual 2025</SelectItem>
               </SelectContent>
             </Select>
           </div>
 
+          {/* Overall Rating Display */}
+          <div className="p-4 bg-gradient-to-r from-[#1EB053]/10 to-[#0072C6]/10 rounded-xl text-center">
+            <p className="text-sm text-gray-500 mb-1">Overall Rating</p>
+            <p className="text-4xl font-bold text-[#0072C6]">{overallRating.toFixed(1)}</p>
+            <p className={`text-sm font-medium ${ratingLabel.color}`}>{ratingLabel.text}</p>
+          </div>
+
+          {/* Rating Categories */}
           <div className="space-y-4">
-            <Label className="text-base font-semibold">Performance Ratings</Label>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {RATING_CATEGORIES.map((category) => (
+            <Label>Performance Ratings</Label>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              {RATING_CATEGORIES.map(category => (
                 <div key={category.key} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
                   <span className="text-sm font-medium">{category.label}</span>
-                  <StarRating
-                    value={formData.ratings[category.key]}
-                    onChange={(v) => updateRating(category.key, v)}
+                  <StarRating 
+                    value={ratings[category.key]} 
+                    onChange={(val) => handleRatingChange(category.key, val)} 
                   />
                 </div>
               ))}
-            </div>
-            <div className="flex items-center justify-between p-4 bg-gradient-to-r from-[#1EB053]/10 to-[#0072C6]/10 rounded-lg">
-              <span className="font-semibold">Overall Rating</span>
-              <div className="flex items-center gap-2">
-                <Star className="w-6 h-6 fill-yellow-400 text-yellow-400" />
-                <span className="text-2xl font-bold">{calculateOverall()}</span>
-                <span className="text-gray-500">/ 5</span>
-              </div>
             </div>
           </div>
 
           <div>
             <Label>Strengths</Label>
-            <Textarea
-              value={formData.strengths}
-              onChange={(e) => setFormData({ ...formData, strengths: e.target.value })}
+            <Textarea 
+              value={strengths}
+              onChange={(e) => setStrengths(e.target.value)}
               placeholder="What does this employee do well?"
               className="mt-1"
+              rows={3}
             />
           </div>
 
           <div>
             <Label>Areas for Improvement</Label>
-            <Textarea
-              value={formData.areas_for_improvement}
-              onChange={(e) => setFormData({ ...formData, areas_for_improvement: e.target.value })}
-              placeholder="What could this employee improve on?"
+            <Textarea 
+              value={improvements}
+              onChange={(e) => setImprovements(e.target.value)}
+              placeholder="What areas need development?"
               className="mt-1"
+              rows={3}
             />
           </div>
 
           <div>
             <Label>Goals for Next Period</Label>
-            <Textarea
-              value={formData.goals}
-              onChange={(e) => setFormData({ ...formData, goals: e.target.value })}
-              placeholder="What goals should this employee work towards?"
+            <Textarea 
+              value={goals}
+              onChange={(e) => setGoals(e.target.value)}
+              placeholder="What should this employee focus on?"
               className="mt-1"
+              rows={3}
             />
           </div>
 
@@ -222,19 +228,18 @@ export default function PerformanceReviewDialog({
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
               Cancel
             </Button>
-            <Button
-              type="button"
+            <Button 
+              type="button" 
               variant="outline"
               onClick={(e) => handleSubmit(e, "draft")}
-              disabled={!formData.review_period || createMutation.isPending || updateMutation.isPending}
+              disabled={createMutation.isPending || updateMutation.isPending}
             >
-              Save Draft
+              Save as Draft
             </Button>
-            <Button
-              type="button"
+            <Button 
+              type="submit" 
               className="bg-[#1EB053] hover:bg-green-600"
-              onClick={(e) => handleSubmit(e, "submitted")}
-              disabled={!formData.review_period || createMutation.isPending || updateMutation.isPending}
+              disabled={createMutation.isPending || updateMutation.isPending}
             >
               Submit Review
             </Button>
