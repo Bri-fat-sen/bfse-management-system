@@ -27,7 +27,8 @@ import {
   Moon,
   Sun,
   Clock,
-  Shield
+  Shield,
+  Factory
 } from "lucide-react";
 import { PermissionsProvider } from "@/components/permissions/PermissionsContext";
 import { DEFAULT_ROLE_PERMISSIONS } from "@/components/permissions/PermissionsContext";
@@ -56,6 +57,7 @@ const menuSections = [
     items: [
       { name: "Sales & POS", icon: ShoppingCart, page: "Sales", module: "sales" },
       { name: "Inventory", icon: Package, page: "Inventory", module: "inventory" },
+      { name: "Suppliers", icon: Factory, page: "Suppliers", module: "inventory" },
       { name: "Transport", icon: Truck, page: "Transport", module: "transport" },
     ]
   },
