@@ -2,18 +2,16 @@ import React, { useState, useMemo } from "react";
 import { base44 } from "@/api/base44Client";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { motion, AnimatePresence } from "framer-motion";
-import {
-  ShoppingCart, User, Package, CreditCard, Truck, Plus, Minus, X, Search, Check, MapPin, Phone, Mail
-} from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { ShoppingCart, User, Package, CreditCard, Truck, Plus, Minus, X, Search, Check, MapPin, Phone, Mail } from "lucide-react";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/components/ui/use-toast";
+import { FormWrapper, FormWrapperContent } from "./FormWrapper";
+import { FormInput, FormTextarea, FormSelect, FormSection } from "./FormField";
+import { FormStepperNavigation } from "./FormStepper";
 
 const STEPS = [
   { id: 1, title: "Customer", icon: User },
@@ -124,9 +122,7 @@ export default function CustomerOrderForm({ orgId, products = [], currentEmploye
   };
 
   return (
-    <Card className="max-w-4xl mx-auto border-0 shadow-2xl overflow-hidden">
-      <div className="h-2 bg-gradient-to-r from-[#1EB053] via-white to-[#0072C6]" />
-      
+    <FormWrapper maxWidth="4xl">
       {/* Progress Header */}
       <div className="bg-gradient-to-r from-[#0F1F3C] to-[#1a3a5c] text-white p-6">
         <div className="flex items-center justify-between mb-6">
@@ -135,7 +131,7 @@ export default function CustomerOrderForm({ orgId, products = [], currentEmploye
               <ShoppingCart className="w-6 h-6" />
             </div>
             <div>
-              <CardTitle className="text-xl">New Order</CardTitle>
+              <h2 className="text-xl font-semibold">New Order</h2>
               <p className="text-white/70 text-sm">Create a customer order</p>
             </div>
           </div>
@@ -169,7 +165,7 @@ export default function CustomerOrderForm({ orgId, products = [], currentEmploye
         </div>
       </div>
 
-      <CardContent className="p-6">
+      <FormWrapperContent className="p-6">
         <AnimatePresence mode="wait">
           {/* Step 1: Customer */}
           {step === 1 && (
@@ -178,92 +174,72 @@ export default function CustomerOrderForm({ orgId, products = [], currentEmploye
               initial={{ opacity: 0, x: 20 }}
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: -20 }}
-              className="space-y-6"
             >
-              <h2 className="text-xl font-bold text-gray-900">Customer Information</h2>
-              
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <Label className="text-gray-700 font-medium flex items-center gap-2">
-                    <User className="w-4 h-4" /> Customer Name *
-                  </Label>
-                  <Input
+              <FormSection title="Customer Information">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <FormInput
+                    label="Customer Name"
+                    icon={User}
+                    required
                     value={customer.name}
                     onChange={(e) => setCustomer({ ...customer, name: e.target.value })}
                     placeholder="Full name"
-                    className="mt-1.5 h-12"
                   />
-                </div>
-                <div>
-                  <Label className="text-gray-700 font-medium flex items-center gap-2">
-                    <Phone className="w-4 h-4" /> Phone Number
-                  </Label>
-                  <Input
+                  <FormInput
+                    label="Phone Number"
+                    icon={Phone}
                     value={customer.phone}
                     onChange={(e) => setCustomer({ ...customer, phone: e.target.value })}
                     placeholder="+232 XX XXX XXXX"
-                    className="mt-1.5 h-12"
                   />
-                </div>
-                <div>
-                  <Label className="text-gray-700 font-medium flex items-center gap-2">
-                    <Mail className="w-4 h-4" /> Email
-                  </Label>
-                  <Input
+                  <FormInput
+                    label="Email"
+                    icon={Mail}
                     type="email"
                     value={customer.email}
                     onChange={(e) => setCustomer({ ...customer, email: e.target.value })}
                     placeholder="customer@email.com"
-                    className="mt-1.5 h-12"
                   />
-                </div>
-                <div>
-                  <Label className="text-gray-700 font-medium flex items-center gap-2">
-                    <MapPin className="w-4 h-4" /> Address
-                  </Label>
-                  <Input
+                  <FormInput
+                    label="Address"
+                    icon={MapPin}
                     value={customer.address}
                     onChange={(e) => setCustomer({ ...customer, address: e.target.value })}
                     placeholder="Customer address"
-                    className="mt-1.5 h-12"
                   />
                 </div>
-              </div>
 
-              <div className="p-4 bg-gray-50 rounded-xl space-y-4">
-                <div className="flex items-center gap-3">
-                  <Checkbox
-                    id="delivery"
-                    checked={customer.delivery_required}
-                    onCheckedChange={(checked) => setCustomer({ ...customer, delivery_required: checked })}
-                  />
-                  <label htmlFor="delivery" className="font-medium flex items-center gap-2 cursor-pointer">
-                    <Truck className="w-4 h-4 text-[#0072C6]" /> Delivery Required
-                  </label>
-                </div>
-                
-                {customer.delivery_required && (
-                  <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }}>
-                    <Label className="text-gray-700 font-medium">Delivery Address</Label>
-                    <Textarea
-                      value={customer.delivery_address}
-                      onChange={(e) => setCustomer({ ...customer, delivery_address: e.target.value })}
-                      placeholder="Full delivery address with landmarks..."
-                      className="mt-1.5"
+                <div className="p-4 bg-gray-50/80 rounded-xl space-y-4 border border-gray-100">
+                  <div className="flex items-center gap-3">
+                    <Checkbox
+                      id="delivery"
+                      checked={customer.delivery_required}
+                      onCheckedChange={(checked) => setCustomer({ ...customer, delivery_required: checked })}
                     />
-                  </motion.div>
-                )}
-              </div>
+                    <label htmlFor="delivery" className="font-medium flex items-center gap-2 cursor-pointer">
+                      <Truck className="w-4 h-4 text-[#0072C6]" /> Delivery Required
+                    </label>
+                  </div>
+                  
+                  {customer.delivery_required && (
+                    <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }}>
+                      <FormTextarea
+                        label="Delivery Address"
+                        value={customer.delivery_address}
+                        onChange={(e) => setCustomer({ ...customer, delivery_address: e.target.value })}
+                        placeholder="Full delivery address with landmarks..."
+                      />
+                    </motion.div>
+                  )}
+                </div>
 
-              <div>
-                <Label className="text-gray-700 font-medium">Order Notes</Label>
-                <Textarea
+                <FormTextarea
+                  label="Order Notes"
                   value={customer.notes}
                   onChange={(e) => setCustomer({ ...customer, notes: e.target.value })}
                   placeholder="Any special instructions..."
-                  className="mt-1.5"
                 />
-              </div>
+              </FormSection>
             </motion.div>
           )}
 
@@ -370,12 +346,8 @@ export default function CustomerOrderForm({ orgId, products = [], currentEmploye
               initial={{ opacity: 0, x: 20 }}
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: -20 }}
-              className="space-y-6"
             >
-              <h2 className="text-xl font-bold text-gray-900">Payment Details</h2>
-
-              <div>
-                <Label className="text-gray-700 font-medium mb-3 block">Payment Method</Label>
+              <FormSection title="Payment Details">
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                   {[
                     { value: "cash", label: "Cash", icon: "💵" },
@@ -389,8 +361,8 @@ export default function CustomerOrderForm({ orgId, products = [], currentEmploye
                       onClick={() => setPayment({ ...payment, method: method.value })}
                       className={`p-4 rounded-xl text-center transition-all border-2 ${
                         payment.method === method.value
-                          ? 'border-[#1EB053] bg-[#1EB053]/10'
-                          : 'border-gray-100 hover:border-gray-200'
+                          ? 'border-[#1EB053] bg-[#1EB053]/10 shadow-sm'
+                          : 'border-gray-100 hover:border-gray-200 bg-gray-50/50'
                       }`}
                     >
                       <span className="text-2xl block mb-1">{method.icon}</span>
@@ -398,49 +370,43 @@ export default function CustomerOrderForm({ orgId, products = [], currentEmploye
                     </button>
                   ))}
                 </div>
-              </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <Label className="text-gray-700 font-medium">Payment Status</Label>
-                  <Select value={payment.status} onValueChange={(v) => setPayment({ ...payment, status: v })}>
-                    <SelectTrigger className="mt-1.5 h-12">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="paid">Paid</SelectItem>
-                      <SelectItem value="pending">Pending</SelectItem>
-                      <SelectItem value="partial">Partial</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div>
-                  <Label className="text-gray-700 font-medium">Discount (Le)</Label>
-                  <Input
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <FormSelect
+                    label="Payment Status"
+                    value={payment.status}
+                    onValueChange={(v) => setPayment({ ...payment, status: v })}
+                    options={[
+                      { value: "paid", label: "Paid" },
+                      { value: "pending", label: "Pending" },
+                      { value: "partial", label: "Partial" }
+                    ]}
+                  />
+                  <FormInput
+                    label="Discount (Le)"
                     type="number"
                     value={payment.discount}
                     onChange={(e) => setPayment({ ...payment, discount: parseFloat(e.target.value) || 0 })}
-                    className="mt-1.5 h-12"
                   />
                 </div>
-              </div>
 
-              <div className="p-4 bg-gradient-to-r from-[#1EB053]/10 to-[#0072C6]/10 rounded-xl space-y-2">
-                <div className="flex justify-between">
-                  <span>Subtotal</span>
-                  <span>Le {subtotal.toLocaleString()}</span>
-                </div>
-                {discount > 0 && (
-                  <div className="flex justify-between text-red-600">
-                    <span>Discount</span>
-                    <span>-Le {discount.toLocaleString()}</span>
+                <div className="p-4 bg-gradient-to-r from-[#1EB053]/10 to-[#0072C6]/10 rounded-xl space-y-2">
+                  <div className="flex justify-between">
+                    <span>Subtotal</span>
+                    <span>Le {subtotal.toLocaleString()}</span>
                   </div>
-                )}
-                <div className="flex justify-between text-xl font-bold pt-2 border-t">
-                  <span>Total</span>
-                  <span className="text-[#1EB053]">Le {total.toLocaleString()}</span>
+                  {discount > 0 && (
+                    <div className="flex justify-between text-red-600">
+                      <span>Discount</span>
+                      <span>-Le {discount.toLocaleString()}</span>
+                    </div>
+                  )}
+                  <div className="flex justify-between text-xl font-bold pt-2 border-t">
+                    <span>Total</span>
+                    <span className="text-[#1EB053]">Le {total.toLocaleString()}</span>
+                  </div>
                 </div>
-              </div>
+              </FormSection>
             </motion.div>
           )}
 
@@ -494,32 +460,19 @@ export default function CustomerOrderForm({ orgId, products = [], currentEmploye
           )}
         </AnimatePresence>
 
-        {/* Navigation */}
-        <div className="flex items-center justify-between mt-8 pt-6 border-t">
-          <Button variant="outline" onClick={step === 1 ? onClose : () => setStep(s => s - 1)}>
-            {step === 1 ? 'Cancel' : 'Back'}
-          </Button>
-
-          {step < 4 ? (
-            <Button 
-              onClick={() => setStep(s => s + 1)}
-              disabled={step === 1 && !customer.name || step === 2 && cart.length === 0}
-              className="bg-gradient-to-r from-[#1EB053] to-[#0072C6] hover:opacity-90"
-            >
-              Continue
-            </Button>
-          ) : (
-            <Button 
-              onClick={handleSubmit}
-              disabled={createMutation.isPending}
-              className="bg-gradient-to-r from-[#1EB053] to-[#0072C6] hover:opacity-90 gap-2"
-            >
-              {createMutation.isPending ? "Processing..." : "Place Order"}
-              <Check className="w-4 h-4" />
-            </Button>
-          )}
-        </div>
-      </CardContent>
-    </Card>
+        <FormStepperNavigation
+          currentStep={step}
+          totalSteps={4}
+          onPrevious={() => setStep(s => s - 1)}
+          onNext={() => setStep(s => s + 1)}
+          onSubmit={handleSubmit}
+          onCancel={onClose}
+          canProceed={!(step === 1 && !customer.name) && !(step === 2 && cart.length === 0)}
+          isLoading={createMutation.isPending}
+          nextLabel="Continue"
+          submitLabel="Place Order"
+        />
+      </FormWrapperContent>
+    </FormWrapper>
   );
 }

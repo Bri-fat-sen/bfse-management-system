@@ -2,16 +2,11 @@ import React, { useState, useMemo } from "react";
 import { base44 } from "@/api/base44Client";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { differenceInBusinessDays, format, addDays } from "date-fns";
-import {
-  Calendar, Umbrella, Heart, Baby, BookOpen, Clock, FileText, AlertCircle, Check
-} from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
+import { Calendar, Umbrella, Heart, Baby, BookOpen, Clock, AlertCircle, Check } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/components/ui/use-toast";
+import { FormWrapper, FormWrapperHeader, FormWrapperContent, FormInfoBanner } from "./FormWrapper";
+import { FormInput, FormTextarea, FormField, FormActions } from "./FormField";
 
 const LEAVE_TYPES = [
   { value: "annual", label: "Annual Leave", icon: Umbrella, color: "bg-blue-500", description: "Vacation / Personal time", maxDays: 21 },
@@ -86,26 +81,18 @@ export default function LeaveApplicationForm({ orgId, currentEmployee, onSuccess
   };
 
   return (
-    <Card className="max-w-2xl mx-auto border-0 shadow-2xl overflow-hidden">
-      <div className="h-2 bg-gradient-to-r from-[#1EB053] via-white to-[#0072C6]" />
-      
-      <CardHeader className="bg-gradient-to-br from-[#0F1F3C] to-[#1a3a5c] text-white pb-8">
-        <div className="flex items-center gap-3">
-          <div className="w-12 h-12 bg-white/10 rounded-xl flex items-center justify-center backdrop-blur-sm">
-            <Calendar className="w-6 h-6" />
-          </div>
-          <div>
-            <CardTitle className="text-xl">Leave Application</CardTitle>
-            <p className="text-white/70 text-sm mt-0.5">Request time off from work</p>
-          </div>
-        </div>
-      </CardHeader>
+    <FormWrapper>
+      <FormWrapperHeader
+        icon={Calendar}
+        title="Leave Application"
+        subtitle="Request time off from work"
+        variant="dark"
+      />
 
-      <CardContent className="p-6 -mt-4">
+      <FormWrapperContent className="p-6">
         <form onSubmit={handleSubmit} className="space-y-6">
           {/* Leave Type Selection */}
-          <div>
-            <Label className="text-gray-700 font-medium mb-3 block">Type of Leave</Label>
+          <FormField label="Type of Leave">
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
               {LEAVE_TYPES.map((type) => (
                 <button
@@ -131,7 +118,7 @@ export default function LeaveApplicationForm({ orgId, currentEmployee, onSuccess
                 </button>
               ))}
             </div>
-          </div>
+          </FormField>
 
           {/* Selected Type Info */}
           {selectedLeaveType && (
@@ -147,26 +134,20 @@ export default function LeaveApplicationForm({ orgId, currentEmployee, onSuccess
 
           {/* Date Selection */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div>
-              <Label className="text-gray-700 font-medium">Start Date</Label>
-              <Input
-                type="date"
-                value={formData.start_date}
-                onChange={(e) => updateField('start_date', e.target.value)}
-                min={new Date().toISOString().split('T')[0]}
-                className="mt-1.5 h-12"
-              />
-            </div>
-            <div>
-              <Label className="text-gray-700 font-medium">End Date</Label>
-              <Input
-                type="date"
-                value={formData.end_date}
-                onChange={(e) => updateField('end_date', e.target.value)}
-                min={formData.start_date || new Date().toISOString().split('T')[0]}
-                className="mt-1.5 h-12"
-              />
-            </div>
+            <FormInput
+              label="Start Date"
+              type="date"
+              value={formData.start_date}
+              onChange={(e) => updateField('start_date', e.target.value)}
+              min={new Date().toISOString().split('T')[0]}
+            />
+            <FormInput
+              label="End Date"
+              type="date"
+              value={formData.end_date}
+              onChange={(e) => updateField('end_date', e.target.value)}
+              min={formData.start_date || new Date().toISOString().split('T')[0]}
+            />
           </div>
 
           {/* Days Summary */}
@@ -188,38 +169,29 @@ export default function LeaveApplicationForm({ orgId, currentEmployee, onSuccess
           )}
 
           {isOverLimit && (
-            <div className="flex items-center gap-2 p-3 bg-red-50 rounded-lg text-red-700 text-sm">
-              <AlertCircle className="w-4 h-4 flex-shrink-0" />
-              <span>Exceeds maximum of {selectedLeaveType.maxDays} days for {selectedLeaveType.label}</span>
-            </div>
+            <FormInfoBanner
+              icon={AlertCircle}
+              message={`Exceeds maximum of ${selectedLeaveType.maxDays} days for ${selectedLeaveType.label}`}
+              variant="error"
+            />
           )}
 
-          {/* Reason */}
-          <div>
-            <Label className="text-gray-700 font-medium">Reason for Leave</Label>
-            <Textarea
-              value={formData.reason}
-              onChange={(e) => updateField('reason', e.target.value)}
-              placeholder="Please provide details about your leave request..."
-              className="mt-1.5 min-h-[120px]"
-            />
-          </div>
+          <FormTextarea
+            label="Reason for Leave"
+            value={formData.reason}
+            onChange={(e) => updateField('reason', e.target.value)}
+            placeholder="Please provide details about your leave request..."
+            textareaClassName="min-h-[120px]"
+          />
 
-          {/* Submit */}
-          <div className="flex gap-3 pt-4 border-t">
-            <Button type="button" variant="outline" onClick={onClose} className="flex-1">
-              Cancel
-            </Button>
-            <Button 
-              type="submit" 
-              disabled={createMutation.isPending || !formData.leave_type || !daysRequested || isOverLimit}
-              className="flex-1 bg-gradient-to-r from-[#1EB053] to-[#0072C6] hover:opacity-90"
-            >
-              {createMutation.isPending ? "Submitting..." : "Submit Request"}
-            </Button>
-          </div>
+          <FormActions
+            onCancel={onClose}
+            isLoading={createMutation.isPending}
+            disabled={!formData.leave_type || !daysRequested || isOverLimit}
+            submitLabel="Submit Request"
+          />
         </form>
-      </CardContent>
-    </Card>
+      </FormWrapperContent>
+    </FormWrapper>
   );
 }

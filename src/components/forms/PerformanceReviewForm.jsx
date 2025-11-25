@@ -2,17 +2,13 @@ import React, { useState } from "react";
 import { base44 } from "@/api/base44Client";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { motion } from "framer-motion";
-import {
-  Star, Target, TrendingUp, MessageSquare, Award, ChevronLeft, ChevronRight, Check, User
-} from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Star, Target, TrendingUp, MessageSquare, Award, User } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Progress } from "@/components/ui/progress";
 import { useToast } from "@/components/ui/use-toast";
+import { FormWrapper, FormWrapperHeader, FormWrapperContent } from "./FormWrapper";
+import { FormSelect, FormTextarea, FormSection } from "./FormField";
+import { FormStepperNavigation } from "./FormStepper";
 
 const RATING_CATEGORIES = [
   { key: "productivity", label: "Productivity", description: "Quality and quantity of work output", icon: TrendingUp },
@@ -127,20 +123,13 @@ export default function PerformanceReviewForm({ orgId, employees = [], currentEm
   );
 
   return (
-    <Card className="max-w-3xl mx-auto border-0 shadow-2xl overflow-hidden">
-      <div className="h-2 bg-gradient-to-r from-[#D4AF37] via-white to-[#0072C6]" />
-      
-      <CardHeader className="bg-gradient-to-br from-[#0F1F3C] to-[#1a3a5c] text-white">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-12 h-12 bg-[#D4AF37]/20 rounded-xl flex items-center justify-center">
-              <Award className="w-6 h-6 text-[#D4AF37]" />
-            </div>
-            <div>
-              <CardTitle className="text-xl">Performance Review</CardTitle>
-              <p className="text-white/70 text-sm mt-0.5">Evaluate employee performance</p>
-            </div>
-          </div>
+    <FormWrapper maxWidth="3xl">
+      <FormWrapperHeader
+        icon={Award}
+        title="Performance Review"
+        subtitle="Evaluate employee performance"
+        variant="gold"
+        rightContent={
           <div className="flex items-center gap-2">
             {[1, 2, 3].map((s) => (
               <div
@@ -151,75 +140,52 @@ export default function PerformanceReviewForm({ orgId, employees = [], currentEm
               />
             ))}
           </div>
-        </div>
-      </CardHeader>
+        }
+      />
 
-      <CardContent className="p-6">
+      <FormWrapperContent className="p-6">
         {/* Step 1: Select Employee */}
         {step === 1 && (
           <motion.div
             initial={{ opacity: 0, x: 20 }}
             animate={{ opacity: 1, x: 0 }}
-            className="space-y-6"
           >
-            <div className="text-center mb-8">
-              <h2 className="text-xl font-bold text-gray-900">Select Employee</h2>
-              <p className="text-gray-500 mt-1">Choose who you're reviewing</p>
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div>
-                <Label className="text-gray-700 font-medium">Employee</Label>
-                <Select value={formData.employee_id} onValueChange={(v) => updateField('employee_id', v)}>
-                  <SelectTrigger className="mt-1.5 h-12">
-                    <SelectValue placeholder="Select employee" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {employees.filter(e => e.id !== currentEmployee?.id).map(emp => (
-                      <SelectItem key={emp.id} value={emp.id}>
-                        <div className="flex items-center gap-2">
-                          <Avatar className="w-6 h-6">
-                            <AvatarImage src={emp.profile_photo} />
-                            <AvatarFallback className="text-xs bg-[#1EB053] text-white">
-                              {emp.full_name?.charAt(0)}
-                            </AvatarFallback>
-                          </Avatar>
-                          {emp.full_name}
-                        </div>
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+            <FormSection title="Select Employee" description="Choose who you're reviewing">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <FormSelect
+                  label="Employee"
+                  value={formData.employee_id}
+                  onValueChange={(v) => updateField('employee_id', v)}
+                  placeholder="Select employee"
+                  options={employees.filter(e => e.id !== currentEmployee?.id).map(emp => ({
+                    value: emp.id,
+                    label: emp.full_name
+                  }))}
+                />
+                <FormSelect
+                  label="Review Period"
+                  value={formData.review_period}
+                  onValueChange={(v) => updateField('review_period', v)}
+                  placeholder="Select period"
+                  options={REVIEW_PERIODS.map(p => ({ value: p, label: p }))}
+                />
               </div>
-              <div>
-                <Label className="text-gray-700 font-medium">Review Period</Label>
-                <Select value={formData.review_period} onValueChange={(v) => updateField('review_period', v)}>
-                  <SelectTrigger className="mt-1.5 h-12">
-                    <SelectValue placeholder="Select period" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {REVIEW_PERIODS.map(period => (
-                      <SelectItem key={period} value={period}>{period}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
 
-            {selectedEmployee && (
-              <div className="p-4 bg-gradient-to-r from-[#1EB053]/10 to-[#0072C6]/10 rounded-xl flex items-center gap-4">
-                <Avatar className="w-16 h-16 border-2 border-white shadow">
-                  <AvatarImage src={selectedEmployee.profile_photo} />
-                  <AvatarFallback className="bg-gradient-to-br from-[#1EB053] to-[#0072C6] text-white text-xl">
-                    {selectedEmployee.full_name?.charAt(0)}
-                  </AvatarFallback>
-                </Avatar>
-                <div>
-                  <h3 className="font-bold text-gray-900">{selectedEmployee.full_name}</h3>
-                  <p className="text-gray-600">{selectedEmployee.position} • {selectedEmployee.department}</p>
+              {selectedEmployee && (
+                <div className="p-4 bg-gradient-to-r from-[#1EB053]/10 to-[#0072C6]/10 rounded-xl flex items-center gap-4 mt-4">
+                  <Avatar className="w-16 h-16 border-2 border-white shadow">
+                    <AvatarImage src={selectedEmployee.profile_photo} />
+                    <AvatarFallback className="bg-gradient-to-br from-[#1EB053] to-[#0072C6] text-white text-xl">
+                      {selectedEmployee.full_name?.charAt(0)}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div>
+                    <h3 className="font-bold text-gray-900">{selectedEmployee.full_name}</h3>
+                    <p className="text-gray-600">{selectedEmployee.position} • {selectedEmployee.department}</p>
+                  </div>
                 </div>
-              </div>
-            )}
+              )}
+            </FormSection>
           </motion.div>
         )}
 
@@ -228,12 +194,8 @@ export default function PerformanceReviewForm({ orgId, employees = [], currentEm
           <motion.div
             initial={{ opacity: 0, x: 20 }}
             animate={{ opacity: 1, x: 0 }}
-            className="space-y-6"
           >
-            <div className="text-center mb-8">
-              <h2 className="text-xl font-bold text-gray-900">Performance Ratings</h2>
-              <p className="text-gray-500 mt-1">Rate each category from 1-5 stars</p>
-            </div>
+            <FormSection title="Performance Ratings" description="Rate each category from 1-5 stars">
 
             {/* Overall Score */}
             <div className="p-4 bg-gradient-to-r from-[#D4AF37]/10 to-[#D4AF37]/5 rounded-xl flex items-center justify-between mb-6">
@@ -266,6 +228,7 @@ export default function PerformanceReviewForm({ orgId, employees = [], currentEm
                 </div>
               ))}
             </div>
+            </FormSection>
           </motion.div>
         )}
 
@@ -274,83 +237,42 @@ export default function PerformanceReviewForm({ orgId, employees = [], currentEm
           <motion.div
             initial={{ opacity: 0, x: 20 }}
             animate={{ opacity: 1, x: 0 }}
-            className="space-y-6"
           >
-            <div className="text-center mb-8">
-              <h2 className="text-xl font-bold text-gray-900">Written Feedback</h2>
-              <p className="text-gray-500 mt-1">Provide detailed comments</p>
-            </div>
-
-            <div>
-              <Label className="text-gray-700 font-medium flex items-center gap-2">
-                <Star className="w-4 h-4 text-[#D4AF37]" /> Strengths
-              </Label>
-              <Textarea
+            <FormSection title="Written Feedback" description="Provide detailed comments">
+              <FormTextarea
+                label={<span className="flex items-center gap-2"><Star className="w-4 h-4 text-[#D4AF37]" /> Strengths</span>}
                 value={formData.strengths}
                 onChange={(e) => updateField('strengths', e.target.value)}
                 placeholder="What does this employee do well? What are their key strengths?"
-                className="mt-1.5 min-h-[100px]"
               />
-            </div>
-
-            <div>
-              <Label className="text-gray-700 font-medium flex items-center gap-2">
-                <TrendingUp className="w-4 h-4 text-[#0072C6]" /> Areas for Improvement
-              </Label>
-              <Textarea
+              <FormTextarea
+                label={<span className="flex items-center gap-2"><TrendingUp className="w-4 h-4 text-[#0072C6]" /> Areas for Improvement</span>}
                 value={formData.areas_for_improvement}
                 onChange={(e) => updateField('areas_for_improvement', e.target.value)}
                 placeholder="What areas need development? How can they improve?"
-                className="mt-1.5 min-h-[100px]"
               />
-            </div>
-
-            <div>
-              <Label className="text-gray-700 font-medium flex items-center gap-2">
-                <Target className="w-4 h-4 text-[#1EB053]" /> Goals for Next Period
-              </Label>
-              <Textarea
+              <FormTextarea
+                label={<span className="flex items-center gap-2"><Target className="w-4 h-4 text-[#1EB053]" /> Goals for Next Period</span>}
                 value={formData.goals}
                 onChange={(e) => updateField('goals', e.target.value)}
                 placeholder="What should they focus on achieving?"
-                className="mt-1.5 min-h-[100px]"
               />
-            </div>
+            </FormSection>
           </motion.div>
         )}
 
-        {/* Navigation */}
-        <div className="flex items-center justify-between mt-8 pt-6 border-t">
-          <Button
-            variant="outline"
-            onClick={step === 1 ? onClose : () => setStep(s => s - 1)}
-            className="gap-2"
-          >
-            <ChevronLeft className="w-4 h-4" />
-            {step === 1 ? 'Cancel' : 'Back'}
-          </Button>
-
-          {step < 3 ? (
-            <Button 
-              onClick={() => setStep(s => s + 1)}
-              disabled={step === 1 && (!formData.employee_id || !formData.review_period)}
-              className="bg-gradient-to-r from-[#D4AF37] to-[#0072C6] hover:opacity-90 gap-2"
-            >
-              Next
-              <ChevronRight className="w-4 h-4" />
-            </Button>
-          ) : (
-            <Button 
-              onClick={handleSubmit}
-              disabled={createMutation.isPending}
-              className="bg-gradient-to-r from-[#1EB053] to-[#0072C6] hover:opacity-90 gap-2"
-            >
-              {createMutation.isPending ? "Submitting..." : "Submit Review"}
-              <Check className="w-4 h-4" />
-            </Button>
-          )}
-        </div>
-      </CardContent>
-    </Card>
+        <FormStepperNavigation
+          currentStep={step}
+          totalSteps={3}
+          onPrevious={() => setStep(s => s - 1)}
+          onNext={() => setStep(s => s + 1)}
+          onSubmit={handleSubmit}
+          onCancel={onClose}
+          canProceed={step !== 1 || (formData.employee_id && formData.review_period)}
+          isLoading={createMutation.isPending}
+          submitLabel="Submit Review"
+        />
+      </FormWrapperContent>
+    </FormWrapper>
   );
 }

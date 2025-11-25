@@ -2,17 +2,13 @@ import React, { useState } from "react";
 import { base44 } from "@/api/base44Client";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { motion } from "framer-motion";
-import {
-  Receipt, Upload, Calendar, DollarSign, FileText, Camera, X, Plus, Check, Loader2
-} from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Receipt, Camera, X, Plus, Check, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/components/ui/use-toast";
+import { FormWrapper, FormWrapperHeader, FormWrapperContent } from "./FormWrapper";
+import { FormInput, FormTextarea, FormSelect, FormField, FormActions } from "./FormField";
 
 const CATEGORIES = [
   { value: "fuel", label: "Fuel & Transport", icon: "⛽", color: "bg-orange-100 text-orange-700" },
@@ -121,26 +117,18 @@ export default function ExpenseClaimForm({ orgId, currentEmployee, onSuccess, on
   const selectedCategory = CATEGORIES.find(c => c.value === items[0]?.category);
 
   return (
-    <Card className="max-w-2xl mx-auto border-0 shadow-2xl overflow-hidden">
-      <div className="h-2 bg-gradient-to-r from-[#1EB053] via-white to-[#0072C6]" />
-      
-      <CardHeader className="bg-gradient-to-r from-[#1EB053] to-[#0072C6] text-white pb-8">
-        <div className="flex items-center gap-3">
-          <div className="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center backdrop-blur-sm">
-            <Receipt className="w-6 h-6" />
-          </div>
-          <div>
-            <CardTitle className="text-xl">Expense Claim</CardTitle>
-            <p className="text-white/80 text-sm mt-0.5">Submit expenses for reimbursement</p>
-          </div>
-        </div>
-      </CardHeader>
+    <FormWrapper>
+      <FormWrapperHeader
+        icon={Receipt}
+        title="Expense Claim"
+        subtitle="Submit expenses for reimbursement"
+        variant="gradient"
+      />
 
-      <CardContent className="p-6 -mt-4">
+      <FormWrapperContent className="p-6">
         <form onSubmit={handleSubmit} className="space-y-6">
           {/* Quick Category Select */}
-          <div>
-            <Label className="text-gray-700 font-medium mb-3 block">Category</Label>
+          <FormField label="Category">
             <div className="grid grid-cols-4 gap-2">
               {CATEGORIES.map((cat) => (
                 <button
@@ -158,16 +146,19 @@ export default function ExpenseClaimForm({ orgId, currentEmployee, onSuccess, on
                 </button>
               ))}
             </div>
-          </div>
+          </FormField>
 
           {/* Expense Items */}
-          <div className="space-y-3">
-            <div className="flex items-center justify-between">
-              <Label className="text-gray-700 font-medium">Expense Items</Label>
-              <Button type="button" variant="ghost" size="sm" onClick={addItem} className="text-[#1EB053]">
-                <Plus className="w-4 h-4 mr-1" /> Add Item
-              </Button>
-            </div>
+          <FormField 
+            label={
+              <div className="flex items-center justify-between w-full">
+                <span>Expense Items</span>
+                <Button type="button" variant="ghost" size="sm" onClick={addItem} className="text-[#1EB053] -mr-2">
+                  <Plus className="w-4 h-4 mr-1" /> Add Item
+                </Button>
+              </div>
+            }
+          >
             
             {items.map((item, index) => (
               <motion.div
@@ -215,44 +206,33 @@ export default function ExpenseClaimForm({ orgId, currentEmployee, onSuccess, on
                 )}
               </motion.div>
             ))}
-          </div>
+          </FormField>
 
           {/* Details */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div>
-              <Label className="text-gray-700 font-medium">Date</Label>
-              <Input
-                type="date"
-                value={formData.date}
-                onChange={(e) => updateField('date', e.target.value)}
-                className="mt-1.5"
-              />
-            </div>
-            <div>
-              <Label className="text-gray-700 font-medium">Payment Method</Label>
-              <Select value={formData.payment_method} onValueChange={(v) => updateField('payment_method', v)}>
-                <SelectTrigger className="mt-1.5">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {PAYMENT_METHODS.map(m => <SelectItem key={m.value} value={m.value}>{m.label}</SelectItem>)}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="sm:col-span-2">
-              <Label className="text-gray-700 font-medium">Vendor / Supplier</Label>
-              <Input
-                value={formData.vendor}
-                onChange={(e) => updateField('vendor', e.target.value)}
-                placeholder="Where was this purchased?"
-                className="mt-1.5"
-              />
-            </div>
+            <FormInput
+              label="Date"
+              type="date"
+              value={formData.date}
+              onChange={(e) => updateField('date', e.target.value)}
+            />
+            <FormSelect
+              label="Payment Method"
+              value={formData.payment_method}
+              onValueChange={(v) => updateField('payment_method', v)}
+              options={PAYMENT_METHODS}
+            />
+            <FormInput
+              label="Vendor / Supplier"
+              className="sm:col-span-2"
+              value={formData.vendor}
+              onChange={(e) => updateField('vendor', e.target.value)}
+              placeholder="Where was this purchased?"
+            />
           </div>
 
           {/* Receipt Upload */}
-          <div>
-            <Label className="text-gray-700 font-medium mb-2 block">Receipt / Proof</Label>
+          <FormField label="Receipt / Proof">
             {formData.receipt_url ? (
               <div className="flex items-center gap-3 p-3 bg-green-50 rounded-xl border border-green-200">
                 <Check className="w-5 h-5 text-green-600" />
@@ -262,7 +242,7 @@ export default function ExpenseClaimForm({ orgId, currentEmployee, onSuccess, on
                 </Button>
               </div>
             ) : (
-              <label className="flex items-center justify-center gap-3 p-6 border-2 border-dashed border-gray-300 rounded-xl cursor-pointer hover:border-[#1EB053] hover:bg-[#1EB053]/5 transition-colors">
+              <label className="flex items-center justify-center gap-3 p-6 border-2 border-dashed border-gray-200 rounded-xl cursor-pointer hover:border-[#1EB053] hover:bg-[#1EB053]/5 transition-all">
                 {uploading ? (
                   <Loader2 className="w-6 h-6 animate-spin text-[#1EB053]" />
                 ) : (
@@ -274,18 +254,15 @@ export default function ExpenseClaimForm({ orgId, currentEmployee, onSuccess, on
                 <input type="file" accept="image/*" className="hidden" onChange={handleReceiptUpload} disabled={uploading} />
               </label>
             )}
-          </div>
+          </FormField>
 
-          {/* Notes */}
-          <div>
-            <Label className="text-gray-700 font-medium">Additional Notes</Label>
-            <Textarea
-              value={formData.notes}
-              onChange={(e) => updateField('notes', e.target.value)}
-              placeholder="Any additional context..."
-              className="mt-1.5 min-h-[80px]"
-            />
-          </div>
+          <FormTextarea
+            label="Additional Notes"
+            value={formData.notes}
+            onChange={(e) => updateField('notes', e.target.value)}
+            placeholder="Any additional context..."
+            textareaClassName="min-h-[80px]"
+          />
 
           {/* Total & Submit */}
           <div className="pt-4 border-t">
@@ -294,21 +271,15 @@ export default function ExpenseClaimForm({ orgId, currentEmployee, onSuccess, on
               <span className="text-2xl font-bold text-[#1EB053]">Le {totalAmount.toLocaleString()}</span>
             </div>
             
-            <div className="flex gap-3">
-              <Button type="button" variant="outline" onClick={onClose} className="flex-1">
-                Cancel
-              </Button>
-              <Button 
-                type="submit" 
-                disabled={createMutation.isPending || totalAmount === 0}
-                className="flex-1 bg-gradient-to-r from-[#1EB053] to-[#0072C6] hover:opacity-90"
-              >
-                {createMutation.isPending ? "Submitting..." : "Submit Claim"}
-              </Button>
-            </div>
+            <FormActions
+              onCancel={onClose}
+              isLoading={createMutation.isPending}
+              disabled={totalAmount === 0}
+              submitLabel="Submit Claim"
+            />
           </div>
         </form>
-      </CardContent>
-    </Card>
+      </FormWrapperContent>
+    </FormWrapper>
   );
 }
