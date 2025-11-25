@@ -100,6 +100,12 @@ export default function Finance() {
     enabled: !!orgId,
   });
 
+  const { data: organisation } = useQuery({
+    queryKey: ['organisation', orgId],
+    queryFn: () => base44.entities.Organisation.filter({ id: orgId }),
+    enabled: !!orgId,
+  });
+
   const createExpenseMutation = useMutation({
     mutationFn: (data) => base44.entities.Expense.create(data),
     onSuccess: () => {
@@ -425,6 +431,7 @@ export default function Finance() {
             payrolls={payrolls}
             employees={employees}
             trips={trips}
+            organisation={organisation?.[0]}
           />
         </TabsContent>
       </Tabs>
