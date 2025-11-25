@@ -145,7 +145,7 @@ export default function Locations() {
     mutationFn: (id) => base44.entities.Warehouse.delete(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['warehouses'] });
-      toast({ title: "Location deleted" });
+      toast.success("Location deleted");
     },
   });
 
