@@ -13,6 +13,7 @@ import Profile from './pages/Profile';
 import RolePermissions from './pages/RolePermissions';
 import Suppliers from './pages/Suppliers';
 import OrganisationSetup from './pages/OrganisationSetup';
+import OrganisationManage from './pages/OrganisationManage';
 import __Layout from './Layout.jsx';
 
 
@@ -32,6 +33,7 @@ export const PAGES = {
     "RolePermissions": RolePermissions,
     "Suppliers": Suppliers,
     "OrganisationSetup": OrganisationSetup,
+    "OrganisationManage": OrganisationManage,
 }
 
 export const pagesConfig = {
