@@ -2,7 +2,7 @@ import React, { useState, useMemo } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery } from "@tanstack/react-query";
 import ProtectedPage from "@/components/permissions/ProtectedPage";
-import { format, startOfMonth, endOfMonth, subMonths, parseISO, differenceInDays } from "date-fns";
+import { format, startOfMonth, endOfMonth, subMonths, subDays, parseISO, differenceInDays } from "date-fns";
 import {
   FileText,
   Download,
@@ -16,7 +16,10 @@ import {
   Truck,
   Calendar,
   Filter,
-  Printer
+  Printer,
+  Brain,
+  Save,
+  LayoutGrid
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -33,6 +36,9 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import PageHeader from "@/components/ui/PageHeader";
 import StatCard from "@/components/ui/StatCard";
+import AdvancedFilters from "@/components/analytics/AdvancedFilters";
+import PredictiveAnalytics from "@/components/analytics/PredictiveAnalytics";
+import SavedReportsManager from "@/components/analytics/SavedReportsManager";
 import {
   BarChart,
   Bar,
@@ -55,9 +61,16 @@ const COLORS = ['#1EB053', '#0072C6', '#D4AF37', '#0F1F3C', '#9333ea', '#f59e0b'
 
 export default function Reports() {
   const [activeTab, setActiveTab] = useState("sales");
-  const [dateRange, setDateRange] = useState("month");
-  const [startDate, setStartDate] = useState(format(startOfMonth(new Date()), 'yyyy-MM-dd'));
-  const [endDate, setEndDate] = useState(format(endOfMonth(new Date()), 'yyyy-MM-dd'));
+  const [filters, setFilters] = useState({
+    date_range: 'month',
+    start_date: format(subDays(new Date(), 30), 'yyyy-MM-dd'),
+    end_date: format(new Date(), 'yyyy-MM-dd'),
+    employee_ids: [],
+    categories: [],
+    payment_methods: [],
+    sale_types: [],
+    statuses: []
+  });
 
   const { data: user } = useQuery({
     queryKey: ['currentUser'],
@@ -115,21 +128,37 @@ export default function Reports() {
     enabled: !!orgId,
   });
 
-  // Date filtering
+  // Advanced filtering
   const filteredSales = useMemo(() => {
     return sales.filter(s => {
       const date = s.created_date?.split('T')[0];
-      return date >= startDate && date <= endDate;
+      if (date < filters.start_date || date > filters.end_date) return false;
+      if (filters.employee_ids?.length > 0 && !filters.employee_ids.includes(s.employee_id)) return false;
+      if (filters.payment_methods?.length > 0 && !filters.payment_methods.includes(s.payment_method)) return false;
+      if (filters.sale_types?.length > 0 && !filters.sale_types.includes(s.sale_type)) return false;
+      if (filters.statuses?.length > 0 && !filters.statuses.includes(s.payment_status)) return false;
+      return true;
     });
-  }, [sales, startDate, endDate]);
+  }, [sales, filters]);
 
   const filteredExpenses = useMemo(() => {
-    return expenses.filter(e => e.date >= startDate && e.date <= endDate);
-  }, [expenses, startDate, endDate]);
+    return expenses.filter(e => {
+      if (e.date < filters.start_date || e.date > filters.end_date) return false;
+      if (filters.employee_ids?.length > 0 && !filters.employee_ids.includes(e.recorded_by)) return false;
+      if (filters.categories?.length > 0 && !filters.categories.includes(e.category)) return false;
+      if (filters.statuses?.length > 0 && !filters.statuses.includes(e.status)) return false;
+      return true;
+    });
+  }, [expenses, filters]);
 
   const filteredTrips = useMemo(() => {
-    return trips.filter(t => t.date >= startDate && t.date <= endDate);
-  }, [trips, startDate, endDate]);
+    return trips.filter(t => {
+      if (t.date < filters.start_date || t.date > filters.end_date) return false;
+      if (filters.employee_ids?.length > 0 && !filters.employee_ids.includes(t.driver_id)) return false;
+      if (filters.statuses?.length > 0 && !filters.statuses.includes(t.status)) return false;
+      return true;
+    });
+  }, [trips, filters]);
 
   // Sales analytics
   const salesAnalytics = useMemo(() => {
@@ -242,33 +271,15 @@ export default function Reports() {
     };
   }, [salesAnalytics, transportAnalytics, expenseAnalytics]);
 
-  const handleDateRangeChange = (range) => {
-    setDateRange(range);
-    const today = new Date();
-    switch (range) {
-      case 'week':
-        setStartDate(format(new Date(today.setDate(today.getDate() - 7)), 'yyyy-MM-dd'));
-        setEndDate(format(new Date(), 'yyyy-MM-dd'));
-        break;
-      case 'month':
-        setStartDate(format(startOfMonth(new Date()), 'yyyy-MM-dd'));
-        setEndDate(format(endOfMonth(new Date()), 'yyyy-MM-dd'));
-        break;
-      case 'quarter':
-        setStartDate(format(subMonths(new Date(), 3), 'yyyy-MM-dd'));
-        setEndDate(format(new Date(), 'yyyy-MM-dd'));
-        break;
-      case 'year':
-        setStartDate(format(new Date(new Date().getFullYear(), 0, 1), 'yyyy-MM-dd'));
-        setEndDate(format(new Date(), 'yyyy-MM-dd'));
-        break;
-      default:
-        break;
-    }
-  };
-
   const handlePrint = () => {
     window.print();
+  };
+
+  const handleLoadSavedReport = (report) => {
+    if (report.filters) {
+      setFilters(report.filters);
+    }
+    setActiveTab(report.report_type === 'custom' ? 'sales' : report.report_type);
   };
 
   return (
@@ -276,7 +287,7 @@ export default function Reports() {
     <div className="space-y-6">
       <PageHeader
         title="Reports & Analytics"
-        subtitle="Comprehensive business insights"
+        subtitle="Comprehensive business insights with predictive analytics"
       >
         <Button variant="outline" onClick={handlePrint}>
           <Printer className="w-4 h-4 mr-2" />
@@ -284,45 +295,17 @@ export default function Reports() {
         </Button>
       </PageHeader>
 
-      {/* Date Range Filters */}
-      <Card>
-        <CardContent className="p-4">
-          <div className="flex flex-wrap items-center gap-4">
-            <div className="flex items-center gap-2">
-              <Filter className="w-4 h-4 text-gray-500" />
-              <span className="font-medium text-sm">Period:</span>
-            </div>
-            <div className="flex gap-2">
-              {['week', 'month', 'quarter', 'year'].map((range) => (
-                <Button
-                  key={range}
-                  variant={dateRange === range ? "default" : "outline"}
-                  size="sm"
-                  onClick={() => handleDateRangeChange(range)}
-                  className={dateRange === range ? "sl-gradient" : ""}
-                >
-                  {range.charAt(0).toUpperCase() + range.slice(1)}
-                </Button>
-              ))}
-            </div>
-            <div className="flex items-center gap-2 ml-auto">
-              <Input
-                type="date"
-                value={startDate}
-                onChange={(e) => { setStartDate(e.target.value); setDateRange('custom'); }}
-                className="w-36"
-              />
-              <span className="text-gray-500">to</span>
-              <Input
-                type="date"
-                value={endDate}
-                onChange={(e) => { setEndDate(e.target.value); setDateRange('custom'); }}
-                className="w-36"
-              />
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+      {/* Advanced Filters */}
+      <AdvancedFilters
+        filters={filters}
+        onFiltersChange={setFilters}
+        employees={employees}
+        showEmployeeFilter={true}
+        showCategoryFilter={activeTab === 'expenses'}
+        showPaymentFilter={activeTab === 'sales'}
+        showSaleTypeFilter={activeTab === 'sales'}
+        showStatusFilter={true}
+      />
 
       {/* Summary Stats */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -365,6 +348,14 @@ export default function Reports() {
           </TabsTrigger>
           <TabsTrigger value="inventory" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#1EB053] data-[state=active]:to-[#0072C6] data-[state=active]:text-white">
             Inventory
+          </TabsTrigger>
+          <TabsTrigger value="predictions" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#1EB053] data-[state=active]:to-[#0072C6] data-[state=active]:text-white">
+            <Brain className="w-4 h-4 mr-1" />
+            Predictions
+          </TabsTrigger>
+          <TabsTrigger value="saved" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#1EB053] data-[state=active]:to-[#0072C6] data-[state=active]:text-white">
+            <Save className="w-4 h-4 mr-1" />
+            Saved
           </TabsTrigger>
         </TabsList>
 
@@ -601,6 +592,23 @@ export default function Reports() {
               })()}
             </CardContent>
           </Card>
+        </TabsContent>
+
+        {/* Predictions Tab */}
+        <TabsContent value="predictions" className="mt-6">
+          <PredictiveAnalytics 
+            sales={sales} 
+            products={products} 
+            expenses={expenses} 
+          />
+        </TabsContent>
+
+        {/* Saved Reports Tab */}
+        <TabsContent value="saved" className="mt-6">
+          <SavedReportsManager 
+            orgId={orgId} 
+            onLoadReport={handleLoadSavedReport}
+          />
         </TabsContent>
       </Tabs>
     </div>
