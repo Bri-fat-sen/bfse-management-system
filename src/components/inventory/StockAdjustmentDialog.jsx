@@ -43,11 +43,31 @@ export default function StockAdjustmentDialog({
       await base44.entities.Product.update(data.productId, { 
         stock_quantity: data.newStock 
       });
+      
+      // Check and create/resolve stock alerts
+      const product = data.product;
+      const threshold = product?.low_stock_threshold || 10;
+      
+      if (data.newStock <= threshold) {
+        // Create low stock alert
+        const alertType = data.newStock === 0 ? "out_of_stock" : "low_stock";
+        await base44.entities.StockAlert.create({
+          organisation_id: data.orgId,
+          product_id: data.productId,
+          product_name: product?.name,
+          alert_type: alertType,
+          current_quantity: data.newStock,
+          threshold_quantity: threshold,
+          status: "active"
+        });
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['products'] });
       queryClient.invalidateQueries({ queryKey: ['stockMovements'] });
+      queryClient.invalidateQueries({ queryKey: ['stockAlerts'] });
       onOpenChange(false);
+      setSelectedProduct("");
       toast({ title: "Stock adjusted successfully" });
     },
   });
@@ -92,7 +112,9 @@ export default function StockAdjustmentDialog({
     createMovementMutation.mutate({
       movement: movementData,
       productId: productId,
-      newStock: newStock
+      newStock: newStock,
+      product: product,
+      orgId: orgId
     });
   };
 

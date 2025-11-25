@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
@@ -12,11 +12,11 @@ import {
   Filter,
   Download,
   Upload,
-  FolderTree,
-  MapPin,
   Bell,
+  MapPin,
+  FolderTree,
   FileText,
-  RefreshCw
+  BarChart3
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -49,7 +49,7 @@ import StockLocations from "@/components/inventory/StockLocations";
 import StockAlerts from "@/components/inventory/StockAlerts";
 import InventoryReport from "@/components/inventory/InventoryReport";
 
-const DEFAULT_CATEGORIES = ["Water", "Beverages", "Food", "Electronics", "Clothing", "Other"];
+const defaultCategories = ["Water", "Beverages", "Food", "Electronics", "Clothing", "Other"];
 
 export default function Inventory() {
   const { toast } = useToast();
@@ -64,6 +64,7 @@ export default function Inventory() {
   const [showLocationsDialog, setShowLocationsDialog] = useState(false);
   const [showAlertsDialog, setShowAlertsDialog] = useState(false);
   const [showReportDialog, setShowReportDialog] = useState(false);
+  const [warehouseFilter, setWarehouseFilter] = useState("all");
 
   const { data: user } = useQuery({
     queryKey: ['currentUser'],
@@ -111,7 +112,7 @@ export default function Inventory() {
 
   const { data: stockAlerts = [] } = useQuery({
     queryKey: ['stockAlerts', orgId],
-    queryFn: () => base44.entities.StockAlert.filter({ organisation_id: orgId }, '-created_date', 100),
+    queryFn: () => base44.entities.StockAlert.filter({ organisation_id: orgId, status: 'active' }),
     enabled: !!orgId,
   });
 
@@ -121,45 +122,8 @@ export default function Inventory() {
     enabled: !!orgId,
   });
 
-  // Auto-generate stock alerts for low stock items
-  useEffect(() => {
-    const checkStockAlerts = async () => {
-      if (!products.length || !orgId) return;
-      
-      for (const product of products) {
-        const threshold = product.low_stock_threshold || 10;
-        const existingAlert = stockAlerts.find(
-          a => a.product_id === product.id && a.status === 'active'
-        );
-        
-        if (product.stock_quantity === 0 && !existingAlert) {
-          await base44.entities.StockAlert.create({
-            organisation_id: orgId,
-            product_id: product.id,
-            product_name: product.name,
-            warehouse_id: product.warehouse_id,
-            alert_type: 'out_of_stock',
-            current_quantity: 0,
-            threshold_quantity: threshold,
-            status: 'active'
-          });
-        } else if (product.stock_quantity > 0 && product.stock_quantity <= threshold && !existingAlert) {
-          await base44.entities.StockAlert.create({
-            organisation_id: orgId,
-            product_id: product.id,
-            product_name: product.name,
-            warehouse_id: product.warehouse_id,
-            alert_type: 'low_stock',
-            current_quantity: product.stock_quantity,
-            threshold_quantity: threshold,
-            status: 'active'
-          });
-        }
-      }
-    };
-    
-    checkStockAlerts();
-  }, [products, stockAlerts, orgId]);
+  // Combine default and custom categories
+  const allCategories = [...new Set([...defaultCategories, ...categories.map(c => c.name)])];
 
   const createProductMutation = useMutation({
     mutationFn: (data) => base44.entities.Product.create(data),
@@ -193,14 +157,15 @@ export default function Inventory() {
     const matchesSearch = p.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          p.sku?.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesCategory = categoryFilter === "all" || p.category === categoryFilter;
-    return matchesSearch && matchesCategory;
+    const matchesWarehouse = warehouseFilter === "all" || p.warehouse_id === warehouseFilter;
+    return matchesSearch && matchesCategory && matchesWarehouse;
   });
 
   const lowStockProducts = products.filter(p => p.stock_quantity <= (p.low_stock_threshold || 10));
   const outOfStockProducts = products.filter(p => p.stock_quantity === 0);
-  const totalValue = products.reduce((sum, p) => sum + (p.stock_quantity * p.cost_price || 0), 0);
+  const totalValue = products.reduce((sum, p) => sum + ((p.stock_quantity || 0) * (p.cost_price || 0)), 0);
+  const totalUnits = products.reduce((sum, p) => sum + (p.stock_quantity || 0), 0);
   const activeAlerts = stockAlerts.filter(a => a.status === 'active');
-  const categoryList = categories.length > 0 ? categories.map(c => c.name) : DEFAULT_CATEGORIES;
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -217,6 +182,7 @@ export default function Inventory() {
       stock_quantity: parseInt(formData.get('stock_quantity')) || 0,
       low_stock_threshold: parseInt(formData.get('low_stock_threshold')) || 10,
       unit: formData.get('unit'),
+      warehouse_id: formData.get('warehouse_id') || null,
       is_active: true,
     };
 
@@ -237,45 +203,44 @@ export default function Inventory() {
           setShowProductDialog(true);
         }}
         actionLabel="Add Product"
+      >
+        <Button variant="outline" onClick={() => setShowStockDialog(true)}>
+          <Upload className="w-4 h-4 mr-2" />
+          Adjust Stock
+        </Button>
+        <Button variant="outline" onClick={() => setShowCategoryDialog(true)}>
+          <FolderTree className="w-4 h-4 mr-2" />
+          Categories
+        </Button>
+        <Button variant="outline" onClick={() => setShowLocationsDialog(true)}>
+          <MapPin className="w-4 h-4 mr-2" />
+          Locations
+        </Button>
+        <Button 
+          variant="outline" 
+          onClick={() => setShowAlertsDialog(true)}
+          className={activeAlerts.length > 0 ? "border-red-300 text-red-600" : ""}
         >
-        <div className="flex flex-wrap gap-2">
-          <Button variant="outline" onClick={() => setShowStockDialog(true)}>
-            <Upload className="w-4 h-4 mr-2" />
-            Adjustment
-          </Button>
-          <Button variant="outline" onClick={() => setShowCategoryDialog(true)}>
-            <FolderTree className="w-4 h-4 mr-2" />
-            Categories
-          </Button>
-          <Button variant="outline" onClick={() => setShowLocationsDialog(true)}>
-            <MapPin className="w-4 h-4 mr-2" />
-            Locations
-          </Button>
-          <Button 
-            variant="outline" 
-            onClick={() => setShowAlertsDialog(true)}
-            className={activeAlerts.length > 0 ? "border-red-300 text-red-600" : ""}
-          >
-            <Bell className="w-4 h-4 mr-2" />
-            Alerts {activeAlerts.length > 0 && `(${activeAlerts.length})`}
-          </Button>
-          <Button variant="outline" onClick={() => setShowReportDialog(true)}>
-            <FileText className="w-4 h-4 mr-2" />
-            Reports
-          </Button>
-        </div>
-        </PageHeader>
+          <Bell className="w-4 h-4 mr-2" />
+          Alerts {activeAlerts.length > 0 && `(${activeAlerts.length})`}
+        </Button>
+        <Button variant="outline" onClick={() => setShowReportDialog(true)}>
+          <FileText className="w-4 h-4 mr-2" />
+          Reports
+        </Button>
+      </PageHeader>
 
       {/* Stats */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
         <StatCard
           title="Total Products"
           value={products.length}
           icon={Package}
           color="blue"
+          subtitle={`${totalUnits.toLocaleString()} units`}
         />
         <StatCard
-          title="Low Stock Items"
+          title="Low Stock"
           value={lowStockProducts.length}
           icon={AlertTriangle}
           color="gold"
@@ -283,15 +248,22 @@ export default function Inventory() {
         />
         <StatCard
           title="Inventory Value"
-          value={`Le ${totalValue.toLocaleString()}`}
-          icon={Warehouse}
+          value={`SLE ${totalValue.toLocaleString()}`}
+          icon={BarChart3}
           color="green"
         />
         <StatCard
-          title="Warehouses"
+          title="Active Alerts"
+          value={activeAlerts.length}
+          icon={Bell}
+          color={activeAlerts.length > 0 ? "red" : "navy"}
+        />
+        <StatCard
+          title="Locations"
           value={warehouses.length}
           icon={Warehouse}
           color="navy"
+          subtitle={`${categories.length} categories`}
         />
       </div>
 
@@ -322,12 +294,26 @@ export default function Inventory() {
                     <SelectValue placeholder="Category" />
                   </SelectTrigger>
                   <SelectContent>
-                      <SelectItem value="all">All Categories</SelectItem>
-                      {categoryList.map(cat => (
-                        <SelectItem key={cat} value={cat}>{cat}</SelectItem>
+                    <SelectItem value="all">All Categories</SelectItem>
+                    {allCategories.map(cat => (
+                      <SelectItem key={cat} value={cat}>{cat}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                {warehouses.length > 0 && (
+                  <Select value={warehouseFilter} onValueChange={setWarehouseFilter}>
+                    <SelectTrigger className="w-40">
+                      <MapPin className="w-4 h-4 mr-2" />
+                      <SelectValue placeholder="Location" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All Locations</SelectItem>
+                      {warehouses.map(w => (
+                        <SelectItem key={w.id} value={w.id}>{w.name}</SelectItem>
                       ))}
                     </SelectContent>
-                </Select>
+                  </Select>
+                )}
               </div>
             </CardContent>
           </Card>
@@ -541,7 +527,7 @@ export default function Inventory() {
         currentEmployee={currentEmployee}
       />
 
-      {/* Inventory Reports Dialog */}
+      {/* Inventory Report Dialog */}
       <InventoryReport
         open={showReportDialog}
         onOpenChange={setShowReportDialog}
@@ -575,12 +561,27 @@ export default function Inventory() {
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    {categoryList.map(cat => (
+                    {allCategories.map(cat => (
                       <SelectItem key={cat} value={cat}>{cat}</SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
               </div>
+              {warehouses.length > 0 && (
+                <div>
+                  <Label>Warehouse Location</Label>
+                  <Select name="warehouse_id" defaultValue={editingProduct?.warehouse_id || ""}>
+                    <SelectTrigger className="mt-1">
+                      <SelectValue placeholder="Select location" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {warehouses.map(w => (
+                        <SelectItem key={w.id} value={w.id}>{w.name}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
               <div>
                 <Label>Unit Price (Le)</Label>
                 <Input name="unit_price" type="number" defaultValue={editingProduct?.unit_price} required className="mt-1" />

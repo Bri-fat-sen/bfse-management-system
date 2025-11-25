@@ -160,9 +160,10 @@ export default function Sales() {
   const cartTotal = cart.reduce((sum, item) => sum + item.total, 0);
 
   const completeSale = async () => {
+    const saleNumber = `SL-${Date.now().toString(36).toUpperCase()}`;
     const saleData = {
       organisation_id: orgId,
-      sale_number: `SL-${Date.now().toString(36).toUpperCase()}`,
+      sale_number: saleNumber,
       sale_type: saleType,
       employee_id: currentEmployee?.id,
       employee_name: currentEmployee?.full_name,
@@ -176,13 +177,47 @@ export default function Sales() {
     
     createSaleMutation.mutate(saleData);
 
-    // Update stock quantities
+    // Update stock quantities and create stock movements
     for (const item of cart) {
       const product = products.find(p => p.id === item.product_id);
       if (product) {
+        const previousStock = product.stock_quantity || 0;
+        const newStock = Math.max(0, previousStock - item.quantity);
+        
+        // Update product stock
         await base44.entities.Product.update(item.product_id, {
-          stock_quantity: product.stock_quantity - item.quantity
+          stock_quantity: newStock
         });
+
+        // Create stock movement record for audit trail
+        await base44.entities.StockMovement.create({
+          organisation_id: orgId,
+          product_id: item.product_id,
+          product_name: item.product_name,
+          movement_type: "out",
+          quantity: item.quantity,
+          previous_stock: previousStock,
+          new_stock: newStock,
+          reference_type: "sale",
+          reference_id: saleNumber,
+          recorded_by: currentEmployee?.id,
+          recorded_by_name: currentEmployee?.full_name,
+          notes: `Sale ${saleNumber} - ${saleType}`
+        });
+
+        // Check and create low stock alert if needed
+        if (newStock <= (product.low_stock_threshold || 10)) {
+          const alertType = newStock === 0 ? "out_of_stock" : "low_stock";
+          await base44.entities.StockAlert.create({
+            organisation_id: orgId,
+            product_id: item.product_id,
+            product_name: item.product_name,
+            alert_type: alertType,
+            current_quantity: newStock,
+            threshold_quantity: product.low_stock_threshold || 10,
+            status: "active"
+          });
+        }
       }
     }
 
