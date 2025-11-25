@@ -57,6 +57,7 @@ const menuSections = [
     items: [
       { name: "Sales & POS", icon: ShoppingCart, page: "Sales", module: "sales" },
       { name: "Inventory", icon: Package, page: "Inventory", module: "inventory" },
+      { name: "Suppliers", icon: Building2, page: "Suppliers", module: "inventory" },
       { name: "Transport", icon: Truck, page: "Transport", module: "transport" },
     ]
   },

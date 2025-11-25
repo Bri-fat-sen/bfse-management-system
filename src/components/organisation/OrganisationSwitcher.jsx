@@ -62,15 +62,40 @@ export default function OrganisationSwitcher({ currentEmployee, user }) {
     }, 500);
   };
 
-  if (organisations.length <= 1) {
+  // No organisations - show create button
+  if (organisations.length === 0) {
+    return (
+      <Link 
+        to={createPageUrl("OrganisationSetup")} 
+        className="flex items-center gap-2 px-3 py-2 hover:bg-white/10 rounded-lg transition-colors"
+      >
+        <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-[#1EB053]/30 to-[#0072C6]/30 flex items-center justify-center">
+          <Plus className="w-4 h-4 text-white" />
+        </div>
+        <span className="font-medium text-sm text-white">Create Organisation</span>
+      </Link>
+    );
+  }
+
+  // Single organisation
+  if (organisations.length === 1) {
     return (
       <div className="flex items-center gap-2 px-3 py-2">
-        <div className="w-8 h-8 rounded-lg overflow-hidden flex flex-col">
-          <div className="flex-1 bg-[#1EB053]" />
-          <div className="flex-1 bg-white" />
-          <div className="flex-1 bg-[#0072C6]" />
-        </div>
-        <span className="font-medium text-sm truncate max-w-[120px]">
+        {currentOrg?.logo_url ? (
+          <Avatar className="w-8 h-8">
+            <AvatarImage src={currentOrg.logo_url} />
+            <AvatarFallback className="bg-gradient-to-br from-[#1EB053] to-[#0072C6] text-white text-xs">
+              {currentOrg.name?.charAt(0)}
+            </AvatarFallback>
+          </Avatar>
+        ) : (
+          <div className="w-8 h-8 rounded-lg overflow-hidden flex flex-col">
+            <div className="flex-1 bg-[#1EB053]" />
+            <div className="flex-1 bg-white" />
+            <div className="flex-1 bg-[#0072C6]" />
+          </div>
+        )}
+        <span className="font-medium text-sm truncate max-w-[120px] text-white">
           {currentOrg?.name || 'My Organisation'}
         </span>
       </div>
