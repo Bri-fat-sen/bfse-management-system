@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { base44 } from "@/api/base44Client";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { format } from "date-fns";
 import {
   Dialog,
   DialogContent,
@@ -19,9 +20,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/components/ui/use-toast";
-import { Package, Plus, Minus, ArrowLeftRight, AlertTriangle } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
+import { Package, Plus, Minus, ArrowLeftRight, Layers } from "lucide-react";
 
 export default function StockAdjustmentDialog({ 
   open, 
@@ -35,6 +36,7 @@ export default function StockAdjustmentDialog({
   const queryClient = useQueryClient();
   const [adjustmentType, setAdjustmentType] = useState("in");
   const [selectedProduct, setSelectedProduct] = useState("");
+  const [trackBatch, setTrackBatch] = useState(false);
 
   const createMovementMutation = useMutation({
     mutationFn: async (data) => {
@@ -45,48 +47,9 @@ export default function StockAdjustmentDialog({
         stock_quantity: data.newStock 
       });
       
-      // Create or update batch if batch number provided
-      if (data.batchNumber && data.movement.movement_type === 'in') {
-        const existingBatches = await base44.entities.InventoryBatch.filter({
-          organisation_id: orgId,
-          product_id: data.productId,
-          batch_number: data.batchNumber
-        });
-        
-        if (existingBatches.length > 0) {
-          // Update existing batch
-          await base44.entities.InventoryBatch.update(existingBatches[0].id, {
-            quantity: (existingBatches[0].quantity || 0) + data.movement.quantity
-          });
-        } else {
-          // Create new batch
-          await base44.entities.InventoryBatch.create({
-            organisation_id: orgId,
-            product_id: data.productId,
-            product_name: data.product?.name,
-            batch_number: data.batchNumber,
-            warehouse_id: data.warehouseId,
-            warehouse_name: data.warehouseName,
-            quantity: data.movement.quantity,
-            expiry_date: data.expiryDate,
-            status: 'active'
-          });
-        }
-      } else if (data.batchNumber && data.movement.movement_type === 'out') {
-        // Reduce batch quantity
-        const existingBatches = await base44.entities.InventoryBatch.filter({
-          organisation_id: orgId,
-          product_id: data.productId,
-          batch_number: data.batchNumber
-        });
-        
-        if (existingBatches.length > 0) {
-          const newQty = Math.max(0, (existingBatches[0].quantity || 0) - data.movement.quantity);
-          await base44.entities.InventoryBatch.update(existingBatches[0].id, {
-            quantity: newQty,
-            status: newQty === 0 ? 'depleted' : existingBatches[0].status
-          });
-        }
+      // Create batch record if tracking batches
+      if (data.batch && data.adjustmentType === 'in') {
+        await base44.entities.InventoryBatch.create(data.batch);
       }
       
       // Create stock alert if needed
@@ -119,6 +82,7 @@ export default function StockAdjustmentDialog({
       queryClient.invalidateQueries({ queryKey: ['inventoryBatches'] });
       onOpenChange(false);
       setSelectedProduct("");
+      setTrackBatch(false);
       toast({ title: "Stock adjusted successfully" });
     },
   });
@@ -144,6 +108,7 @@ export default function StockAdjustmentDialog({
       newStock = quantity; // Direct adjustment
     }
 
+    const batchNumber = formData.get('batch_number');
     const movementData = {
       organisation_id: orgId,
       product_id: productId,
@@ -157,45 +122,43 @@ export default function StockAdjustmentDialog({
       reference_type: "manual",
       recorded_by: currentEmployee?.id,
       recorded_by_name: currentEmployee?.full_name,
-      notes: formData.get('notes'),
+      notes: batchNumber ? `Batch: ${batchNumber} - ${formData.get('notes') || ''}` : formData.get('notes'),
     };
 
-    const batchNumber = formData.get('batch_number');
-    const expiryDate = formData.get('expiry_date');
+    let batchData = null;
+    if (trackBatch && adjustmentType === 'in' && batchNumber) {
+      batchData = {
+        organisation_id: orgId,
+        product_id: productId,
+        product_name: product.name,
+        batch_number: batchNumber,
+        warehouse_id: formData.get('warehouse_id'),
+        warehouse_name: warehouse?.name || 'Main',
+        quantity: quantity,
+        unit_cost: parseFloat(formData.get('unit_cost')) || product.cost_price || 0,
+        manufacturing_date: formData.get('manufacturing_date'),
+        expiry_date: formData.get('expiry_date'),
+        received_date: format(new Date(), 'yyyy-MM-dd'),
+        status: 'active',
+        notes: formData.get('notes'),
+      };
+    }
 
     createMovementMutation.mutate({
       movement: movementData,
       productId: productId,
       newStock: newStock,
       product: product,
-      batchNumber: batchNumber,
-      expiryDate: expiryDate,
-      warehouseId: formData.get('warehouse_id'),
-      warehouseName: warehouse?.name || 'Main'
+      batch: batchData,
+      adjustmentType: adjustmentType
     });
-  };
-
-  // Check if this would trigger a low stock alert
-  const getStockWarning = (productId, quantity) => {
-    const prod = products.find(p => p.id === productId);
-    if (!prod) return null;
-    
-    let newStock = prod.stock_quantity || 0;
-    if (adjustmentType === "in") newStock += quantity;
-    else if (adjustmentType === "out") newStock = Math.max(0, newStock - quantity);
-    else newStock = quantity;
-    
-    const threshold = prod.low_stock_threshold || 10;
-    if (newStock === 0) return { type: "out_of_stock", message: "This will result in OUT OF STOCK" };
-    if (newStock <= threshold) return { type: "low_stock", message: `This will result in LOW STOCK (below ${threshold})` };
-    return null;
   };
 
   const product = products.find(p => p.id === selectedProduct);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-md">
+      <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Stock Adjustment</DialogTitle>
         </DialogHeader>
@@ -261,32 +224,7 @@ export default function StockAdjustmentDialog({
             <Label>
               {adjustmentType === "adjustment" ? "New Stock Quantity" : "Quantity"}
             </Label>
-            <Input 
-              name="quantity" 
-              type="number" 
-              min="0" 
-              required 
-              className="mt-1" 
-              id="adjustment-quantity"
-              onChange={(e) => {
-                // Trigger re-render for warning
-                const form = e.target.closest('form');
-                if (form) {
-                  const qty = parseInt(e.target.value) || 0;
-                  const warning = getStockWarning(selectedProduct, qty);
-                  const warningEl = document.getElementById('stock-warning');
-                  if (warningEl && warning) {
-                    warningEl.classList.remove('hidden');
-                    warningEl.textContent = warning.message;
-                  } else if (warningEl) {
-                    warningEl.classList.add('hidden');
-                  }
-                }
-              }}
-            />
-            <p id="stock-warning" className="hidden text-sm text-amber-600 mt-1 flex items-center gap-1">
-              <AlertTriangle className="w-3 h-3" />
-            </p>
+            <Input name="quantity" type="number" min="0" required className="mt-1" />
           </div>
 
           {warehouses.length > 0 && (
@@ -305,19 +243,45 @@ export default function StockAdjustmentDialog({
             </div>
           )}
 
-          <div className="border-t pt-4 mt-4">
-            <h4 className="font-medium mb-3">Batch Information (Optional)</h4>
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <Label>Batch Number</Label>
-                <Input name="batch_number" className="mt-1" placeholder="e.g., BTH-001" />
+          {/* Batch Tracking Section - Only for Stock In */}
+          {adjustmentType === "in" && (
+            <div className="border rounded-lg p-3 bg-gray-50">
+              <div className="flex items-center space-x-2 mb-3">
+                <Checkbox 
+                  id="track_batch" 
+                  checked={trackBatch}
+                  onCheckedChange={setTrackBatch}
+                />
+                <label htmlFor="track_batch" className="text-sm font-medium flex items-center gap-2 cursor-pointer">
+                  <Layers className="w-4 h-4" />
+                  Track Batch & Expiry
+                </label>
               </div>
-              <div>
-                <Label>Expiry Date</Label>
-                <Input name="expiry_date" type="date" className="mt-1" />
-              </div>
+              
+              {trackBatch && (
+                <div className="space-y-3 pt-2 border-t">
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <Label className="text-xs">Batch Number *</Label>
+                      <Input name="batch_number" className="mt-1 h-9" placeholder="e.g., BTH-001" required={trackBatch} />
+                    </div>
+                    <div>
+                      <Label className="text-xs">Unit Cost (Le)</Label>
+                      <Input name="unit_cost" type="number" step="0.01" className="mt-1 h-9" />
+                    </div>
+                    <div>
+                      <Label className="text-xs">Manufacturing Date</Label>
+                      <Input name="manufacturing_date" type="date" className="mt-1 h-9" />
+                    </div>
+                    <div>
+                      <Label className="text-xs">Expiry Date</Label>
+                      <Input name="expiry_date" type="date" className="mt-1 h-9" />
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
-          </div>
+          )}
 
           <div>
             <Label>Reason / Notes</Label>
