@@ -2,17 +2,12 @@ import React, { useState } from "react";
 import { base44 } from "@/api/base44Client";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { motion, AnimatePresence } from "framer-motion";
-import {
-  User, Briefcase, Phone, MapPin, Shield, Camera, Check, ChevronRight, ChevronLeft, Upload, AlertCircle
-} from "lucide-react";
-import { Card, CardContent } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { User, Briefcase, Phone, Shield, Camera, Check } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useToast } from "@/components/ui/use-toast";
+import { FormWrapper, FormWrapperContent } from "./FormWrapper";
+import { FormInput, FormTextarea, FormSelect, FormSection } from "./FormField";
+import { FormStepper, FormStepperNavigation } from "./FormStepper";
 
 const STEPS = [
   { id: 1, title: "Personal Info", icon: User, description: "Basic details" },
@@ -132,44 +127,12 @@ export default function EmployeeOnboardingForm({ orgId, onSuccess, onClose }) {
     });
   };
 
-  const FieldError = ({ error }) => error ? (
-    <p className="text-red-500 text-xs mt-1 flex items-center gap-1">
-      <AlertCircle className="w-3 h-3" /> {error}
-    </p>
-  ) : null;
-
   return (
     <div className="max-w-3xl mx-auto">
-      {/* Progress Header */}
-      <div className="mb-8">
-        <div className="flex items-center justify-between mb-4">
-          {STEPS.map((s, i) => (
-            <React.Fragment key={s.id}>
-              <div className="flex flex-col items-center">
-                <div className={`
-                  w-12 h-12 rounded-full flex items-center justify-center transition-all duration-300
-                  ${step >= s.id 
-                    ? 'bg-gradient-to-br from-[#1EB053] to-[#0072C6] text-white shadow-lg' 
-                    : 'bg-gray-100 text-gray-400'}
-                `}>
-                  {step > s.id ? <Check className="w-5 h-5" /> : <s.icon className="w-5 h-5" />}
-                </div>
-                <span className={`text-xs mt-2 font-medium hidden sm:block ${step >= s.id ? 'text-[#1EB053]' : 'text-gray-400'}`}>
-                  {s.title}
-                </span>
-              </div>
-              {i < STEPS.length - 1 && (
-                <div className={`flex-1 h-1 mx-2 rounded ${step > s.id ? 'bg-gradient-to-r from-[#1EB053] to-[#0072C6]' : 'bg-gray-200'}`} />
-              )}
-            </React.Fragment>
-          ))}
-        </div>
-      </div>
-
-      {/* Form Content */}
-      <Card className="border-0 shadow-xl overflow-hidden">
-        <div className="h-2 bg-gradient-to-r from-[#1EB053] via-white to-[#0072C6]" />
-        <CardContent className="p-8">
+      <FormStepper steps={STEPS} currentStep={step} />
+      
+      <FormWrapper maxWidth="3xl">
+        <FormWrapperContent className="p-8">
           <AnimatePresence mode="wait">
             <motion.div
               key={step}
@@ -180,183 +143,138 @@ export default function EmployeeOnboardingForm({ orgId, onSuccess, onClose }) {
             >
               {/* Step 1: Personal Info */}
               {step === 1 && (
-                <div className="space-y-6">
-                  <div className="text-center mb-8">
-                    <h2 className="text-2xl font-bold text-gray-900">Personal Information</h2>
-                    <p className="text-gray-500 mt-1">Let's start with the basics</p>
-                  </div>
-
-                  {/* Photo Upload */}
+                <FormSection title="Personal Information" description="Let's start with the basics">
                   <div className="flex justify-center mb-6">
                     <div className="relative">
-                      <Avatar className="w-28 h-28 border-4 border-white shadow-xl">
+                      <Avatar className="w-28 h-28 border-4 border-white shadow-xl ring-4 ring-gray-50">
                         <AvatarImage src={photoPreview || formData.profile_photo} />
                         <AvatarFallback className="bg-gradient-to-br from-[#1EB053] to-[#0072C6] text-white text-2xl">
                           {formData.first_name?.[0]}{formData.last_name?.[0]}
                         </AvatarFallback>
                       </Avatar>
-                      <label className="absolute bottom-0 right-0 w-9 h-9 bg-[#0072C6] rounded-full flex items-center justify-center cursor-pointer hover:bg-[#005a9e] transition-colors shadow-lg">
-                        <Camera className="w-4 h-4 text-white" />
+                      <label className="absolute bottom-0 right-0 w-10 h-10 bg-gradient-to-br from-[#1EB053] to-[#0072C6] rounded-full flex items-center justify-center cursor-pointer hover:opacity-90 transition-all shadow-lg">
+                        <Camera className="w-5 h-5 text-white" />
                         <input type="file" accept="image/*" className="hidden" onChange={handlePhotoUpload} disabled={uploading} />
                       </label>
                     </div>
                   </div>
 
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                    <div>
-                      <Label className="text-gray-700 font-medium">First Name *</Label>
-                      <Input
-                        value={formData.first_name}
-                        onChange={(e) => updateField('first_name', e.target.value)}
-                        placeholder="Enter first name"
-                        className={`mt-1.5 h-12 ${errors.first_name ? 'border-red-500' : ''}`}
-                      />
-                      <FieldError error={errors.first_name} />
-                    </div>
-                    <div>
-                      <Label className="text-gray-700 font-medium">Last Name *</Label>
-                      <Input
-                        value={formData.last_name}
-                        onChange={(e) => updateField('last_name', e.target.value)}
-                        placeholder="Enter last name"
-                        className={`mt-1.5 h-12 ${errors.last_name ? 'border-red-500' : ''}`}
-                      />
-                      <FieldError error={errors.last_name} />
-                    </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                    <FormInput
+                      label="First Name"
+                      icon={User}
+                      required
+                      value={formData.first_name}
+                      onChange={(e) => updateField('first_name', e.target.value)}
+                      placeholder="Enter first name"
+                      error={errors.first_name}
+                    />
+                    <FormInput
+                      label="Last Name"
+                      icon={User}
+                      required
+                      value={formData.last_name}
+                      onChange={(e) => updateField('last_name', e.target.value)}
+                      placeholder="Enter last name"
+                      error={errors.last_name}
+                    />
                   </div>
-                </div>
+                </FormSection>
               )}
 
               {/* Step 2: Employment */}
               {step === 2 && (
-                <div className="space-y-6">
-                  <div className="text-center mb-8">
-                    <h2 className="text-2xl font-bold text-gray-900">Employment Details</h2>
-                    <p className="text-gray-500 mt-1">Job role and compensation</p>
+                <FormSection title="Employment Details" description="Job role and compensation">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                    <FormSelect
+                      label="Department"
+                      icon={Briefcase}
+                      required
+                      value={formData.department}
+                      onValueChange={(v) => updateField('department', v)}
+                      placeholder="Select department"
+                      error={errors.department}
+                      options={DEPARTMENTS.map(d => ({ value: d, label: d }))}
+                    />
+                    <FormInput
+                      label="Position"
+                      icon={Briefcase}
+                      required
+                      value={formData.position}
+                      onChange={(e) => updateField('position', e.target.value)}
+                      placeholder="e.g. Sales Manager"
+                      error={errors.position}
+                    />
+                    <FormSelect
+                      label="System Role"
+                      required
+                      value={formData.role}
+                      onValueChange={(v) => updateField('role', v)}
+                      options={ROLES}
+                    />
+                    <FormInput
+                      label="Hire Date"
+                      required
+                      type="date"
+                      value={formData.hire_date}
+                      onChange={(e) => updateField('hire_date', e.target.value)}
+                      error={errors.hire_date}
+                    />
+                    <FormSelect
+                      label="Salary Type"
+                      value={formData.salary_type}
+                      onValueChange={(v) => updateField('salary_type', v)}
+                      options={[
+                        { value: "monthly", label: "Monthly" },
+                        { value: "hourly", label: "Hourly" },
+                        { value: "daily", label: "Daily" }
+                      ]}
+                    />
+                    <FormInput
+                      label="Base Salary (Le)"
+                      type="number"
+                      value={formData.base_salary}
+                      onChange={(e) => updateField('base_salary', e.target.value)}
+                      placeholder="Enter salary amount"
+                    />
                   </div>
-
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                    <div>
-                      <Label className="text-gray-700 font-medium">Department *</Label>
-                      <Select value={formData.department} onValueChange={(v) => updateField('department', v)}>
-                        <SelectTrigger className={`mt-1.5 h-12 ${errors.department ? 'border-red-500' : ''}`}>
-                          <SelectValue placeholder="Select department" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {DEPARTMENTS.map(d => <SelectItem key={d} value={d}>{d}</SelectItem>)}
-                        </SelectContent>
-                      </Select>
-                      <FieldError error={errors.department} />
-                    </div>
-                    <div>
-                      <Label className="text-gray-700 font-medium">Position *</Label>
-                      <Input
-                        value={formData.position}
-                        onChange={(e) => updateField('position', e.target.value)}
-                        placeholder="e.g. Sales Manager"
-                        className={`mt-1.5 h-12 ${errors.position ? 'border-red-500' : ''}`}
-                      />
-                      <FieldError error={errors.position} />
-                    </div>
-                    <div>
-                      <Label className="text-gray-700 font-medium">Role *</Label>
-                      <Select value={formData.role} onValueChange={(v) => updateField('role', v)}>
-                        <SelectTrigger className="mt-1.5 h-12">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {ROLES.map(r => <SelectItem key={r.value} value={r.value}>{r.label}</SelectItem>)}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div>
-                      <Label className="text-gray-700 font-medium">Hire Date *</Label>
-                      <Input
-                        type="date"
-                        value={formData.hire_date}
-                        onChange={(e) => updateField('hire_date', e.target.value)}
-                        className={`mt-1.5 h-12 ${errors.hire_date ? 'border-red-500' : ''}`}
-                      />
-                      <FieldError error={errors.hire_date} />
-                    </div>
-                    <div>
-                      <Label className="text-gray-700 font-medium">Salary Type</Label>
-                      <Select value={formData.salary_type} onValueChange={(v) => updateField('salary_type', v)}>
-                        <SelectTrigger className="mt-1.5 h-12">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="monthly">Monthly</SelectItem>
-                          <SelectItem value="hourly">Hourly</SelectItem>
-                          <SelectItem value="daily">Daily</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div>
-                      <Label className="text-gray-700 font-medium">Base Salary (Le)</Label>
-                      <Input
-                        type="number"
-                        value={formData.base_salary}
-                        onChange={(e) => updateField('base_salary', e.target.value)}
-                        placeholder="Enter salary amount"
-                        className="mt-1.5 h-12"
-                      />
-                    </div>
-                  </div>
-                </div>
+                </FormSection>
               )}
 
               {/* Step 3: Contact */}
               {step === 3 && (
-                <div className="space-y-6">
-                  <div className="text-center mb-8">
-                    <h2 className="text-2xl font-bold text-gray-900">Contact Information</h2>
-                    <p className="text-gray-500 mt-1">How to reach this employee</p>
+                <FormSection title="Contact Information" description="How to reach this employee">
+                  <div className="space-y-5">
+                    <FormInput
+                      label="Phone Number"
+                      icon={Phone}
+                      required
+                      value={formData.phone}
+                      onChange={(e) => updateField('phone', e.target.value)}
+                      placeholder="+232 XX XXX XXXX"
+                      error={errors.phone}
+                    />
+                    <FormInput
+                      label="Email Address"
+                      type="email"
+                      value={formData.email}
+                      onChange={(e) => updateField('email', e.target.value)}
+                      placeholder="employee@example.com"
+                      error={errors.email}
+                    />
+                    <FormTextarea
+                      label="Address"
+                      value={formData.address}
+                      onChange={(e) => updateField('address', e.target.value)}
+                      placeholder="Street, City, Sierra Leone"
+                    />
                   </div>
-
-                  <div className="space-y-6">
-                    <div>
-                      <Label className="text-gray-700 font-medium">Phone Number *</Label>
-                      <Input
-                        value={formData.phone}
-                        onChange={(e) => updateField('phone', e.target.value)}
-                        placeholder="+232 XX XXX XXXX"
-                        className={`mt-1.5 h-12 ${errors.phone ? 'border-red-500' : ''}`}
-                      />
-                      <FieldError error={errors.phone} />
-                    </div>
-                    <div>
-                      <Label className="text-gray-700 font-medium">Email Address</Label>
-                      <Input
-                        type="email"
-                        value={formData.email}
-                        onChange={(e) => updateField('email', e.target.value)}
-                        placeholder="employee@example.com"
-                        className={`mt-1.5 h-12 ${errors.email ? 'border-red-500' : ''}`}
-                      />
-                      <FieldError error={errors.email} />
-                    </div>
-                    <div>
-                      <Label className="text-gray-700 font-medium">Address</Label>
-                      <Textarea
-                        value={formData.address}
-                        onChange={(e) => updateField('address', e.target.value)}
-                        placeholder="Street, City, Sierra Leone"
-                        className="mt-1.5 min-h-[100px]"
-                      />
-                    </div>
-                  </div>
-                </div>
+                </FormSection>
               )}
 
               {/* Step 4: Emergency */}
               {step === 4 && (
-                <div className="space-y-6">
-                  <div className="text-center mb-8">
-                    <h2 className="text-2xl font-bold text-gray-900">Emergency Contact</h2>
-                    <p className="text-gray-500 mt-1">Who to contact in case of emergency</p>
-                  </div>
-
+                <FormSection title="Emergency Contact" description="Who to contact in case of emergency">
                   <div className="p-4 bg-amber-50 border border-amber-200 rounded-xl mb-6">
                     <p className="text-amber-800 text-sm flex items-center gap-2">
                       <Shield className="w-4 h-4" />
@@ -364,27 +282,23 @@ export default function EmployeeOnboardingForm({ orgId, onSuccess, onClose }) {
                     </p>
                   </div>
 
-                  <div className="space-y-6">
-                    <div>
-                      <Label className="text-gray-700 font-medium">Emergency Contact Name</Label>
-                      <Input
-                        value={formData.emergency_contact}
-                        onChange={(e) => updateField('emergency_contact', e.target.value)}
-                        placeholder="Full name of contact person"
-                        className="mt-1.5 h-12"
-                      />
-                    </div>
-                    <div>
-                      <Label className="text-gray-700 font-medium">Emergency Contact Phone</Label>
-                      <Input
-                        value={formData.emergency_phone}
-                        onChange={(e) => updateField('emergency_phone', e.target.value)}
-                        placeholder="+232 XX XXX XXXX"
-                        className="mt-1.5 h-12"
-                      />
-                    </div>
+                  <div className="space-y-5">
+                    <FormInput
+                      label="Emergency Contact Name"
+                      icon={User}
+                      value={formData.emergency_contact}
+                      onChange={(e) => updateField('emergency_contact', e.target.value)}
+                      placeholder="Full name of contact person"
+                    />
+                    <FormInput
+                      label="Emergency Contact Phone"
+                      icon={Phone}
+                      value={formData.emergency_phone}
+                      onChange={(e) => updateField('emergency_phone', e.target.value)}
+                      placeholder="+232 XX XXX XXXX"
+                    />
                   </div>
-                </div>
+                </FormSection>
               )}
 
               {/* Step 5: Review */}
@@ -428,35 +342,18 @@ export default function EmployeeOnboardingForm({ orgId, onSuccess, onClose }) {
             </motion.div>
           </AnimatePresence>
 
-          {/* Navigation */}
-          <div className="flex items-center justify-between mt-10 pt-6 border-t">
-            <Button
-              variant="outline"
-              onClick={step === 1 ? onClose : prevStep}
-              className="gap-2"
-            >
-              <ChevronLeft className="w-4 h-4" />
-              {step === 1 ? 'Cancel' : 'Back'}
-            </Button>
-
-            {step < 5 ? (
-              <Button onClick={nextStep} className="bg-gradient-to-r from-[#1EB053] to-[#0072C6] hover:opacity-90 gap-2">
-                Next
-                <ChevronRight className="w-4 h-4" />
-              </Button>
-            ) : (
-              <Button 
-                onClick={handleSubmit} 
-                disabled={createMutation.isPending}
-                className="bg-gradient-to-r from-[#1EB053] to-[#0072C6] hover:opacity-90 gap-2 min-w-[140px]"
-              >
-                {createMutation.isPending ? "Saving..." : "Add Employee"}
-                <Check className="w-4 h-4" />
-              </Button>
-            )}
-          </div>
-        </CardContent>
-      </Card>
+          <FormStepperNavigation
+            currentStep={step}
+            totalSteps={5}
+            onPrevious={prevStep}
+            onNext={nextStep}
+            onSubmit={handleSubmit}
+            onCancel={onClose}
+            isLoading={createMutation.isPending}
+            submitLabel="Add Employee"
+          />
+        </FormWrapperContent>
+      </FormWrapper>
     </div>
   );
 }
