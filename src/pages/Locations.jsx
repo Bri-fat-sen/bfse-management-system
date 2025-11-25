@@ -113,11 +113,40 @@ export default function Locations() {
     return employees.filter(emp => emp.assigned_location_id === locationId);
   };
 
-  // Get stock count for location
+  // Get stock count for location (warehouse stock only)
   const getLocationStockCount = (locationId) => {
     return stockLevels
-      .filter(sl => sl.warehouse_id === locationId)
+      .filter(sl => sl.warehouse_id === locationId && sl.location_type !== 'vehicle')
       .reduce((sum, sl) => sum + (sl.quantity || 0), 0);
+  };
+
+  // Get vehicle stock count
+  const getVehicleStockCount = (vehicleId) => {
+    return stockLevels
+      .filter(sl => sl.warehouse_id === vehicleId && sl.location_type === 'vehicle')
+      .reduce((sum, sl) => sum + (sl.quantity || 0), 0);
+  };
+
+  // Get combined stock (warehouse + linked vehicles)
+  const getCombinedStockCount = (warehouseId) => {
+    const warehouseStock = stockLevels
+      .filter(sl => sl.warehouse_id === warehouseId)
+      .reduce((sum, sl) => sum + (sl.quantity || 0), 0);
+    
+    const linkedVehicleIds = vehicles
+      .filter(v => v.parent_warehouse_id === warehouseId)
+      .map(v => v.id);
+    
+    const vehicleStock = stockLevels
+      .filter(sl => linkedVehicleIds.includes(sl.warehouse_id))
+      .reduce((sum, sl) => sum + (sl.quantity || 0), 0);
+    
+    return { warehouseStock, vehicleStock, total: warehouseStock + vehicleStock };
+  };
+
+  // Get linked vehicles for a warehouse
+  const getLinkedVehicles = (warehouseId) => {
+    return vehicles.filter(v => v.parent_warehouse_id === warehouseId);
   };
 
   // Mutations
