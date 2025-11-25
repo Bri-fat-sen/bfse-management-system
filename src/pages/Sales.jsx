@@ -160,10 +160,9 @@ export default function Sales() {
   const cartTotal = cart.reduce((sum, item) => sum + item.total, 0);
 
   const completeSale = async () => {
-    const saleNumber = `SL-${Date.now().toString(36).toUpperCase()}`;
     const saleData = {
       organisation_id: orgId,
-      sale_number: saleNumber,
+      sale_number: `SL-${Date.now().toString(36).toUpperCase()}`,
       sale_type: saleType,
       employee_id: currentEmployee?.id,
       employee_name: currentEmployee?.full_name,
@@ -181,42 +180,71 @@ export default function Sales() {
     for (const item of cart) {
       const product = products.find(p => p.id === item.product_id);
       if (product) {
-        const previousStock = product.stock_quantity || 0;
-        const newStock = Math.max(0, previousStock - item.quantity);
+        const newQuantity = Math.max(0, product.stock_quantity - item.quantity);
         
         // Update product stock
         await base44.entities.Product.update(item.product_id, {
-          stock_quantity: newStock
+          stock_quantity: newQuantity
         });
 
-        // Create stock movement record for audit trail
+        // Create stock movement record
         await base44.entities.StockMovement.create({
           organisation_id: orgId,
           product_id: item.product_id,
           product_name: item.product_name,
+          warehouse_id: product.warehouse_id,
           movement_type: "out",
           quantity: item.quantity,
-          previous_stock: previousStock,
-          new_stock: newStock,
+          previous_stock: product.stock_quantity,
+          new_stock: newQuantity,
           reference_type: "sale",
-          reference_id: saleNumber,
+          reference_id: saleData.sale_number,
           recorded_by: currentEmployee?.id,
           recorded_by_name: currentEmployee?.full_name,
-          notes: `Sale ${saleNumber} - ${saleType}`
+          notes: `Sale to ${customerName || 'Walk-in Customer'}`
         });
 
         // Check and create low stock alert if needed
-        if (newStock <= (product.low_stock_threshold || 10)) {
-          const alertType = newStock === 0 ? "out_of_stock" : "low_stock";
-          await base44.entities.StockAlert.create({
+        const threshold = product.low_stock_threshold || 10;
+        if (newQuantity <= threshold && newQuantity > 0) {
+          const existingAlerts = await base44.entities.StockAlert.filter({
             organisation_id: orgId,
             product_id: item.product_id,
-            product_name: item.product_name,
-            alert_type: alertType,
-            current_quantity: newStock,
-            threshold_quantity: product.low_stock_threshold || 10,
-            status: "active"
+            status: 'active',
+            alert_type: 'low_stock'
           });
+          
+          if (existingAlerts.length === 0) {
+            await base44.entities.StockAlert.create({
+              organisation_id: orgId,
+              product_id: item.product_id,
+              product_name: item.product_name,
+              warehouse_id: product.warehouse_id,
+              alert_type: 'low_stock',
+              current_quantity: newQuantity,
+              threshold_quantity: threshold,
+              status: 'active'
+            });
+          }
+        } else if (newQuantity === 0) {
+          const existingAlerts = await base44.entities.StockAlert.filter({
+            organisation_id: orgId,
+            product_id: item.product_id,
+            status: 'active'
+          });
+          
+          if (existingAlerts.length === 0) {
+            await base44.entities.StockAlert.create({
+              organisation_id: orgId,
+              product_id: item.product_id,
+              product_name: item.product_name,
+              warehouse_id: product.warehouse_id,
+              alert_type: 'out_of_stock',
+              current_quantity: 0,
+              threshold_quantity: threshold,
+              status: 'active'
+            });
+          }
         }
       }
     }
