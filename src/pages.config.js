@@ -14,7 +14,7 @@ import RolePermissions from './pages/RolePermissions';
 import Suppliers from './pages/Suppliers';
 import OrganisationSetup from './pages/OrganisationSetup';
 import OrganisationManage from './pages/OrganisationManage';
-import DriverDashboard from './pages/DriverDashboard';
+import MobileHub from './pages/MobileHub';
 import __Layout from './Layout.jsx';
 
 
@@ -35,7 +35,7 @@ export const PAGES = {
     "Suppliers": Suppliers,
     "OrganisationSetup": OrganisationSetup,
     "OrganisationManage": OrganisationManage,
-    "DriverDashboard": DriverDashboard,
+    "MobileHub": MobileHub,
 }
 
 export const pagesConfig = {
