@@ -31,10 +31,11 @@ import {
   Calendar,
   AlertTriangle
 } from "lucide-react";
+import { generateExportHTML, printDocument, exportToCSV as exportCSVUtil } from "@/components/exports/SierraLeoneExportStyles";
 
 const COLORS = ['#1EB053', '#0072C6', '#D4AF37', '#EF4444', '#8B5CF6'];
 
-export default function BatchReports({ batches = [], products = [], warehouses = [] }) {
+export default function BatchReports({ batches = [], products = [], warehouses = [], organisation }) {
   const [reportType, setReportType] = useState("summary");
 
   // Calculate report data
@@ -99,27 +100,50 @@ export default function BatchReports({ batches = [], products = [], warehouses =
   }, [batches, products, warehouses]);
 
   const handleExport = () => {
-    const csvContent = batches.map(b => ({
-      'Batch Number': b.batch_number,
-      'Product': b.product_name,
-      'Warehouse': b.warehouse_name || 'Main',
-      'Quantity': b.quantity,
-      'Manufacturing Date': b.manufacturing_date || '',
-      'Expiry Date': b.expiry_date || '',
-      'Status': b.status,
-      'Cost Price': b.cost_price || 0
-    }));
-
-    const headers = Object.keys(csvContent[0] || {}).join(',');
-    const rows = csvContent.map(row => Object.values(row).join(',')).join('\n');
-    const csv = `${headers}\n${rows}`;
+    const columns = ['Batch Number', 'Product', 'Warehouse', 'Quantity', 'Manufacturing Date', 'Expiry Date', 'Status', 'Cost Price'];
+    const rows = batches.map(b => [
+      b.batch_number,
+      b.product_name,
+      b.warehouse_name || 'Main',
+      b.quantity,
+      b.manufacturing_date || '',
+      b.expiry_date || '',
+      b.status,
+      b.cost_price || 0
+    ]);
     
-    const blob = new Blob([csv], { type: 'text/csv' });
-    const url = window.URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `batch-report-${format(new Date(), 'yyyy-MM-dd')}.csv`;
-    a.click();
+    exportCSVUtil(columns, rows, `batch-report-${format(new Date(), 'yyyy-MM-dd')}.csv`);
+  };
+
+  const handlePrint = () => {
+    const summary = [
+      { label: 'Total Batches', value: batches.length.toString() },
+      { label: 'Total Quantity', value: batches.reduce((sum, b) => sum + (b.quantity || 0), 0).toLocaleString() },
+      { label: 'Total Value', value: `SLE ${reportData.totalValue.toLocaleString()}` },
+      { label: 'Expired Value', value: `SLE ${reportData.expiredValue.toLocaleString()}`, highlight: reportData.expiredValue > 0 ? 'red' : undefined }
+    ];
+
+    const columns = ['Batch #', 'Product', 'Warehouse', 'Qty', 'Mfg Date', 'Expiry Date', 'Value', 'Status'];
+    const rows = batches.map(b => [
+      b.batch_number,
+      b.product_name,
+      b.warehouse_name || 'Main',
+      b.quantity,
+      b.manufacturing_date ? format(new Date(b.manufacturing_date), 'dd MMM yyyy') : '-',
+      b.expiry_date ? format(new Date(b.expiry_date), 'dd MMM yyyy') : '-',
+      `SLE ${((b.quantity || 0) * (b.cost_price || 0)).toLocaleString()}`,
+      b.status
+    ]);
+
+    const html = generateExportHTML({
+      title: 'Batch Inventory Report',
+      organisation: organisation,
+      summary: summary,
+      columns: columns,
+      rows: rows
+    });
+
+    printDocument(html);
   };
 
   return (
@@ -143,7 +167,7 @@ export default function BatchReports({ batches = [], products = [], warehouses =
                 <Download className="w-4 h-4 mr-2" />
                 Export CSV
               </Button>
-              <Button variant="outline" onClick={() => window.print()}>
+              <Button variant="outline" onClick={handlePrint}>
                 <Printer className="w-4 h-4 mr-2" />
                 Print
               </Button>
