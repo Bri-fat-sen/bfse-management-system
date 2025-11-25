@@ -16,6 +16,7 @@ import OrganisationManage from './pages/OrganisationManage';
 import EmployeeDashboard from './pages/EmployeeDashboard';
 import Analytics from './pages/Analytics';
 import Reports from './pages/Reports';
+import Locations from './pages/Locations';
 import __Layout from './Layout.jsx';
 
 
@@ -38,6 +39,7 @@ export const PAGES = {
     "EmployeeDashboard": EmployeeDashboard,
     "Analytics": Analytics,
     "Reports": Reports,
+    "Locations": Locations,
 }
 
 export const pagesConfig = {
