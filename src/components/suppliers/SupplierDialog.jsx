@@ -20,11 +20,29 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useToast } from "@/components/ui/use-toast";
-import { Truck } from "lucide-react";
+import { Star } from "lucide-react";
 
-export default function SupplierDialog({ open, onOpenChange, supplier, orgId }) {
+const PAYMENT_TERMS = [
+  { value: "immediate", label: "Immediate Payment" },
+  { value: "net_7", label: "Net 7 Days" },
+  { value: "net_15", label: "Net 15 Days" },
+  { value: "net_30", label: "Net 30 Days" },
+  { value: "net_60", label: "Net 60 Days" },
+];
+
+export default function SupplierDialog({ 
+  open, 
+  onOpenChange, 
+  supplier,
+  orgId 
+}) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const [rating, setRating] = React.useState(supplier?.rating || 0);
+
+  React.useEffect(() => {
+    setRating(supplier?.rating || 0);
+  }, [supplier]);
 
   const createMutation = useMutation({
     mutationFn: (data) => base44.entities.Supplier.create(data),
@@ -59,10 +77,12 @@ export default function SupplierDialog({ open, onOpenChange, supplier, orgId }) 
       city: formData.get('city'),
       country: formData.get('country') || 'Sierra Leone',
       payment_terms: formData.get('payment_terms'),
+      default_lead_time_days: parseInt(formData.get('default_lead_time_days')) || 7,
       tax_id: formData.get('tax_id'),
       bank_name: formData.get('bank_name'),
       bank_account: formData.get('bank_account'),
       notes: formData.get('notes'),
+      rating: rating,
       status: formData.get('status') || 'active',
     };
 
@@ -77,14 +97,11 @@ export default function SupplierDialog({ open, onOpenChange, supplier, orgId }) 
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <Truck className="w-5 h-5" />
-            {supplier ? 'Edit Supplier' : 'Add New Supplier'}
-          </DialogTitle>
+          <DialogTitle>{supplier ? 'Edit Supplier' : 'Add New Supplier'}</DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="grid grid-cols-2 gap-4">
-            <div className="col-span-2 sm:col-span-1">
+            <div className="col-span-2 md:col-span-1">
               <Label>Supplier Name *</Label>
               <Input name="name" defaultValue={supplier?.name} required className="mt-1" />
             </div>
@@ -120,60 +137,84 @@ export default function SupplierDialog({ open, onOpenChange, supplier, orgId }) 
               <Label>Country</Label>
               <Input name="country" defaultValue={supplier?.country || 'Sierra Leone'} className="mt-1" />
             </div>
-            <div>
-              <Label>Payment Terms</Label>
-              <Select name="payment_terms" defaultValue={supplier?.payment_terms || "net_30"}>
-                <SelectTrigger className="mt-1">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="immediate">Immediate</SelectItem>
-                  <SelectItem value="net_7">Net 7 Days</SelectItem>
-                  <SelectItem value="net_15">Net 15 Days</SelectItem>
-                  <SelectItem value="net_30">Net 30 Days</SelectItem>
-                  <SelectItem value="net_60">Net 60 Days</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div>
-              <Label>Status</Label>
-              <Select name="status" defaultValue={supplier?.status || "active"}>
-                <SelectTrigger className="mt-1">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="active">Active</SelectItem>
-                  <SelectItem value="inactive">Inactive</SelectItem>
-                  <SelectItem value="blocked">Blocked</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div>
-              <Label>Tax ID / TIN</Label>
-              <Input name="tax_id" defaultValue={supplier?.tax_id} className="mt-1" />
-            </div>
-            <div>
-              <Label>Bank Name</Label>
-              <Input name="bank_name" defaultValue={supplier?.bank_name} className="mt-1" />
-            </div>
-            <div>
-              <Label>Bank Account</Label>
-              <Input name="bank_account" defaultValue={supplier?.bank_account} className="mt-1" />
-            </div>
-            <div className="col-span-2">
-              <Label>Notes</Label>
-              <Textarea name="notes" defaultValue={supplier?.notes} className="mt-1" rows={3} />
+          </div>
+
+          <div className="border-t pt-4">
+            <h3 className="font-medium mb-3">Business Details</h3>
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label>Payment Terms</Label>
+                <Select name="payment_terms" defaultValue={supplier?.payment_terms || "net_30"}>
+                  <SelectTrigger className="mt-1">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {PAYMENT_TERMS.map(term => (
+                      <SelectItem key={term.value} value={term.value}>{term.label}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label>Default Lead Time (Days)</Label>
+                <Input name="default_lead_time_days" type="number" min="1" defaultValue={supplier?.default_lead_time_days || 7} className="mt-1" />
+              </div>
+              <div>
+                <Label>Tax ID / NRA Number</Label>
+                <Input name="tax_id" defaultValue={supplier?.tax_id} className="mt-1" />
+              </div>
+              <div>
+                <Label>Status</Label>
+                <Select name="status" defaultValue={supplier?.status || "active"}>
+                  <SelectTrigger className="mt-1">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="active">Active</SelectItem>
+                    <SelectItem value="inactive">Inactive</SelectItem>
+                    <SelectItem value="blocked">Blocked</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label>Bank Name</Label>
+                <Input name="bank_name" defaultValue={supplier?.bank_name} className="mt-1" />
+              </div>
+              <div>
+                <Label>Bank Account</Label>
+                <Input name="bank_account" defaultValue={supplier?.bank_account} className="mt-1" />
+              </div>
             </div>
           </div>
+
+          <div>
+            <Label>Rating</Label>
+            <div className="flex gap-1 mt-1">
+              {[1, 2, 3, 4, 5].map((star) => (
+                <button
+                  key={star}
+                  type="button"
+                  onClick={() => setRating(star)}
+                  className="p-1 hover:scale-110 transition-transform"
+                >
+                  <Star
+                    className={`w-6 h-6 ${star <= rating ? 'fill-[#D4AF37] text-[#D4AF37]' : 'text-gray-300'}`}
+                  />
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div>
+            <Label>Notes</Label>
+            <Textarea name="notes" defaultValue={supplier?.notes} className="mt-1" rows={3} />
+          </div>
+
           <DialogFooter>
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
               Cancel
             </Button>
-            <Button 
-              type="submit" 
-              className="bg-[#1EB053] hover:bg-[#178f43]"
-              disabled={createMutation.isPending || updateMutation.isPending}
-            >
+            <Button type="submit" className="bg-[#1EB053] hover:bg-[#178f43]" disabled={createMutation.isPending || updateMutation.isPending}>
               {supplier ? 'Update' : 'Create'} Supplier
             </Button>
           </DialogFooter>

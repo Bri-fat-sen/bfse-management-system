@@ -1,25 +1,28 @@
 import React, { useState } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { format } from "date-fns";
 import {
   Truck,
   Search,
   Plus,
   Edit,
   Trash2,
+  Package,
+  FileText,
+  Star,
   Phone,
   Mail,
   MapPin,
-  Star,
-  Package,
-  FileText,
-  TrendingUp,
   Clock,
   DollarSign,
+  TrendingUp,
+  ShoppingCart,
+  CheckCircle,
+  AlertCircle,
+  Ban,
   MoreVertical,
   Eye,
-  ShoppingCart
+  Download
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -30,31 +33,54 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { useToast } from "@/components/ui/use-toast";
 import PageHeader from "@/components/ui/PageHeader";
 import EmptyState from "@/components/ui/EmptyState";
 import StatCard from "@/components/ui/StatCard";
 import SupplierDialog from "@/components/suppliers/SupplierDialog";
-import SupplierDetailDialog from "@/components/suppliers/SupplierDetailDialog";
+import SupplierProductsDialog from "@/components/suppliers/SupplierProductsDialog";
 import PurchaseOrderDialog from "@/components/suppliers/PurchaseOrderDialog";
-import PurchaseOrderList from "@/components/suppliers/PurchaseOrderList";
-import ReceiveOrderDialog from "@/components/suppliers/ReceiveOrderDialog";
+import ReceiveStockDialog from "@/components/suppliers/ReceiveStockDialog";
+import PriceHistoryDialog from "@/components/suppliers/PriceHistoryDialog";
 import { PermissionGate } from "@/components/permissions/PermissionGate";
+import { format } from "date-fns";
+
+const STATUS_CONFIG = {
+  draft: { label: 'Draft', color: 'bg-gray-100 text-gray-700', icon: FileText },
+  pending: { label: 'Pending', color: 'bg-yellow-100 text-yellow-700', icon: Clock },
+  approved: { label: 'Approved', color: 'bg-blue-100 text-blue-700', icon: CheckCircle },
+  ordered: { label: 'Ordered', color: 'bg-purple-100 text-purple-700', icon: ShoppingCart },
+  partial: { label: 'Partial', color: 'bg-orange-100 text-orange-700', icon: AlertCircle },
+  received: { label: 'Received', color: 'bg-green-100 text-green-700', icon: CheckCircle },
+  cancelled: { label: 'Cancelled', color: 'bg-red-100 text-red-700', icon: Ban },
+};
 
 export default function Suppliers() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [searchTerm, setSearchTerm] = useState("");
+  const [statusFilter, setStatusFilter] = useState("all");
   const [activeTab, setActiveTab] = useState("suppliers");
   const [showSupplierDialog, setShowSupplierDialog] = useState(false);
   const [editingSupplier, setEditingSupplier] = useState(null);
+  const [showProductsDialog, setShowProductsDialog] = useState(false);
   const [selectedSupplier, setSelectedSupplier] = useState(null);
-  const [showDetailDialog, setShowDetailDialog] = useState(false);
   const [showPODialog, setShowPODialog] = useState(false);
+  const [editingPO, setEditingPO] = useState(null);
   const [showReceiveDialog, setShowReceiveDialog] = useState(false);
-  const [selectedPO, setSelectedPO] = useState(null);
+  const [receivingPO, setReceivingPO] = useState(null);
+  const [showPriceHistory, setShowPriceHistory] = useState(false);
+  const [priceHistorySupplier, setPriceHistorySupplier] = useState(null);
 
   const { data: user } = useQuery({
     queryKey: ['currentUser'],
@@ -70,21 +96,15 @@ export default function Suppliers() {
   const currentEmployee = employee?.[0];
   const orgId = currentEmployee?.organisation_id;
 
-  const { data: suppliers = [], isLoading } = useQuery({
+  const { data: suppliers = [], isLoading: loadingSuppliers } = useQuery({
     queryKey: ['suppliers', orgId],
     queryFn: () => base44.entities.Supplier.filter({ organisation_id: orgId }),
     enabled: !!orgId,
   });
 
-  const { data: purchaseOrders = [] } = useQuery({
+  const { data: purchaseOrders = [], isLoading: loadingPOs } = useQuery({
     queryKey: ['purchaseOrders', orgId],
     queryFn: () => base44.entities.PurchaseOrder.filter({ organisation_id: orgId }, '-created_date', 100),
-    enabled: !!orgId,
-  });
-
-  const { data: supplierProducts = [] } = useQuery({
-    queryKey: ['supplierProducts', orgId],
-    queryFn: () => base44.entities.SupplierProduct.filter({ organisation_id: orgId }),
     enabled: !!orgId,
   });
 
@@ -100,43 +120,54 @@ export default function Suppliers() {
     enabled: !!orgId,
   });
 
-  const deleteSupplierMutation = useMutation({
+  const deleteMutation = useMutation({
     mutationFn: (id) => base44.entities.Supplier.delete(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['suppliers'] });
-      toast({ title: "Supplier deleted successfully" });
+      toast({ title: "Supplier deleted" });
     },
   });
 
-  const filteredSuppliers = suppliers.filter(s =>
-    s.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    s.code?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    s.contact_person?.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const updatePOMutation = useMutation({
+    mutationFn: ({ id, data }) => base44.entities.PurchaseOrder.update(id, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['purchaseOrders'] });
+      toast({ title: "Purchase order updated" });
+    },
+  });
 
+  // Stats
   const activeSuppliers = suppliers.filter(s => s.status === 'active').length;
-  const pendingOrders = purchaseOrders.filter(po => ['pending', 'approved', 'ordered', 'partial'].includes(po.status)).length;
-  const totalSpent = purchaseOrders.filter(po => po.payment_status === 'paid').reduce((sum, po) => sum + (po.total_amount || 0), 0);
+  const pendingOrders = purchaseOrders.filter(po => ['pending', 'approved', 'ordered'].includes(po.status)).length;
+  const totalSpent = purchaseOrders.filter(po => po.status === 'received').reduce((sum, po) => sum + (po.total_amount || 0), 0);
+  const avgLeadTime = suppliers.filter(s => s.default_lead_time_days).reduce((sum, s) => sum + s.default_lead_time_days, 0) / (suppliers.length || 1);
 
-  const statusColors = {
-    active: "bg-green-100 text-green-800",
-    inactive: "bg-gray-100 text-gray-800",
-    blocked: "bg-red-100 text-red-800"
-  };
+  // Filters
+  const filteredSuppliers = suppliers.filter(s => {
+    const matchesSearch = s.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         s.contact_person?.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesStatus = statusFilter === "all" || s.status === statusFilter;
+    return matchesSearch && matchesStatus;
+  });
 
-  const handleViewSupplier = (supplier) => {
-    setSelectedSupplier(supplier);
-    setShowDetailDialog(true);
-  };
+  const filteredPOs = purchaseOrders.filter(po => {
+    const matchesSearch = po.po_number?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         po.supplier_name?.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesStatus = statusFilter === "all" || po.status === statusFilter;
+    return matchesSearch && matchesStatus;
+  });
 
-  const handleCreatePO = (supplier) => {
-    setSelectedSupplier(supplier);
-    setShowPODialog(true);
-  };
-
-  const handleReceiveOrder = (po) => {
-    setSelectedPO(po);
-    setShowReceiveDialog(true);
+  const renderStars = (rating) => {
+    return (
+      <div className="flex gap-0.5">
+        {[1, 2, 3, 4, 5].map((star) => (
+          <Star
+            key={star}
+            className={`w-4 h-4 ${star <= (rating || 0) ? 'fill-[#D4AF37] text-[#D4AF37]' : 'text-gray-200'}`}
+          />
+        ))}
+      </div>
+    );
   };
 
   return (
@@ -144,50 +175,53 @@ export default function Suppliers() {
       <div className="space-y-6">
         <PageHeader
           title="Supplier Management"
-          subtitle="Manage suppliers, purchase orders, and pricing"
+          subtitle="Manage suppliers and purchase orders"
           action={() => {
             setEditingSupplier(null);
             setShowSupplierDialog(true);
           }}
           actionLabel="Add Supplier"
-          actionIcon={Truck}
         >
-          <Button 
-            variant="outline" 
-            onClick={() => {
-              setSelectedSupplier(null);
-              setShowPODialog(true);
-            }}
-          >
-            <ShoppingCart className="w-4 h-4 mr-2" />
+          <Button variant="outline" onClick={() => {
+            setEditingPO(null);
+            setShowPODialog(true);
+          }}>
+            <FileText className="w-4 h-4 mr-2" />
             New Purchase Order
+          </Button>
+          <Button variant="outline" onClick={() => {
+            setPriceHistorySupplier(null);
+            setShowPriceHistory(true);
+          }}>
+            <TrendingUp className="w-4 h-4 mr-2" />
+            Price History
           </Button>
         </PageHeader>
 
         {/* Stats */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           <StatCard
-            title="Total Suppliers"
-            value={suppliers.length}
-            icon={Truck}
-            color="blue"
-          />
-          <StatCard
             title="Active Suppliers"
             value={activeSuppliers}
-            icon={Star}
+            icon={Truck}
             color="green"
           />
           <StatCard
             title="Pending Orders"
             value={pendingOrders}
-            icon={Clock}
+            icon={ShoppingCart}
             color="gold"
           />
           <StatCard
-            title="Total Spent (YTD)"
+            title="Total Spent"
             value={`Le ${totalSpent.toLocaleString()}`}
             icon={DollarSign}
+            color="blue"
+          />
+          <StatCard
+            title="Avg Lead Time"
+            value={`${Math.round(avgLeadTime)} days`}
+            icon={Clock}
             color="navy"
           />
         </div>
@@ -198,23 +232,45 @@ export default function Suppliers() {
             <TabsTrigger value="orders">Purchase Orders</TabsTrigger>
           </TabsList>
 
-          {/* Suppliers Tab */}
-          <TabsContent value="suppliers" className="mt-6">
-            <Card className="mb-6">
-              <CardContent className="p-4">
-                <div className="relative">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                  <Input
-                    placeholder="Search suppliers by name, code, or contact..."
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    className="pl-10"
-                  />
-                </div>
-              </CardContent>
-            </Card>
+          {/* Filters */}
+          <div className="flex flex-col sm:flex-row gap-4 mt-6 mb-4">
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+              <Input
+                placeholder={activeTab === 'suppliers' ? "Search suppliers..." : "Search orders..."}
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-10"
+              />
+            </div>
+            <Select value={statusFilter} onValueChange={setStatusFilter}>
+              <SelectTrigger className="w-40">
+                <SelectValue placeholder="Status" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Status</SelectItem>
+                {activeTab === 'suppliers' ? (
+                  <>
+                    <SelectItem value="active">Active</SelectItem>
+                    <SelectItem value="inactive">Inactive</SelectItem>
+                    <SelectItem value="blocked">Blocked</SelectItem>
+                  </>
+                ) : (
+                  <>
+                    <SelectItem value="draft">Draft</SelectItem>
+                    <SelectItem value="pending">Pending</SelectItem>
+                    <SelectItem value="ordered">Ordered</SelectItem>
+                    <SelectItem value="partial">Partial</SelectItem>
+                    <SelectItem value="received">Received</SelectItem>
+                  </>
+                )}
+              </SelectContent>
+            </Select>
+          </div>
 
-            {isLoading ? (
+          {/* Suppliers Tab */}
+          <TabsContent value="suppliers">
+            {loadingSuppliers ? (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 {[...Array(6)].map((_, i) => (
                   <div key={i} className="h-48 bg-gray-100 rounded-xl animate-pulse" />
@@ -224,127 +280,235 @@ export default function Suppliers() {
               <EmptyState
                 icon={Truck}
                 title="No Suppliers Found"
-                description="Add your first supplier to start managing purchases"
+                description="Add your first supplier to start managing your supply chain"
                 action={() => setShowSupplierDialog(true)}
                 actionLabel="Add Supplier"
               />
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {filteredSuppliers.map((supplier) => {
-                  const supplierPOs = purchaseOrders.filter(po => po.supplier_id === supplier.id);
-                  const productCount = supplierProducts.filter(sp => sp.supplier_id === supplier.id).length;
-                  
-                  return (
-                    <Card key={supplier.id} className="hover:shadow-lg transition-all">
-                      <CardContent className="p-5">
-                        <div className="flex items-start justify-between mb-3">
-                          <div className="flex items-center gap-3">
-                            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-[#1EB053] to-[#0072C6] flex items-center justify-center">
-                              <Truck className="w-6 h-6 text-white" />
-                            </div>
-                            <div>
-                              <h3 className="font-semibold">{supplier.name}</h3>
-                              <p className="text-sm text-gray-500">{supplier.code || 'No code'}</p>
-                            </div>
+                {filteredSuppliers.map((supplier) => (
+                  <Card key={supplier.id} className="hover:shadow-lg transition-all border-t-4 border-t-[#1EB053]">
+                    <CardContent className="p-4">
+                      <div className="flex items-start justify-between mb-3">
+                        <div className="flex items-center gap-3">
+                          <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-[#1EB053] to-[#0072C6] flex items-center justify-center text-white font-bold text-lg">
+                            {supplier.name?.charAt(0)}
                           </div>
-                          <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                              <Button variant="ghost" size="icon">
-                                <MoreVertical className="w-4 h-4" />
-                              </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end">
-                              <DropdownMenuItem onClick={() => handleViewSupplier(supplier)}>
-                                <Eye className="w-4 h-4 mr-2" />
-                                View Details
-                              </DropdownMenuItem>
-                              <DropdownMenuItem onClick={() => handleCreatePO(supplier)}>
-                                <ShoppingCart className="w-4 h-4 mr-2" />
-                                Create PO
-                              </DropdownMenuItem>
-                              <DropdownMenuItem onClick={() => {
-                                setEditingSupplier(supplier);
-                                setShowSupplierDialog(true);
-                              }}>
-                                <Edit className="w-4 h-4 mr-2" />
-                                Edit
-                              </DropdownMenuItem>
-                              <DropdownMenuItem 
-                                className="text-red-600"
-                                onClick={() => deleteSupplierMutation.mutate(supplier.id)}
-                              >
-                                <Trash2 className="w-4 h-4 mr-2" />
-                                Delete
-                              </DropdownMenuItem>
-                            </DropdownMenuContent>
-                          </DropdownMenu>
+                          <div>
+                            <h3 className="font-semibold">{supplier.name}</h3>
+                            <Badge variant="secondary" className={
+                              supplier.status === 'active' ? 'bg-green-100 text-green-700' :
+                              supplier.status === 'blocked' ? 'bg-red-100 text-red-700' :
+                              'bg-gray-100 text-gray-700'
+                            }>
+                              {supplier.status}
+                            </Badge>
+                          </div>
                         </div>
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" size="icon">
+                              <MoreVertical className="w-4 h-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuItem onClick={() => {
+                              setSelectedSupplier(supplier);
+                              setShowProductsDialog(true);
+                            }}>
+                              <Package className="w-4 h-4 mr-2" />
+                              Manage Products
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => {
+                              setPriceHistorySupplier(supplier);
+                              setShowPriceHistory(true);
+                            }}>
+                              <TrendingUp className="w-4 h-4 mr-2" />
+                              Price History
+                            </DropdownMenuItem>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem onClick={() => {
+                              setEditingSupplier(supplier);
+                              setShowSupplierDialog(true);
+                            }}>
+                              <Edit className="w-4 h-4 mr-2" />
+                              Edit
+                            </DropdownMenuItem>
+                            <DropdownMenuItem 
+                              className="text-red-600"
+                              onClick={() => deleteMutation.mutate(supplier.id)}
+                            >
+                              <Trash2 className="w-4 h-4 mr-2" />
+                              Delete
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </div>
 
-                        <div className="space-y-2 text-sm">
-                          {supplier.contact_person && (
-                            <p className="text-gray-600">{supplier.contact_person}</p>
-                          )}
-                          {supplier.phone && (
-                            <div className="flex items-center gap-2 text-gray-500">
-                              <Phone className="w-3 h-3" />
-                              {supplier.phone}
-                            </div>
-                          )}
-                          {supplier.email && (
-                            <div className="flex items-center gap-2 text-gray-500">
-                              <Mail className="w-3 h-3" />
-                              {supplier.email}
-                            </div>
-                          )}
-                          {supplier.city && (
-                            <div className="flex items-center gap-2 text-gray-500">
-                              <MapPin className="w-3 h-3" />
-                              {supplier.city}, {supplier.country || 'Sierra Leone'}
-                            </div>
-                          )}
-                        </div>
+                      {renderStars(supplier.rating)}
 
-                        <div className="flex items-center gap-2 mt-4 pt-4 border-t">
-                          <Badge className={statusColors[supplier.status]}>
-                            {supplier.status}
-                          </Badge>
-                          <Badge variant="outline">
-                            <Package className="w-3 h-3 mr-1" />
-                            {productCount} products
-                          </Badge>
-                          <Badge variant="outline">
-                            <FileText className="w-3 h-3 mr-1" />
-                            {supplierPOs.length} orders
-                          </Badge>
-                        </div>
-
-                        {supplier.rating && (
-                          <div className="flex items-center gap-1 mt-2">
-                            {[...Array(5)].map((_, i) => (
-                              <Star 
-                                key={i} 
-                                className={`w-4 h-4 ${i < supplier.rating ? 'text-yellow-400 fill-yellow-400' : 'text-gray-300'}`} 
-                              />
-                            ))}
+                      <div className="mt-4 space-y-2 text-sm text-gray-600">
+                        {supplier.contact_person && (
+                          <div className="flex items-center gap-2">
+                            <span className="font-medium">{supplier.contact_person}</span>
                           </div>
                         )}
-                      </CardContent>
-                    </Card>
-                  );
-                })}
+                        {supplier.phone && (
+                          <div className="flex items-center gap-2">
+                            <Phone className="w-4 h-4 text-gray-400" />
+                            <span>{supplier.phone}</span>
+                          </div>
+                        )}
+                        {supplier.email && (
+                          <div className="flex items-center gap-2">
+                            <Mail className="w-4 h-4 text-gray-400" />
+                            <span className="truncate">{supplier.email}</span>
+                          </div>
+                        )}
+                        {supplier.city && (
+                          <div className="flex items-center gap-2">
+                            <MapPin className="w-4 h-4 text-gray-400" />
+                            <span>{supplier.city}, {supplier.country}</span>
+                          </div>
+                        )}
+                      </div>
+
+                      <div className="mt-4 pt-4 border-t flex items-center justify-between text-sm">
+                        <div>
+                          <p className="text-gray-500">Lead Time</p>
+                          <p className="font-medium">{supplier.default_lead_time_days || 7} days</p>
+                        </div>
+                        <div className="text-right">
+                          <p className="text-gray-500">Total Orders</p>
+                          <p className="font-medium">{supplier.total_orders || 0}</p>
+                        </div>
+                        <div className="text-right">
+                          <p className="text-gray-500">Total Spent</p>
+                          <p className="font-bold text-[#1EB053]">Le {(supplier.total_spent || 0).toLocaleString()}</p>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
               </div>
             )}
           </TabsContent>
 
           {/* Purchase Orders Tab */}
-          <TabsContent value="orders" className="mt-6">
-            <PurchaseOrderList
-              purchaseOrders={purchaseOrders}
-              suppliers={suppliers}
-              onReceive={handleReceiveOrder}
-              orgId={orgId}
-              currentEmployee={currentEmployee}
-            />
+          <TabsContent value="orders">
+            {loadingPOs ? (
+              <div className="space-y-3">
+                {[...Array(5)].map((_, i) => (
+                  <div key={i} className="h-20 bg-gray-100 rounded-lg animate-pulse" />
+                ))}
+              </div>
+            ) : filteredPOs.length === 0 ? (
+              <EmptyState
+                icon={FileText}
+                title="No Purchase Orders"
+                description="Create your first purchase order to track supplier deliveries"
+                action={() => setShowPODialog(true)}
+                actionLabel="Create Order"
+              />
+            ) : (
+              <Card>
+                <CardContent className="p-0">
+                  <div className="overflow-x-auto">
+                    <table className="w-full">
+                      <thead className="bg-gray-50 border-b">
+                        <tr>
+                          <th className="text-left p-4 font-medium">PO Number</th>
+                          <th className="text-left p-4 font-medium">Supplier</th>
+                          <th className="text-left p-4 font-medium">Order Date</th>
+                          <th className="text-left p-4 font-medium">Expected</th>
+                          <th className="text-right p-4 font-medium">Amount</th>
+                          <th className="text-center p-4 font-medium">Status</th>
+                          <th className="text-right p-4 font-medium">Actions</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {filteredPOs.map((po) => {
+                          const statusConfig = STATUS_CONFIG[po.status] || STATUS_CONFIG.draft;
+                          const StatusIcon = statusConfig.icon;
+                          return (
+                            <tr key={po.id} className="border-b hover:bg-gray-50">
+                              <td className="p-4">
+                                <span className="font-medium">{po.po_number}</span>
+                                <p className="text-xs text-gray-500">{po.items?.length || 0} items</p>
+                              </td>
+                              <td className="p-4">{po.supplier_name}</td>
+                              <td className="p-4 text-gray-600">{po.order_date && format(new Date(po.order_date), 'PP')}</td>
+                              <td className="p-4 text-gray-600">{po.expected_delivery_date && format(new Date(po.expected_delivery_date), 'PP')}</td>
+                              <td className="p-4 text-right font-bold text-[#1EB053]">Le {(po.total_amount || 0).toLocaleString()}</td>
+                              <td className="p-4">
+                                <div className="flex justify-center">
+                                  <Badge className={statusConfig.color}>
+                                    <StatusIcon className="w-3 h-3 mr-1" />
+                                    {statusConfig.label}
+                                  </Badge>
+                                </div>
+                              </td>
+                              <td className="p-4">
+                                <div className="flex justify-end gap-2">
+                                  {['ordered', 'partial'].includes(po.status) && (
+                                    <Button
+                                      variant="outline"
+                                      size="sm"
+                                      onClick={() => {
+                                        setReceivingPO(po);
+                                        setShowReceiveDialog(true);
+                                      }}
+                                      className="text-[#1EB053] border-[#1EB053]"
+                                    >
+                                      <Download className="w-4 h-4 mr-1" />
+                                      Receive
+                                    </Button>
+                                  )}
+                                  {po.status === 'draft' && (
+                                    <Button
+                                      variant="outline"
+                                      size="sm"
+                                      onClick={() => updatePOMutation.mutate({ id: po.id, data: { status: 'ordered' } })}
+                                    >
+                                      Send Order
+                                    </Button>
+                                  )}
+                                  <DropdownMenu>
+                                    <DropdownMenuTrigger asChild>
+                                      <Button variant="ghost" size="icon">
+                                        <MoreVertical className="w-4 h-4" />
+                                      </Button>
+                                    </DropdownMenuTrigger>
+                                    <DropdownMenuContent align="end">
+                                      <DropdownMenuItem onClick={() => {
+                                        setEditingPO(po);
+                                        setShowPODialog(true);
+                                      }}>
+                                        <Edit className="w-4 h-4 mr-2" />
+                                        Edit
+                                      </DropdownMenuItem>
+                                      {po.status !== 'cancelled' && po.status !== 'received' && (
+                                        <DropdownMenuItem 
+                                          className="text-red-600"
+                                          onClick={() => updatePOMutation.mutate({ id: po.id, data: { status: 'cancelled' } })}
+                                        >
+                                          <Ban className="w-4 h-4 mr-2" />
+                                          Cancel Order
+                                        </DropdownMenuItem>
+                                      )}
+                                    </DropdownMenuContent>
+                                  </DropdownMenu>
+                                </div>
+                              </td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
           </TabsContent>
         </Tabs>
 
@@ -356,12 +520,10 @@ export default function Suppliers() {
           orgId={orgId}
         />
 
-        <SupplierDetailDialog
-          open={showDetailDialog}
-          onOpenChange={setShowDetailDialog}
+        <SupplierProductsDialog
+          open={showProductsDialog}
+          onOpenChange={setShowProductsDialog}
           supplier={selectedSupplier}
-          supplierProducts={supplierProducts.filter(sp => sp.supplier_id === selectedSupplier?.id)}
-          purchaseOrders={purchaseOrders.filter(po => po.supplier_id === selectedSupplier?.id)}
           products={products}
           orgId={orgId}
         />
@@ -369,21 +531,28 @@ export default function Suppliers() {
         <PurchaseOrderDialog
           open={showPODialog}
           onOpenChange={setShowPODialog}
-          supplier={selectedSupplier}
+          purchaseOrder={editingPO}
           suppliers={suppliers}
           products={products}
-          supplierProducts={supplierProducts}
           warehouses={warehouses}
           orgId={orgId}
           currentEmployee={currentEmployee}
         />
 
-        <ReceiveOrderDialog
+        <ReceiveStockDialog
           open={showReceiveDialog}
           onOpenChange={setShowReceiveDialog}
-          purchaseOrder={selectedPO}
+          purchaseOrder={receivingPO}
+          products={products}
           orgId={orgId}
           currentEmployee={currentEmployee}
+        />
+
+        <PriceHistoryDialog
+          open={showPriceHistory}
+          onOpenChange={setShowPriceHistory}
+          supplier={priceHistorySupplier}
+          orgId={orgId}
         />
       </div>
     </PermissionGate>

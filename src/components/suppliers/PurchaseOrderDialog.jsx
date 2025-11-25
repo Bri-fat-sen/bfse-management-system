@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { format } from "date-fns";
+import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
 import {
   Dialog,
   DialogContent,
@@ -21,59 +20,69 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useToast } from "@/components/ui/use-toast";
-import { ShoppingCart, Plus, Trash2, Package } from "lucide-react";
+import { Plus, Trash2, Package, Calculator } from "lucide-react";
+import { Card, CardContent } from "@/components/ui/card";
+import { format, addDays } from "date-fns";
 
-export default function PurchaseOrderDialog({
-  open,
-  onOpenChange,
-  supplier: initialSupplier,
+export default function PurchaseOrderDialog({ 
+  open, 
+  onOpenChange, 
+  purchaseOrder,
   suppliers = [],
   products = [],
-  supplierProducts = [],
   warehouses = [],
   orgId,
   currentEmployee
 }) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const [selectedSupplier, setSelectedSupplier] = useState(initialSupplier?.id || "");
-  const [items, setItems] = useState([]);
-  const [shippingCost, setShippingCost] = useState(0);
+  const [selectedSupplier, setSelectedSupplier] = useState(purchaseOrder?.supplier_id || "");
+  const [items, setItems] = useState(purchaseOrder?.items || []);
+  const [shippingCost, setShippingCost] = useState(purchaseOrder?.shipping_cost || 0);
+  const [taxAmount, setTaxAmount] = useState(purchaseOrder?.tax_amount || 0);
+
+  const { data: supplierProducts = [] } = useQuery({
+    queryKey: ['supplierProducts', selectedSupplier],
+    queryFn: () => base44.entities.SupplierProduct.filter({ supplier_id: selectedSupplier }),
+    enabled: !!selectedSupplier,
+  });
+
+  const supplier = suppliers.find(s => s.id === selectedSupplier);
 
   useEffect(() => {
-    if (initialSupplier) {
-      setSelectedSupplier(initialSupplier.id);
-    }
-  }, [initialSupplier]);
-
-  useEffect(() => {
-    if (!open) {
+    if (purchaseOrder) {
+      setSelectedSupplier(purchaseOrder.supplier_id);
+      setItems(purchaseOrder.items || []);
+      setShippingCost(purchaseOrder.shipping_cost || 0);
+      setTaxAmount(purchaseOrder.tax_amount || 0);
+    } else {
+      setSelectedSupplier("");
       setItems([]);
       setShippingCost(0);
-      if (!initialSupplier) setSelectedSupplier("");
+      setTaxAmount(0);
     }
-  }, [open, initialSupplier]);
+  }, [purchaseOrder, open]);
 
-  const createPOMutation = useMutation({
+  const createMutation = useMutation({
     mutationFn: (data) => base44.entities.PurchaseOrder.create(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['purchaseOrders'] });
       onOpenChange(false);
-      toast({ title: "Purchase order created successfully" });
+      toast({ title: "Purchase order created" });
     },
   });
 
-  // Get products for selected supplier
-  const supplierProductsList = selectedSupplier 
-    ? supplierProducts.filter(sp => sp.supplier_id === selectedSupplier)
-    : [];
-  
-  const availableProducts = supplierProductsList.length > 0
-    ? products.filter(p => supplierProductsList.some(sp => sp.product_id === p.id))
-    : products;
+  const updateMutation = useMutation({
+    mutationFn: ({ id, data }) => base44.entities.PurchaseOrder.update(id, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['purchaseOrders'] });
+      onOpenChange(false);
+      toast({ title: "Purchase order updated" });
+    },
+  });
 
   const addItem = () => {
-    setItems([...items, { product_id: "", quantity: 1, unit_cost: 0 }]);
+    setItems([...items, { product_id: "", product_name: "", quantity_ordered: 1, quantity_received: 0, unit_cost: 0, total: 0 }]);
   };
 
   const updateItem = (index, field, value) => {
@@ -81,13 +90,16 @@ export default function PurchaseOrderDialog({
     newItems[index][field] = value;
     
     if (field === 'product_id') {
-      const sp = supplierProductsList.find(s => s.product_id === value);
       const product = products.find(p => p.id === value);
-      newItems[index].product_name = product?.name;
-      newItems[index].unit_cost = sp?.unit_cost || product?.cost_price || 0;
+      const supplierProduct = supplierProducts.find(sp => sp.product_id === value);
+      newItems[index].product_name = product?.name || "";
+      newItems[index].unit_cost = supplierProduct?.unit_cost || product?.cost_price || 0;
     }
     
-    newItems[index].total = (newItems[index].quantity || 0) * (newItems[index].unit_cost || 0);
+    if (field === 'quantity_ordered' || field === 'unit_cost') {
+      newItems[index].total = (newItems[index].quantity_ordered || 0) * (newItems[index].unit_cost || 0);
+    }
+    
     setItems(newItems);
   };
 
@@ -96,55 +108,56 @@ export default function PurchaseOrderDialog({
   };
 
   const subtotal = items.reduce((sum, item) => sum + (item.total || 0), 0);
-  const total = subtotal + (parseFloat(shippingCost) || 0);
+  const total = subtotal + (parseFloat(shippingCost) || 0) + (parseFloat(taxAmount) || 0);
 
   const handleSubmit = (e) => {
     e.preventDefault();
     const formData = new FormData(e.target);
-    const supplier = suppliers.find(s => s.id === selectedSupplier);
     const warehouse = warehouses.find(w => w.id === formData.get('warehouse_id'));
-
-    const poNumber = `PO-${Date.now().toString(36).toUpperCase()}`;
-
+    
+    const poNumber = purchaseOrder?.po_number || `PO-${Date.now().toString(36).toUpperCase()}`;
+    
     const data = {
       organisation_id: orgId,
       po_number: poNumber,
       supplier_id: selectedSupplier,
       supplier_name: supplier?.name,
       warehouse_id: formData.get('warehouse_id'),
-      warehouse_name: warehouse?.name,
-      items: items.map(item => ({
-        ...item,
-        quantity_ordered: item.quantity,
-        quantity_received: 0
-      })),
-      subtotal,
+      warehouse_name: warehouse?.name || 'Main',
+      order_date: formData.get('order_date'),
+      expected_delivery_date: formData.get('expected_delivery_date'),
+      items: items.filter(item => item.product_id),
+      subtotal: subtotal,
+      tax_amount: parseFloat(taxAmount) || 0,
       shipping_cost: parseFloat(shippingCost) || 0,
       total_amount: total,
-      status: 'draft',
-      payment_status: 'unpaid',
-      order_date: formData.get('order_date'),
-      expected_date: formData.get('expected_date'),
+      status: purchaseOrder?.status || 'draft',
+      payment_status: purchaseOrder?.payment_status || 'unpaid',
       created_by: currentEmployee?.id,
       created_by_name: currentEmployee?.full_name,
       notes: formData.get('notes'),
     };
 
-    createPOMutation.mutate(data);
+    if (purchaseOrder) {
+      updateMutation.mutate({ id: purchaseOrder.id, data });
+    } else {
+      createMutation.mutate(data);
+    }
   };
+
+  const defaultExpectedDate = supplier 
+    ? format(addDays(new Date(), supplier.default_lead_time_days || 7), 'yyyy-MM-dd')
+    : format(addDays(new Date(), 7), 'yyyy-MM-dd');
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <ShoppingCart className="w-5 h-5" />
-            Create Purchase Order
-          </DialogTitle>
+          <DialogTitle>{purchaseOrder ? 'Edit Purchase Order' : 'Create Purchase Order'}</DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="grid grid-cols-2 gap-4">
-            <div>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div className="col-span-2">
               <Label>Supplier *</Label>
               <Select 
                 value={selectedSupplier} 
@@ -162,8 +175,27 @@ export default function PurchaseOrderDialog({
               </Select>
             </div>
             <div>
-              <Label>Delivery Warehouse</Label>
-              <Select name="warehouse_id">
+              <Label>Order Date *</Label>
+              <Input 
+                name="order_date" 
+                type="date" 
+                defaultValue={purchaseOrder?.order_date || format(new Date(), 'yyyy-MM-dd')} 
+                required 
+                className="mt-1" 
+              />
+            </div>
+            <div>
+              <Label>Expected Delivery</Label>
+              <Input 
+                name="expected_delivery_date" 
+                type="date" 
+                defaultValue={purchaseOrder?.expected_delivery_date || defaultExpectedDate} 
+                className="mt-1" 
+              />
+            </div>
+            <div className="col-span-2">
+              <Label>Warehouse</Label>
+              <Select name="warehouse_id" defaultValue={purchaseOrder?.warehouse_id || ""}>
                 <SelectTrigger className="mt-1">
                   <SelectValue placeholder="Select warehouse" />
                 </SelectTrigger>
@@ -174,88 +206,85 @@ export default function PurchaseOrderDialog({
                 </SelectContent>
               </Select>
             </div>
-            <div>
-              <Label>Order Date</Label>
-              <Input 
-                name="order_date" 
-                type="date" 
-                defaultValue={format(new Date(), 'yyyy-MM-dd')} 
-                className="mt-1" 
-              />
-            </div>
-            <div>
-              <Label>Expected Delivery</Label>
-              <Input name="expected_date" type="date" className="mt-1" />
-            </div>
           </div>
 
-          {/* Order Items */}
-          <div>
-            <div className="flex justify-between items-center mb-2">
-              <Label>Order Items</Label>
-              <Button type="button" size="sm" variant="outline" onClick={addItem}>
-                <Plus className="w-4 h-4 mr-1" />
+          {/* Items */}
+          <div className="border rounded-lg p-4">
+            <div className="flex justify-between items-center mb-4">
+              <h4 className="font-medium">Order Items</h4>
+              <Button type="button" onClick={addItem} size="sm" variant="outline">
+                <Plus className="w-4 h-4 mr-2" />
                 Add Item
               </Button>
             </div>
 
             {items.length === 0 ? (
-              <div className="text-center py-8 bg-gray-50 rounded-lg text-gray-500">
+              <div className="text-center py-6 text-gray-500">
                 <Package className="w-10 h-10 mx-auto mb-2 text-gray-300" />
                 <p>No items added yet</p>
-                <Button type="button" size="sm" variant="link" onClick={addItem}>
-                  Add your first item
-                </Button>
               </div>
             ) : (
-              <div className="space-y-2">
+              <div className="space-y-3">
                 {items.map((item, index) => (
-                  <div key={index} className="flex items-center gap-2 p-3 bg-gray-50 rounded-lg">
-                    <div className="flex-1">
+                  <div key={index} className="grid grid-cols-12 gap-2 items-end bg-gray-50 p-3 rounded-lg">
+                    <div className="col-span-5">
+                      <Label className="text-xs">Product</Label>
                       <Select 
                         value={item.product_id} 
                         onValueChange={(val) => updateItem(index, 'product_id', val)}
                       >
-                        <SelectTrigger>
+                        <SelectTrigger className="mt-1">
                           <SelectValue placeholder="Select product" />
                         </SelectTrigger>
                         <SelectContent>
-                          {availableProducts.map(p => (
-                            <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>
-                          ))}
+                          {products.map(p => {
+                            const sp = supplierProducts.find(sp => sp.product_id === p.id);
+                            return (
+                              <SelectItem key={p.id} value={p.id}>
+                                {p.name} {sp ? `(Le ${sp.unit_cost?.toLocaleString()})` : ''}
+                              </SelectItem>
+                            );
+                          })}
                         </SelectContent>
                       </Select>
                     </div>
-                    <div className="w-24">
-                      <Input
-                        type="number"
-                        min="1"
-                        value={item.quantity}
-                        onChange={(e) => updateItem(index, 'quantity', parseInt(e.target.value) || 0)}
-                        placeholder="Qty"
+                    <div className="col-span-2">
+                      <Label className="text-xs">Quantity</Label>
+                      <Input 
+                        type="number" 
+                        min="1" 
+                        value={item.quantity_ordered}
+                        onChange={(e) => updateItem(index, 'quantity_ordered', parseInt(e.target.value) || 0)}
+                        className="mt-1"
                       />
                     </div>
-                    <div className="w-32">
-                      <Input
-                        type="number"
+                    <div className="col-span-2">
+                      <Label className="text-xs">Unit Cost (Le)</Label>
+                      <Input 
+                        type="number" 
                         step="0.01"
                         value={item.unit_cost}
                         onChange={(e) => updateItem(index, 'unit_cost', parseFloat(e.target.value) || 0)}
-                        placeholder="Unit Cost"
+                        className="mt-1"
                       />
                     </div>
-                    <div className="w-28 text-right font-medium">
-                      Le {(item.total || 0).toLocaleString()}
+                    <div className="col-span-2">
+                      <Label className="text-xs">Total</Label>
+                      <div className="mt-1 h-10 px-3 flex items-center bg-white border rounded-md font-medium">
+                        Le {item.total?.toLocaleString()}
+                      </div>
                     </div>
-                    <Button 
-                      type="button" 
-                      variant="ghost" 
-                      size="icon"
-                      className="text-red-500"
-                      onClick={() => removeItem(index)}
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </Button>
+                    <div className="col-span-1">
+                      <Button 
+                        type="button" 
+                        variant="ghost" 
+                        size="icon"
+                        className="text-red-500"
+                        onClick={() => removeItem(index)}
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </Button>
+                    </div>
                   </div>
                 ))}
               </div>
@@ -263,32 +292,54 @@ export default function PurchaseOrderDialog({
           </div>
 
           {/* Totals */}
-          {items.length > 0 && (
-            <div className="bg-gray-50 rounded-lg p-4 space-y-2">
-              <div className="flex justify-between text-sm">
-                <span>Subtotal</span>
-                <span>Le {subtotal.toLocaleString()}</span>
+          <Card className="bg-gray-50">
+            <CardContent className="p-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label>Shipping Cost (Le)</Label>
+                  <Input 
+                    type="number" 
+                    step="0.01" 
+                    value={shippingCost}
+                    onChange={(e) => setShippingCost(e.target.value)}
+                    className="mt-1"
+                  />
+                </div>
+                <div>
+                  <Label>Tax Amount (Le)</Label>
+                  <Input 
+                    type="number" 
+                    step="0.01" 
+                    value={taxAmount}
+                    onChange={(e) => setTaxAmount(e.target.value)}
+                    className="mt-1"
+                  />
+                </div>
               </div>
-              <div className="flex justify-between text-sm items-center">
-                <span>Shipping Cost</span>
-                <Input
-                  type="number"
-                  step="0.01"
-                  value={shippingCost}
-                  onChange={(e) => setShippingCost(e.target.value)}
-                  className="w-32 h-8"
-                />
+              <div className="mt-4 pt-4 border-t space-y-2">
+                <div className="flex justify-between text-sm">
+                  <span>Subtotal</span>
+                  <span>Le {subtotal.toLocaleString()}</span>
+                </div>
+                <div className="flex justify-between text-sm">
+                  <span>Shipping</span>
+                  <span>Le {parseFloat(shippingCost || 0).toLocaleString()}</span>
+                </div>
+                <div className="flex justify-between text-sm">
+                  <span>Tax</span>
+                  <span>Le {parseFloat(taxAmount || 0).toLocaleString()}</span>
+                </div>
+                <div className="flex justify-between font-bold text-lg pt-2 border-t">
+                  <span>Total</span>
+                  <span className="text-[#1EB053]">Le {total.toLocaleString()}</span>
+                </div>
               </div>
-              <div className="flex justify-between font-bold text-lg pt-2 border-t">
-                <span>Total</span>
-                <span className="text-[#1EB053]">Le {total.toLocaleString()}</span>
-              </div>
-            </div>
-          )}
+            </CardContent>
+          </Card>
 
           <div>
             <Label>Notes</Label>
-            <Textarea name="notes" className="mt-1" placeholder="Additional notes..." />
+            <Textarea name="notes" defaultValue={purchaseOrder?.notes} className="mt-1" rows={2} />
           </div>
 
           <DialogFooter>
@@ -298,9 +349,9 @@ export default function PurchaseOrderDialog({
             <Button 
               type="submit" 
               className="bg-[#1EB053] hover:bg-[#178f43]"
-              disabled={items.length === 0 || !selectedSupplier || createPOMutation.isPending}
+              disabled={createMutation.isPending || updateMutation.isPending || items.length === 0}
             >
-              Create Purchase Order
+              {purchaseOrder ? 'Update' : 'Create'} Order
             </Button>
           </DialogFooter>
         </form>
