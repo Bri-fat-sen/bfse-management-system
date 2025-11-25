@@ -16,7 +16,6 @@ import OrganisationSetup from './pages/OrganisationSetup';
 import OrganisationManage from './pages/OrganisationManage';
 import EmployeeDashboard from './pages/EmployeeDashboard';
 import Analytics from './pages/Analytics';
-import Forms from './pages/Forms';
 import Reports from './pages/Reports';
 import __Layout from './Layout.jsx';
 
@@ -40,7 +39,6 @@ export const PAGES = {
     "OrganisationManage": OrganisationManage,
     "EmployeeDashboard": EmployeeDashboard,
     "Analytics": Analytics,
-    "Forms": Forms,
     "Reports": Reports,
 }
 
