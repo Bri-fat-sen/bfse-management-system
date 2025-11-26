@@ -155,9 +155,9 @@ export function MultiAreaChart({
         />
         <Tooltip content={<CustomTooltip formatter={formatter} />} />
         <Legend 
-          wrapperStyle={{ paddingTop: 20 }}
+          wrapperStyle={{ paddingTop: 10, fontSize: 11 }}
           iconType="circle"
-          iconSize={8}
+          iconSize={6}
         />
         {lines.map((line, i) => (
           <Area
@@ -400,9 +400,9 @@ export function GlowLineChart({
         />
         <Tooltip content={<CustomTooltip formatter={formatter} />} />
         <Legend 
-          wrapperStyle={{ paddingTop: 20 }}
+          wrapperStyle={{ paddingTop: 10, fontSize: 11 }}
           iconType="circle"
-          iconSize={8}
+          iconSize={6}
         />
         {lines.map((line, i) => (
           <Line
@@ -457,9 +457,9 @@ export function AdvancedRadarChart({
           />
         ))}
         <Legend 
-          wrapperStyle={{ paddingTop: 20 }}
+          wrapperStyle={{ paddingTop: 10, fontSize: 11 }}
           iconType="circle"
-          iconSize={8}
+          iconSize={6}
         />
         <Tooltip 
           content={({ active, payload }) => {
@@ -560,7 +560,7 @@ export function StackedBarChart({
         <XAxis dataKey={xKey} tick={{ fontSize: 11, fill: '#6B7280' }} tickLine={false} axisLine={{ stroke: '#E5E7EB' }} />
         <YAxis tick={{ fontSize: 11, fill: '#6B7280' }} tickLine={false} axisLine={false} />
         <Tooltip content={<CustomTooltip formatter={formatter} />} cursor={{ fill: 'rgba(0,0,0,0.05)' }} />
-        <Legend wrapperStyle={{ paddingTop: 20 }} iconType="circle" iconSize={8} />
+        <Legend wrapperStyle={{ paddingTop: 10, fontSize: 11 }} iconType="circle" iconSize={6} />
         {bars.map((bar, i) => (
           <Bar
             key={i}
