@@ -137,77 +137,59 @@ export default function AnalyticsDashboard({ sales = [], expenses = [], products
 
       {/* Key Metrics */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <Card className="overflow-hidden group hover:shadow-lg transition-all duration-300 border-0 shadow-sm">
-          <div className="h-1 bg-gradient-to-r from-[#1EB053] to-[#0072C6]" />
+        <Card>
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-xs text-gray-500 uppercase tracking-wide">Revenue</p>
-                <p className="text-2xl font-bold text-gray-900">Le {totalRevenue.toLocaleString()}</p>
-                <div className={`flex items-center gap-1 text-sm mt-1 ${revenueChange >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                  {revenueChange >= 0 ? <ArrowUpRight className="w-4 h-4" /> : <ArrowDownRight className="w-4 h-4" />}
-                  {Math.abs(revenueChange).toFixed(1)}% vs last period
-                </div>
+                <p className="text-sm text-gray-500">Revenue</p>
+                <p className="text-2xl font-bold">Le {totalRevenue.toLocaleString()}</p>
               </div>
-              <div className="p-3 rounded-xl bg-gradient-to-br from-[#1EB053]/10 to-[#0072C6]/10 group-hover:scale-110 transition-transform">
-                <TrendingUp className="w-6 h-6 text-[#1EB053]" />
+              <div className={`flex items-center gap-1 text-sm ${revenueChange >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                {revenueChange >= 0 ? <ArrowUpRight className="w-4 h-4" /> : <ArrowDownRight className="w-4 h-4" />}
+                {Math.abs(revenueChange).toFixed(1)}%
               </div>
             </div>
           </CardContent>
         </Card>
 
-        <Card className="overflow-hidden group hover:shadow-lg transition-all duration-300 border-0 shadow-sm">
-          <div className="h-1 bg-gradient-to-r from-red-500 to-orange-500" />
+        <Card>
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-xs text-gray-500 uppercase tracking-wide">Expenses</p>
-                <p className="text-2xl font-bold text-gray-900">Le {totalExpenses.toLocaleString()}</p>
-                <p className="text-sm text-gray-400 mt-1">{filteredExpenses.length} transactions</p>
+                <p className="text-sm text-gray-500">Expenses</p>
+                <p className="text-2xl font-bold">Le {totalExpenses.toLocaleString()}</p>
               </div>
-              <div className="p-3 rounded-xl bg-gradient-to-br from-red-500/10 to-orange-500/10 group-hover:scale-110 transition-transform">
-                <DollarSign className="w-6 h-6 text-red-500" />
-              </div>
+              <DollarSign className="w-8 h-8 text-red-500 opacity-50" />
             </div>
           </CardContent>
         </Card>
 
-        <Card className="overflow-hidden group hover:shadow-lg transition-all duration-300 border-0 shadow-sm">
-          <div className={`h-1 ${totalProfit >= 0 ? 'bg-gradient-to-r from-green-500 to-emerald-500' : 'bg-gradient-to-r from-red-500 to-rose-500'}`} />
+        <Card>
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-xs text-gray-500 uppercase tracking-wide">Net Profit</p>
+                <p className="text-sm text-gray-500">Net Profit</p>
                 <p className={`text-2xl font-bold ${totalProfit >= 0 ? 'text-green-600' : 'text-red-600'}`}>
                   Le {totalProfit.toLocaleString()}
                 </p>
-                <p className="text-sm text-gray-400 mt-1">
-                  {totalRevenue > 0 ? ((totalProfit / totalRevenue) * 100).toFixed(1) : 0}% margin
-                </p>
               </div>
-              <ProgressRing 
-                value={Math.abs(totalProfit)} 
-                max={totalRevenue || 1} 
-                size={50} 
-                strokeWidth={5}
-                color={totalProfit >= 0 ? "#22C55E" : "#EF4444"}
-              />
+              {totalProfit >= 0 ? (
+                <TrendingUp className="w-8 h-8 text-green-500 opacity-50" />
+              ) : (
+                <TrendingDown className="w-8 h-8 text-red-500 opacity-50" />
+              )}
             </div>
           </CardContent>
         </Card>
 
-        <Card className="overflow-hidden group hover:shadow-lg transition-all duration-300 border-0 shadow-sm">
-          <div className="h-1 bg-gradient-to-r from-[#0072C6] to-[#9333EA]" />
+        <Card>
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-xs text-gray-500 uppercase tracking-wide">Avg Order</p>
-                <p className="text-2xl font-bold text-gray-900">Le {Math.round(avgOrderValue).toLocaleString()}</p>
-                <p className="text-sm text-gray-400 mt-1">{filteredSales.length} orders</p>
+                <p className="text-sm text-gray-500">Avg Order Value</p>
+                <p className="text-2xl font-bold">Le {avgOrderValue.toLocaleString()}</p>
               </div>
-              <div className="p-3 rounded-xl bg-gradient-to-br from-[#0072C6]/10 to-[#9333EA]/10 group-hover:scale-110 transition-transform">
-                <ShoppingCart className="w-6 h-6 text-[#0072C6]" />
-              </div>
+              <ShoppingCart className="w-8 h-8 text-blue-500 opacity-50" />
             </div>
           </CardContent>
         </Card>
