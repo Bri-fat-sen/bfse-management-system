@@ -73,6 +73,7 @@ const menuSections = [
     title: "Management",
     items: [
       { name: "HR & Payroll", icon: Users, page: "HR", module: "hr" },
+      { name: "HR Analytics", icon: BarChart3, page: "HRAnalytics", module: "hr" },
       { name: "Finance", icon: DollarSign, page: "Finance", module: "finance" },
       { name: "Attendance", icon: Clock, page: "Attendance", module: "attendance" },
     ]
