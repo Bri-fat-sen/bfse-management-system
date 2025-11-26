@@ -378,87 +378,69 @@ export default function Reports() {
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             {/* Sales Trend */}
-            <Card>
-              <CardHeader>
+            <Card className="overflow-hidden">
+              <CardHeader className="bg-gradient-to-r from-[#1EB053]/5 to-[#0072C6]/5 border-b">
                 <CardTitle className="flex items-center gap-2">
-                  <TrendingUp className="w-5 h-5 text-[#1EB053]" />
+                  <div className="p-2 rounded-lg bg-gradient-to-br from-[#1EB053] to-[#0072C6]">
+                    <TrendingUp className="w-4 h-4 text-white" />
+                  </div>
                   Sales Trend
                 </CardTitle>
               </CardHeader>
-              <CardContent>
-                <ResponsiveContainer width="100%" height={300}>
-                  <AreaChart data={salesAnalytics.trendData}>
-                    <defs>
-                      <linearGradient id="colorRevenue" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%" stopColor="#1EB053" stopOpacity={0.3}/>
-                        <stop offset="95%" stopColor="#1EB053" stopOpacity={0}/>
-                      </linearGradient>
-                    </defs>
-                    <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis dataKey="date" />
-                    <YAxis />
-                    <Tooltip formatter={(value) => [`Le ${value.toLocaleString()}`, 'Revenue']} />
-                    <Area type="monotone" dataKey="revenue" stroke="#1EB053" fillOpacity={1} fill="url(#colorRevenue)" />
-                  </AreaChart>
-                </ResponsiveContainer>
+              <CardContent className="pt-6">
+                <GradientAreaChart 
+                  data={salesAnalytics.trendData}
+                  dataKey="revenue"
+                  xKey="date"
+                  height={300}
+                  formatter={(v) => `Le ${v.toLocaleString()}`}
+                />
               </CardContent>
             </Card>
 
             {/* Payment Methods */}
-            <Card>
-              <CardHeader>
+            <Card className="overflow-hidden">
+              <CardHeader className="bg-gradient-to-r from-[#0072C6]/5 to-[#9333EA]/5 border-b">
                 <CardTitle className="flex items-center gap-2">
-                  <PieChart className="w-5 h-5 text-[#0072C6]" />
+                  <div className="p-2 rounded-lg bg-gradient-to-br from-[#0072C6] to-[#9333EA]">
+                    <PieChart className="w-4 h-4 text-white" />
+                  </div>
                   Payment Methods
                 </CardTitle>
               </CardHeader>
-              <CardContent>
-                <ResponsiveContainer width="100%" height={300}>
-                  <RePieChart>
-                    <Pie
-                      data={salesAnalytics.byPayment}
-                      cx="50%"
-                      cy="50%"
-                      labelLine={false}
-                      outerRadius={100}
-                      fill="#8884d8"
-                      dataKey="value"
-                      label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
-                    >
-                      {salesAnalytics.byPayment.map((entry, index) => (
-                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                      ))}
-                    </Pie>
-                    <Tooltip formatter={(value) => `Le ${value.toLocaleString()}`} />
-                  </RePieChart>
-                </ResponsiveContainer>
+              <CardContent className="pt-6">
+                <DonutChart 
+                  data={salesAnalytics.byPayment}
+                  height={300}
+                  innerRadius={70}
+                  outerRadius={110}
+                  formatter={(v) => `Le ${v.toLocaleString()}`}
+                  centerValue={salesAnalytics.totalTransactions}
+                  centerLabel="Transactions"
+                />
               </CardContent>
             </Card>
 
             {/* Top Products */}
-            <Card className="lg:col-span-2">
-              <CardHeader>
+            <Card className="lg:col-span-2 overflow-hidden">
+              <CardHeader className="bg-gradient-to-r from-[#D4AF37]/5 to-[#F59E0B]/5 border-b">
                 <CardTitle className="flex items-center gap-2">
-                  <Package className="w-5 h-5 text-[#D4AF37]" />
+                  <div className="p-2 rounded-lg bg-gradient-to-br from-[#D4AF37] to-[#F59E0B]">
+                    <Package className="w-4 h-4 text-white" />
+                  </div>
                   Top Selling Products
                 </CardTitle>
               </CardHeader>
-              <CardContent>
-                <ResponsiveContainer width="100%" height={300}>
-                  <BarChart data={salesAnalytics.topProducts} layout="vertical">
-                    <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis type="number" />
-                    <YAxis dataKey="name" type="category" width={150} />
-                    <Tooltip formatter={(value) => `Le ${value.toLocaleString()}`} />
-                    <Bar dataKey="value" fill="url(#colorGradient)" radius={[0, 4, 4, 0]} />
-                    <defs>
-                      <linearGradient id="colorGradient" x1="0" y1="0" x2="1" y2="0">
-                        <stop offset="0%" stopColor="#1EB053" />
-                        <stop offset="100%" stopColor="#0072C6" />
-                      </linearGradient>
-                    </defs>
-                  </BarChart>
-                </ResponsiveContainer>
+              <CardContent className="pt-6">
+                <GradientBarChart 
+                  data={salesAnalytics.topProducts}
+                  dataKey="value"
+                  xKey="name"
+                  height={300}
+                  horizontal={true}
+                  formatter={(v) => `Le ${v.toLocaleString()}`}
+                  barSize={24}
+                />
               </CardContent>
             </Card>
           </div>
