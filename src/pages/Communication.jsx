@@ -13,8 +13,6 @@ import {
   MapPin,
   ExternalLink,
   Megaphone,
-  Bell,
-  Search,
   Repeat
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -28,7 +26,6 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { toast } from "sonner";
 import PageHeader from "@/components/ui/PageHeader";
 import EmptyState from "@/components/ui/EmptyState";
 import MeetingDialog from "@/components/communication/MeetingDialog";
