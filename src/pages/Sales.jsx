@@ -18,8 +18,17 @@ import {
   Truck,
   Warehouse,
   Store,
-  Users
+  Users,
+  Eye,
+  Download,
+  MoreVertical
 } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -187,6 +196,25 @@ export default function Sales() {
       }
     },
   });
+
+  const deleteSaleMutation = useMutation({
+    mutationFn: (saleId) => base44.entities.Sale.delete(saleId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['sales'] });
+      toast.success("Sale Deleted", { description: "The sale has been removed." });
+    },
+  });
+
+  const handleViewReceipt = (sale) => {
+    setLastSale(sale);
+    setShowReceipt(true);
+  };
+
+  const handleDeleteSale = (sale) => {
+    if (window.confirm(`Are you sure you want to delete sale ${sale.sale_number}? This action cannot be undone.`)) {
+      deleteSaleMutation.mutate(sale.id);
+    }
+  };
 
   // Filter products and add location-specific stock
   const filteredProducts = React.useMemo(() => {
@@ -688,22 +716,51 @@ export default function Sales() {
                           <p className="text-sm text-gray-500">
                             {sale.customer_name || 'Walk-in Customer'} • {sale.items?.length || 0} items
                           </p>
+                          <p className="text-xs text-gray-400">
+                            {format(new Date(sale.created_date), 'dd MMM yyyy, HH:mm')}
+                          </p>
                         </div>
                       </div>
-                      <div className="text-right">
-                        <p className="font-bold text-[#1EB053]">Le {sale.total_amount?.toLocaleString()}</p>
-                        <div className="flex items-center gap-2 flex-wrap">
-                          <Badge variant="secondary">{sale.sale_type}</Badge>
-                          <Badge variant="outline">{sale.payment_method}</Badge>
-                          {sale.location && (
-                            <Badge variant="outline" className="text-xs">
-                              {sale.sale_type === 'vehicle' && <Truck className="w-3 h-3 mr-1" />}
-                              {sale.sale_type === 'warehouse' && <Warehouse className="w-3 h-3 mr-1" />}
-                              {sale.sale_type === 'retail' && <Store className="w-3 h-3 mr-1" />}
-                              {sale.location}
+                      <div className="flex items-center gap-3">
+                        <div className="text-right">
+                          <p className="font-bold text-[#1EB053]">Le {sale.total_amount?.toLocaleString()}</p>
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <Badge variant="secondary">{sale.sale_type}</Badge>
+                            <Badge variant="outline">{sale.payment_method}</Badge>
+                            <Badge 
+                              variant="outline" 
+                              className={sale.payment_status === 'paid' ? 'bg-green-50 text-green-700 border-green-200' : 'bg-amber-50 text-amber-700 border-amber-200'}
+                            >
+                              {sale.payment_status}
                             </Badge>
-                          )}
+                          </div>
                         </div>
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" size="icon" className="h-8 w-8">
+                              <MoreVertical className="w-4 h-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuItem onClick={() => handleViewReceipt(sale)}>
+                              <Eye className="w-4 h-4 mr-2" />
+                              View Receipt
+                            </DropdownMenuItem>
+                            {sale.payment_status === 'paid' && (
+                              <DropdownMenuItem onClick={() => handleViewReceipt(sale)}>
+                                <Download className="w-4 h-4 mr-2" />
+                                Download PDF
+                              </DropdownMenuItem>
+                            )}
+                            <DropdownMenuItem 
+                              onClick={() => handleDeleteSale(sale)}
+                              className="text-red-600 focus:text-red-600"
+                            >
+                              <Trash2 className="w-4 h-4 mr-2" />
+                              Delete Sale
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
                       </div>
                     </div>
                   ))}

@@ -240,18 +240,41 @@ export default function ReceiptDialog({ open, onOpenChange, sale, organisation }
   const handleDownloadPDF = async () => {
     setDownloading(true);
     try {
-      // Create a blob from HTML and trigger download
       const htmlContent = getReceiptHTML();
-      const blob = new Blob([htmlContent], { type: 'text/html' });
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = `Receipt-${sale?.sale_number}.html`;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      URL.revokeObjectURL(url);
-      toast({ title: "Receipt downloaded", description: "Open the file and print to PDF for best results" });
+      
+      // Open a new window with the receipt HTML
+      const printWindow = window.open('', '_blank', 'width=500,height=700');
+      if (printWindow) {
+        printWindow.document.write(htmlContent);
+        printWindow.document.close();
+        
+        // Wait for content to load then trigger print dialog (user can save as PDF)
+        printWindow.onload = () => {
+          setTimeout(() => {
+            printWindow.print();
+          }, 300);
+        };
+        
+        toast({ 
+          title: "Receipt ready", 
+          description: "Choose 'Save as PDF' in the print dialog to download as PDF" 
+        });
+      } else {
+        // Fallback: download as HTML if popup blocked
+        const blob = new Blob([htmlContent], { type: 'text/html' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `Receipt-${sale?.sale_number}.html`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+        toast({ 
+          title: "Receipt downloaded", 
+          description: "Open the file in browser and use Print > Save as PDF" 
+        });
+      }
     } catch (error) {
       toast({ title: "Download failed", variant: "destructive" });
     }
