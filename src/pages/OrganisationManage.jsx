@@ -482,100 +482,147 @@ export default function OrganisationManage() {
 
         {/* Branding Tab */}
         <TabsContent value="branding" className="mt-6">
-          <Card>
-            <CardHeader>
-              <CardTitle>Branding</CardTitle>
-              <CardDescription>Customize your organisation's appearance</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              <div>
-                <Label>Logo</Label>
-                <div className="mt-2 flex items-center gap-4">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* Logo Section */}
+            <Card>
+              <CardHeader className="pb-4">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#1EB053]/20 to-[#0072C6]/20 flex items-center justify-center">
+                    <Camera className="w-5 h-5 text-[#0072C6]" />
+                  </div>
+                  <div>
+                    <CardTitle>Company Logo</CardTitle>
+                    <CardDescription>Upload your organisation's logo</CardDescription>
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <div className="flex flex-col items-center p-6 border-2 border-dashed rounded-xl bg-gray-50/50 hover:bg-gray-50 transition-colors">
                   {formData.logo_url ? (
-                    <img src={formData.logo_url} alt="Logo" className="w-20 h-20 rounded-xl object-cover border" />
+                    <div className="relative group">
+                      <img src={formData.logo_url} alt="Logo" className="w-32 h-32 object-contain" />
+                      {isAdmin && (
+                        <label className="absolute inset-0 flex items-center justify-center bg-black/50 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer">
+                          <Edit3 className="w-6 h-6 text-white" />
+                          <input type="file" accept="image/*" onChange={handleLogoUpload} className="hidden" />
+                        </label>
+                      )}
+                    </div>
                   ) : (
-                    <div className="w-20 h-20 rounded-xl bg-gradient-to-br from-[#1EB053]/20 to-[#0072C6]/20 flex items-center justify-center border-2 border-dashed">
-                      <Building2 className="w-8 h-8 text-gray-400" />
-                    </div>
-                  )}
-                  {isAdmin && (
-                    <div>
-                      <Input type="file" accept="image/*" onChange={handleLogoUpload} className="max-w-[200px]" />
-                    </div>
-                  )}
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <Label>Primary Color</Label>
-                  <div className="flex gap-2 mt-1">
-                    <Input
-                      type="color"
-                      value={formData.primary_color}
-                      onChange={(e) => setFormData(prev => ({ ...prev, primary_color: e.target.value }))}
-                      disabled={!isAdmin}
-                      className="w-12 h-10 p-1"
-                    />
-                    <Input
-                      value={formData.primary_color}
-                      onChange={(e) => setFormData(prev => ({ ...prev, primary_color: e.target.value }))}
-                      disabled={!isAdmin}
-                      className="font-mono"
-                    />
-                  </div>
-                </div>
-                <div>
-                  <Label>Secondary Color</Label>
-                  <div className="flex gap-2 mt-1">
-                    <Input
-                      type="color"
-                      value={formData.secondary_color}
-                      onChange={(e) => setFormData(prev => ({ ...prev, secondary_color: e.target.value }))}
-                      disabled={!isAdmin}
-                      className="w-12 h-10 p-1"
-                    />
-                    <Input
-                      value={formData.secondary_color}
-                      onChange={(e) => setFormData(prev => ({ ...prev, secondary_color: e.target.value }))}
-                      disabled={!isAdmin}
-                      className="font-mono"
-                    />
-                  </div>
-                </div>
-              </div>
-
-              {/* Preview */}
-              <div>
-                <Label>Preview</Label>
-                <div
-                  className="mt-2 p-4 rounded-xl text-white"
-                  style={{ background: `linear-gradient(135deg, ${formData.primary_color} 0%, ${formData.secondary_color} 100%)` }}
-                >
-                  <div className="flex items-center gap-3">
-                    {formData.logo_url ? (
-                      <img src={formData.logo_url} alt="" className="w-10 h-10 rounded-lg object-cover bg-white" />
-                    ) : (
-                      <div className="w-10 h-10 rounded-lg bg-white/20 flex items-center justify-center">
-                        <Building2 className="w-5 h-5" />
+                    <div className="text-center">
+                      <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-[#1EB053]/10 to-[#0072C6]/10 flex items-center justify-center mx-auto mb-4">
+                        <Upload className="w-8 h-8 text-gray-400" />
                       </div>
-                    )}
-                    <div>
-                      <h3 className="font-bold">{formData.name}</h3>
-                      <p className="text-sm opacity-80">{formData.city}, {formData.country}</p>
+                      <p className="text-gray-500 mb-2">No logo uploaded</p>
+                      {isAdmin && (
+                        <label className="inline-flex items-center gap-2 px-4 py-2 bg-white border rounded-lg cursor-pointer hover:bg-gray-50 transition-colors">
+                          <Upload className="w-4 h-4" />
+                          <span className="text-sm font-medium">Upload Logo</span>
+                          <input type="file" accept="image/*" onChange={handleLogoUpload} className="hidden" />
+                        </label>
+                      )}
+                    </div>
+                  )}
+                </div>
+                <p className="text-xs text-gray-500 text-center mt-3">Recommended: PNG or SVG, at least 200x200px</p>
+              </CardContent>
+            </Card>
+
+            {/* Colors Section */}
+            <Card>
+              <CardHeader className="pb-4">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#1EB053]/20 to-[#0072C6]/20 flex items-center justify-center">
+                    <Palette className="w-5 h-5 text-[#1EB053]" />
+                  </div>
+                  <div>
+                    <CardTitle>Brand Colors</CardTitle>
+                    <CardDescription>Customize your organisation's colors</CardDescription>
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-3">
+                    <Label className="text-sm font-medium text-gray-700">Primary Color</Label>
+                    <div className="flex items-center gap-3">
+                      <div 
+                        className="w-14 h-14 rounded-xl shadow-inner border-4 border-white shadow-gray-200 cursor-pointer overflow-hidden"
+                        style={{ backgroundColor: formData.primary_color }}
+                      >
+                        <input
+                          type="color"
+                          value={formData.primary_color}
+                          onChange={(e) => setFormData(prev => ({ ...prev, primary_color: e.target.value }))}
+                          disabled={!isAdmin}
+                          className="w-full h-full opacity-0 cursor-pointer"
+                        />
+                      </div>
+                      <Input
+                        value={formData.primary_color}
+                        onChange={(e) => setFormData(prev => ({ ...prev, primary_color: e.target.value }))}
+                        disabled={!isAdmin}
+                        className="font-mono text-sm h-11 flex-1"
+                      />
+                    </div>
+                  </div>
+                  <div className="space-y-3">
+                    <Label className="text-sm font-medium text-gray-700">Secondary Color</Label>
+                    <div className="flex items-center gap-3">
+                      <div 
+                        className="w-14 h-14 rounded-xl shadow-inner border-4 border-white shadow-gray-200 cursor-pointer overflow-hidden"
+                        style={{ backgroundColor: formData.secondary_color }}
+                      >
+                        <input
+                          type="color"
+                          value={formData.secondary_color}
+                          onChange={(e) => setFormData(prev => ({ ...prev, secondary_color: e.target.value }))}
+                          disabled={!isAdmin}
+                          className="w-full h-full opacity-0 cursor-pointer"
+                        />
+                      </div>
+                      <Input
+                        value={formData.secondary_color}
+                        onChange={(e) => setFormData(prev => ({ ...prev, secondary_color: e.target.value }))}
+                        disabled={!isAdmin}
+                        className="font-mono text-sm h-11 flex-1"
+                      />
                     </div>
                   </div>
                 </div>
-              </div>
 
-              {isAdmin && (
-                <Button onClick={handleSave} disabled={updateOrgMutation.isPending} className="bg-gradient-to-r from-[#1EB053] to-[#0072C6] hover:from-[#178f43] hover:to-[#005a9e] w-full sm:w-auto">
-                  {updateOrgMutation.isPending ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Save className="w-4 h-4 mr-2" />}
-                  Save Changes
-                </Button>
-              )}
-            </CardContent>
-          </Card>
+                {/* Live Preview */}
+                <div className="space-y-3">
+                  <Label className="text-sm font-medium text-gray-700">Live Preview</Label>
+                  <div
+                    className="p-6 rounded-2xl text-white shadow-lg"
+                    style={{ background: `linear-gradient(135deg, ${formData.primary_color} 0%, ${formData.secondary_color} 100%)` }}
+                  >
+                    <div className="flex items-center gap-4">
+                      {formData.logo_url ? (
+                        <img src={formData.logo_url} alt="" className="w-14 h-14 object-contain bg-white rounded-xl p-1" />
+                      ) : (
+                        <div className="w-14 h-14 rounded-xl bg-white/20 backdrop-blur flex items-center justify-center">
+                          <Building2 className="w-7 h-7" />
+                        </div>
+                      )}
+                      <div>
+                        <h3 className="font-bold text-lg">{formData.name}</h3>
+                        <p className="text-sm opacity-80">{formData.city ? `${formData.city}, ${formData.country}` : formData.country}</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {isAdmin && (
+                  <Button onClick={handleSave} disabled={updateOrgMutation.isPending} className="w-full bg-gradient-to-r from-[#1EB053] to-[#0072C6] hover:from-[#178f43] hover:to-[#005a9e] shadow-lg">
+                    {updateOrgMutation.isPending ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Save className="w-4 h-4 mr-2" />}
+                    Save Branding
+                  </Button>
+                )}
+              </CardContent>
+            </Card>
+          </div>
         </TabsContent>
 
         {/* Members Tab */}
