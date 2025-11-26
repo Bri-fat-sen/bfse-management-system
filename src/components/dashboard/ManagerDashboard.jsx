@@ -391,7 +391,7 @@ export default function ManagerDashboard({ currentEmployee, orgId, user }) {
         />
         <StatCard
           title="Active Contracts"
-          value={myContracts.length}
+          value={truckContracts.filter(c => c.status === 'in_progress' || c.status === 'pending').length}
           icon={FileText}
           color="gold"
           subtitle="In progress"
