@@ -755,6 +755,18 @@ export default function Inventory() {
         organisation={organisation?.[0]}
       />
 
+      {/* Stock Transfer Dialog */}
+      <StockTransferDialog
+        open={showTransferDialog}
+        onOpenChange={setShowTransferDialog}
+        products={products}
+        warehouses={warehouses}
+        vehicles={vehicles}
+        stockLevels={stockLevels}
+        orgId={orgId}
+        currentEmployee={currentEmployee}
+      />
+
       {/* Product Dialog */}
       <Dialog open={showProductDialog} onOpenChange={setShowProductDialog}>
         <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto w-[95vw] sm:w-full">
