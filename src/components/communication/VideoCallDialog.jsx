@@ -71,8 +71,17 @@ export default function VideoCallDialog({
 
   const initializeAgora = async () => {
     try {
-      // Dynamically import Agora SDK
-      const AgoraRTC = (await import("agora-rtc-sdk-ng")).default;
+      // Load Agora SDK from CDN if not already loaded
+      if (!window.AgoraRTC) {
+        await new Promise((resolve, reject) => {
+          const script = document.createElement('script');
+          script.src = 'https://download.agora.io/sdk/release/AgoraRTC_N-4.20.0.js';
+          script.onload = resolve;
+          script.onerror = reject;
+          document.head.appendChild(script);
+        });
+      }
+      const AgoraRTC = window.AgoraRTC;
       
       // Get token from backend
       const channelName = `call_${room?.id || Date.now()}`;
@@ -246,7 +255,7 @@ export default function VideoCallDialog({
     if (!agoraClientRef.current) return;
 
     try {
-      const AgoraRTC = (await import("agora-rtc-sdk-ng")).default;
+      const AgoraRTC = window.AgoraRTC;
 
       if (isScreenSharing) {
         // Stop screen sharing, restore camera
