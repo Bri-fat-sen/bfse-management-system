@@ -1,80 +1,105 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { base44 } from "@/api/base44Client";
-import { useQuery } from "@tanstack/react-query";
 import { format } from "date-fns";
+import { debounce } from "lodash";
 import {
   Search,
   X,
   MessageSquare,
+  Users,
   ArrowRight,
   Loader2
 } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Badge } from "@/components/ui/badge";
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { Badge } from "@/components/ui/badge";
 
-export default function MessageSearch({
-  open,
-  onOpenChange,
-  orgId,
-  rooms = [],
-  onSelectMessage
+export default function MessageSearch({ 
+  open, 
+  onOpenChange, 
+  orgId, 
+  currentEmployee,
+  onSelectRoom,
+  rooms = []
 }) {
   const [searchTerm, setSearchTerm] = useState("");
-  const [debouncedSearch, setDebouncedSearch] = useState("");
+  const [results, setResults] = useState({ messages: [], rooms: [] });
+  const [isSearching, setIsSearching] = useState(false);
 
-  // Debounce search
-  React.useEffect(() => {
-    const timer = setTimeout(() => {
-      setDebouncedSearch(searchTerm);
-    }, 300);
-    return () => clearTimeout(timer);
-  }, [searchTerm]);
+  const searchMessages = useCallback(
+    debounce(async (term) => {
+      if (!term || term.length < 2) {
+        setResults({ messages: [], rooms: [] });
+        setIsSearching(false);
+        return;
+      }
 
-  const { data: allMessages = [], isLoading } = useQuery({
-    queryKey: ['searchMessages', orgId],
-    queryFn: () => base44.entities.ChatMessage.filter({ organisation_id: orgId }, '-created_date', 500),
-    enabled: !!orgId && open,
-  });
+      setIsSearching(true);
+      try {
+        // Search messages
+        const allMessages = await base44.entities.ChatMessage.filter({
+          organisation_id: orgId
+        }, '-created_date', 100);
 
-  const searchResults = useMemo(() => {
-    if (!debouncedSearch.trim() || debouncedSearch.length < 2) return [];
-    
-    const term = debouncedSearch.toLowerCase();
-    return allMessages
-      .filter(m => 
-        m.content?.toLowerCase().includes(term) ||
-        m.sender_name?.toLowerCase().includes(term) ||
-        m.file_name?.toLowerCase().includes(term)
-      )
-      .slice(0, 50);
-  }, [allMessages, debouncedSearch]);
+        const matchingMessages = allMessages.filter(m => 
+          m.content?.toLowerCase().includes(term.toLowerCase()) ||
+          m.sender_name?.toLowerCase().includes(term.toLowerCase())
+        ).slice(0, 20);
 
-  const handleSelectResult = (message) => {
+        // Search rooms
+        const matchingRooms = rooms.filter(r =>
+          r.name?.toLowerCase().includes(term.toLowerCase()) ||
+          r.participant_names?.some(n => n?.toLowerCase().includes(term.toLowerCase()))
+        );
+
+        setResults({
+          messages: matchingMessages,
+          rooms: matchingRooms
+        });
+      } catch (error) {
+        console.error('Search error:', error);
+      } finally {
+        setIsSearching(false);
+      }
+    }, 300),
+    [orgId, rooms]
+  );
+
+  useEffect(() => {
+    searchMessages(searchTerm);
+  }, [searchTerm, searchMessages]);
+
+  const handleClose = () => {
+    setSearchTerm("");
+    setResults({ messages: [], rooms: [] });
+    onOpenChange(false);
+  };
+
+  const handleSelectMessage = (message) => {
     const room = rooms.find(r => r.id === message.room_id);
     if (room) {
-      onSelectMessage?.(room, message);
-      onOpenChange(false);
-      setSearchTerm("");
+      onSelectRoom(room, message.id);
+      handleClose();
     }
   };
 
-  const getRoomName = (roomId) => {
-    const room = rooms.find(r => r.id === roomId);
-    return room?.name || 'Unknown';
+  const handleSelectRoom = (room) => {
+    onSelectRoom(room);
+    handleClose();
   };
 
   const highlightText = (text, term) => {
-    if (!text || !term) return text;
-    const parts = text.split(new RegExp(`(${term})`, 'gi'));
+    if (!term || !text) return text;
+    const regex = new RegExp(`(${term})`, 'gi');
+    const parts = text.split(regex);
     return parts.map((part, i) => 
       part.toLowerCase() === term.toLowerCase() 
         ? <mark key={i} className="bg-yellow-200 rounded px-0.5">{part}</mark>
@@ -83,8 +108,8 @@ export default function MessageSearch({
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-lg max-h-[80vh] flex flex-col">
+    <Dialog open={open} onOpenChange={handleClose}>
+      <DialogContent className="max-w-lg max-h-[80vh] overflow-hidden flex flex-col">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Search className="w-5 h-5" />
@@ -95,7 +120,7 @@ export default function MessageSearch({
         <div className="relative">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
           <Input
-            placeholder="Search messages, files, or people..."
+            placeholder="Search messages, people, or groups..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             className="pl-10 pr-10"
@@ -114,56 +139,100 @@ export default function MessageSearch({
         </div>
 
         <ScrollArea className="flex-1 mt-4">
-          {isLoading ? (
-            <div className="flex items-center justify-center py-8">
+          {isSearching ? (
+            <div className="flex items-center justify-center py-12">
               <Loader2 className="w-6 h-6 animate-spin text-gray-400" />
             </div>
           ) : searchTerm.length < 2 ? (
-            <div className="text-center py-8 text-gray-500">
-              <Search className="w-12 h-12 mx-auto mb-2 text-gray-300" />
-              <p className="text-sm">Type at least 2 characters to search</p>
+            <div className="text-center py-12 text-gray-500">
+              <Search className="w-12 h-12 mx-auto mb-3 text-gray-300" />
+              <p>Type at least 2 characters to search</p>
             </div>
-          ) : searchResults.length === 0 ? (
-            <div className="text-center py-8 text-gray-500">
-              <MessageSquare className="w-12 h-12 mx-auto mb-2 text-gray-300" />
-              <p className="text-sm">No messages found</p>
+          ) : results.messages.length === 0 && results.rooms.length === 0 ? (
+            <div className="text-center py-12 text-gray-500">
+              <MessageSquare className="w-12 h-12 mx-auto mb-3 text-gray-300" />
+              <p>No results found for "{searchTerm}"</p>
             </div>
           ) : (
-            <div className="space-y-2">
-              <p className="text-xs text-gray-500 mb-3">
-                {searchResults.length} result{searchResults.length !== 1 && 's'}
-              </p>
-              {searchResults.map((msg) => (
-                <div
-                  key={msg.id}
-                  className="p-3 rounded-lg border hover:bg-gray-50 cursor-pointer transition-colors group"
-                  onClick={() => handleSelectResult(msg)}
-                >
-                  <div className="flex items-start gap-3">
-                    <Avatar className="w-8 h-8 flex-shrink-0">
-                      <AvatarImage src={msg.sender_photo} />
-                      <AvatarFallback className="text-xs bg-gradient-to-br from-[#1EB053] to-[#0072C6] text-white">
-                        {msg.sender_name?.charAt(0)}
-                      </AvatarFallback>
-                    </Avatar>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 mb-1">
-                        <span className="font-medium text-sm">{msg.sender_name}</span>
-                        <span className="text-xs text-gray-400">
-                          {format(new Date(msg.created_date), 'MMM d, HH:mm')}
-                        </span>
+            <div className="space-y-6">
+              {/* Rooms */}
+              {results.rooms.length > 0 && (
+                <div>
+                  <h4 className="text-sm font-medium text-gray-500 mb-2 px-1">Conversations</h4>
+                  <div className="space-y-1">
+                    {results.rooms.map((room) => (
+                      <div
+                        key={room.id}
+                        className="flex items-center gap-3 p-3 rounded-lg hover:bg-gray-50 cursor-pointer transition-colors"
+                        onClick={() => handleSelectRoom(room)}
+                      >
+                        <Avatar className="w-10 h-10">
+                          {room.type === 'group' ? (
+                            <AvatarFallback className="bg-gradient-to-br from-purple-500 to-pink-500 text-white">
+                              <Users className="w-5 h-5" />
+                            </AvatarFallback>
+                          ) : (
+                            <AvatarFallback className="bg-gradient-to-br from-[#1EB053] to-[#0072C6] text-white">
+                              {room.name?.charAt(0)}
+                            </AvatarFallback>
+                          )}
+                        </Avatar>
+                        <div className="flex-1 min-w-0">
+                          <p className="font-medium">{highlightText(room.name, searchTerm)}</p>
+                          <p className="text-sm text-gray-500 truncate">
+                            {room.type === 'group' 
+                              ? `${room.participants?.length || 0} members` 
+                              : room.participant_names?.join(', ')}
+                          </p>
+                        </div>
+                        <ArrowRight className="w-4 h-4 text-gray-400" />
                       </div>
-                      <p className="text-sm text-gray-700 line-clamp-2">
-                        {highlightText(msg.content, debouncedSearch)}
-                      </p>
-                      <Badge variant="outline" className="mt-2 text-xs">
-                        {getRoomName(msg.room_id)}
-                      </Badge>
-                    </div>
-                    <ArrowRight className="w-4 h-4 text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity" />
+                    ))}
                   </div>
                 </div>
-              ))}
+              )}
+
+              {/* Messages */}
+              {results.messages.length > 0 && (
+                <div>
+                  <h4 className="text-sm font-medium text-gray-500 mb-2 px-1">Messages</h4>
+                  <div className="space-y-1">
+                    {results.messages.map((msg) => {
+                      const room = rooms.find(r => r.id === msg.room_id);
+                      return (
+                        <div
+                          key={msg.id}
+                          className="p-3 rounded-lg hover:bg-gray-50 cursor-pointer transition-colors"
+                          onClick={() => handleSelectMessage(msg)}
+                        >
+                          <div className="flex items-center gap-2 mb-1">
+                            <Avatar className="w-6 h-6">
+                              <AvatarImage src={msg.sender_photo} />
+                              <AvatarFallback className="text-xs">
+                                {msg.sender_name?.charAt(0)}
+                              </AvatarFallback>
+                            </Avatar>
+                            <span className="text-sm font-medium">
+                              {highlightText(msg.sender_name, searchTerm)}
+                            </span>
+                            {room && (
+                              <Badge variant="secondary" className="text-xs">
+                                {room.name}
+                              </Badge>
+                            )}
+                            <span className="text-xs text-gray-400 ml-auto">
+                              {format(new Date(msg.created_date), 'MMM d')}
+                            </span>
+                          </div>
+                          <p className="text-sm text-gray-600 line-clamp-2 ml-8">
+                            {highlightText(msg.content, searchTerm)}
+                          </p>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
             </div>
           )}
         </ScrollArea>
