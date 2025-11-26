@@ -40,6 +40,7 @@ export default function PurchaseOrderDialog({
   const [items, setItems] = useState(purchaseOrder?.items || []);
   const [shippingCost, setShippingCost] = useState(purchaseOrder?.shipping_cost || 0);
   const [taxAmount, setTaxAmount] = useState(purchaseOrder?.tax_amount || 0);
+  const [paymentMethod, setPaymentMethod] = useState(purchaseOrder?.payment_method || "bank_transfer");
 
   const { data: supplierProducts = [] } = useQuery({
     queryKey: ['supplierProducts', selectedSupplier],
@@ -55,11 +56,13 @@ export default function PurchaseOrderDialog({
       setItems(purchaseOrder.items || []);
       setShippingCost(purchaseOrder.shipping_cost || 0);
       setTaxAmount(purchaseOrder.tax_amount || 0);
+      setPaymentMethod(purchaseOrder.payment_method || "bank_transfer");
     } else {
       setSelectedSupplier("");
       setItems([]);
       setShippingCost(0);
       setTaxAmount(0);
+      setPaymentMethod("bank_transfer");
     }
   }, [purchaseOrder, open]);
 
@@ -133,6 +136,7 @@ export default function PurchaseOrderDialog({
       total_amount: total,
       status: purchaseOrder?.status || 'draft',
       payment_status: purchaseOrder?.payment_status || 'unpaid',
+      payment_method: paymentMethod,
       created_by: currentEmployee?.id,
       created_by_name: currentEmployee?.full_name,
       notes: formData.get('notes'),
@@ -193,7 +197,7 @@ export default function PurchaseOrderDialog({
                 className="mt-1" 
               />
             </div>
-            <div className="col-span-2">
+            <div>
               <Label>Warehouse</Label>
               <Select name="warehouse_id" defaultValue={purchaseOrder?.warehouse_id || ""}>
                 <SelectTrigger className="mt-1">
@@ -203,6 +207,20 @@ export default function PurchaseOrderDialog({
                   {warehouses.map(w => (
                     <SelectItem key={w.id} value={w.id}>{w.name}</SelectItem>
                   ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <Label>Payment Method</Label>
+              <Select value={paymentMethod} onValueChange={setPaymentMethod}>
+                <SelectTrigger className="mt-1">
+                  <SelectValue placeholder="Select payment method" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="cash">Cash</SelectItem>
+                  <SelectItem value="bank_transfer">Bank Transfer</SelectItem>
+                  <SelectItem value="mobile_money">Mobile Money</SelectItem>
+                  <SelectItem value="credit">Credit (Pay Later)</SelectItem>
                 </SelectContent>
               </Select>
             </div>
