@@ -342,101 +342,142 @@ export default function OrganisationManage() {
 
         {/* General Tab */}
         <TabsContent value="general" className="mt-6">
-          <Card>
-            <CardHeader>
-              <CardTitle>Organisation Details</CardTitle>
-              <CardDescription>Basic information about your organisation</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <Label>Organisation Name</Label>
-                  <Input
-                    value={formData.name}
-                    onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
-                    disabled={!isAdmin}
-                    className="mt-1"
-                  />
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            {/* Main Details */}
+            <Card className="lg:col-span-2">
+              <CardHeader className="pb-4">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#1EB053]/20 to-[#0072C6]/20 flex items-center justify-center">
+                    <Building2 className="w-5 h-5 text-[#0072C6]" />
+                  </div>
+                  <div>
+                    <CardTitle>Organisation Details</CardTitle>
+                    <CardDescription>Basic information about your organisation</CardDescription>
+                  </div>
                 </div>
-                <div>
-                  <Label>Organisation Code</Label>
-                  <Input
-                    value={formData.code}
-                    disabled
-                    className="mt-1 font-mono bg-gray-50"
-                  />
+              </CardHeader>
+              <CardContent className="space-y-5">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label className="text-sm font-medium text-gray-700">Organisation Name</Label>
+                    <Input
+                      value={formData.name}
+                      onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
+                      disabled={!isAdmin}
+                      className="h-11"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="text-sm font-medium text-gray-700">Owner / Manager</Label>
+                    <Input
+                      value={formData.owner_name}
+                      onChange={(e) => setFormData(prev => ({ ...prev, owner_name: e.target.value }))}
+                      disabled={!isAdmin}
+                      className="h-11"
+                      placeholder="Enter owner name"
+                    />
+                  </div>
                 </div>
-                <div>
-                  <Label>Owner/Manager</Label>
-                  <Input
-                    value={formData.owner_name}
-                    onChange={(e) => setFormData(prev => ({ ...prev, owner_name: e.target.value }))}
+
+                <div className="space-y-2">
+                  <Label className="text-sm font-medium text-gray-700">Address</Label>
+                  <Textarea
+                    value={formData.address}
+                    onChange={(e) => setFormData(prev => ({ ...prev, address: e.target.value }))}
                     disabled={!isAdmin}
-                    className="mt-1"
+                    rows={2}
+                    placeholder="Enter full address"
                   />
                 </div>
 
-              </div>
-
-              <div>
-                <Label>Address</Label>
-                <Textarea
-                  value={formData.address}
-                  onChange={(e) => setFormData(prev => ({ ...prev, address: e.target.value }))}
-                  disabled={!isAdmin}
-                  className="mt-1"
-                  rows={2}
-                />
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <Label>City</Label>
-                  <Input
-                    value={formData.city}
-                    onChange={(e) => setFormData(prev => ({ ...prev, city: e.target.value }))}
-                    disabled={!isAdmin}
-                    className="mt-1"
-                  />
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label className="text-sm font-medium text-gray-700">City</Label>
+                    <Input
+                      value={formData.city}
+                      onChange={(e) => setFormData(prev => ({ ...prev, city: e.target.value }))}
+                      disabled={!isAdmin}
+                      className="h-11"
+                      placeholder="e.g. Freetown"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="text-sm font-medium text-gray-700">Country</Label>
+                    <Input
+                      value={formData.country}
+                      onChange={(e) => setFormData(prev => ({ ...prev, country: e.target.value }))}
+                      disabled={!isAdmin}
+                      className="h-11"
+                    />
+                  </div>
                 </div>
-                <div>
-                  <Label>Country</Label>
-                  <Input
-                    value={formData.country}
-                    onChange={(e) => setFormData(prev => ({ ...prev, country: e.target.value }))}
-                    disabled={!isAdmin}
-                    className="mt-1"
-                  />
+
+                {isAdmin && (
+                  <div className="pt-4 border-t">
+                    <Button onClick={handleSave} disabled={updateOrgMutation.isPending} className="bg-gradient-to-r from-[#1EB053] to-[#0072C6] hover:from-[#178f43] hover:to-[#005a9e] shadow-lg">
+                      {updateOrgMutation.isPending ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Save className="w-4 h-4 mr-2" />}
+                      Save Changes
+                    </Button>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+
+            {/* Contact Info Card */}
+            <Card>
+              <CardHeader className="pb-4">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#1EB053]/20 to-[#0072C6]/20 flex items-center justify-center">
+                    <Mail className="w-5 h-5 text-[#1EB053]" />
+                  </div>
+                  <div>
+                    <CardTitle className="text-base">Contact Information</CardTitle>
+                    <CardDescription>How people can reach you</CardDescription>
+                  </div>
                 </div>
-                <div>
-                  <Label>Phone</Label>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="space-y-2">
+                  <Label className="text-sm font-medium text-gray-700 flex items-center gap-2">
+                    <Phone className="w-4 h-4 text-gray-400" />
+                    Phone Number
+                  </Label>
                   <Input
                     value={formData.phone}
                     onChange={(e) => setFormData(prev => ({ ...prev, phone: e.target.value }))}
                     disabled={!isAdmin}
-                    className="mt-1"
+                    className="h-11"
+                    placeholder="+232 xx xxx xxxx"
                   />
                 </div>
-                <div>
-                  <Label>Email</Label>
+                <div className="space-y-2">
+                  <Label className="text-sm font-medium text-gray-700 flex items-center gap-2">
+                    <Mail className="w-4 h-4 text-gray-400" />
+                    Email Address
+                  </Label>
                   <Input
                     type="email"
                     value={formData.email}
                     onChange={(e) => setFormData(prev => ({ ...prev, email: e.target.value }))}
                     disabled={!isAdmin}
-                    className="mt-1"
+                    className="h-11"
+                    placeholder="contact@company.com"
                   />
                 </div>
-              </div>
-
-              {isAdmin && (
-                <Button onClick={handleSave} disabled={updateOrgMutation.isPending} className="bg-gradient-to-r from-[#1EB053] to-[#0072C6] hover:from-[#178f43] hover:to-[#005a9e] w-full sm:w-auto">
-                  {updateOrgMutation.isPending ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Save className="w-4 h-4 mr-2" />}
-                  Save Changes
-                </Button>
-              )}
-            </CardContent>
-          </Card>
+                <div className="space-y-2">
+                  <Label className="text-sm font-medium text-gray-700 flex items-center gap-2">
+                    <Globe className="w-4 h-4 text-gray-400" />
+                    Timezone
+                  </Label>
+                  <Input
+                    value={organisation?.timezone || 'Africa/Freetown'}
+                    disabled
+                    className="h-11 bg-gray-50"
+                  />
+                </div>
+              </CardContent>
+            </Card>
+          </div>
         </TabsContent>
 
         {/* Branding Tab */}
