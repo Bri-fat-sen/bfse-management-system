@@ -208,13 +208,13 @@ export function GradientBarChart({
         {showGrid && <CartesianGrid strokeDasharray="3 3" stroke="#E5E7EB" horizontal={!horizontal} vertical={horizontal} />}
         {horizontal ? (
           <>
-            <XAxis type="number" tick={{ fontSize: 11, fill: '#6B7280' }} tickLine={false} axisLine={false} />
-            <YAxis dataKey={xKey} type="category" width={120} tick={{ fontSize: 11, fill: '#6B7280' }} tickLine={false} axisLine={false} />
+            <XAxis type="number" tick={{ fontSize: 10, fill: '#6B7280' }} tickLine={false} axisLine={false} />
+            <YAxis dataKey={xKey} type="category" width={80} tick={{ fontSize: 10, fill: '#6B7280' }} tickLine={false} axisLine={false} />
           </>
         ) : (
           <>
-            <XAxis dataKey={xKey} tick={{ fontSize: 11, fill: '#6B7280' }} tickLine={false} axisLine={{ stroke: '#E5E7EB' }} />
-            <YAxis tick={{ fontSize: 11, fill: '#6B7280' }} tickLine={false} axisLine={false} tickFormatter={(v) => v >= 1000 ? `${(v/1000).toFixed(0)}k` : v} />
+            <XAxis dataKey={xKey} tick={{ fontSize: 10, fill: '#6B7280' }} tickLine={false} axisLine={{ stroke: '#E5E7EB' }} />
+            <YAxis tick={{ fontSize: 10, fill: '#6B7280' }} tickLine={false} axisLine={false} tickFormatter={(v) => v >= 1000 ? `${(v/1000).toFixed(0)}k` : v} />
           </>
         )}
         <Tooltip content={<CustomTooltip formatter={formatter} />} cursor={{ fill: 'rgba(0,0,0,0.05)', radius: 8 }} />
@@ -350,9 +350,9 @@ export function DonutChart({
           align="center"
           verticalAlign="bottom"
           iconType="circle"
-          iconSize={10}
-          wrapperStyle={{ paddingTop: 20 }}
-          formatter={(value) => <span className="text-sm text-gray-600">{value}</span>}
+          iconSize={8}
+          wrapperStyle={{ paddingTop: 10, fontSize: 11 }}
+          formatter={(value) => <span className="text-xs text-gray-600">{value}</span>}
         />
       </PieChart>
     </ResponsiveContainer>
