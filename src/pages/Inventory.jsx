@@ -761,6 +761,48 @@ export default function Inventory() {
                 <Label>Description</Label>
                 <Textarea name="description" defaultValue={editingProduct?.description} className="mt-1" />
               </div>
+              
+              {/* Location Selection */}
+              <div className="col-span-2">
+                <Label className="flex items-center gap-2 mb-2">
+                  <MapPin className="w-4 h-4" />
+                  Available Locations
+                </Label>
+                <p className="text-xs text-gray-500 mb-3">Select where this product is available for sale</p>
+                
+                {allLocations.length === 0 ? (
+                  <p className="text-sm text-gray-500 italic">No locations available. Add warehouses or vehicles first.</p>
+                ) : (
+                  <div className="grid grid-cols-1 gap-2 max-h-40 overflow-y-auto border rounded-lg p-3 bg-gray-50">
+                    {allLocations.map((location) => (
+                      <div 
+                        key={location.id} 
+                        className={`flex items-center gap-3 p-2 rounded-lg cursor-pointer transition-colors ${
+                          selectedLocations.includes(location.id) 
+                            ? 'bg-[#1EB053]/10 border border-[#1EB053]' 
+                            : 'bg-white border border-gray-200 hover:border-gray-300'
+                        }`}
+                        onClick={() => toggleLocation(location.id)}
+                      >
+                        <Checkbox 
+                          checked={selectedLocations.includes(location.id)}
+                          onCheckedChange={() => toggleLocation(location.id)}
+                        />
+                        {location.type === 'warehouse' ? (
+                          <Warehouse className="w-4 h-4 text-blue-600" />
+                        ) : (
+                          <Truck className="w-4 h-4 text-purple-600" />
+                        )}
+                        <span className="text-sm flex-1">{location.name}</span>
+                        <span className="text-xs text-gray-400 capitalize">{location.type}</span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+                {selectedLocations.length > 0 && (
+                  <p className="text-xs text-[#1EB053] mt-2">{selectedLocations.length} location(s) selected</p>
+                )}
+              </div>
             </div>
             <DialogFooter className="flex-col sm:flex-row gap-2">
               <Button type="button" variant="outline" onClick={() => setShowProductDialog(false)} className="w-full sm:w-auto">
