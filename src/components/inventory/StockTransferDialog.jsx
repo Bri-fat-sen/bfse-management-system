@@ -181,7 +181,7 @@ export default function StockTransferDialog({
     type === 'warehouse' ? <Warehouse className="w-4 h-4" /> : <Truck className="w-4 h-4" />;
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent className="max-w-md">
         <DialogHeader>
           <div className="flex h-1 w-16 rounded-full overflow-hidden mb-3">
