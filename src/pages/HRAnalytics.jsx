@@ -24,30 +24,19 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import {
-  LineChart,
-  Line,
-  BarChart,
-  Bar,
-  PieChart,
-  Pie,
-  Cell,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  Legend,
-  ResponsiveContainer,
-  RadarChart,
-  Radar,
-  PolarGrid,
-  PolarAngleAxis,
-  PolarRadiusAxis
-} from "recharts";
 import PageHeader from "@/components/ui/PageHeader";
 import StatCard from "@/components/ui/StatCard";
+import {
+  GlowLineChart,
+  ColorfulBarChart,
+  GradientBarChart,
+  DonutChart,
+  AdvancedRadarChart,
+  ProgressRing,
+  SL_COLORS
+} from "@/components/charts/AdvancedCharts";
 
-const COLORS = ['#1EB053', '#0072C6', '#D4AF37', '#9333EA', '#EC4899', '#F59E0B', '#10B981', '#6366F1'];
+const COLORS = SL_COLORS.chart;
 
 const SKILL_LEVELS = {
   beginner: 1,
