@@ -702,6 +702,8 @@ export default function Inventory() {
           <BatchManagement
             products={products}
             warehouses={warehouses}
+            vehicles={vehicles}
+            stockLevels={stockLevels}
             orgId={orgId}
             currentEmployee={currentEmployee}
           />
