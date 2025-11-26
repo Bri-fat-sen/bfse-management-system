@@ -18,6 +18,7 @@ import Analytics from './pages/Analytics';
 import Reports from './pages/Reports';
 import Locations from './pages/Locations';
 import HRAnalytics from './pages/HRAnalytics';
+import CRM from './pages/CRM';
 import __Layout from './Layout.jsx';
 
 
@@ -42,6 +43,7 @@ export const PAGES = {
     "Reports": Reports,
     "Locations": Locations,
     "HRAnalytics": HRAnalytics,
+    "CRM": CRM,
 }
 
 export const pagesConfig = {
