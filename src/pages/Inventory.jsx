@@ -16,7 +16,10 @@ import {
   MapPin,
   Bell,
   FileText,
-  RefreshCw
+  RefreshCw,
+  Truck,
+  Store,
+  X
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
