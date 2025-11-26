@@ -93,6 +93,18 @@ export default function Inventory() {
     enabled: !!orgId,
   });
 
+  const { data: vehicles = [] } = useQuery({
+    queryKey: ['vehicles', orgId],
+    queryFn: () => base44.entities.Vehicle.filter({ organisation_id: orgId, status: 'active' }),
+    enabled: !!orgId,
+  });
+
+  // Combine warehouses and vehicles into locations
+  const allLocations = [
+    ...warehouses.map(w => ({ id: w.id, name: w.name, type: 'warehouse' })),
+    ...vehicles.map(v => ({ id: v.id, name: `${v.registration_number} - ${v.brand || ''} ${v.model || ''}`.trim(), type: 'vehicle' }))
+  ];
+
   const { data: stockMovements = [] } = useQuery({
     queryKey: ['stockMovements', orgId],
     queryFn: () => base44.entities.StockMovement.filter({ organisation_id: orgId }, '-created_date', 50),
