@@ -14,7 +14,12 @@ import {
   Calendar,
   Route as RouteIcon,
   Play,
-  CheckCircle
+  CheckCircle,
+  FileText,
+  Package,
+  MoreVertical,
+  Edit,
+  Trash2
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -42,6 +47,13 @@ import EmptyState from "@/components/ui/EmptyState";
 import StatCard from "@/components/ui/StatCard";
 import RouteDialog from "@/components/transport/RouteDialog";
 import TripReportExport from "@/components/transport/TripReportExport";
+import TruckContractDialog from "@/components/transport/TruckContractDialog";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 export default function Transport() {
   const { toast } = useToast();
@@ -50,6 +62,8 @@ export default function Transport() {
   const [showTripDialog, setShowTripDialog] = useState(false);
   const [showVehicleDialog, setShowVehicleDialog] = useState(false);
   const [showRouteDialog, setShowRouteDialog] = useState(false);
+  const [showContractDialog, setShowContractDialog] = useState(false);
+  const [editingContract, setEditingContract] = useState(null);
 
   const { data: user } = useQuery({
     queryKey: ['currentUser'],
@@ -95,6 +109,18 @@ export default function Transport() {
     enabled: !!orgId,
   });
 
+  const { data: employees = [] } = useQuery({
+    queryKey: ['employees', orgId],
+    queryFn: () => base44.entities.Employee.filter({ organisation_id: orgId }),
+    enabled: !!orgId,
+  });
+
+  const { data: truckContracts = [], isLoading: loadingContracts } = useQuery({
+    queryKey: ['truckContracts', orgId],
+    queryFn: () => base44.entities.TruckContract.filter({ organisation_id: orgId }, '-contract_date', 100),
+    enabled: !!orgId,
+  });
+
   const createTripMutation = useMutation({
     mutationFn: (data) => base44.entities.Trip.create(data),
     onSuccess: () => {
@@ -121,10 +147,20 @@ export default function Transport() {
     },
   });
 
+  const deleteContractMutation = useMutation({
+    mutationFn: (id) => base44.entities.TruckContract.delete(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['truckContracts'] });
+      toast({ title: "Contract deleted" });
+    },
+  });
+
   const todayTrips = trips.filter(t => t.date === format(new Date(), 'yyyy-MM-dd'));
   const totalRevenue = todayTrips.reduce((sum, t) => sum + (t.total_revenue || 0), 0);
   const totalPassengers = todayTrips.reduce((sum, t) => sum + (t.passengers_count || 0), 0);
   const activeVehicles = vehicles.filter(v => v.status === 'active');
+  const activeContracts = truckContracts.filter(c => c.status === 'in_progress');
+  const totalContractRevenue = truckContracts.filter(c => c.status === 'completed').reduce((sum, c) => sum + (c.net_revenue || 0), 0);
 
   const handleTripSubmit = (e) => {
     e.preventDefault();
@@ -229,6 +265,9 @@ export default function Transport() {
           </TabsTrigger>
           <TabsTrigger value="drivers" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#1EB053] data-[state=active]:to-[#0072C6] data-[state=active]:text-white">
             Drivers
+          </TabsTrigger>
+          <TabsTrigger value="contracts" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#1EB053] data-[state=active]:to-[#0072C6] data-[state=active]:text-white">
+            Truck Contracts
           </TabsTrigger>
         </TabsList>
 
@@ -445,6 +484,123 @@ export default function Transport() {
             </CardContent>
           </Card>
         </TabsContent>
+
+        <TabsContent value="contracts" className="mt-6">
+          <Card>
+            <CardHeader className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+              <div>
+                <CardTitle>Truck Contracts</CardTitle>
+                <p className="text-sm text-gray-500 mt-1">
+                  {activeContracts.length} active • Le {totalContractRevenue.toLocaleString()} total revenue
+                </p>
+              </div>
+              <Button onClick={() => { setEditingContract(null); setShowContractDialog(true); }} className="sl-gradient">
+                <Plus className="w-4 h-4 mr-2" />
+                New Contract
+              </Button>
+            </CardHeader>
+            <CardContent>
+              {loadingContracts ? (
+                <div className="space-y-3">
+                  {[...Array(3)].map((_, i) => (
+                    <div key={i} className="h-24 bg-gray-100 rounded-lg animate-pulse" />
+                  ))}
+                </div>
+              ) : truckContracts.length === 0 ? (
+                <EmptyState
+                  icon={FileText}
+                  title="No Contracts"
+                  description="Create truck contracts to track cargo transport jobs"
+                  action={() => setShowContractDialog(true)}
+                  actionLabel="Create Contract"
+                />
+              ) : (
+                <div className="space-y-3">
+                  {truckContracts.map((contract) => (
+                    <div key={contract.id} className="flex flex-col sm:flex-row sm:items-center justify-between p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors gap-3">
+                      <div className="flex items-start gap-4">
+                        <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${
+                          contract.status === 'completed' ? 'bg-green-100' :
+                          contract.status === 'in_progress' ? 'bg-blue-100' :
+                          contract.status === 'cancelled' ? 'bg-red-100' : 'bg-gray-100'
+                        }`}>
+                          <Package className={`w-6 h-6 ${
+                            contract.status === 'completed' ? 'text-green-600' :
+                            contract.status === 'in_progress' ? 'text-blue-600' :
+                            contract.status === 'cancelled' ? 'text-red-600' : 'text-gray-600'
+                          }`} />
+                        </div>
+                        <div>
+                          <div className="flex items-center gap-2">
+                            <p className="font-semibold">{contract.client_name}</p>
+                            <Badge variant="outline" className="text-xs">{contract.contract_number}</Badge>
+                          </div>
+                          <p className="text-sm text-gray-600">
+                            {contract.pickup_location} → {contract.delivery_location}
+                          </p>
+                          <div className="flex items-center gap-3 text-sm text-gray-500 mt-1">
+                            {contract.vehicle_registration && (
+                              <span className="flex items-center gap-1">
+                                <Truck className="w-3 h-3" />
+                                {contract.vehicle_registration}
+                              </span>
+                            )}
+                            <span className="flex items-center gap-1">
+                              <Calendar className="w-3 h-3" />
+                              {contract.contract_date}
+                            </span>
+                            <Badge variant={
+                              contract.status === 'completed' ? 'secondary' :
+                              contract.status === 'in_progress' ? 'default' :
+                              contract.status === 'cancelled' ? 'destructive' : 'outline'
+                            } className="capitalize">
+                              {contract.status?.replace(/_/g, ' ')}
+                            </Badge>
+                            <Badge variant={
+                              contract.payment_status === 'paid' ? 'secondary' :
+                              contract.payment_status === 'partial' ? 'default' : 'outline'
+                            } className="capitalize">
+                              {contract.payment_status}
+                            </Badge>
+                          </div>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <div className="text-right">
+                          <p className="text-sm text-gray-500">Contract: Le {contract.contract_amount?.toLocaleString()}</p>
+                          <p className="text-sm text-red-500">Expenses: -Le {contract.total_expenses?.toLocaleString()}</p>
+                          <p className={`font-bold ${(contract.net_revenue || 0) >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                            Net: Le {contract.net_revenue?.toLocaleString()}
+                          </p>
+                        </div>
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" size="icon">
+                              <MoreVertical className="w-4 h-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuItem onClick={() => { setEditingContract(contract); setShowContractDialog(true); }}>
+                              <Edit className="w-4 h-4 mr-2" />
+                              Edit
+                            </DropdownMenuItem>
+                            <DropdownMenuItem 
+                              onClick={() => deleteContractMutation.mutate(contract.id)}
+                              className="text-red-600"
+                            >
+                              <Trash2 className="w-4 h-4 mr-2" />
+                              Delete
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
       </Tabs>
 
       {/* Trip Dialog */}
@@ -531,6 +687,16 @@ export default function Transport() {
       <RouteDialog
         open={showRouteDialog}
         onOpenChange={setShowRouteDialog}
+        orgId={orgId}
+      />
+
+      {/* Truck Contract Dialog */}
+      <TruckContractDialog
+        open={showContractDialog}
+        onOpenChange={setShowContractDialog}
+        contract={editingContract}
+        vehicles={vehicles}
+        employees={employees}
         orgId={orgId}
       />
 
