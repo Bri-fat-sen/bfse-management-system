@@ -34,6 +34,10 @@ import ChatSidebar from "@/components/communication/ChatSidebar";
 import ChatWindow from "@/components/communication/ChatWindow";
 import AnnouncementsPanel from "@/components/communication/AnnouncementsPanel";
 import NewGroupDialog from "@/components/communication/NewGroupDialog";
+import GroupSettingsDialog from "@/components/communication/GroupSettingsDialog";
+import SharedFilesPanel from "@/components/communication/SharedFilesPanel";
+import MessageSearch from "@/components/communication/MessageSearch";
+import MeetingReminders, { RecurringMeetingOptions } from "@/components/communication/MeetingReminders";
 
 export default function Communication() {
   const queryClient = useQueryClient();
@@ -42,6 +46,9 @@ export default function Communication() {
   const [showNewChatDialog, setShowNewChatDialog] = useState(false);
   const [showNewGroupDialog, setShowNewGroupDialog] = useState(false);
   const [showMeetingDialog, setShowMeetingDialog] = useState(false);
+  const [showGroupSettings, setShowGroupSettings] = useState(false);
+  const [showFilesPanel, setShowFilesPanel] = useState(false);
+  const [showMessageSearch, setShowMessageSearch] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
 
   const { data: user } = useQuery({
@@ -278,12 +285,29 @@ export default function Communication() {
 
             {/* Chat Window */}
             <Card className="lg:col-span-8 xl:col-span-9 overflow-hidden">
-              <ChatWindow
-                room={selectedRoom}
-                messages={messages}
-                currentEmployee={currentEmployee}
-                orgId={orgId}
-              />
+              {showFilesPanel && selectedRoom ? (
+                <div className="h-full flex flex-col">
+                  <div className="p-3 border-b flex items-center justify-between">
+                    <h3 className="font-semibold">Shared Files</h3>
+                    <Button variant="ghost" size="sm" onClick={() => setShowFilesPanel(false)}>
+                      Back to Chat
+                    </Button>
+                  </div>
+                  <div className="flex-1 overflow-hidden">
+                    <SharedFilesPanel messages={messages} roomName={selectedRoom?.name} />
+                  </div>
+                </div>
+              ) : (
+                <ChatWindow
+                  room={selectedRoom}
+                  messages={messages}
+                  currentEmployee={currentEmployee}
+                  orgId={orgId}
+                  onViewInfo={() => selectedRoom?.type === 'group' && setShowGroupSettings(true)}
+                  onOpenSearch={() => setShowMessageSearch(true)}
+                  onOpenFiles={() => setShowFilesPanel(true)}
+                />
+              )}
             </Card>
           </div>
         </TabsContent>
@@ -469,6 +493,34 @@ export default function Communication() {
         employees={employees}
         orgId={orgId}
         currentEmployee={currentEmployee}
+      />
+
+      {/* Group Settings Dialog */}
+      <GroupSettingsDialog
+        open={showGroupSettings}
+        onOpenChange={setShowGroupSettings}
+        room={selectedRoom}
+        employees={employees}
+        currentEmployee={currentEmployee}
+        onRoomUpdated={setSelectedRoom}
+      />
+
+      {/* Message Search */}
+      <MessageSearch
+        open={showMessageSearch}
+        onOpenChange={setShowMessageSearch}
+        orgId={orgId}
+        rooms={myRooms}
+        onSelectMessage={(room, msg) => {
+          setSelectedRoom(room);
+          setShowMessageSearch(false);
+        }}
+      />
+
+      {/* Meeting Reminders */}
+      <MeetingReminders
+        meetings={meetings}
+        currentEmployeeId={currentEmployee?.id}
       />
     </div>
   );
