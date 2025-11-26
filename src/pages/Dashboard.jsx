@@ -172,82 +172,158 @@ export default function Dashboard() {
   return (
     <div className="space-y-6">
       {/* Welcome Header with Sierra Leone Theme */}
-      <div className="relative overflow-hidden rounded-2xl">
-        {/* Flag stripe at top */}
-        <div className="h-2 flex">
+      <div className="relative overflow-hidden rounded-2xl shadow-2xl">
+        {/* Animated Flag stripe at top */}
+        <div className="h-2 flex relative overflow-hidden">
           <div className="flex-1 bg-[#1EB053]" />
           <div className="flex-1 bg-white" />
           <div className="flex-1 bg-[#0072C6]" />
+          <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent animate-pulse" />
         </div>
-        <div className="sl-hero-pattern p-6 md:p-8 text-white">
+        <div className="relative bg-gradient-to-br from-[#0F1F3C] via-[#1a3a5c] to-[#0F1F3C] p-6 md:p-8 text-white overflow-hidden">
+          {/* Decorative background patterns */}
+          <div className="absolute inset-0 opacity-5">
+            <div className="absolute top-0 left-0 w-full h-full" style={{
+              backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='1'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`
+            }} />
+          </div>
+          
+          {/* Glowing orbs */}
+          <div className="absolute top-0 right-0 w-64 h-64 bg-[#1EB053] rounded-full blur-[100px] opacity-20" />
+          <div className="absolute bottom-0 left-0 w-48 h-48 bg-[#0072C6] rounded-full blur-[80px] opacity-20" />
+          <div className="absolute top-1/2 left-1/2 w-32 h-32 bg-[#D4AF37] rounded-full blur-[60px] opacity-10" />
+          
           <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 relative z-10">
             <div>
-              <p className="text-white/70 text-sm mb-1">🇸🇱 BRI-FAT-SEN ENTERPRISE</p>
-              <h1 className="text-2xl md:text-3xl font-bold">
+              <div className="flex items-center gap-2 mb-2">
+                <div className="flex h-6 w-1.5 rounded-full overflow-hidden">
+                  <div className="w-full bg-gradient-to-b from-[#1EB053] via-white to-[#0072C6]" />
+                </div>
+                <p className="text-[#D4AF37] text-sm font-semibold tracking-wide">🇸🇱 BRI-FAT-SEN ENTERPRISE</p>
+              </div>
+              <h1 className="text-2xl md:text-4xl font-bold bg-gradient-to-r from-white via-white to-[#D4AF37] bg-clip-text text-transparent">
                 Welcome back, {user?.full_name?.split(' ')[0] || 'User'}!
               </h1>
-              <p className="text-white/80 mt-1 flex items-center gap-2">
-                <Calendar className="w-4 h-4" />
+              <p className="text-white/70 mt-2 flex items-center gap-2">
+                <Calendar className="w-4 h-4 text-[#1EB053]" />
                 {format(new Date(), 'EEEE, MMMM d, yyyy')}
               </p>
             </div>
             <div className="flex items-center gap-3">
               <Link to={createPageUrl("Sales")}>
-                <Button variant="secondary" className="bg-white text-[#0072C6] hover:bg-white/90 font-semibold shadow-lg">
+                <Button className="bg-gradient-to-r from-[#1EB053] to-[#0072C6] hover:from-[#178f43] hover:to-[#005a9e] text-white font-semibold shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 border-0">
                   <ShoppingCart className="w-4 h-4 mr-2" />
                   New Sale
                 </Button>
               </Link>
             </div>
           </div>
-          {/* Decorative cotton tree silhouette */}
-          <div className="absolute right-4 bottom-0 opacity-10">
-            <svg width="120" height="100" viewBox="0 0 120 100" fill="currentColor">
+          
+          {/* Decorative cotton tree silhouette - larger and more prominent */}
+          <div className="absolute right-8 bottom-0 opacity-20">
+            <svg width="150" height="120" viewBox="0 0 120 100" fill="currentColor">
               <path d="M60 100V60M60 60C60 60 40 50 40 35C40 20 50 15 60 15C70 15 80 20 80 35C80 50 60 60 60 60Z M60 15C60 15 45 10 45 5C45 0 52 0 60 0C68 0 75 0 75 5C75 10 60 15 60 15Z M40 35C40 35 25 30 20 35C15 40 25 50 40 45 M80 35C80 35 95 30 100 35C105 40 95 50 80 45"/>
             </svg>
           </div>
+          
+          {/* Diamond accent */}
+          <div className="absolute right-32 top-4 w-3 h-3 bg-[#D4AF37] rotate-45 opacity-60" />
+          <div className="absolute right-40 top-8 w-2 h-2 bg-[#1EB053] rotate-45 opacity-40" />
+        </div>
+        {/* Bottom flag stripe */}
+        <div className="h-1 flex">
+          <div className="flex-1 bg-[#1EB053]" />
+          <div className="flex-1 bg-white" />
+          <div className="flex-1 bg-[#0072C6]" />
         </div>
       </div>
 
-      {/* Stats Grid */}
+      {/* Stats Grid with Sierra Leone themed cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <StatCard
-          title="Today's Sales"
-          value={`SLE ${totalRevenue.toLocaleString()}`}
-          icon={DollarSign}
-          color="green"
-          trend="up"
-          trendValue="+12% from yesterday"
-        />
-        <StatCard
-          title="Active Staff"
-          value={activeEmployees.length}
-          icon={Users}
-          color="blue"
-          subtitle={`${clockedIn.length} clocked in today`}
-        />
-        <StatCard
-          title="Products"
-          value={products.length}
-          icon={Package}
-          color="navy"
-          subtitle={`${lowStockProducts.length} low stock alerts`}
-        />
-        <StatCard
-          title="Transport Revenue"
-          value={`SLE ${transportRevenue.toLocaleString()}`}
-          icon={Truck}
-          color="gold"
-          subtitle={`${todayTrips.length} trips today`}
-        />
+        <Card className="relative overflow-hidden border-0 shadow-lg hover:shadow-xl transition-all duration-300 group">
+          <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-[#1EB053] to-[#0072C6]" />
+          <div className="absolute top-0 right-0 w-24 h-24 bg-gradient-to-br from-[#1EB053]/20 to-transparent rounded-full transform translate-x-8 -translate-y-8 group-hover:scale-150 transition-transform duration-500" />
+          <CardContent className="p-5">
+            <div className="flex items-start justify-between">
+              <div>
+                <p className="text-sm text-gray-500 font-medium">Today's Sales</p>
+                <p className="text-2xl font-bold text-gray-900 mt-1">Le {totalRevenue.toLocaleString()}</p>
+                <div className="flex items-center gap-1 mt-2 text-[#1EB053] text-sm">
+                  <TrendingUp className="w-4 h-4" />
+                  <span className="font-medium">+12% from yesterday</span>
+                </div>
+              </div>
+              <div className="p-3 rounded-xl bg-gradient-to-br from-[#1EB053] to-[#0072C6] shadow-lg">
+                <DollarSign className="w-6 h-6 text-white" />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="relative overflow-hidden border-0 shadow-lg hover:shadow-xl transition-all duration-300 group">
+          <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-[#0072C6] to-[#9333EA]" />
+          <div className="absolute top-0 right-0 w-24 h-24 bg-gradient-to-br from-[#0072C6]/20 to-transparent rounded-full transform translate-x-8 -translate-y-8 group-hover:scale-150 transition-transform duration-500" />
+          <CardContent className="p-5">
+            <div className="flex items-start justify-between">
+              <div>
+                <p className="text-sm text-gray-500 font-medium">Active Staff</p>
+                <p className="text-2xl font-bold text-gray-900 mt-1">{activeEmployees.length}</p>
+                <p className="text-sm text-gray-500 mt-2">{clockedIn.length} clocked in today</p>
+              </div>
+              <div className="p-3 rounded-xl bg-gradient-to-br from-[#0072C6] to-[#9333EA] shadow-lg">
+                <Users className="w-6 h-6 text-white" />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="relative overflow-hidden border-0 shadow-lg hover:shadow-xl transition-all duration-300 group">
+          <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-[#0F1F3C] to-[#1a3a5c]" />
+          <div className="absolute top-0 right-0 w-24 h-24 bg-gradient-to-br from-[#0F1F3C]/20 to-transparent rounded-full transform translate-x-8 -translate-y-8 group-hover:scale-150 transition-transform duration-500" />
+          <CardContent className="p-5">
+            <div className="flex items-start justify-between">
+              <div>
+                <p className="text-sm text-gray-500 font-medium">Products</p>
+                <p className="text-2xl font-bold text-gray-900 mt-1">{products.length}</p>
+                <p className="text-sm text-gray-500 mt-2">{lowStockProducts.length} low stock alerts</p>
+              </div>
+              <div className="p-3 rounded-xl bg-gradient-to-br from-[#0F1F3C] to-[#1a3a5c] shadow-lg">
+                <Package className="w-6 h-6 text-white" />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="relative overflow-hidden border-0 shadow-lg hover:shadow-xl transition-all duration-300 group">
+          <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-[#D4AF37] to-[#F59E0B]" />
+          <div className="absolute top-0 right-0 w-24 h-24 bg-gradient-to-br from-[#D4AF37]/20 to-transparent rounded-full transform translate-x-8 -translate-y-8 group-hover:scale-150 transition-transform duration-500" />
+          <CardContent className="p-5">
+            <div className="flex items-start justify-between">
+              <div>
+                <p className="text-sm text-gray-500 font-medium">Transport Revenue</p>
+                <p className="text-2xl font-bold text-gray-900 mt-1">Le {transportRevenue.toLocaleString()}</p>
+                <p className="text-sm text-gray-500 mt-2">{todayTrips.length} trips today</p>
+              </div>
+              <div className="p-3 rounded-xl bg-gradient-to-br from-[#D4AF37] to-[#F59E0B] shadow-lg">
+                <Truck className="w-6 h-6 text-white" />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
       </div>
 
       {/* Main Content Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Recent Sales */}
-        <Card className="lg:col-span-2 border-t-4 border-t-[#0072C6]">
-          <CardHeader className="flex flex-row items-center justify-between">
-            <CardTitle className="text-lg font-semibold">Recent Sales</CardTitle>
+        <Card className="lg:col-span-2 border-0 shadow-lg overflow-hidden">
+          <div className="h-1 bg-gradient-to-r from-[#1EB053] via-white to-[#0072C6]" />
+          <CardHeader className="flex flex-row items-center justify-between bg-gradient-to-r from-gray-50 to-white">
+            <div className="flex items-center gap-2">
+              <div className="p-2 rounded-lg bg-gradient-to-br from-[#0072C6] to-[#1EB053]">
+                <Activity className="w-4 h-4 text-white" />
+              </div>
+              <CardTitle className="text-lg font-semibold">Recent Sales</CardTitle>
+            </div>
             <Link to={createPageUrl("Sales")}>
               <Button variant="ghost" size="sm">
                 View All <ArrowRight className="w-4 h-4 ml-1" />
@@ -378,8 +454,24 @@ export default function Dashboard() {
       </div>
 
       {/* Footer with Sierra Leone Pride */}
-      <div className="text-center py-4">
-        <p className="text-sm text-gray-400">🇸🇱 Proudly serving businesses in Sierra Leone</p>
+      <div className="relative overflow-hidden rounded-xl bg-gradient-to-r from-[#0F1F3C] to-[#1a3a5c] p-4 mt-4">
+        <div className="absolute inset-0 opacity-10">
+          <div className="absolute top-0 right-0 w-32 h-32 bg-[#1EB053] rounded-full blur-[50px]" />
+          <div className="absolute bottom-0 left-0 w-24 h-24 bg-[#0072C6] rounded-full blur-[40px]" />
+        </div>
+        <div className="flex items-center justify-center gap-3 relative z-10">
+          <div className="flex h-6 w-12 rounded overflow-hidden shadow-lg">
+            <div className="flex-1 bg-[#1EB053]" />
+            <div className="flex-1 bg-white" />
+            <div className="flex-1 bg-[#0072C6]" />
+          </div>
+          <p className="text-sm text-white/80 font-medium">Proudly serving businesses in Sierra Leone</p>
+          <div className="flex h-6 w-12 rounded overflow-hidden shadow-lg">
+            <div className="flex-1 bg-[#1EB053]" />
+            <div className="flex-1 bg-white" />
+            <div className="flex-1 bg-[#0072C6]" />
+          </div>
+        </div>
       </div>
     </div>
   );
