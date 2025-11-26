@@ -157,6 +157,15 @@ export default function ChatPanel({ isOpen, onClose, orgId, currentEmployee }) {
     },
   });
 
+  const deleteRoomMutation = useMutation({
+    mutationFn: (id) => base44.entities.ChatRoom.delete(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['chatRooms'] });
+      setSelectedRoom(null);
+      toast.success("Chat deleted");
+    },
+  });
+
   const myRooms = chatRooms.filter(r => r.participants?.includes(currentEmployee?.id));
   
   const filteredRooms = myRooms.filter(room => 
@@ -423,6 +432,27 @@ export default function ChatPanel({ isOpen, onClose, orgId, currentEmployee }) {
               >
                 <Video className="w-4 h-4" />
               </Button>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" size="icon" className="text-white hover:bg-white/10">
+                    <MoreVertical className="w-4 h-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem onClick={() => notificationSettings?.toggleRoomMute?.(selectedRoom?.id)}>
+                    <BellOff className="w-4 h-4 mr-2" />
+                    {notificationSettings?.isRoomMuted?.(selectedRoom?.id) ? 'Unmute Chat' : 'Mute Chat'}
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem 
+                    onClick={() => deleteRoomMutation.mutate(selectedRoom?.id)}
+                    className="text-red-600"
+                  >
+                    <Trash2 className="w-4 h-4 mr-2" />
+                    Delete Chat
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
             </>
           )}
           <Link to={createPageUrl("Communication")}>
