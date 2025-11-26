@@ -4,14 +4,10 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { format } from "date-fns";
 import {
   Calendar,
-  Clock,
   Users,
   Plus,
   Edit2,
-  Trash2,
-  Copy,
-  Check,
-  X
+  Trash2
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
