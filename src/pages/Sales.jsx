@@ -295,7 +295,7 @@ export default function Sales() {
 
     const saleData = {
       organisation_id: orgId,
-      sale_number: `SL-${Date.now().toString(36).toUpperCase()}`,
+      sale_number: `SL-${format(new Date(), 'yyyyMMdd')}-${Math.floor(1000 + Math.random() * 9000)}`,
       sale_type: saleType,
       employee_id: currentEmployee?.id,
       employee_name: currentEmployee?.full_name,

@@ -126,7 +126,8 @@ export default function PurchaseOrderDialog({
     const formData = new FormData(e.target);
     const warehouse = warehouses.find(w => w.id === formData.get('warehouse_id'));
     
-    const poNumber = purchaseOrder?.po_number || `PO-${Date.now().toString(36).toUpperCase()}`;
+    // Auto-generate PO number: PO-YYYYMMDD-XXXX
+    const poNumber = purchaseOrder?.po_number || `PO-${format(new Date(), 'yyyyMMdd')}-${Math.floor(1000 + Math.random() * 9000)}`;
     
     const data = {
       organisation_id: orgId,

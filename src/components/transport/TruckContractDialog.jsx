@@ -140,8 +140,8 @@ export default function TruckContractDialog({
     const contractAmount = parseFloat(formData.contract_amount) || 0;
     const netRevenue = contractAmount - totalExpenses;
 
-    // Generate contract number
-    const contractNumber = `TC-${Date.now().toString().slice(-8)}`;
+    // Auto-generate contract number: TC-YYYYMMDD-XXXX
+    const contractNumber = `TC-${format(new Date(), 'yyyyMMdd')}-${Math.floor(1000 + Math.random() * 9000)}`;
 
     const data = {
       organisation_id: orgId,
