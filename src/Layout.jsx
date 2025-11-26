@@ -30,7 +30,8 @@ import {
   Shield,
   BarChart3,
   MapPin,
-  ChevronUp
+  ChevronUp,
+  Calendar
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { PermissionsProvider } from "@/components/permissions/PermissionsContext";
@@ -78,6 +79,7 @@ const menuSections = [
     items: [
       { name: "HR & Payroll", icon: Users, page: "HR", module: "hr" },
       { name: "Attendance", icon: Clock, page: "Attendance", module: "attendance" },
+      { name: "Work Schedules", icon: Calendar, page: "WorkSchedules", module: "hr" },
     ]
   },
   {
