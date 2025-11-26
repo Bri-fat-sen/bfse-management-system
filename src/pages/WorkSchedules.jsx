@@ -1,7 +1,7 @@
 import React, { useState, useMemo } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery } from "@tanstack/react-query";
-import { format, startOfWeek, endOfWeek, eachDayOfInterval, parseISO, getDay, startOfMonth, endOfMonth } from "date-fns";
+import { format, startOfWeek, endOfWeek, eachDayOfInterval, parseISO, getDay } from "date-fns";
 import {
   Calendar,
   Clock,
@@ -28,7 +28,7 @@ import {
 import PageHeader from "@/components/ui/PageHeader";
 import StatCard from "@/components/ui/StatCard";
 import WorkScheduleManager from "@/components/hr/WorkScheduleManager";
-import ScheduleComplianceCard from "@/components/hr/ScheduleComplianceCard";
+
 
 export default function WorkSchedules() {
   const [activeTab, setActiveTab] = useState("overview");

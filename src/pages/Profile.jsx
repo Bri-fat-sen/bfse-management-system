@@ -274,23 +274,23 @@ export default function Profile() {
               )}
             </CardContent>
           </Card>
-          </div>
-          </div>
+        </div>
+      </div>
 
-          {/* Skills & Development Section */}
-          {currentEmployee && (
-          <EmployeeSkillsSection employee={currentEmployee} canEdit={true} />
-          )}
+      {/* Skills & Development Section */}
+      {currentEmployee && (
+        <EmployeeSkillsSection employee={currentEmployee} canEdit={true} />
+      )}
 
-          {/* Performance Reviews Section */}
-          {currentEmployee && (
-          <EmployeePerformanceSection 
+      {/* Performance Reviews Section */}
+      {currentEmployee && (
+        <EmployeePerformanceSection 
           employee={currentEmployee} 
           currentEmployee={currentEmployee}
           orgId={orgId}
           canEdit={['super_admin', 'org_admin', 'hr_admin'].includes(currentEmployee?.role)}
-          />
-          )}
-          </div>
-          );
-          }
+        />
+      )}
+    </div>
+  );
+}
