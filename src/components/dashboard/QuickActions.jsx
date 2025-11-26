@@ -8,11 +8,8 @@ import {
   Truck,
   DollarSign,
   Clock,
-  FileText,
-  Bell,
   Calculator,
-  Warehouse,
-  ClipboardList
+  Warehouse
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
