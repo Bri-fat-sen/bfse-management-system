@@ -452,49 +452,46 @@ export default function HRAnalytics() {
         <TabsContent value="skills" className="space-y-4">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
             {/* Top Skills */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-lg">Top Skills</CardTitle>
+            <Card className="overflow-hidden border-0 shadow-sm">
+              <CardHeader className="bg-gradient-to-r from-[#1EB053]/5 to-[#10B981]/5 border-b">
+                <CardTitle className="text-lg flex items-center gap-2">
+                  <div className="p-2 rounded-lg bg-gradient-to-br from-[#1EB053] to-[#10B981]">
+                    <Award className="w-4 h-4 text-white" />
+                  </div>
+                  Top Skills
+                </CardTitle>
               </CardHeader>
-              <CardContent>
-                <ResponsiveContainer width="100%" height={300}>
-                  <BarChart data={skillDistribution} layout="vertical">
-                    <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis type="number" tick={{ fontSize: 12 }} />
-                    <YAxis dataKey="name" type="category" width={100} tick={{ fontSize: 11 }} />
-                    <Tooltip />
-                    <Bar dataKey="count" fill="#1EB053" name="Employees" radius={[0, 4, 4, 0]} />
-                  </BarChart>
-                </ResponsiveContainer>
+              <CardContent className="pt-6">
+                <GradientBarChart 
+                  data={skillDistribution}
+                  dataKey="count"
+                  xKey="name"
+                  height={300}
+                  horizontal={true}
+                  formatter={(v) => `${v} employees`}
+                  barSize={20}
+                />
               </CardContent>
             </Card>
 
             {/* Skill Radar */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-lg">Skills by Department</CardTitle>
+            <Card className="overflow-hidden border-0 shadow-sm">
+              <CardHeader className="bg-gradient-to-r from-[#9333EA]/5 to-[#EC4899]/5 border-b">
+                <CardTitle className="text-lg flex items-center gap-2">
+                  <div className="p-2 rounded-lg bg-gradient-to-br from-[#9333EA] to-[#EC4899]">
+                    <BookOpen className="w-4 h-4 text-white" />
+                  </div>
+                  Skills by Department
+                </CardTitle>
               </CardHeader>
-              <CardContent>
+              <CardContent className="pt-6">
                 {skillRadar.length > 0 ? (
-                  <ResponsiveContainer width="100%" height={300}>
-                    <RadarChart data={skillRadar}>
-                      <PolarGrid />
-                      <PolarAngleAxis dataKey="skill" tick={{ fontSize: 10 }} />
-                      <PolarRadiusAxis domain={[0, 4]} tick={{ fontSize: 10 }} />
-                      {departments.slice(0, 4).map((dept, i) => (
-                        <Radar
-                          key={dept}
-                          name={dept}
-                          dataKey={dept}
-                          stroke={COLORS[i]}
-                          fill={COLORS[i]}
-                          fillOpacity={0.2}
-                        />
-                      ))}
-                      <Legend />
-                      <Tooltip />
-                    </RadarChart>
-                  </ResponsiveContainer>
+                  <AdvancedRadarChart 
+                    data={skillRadar}
+                    angleKey="skill"
+                    height={300}
+                    dataKeys={departments.slice(0, 4).map((dept, i) => ({ dataKey: dept, name: dept }))}
+                  />
                 ) : (
                   <div className="h-[300px] flex items-center justify-center text-gray-500">
                     No skill data available
@@ -504,20 +501,34 @@ export default function HRAnalytics() {
             </Card>
 
             {/* Skill Level Distribution */}
-            <Card className="lg:col-span-2">
-              <CardHeader>
-                <CardTitle className="text-lg">Skill Proficiency Levels</CardTitle>
+            <Card className="lg:col-span-2 overflow-hidden border-0 shadow-sm">
+              <CardHeader className="bg-gradient-to-r from-[#0072C6]/5 to-[#6366F1]/5 border-b">
+                <CardTitle className="text-lg flex items-center gap-2">
+                  <div className="p-2 rounded-lg bg-gradient-to-br from-[#0072C6] to-[#6366F1]">
+                    <TrendingUp className="w-4 h-4 text-white" />
+                  </div>
+                  Skill Proficiency Levels
+                </CardTitle>
               </CardHeader>
-              <CardContent>
+              <CardContent className="pt-6">
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
                   {['beginner', 'intermediate', 'advanced', 'expert'].map((level, i) => {
                     const count = filteredEmployees.reduce((sum, emp) => 
                       sum + (emp.skills || []).filter(s => s.level === level).length, 0
                     );
+                    const total = filteredEmployees.reduce((sum, emp) => sum + (emp.skills || []).length, 0);
                     return (
-                      <div key={level} className="text-center p-4 bg-gray-50 rounded-lg">
-                        <div className={`text-3xl font-bold mb-1`} style={{ color: COLORS[i] }}>{count}</div>
-                        <div className="text-sm text-gray-600 capitalize">{level}</div>
+                      <div key={level} className="text-center p-6 bg-gradient-to-br from-gray-50 to-white rounded-xl border shadow-sm hover:shadow-md transition-shadow">
+                        <ProgressRing 
+                          value={count} 
+                          max={total || 1} 
+                          size={80} 
+                          strokeWidth={6}
+                          color={COLORS[i]}
+                          secondaryColor={COLORS[(i + 1) % COLORS.length]}
+                        />
+                        <div className={`text-2xl font-bold mt-3`} style={{ color: COLORS[i] }}>{count}</div>
+                        <div className="text-sm text-gray-600 capitalize mt-1">{level}</div>
                       </div>
                     );
                   })}
