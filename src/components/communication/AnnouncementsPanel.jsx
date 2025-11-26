@@ -10,7 +10,8 @@ import {
   Info,
   CheckCircle,
   X,
-  Send
+  Send,
+  Filter
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -32,7 +33,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
+import AnnouncementComments from "./AnnouncementComments";
 
 const PRIORITY_CONFIG = {
   urgent: { icon: AlertCircle, color: 'text-red-600', bg: 'bg-red-50', border: 'border-red-200' },
@@ -43,6 +46,8 @@ const PRIORITY_CONFIG = {
 export default function AnnouncementsPanel({ orgId, currentEmployee, canPost }) {
   const queryClient = useQueryClient();
   const [showNewDialog, setShowNewDialog] = useState(false);
+  const [filter, setFilter] = useState("all");
+  const [category, setCategory] = useState("");
 
   const { data: announcements = [] } = useQuery({
     queryKey: ['announcements', orgId],
@@ -74,8 +79,16 @@ export default function AnnouncementsPanel({ orgId, currentEmployee, canPost }) 
       content: formData.get('content'),
       message_type: 'announcement',
       priority: formData.get('priority') || 'normal',
+      category: formData.get('category') || 'general',
     });
   };
+
+  const filteredAnnouncements = announcements.filter(ann => {
+    if (filter === "urgent") return ann.priority === "urgent";
+    if (filter === "important") return ann.priority === "important";
+    if (filter === "unread") return !ann.acknowledged_by?.includes(currentEmployee?.id);
+    return true;
+  });
 
   return (
     <Card className="h-full flex flex-col">
@@ -92,29 +105,38 @@ export default function AnnouncementsPanel({ orgId, currentEmployee, canPost }) 
             </Button>
           )}
         </div>
+        <Tabs value={filter} onValueChange={setFilter} className="mt-3">
+          <TabsList className="w-full h-8 bg-gray-100">
+            <TabsTrigger value="all" className="flex-1 text-xs h-7">All</TabsTrigger>
+            <TabsTrigger value="urgent" className="flex-1 text-xs h-7">Urgent</TabsTrigger>
+            <TabsTrigger value="important" className="flex-1 text-xs h-7">Important</TabsTrigger>
+            <TabsTrigger value="unread" className="flex-1 text-xs h-7">Unread</TabsTrigger>
+          </TabsList>
+        </Tabs>
       </CardHeader>
       <CardContent className="flex-1 overflow-auto space-y-3 pt-0">
-        {announcements.length === 0 ? (
+        {filteredAnnouncements.length === 0 ? (
           <div className="text-center py-8 text-gray-500">
             <Megaphone className="w-12 h-12 mx-auto mb-2 text-gray-300" />
             <p className="text-sm">No announcements yet</p>
           </div>
         ) : (
-          announcements.map((ann) => {
+          filteredAnnouncements.map((ann) => {
             const config = PRIORITY_CONFIG[ann.priority] || PRIORITY_CONFIG.normal;
             const Icon = config.icon;
+            const isAcknowledged = ann.acknowledged_by?.includes(currentEmployee?.id);
             
             return (
               <div 
                 key={ann.id} 
-                className={`p-3 rounded-lg border ${config.bg} ${config.border}`}
+                className={`p-3 rounded-lg border ${config.bg} ${config.border} ${!isAcknowledged ? 'ring-2 ring-offset-1 ring-blue-200' : ''}`}
               >
                 <div className="flex items-start gap-3">
                   <div className={`p-2 rounded-lg bg-white ${config.color}`}>
                     <Icon className="w-4 h-4" />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 mb-1">
+                    <div className="flex items-center gap-2 mb-1 flex-wrap">
                       <span className="font-medium text-sm">{ann.sender_name}</span>
                       <span className="text-xs text-gray-500">
                         {format(new Date(ann.created_date), 'MMM d, HH:mm')}
@@ -122,8 +144,21 @@ export default function AnnouncementsPanel({ orgId, currentEmployee, canPost }) 
                       {ann.priority === 'urgent' && (
                         <Badge variant="destructive" className="text-xs px-1.5 py-0">Urgent</Badge>
                       )}
+                      {ann.priority === 'important' && (
+                        <Badge className="text-xs px-1.5 py-0 bg-amber-500">Important</Badge>
+                      )}
+                      {ann.category && ann.category !== 'general' && (
+                        <Badge variant="outline" className="text-xs px-1.5 py-0">{ann.category}</Badge>
+                      )}
                     </div>
                     <p className="text-sm text-gray-700 whitespace-pre-wrap">{ann.content}</p>
+                    
+                    {/* Comments & Reactions */}
+                    <AnnouncementComments 
+                      announcement={ann}
+                      currentEmployee={currentEmployee}
+                      orgId={orgId}
+                    />
                   </div>
                 </div>
               </div>
@@ -142,7 +177,7 @@ export default function AnnouncementsPanel({ orgId, currentEmployee, canPost }) 
             </DialogTitle>
           </DialogHeader>
           <form onSubmit={handlePost} className="space-y-4">
-            <div>
+            <div className="grid grid-cols-2 gap-3">
               <Select name="priority" defaultValue="normal">
                 <SelectTrigger>
                   <SelectValue placeholder="Priority" />
@@ -166,6 +201,19 @@ export default function AnnouncementsPanel({ orgId, currentEmployee, canPost }) 
                       Urgent
                     </div>
                   </SelectItem>
+                </SelectContent>
+              </Select>
+              <Select name="category" defaultValue="general">
+                <SelectTrigger>
+                  <SelectValue placeholder="Category" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="general">General</SelectItem>
+                  <SelectItem value="hr">HR</SelectItem>
+                  <SelectItem value="operations">Operations</SelectItem>
+                  <SelectItem value="sales">Sales</SelectItem>
+                  <SelectItem value="events">Events</SelectItem>
+                  <SelectItem value="policy">Policy</SelectItem>
                 </SelectContent>
               </Select>
             </div>
