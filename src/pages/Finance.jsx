@@ -166,21 +166,35 @@ export default function Finance() {
     { name: 'Vehicle Maintenance', value: maintenanceExpenses }
   ].filter(item => item.value > 0);
 
-  // Monthly revenue data
+  // Monthly revenue data (includes ALL revenue sources)
   const monthlyData = [];
   for (let i = 5; i >= 0; i--) {
     const date = new Date();
     date.setMonth(date.getMonth() - i);
     const monthStart = startOfMonth(date);
     const monthEnd = endOfMonth(date);
+    
+    // Sales revenue
     const monthSales = sales.filter(s => {
       const saleDate = new Date(s.created_date);
       return saleDate >= monthStart && saleDate <= monthEnd;
     }).reduce((sum, s) => sum + (s.total_amount || 0), 0);
     
+    // Transport trip revenue
+    const monthTrips = trips.filter(t => {
+      const tripDate = new Date(t.date);
+      return tripDate >= monthStart && tripDate <= monthEnd;
+    }).reduce((sum, t) => sum + (t.total_revenue || 0), 0);
+    
+    // Truck contract revenue (completed contracts)
+    const monthContracts = truckContracts.filter(c => {
+      const contractDate = new Date(c.contract_date);
+      return contractDate >= monthStart && contractDate <= monthEnd && c.status === 'completed';
+    }).reduce((sum, c) => sum + (c.contract_amount || 0), 0);
+    
     monthlyData.push({
       month: format(date, 'MMM'),
-      revenue: monthSales
+      revenue: monthSales + monthTrips + monthContracts
     });
   }
 
