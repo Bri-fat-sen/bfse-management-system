@@ -381,37 +381,75 @@ export default function Transport() {
                 />
               ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {vehicles.map((vehicle) => (
-                    <Card key={vehicle.id}>
-                      <CardContent className="p-4">
-                        <div className="flex items-start gap-4">
-                          <div className={`w-14 h-14 rounded-xl flex items-center justify-center ${
-                            vehicle.status === 'active' ? 'bg-gradient-to-br from-[#1EB053] to-[#1D5FC3]' : 'bg-gray-200'
-                          }`}>
-                            <Truck className={`w-7 h-7 ${vehicle.status === 'active' ? 'text-white' : 'text-gray-500'}`} />
-                          </div>
-                          <div className="flex-1">
-                            <h3 className="font-bold text-lg">{vehicle.registration_number}</h3>
-                            <p className="text-gray-500">{vehicle.brand} {vehicle.model}</p>
-                            <div className="flex items-center gap-2 mt-2">
-                              <Badge variant={vehicle.status === 'active' ? 'secondary' : 'outline'}>
-                                {vehicle.status}
-                              </Badge>
-                              <Badge variant="outline" className="flex items-center gap-1">
-                                <Users className="w-3 h-3" />
-                                {vehicle.capacity}
-                              </Badge>
+                  {vehicles.map((vehicle) => {
+                    const vehicleMaintenance = maintenanceRecords.filter(m => m.vehicle_id === vehicle.id);
+                    const lastMaintenance = vehicleMaintenance[0];
+                    const vehicleOverdue = vehicleMaintenance.filter(m => m.next_due_date && isPast(new Date(m.next_due_date)));
+                    const hasOverdue = vehicleOverdue.length > 0;
+
+                    return (
+                      <Card key={vehicle.id} className={hasOverdue ? 'border-red-300 bg-red-50/30' : ''}>
+                        <CardContent className="p-4">
+                          <div className="flex items-start gap-4">
+                            <div className={`w-14 h-14 rounded-xl flex items-center justify-center ${
+                              vehicle.status === 'active' ? 'bg-gradient-to-br from-[#1EB053] to-[#1D5FC3]' : 'bg-gray-200'
+                            }`}>
+                              <Truck className={`w-7 h-7 ${vehicle.status === 'active' ? 'text-white' : 'text-gray-500'}`} />
+                            </div>
+                            <div className="flex-1">
+                              <h3 className="font-bold text-lg">{vehicle.registration_number}</h3>
+                              <p className="text-gray-500">{vehicle.brand} {vehicle.model}</p>
+                              <div className="flex items-center gap-2 mt-2 flex-wrap">
+                                <Badge variant={vehicle.status === 'active' ? 'secondary' : 'outline'}>
+                                  {vehicle.status}
+                                </Badge>
+                                <Badge variant="outline" className="flex items-center gap-1">
+                                  <Users className="w-3 h-3" />
+                                  {vehicle.capacity}
+                                </Badge>
+                                {hasOverdue && (
+                                  <Badge variant="destructive" className="flex items-center gap-1">
+                                    <AlertTriangle className="w-3 h-3" />
+                                    Maintenance Due
+                                  </Badge>
+                                )}
+                              </div>
                             </div>
                           </div>
-                        </div>
-                        {vehicle.assigned_driver_name && (
-                          <div className="mt-3 pt-3 border-t text-sm text-gray-600">
-                            Driver: {vehicle.assigned_driver_name}
+                          <div className="mt-3 pt-3 border-t space-y-2">
+                            {vehicle.current_mileage > 0 && (
+                              <p className="text-sm text-gray-600">
+                                Mileage: {vehicle.current_mileage?.toLocaleString()} km
+                              </p>
+                            )}
+                            {vehicle.assigned_driver_name && (
+                              <p className="text-sm text-gray-600">
+                                Driver: {vehicle.assigned_driver_name}
+                              </p>
+                            )}
+                            {lastMaintenance && (
+                              <p className="text-sm text-gray-500">
+                                Last service: {format(new Date(lastMaintenance.date_performed), 'MMM d, yyyy')}
+                              </p>
+                            )}
+                            <Button 
+                              variant="outline" 
+                              size="sm" 
+                              className="w-full mt-2"
+                              onClick={() => { 
+                                setSelectedVehicleForMaintenance(vehicle.id); 
+                                setEditingMaintenance(null);
+                                setShowMaintenanceDialog(true); 
+                              }}
+                            >
+                              <Wrench className="w-3 h-3 mr-2" />
+                              Log Maintenance
+                            </Button>
                           </div>
-                        )}
-                      </CardContent>
-                    </Card>
-                  ))}
+                        </CardContent>
+                      </Card>
+                    );
+                  })}
                 </div>
               )}
             </CardContent>
