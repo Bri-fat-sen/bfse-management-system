@@ -103,6 +103,11 @@ export default function Layout({ children, currentPageName }) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [darkMode, setDarkMode] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
+  const [collapsedSections, setCollapsedSections] = useState({});
+
+  const toggleSection = (title) => {
+    setCollapsedSections(prev => ({ ...prev, [title]: !prev[title] }));
+  };
 
   const { data: user } = useQuery({
     queryKey: ['currentUser'],
