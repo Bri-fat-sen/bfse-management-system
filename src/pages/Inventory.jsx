@@ -270,12 +270,14 @@ export default function Inventory() {
     );
   };
 
-  // Reset selected locations when dialog opens
+  // Reset selected locations when dialog opens or editingProduct changes
   useEffect(() => {
     if (showProductDialog) {
       setSelectedLocations(editingProduct?.location_ids || []);
+    } else {
+      setSelectedLocations([]);
     }
-  }, [showProductDialog]);
+  }, [showProductDialog, editingProduct]);
 
   return (
     <div className="space-y-6">
