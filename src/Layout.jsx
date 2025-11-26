@@ -111,6 +111,7 @@ export default function Layout({ children, currentPageName }) {
     "Insights": true,
     "Admin": true
   });
+  const [chatPanelOpen, setChatPanelOpen] = useState(false);
 
   const toggleSection = (title) => {
     setCollapsedSections(prev => ({ ...prev, [title]: !prev[title] }));
