@@ -13,7 +13,8 @@ import {
   BarChart3,
   Filter,
   Download,
-  Calendar
+  Calendar,
+  Truck
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -89,6 +90,12 @@ export default function Finance() {
     enabled: !!orgId,
   });
 
+  const { data: truckContracts = [] } = useQuery({
+    queryKey: ['truckContracts', orgId],
+    queryFn: () => base44.entities.TruckContract.filter({ organisation_id: orgId }, '-contract_date', 100),
+    enabled: !!orgId,
+  });
+
   const { data: payrolls = [] } = useQuery({
     queryKey: ['payrolls', orgId],
     queryFn: () => base44.entities.Payroll.filter({ organisation_id: orgId }, '-period_start', 100),
@@ -125,7 +132,9 @@ export default function Finance() {
   const totalWarehouseRevenue = warehouseSales.reduce((sum, s) => sum + (s.total_amount || 0), 0);
   const totalVehicleSalesRevenue = vehicleSales.reduce((sum, s) => sum + (s.total_amount || 0), 0);
   const totalTransportRevenue = trips.reduce((sum, t) => sum + (t.total_revenue || 0), 0);
-  const totalRevenue = totalRetailRevenue + totalWarehouseRevenue + totalVehicleSalesRevenue + totalTransportRevenue;
+  const completedContracts = truckContracts.filter(c => c.status === 'completed');
+  const totalTruckContractRevenue = completedContracts.reduce((sum, c) => sum + (c.net_revenue || 0), 0);
+  const totalRevenue = totalRetailRevenue + totalWarehouseRevenue + totalVehicleSalesRevenue + totalTransportRevenue + totalTruckContractRevenue;
   const totalExpenses = expenses.reduce((sum, e) => sum + (e.amount || 0), 0);
   const netProfit = totalRevenue - totalExpenses;
 
@@ -352,6 +361,18 @@ export default function Finance() {
                       </div>
                     </div>
                     <p className="font-bold text-blue-600">Le {totalTransportRevenue.toLocaleString()}</p>
+                  </div>
+                  <div className="flex items-center justify-between p-4 bg-teal-50 rounded-lg">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-full bg-teal-100 flex items-center justify-center">
+                        <Truck className="w-5 h-5 text-teal-600" />
+                      </div>
+                      <div>
+                        <p className="font-medium">Truck Contract Revenue</p>
+                        <p className="text-sm text-gray-500">{completedContracts.length} contracts completed</p>
+                      </div>
+                    </div>
+                    <p className="font-bold text-teal-600">Le {totalTruckContractRevenue.toLocaleString()}</p>
                   </div>
                 </div>
               </CardContent>
