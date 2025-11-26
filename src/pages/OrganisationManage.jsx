@@ -9,10 +9,18 @@ import {
   MapPin,
   Loader2,
   Save,
-  Trash2,
   UserPlus,
   MoreVertical,
-  UserMinus
+  UserMinus,
+  Globe,
+  Palette,
+  Shield,
+  Camera,
+  Clock,
+  CheckCircle2,
+  Crown,
+  Edit3,
+  Upload
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
