@@ -75,9 +75,14 @@ const actions = [
 
 export default function QuickActions() {
   return (
-    <Card>
+    <Card className="overflow-hidden">
       <CardHeader className="pb-2">
-        <CardTitle className="text-lg">Quick Actions</CardTitle>
+        <div className="flex items-center gap-3">
+          <div className="flex h-6 w-1.5 rounded-full overflow-hidden">
+            <div className="w-full bg-gradient-to-b from-[#1EB053] via-white to-[#0072C6]" />
+          </div>
+          <CardTitle className="text-lg">Quick Actions</CardTitle>
+        </div>
       </CardHeader>
       <CardContent>
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
@@ -98,6 +103,8 @@ export default function QuickActions() {
           ))}
         </div>
       </CardContent>
+      {/* Sierra Leone themed footer */}
+      <div className="h-1.5 w-full bg-gradient-to-r from-[#1EB053] via-white to-[#0072C6]" />
     </Card>
   );
 }
