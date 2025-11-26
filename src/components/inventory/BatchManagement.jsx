@@ -257,16 +257,15 @@ export default function BatchManagement({ products = [], warehouses = [], vehicl
                           <div className="flex justify-end gap-1">
                             <Button
                               variant="ghost"
-                              size="sm"
-                              className="text-[#1EB053] hover:text-[#1EB053] hover:bg-[#1EB053]/10"
+                              size="icon"
+                              title="Allocate to Locations"
                               onClick={() => { 
                                 setAllocatingBatch(batch); 
                                 setShowAllocationDialog(true); 
                               }}
-                              title="Allocate to locations"
+                              className="text-[#1EB053] hover:text-[#1EB053] hover:bg-[#1EB053]/10"
                             >
-                              <MapPin className="w-4 h-4 mr-1" />
-                              Allocate
+                              <MapPin className="w-4 h-4" />
                             </Button>
                             <Button
                               variant="ghost"
@@ -294,6 +293,19 @@ export default function BatchManagement({ products = [], warehouses = [], vehicl
           </CardContent>
         </Card>
       )}
+
+      {/* Batch Stock Allocation Dialog */}
+      <BatchStockAllocation
+        open={showAllocationDialog}
+        onOpenChange={setShowAllocationDialog}
+        batch={allocatingBatch}
+        product={products.find(p => p.id === allocatingBatch?.product_id)}
+        warehouses={warehouses}
+        vehicles={vehicles}
+        stockLevels={stockLevels}
+        orgId={orgId}
+        currentEmployee={currentEmployee}
+      />
 
       {/* Add/Edit Dialog */}
       <Dialog open={showBatchDialog} onOpenChange={setShowBatchDialog}>
