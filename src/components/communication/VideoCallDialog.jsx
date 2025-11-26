@@ -19,8 +19,18 @@ import {
   Users,
   Clock,
   Grid,
-  LayoutGrid
+  LayoutGrid,
+  Wifi,
+  WifiOff,
+  AlertTriangle,
+  Flag
 } from "lucide-react";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { toast } from "sonner";
 import { base44 } from "@/api/base44Client";
 
@@ -44,6 +54,11 @@ export default function VideoCallDialog({
   const [remoteUsers, setRemoteUsers] = useState([]);
   const [viewMode, setViewMode] = useState("grid"); // "grid" or "speaker"
   const [activeSpeaker, setActiveSpeaker] = useState(null);
+  const [networkQuality, setNetworkQuality] = useState({ uplink: 0, downlink: 0 });
+  const [callStats, setCallStats] = useState({ latency: 0, packetLoss: 0, bitrate: 0 });
+  const [showQualityReport, setShowQualityReport] = useState(false);
+  const [qualityLogs, setQualityLogs] = useState([]);
+  const statsIntervalRef = useRef(null);
   
   const localVideoRef = useRef(null);
   const screenStreamRef = useRef(null);
@@ -139,6 +154,14 @@ export default function VideoCallDialog({
         toast.success("A participant joined the call");
       });
 
+      // Network quality monitoring
+      client.on("network-quality", (stats) => {
+        setNetworkQuality({ uplink: stats.uplinkNetworkQuality, downlink: stats.downlinkNetworkQuality });
+        logQualityMetric("network", stats);
+      });
+
+      client.enableAudioVolumeIndicator();
+
       // Join channel
       await client.join(data.appId, channelName, data.token, data.uid);
 
@@ -165,6 +188,7 @@ export default function VideoCallDialog({
 
       setCallStatus("connected");
       startCallTimer();
+      startStatsMonitoring(client);
       toast.success("Call connected");
 
     } catch (error) {
@@ -202,7 +226,60 @@ export default function VideoCallDialog({
     }
   };
 
+  const logQualityMetric = (type, data) => {
+    const log = {
+      timestamp: new Date().toISOString(),
+      type,
+      ...data
+    };
+    setQualityLogs(prev => [...prev.slice(-50), log]); // Keep last 50 logs
+  };
+
+  const startStatsMonitoring = (client) => {
+    statsIntervalRef.current = setInterval(async () => {
+      if (!client) return;
+      try {
+        const stats = client.getRTCStats();
+        const localStats = {
+          latency: stats.RTT || 0,
+          packetLoss: stats.OutgoingAvailableBandwidth ? 0 : (stats.SendPacketLossRate || 0),
+          bitrate: Math.round((stats.SendBitrate || 0) / 1000),
+          duration: stats.Duration || 0
+        };
+        setCallStats(localStats);
+        logQualityMetric("stats", localStats);
+      } catch (e) {
+        // Stats not available
+      }
+    }, 2000);
+  };
+
+  const getQualityLevel = (quality) => {
+    if (quality === 0) return { label: "Unknown", color: "text-gray-400", icon: Wifi };
+    if (quality <= 2) return { label: "Excellent", color: "text-green-500", icon: Wifi };
+    if (quality <= 3) return { label: "Good", color: "text-yellow-500", icon: Wifi };
+    if (quality <= 4) return { label: "Poor", color: "text-orange-500", icon: AlertTriangle };
+    return { label: "Bad", color: "text-red-500", icon: WifiOff };
+  };
+
+  const handleReportQuality = async (issue) => {
+    const report = {
+      callId: room?.id,
+      userId: currentEmployee?.id,
+      issue,
+      stats: callStats,
+      networkQuality,
+      logs: qualityLogs.slice(-10),
+      timestamp: new Date().toISOString()
+    };
+    console.log("Quality Report:", report);
+    toast.success("Quality issue reported", { description: "Thank you for your feedback" });
+    setShowQualityReport(false);
+  };
+
   const leaveChannel = async () => {
+    // Stop stats monitoring
+    if (statsIntervalRef.current) clearInterval(statsIntervalRef.current);
     // Stop local tracks
     if (localTracksRef.current.audioTrack) {
       localTracksRef.current.audioTrack.stop();
@@ -453,6 +530,26 @@ export default function VideoCallDialog({
                 )}
               </div>
               <div className="flex items-center gap-2">
+                {/* Quality Indicator */}
+                {callStatus === "connected" && (
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <div className={`flex items-center gap-1.5 px-2 py-1 rounded-full bg-black/40 ${getQualityLevel(networkQuality.downlink).color}`}>
+                          {React.createElement(getQualityLevel(networkQuality.downlink).icon, { className: "w-4 h-4" })}
+                          <span className="text-xs font-medium">{getQualityLevel(networkQuality.downlink).label}</span>
+                        </div>
+                      </TooltipTrigger>
+                      <TooltipContent side="bottom" className="bg-gray-900 border-gray-700">
+                        <div className="text-xs space-y-1">
+                          <p>Latency: <span className="font-mono">{callStats.latency}ms</span></p>
+                          <p>Bitrate: <span className="font-mono">{callStats.bitrate} kbps</span></p>
+                          <p>Packet Loss: <span className="font-mono">{callStats.packetLoss.toFixed(1)}%</span></p>
+                        </div>
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+                )}
                 {isGroupCall && callStatus === "connected" && (
                   <Button
                     variant="ghost"
@@ -461,6 +558,16 @@ export default function VideoCallDialog({
                     onClick={() => setViewMode(viewMode === "grid" ? "speaker" : "grid")}
                   >
                     {viewMode === "grid" ? <LayoutGrid className="w-5 h-5" /> : <Grid className="w-5 h-5" />}
+                  </Button>
+                )}
+                {callStatus === "connected" && (
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="text-white hover:bg-white/20"
+                    onClick={() => setShowQualityReport(true)}
+                  >
+                    <Flag className="w-5 h-5" />
                   </Button>
                 )}
                 <Button
@@ -537,6 +644,30 @@ export default function VideoCallDialog({
               </div>
             )}
           </div>
+
+          {/* Quality Report Modal */}
+          {showQualityReport && (
+            <div className="absolute inset-0 bg-black/70 flex items-center justify-center z-50">
+              <div className="bg-gray-800 rounded-xl p-6 max-w-sm w-full mx-4">
+                <h3 className="text-lg font-semibold text-white mb-4">Report Call Quality Issue</h3>
+                <div className="space-y-2 mb-4">
+                  {["Audio cutting out", "Video freezing", "High latency", "Echo/feedback", "Cannot hear others", "Other issue"].map(issue => (
+                    <Button
+                      key={issue}
+                      variant="outline"
+                      className="w-full justify-start text-left border-gray-600 text-white hover:bg-gray-700"
+                      onClick={() => handleReportQuality(issue)}
+                    >
+                      {issue}
+                    </Button>
+                  ))}
+                </div>
+                <Button variant="ghost" className="w-full text-gray-400" onClick={() => setShowQualityReport(false)}>
+                  Cancel
+                </Button>
+              </div>
+            </div>
+          )}
         </div>
       </DialogContent>
     </Dialog>
