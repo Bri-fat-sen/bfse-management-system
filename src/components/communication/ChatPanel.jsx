@@ -66,6 +66,7 @@ export default function ChatPanel({ isOpen, onClose, orgId, currentEmployee }) {
   const [editText, setEditText] = useState("");
   const [replyingTo, setReplyingTo] = useState(null);
   const [showNewGroupDialog, setShowNewGroupDialog] = useState(false);
+  const [showNewChatDialog, setShowNewChatDialog] = useState(false);
   const [groupName, setGroupName] = useState("");
   const [selectedMembers, setSelectedMembers] = useState([]);
   const [showPinnedMessages, setShowPinnedMessages] = useState(false);
@@ -507,8 +508,12 @@ export default function ChatPanel({ isOpen, onClose, orgId, currentEmployee }) {
 
           {/* Quick Actions */}
           <div className="flex gap-2 p-3 border-b">
-            <Button variant="outline" size="sm" className="flex-1 text-xs" onClick={() => setShowNewGroupDialog(true)}>
+            <Button variant="outline" size="sm" className="flex-1 text-xs" onClick={() => setShowNewChatDialog(true)}>
               <Plus className="w-3 h-3 mr-1" />
+              New Chat
+            </Button>
+            <Button variant="outline" size="sm" className="flex-1 text-xs" onClick={() => setShowNewGroupDialog(true)}>
+              <Users className="w-3 h-3 mr-1" />
               New Group
             </Button>
           </div>
@@ -830,6 +835,51 @@ export default function ChatPanel({ isOpen, onClose, orgId, currentEmployee }) {
               Create Group
             </Button>
           </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* New Chat Dialog */}
+      <Dialog open={showNewChatDialog} onOpenChange={setShowNewChatDialog}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle>Start New Chat</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3">
+            <Input
+              placeholder="Search employees..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
+            <div className="max-h-64 overflow-y-auto space-y-1">
+              {employees
+                .filter(e => 
+                  e.id !== currentEmployee?.id &&
+                  e.full_name?.toLowerCase().includes(searchTerm.toLowerCase())
+                )
+                .map((emp) => (
+                  <div
+                    key={emp.id}
+                    onClick={() => {
+                      startChat(emp);
+                      setShowNewChatDialog(false);
+                      setSearchTerm("");
+                    }}
+                    className="flex items-center gap-3 p-2 rounded-lg hover:bg-gray-50 cursor-pointer"
+                  >
+                    <Avatar className="w-8 h-8">
+                      <AvatarImage src={emp.profile_photo} />
+                      <AvatarFallback className="bg-gradient-to-br from-[#1EB053] to-[#0072C6] text-white text-xs">
+                        {emp.full_name?.charAt(0)}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div>
+                      <p className="text-sm font-medium">{emp.full_name}</p>
+                      <p className="text-xs text-gray-500">{emp.department || emp.position}</p>
+                    </div>
+                  </div>
+                ))}
+            </div>
+          </div>
         </DialogContent>
       </Dialog>
 
