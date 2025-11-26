@@ -70,6 +70,7 @@ export default function Inventory() {
   const [showLocationsDialog, setShowLocationsDialog] = useState(false);
   const [showAlertsDialog, setShowAlertsDialog] = useState(false);
   const [showReportDialog, setShowReportDialog] = useState(false);
+  const [selectedLocations, setSelectedLocations] = useState([]);
 
   const { data: user } = useQuery({
     queryKey: ['currentUser'],
