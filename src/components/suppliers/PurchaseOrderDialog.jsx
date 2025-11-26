@@ -41,6 +41,8 @@ export default function PurchaseOrderDialog({
   const [shippingCost, setShippingCost] = useState(purchaseOrder?.shipping_cost || 0);
   const [taxAmount, setTaxAmount] = useState(purchaseOrder?.tax_amount || 0);
   const [paymentMethod, setPaymentMethod] = useState(purchaseOrder?.payment_method || "bank_transfer");
+  
+  const isCashOnly = supplier?.cash_only || false;
 
   const { data: supplierProducts = [] } = useQuery({
     queryKey: ['supplierProducts', selectedSupplier],
@@ -63,6 +65,13 @@ export default function PurchaseOrderDialog({
       setShippingCost(0);
       setTaxAmount(0);
       setPaymentMethod("bank_transfer");
+    }
+  }, [purchaseOrder, open]);
+
+  // Auto-set cash when supplier is cash only
+  useEffect(() => {
+    if (supplier?.cash_only) {
+      setPaymentMethod("cash");
     }
   }, [purchaseOrder, open]);
 
@@ -211,16 +220,20 @@ export default function PurchaseOrderDialog({
               </Select>
             </div>
             <div>
-              <Label>Payment Method</Label>
-              <Select value={paymentMethod} onValueChange={setPaymentMethod}>
+              <Label>Payment Method {isCashOnly && <span className="text-xs text-orange-500 ml-1">(Cash Only Supplier)</span>}</Label>
+              <Select value={paymentMethod} onValueChange={setPaymentMethod} disabled={isCashOnly}>
                 <SelectTrigger className="mt-1">
                   <SelectValue placeholder="Select payment method" />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="cash">Cash</SelectItem>
-                  <SelectItem value="bank_transfer">Bank Transfer</SelectItem>
-                  <SelectItem value="mobile_money">Mobile Money</SelectItem>
-                  <SelectItem value="credit">Credit (Pay Later)</SelectItem>
+                  {!isCashOnly && (
+                    <>
+                      <SelectItem value="bank_transfer">Bank Transfer</SelectItem>
+                      <SelectItem value="mobile_money">Mobile Money</SelectItem>
+                      <SelectItem value="credit">Credit (Pay Later)</SelectItem>
+                    </>
+                  )}
                 </SelectContent>
               </Select>
             </div>
