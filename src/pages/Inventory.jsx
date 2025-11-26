@@ -295,6 +295,15 @@ export default function Inventory() {
           <Button 
             variant="outline" 
             size="sm"
+            onClick={() => setShowTransferDialog(true)}
+            className="text-xs sm:text-sm border-purple-400/30 hover:border-purple-500 hover:bg-purple-500/10 hover:text-purple-600"
+          >
+            <ArrowLeftRight className="w-3 h-3 sm:w-4 sm:h-4 sm:mr-2" />
+            <span className="hidden sm:inline">Transfer</span>
+          </Button>
+          <Button 
+            variant="outline" 
+            size="sm"
             onClick={() => setShowCategoryDialog(true)}
             className="text-xs sm:text-sm border-[#0072C6]/30 hover:border-[#0072C6] hover:bg-[#0072C6]/10 hover:text-[#0072C6]"
           >
