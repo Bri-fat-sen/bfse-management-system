@@ -17,7 +17,8 @@ import {
   Filter,
   Truck,
   Warehouse,
-  Store
+  Store,
+  Users
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -54,6 +55,8 @@ export default function Sales() {
   const [showReceipt, setShowReceipt] = useState(false);
   const [lastSale, setLastSale] = useState(null);
   const [selectedLocation, setSelectedLocation] = useState("");
+  const [selectedCustomer, setSelectedCustomer] = useState(null);
+  const [customerSearch, setCustomerSearch] = useState("");
 
   const { data: user } = useQuery({
     queryKey: ['currentUser'],
@@ -98,6 +101,17 @@ export default function Sales() {
     queryFn: () => base44.entities.Warehouse.filter({ organisation_id: orgId, is_active: true }),
     enabled: !!orgId,
   });
+
+  const { data: customers = [] } = useQuery({
+    queryKey: ['customers', orgId],
+    queryFn: () => base44.entities.Customer.filter({ organisation_id: orgId, status: 'active' }),
+    enabled: !!orgId,
+  });
+
+  const filteredCustomers = customers.filter(c =>
+    c.name?.toLowerCase().includes(customerSearch.toLowerCase()) ||
+    c.phone?.includes(customerSearch)
+  ).slice(0, 5);
 
   // Fetch stock levels for the selected location
   const { data: stockLevels = [] } = useQuery({
@@ -257,7 +271,9 @@ export default function Sales() {
       sale_type: saleType,
       employee_id: currentEmployee?.id,
       employee_name: currentEmployee?.full_name,
-      customer_name: customerName,
+      customer_name: selectedCustomer?.name || customerName,
+      customer_id: selectedCustomer?.id || null,
+      customer_phone: selectedCustomer?.phone || null,
       items: cart,
       subtotal: cartTotal,
       total_amount: cartTotal,
@@ -268,6 +284,39 @@ export default function Sales() {
     };
     
     createSaleMutation.mutate(saleData);
+
+    // Update customer stats if a customer is linked
+    if (selectedCustomer) {
+      const newTotalSpent = (selectedCustomer.total_spent || 0) + cartTotal;
+      const newTotalPurchases = (selectedCustomer.total_purchases || 0) + 1;
+      await base44.entities.Customer.update(selectedCustomer.id, {
+        total_spent: newTotalSpent,
+        total_purchases: newTotalPurchases,
+        average_order_value: newTotalSpent / newTotalPurchases,
+        last_purchase_date: format(new Date(), 'yyyy-MM-dd'),
+        loyalty_points: (selectedCustomer.loyalty_points || 0) + Math.floor(cartTotal / 1000)
+      });
+
+      // Log customer interaction
+      await base44.entities.CustomerInteraction.create({
+        organisation_id: orgId,
+        customer_id: selectedCustomer.id,
+        customer_name: selectedCustomer.name,
+        interaction_type: 'sale',
+        subject: `Purchase - ${saleData.sale_number}`,
+        description: `Completed ${saleType} sale of Le ${cartTotal.toLocaleString()}`,
+        outcome: 'successful',
+        interaction_date: format(new Date(), 'yyyy-MM-dd'),
+        employee_id: currentEmployee?.id,
+        employee_name: currentEmployee?.full_name,
+        related_sale_id: saleData.sale_number
+      });
+
+      queryClient.invalidateQueries({ queryKey: ['customers'] });
+    }
+
+    setSelectedCustomer(null);
+    setCustomerSearch("");
 
     // Update stock quantities at the location and create stock movements
     for (const item of cart) {
@@ -680,15 +729,61 @@ export default function Sales() {
             <DialogTitle>Complete Sale</DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
+            {/* Customer Selection */}
             <div>
-              <label className="text-sm font-medium">Customer Name (Optional)</label>
-              <Input
-                placeholder="Enter customer name"
-                value={customerName}
-                onChange={(e) => setCustomerName(e.target.value)}
-                className="mt-1"
-              />
+              <label className="text-sm font-medium flex items-center gap-2">
+                <Users className="w-4 h-4" /> Link Customer (Optional)
+              </label>
+              {selectedCustomer ? (
+                <div className="mt-2 p-3 bg-green-50 border border-green-200 rounded-lg flex items-center justify-between">
+                  <div>
+                    <p className="font-medium text-green-800">{selectedCustomer.name}</p>
+                    <p className="text-sm text-green-600">{selectedCustomer.phone || selectedCustomer.email}</p>
+                  </div>
+                  <Button variant="ghost" size="sm" onClick={() => setSelectedCustomer(null)}>
+                    <X className="w-4 h-4" />
+                  </Button>
+                </div>
+              ) : (
+                <div className="mt-1 relative">
+                  <Input
+                    placeholder="Search customers by name or phone..."
+                    value={customerSearch}
+                    onChange={(e) => setCustomerSearch(e.target.value)}
+                  />
+                  {customerSearch && filteredCustomers.length > 0 && (
+                    <div className="absolute top-full left-0 right-0 mt-1 bg-white border rounded-lg shadow-lg z-10 max-h-48 overflow-y-auto">
+                      {filteredCustomers.map(customer => (
+                        <div
+                          key={customer.id}
+                          className="p-3 hover:bg-gray-50 cursor-pointer border-b last:border-0"
+                          onClick={() => {
+                            setSelectedCustomer(customer);
+                            setCustomerSearch("");
+                            setCustomerName(customer.name);
+                          }}
+                        >
+                          <p className="font-medium">{customer.name}</p>
+                          <p className="text-sm text-gray-500">{customer.phone} • {customer.segment}</p>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
+
+            {!selectedCustomer && (
+              <div>
+                <label className="text-sm font-medium">Or Enter Customer Name</label>
+                <Input
+                  placeholder="Walk-in customer name"
+                  value={customerName}
+                  onChange={(e) => setCustomerName(e.target.value)}
+                  className="mt-1"
+                />
+              </div>
+            )}
 
             {/* Location Info */}
             <div className="p-3 bg-gray-100 rounded-lg">
