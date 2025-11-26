@@ -19,7 +19,7 @@ import {
 
 const COLORS = SL_COLORS.chart;
 
-export default function AnalyticsDashboard({ sales = [], expenses = [], products = [], employees = [], trips = [] }) {
+export default function AnalyticsDashboard({ sales = [], expenses = [], products = [], employees = [], trips = [], truckContracts = [], maintenanceRecords = [] }) {
   const [timeRange, setTimeRange] = useState("7days");
 
   // Calculate date range
@@ -48,17 +48,48 @@ export default function AnalyticsDashboard({ sales = [], expenses = [], products
     return date >= start && date <= end;
   });
 
-  // Revenue over time
+  const filteredTrips = trips.filter(t => {
+    const date = new Date(t.date);
+    return date >= start && date <= end;
+  });
+
+  const filteredContracts = (truckContracts || []).filter(c => {
+    const date = new Date(c.contract_date);
+    return date >= start && date <= end;
+  });
+
+  const filteredMaintenance = (maintenanceRecords || []).filter(m => {
+    const date = new Date(m.date_performed);
+    return date >= start && date <= end;
+  });
+
+  // Revenue over time - includes ALL revenue sources
   const revenueByDay = eachDayOfInterval({ start, end }).map(day => {
     const dayStr = format(day, 'yyyy-MM-dd');
     const daySales = filteredSales.filter(s => s.created_date?.startsWith(dayStr));
+    const dayTrips = filteredTrips.filter(t => t.date === dayStr);
+    const dayContracts = filteredContracts.filter(c => c.contract_date === dayStr && c.status === 'completed');
+    
+    // All revenue sources
+    const salesRevenue = daySales.reduce((sum, s) => sum + (s.total_amount || 0), 0);
+    const tripRevenue = dayTrips.reduce((sum, t) => sum + (t.total_revenue || 0), 0);
+    const contractRevenue = dayContracts.reduce((sum, c) => sum + (c.contract_amount || 0), 0);
+    const totalDayRevenue = salesRevenue + tripRevenue + contractRevenue;
+    
+    // All expense sources
     const dayExpenses = filteredExpenses.filter(e => e.date === dayStr);
+    const dayMaintenance = filteredMaintenance.filter(m => m.date_performed === dayStr);
+    const recordedExpenses = dayExpenses.reduce((sum, e) => sum + (e.amount || 0), 0);
+    const tripExpenses = dayTrips.reduce((sum, t) => sum + (t.fuel_cost || 0) + (t.other_expenses || 0), 0);
+    const contractExpenses = filteredContracts.filter(c => c.contract_date === dayStr).reduce((sum, c) => sum + (c.total_expenses || 0), 0);
+    const maintenanceExpenses = dayMaintenance.reduce((sum, m) => sum + (m.cost || 0), 0);
+    const totalDayExpenses = recordedExpenses + tripExpenses + contractExpenses + maintenanceExpenses;
+    
     return {
       date: format(day, 'MMM d'),
-      revenue: daySales.reduce((sum, s) => sum + (s.total_amount || 0), 0),
-      expenses: dayExpenses.reduce((sum, e) => sum + (e.amount || 0), 0),
-      profit: daySales.reduce((sum, s) => sum + (s.total_amount || 0), 0) - 
-              dayExpenses.reduce((sum, e) => sum + (e.amount || 0), 0)
+      revenue: totalDayRevenue,
+      expenses: totalDayExpenses,
+      profit: totalDayRevenue - totalDayExpenses
     };
   });
 
@@ -100,11 +131,20 @@ export default function AnalyticsDashboard({ sales = [], expenses = [], products
     .slice(0, 5)
     .map(([name, value]) => ({ name, value }));
 
-  // Calculate totals and trends
-  const totalRevenue = filteredSales.reduce((sum, s) => sum + (s.total_amount || 0), 0);
-  const totalExpenses = filteredExpenses.reduce((sum, e) => sum + (e.amount || 0), 0);
+  // Calculate totals and trends - ALL sources
+  const salesRevenue = filteredSales.reduce((sum, s) => sum + (s.total_amount || 0), 0);
+  const tripRevenue = filteredTrips.reduce((sum, t) => sum + (t.total_revenue || 0), 0);
+  const contractRevenue = filteredContracts.filter(c => c.status === 'completed').reduce((sum, c) => sum + (c.contract_amount || 0), 0);
+  const totalRevenue = salesRevenue + tripRevenue + contractRevenue;
+  
+  const recordedExpenses = filteredExpenses.reduce((sum, e) => sum + (e.amount || 0), 0);
+  const tripExpenses = filteredTrips.reduce((sum, t) => sum + (t.fuel_cost || 0) + (t.other_expenses || 0), 0);
+  const contractExpenses = filteredContracts.reduce((sum, c) => sum + (c.total_expenses || 0), 0);
+  const maintenanceExpenses = filteredMaintenance.reduce((sum, m) => sum + (m.cost || 0), 0);
+  const totalExpenses = recordedExpenses + tripExpenses + contractExpenses + maintenanceExpenses;
+  
   const totalProfit = totalRevenue - totalExpenses;
-  const avgOrderValue = filteredSales.length > 0 ? totalRevenue / filteredSales.length : 0;
+  const avgOrderValue = filteredSales.length > 0 ? salesRevenue / filteredSales.length : 0;
 
   // Compare with previous period
   const prevStart = subDays(start, (end - start) / (1000 * 60 * 60 * 24));
