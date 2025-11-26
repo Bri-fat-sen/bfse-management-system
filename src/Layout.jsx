@@ -129,6 +129,14 @@ export default function Layout({ children, currentPageName }) {
   const userRole = currentEmployee?.role || 'read_only';
   const orgId = currentEmployee?.organisation_id;
 
+  const { data: organisation } = useQuery({
+    queryKey: ['organisation', orgId],
+    queryFn: () => base44.entities.Organisation.filter({ id: orgId }),
+    enabled: !!orgId,
+  });
+
+  const currentOrg = organisation?.[0];
+
   // Get permissions for the user's role
   const permissions = useMemo(() => {
     return DEFAULT_ROLE_PERMISSIONS[userRole] || DEFAULT_ROLE_PERMISSIONS.read_only;
