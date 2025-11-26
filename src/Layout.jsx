@@ -52,16 +52,15 @@ import { Toaster } from "sonner";
 
 const menuSections = [
   {
-    title: "Main",
+    title: "Overview",
     items: [
       { name: "Dashboard", icon: LayoutDashboard, page: "Dashboard", module: "dashboard" },
-      { name: "My Dashboard", icon: User, page: "EmployeeDashboard", module: "dashboard" },
-      { name: "Analytics", icon: BarChart3, page: "Analytics", module: "dashboard" },
+      { name: "Employee Portal", icon: User, page: "EmployeeDashboard", module: "dashboard" },
       { name: "Communication", icon: MessageSquare, page: "Communication", module: "communication", badge: "3" },
     ]
   },
   {
-    title: "Business",
+    title: "Operations",
     items: [
       { name: "Sales & POS", icon: ShoppingCart, page: "Sales", module: "sales" },
       { name: "Inventory", icon: Package, page: "Inventory", module: "inventory" },
@@ -70,24 +69,30 @@ const menuSections = [
     ]
   },
   {
-    title: "Management",
+    title: "People",
     items: [
       { name: "HR & Payroll", icon: Users, page: "HR", module: "hr" },
-      { name: "HR Analytics", icon: BarChart3, page: "HRAnalytics", module: "hr" },
-      { name: "Finance", icon: DollarSign, page: "Finance", module: "finance" },
       { name: "Attendance", icon: Clock, page: "Attendance", module: "attendance" },
     ]
   },
   {
-    title: "System",
+    title: "Insights",
     items: [
-      { name: "Activity Log", icon: Activity, page: "ActivityLog", module: "activity_log" },
+      { name: "Analytics", icon: BarChart3, page: "Analytics", module: "dashboard" },
+      { name: "HR Analytics", icon: Users, page: "HRAnalytics", module: "hr" },
+      { name: "Finance", icon: DollarSign, page: "Finance", module: "finance" },
       { name: "Reports", icon: BarChart3, page: "Reports", module: "finance" },
+      { name: "Activity Log", icon: Activity, page: "ActivityLog", module: "activity_log" },
+    ]
+  },
+  {
+    title: "Admin",
+    items: [
       { name: "Locations", icon: MapPin, page: "Locations", module: "settings", adminOnly: true },
       { name: "Organisation", icon: Building2, page: "OrganisationManage", module: "settings", adminOnly: true },
-      { name: "Role Permissions", icon: Shield, page: "RolePermissions", module: "settings", adminOnly: true },
-      { name: "Support", icon: HelpCircle, page: "Support", module: "settings" },
+      { name: "Permissions", icon: Shield, page: "RolePermissions", module: "settings", adminOnly: true },
       { name: "Settings", icon: Settings, page: "Settings", module: "settings" },
+      { name: "Support", icon: HelpCircle, page: "Support", module: "settings" },
     ]
   }
 ];
