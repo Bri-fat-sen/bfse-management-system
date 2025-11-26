@@ -5,10 +5,9 @@ import { format } from "date-fns";
 import { Clock, MapPin, CheckCircle, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { useToast } from "@/components/ui/use-toast";
+import { toast } from "sonner";
 
 export default function QuickClockIn({ currentEmployee, orgId, todayAttendance }) {
-  const { toast } = useToast();
   const queryClient = useQueryClient();
   const [location, setLocation] = useState(null);
   const [isLocating, setIsLocating] = useState(false);
@@ -60,10 +59,10 @@ export default function QuickClockIn({ currentEmployee, orgId, todayAttendance }
       queryClient.invalidateQueries({ queryKey: ['todayAttendance'] });
       queryClient.invalidateQueries({ queryKey: ['myAttendance'] });
       queryClient.invalidateQueries({ queryKey: ['attendance'] });
-      toast({ title: "Clocked In!", description: `Welcome, ${currentEmployee.first_name}!` });
+      toast.success(`Clocked In! Welcome, ${currentEmployee.first_name}!`);
     },
     onError: (error) => {
-      toast({ title: "Clock In Failed", description: error.message || "Please try again", variant: "destructive" });
+      toast.error(error.message || "Clock In Failed. Please try again.");
     }
   });
 
@@ -87,10 +86,10 @@ export default function QuickClockIn({ currentEmployee, orgId, todayAttendance }
       queryClient.invalidateQueries({ queryKey: ['todayAttendance'] });
       queryClient.invalidateQueries({ queryKey: ['myAttendance'] });
       queryClient.invalidateQueries({ queryKey: ['attendance'] });
-      toast({ title: "Clocked Out!", description: "Have a great day!" });
+      toast.success("Clocked Out! Have a great day!");
     },
     onError: (error) => {
-      toast({ title: "Clock Out Failed", description: error.message || "Please try again", variant: "destructive" });
+      toast.error(error.message || "Clock Out Failed. Please try again.");
     }
   });
 
