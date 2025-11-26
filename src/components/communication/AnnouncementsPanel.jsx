@@ -19,6 +19,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Dialog,
   DialogContent,
@@ -33,9 +34,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import AnnouncementComments from "./AnnouncementComments";
+import AnnouncementAcknowledgment from "./AnnouncementAcknowledgment";
 
 const PRIORITY_CONFIG = {
   urgent: { icon: AlertCircle, color: 'text-red-600', bg: 'bg-red-50', border: 'border-red-200' },
@@ -43,11 +44,10 @@ const PRIORITY_CONFIG = {
   normal: { icon: CheckCircle, color: 'text-blue-600', bg: 'bg-blue-50', border: 'border-blue-200' },
 };
 
-export default function AnnouncementsPanel({ orgId, currentEmployee, canPost }) {
+export default function AnnouncementsPanel({ orgId, currentEmployee, canPost, totalEmployees = 0 }) {
   const queryClient = useQueryClient();
   const [showNewDialog, setShowNewDialog] = useState(false);
-  const [filter, setFilter] = useState("all");
-  const [category, setCategory] = useState("");
+  const [categoryFilter, setCategoryFilter] = useState("all");
 
   const { data: announcements = [] } = useQuery({
     queryKey: ['announcements', orgId],
@@ -80,20 +80,19 @@ export default function AnnouncementsPanel({ orgId, currentEmployee, canPost }) 
       message_type: 'announcement',
       priority: formData.get('priority') || 'normal',
       category: formData.get('category') || 'general',
+      comments: [],
+      acknowledgments: [],
     });
   };
 
-  const filteredAnnouncements = announcements.filter(ann => {
-    if (filter === "urgent") return ann.priority === "urgent";
-    if (filter === "important") return ann.priority === "important";
-    if (filter === "unread") return !ann.acknowledged_by?.includes(currentEmployee?.id);
-    return true;
-  });
+  const filteredAnnouncements = announcements.filter(ann => 
+    categoryFilter === 'all' || ann.category === categoryFilter || ann.priority === categoryFilter
+  );
 
   return (
     <Card className="h-full flex flex-col">
       <CardHeader className="pb-3">
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between mb-2">
           <CardTitle className="text-lg flex items-center gap-2">
             <Megaphone className="w-5 h-5 text-[#0072C6]" />
             Announcements
@@ -105,12 +104,12 @@ export default function AnnouncementsPanel({ orgId, currentEmployee, canPost }) 
             </Button>
           )}
         </div>
-        <Tabs value={filter} onValueChange={setFilter} className="mt-3">
-          <TabsList className="w-full h-8 bg-gray-100">
+        <Tabs value={categoryFilter} onValueChange={setCategoryFilter}>
+          <TabsList className="w-full h-8 bg-gray-100 p-0.5">
             <TabsTrigger value="all" className="flex-1 text-xs h-7">All</TabsTrigger>
             <TabsTrigger value="urgent" className="flex-1 text-xs h-7">Urgent</TabsTrigger>
-            <TabsTrigger value="important" className="flex-1 text-xs h-7">Important</TabsTrigger>
-            <TabsTrigger value="unread" className="flex-1 text-xs h-7">Unread</TabsTrigger>
+            <TabsTrigger value="policy" className="flex-1 text-xs h-7">Policy</TabsTrigger>
+            <TabsTrigger value="event" className="flex-1 text-xs h-7">Events</TabsTrigger>
           </TabsList>
         </Tabs>
       </CardHeader>
@@ -124,12 +123,11 @@ export default function AnnouncementsPanel({ orgId, currentEmployee, canPost }) 
           filteredAnnouncements.map((ann) => {
             const config = PRIORITY_CONFIG[ann.priority] || PRIORITY_CONFIG.normal;
             const Icon = config.icon;
-            const isAcknowledged = ann.acknowledged_by?.includes(currentEmployee?.id);
             
             return (
               <div 
                 key={ann.id} 
-                className={`p-3 rounded-lg border ${config.bg} ${config.border} ${!isAcknowledged ? 'ring-2 ring-offset-1 ring-blue-200' : ''}`}
+                className={`p-3 rounded-lg border ${config.bg} ${config.border}`}
               >
                 <div className="flex items-start gap-3">
                   <div className={`p-2 rounded-lg bg-white ${config.color}`}>
@@ -144,20 +142,25 @@ export default function AnnouncementsPanel({ orgId, currentEmployee, canPost }) 
                       {ann.priority === 'urgent' && (
                         <Badge variant="destructive" className="text-xs px-1.5 py-0">Urgent</Badge>
                       )}
-                      {ann.priority === 'important' && (
-                        <Badge className="text-xs px-1.5 py-0 bg-amber-500">Important</Badge>
-                      )}
                       {ann.category && ann.category !== 'general' && (
-                        <Badge variant="outline" className="text-xs px-1.5 py-0">{ann.category}</Badge>
+                        <Badge variant="secondary" className="text-xs px-1.5 py-0 capitalize">
+                          {ann.category}
+                        </Badge>
                       )}
                     </div>
                     <p className="text-sm text-gray-700 whitespace-pre-wrap">{ann.content}</p>
                     
-                    {/* Comments & Reactions */}
+                    {/* Comments */}
                     <AnnouncementComments 
+                      announcement={ann} 
+                      currentEmployee={currentEmployee} 
+                    />
+                    
+                    {/* Acknowledgment */}
+                    <AnnouncementAcknowledgment
                       announcement={ann}
                       currentEmployee={currentEmployee}
-                      orgId={orgId}
+                      totalEmployees={totalEmployees}
                     />
                   </div>
                 </div>
@@ -178,44 +181,50 @@ export default function AnnouncementsPanel({ orgId, currentEmployee, canPost }) 
           </DialogHeader>
           <form onSubmit={handlePost} className="space-y-4">
             <div className="grid grid-cols-2 gap-3">
-              <Select name="priority" defaultValue="normal">
-                <SelectTrigger>
-                  <SelectValue placeholder="Priority" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="normal">
-                    <div className="flex items-center gap-2">
-                      <CheckCircle className="w-4 h-4 text-blue-600" />
-                      Normal
-                    </div>
-                  </SelectItem>
-                  <SelectItem value="important">
-                    <div className="flex items-center gap-2">
-                      <Info className="w-4 h-4 text-amber-600" />
-                      Important
-                    </div>
-                  </SelectItem>
-                  <SelectItem value="urgent">
-                    <div className="flex items-center gap-2">
-                      <AlertCircle className="w-4 h-4 text-red-600" />
-                      Urgent
-                    </div>
-                  </SelectItem>
-                </SelectContent>
-              </Select>
-              <Select name="category" defaultValue="general">
-                <SelectTrigger>
-                  <SelectValue placeholder="Category" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="general">General</SelectItem>
-                  <SelectItem value="hr">HR</SelectItem>
-                  <SelectItem value="operations">Operations</SelectItem>
-                  <SelectItem value="sales">Sales</SelectItem>
-                  <SelectItem value="events">Events</SelectItem>
-                  <SelectItem value="policy">Policy</SelectItem>
-                </SelectContent>
-              </Select>
+              <div>
+                <label className="text-xs font-medium text-gray-500 mb-1 block">Priority</label>
+                <Select name="priority" defaultValue="normal">
+                  <SelectTrigger>
+                    <SelectValue placeholder="Priority" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="normal">
+                      <div className="flex items-center gap-2">
+                        <CheckCircle className="w-4 h-4 text-blue-600" />
+                        Normal
+                      </div>
+                    </SelectItem>
+                    <SelectItem value="important">
+                      <div className="flex items-center gap-2">
+                        <Info className="w-4 h-4 text-amber-600" />
+                        Important
+                      </div>
+                    </SelectItem>
+                    <SelectItem value="urgent">
+                      <div className="flex items-center gap-2">
+                        <AlertCircle className="w-4 h-4 text-red-600" />
+                        Urgent
+                      </div>
+                    </SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <label className="text-xs font-medium text-gray-500 mb-1 block">Category</label>
+                <Select name="category" defaultValue="general">
+                  <SelectTrigger>
+                    <SelectValue placeholder="Category" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="general">General</SelectItem>
+                    <SelectItem value="policy">Policy Update</SelectItem>
+                    <SelectItem value="event">Event</SelectItem>
+                    <SelectItem value="hr">HR</SelectItem>
+                    <SelectItem value="safety">Safety</SelectItem>
+                    <SelectItem value="training">Training</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
             <Textarea 
               name="content" 
