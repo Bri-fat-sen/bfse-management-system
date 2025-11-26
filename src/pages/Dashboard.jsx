@@ -51,6 +51,13 @@ export default function Dashboard() {
   const orgId = currentEmployee?.organisation_id;
   const userRole = currentEmployee?.role || 'read_only';
 
+  const { data: organisation } = useQuery({
+    queryKey: ['organisation', orgId],
+    queryFn: () => base44.entities.Organisation.filter({ id: orgId }),
+    enabled: !!orgId,
+  });
+  const currentOrg = organisation?.[0];
+
   // Role-based dashboard routing
   const isDriver = userRole === 'driver';
   const isSalesStaff = ['retail_cashier', 'vehicle_sales', 'warehouse_manager'].includes(userRole);
@@ -142,7 +149,7 @@ export default function Dashboard() {
   }
 
   if (isManager) {
-    return <ManagerDashboard currentEmployee={currentEmployee} orgId={orgId} user={user} />;
+    return <ManagerDashboard currentEmployee={currentEmployee} orgId={orgId} user={user} organisation={currentOrg} />;
   }
 
   // Calculate statistics
@@ -199,7 +206,7 @@ export default function Dashboard() {
                 <div className="flex h-6 w-1.5 rounded-full overflow-hidden">
                   <div className="w-full bg-gradient-to-b from-[#1EB053] via-white to-[#0072C6]" />
                 </div>
-                <p className="text-[#D4AF37] text-sm font-semibold tracking-wide">🇸🇱 BRI-FAT-SEN ENTERPRISE</p>
+                <p className="text-[#D4AF37] text-sm font-semibold tracking-wide">🇸🇱 {currentOrg?.name || ''}</p>
               </div>
               <h1 className="text-2xl md:text-4xl font-bold bg-gradient-to-r from-white via-white to-[#D4AF37] bg-clip-text text-transparent">
                 Welcome back, {user?.full_name?.split(' ')[0] || 'User'}!
