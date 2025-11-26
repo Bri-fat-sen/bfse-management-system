@@ -126,7 +126,8 @@ export default function StockTransferDialog({
       queryClient.invalidateQueries({ queryKey: ['stockLevels'] });
       queryClient.invalidateQueries({ queryKey: ['stockMovements'] });
       toast.success(`Transferred ${qty} ${product.name} from ${fromLoc.name} to ${toLoc.name}`);
-      handleClose();
+      resetForm();
+      onOpenChange(false);
     },
     onError: (error) => {
       toast.error("Transfer failed: " + error.message);
