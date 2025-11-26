@@ -258,6 +258,18 @@ export default function BatchManagement({ products = [], warehouses = [], vehicl
                             <Button
                               variant="ghost"
                               size="icon"
+                              title="Allocate to Locations"
+                              onClick={() => { 
+                                setAllocatingBatch(batch); 
+                                setShowAllocationDialog(true); 
+                              }}
+                              className="text-[#1EB053] hover:text-[#1EB053] hover:bg-[#1EB053]/10"
+                            >
+                              <MapPin className="w-4 h-4" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="icon"
                               onClick={() => { setEditingBatch(batch); setShowBatchDialog(true); }}
                             >
                               <Edit className="w-4 h-4" />
