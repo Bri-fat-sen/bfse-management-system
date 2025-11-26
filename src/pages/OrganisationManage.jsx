@@ -109,7 +109,7 @@ export default function OrganisationManage() {
   const [formData, setFormData] = useState(null);
 
   React.useEffect(() => {
-    if (organisation && !formData) {
+    if (organisation) {
       setFormData({
         name: organisation.name || '',
         code: organisation.code || '',
@@ -124,7 +124,7 @@ export default function OrganisationManage() {
         logo_url: organisation.logo_url || '',
       });
     }
-  }, [organisation, formData]);
+  }, [organisation]);
 
   const updateOrgMutation = useMutation({
     mutationFn: (data) => base44.entities.Organisation.update(orgId, data),
