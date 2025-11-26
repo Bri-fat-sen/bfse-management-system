@@ -24,9 +24,11 @@ import {
   Check,
   CheckCheck,
   Copy,
-  Reply
+  Reply,
+  BellOff
 } from "lucide-react";
 import VideoCallDialog from "./VideoCallDialog";
+import { useChatNotifications, NotificationSettingsButton, useNotificationSettings } from "./ChatNotificationManager";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -70,6 +72,7 @@ export default function ChatPanel({ isOpen, onClose, orgId, currentEmployee }) {
   const [lastMessageCount, setLastMessageCount] = useState(0);
   const messagesEndRef = useRef(null);
   const typingTimeoutRef = useRef(null);
+  const notificationSettings = useNotificationSettings();
 
   const { data: chatRooms = [] } = useQuery({
     queryKey: ['chatRooms', orgId],
@@ -91,19 +94,13 @@ export default function ChatPanel({ isOpen, onClose, orgId, currentEmployee }) {
     enabled: !!orgId && isOpen,
   });
 
-  // Real-time notification for new messages
-  useEffect(() => {
-    if (messages.length > lastMessageCount && lastMessageCount > 0) {
-      const newMessage = messages[messages.length - 1];
-      if (newMessage?.sender_id !== currentEmployee?.id) {
-        toast.info(`New message from ${newMessage?.sender_name}`, {
-          description: newMessage?.content?.substring(0, 50) + (newMessage?.content?.length > 50 ? '...' : ''),
-          duration: 3000,
-        });
-      }
-    }
-    setLastMessageCount(messages.length);
-  }, [messages.length]);
+  // Use enhanced notification system
+  useChatNotifications({
+    messages,
+    currentEmployeeId: currentEmployee?.id,
+    selectedRoomId: selectedRoom?.id,
+    isOpen,
+  });
 
   // Auto-scroll to bottom on new messages
   useEffect(() => {
@@ -390,6 +387,10 @@ export default function ChatPanel({ isOpen, onClose, orgId, currentEmployee }) {
         <div className="flex items-center gap-1">
           {selectedRoom && (
             <>
+              <NotificationSettingsButton />
+              {notificationSettings?.isRoomMuted?.(selectedRoom?.id) && (
+                <BellOff className="w-4 h-4 text-gray-400" title="Notifications muted" />
+              )}
               {pinnedMessages.length > 0 && (
                 <Button
                   variant="ghost"
@@ -662,6 +663,11 @@ export default function ChatPanel({ isOpen, onClose, orgId, currentEmployee }) {
                               </DropdownMenuItem>
                             </>
                           )}
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem onClick={() => notificationSettings?.toggleRoomMute?.(selectedRoom?.id)}>
+                            <BellOff className="w-4 h-4 mr-2" /> 
+                            {notificationSettings?.isRoomMuted?.(selectedRoom?.id) ? 'Unmute Chat' : 'Mute Chat'}
+                          </DropdownMenuItem>
                         </DropdownMenuContent>
                       </DropdownMenu>
                     </div>
