@@ -13,6 +13,11 @@ export default function QuickClockIn({ currentEmployee, orgId, todayAttendance }
   const [isLocating, setIsLocating] = useState(false);
   const [currentTime, setCurrentTime] = useState(new Date());
 
+  // Guard against missing data
+  if (!currentEmployee || !orgId) {
+    return null;
+  }
+
   // Update time every second
   useEffect(() => {
     const timer = setInterval(() => setCurrentTime(new Date()), 1000);

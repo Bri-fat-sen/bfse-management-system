@@ -54,7 +54,7 @@ export default function EmployeeSkillsSection({ employee, canEdit = false }) {
   const [uploading, setUploading] = useState(false);
 
   const updateMutation = useMutation({
-    mutationFn: (data) => base44.entities.Employee.update(employee.id, data),
+    mutationFn: (data) => base44.entities.Employee.update(employee?.id, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['employee'] });
       queryClient.invalidateQueries({ queryKey: ['employees'] });
