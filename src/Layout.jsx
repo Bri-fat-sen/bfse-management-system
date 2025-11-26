@@ -50,6 +50,7 @@ import MobileNav from "@/components/mobile/MobileNav";
 import { OfflineProvider, OfflineStatus } from "@/components/offline/OfflineManager";
 import GlobalSearch from "@/components/search/GlobalSearch";
 import { Toaster } from "sonner";
+import InstallPrompt from "@/components/pwa/InstallPrompt";
 
 const menuSections = [
   {
@@ -488,6 +489,9 @@ export default function Layout({ children, currentPageName }) {
                       visibleToasts={5}
                       duration={4000}
                     />
+
+                    {/* PWA Install Prompt */}
+                    <InstallPrompt />
                     </div>
                     </div>
                     );
