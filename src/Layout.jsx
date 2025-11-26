@@ -511,6 +511,14 @@ export default function Layout({ children, currentPageName }) {
 
                     {/* PWA Install Prompt */}
                     <InstallPrompt />
+
+                    {/* Chat Panel */}
+                    <ChatPanel 
+                      isOpen={chatPanelOpen}
+                      onClose={() => setChatPanelOpen(false)}
+                      orgId={orgId}
+                      currentEmployee={currentEmployee}
+                    />
                     </div>
                     </div>
                     );
