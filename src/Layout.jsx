@@ -51,6 +51,7 @@ import { OfflineProvider, OfflineStatus } from "@/components/offline/OfflineMana
 import GlobalSearch from "@/components/search/GlobalSearch";
 import { Toaster } from "sonner";
 import InstallPrompt from "@/components/pwa/InstallPrompt";
+import ChatPanel from "@/components/communication/ChatPanel";
 
 const menuSections = [
   {
@@ -58,7 +59,6 @@ const menuSections = [
     items: [
       { name: "Dashboard", icon: LayoutDashboard, page: "Dashboard", module: "dashboard" },
       { name: "Employee Portal", icon: User, page: "EmployeeDashboard", module: "dashboard" },
-      { name: "Communication", icon: MessageSquare, page: "Communication", module: "communication", badge: "3" },
     ]
   },
   {
