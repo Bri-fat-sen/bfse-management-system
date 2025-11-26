@@ -29,7 +29,8 @@ import {
   Clock,
   Shield,
   BarChart3,
-  MapPin
+  MapPin,
+  ChevronUp
 } from "lucide-react";
 import { PermissionsProvider } from "@/components/permissions/PermissionsContext";
 import { DEFAULT_ROLE_PERMISSIONS } from "@/components/permissions/PermissionsContext";
