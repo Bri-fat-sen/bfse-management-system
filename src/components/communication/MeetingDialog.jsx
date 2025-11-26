@@ -43,7 +43,7 @@ export default function MeetingDialog({
       queryClient.invalidateQueries({ queryKey: ['meetings'] });
       onOpenChange(false);
       setSelectedAttendees([]);
-      toast({ title: "Meeting scheduled successfully" });
+      toast.success("Meeting scheduled successfully");
     },
   });
 
