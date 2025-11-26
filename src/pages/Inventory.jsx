@@ -510,6 +510,31 @@ export default function Inventory() {
                             <td className="p-4">
                               <Badge variant="secondary">{product.category || 'Other'}</Badge>
                             </td>
+                            <td className="p-4">
+                              <div className="flex flex-wrap gap-1">
+                                {product.location_ids?.length > 0 ? (
+                                  product.location_ids.slice(0, 2).map(locId => {
+                                    const loc = allLocations.find(l => l.id === locId);
+                                    if (!loc) return null;
+                                    return (
+                                      <Badge key={locId} variant="outline" className="text-xs flex items-center gap-1">
+                                        {loc.type === 'warehouse' ? (
+                                          <Warehouse className="w-3 h-3" />
+                                        ) : (
+                                          <Truck className="w-3 h-3" />
+                                        )}
+                                        <span className="truncate max-w-[60px]">{loc.name}</span>
+                                      </Badge>
+                                    );
+                                  })
+                                ) : (
+                                  <span className="text-xs text-gray-400">All locations</span>
+                                )}
+                                {product.location_ids?.length > 2 && (
+                                  <Badge variant="outline" className="text-xs">+{product.location_ids.length - 2}</Badge>
+                                )}
+                              </div>
+                            </td>
                             <td className="p-4 text-right font-medium">Le {product.unit_price?.toLocaleString()}</td>
                             <td className="p-4 text-right">
                               <Badge variant={product.stock_quantity <= product.low_stock_threshold ? "destructive" : "secondary"}>
