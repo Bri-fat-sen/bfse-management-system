@@ -482,184 +482,230 @@ export default function OrganisationManage() {
 
         {/* Branding Tab */}
         <TabsContent value="branding" className="mt-6">
-          <Card>
-            <CardHeader>
-              <CardTitle>Branding</CardTitle>
-              <CardDescription>Customize your organisation's appearance</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              <div>
-                <Label>Logo</Label>
-                <div className="mt-2 flex items-center gap-4">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* Logo Section */}
+            <Card>
+              <CardHeader className="pb-4">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#1EB053]/20 to-[#0072C6]/20 flex items-center justify-center">
+                    <Camera className="w-5 h-5 text-[#0072C6]" />
+                  </div>
+                  <div>
+                    <CardTitle>Company Logo</CardTitle>
+                    <CardDescription>Upload your organisation's logo</CardDescription>
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <div className="flex flex-col items-center p-6 border-2 border-dashed rounded-xl bg-gray-50/50 hover:bg-gray-50 transition-colors">
                   {formData.logo_url ? (
-                    <img src={formData.logo_url} alt="Logo" className="w-20 h-20 rounded-xl object-cover border" />
+                    <div className="relative group">
+                      <img src={formData.logo_url} alt="Logo" className="w-32 h-32 object-contain" />
+                      {isAdmin && (
+                        <label className="absolute inset-0 flex items-center justify-center bg-black/50 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer">
+                          <Edit3 className="w-6 h-6 text-white" />
+                          <input type="file" accept="image/*" onChange={handleLogoUpload} className="hidden" />
+                        </label>
+                      )}
+                    </div>
                   ) : (
-                    <div className="w-20 h-20 rounded-xl bg-gradient-to-br from-[#1EB053]/20 to-[#0072C6]/20 flex items-center justify-center border-2 border-dashed">
-                      <Building2 className="w-8 h-8 text-gray-400" />
-                    </div>
-                  )}
-                  {isAdmin && (
-                    <div>
-                      <Input type="file" accept="image/*" onChange={handleLogoUpload} className="max-w-[200px]" />
-                    </div>
-                  )}
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <Label>Primary Color</Label>
-                  <div className="flex gap-2 mt-1">
-                    <Input
-                      type="color"
-                      value={formData.primary_color}
-                      onChange={(e) => setFormData(prev => ({ ...prev, primary_color: e.target.value }))}
-                      disabled={!isAdmin}
-                      className="w-12 h-10 p-1"
-                    />
-                    <Input
-                      value={formData.primary_color}
-                      onChange={(e) => setFormData(prev => ({ ...prev, primary_color: e.target.value }))}
-                      disabled={!isAdmin}
-                      className="font-mono"
-                    />
-                  </div>
-                </div>
-                <div>
-                  <Label>Secondary Color</Label>
-                  <div className="flex gap-2 mt-1">
-                    <Input
-                      type="color"
-                      value={formData.secondary_color}
-                      onChange={(e) => setFormData(prev => ({ ...prev, secondary_color: e.target.value }))}
-                      disabled={!isAdmin}
-                      className="w-12 h-10 p-1"
-                    />
-                    <Input
-                      value={formData.secondary_color}
-                      onChange={(e) => setFormData(prev => ({ ...prev, secondary_color: e.target.value }))}
-                      disabled={!isAdmin}
-                      className="font-mono"
-                    />
-                  </div>
-                </div>
-              </div>
-
-              {/* Preview */}
-              <div>
-                <Label>Preview</Label>
-                <div
-                  className="mt-2 p-4 rounded-xl text-white"
-                  style={{ background: `linear-gradient(135deg, ${formData.primary_color} 0%, ${formData.secondary_color} 100%)` }}
-                >
-                  <div className="flex items-center gap-3">
-                    {formData.logo_url ? (
-                      <img src={formData.logo_url} alt="" className="w-10 h-10 rounded-lg object-cover bg-white" />
-                    ) : (
-                      <div className="w-10 h-10 rounded-lg bg-white/20 flex items-center justify-center">
-                        <Building2 className="w-5 h-5" />
+                    <div className="text-center">
+                      <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-[#1EB053]/10 to-[#0072C6]/10 flex items-center justify-center mx-auto mb-4">
+                        <Upload className="w-8 h-8 text-gray-400" />
                       </div>
-                    )}
-                    <div>
-                      <h3 className="font-bold">{formData.name}</h3>
-                      <p className="text-sm opacity-80">{formData.city}, {formData.country}</p>
+                      <p className="text-gray-500 mb-2">No logo uploaded</p>
+                      {isAdmin && (
+                        <label className="inline-flex items-center gap-2 px-4 py-2 bg-white border rounded-lg cursor-pointer hover:bg-gray-50 transition-colors">
+                          <Upload className="w-4 h-4" />
+                          <span className="text-sm font-medium">Upload Logo</span>
+                          <input type="file" accept="image/*" onChange={handleLogoUpload} className="hidden" />
+                        </label>
+                      )}
+                    </div>
+                  )}
+                </div>
+                <p className="text-xs text-gray-500 text-center mt-3">Recommended: PNG or SVG, at least 200x200px</p>
+              </CardContent>
+            </Card>
+
+            {/* Colors Section */}
+            <Card>
+              <CardHeader className="pb-4">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#1EB053]/20 to-[#0072C6]/20 flex items-center justify-center">
+                    <Palette className="w-5 h-5 text-[#1EB053]" />
+                  </div>
+                  <div>
+                    <CardTitle>Brand Colors</CardTitle>
+                    <CardDescription>Customize your organisation's colors</CardDescription>
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-3">
+                    <Label className="text-sm font-medium text-gray-700">Primary Color</Label>
+                    <div className="flex items-center gap-3">
+                      <div 
+                        className="w-14 h-14 rounded-xl shadow-inner border-4 border-white shadow-gray-200 cursor-pointer overflow-hidden"
+                        style={{ backgroundColor: formData.primary_color }}
+                      >
+                        <input
+                          type="color"
+                          value={formData.primary_color}
+                          onChange={(e) => setFormData(prev => ({ ...prev, primary_color: e.target.value }))}
+                          disabled={!isAdmin}
+                          className="w-full h-full opacity-0 cursor-pointer"
+                        />
+                      </div>
+                      <Input
+                        value={formData.primary_color}
+                        onChange={(e) => setFormData(prev => ({ ...prev, primary_color: e.target.value }))}
+                        disabled={!isAdmin}
+                        className="font-mono text-sm h-11 flex-1"
+                      />
+                    </div>
+                  </div>
+                  <div className="space-y-3">
+                    <Label className="text-sm font-medium text-gray-700">Secondary Color</Label>
+                    <div className="flex items-center gap-3">
+                      <div 
+                        className="w-14 h-14 rounded-xl shadow-inner border-4 border-white shadow-gray-200 cursor-pointer overflow-hidden"
+                        style={{ backgroundColor: formData.secondary_color }}
+                      >
+                        <input
+                          type="color"
+                          value={formData.secondary_color}
+                          onChange={(e) => setFormData(prev => ({ ...prev, secondary_color: e.target.value }))}
+                          disabled={!isAdmin}
+                          className="w-full h-full opacity-0 cursor-pointer"
+                        />
+                      </div>
+                      <Input
+                        value={formData.secondary_color}
+                        onChange={(e) => setFormData(prev => ({ ...prev, secondary_color: e.target.value }))}
+                        disabled={!isAdmin}
+                        className="font-mono text-sm h-11 flex-1"
+                      />
                     </div>
                   </div>
                 </div>
-              </div>
 
-              {isAdmin && (
-                <Button onClick={handleSave} disabled={updateOrgMutation.isPending} className="bg-gradient-to-r from-[#1EB053] to-[#0072C6] hover:from-[#178f43] hover:to-[#005a9e] w-full sm:w-auto">
-                  {updateOrgMutation.isPending ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Save className="w-4 h-4 mr-2" />}
-                  Save Changes
-                </Button>
-              )}
-            </CardContent>
-          </Card>
+                {/* Live Preview */}
+                <div className="space-y-3">
+                  <Label className="text-sm font-medium text-gray-700">Live Preview</Label>
+                  <div
+                    className="p-6 rounded-2xl text-white shadow-lg"
+                    style={{ background: `linear-gradient(135deg, ${formData.primary_color} 0%, ${formData.secondary_color} 100%)` }}
+                  >
+                    <div className="flex items-center gap-4">
+                      {formData.logo_url ? (
+                        <img src={formData.logo_url} alt="" className="w-14 h-14 object-contain bg-white rounded-xl p-1" />
+                      ) : (
+                        <div className="w-14 h-14 rounded-xl bg-white/20 backdrop-blur flex items-center justify-center">
+                          <Building2 className="w-7 h-7" />
+                        </div>
+                      )}
+                      <div>
+                        <h3 className="font-bold text-lg">{formData.name}</h3>
+                        <p className="text-sm opacity-80">{formData.city ? `${formData.city}, ${formData.country}` : formData.country}</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {isAdmin && (
+                  <Button onClick={handleSave} disabled={updateOrgMutation.isPending} className="w-full bg-gradient-to-r from-[#1EB053] to-[#0072C6] hover:from-[#178f43] hover:to-[#005a9e] shadow-lg">
+                    {updateOrgMutation.isPending ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Save className="w-4 h-4 mr-2" />}
+                    Save Branding
+                  </Button>
+                )}
+              </CardContent>
+            </Card>
+          </div>
         </TabsContent>
 
         {/* Members Tab */}
-        <TabsContent value="members" className="mt-6 space-y-6">
-          {/* Members Header */}
-          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-            <div>
-              <h2 className="text-xl font-semibold text-gray-900">Team Members</h2>
-              <p className="text-gray-500">{employees.length} members in this organisation</p>
-            </div>
-            {isAdmin && (
-              <Button onClick={() => setShowInviteDialog(true)} className="bg-gradient-to-r from-[#1EB053] to-[#0072C6] hover:from-[#178f43] hover:to-[#005a9e] shadow-lg">
-                <UserPlus className="w-4 h-4 mr-2" />
-                Add Team Member
-              </Button>
-            )}
-          </div>
-
-          {/* Role Summary Cards */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            {[
-              { label: 'Administrators', count: adminCount, icon: Shield, color: 'from-purple-500 to-purple-600' },
-              { label: 'Active Members', count: activeCount, icon: CheckCircle2, color: 'from-[#1EB053] to-emerald-600' },
-              { label: 'Total Team', count: employees.length, icon: Users, color: 'from-[#0072C6] to-blue-600' },
-              { label: 'Departments', count: [...new Set(employees.map(e => e.department).filter(Boolean))].length, icon: Building2, color: 'from-amber-500 to-orange-500' },
-            ].map((stat) => (
-              <div key={stat.label} className="bg-white rounded-xl border p-4 hover:shadow-md transition-shadow">
-                <div className={`w-10 h-10 rounded-lg bg-gradient-to-br ${stat.color} flex items-center justify-center mb-3`}>
-                  <stat.icon className="w-5 h-5 text-white" />
-                </div>
-                <p className="text-2xl font-bold text-gray-900">{stat.count}</p>
-                <p className="text-sm text-gray-500">{stat.label}</p>
-              </div>
-            ))}
-          </div>
-
-          {/* Members List */}
+        <TabsContent value="members" className="mt-6">
           <Card>
-            <CardContent className="p-0">
-              <div className="divide-y">
-                {employees.map((emp, index) => {
+            <CardHeader className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-6">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#1EB053]/20 to-[#0072C6]/20 flex items-center justify-center">
+                  <Users className="w-5 h-5 text-[#0072C6]" />
+                </div>
+                <div>
+                  <CardTitle>Team Members</CardTitle>
+                  <CardDescription>{employees.length} members • {activeCount} active</CardDescription>
+                </div>
+              </div>
+              {isAdmin && (
+                <Button onClick={() => setShowInviteDialog(true)} className="bg-gradient-to-r from-[#1EB053] to-[#0072C6] hover:from-[#178f43] hover:to-[#005a9e] shadow-lg w-full sm:w-auto">
+                  <UserPlus className="w-4 h-4 mr-2" />
+                  Add Member
+                </Button>
+              )}
+            </CardHeader>
+            <CardContent>
+              {/* Role filter badges */}
+              <div className="flex flex-wrap gap-2 mb-6">
+                {['All', 'Admins', 'Active', 'Inactive'].map((filter) => (
+                  <Badge 
+                    key={filter} 
+                    variant="outline" 
+                    className="px-3 py-1 cursor-pointer hover:bg-gray-100 transition-colors"
+                  >
+                    {filter}
+                  </Badge>
+                ))}
+              </div>
+
+              <div className="space-y-3">
+                {employees.map((emp) => {
                   const isCurrentUser = emp.user_email === user?.email;
                   const isEmpAdmin = ['super_admin', 'org_admin'].includes(emp.role);
                   return (
                     <div 
                       key={emp.id} 
-                      className={`flex flex-col sm:flex-row sm:items-center justify-between p-4 hover:bg-gray-50 transition-colors gap-3 ${index === 0 ? 'rounded-t-xl' : ''} ${index === employees.length - 1 ? 'rounded-b-xl' : ''}`}
+                      className={`flex flex-col sm:flex-row sm:items-center justify-between p-4 rounded-xl border transition-all hover:shadow-md ${
+                        isCurrentUser ? 'bg-gradient-to-r from-[#1EB053]/5 to-[#0072C6]/5 border-[#1EB053]/20' : 'bg-white border-gray-100'
+                      }`}
                     >
                       <div className="flex items-center gap-4">
                         <div className="relative">
-                          <Avatar className="w-12 h-12 border-2 border-white shadow">
+                          <Avatar className="w-12 h-12">
                             <AvatarImage src={emp.profile_photo} />
-                            <AvatarFallback className="bg-gradient-to-br from-[#1EB053] to-[#0072C6] text-white font-semibold">
+                            <AvatarFallback className="bg-gradient-to-br from-[#1EB053] to-[#0072C6] text-white text-lg">
                               {emp.full_name?.charAt(0)}
                             </AvatarFallback>
                           </Avatar>
                           {emp.status === 'active' && (
-                            <div className="absolute -bottom-0.5 -right-0.5 w-4 h-4 bg-green-500 rounded-full border-2 border-white" />
+                            <div className="absolute -bottom-0.5 -right-0.5 w-4 h-4 bg-green-500 border-2 border-white rounded-full" />
                           )}
                         </div>
                         <div>
                           <div className="flex items-center gap-2">
                             <p className="font-semibold text-gray-900">{emp.full_name}</p>
                             {isCurrentUser && (
-                              <Badge variant="outline" className="text-xs bg-blue-50 text-blue-600 border-blue-200">You</Badge>
+                              <Badge variant="secondary" className="text-[10px] px-1.5 py-0">You</Badge>
                             )}
                             {isEmpAdmin && (
-                              <Crown className="w-4 h-4 text-amber-500" />
+                              <Crown className="w-4 h-4 text-[#D4AF37]" />
                             )}
                           </div>
                           <p className="text-sm text-gray-500">{emp.email}</p>
                           {(emp.department || emp.position) && (
                             <p className="text-xs text-gray-400 mt-0.5">
-                              {[emp.department, emp.position].filter(Boolean).join(' • ')}
+                              {[emp.position, emp.department].filter(Boolean).join(' • ')}
                             </p>
                           )}
                         </div>
                       </div>
-                      <div className="flex items-center gap-2 ml-16 sm:ml-0">
+                      <div className="flex items-center gap-2 mt-3 sm:mt-0">
                         <Badge 
                           className={`capitalize ${
                             isEmpAdmin 
-                              ? 'bg-purple-100 text-purple-700 border-purple-200' 
-                              : 'bg-gray-100 text-gray-700 border-gray-200'
+                              ? 'bg-[#D4AF37]/10 text-[#D4AF37] border-[#D4AF37]/20' 
+                              : 'bg-gray-100 text-gray-600'
                           }`}
                         >
                           {emp.role?.replace(/_/g, ' ')}
@@ -667,8 +713,8 @@ export default function OrganisationManage() {
                         <Badge 
                           variant="outline"
                           className={emp.status === 'active' 
-                            ? 'bg-green-50 text-green-700 border-green-200' 
-                            : 'bg-red-50 text-red-700 border-red-200'
+                            ? 'border-green-200 bg-green-50 text-green-700' 
+                            : 'border-red-200 bg-red-50 text-red-700'
                           }
                         >
                           {emp.status}
@@ -676,7 +722,7 @@ export default function OrganisationManage() {
                         {isAdmin && !isCurrentUser && (
                           <DropdownMenu>
                             <DropdownMenuTrigger asChild>
-                              <Button variant="ghost" size="icon" className="h-8 w-8">
+                              <Button variant="ghost" size="icon" className="h-8 w-8 text-gray-400 hover:text-gray-600">
                                 <MoreVertical className="h-4 w-4" />
                               </Button>
                             </DropdownMenuTrigger>
