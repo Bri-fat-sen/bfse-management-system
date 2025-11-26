@@ -33,7 +33,6 @@ export default function MeetingDialog({
   orgId,
   currentEmployee 
 }) {
-  const { toast } = useToast();
   const queryClient = useQueryClient();
   const [selectedAttendees, setSelectedAttendees] = useState([]);
   const [meetingType, setMeetingType] = useState("in_person");
