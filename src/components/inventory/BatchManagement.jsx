@@ -103,6 +103,13 @@ export default function BatchManagement({ products = [], warehouses = [], orgId,
     return { label: `${days}d left`, color: "bg-green-100 text-green-700", days };
   };
 
+  // Generate batch number: BATCH-YYYYMMDD-XXXX (random 4 digits)
+  const generateBatchNumber = () => {
+    const date = format(new Date(), 'yyyyMMdd');
+    const random = Math.floor(1000 + Math.random() * 9000);
+    return `BATCH-${date}-${random}`;
+  };
+
   const handleSubmit = (e) => {
     e.preventDefault();
     const formData = new FormData(e.target);
@@ -113,7 +120,7 @@ export default function BatchManagement({ products = [], warehouses = [], orgId,
       organisation_id: orgId,
       product_id: formData.get('product_id'),
       product_name: product?.name,
-      batch_number: formData.get('batch_number'),
+      batch_number: editingBatch ? editingBatch.batch_number : generateBatchNumber(),
       warehouse_id: formData.get('warehouse_id'),
       warehouse_name: warehouse?.name,
       quantity: parseInt(formData.get('quantity')) || 0,
@@ -292,10 +299,12 @@ export default function BatchManagement({ products = [], warehouses = [], orgId,
                   </SelectContent>
                 </Select>
               </div>
-              <div>
-                <Label>Batch Number *</Label>
-                <Input name="batch_number" defaultValue={editingBatch?.batch_number} required className="mt-1" />
-              </div>
+              {editingBatch && (
+                <div>
+                  <Label>Batch Number</Label>
+                  <Input value={editingBatch?.batch_number} disabled className="mt-1 bg-gray-100" />
+                </div>
+              )}
               <div>
                 <Label>Quantity</Label>
                 <Input name="quantity" type="number" defaultValue={editingBatch?.quantity || 0} className="mt-1" />
