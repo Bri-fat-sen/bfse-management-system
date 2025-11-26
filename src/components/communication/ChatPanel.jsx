@@ -160,6 +160,29 @@ export default function ChatPanel({ isOpen, onClose, orgId, currentEmployee }) {
           </div>
         </div>
         <div className="flex items-center gap-1">
+          {/* Call buttons when in a chat */}
+          {selectedRoom && (
+            <>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => startCall("audio")}
+                className="text-white hover:bg-white/10"
+                title="Voice call"
+              >
+                <Phone className="w-4 h-4" />
+              </Button>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => startCall("video")}
+                className="text-white hover:bg-white/10"
+                title="Video call"
+              >
+                <Video className="w-4 h-4" />
+              </Button>
+            </>
+          )}
           <Link to={createPageUrl("Communication")}>
             <Button
               variant="ghost"
