@@ -862,6 +862,7 @@ export default function Inventory() {
                       >
                         <Checkbox 
                           checked={selectedLocations.includes(location.id)}
+                          onClick={(e) => e.stopPropagation()}
                           onCheckedChange={() => toggleLocation(location.id)}
                         />
                         {location.type === 'warehouse' ? (
