@@ -49,39 +49,21 @@ export default function ChatWindow({
   orgId,
   onlineUsers = [],
   onViewInfo,
+  typingUsers = [],
   onOpenSearch,
-  onOpenFiles,
-  typingUsers = []
+  onOpenFiles
 }) {
   const queryClient = useQueryClient();
   const [messageText, setMessageText] = useState("");
   const [replyTo, setReplyTo] = useState(null);
   const [attachments, setAttachments] = useState([]);
   const [isUploading, setIsUploading] = useState(false);
-  const [isTyping, setIsTyping] = useState(false);
   const messagesEndRef = useRef(null);
   const fileInputRef = useRef(null);
-  const typingTimeoutRef = useRef(null);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
-
-  // Handle typing indicator
-  const handleTyping = () => {
-    if (!isTyping && room) {
-      setIsTyping(true);
-      // In a real app, you'd broadcast this to other users
-    }
-    
-    if (typingTimeoutRef.current) {
-      clearTimeout(typingTimeoutRef.current);
-    }
-    
-    typingTimeoutRef.current = setTimeout(() => {
-      setIsTyping(false);
-    }, 2000);
-  };
 
   const sendMessageMutation = useMutation({
     mutationFn: (data) => base44.entities.ChatMessage.create(data),
@@ -212,7 +194,7 @@ export default function ChatWindow({
                   <Search className="w-4 h-4" />
                 </Button>
               </TooltipTrigger>
-              <TooltipContent>Search Messages</TooltipContent>
+              <TooltipContent>Search</TooltipContent>
             </Tooltip>
             <Tooltip>
               <TooltipTrigger asChild>
@@ -338,14 +320,7 @@ export default function ChatWindow({
                           </div>
                         </div>
 
-                        {/* Reactions */}
-                      <MessageReactions
-                        message={msg}
-                        currentEmployeeId={currentEmployee?.id}
-                        currentEmployeeName={currentEmployee?.full_name}
-                      />
-
-                      <div className={`flex items-center gap-1 mt-0.5 text-xs text-gray-400 ${
+                        <div className={`flex items-center gap-1 mt-0.5 text-xs text-gray-400 ${
                           isOwn ? 'flex-row-reverse' : ''
                         }`}>
                           <span>{format(parseISO(msg.created_date), 'HH:mm')}</span>
@@ -355,6 +330,13 @@ export default function ChatWindow({
                               : <Check className="w-3.5 h-3.5" />
                           )}
                         </div>
+                        
+                        {/* Reactions */}
+                        <MessageReactions 
+                          message={msg} 
+                          currentEmployeeId={currentEmployee?.id}
+                          currentEmployeeName={currentEmployee?.full_name}
+                        />
                       </div>
                     </div>
                   </div>
@@ -421,10 +403,7 @@ export default function ChatWindow({
           <Input
             placeholder="Type a message..."
             value={messageText}
-            onChange={(e) => {
-              setMessageText(e.target.value);
-              handleTyping();
-            }}
+            onChange={(e) => setMessageText(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && !e.shiftKey && handleSendMessage()}
             className="flex-1 h-10"
             disabled={isUploading}
