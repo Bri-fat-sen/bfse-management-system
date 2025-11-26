@@ -126,6 +126,20 @@ export default function ChatWindow({
     return !isSameDay(prevDate, currDate);
   };
 
+  if (!room) {
+    return (
+      <div className="flex-1 flex items-center justify-center bg-gray-50 text-gray-500">
+        <div className="text-center">
+          <div className="w-20 h-20 rounded-full bg-gray-100 flex items-center justify-center mx-auto mb-4">
+            <Send className="w-8 h-8 text-gray-300" />
+          </div>
+          <h3 className="font-semibold text-lg mb-1">Select a conversation</h3>
+          <p className="text-sm">Choose a chat to start messaging</p>
+        </div>
+      </div>
+    );
+  }
+
   const otherName = room.type === 'group'
     ? room.name
     : room.participant_names?.find(n => n !== currentEmployee?.full_name) || room.name;
@@ -133,7 +147,8 @@ export default function ChatWindow({
   const isOnline = room.type === 'direct' &&
     room.participants?.some(p => p !== currentEmployee?.id && onlineUsers.includes(p));
 
-  if (!room) {
+  // This block is removed since it's now at the top
+  if (false) {
     return (
       <div className="flex-1 flex items-center justify-center bg-gray-50 text-gray-500">
         <div className="text-center">
