@@ -14,7 +14,9 @@ import {
   Filter,
   Download,
   Calendar,
-  Truck
+  Truck,
+  Wrench,
+  Fuel
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -96,6 +98,12 @@ export default function Finance() {
     enabled: !!orgId,
   });
 
+  const { data: maintenanceRecords = [] } = useQuery({
+    queryKey: ['vehicleMaintenance', orgId],
+    queryFn: () => base44.entities.VehicleMaintenance.filter({ organisation_id: orgId }, '-date_performed', 200),
+    enabled: !!orgId,
+  });
+
   const { data: payrolls = [] } = useQuery({
     queryKey: ['payrolls', orgId],
     queryFn: () => base44.entities.Payroll.filter({ organisation_id: orgId }, '-period_start', 100),
@@ -133,16 +141,30 @@ export default function Finance() {
   const totalVehicleSalesRevenue = vehicleSales.reduce((sum, s) => sum + (s.total_amount || 0), 0);
   const totalTransportRevenue = trips.reduce((sum, t) => sum + (t.total_revenue || 0), 0);
   const completedContracts = truckContracts.filter(c => c.status === 'completed');
-  const totalTruckContractRevenue = completedContracts.reduce((sum, c) => sum + (c.net_revenue || 0), 0);
+  const totalTruckContractRevenue = completedContracts.reduce((sum, c) => sum + (c.contract_amount || 0), 0);
   const totalRevenue = totalRetailRevenue + totalWarehouseRevenue + totalVehicleSalesRevenue + totalTransportRevenue + totalTruckContractRevenue;
-  const totalExpenses = expenses.reduce((sum, e) => sum + (e.amount || 0), 0);
+  
+  // Calculate ALL expenses from all sources
+  const recordedExpenses = expenses.reduce((sum, e) => sum + (e.amount || 0), 0);
+  const tripFuelExpenses = trips.reduce((sum, t) => sum + (t.fuel_cost || 0), 0);
+  const tripOtherExpenses = trips.reduce((sum, t) => sum + (t.other_expenses || 0), 0);
+  const truckContractExpenses = truckContracts.reduce((sum, c) => sum + (c.total_expenses || 0), 0);
+  const maintenanceExpenses = maintenanceRecords.reduce((sum, m) => sum + (m.cost || 0), 0);
+  
+  const totalExpenses = recordedExpenses + tripFuelExpenses + tripOtherExpenses + truckContractExpenses + maintenanceExpenses;
   const netProfit = totalRevenue - totalExpenses;
 
-  // Expense breakdown by category
-  const expensesByCategory = expenseCategories.map(cat => ({
-    name: cat.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase()),
-    value: expenses.filter(e => e.category === cat).reduce((sum, e) => sum + (e.amount || 0), 0)
-  })).filter(item => item.value > 0);
+  // Expense breakdown by category (including all sources)
+  const expensesByCategory = [
+    ...expenseCategories.map(cat => ({
+      name: cat.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase()),
+      value: expenses.filter(e => e.category === cat).reduce((sum, e) => sum + (e.amount || 0), 0)
+    })),
+    { name: 'Trip Fuel', value: tripFuelExpenses },
+    { name: 'Trip Other', value: tripOtherExpenses },
+    { name: 'Truck Contract Expenses', value: truckContractExpenses },
+    { name: 'Vehicle Maintenance', value: maintenanceExpenses }
+  ].filter(item => item.value > 0);
 
   // Monthly revenue data
   const monthlyData = [];
@@ -373,6 +395,65 @@ export default function Finance() {
                       </div>
                     </div>
                     <p className="font-bold text-teal-600">Le {totalTruckContractRevenue.toLocaleString()}</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Expense Sources */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Expense Sources</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between p-4 bg-red-50 rounded-lg">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-full bg-red-100 flex items-center justify-center">
+                        <Receipt className="w-5 h-5 text-red-600" />
+                      </div>
+                      <div>
+                        <p className="font-medium">Recorded Expenses</p>
+                        <p className="text-sm text-gray-500">{expenses.length} entries</p>
+                      </div>
+                    </div>
+                    <p className="font-bold text-red-600">Le {recordedExpenses.toLocaleString()}</p>
+                  </div>
+                  <div className="flex items-center justify-between p-4 bg-orange-50 rounded-lg">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-full bg-orange-100 flex items-center justify-center">
+                        <Fuel className="w-5 h-5 text-orange-600" />
+                      </div>
+                      <div>
+                        <p className="font-medium">Trip Expenses</p>
+                        <p className="text-sm text-gray-500">Fuel & other trip costs</p>
+                      </div>
+                    </div>
+                    <p className="font-bold text-orange-600">Le {(tripFuelExpenses + tripOtherExpenses).toLocaleString()}</p>
+                  </div>
+                  <div className="flex items-center justify-between p-4 bg-violet-50 rounded-lg">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-full bg-violet-100 flex items-center justify-center">
+                        <Truck className="w-5 h-5 text-violet-600" />
+                      </div>
+                      <div>
+                        <p className="font-medium">Contract Expenses</p>
+                        <p className="text-sm text-gray-500">Truck contract costs</p>
+                      </div>
+                    </div>
+                    <p className="font-bold text-violet-600">Le {truckContractExpenses.toLocaleString()}</p>
+                  </div>
+                  <div className="flex items-center justify-between p-4 bg-cyan-50 rounded-lg">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-full bg-cyan-100 flex items-center justify-center">
+                        <Wrench className="w-5 h-5 text-cyan-600" />
+                      </div>
+                      <div>
+                        <p className="font-medium">Vehicle Maintenance</p>
+                        <p className="text-sm text-gray-500">{maintenanceRecords.length} service records</p>
+                      </div>
+                    </div>
+                    <p className="font-bold text-cyan-600">Le {maintenanceExpenses.toLocaleString()}</p>
                   </div>
                 </div>
               </CardContent>
