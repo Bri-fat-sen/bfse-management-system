@@ -366,10 +366,13 @@ export default function Dashboard() {
         <div className="space-y-6">
           {/* Critical Alerts Section */}
           {(lowStockProducts.length > 0 || expiredBatches.length > 0 || expiringBatches.length > 0) && (
-            <Card className="border-l-4 border-l-red-500">
-              <CardHeader className="pb-2">
+            <Card className="border-0 shadow-lg overflow-hidden">
+              <div className="h-1 bg-gradient-to-r from-red-500 via-orange-500 to-amber-500" />
+              <CardHeader className="pb-2 bg-gradient-to-r from-red-50 to-white">
                 <CardTitle className="text-lg font-semibold flex items-center gap-2">
-                  <Bell className="w-5 h-5 text-red-500" />
+                  <div className="p-1.5 rounded-lg bg-gradient-to-br from-red-500 to-orange-500 animate-pulse">
+                    <Bell className="w-4 h-4 text-white" />
+                  </div>
                   Critical Alerts
                 </CardTitle>
               </CardHeader>
@@ -443,7 +446,10 @@ export default function Dashboard() {
       </div>
 
       {/* Quick Actions Grid */}
-      <QuickActions />
+      <div className="relative">
+        <div className="absolute -top-4 left-0 right-0 h-8 bg-gradient-to-b from-transparent to-gray-50/50 pointer-events-none" />
+        <QuickActions />
+      </div>
 
       {/* Additional Dashboard Widgets */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
