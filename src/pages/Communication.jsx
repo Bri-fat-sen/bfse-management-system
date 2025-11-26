@@ -37,7 +37,7 @@ import NewGroupDialog from "@/components/communication/NewGroupDialog";
 import GroupSettingsDialog from "@/components/communication/GroupSettingsDialog";
 import SharedFilesPanel from "@/components/communication/SharedFilesPanel";
 import MessageSearch from "@/components/communication/MessageSearch";
-import MeetingReminders, { RecurringMeetingOptions } from "@/components/communication/MeetingReminders";
+import MeetingReminders from "@/components/communication/MeetingReminders";
 
 export default function Communication() {
   const queryClient = useQueryClient();
