@@ -13,17 +13,6 @@ export default function QuickClockIn({ currentEmployee, orgId, todayAttendance }
   const [isLocating, setIsLocating] = useState(false);
   const [currentTime, setCurrentTime] = useState(new Date());
 
-  // Guard against missing data
-  if (!currentEmployee || !orgId) {
-    return null;
-  }
-
-  // Update time every second
-  useEffect(() => {
-    const timer = setInterval(() => setCurrentTime(new Date()), 1000);
-    return () => clearInterval(timer);
-  }, []);
-
   const isClockedIn = todayAttendance?.clock_in_time && !todayAttendance?.clock_out_time;
   const isClockedOut = todayAttendance?.clock_out_time;
 
@@ -51,8 +40,8 @@ export default function QuickClockIn({ currentEmployee, orgId, todayAttendance }
       const now = new Date();
       return base44.entities.Attendance.create({
         organisation_id: orgId,
-        employee_id: currentEmployee.id,
-        employee_name: currentEmployee.full_name,
+        employee_id: currentEmployee?.id,
+        employee_name: currentEmployee?.full_name,
         date: format(now, 'yyyy-MM-dd'),
         clock_in_time: format(now, 'HH:mm'),
         clock_in_location: location || 'Unknown',
@@ -64,7 +53,7 @@ export default function QuickClockIn({ currentEmployee, orgId, todayAttendance }
       queryClient.invalidateQueries({ queryKey: ['todayAttendance'] });
       queryClient.invalidateQueries({ queryKey: ['myAttendance'] });
       queryClient.invalidateQueries({ queryKey: ['attendance'] });
-      toast.success(`Clocked In! Welcome, ${currentEmployee.first_name}!`);
+      toast.success(`Clocked In! Welcome, ${currentEmployee?.first_name}!`);
     },
     onError: (error) => {
       toast.error(error.message || "Clock In Failed. Please try again.");
@@ -74,13 +63,13 @@ export default function QuickClockIn({ currentEmployee, orgId, todayAttendance }
   const clockOutMutation = useMutation({
     mutationFn: async () => {
       const now = new Date();
-      const clockInTime = todayAttendance.clock_in_time;
+      const clockInTime = todayAttendance?.clock_in_time;
       const [inHours, inMins] = clockInTime.split(':').map(Number);
       const clockInDate = new Date();
       clockInDate.setHours(inHours, inMins, 0);
       const totalHours = (now - clockInDate) / (1000 * 60 * 60);
 
-      return base44.entities.Attendance.update(todayAttendance.id, {
+      return base44.entities.Attendance.update(todayAttendance?.id, {
         clock_out_time: format(now, 'HH:mm'),
         clock_out_location: location || 'Unknown',
         clock_out_device: navigator.userAgent.includes('Mobile') ? 'Mobile' : 'Desktop',
@@ -98,9 +87,20 @@ export default function QuickClockIn({ currentEmployee, orgId, todayAttendance }
     }
   });
 
+  // Update time every second
+  useEffect(() => {
+    const timer = setInterval(() => setCurrentTime(new Date()), 1000);
+    return () => clearInterval(timer);
+  }, []);
+
   useEffect(() => {
     getLocation();
   }, []);
+
+  // Guard against missing data - must be after all hooks
+  if (!currentEmployee || !orgId) {
+    return null;
+  }
 
   return (
     <Card className="border-2 border-[#1EB053]/20 bg-gradient-to-br from-[#1EB053]/5 to-[#0072C6]/5">
