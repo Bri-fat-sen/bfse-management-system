@@ -149,14 +149,17 @@ export default function Inventory() {
     enabled: !!orgId,
   });
 
-  // Auto-generate stock alerts for low stock items
+  // Auto-generate stock alerts for low stock items (run only when products change)
   useEffect(() => {
     const checkStockAlerts = async () => {
       if (!products.length || !orgId) return;
       
+      // Get current alerts to check against
+      const currentAlerts = await base44.entities.StockAlert.filter({ organisation_id: orgId, status: 'active' });
+      
       for (const product of products) {
         const threshold = product.low_stock_threshold || 10;
-        const existingAlert = stockAlerts.find(
+        const existingAlert = currentAlerts.find(
           a => a.product_id === product.id && a.status === 'active'
         );
         
@@ -184,10 +187,13 @@ export default function Inventory() {
           });
         }
       }
+      
+      // Refresh alerts after creating new ones
+      queryClient.invalidateQueries({ queryKey: ['stockAlerts'] });
     };
     
     checkStockAlerts();
-  }, [products, stockAlerts, orgId]);
+  }, [products, orgId, queryClient]);
 
   const createProductMutation = useMutation({
     mutationFn: (data) => base44.entities.Product.create(data),
