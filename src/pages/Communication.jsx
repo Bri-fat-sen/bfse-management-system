@@ -13,7 +13,9 @@ import {
   MapPin,
   ExternalLink,
   Megaphone,
-  Bell
+  Bell,
+  Search,
+  Repeat
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -34,10 +36,9 @@ import ChatSidebar from "@/components/communication/ChatSidebar";
 import ChatWindow from "@/components/communication/ChatWindow";
 import AnnouncementsPanel from "@/components/communication/AnnouncementsPanel";
 import NewGroupDialog from "@/components/communication/NewGroupDialog";
-import GroupSettingsDialog from "@/components/communication/GroupSettingsDialog";
-import SharedFilesPanel from "@/components/communication/SharedFilesPanel";
+import GroupSettings from "@/components/communication/GroupSettings";
 import MessageSearch from "@/components/communication/MessageSearch";
-import MeetingReminders from "@/components/communication/MeetingReminders";
+import SharedFilesGallery from "@/components/communication/SharedFilesGallery";
 
 export default function Communication() {
   const queryClient = useQueryClient();
@@ -46,10 +47,10 @@ export default function Communication() {
   const [showNewChatDialog, setShowNewChatDialog] = useState(false);
   const [showNewGroupDialog, setShowNewGroupDialog] = useState(false);
   const [showMeetingDialog, setShowMeetingDialog] = useState(false);
-  const [showGroupSettings, setShowGroupSettings] = useState(false);
-  const [showFilesPanel, setShowFilesPanel] = useState(false);
-  const [showMessageSearch, setShowMessageSearch] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
+  const [showGroupSettings, setShowGroupSettings] = useState(false);
+  const [showMessageSearch, setShowMessageSearch] = useState(false);
+  const [showSharedFiles, setShowSharedFiles] = useState(false);
 
   const { data: user } = useQuery({
     queryKey: ['currentUser'],
@@ -187,21 +188,29 @@ export default function Communication() {
               </div>
             )}
           </div>
-          {meeting.meeting_link && (
-            <a
-              href={meeting.meeting_link}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex items-center gap-1 px-3 py-1.5 bg-[#1EB053] text-white text-sm rounded-lg hover:bg-[#178f43] transition-colors"
-            >
-              Join
-              <ExternalLink className="w-3.5 h-3.5" />
-            </a>
-          )}
-        </div>
-      </div>
-    );
-  };
+          <div className="flex items-center gap-2">
+            {meeting.is_recurring && (
+              <Badge variant="outline" className="text-xs">
+                <Repeat className="w-3 h-3 mr-1" />
+                Recurring
+              </Badge>
+            )}
+            {meeting.meeting_link && (
+              <a
+                href={meeting.meeting_link}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-1 px-3 py-1.5 bg-[#1EB053] text-white text-sm rounded-lg hover:bg-[#178f43] transition-colors"
+              >
+                Join
+                <ExternalLink className="w-3.5 h-3.5" />
+              </a>
+            )}
+          </div>
+          </div>
+          </div>
+          );
+          };
 
   const MeetingSection = ({ title, meetings, showDate }) => {
     if (meetings.length === 0) return null;
@@ -285,18 +294,11 @@ export default function Communication() {
 
             {/* Chat Window */}
             <Card className="lg:col-span-8 xl:col-span-9 overflow-hidden">
-              {showFilesPanel && selectedRoom ? (
-                <div className="h-full flex flex-col">
-                  <div className="p-3 border-b flex items-center justify-between">
-                    <h3 className="font-semibold">Shared Files</h3>
-                    <Button variant="ghost" size="sm" onClick={() => setShowFilesPanel(false)}>
-                      Back to Chat
-                    </Button>
-                  </div>
-                  <div className="flex-1 overflow-hidden">
-                    <SharedFilesPanel messages={messages} roomName={selectedRoom?.name} />
-                  </div>
-                </div>
+              {showSharedFiles && selectedRoom ? (
+                <SharedFilesGallery 
+                  messages={messages} 
+                  roomName={selectedRoom?.name}
+                />
               ) : (
                 <ChatWindow
                   room={selectedRoom}
@@ -305,8 +307,19 @@ export default function Communication() {
                   orgId={orgId}
                   onViewInfo={() => selectedRoom?.type === 'group' && setShowGroupSettings(true)}
                   onOpenSearch={() => setShowMessageSearch(true)}
-                  onOpenFiles={() => setShowFilesPanel(true)}
+                  onOpenFiles={() => setShowSharedFiles(true)}
                 />
+              )}
+              {showSharedFiles && (
+                <div className="absolute top-2 right-2">
+                  <Button 
+                    variant="ghost" 
+                    size="sm"
+                    onClick={() => setShowSharedFiles(false)}
+                  >
+                    Back to Chat
+                  </Button>
+                </div>
               )}
             </Card>
           </div>
@@ -419,6 +432,7 @@ export default function Communication() {
               orgId={orgId}
               currentEmployee={currentEmployee}
               canPost={canPost}
+              totalEmployees={employees.length}
             />
           </div>
         </TabsContent>
@@ -496,31 +510,26 @@ export default function Communication() {
       />
 
       {/* Group Settings Dialog */}
-      <GroupSettingsDialog
+      <GroupSettings
+        room={selectedRoom}
         open={showGroupSettings}
         onOpenChange={setShowGroupSettings}
-        room={selectedRoom}
-        employees={employees}
         currentEmployee={currentEmployee}
-        onRoomUpdated={setSelectedRoom}
+        orgId={orgId}
       />
 
-      {/* Message Search */}
+      {/* Message Search Dialog */}
       <MessageSearch
         open={showMessageSearch}
         onOpenChange={setShowMessageSearch}
         orgId={orgId}
+        currentEmployee={currentEmployee}
         rooms={myRooms}
-        onSelectMessage={(room, msg) => {
+        onSelectRoom={(room, messageId) => {
           setSelectedRoom(room);
           setShowMessageSearch(false);
+          // Could scroll to specific message if messageId provided
         }}
-      />
-
-      {/* Meeting Reminders */}
-      <MeetingReminders
-        meetings={meetings}
-        currentEmployeeId={currentEmployee?.id}
       />
     </div>
   );
