@@ -73,13 +73,7 @@ const actions = [
     color: "from-indigo-500 to-purple-600",
     description: "Manage vendors"
   },
-  { 
-    icon: ClipboardList, 
-    label: "Reports", 
-    page: "Reports", 
-    color: "from-[#D4AF37] to-amber-600",
-    description: "View reports"
-  },
+
 ];
 
 export default function QuickActions() {
