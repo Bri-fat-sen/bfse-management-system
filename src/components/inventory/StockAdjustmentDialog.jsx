@@ -22,6 +22,7 @@ import {
 import { useToast } from "@/components/ui/use-toast";
 import { Package, Plus, Minus, ArrowLeftRight, AlertTriangle } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { format } from "date-fns";
 
 export default function StockAdjustmentDialog({ 
   open, 
@@ -59,12 +60,13 @@ export default function StockAdjustmentDialog({
             quantity: (existingBatches[0].quantity || 0) + data.movement.quantity
           });
         } else {
-          // Create new batch
+          // Create new batch with auto-generated number if not provided
+          const autoBatchNumber = data.batchNumber || `BATCH-${format(new Date(), 'yyyyMMdd')}-${Math.floor(1000 + Math.random() * 9000)}`;
           await base44.entities.InventoryBatch.create({
             organisation_id: orgId,
             product_id: data.productId,
             product_name: data.product?.name,
-            batch_number: data.batchNumber,
+            batch_number: autoBatchNumber,
             warehouse_id: data.warehouseId,
             warehouse_name: data.warehouseName,
             quantity: data.movement.quantity,
