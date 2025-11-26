@@ -3,17 +3,21 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import {
-  BarChart, Bar, LineChart, Line, PieChart, Pie, Cell,
-  XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, AreaChart, Area
-} from "recharts";
 import { format, subDays, startOfWeek, endOfWeek, eachDayOfInterval } from "date-fns";
 import {
   TrendingUp, TrendingDown, DollarSign, ShoppingCart,
   Package, Users, Calendar, ArrowUpRight, ArrowDownRight
 } from "lucide-react";
+import {
+  MultiAreaChart,
+  DonutChart,
+  GradientBarChart,
+  ProgressRing,
+  SparklineChart,
+  SL_COLORS
+} from "@/components/charts/AdvancedCharts";
 
-const COLORS = ['#1EB053', '#0072C6', '#D4AF37', '#0F1F3C', '#9333ea', '#ec4899'];
+const COLORS = SL_COLORS.chart;
 
 export default function AnalyticsDashboard({ sales = [], expenses = [], products = [], employees = [], trips = [] }) {
   const [timeRange, setTimeRange] = useState("7days");
