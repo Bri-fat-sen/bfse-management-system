@@ -541,74 +541,100 @@ export default function HRAnalytics() {
         <TabsContent value="training" className="space-y-4">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
             {/* Training by Department */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-lg">Training Completion by Department</CardTitle>
+            <Card className="overflow-hidden border-0 shadow-sm">
+              <CardHeader className="bg-gradient-to-r from-[#1EB053]/5 to-[#10B981]/5 border-b">
+                <CardTitle className="text-lg flex items-center gap-2">
+                  <div className="p-2 rounded-lg bg-gradient-to-br from-[#1EB053] to-[#10B981]">
+                    <BookOpen className="w-4 h-4 text-white" />
+                  </div>
+                  Training by Department
+                </CardTitle>
               </CardHeader>
-              <CardContent>
-                <ResponsiveContainer width="100%" height={300}>
-                  <BarChart data={trainingByDepartment}>
-                    <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis dataKey="department" tick={{ fontSize: 11 }} />
-                    <YAxis tick={{ fontSize: 12 }} />
-                    <Tooltip />
-                    <Legend />
-                    <Bar dataKey="trained" fill="#1EB053" name="Trained" stackId="a" />
-                    <Bar dataKey="total" fill="#E5E7EB" name="Total" stackId="b" />
-                  </BarChart>
-                </ResponsiveContainer>
+              <CardContent className="pt-6">
+                <ColorfulBarChart 
+                  data={trainingByDepartment}
+                  dataKey="trained"
+                  xKey="department"
+                  height={300}
+                  formatter={(v) => `${v} trained`}
+                />
               </CardContent>
             </Card>
 
             {/* Training Rate Pie */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-lg">Overall Training Status</CardTitle>
+            <Card className="overflow-hidden border-0 shadow-sm">
+              <CardHeader className="bg-gradient-to-r from-[#0072C6]/5 to-[#6366F1]/5 border-b">
+                <CardTitle className="text-lg flex items-center gap-2">
+                  <div className="p-2 rounded-lg bg-gradient-to-br from-[#0072C6] to-[#6366F1]">
+                    <Users className="w-4 h-4 text-white" />
+                  </div>
+                  Overall Training Status
+                </CardTitle>
               </CardHeader>
-              <CardContent>
-                <ResponsiveContainer width="100%" height={300}>
-                  <PieChart>
-                    <Pie
-                      data={[
-                        { name: 'Trained', value: filteredEmployees.filter(e => e.training_history?.length > 0).length },
-                        { name: 'Not Trained', value: filteredEmployees.filter(e => !e.training_history?.length).length }
-                      ]}
-                      cx="50%"
-                      cy="50%"
-                      innerRadius={60}
-                      outerRadius={100}
-                      paddingAngle={5}
-                      dataKey="value"
-                      label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
-                    >
-                      <Cell fill="#1EB053" />
-                      <Cell fill="#E5E7EB" />
-                    </Pie>
-                    <Tooltip />
-                  </PieChart>
-                </ResponsiveContainer>
+              <CardContent className="pt-6">
+                <DonutChart 
+                  data={[
+                    { name: 'Trained', value: filteredEmployees.filter(e => e.training_history?.length > 0).length },
+                    { name: 'Not Trained', value: filteredEmployees.filter(e => !e.training_history?.length).length }
+                  ]}
+                  height={300}
+                  innerRadius={70}
+                  outerRadius={110}
+                  colors={['#1EB053', '#E5E7EB']}
+                  centerValue={`${metrics.trainingRate}%`}
+                  centerLabel="Trained"
+                />
               </CardContent>
             </Card>
 
             {/* Certification Stats */}
-            <Card className="lg:col-span-2">
-              <CardHeader>
-                <CardTitle className="text-lg">Certification Overview</CardTitle>
+            <Card className="lg:col-span-2 overflow-hidden border-0 shadow-sm">
+              <CardHeader className="bg-gradient-to-r from-[#D4AF37]/5 to-[#F59E0B]/5 border-b">
+                <CardTitle className="text-lg flex items-center gap-2">
+                  <div className="p-2 rounded-lg bg-gradient-to-br from-[#D4AF37] to-[#F59E0B]">
+                    <Award className="w-4 h-4 text-white" />
+                  </div>
+                  Certification Overview
+                </CardTitle>
               </CardHeader>
-              <CardContent>
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                  <div className="bg-gradient-to-br from-[#1EB053]/10 to-[#0072C6]/10 rounded-xl p-6 text-center">
-                    <div className="text-4xl font-bold text-[#1EB053]">{metrics.totalCerts}</div>
+              <CardContent className="pt-6">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+                  <div className="bg-gradient-to-br from-[#1EB053]/10 to-[#0072C6]/10 rounded-2xl p-6 text-center hover:shadow-lg transition-shadow">
+                    <ProgressRing 
+                      value={metrics.totalCerts} 
+                      max={metrics.total * 2 || 1} 
+                      size={100} 
+                      strokeWidth={8}
+                      color="#1EB053"
+                      secondaryColor="#0072C6"
+                    />
+                    <div className="text-3xl font-bold text-[#1EB053] mt-4">{metrics.totalCerts}</div>
                     <div className="text-sm text-gray-600 mt-1">Total Certifications</div>
                   </div>
-                  <div className="bg-gradient-to-br from-[#0072C6]/10 to-[#9333EA]/10 rounded-xl p-6 text-center">
-                    <div className="text-4xl font-bold text-[#0072C6]">
+                  <div className="bg-gradient-to-br from-[#0072C6]/10 to-[#9333EA]/10 rounded-2xl p-6 text-center hover:shadow-lg transition-shadow">
+                    <ProgressRing 
+                      value={filteredEmployees.filter(e => e.certifications?.length > 0).length} 
+                      max={metrics.total || 1} 
+                      size={100} 
+                      strokeWidth={8}
+                      color="#0072C6"
+                      secondaryColor="#9333EA"
+                    />
+                    <div className="text-3xl font-bold text-[#0072C6] mt-4">
                       {filteredEmployees.filter(e => e.certifications?.length > 0).length}
                     </div>
                     <div className="text-sm text-gray-600 mt-1">Certified Employees</div>
                   </div>
-                  <div className="bg-gradient-to-br from-[#D4AF37]/10 to-[#F59E0B]/10 rounded-xl p-6 text-center">
-                    <div className="text-4xl font-bold text-[#D4AF37]">
+                  <div className="bg-gradient-to-br from-[#D4AF37]/10 to-[#F59E0B]/10 rounded-2xl p-6 text-center hover:shadow-lg transition-shadow">
+                    <ProgressRing 
+                      value={metrics.total > 0 ? (filteredEmployees.filter(e => e.certifications?.length > 0).length / metrics.total) * 100 : 0} 
+                      max={100} 
+                      size={100} 
+                      strokeWidth={8}
+                      color="#D4AF37"
+                      secondaryColor="#F59E0B"
+                    />
+                    <div className="text-3xl font-bold text-[#D4AF37] mt-4">
                       {metrics.total > 0 ? ((filteredEmployees.filter(e => e.certifications?.length > 0).length / metrics.total) * 100).toFixed(0) : 0}%
                     </div>
                     <div className="text-sm text-gray-600 mt-1">Certification Rate</div>
