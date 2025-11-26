@@ -8,7 +8,6 @@ import {
   ShoppingCart,
   DollarSign,
   TrendingUp,
-  TrendingDown,
   Package,
   Target,
   Award,
@@ -54,15 +53,6 @@ export default function SalesDashboard({ currentEmployee, orgId }) {
     enabled: !!orgId,
   });
 
-  // Fetch expenses recorded by this employee
-  const { data: myExpenses = [] } = useQuery({
-    queryKey: ['myExpenses', currentEmployee?.id],
-    queryFn: () => base44.entities.Expense.filter({
-      recorded_by: currentEmployee?.id
-    }, '-date', 50),
-    enabled: !!currentEmployee?.id,
-  });
-
   const isClockedIn = todayAttendance?.clock_in_time && !todayAttendance?.clock_out_time;
   
   const todaySales = mySales.filter(s => s.created_date?.startsWith(today));
@@ -70,10 +60,15 @@ export default function SalesDashboard({ currentEmployee, orgId }) {
   
   const todayRevenue = todaySales.reduce((sum, s) => sum + (s.total_amount || 0), 0);
   const monthRevenue = monthSales.reduce((sum, s) => sum + (s.total_amount || 0), 0);
+
+  // Breakdown by sale type
+  const todayRetailSales = todaySales.filter(s => s.sale_type === 'retail');
+  const todayWarehouseSales = todaySales.filter(s => s.sale_type === 'warehouse');
+  const todayVehicleSales = todaySales.filter(s => s.sale_type === 'vehicle');
   
-  // My expenses
-  const todayExpenses = myExpenses.filter(e => e.date === today).reduce((sum, e) => sum + (e.amount || 0), 0);
-  const monthExpenses = myExpenses.filter(e => e.date >= monthStart).reduce((sum, e) => sum + (e.amount || 0), 0);
+  const todayRetailRevenue = todayRetailSales.reduce((sum, s) => sum + (s.total_amount || 0), 0);
+  const todayWarehouseRevenue = todayWarehouseSales.reduce((sum, s) => sum + (s.total_amount || 0), 0);
+  const todayVehicleRevenue = todayVehicleSales.reduce((sum, s) => sum + (s.total_amount || 0), 0);
   
   // Monthly target (example: Le 5,000,000)
   const monthlyTarget = 5000000;
@@ -131,25 +126,24 @@ export default function SalesDashboard({ currentEmployee, orgId }) {
       {/* Stats */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         <StatCard
-          title="Today's Sales"
+          title="Today's Total Sales"
           value={`Le ${todayRevenue.toLocaleString()}`}
           icon={DollarSign}
           color="green"
           subtitle={`${todaySales.length} transactions`}
         />
         <StatCard
-          title="Today's Expenses"
-          value={`Le ${todayExpenses.toLocaleString()}`}
-          icon={TrendingDown}
-          color="red"
-          subtitle="My recorded expenses"
-        />
-        <StatCard
           title="Month Sales"
           value={`Le ${monthRevenue.toLocaleString()}`}
           icon={TrendingUp}
           color="blue"
-          subtitle={`Expenses: Le ${monthExpenses.toLocaleString()}`}
+          subtitle={`${monthSales.length} transactions`}
+        />
+        <StatCard
+          title="Avg Transaction"
+          value={`Le ${todaySales.length > 0 ? Math.round(todayRevenue / todaySales.length).toLocaleString() : 0}`}
+          icon={CreditCard}
+          color="gold"
         />
         <StatCard
           title="Products Available"
@@ -159,6 +153,44 @@ export default function SalesDashboard({ currentEmployee, orgId }) {
           subtitle={`${lowStockProducts.length} low stock`}
         />
       </div>
+
+      {/* My Sales Breakdown by Type */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-lg">
+            <Receipt className="w-5 h-5 text-green-600" />
+            Today's Sales by Type
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div className="p-4 bg-green-50 rounded-lg">
+              <div className="flex items-center gap-2 mb-2">
+                <ShoppingCart className="w-5 h-5 text-green-600" />
+                <span className="font-medium text-green-800">Retail Sales</span>
+              </div>
+              <p className="text-2xl font-bold text-green-700">Le {todayRetailRevenue.toLocaleString()}</p>
+              <p className="text-sm text-green-600">{todayRetailSales.length} transactions</p>
+            </div>
+            <div className="p-4 bg-amber-50 rounded-lg">
+              <div className="flex items-center gap-2 mb-2">
+                <Package className="w-5 h-5 text-amber-600" />
+                <span className="font-medium text-amber-800">Warehouse Sales</span>
+              </div>
+              <p className="text-2xl font-bold text-amber-700">Le {todayWarehouseRevenue.toLocaleString()}</p>
+              <p className="text-sm text-amber-600">{todayWarehouseSales.length} transactions</p>
+            </div>
+            <div className="p-4 bg-purple-50 rounded-lg">
+              <div className="flex items-center gap-2 mb-2">
+                <DollarSign className="w-5 h-5 text-purple-600" />
+                <span className="font-medium text-purple-800">Vehicle Sales</span>
+              </div>
+              <p className="text-2xl font-bold text-purple-700">Le {todayVehicleRevenue.toLocaleString()}</p>
+              <p className="text-sm text-purple-600">{todayVehicleSales.length} transactions</p>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Top Selling Products */}
