@@ -420,9 +420,6 @@ export default function Layout({ children, currentPageName }) {
               )}
             >
               <MessageSquare className="w-5 h-5" />
-              <span className="absolute -top-0.5 -right-0.5 w-4 h-4 bg-[#1EB053] text-white text-[10px] font-bold rounded-full flex items-center justify-center">
-                3
-              </span>
             </Button>
 
             {/* Dark Mode Toggle */}
