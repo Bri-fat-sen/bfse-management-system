@@ -176,11 +176,11 @@ export default function Sales() {
 
   // Filter products and add location-specific stock
   const filteredProducts = React.useMemo(() => {
-    return products
-      .filter(p => 
+    return (products || [])
+      .filter(p => p && (
         p.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
         p.sku?.toLowerCase().includes(searchTerm.toLowerCase())
-      )
+      ))
       .map(p => ({
         ...p,
         // Use location-specific stock if a location is selected, otherwise use product's general stock

@@ -62,13 +62,13 @@ export default function SalesDashboard({ currentEmployee, orgId }) {
   const monthRevenue = monthSales.reduce((sum, s) => sum + (s.total_amount || 0), 0);
 
   // Breakdown by sale type (with null safety)
-  const todayRetailSales = todaySales.filter(s => s?.sale_type === 'retail');
-  const todayWarehouseSales = todaySales.filter(s => s?.sale_type === 'warehouse');
-  const todayVehicleSales = todaySales.filter(s => s?.sale_type === 'vehicle');
+  const todayRetailSales = todaySales.filter(s => s && s.sale_type === 'retail');
+  const todayWarehouseSales = todaySales.filter(s => s && s.sale_type === 'warehouse');
+  const todayVehicleSales = todaySales.filter(s => s && s.sale_type === 'vehicle');
   
-  const todayRetailRevenue = todayRetailSales.reduce((sum, s) => sum + (s.total_amount || 0), 0);
-  const todayWarehouseRevenue = todayWarehouseSales.reduce((sum, s) => sum + (s.total_amount || 0), 0);
-  const todayVehicleRevenue = todayVehicleSales.reduce((sum, s) => sum + (s.total_amount || 0), 0);
+  const todayRetailRevenue = todayRetailSales.reduce((sum, s) => sum + (s?.total_amount || 0), 0);
+  const todayWarehouseRevenue = todayWarehouseSales.reduce((sum, s) => sum + (s?.total_amount || 0), 0);
+  const todayVehicleRevenue = todayVehicleSales.reduce((sum, s) => sum + (s?.total_amount || 0), 0);
   
   // Monthly target (example: Le 5,000,000)
   const monthlyTarget = 5000000;
