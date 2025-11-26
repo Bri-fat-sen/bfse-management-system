@@ -249,7 +249,7 @@ export default function OrganisationManage() {
         
         <div className="relative flex flex-col md:flex-row items-start md:items-center gap-6">
           {/* Logo */}
-          <div className="relative group">
+          <div className="relative">
             {formData.logo_url ? (
               <img 
                 src={formData.logo_url} 
@@ -260,12 +260,6 @@ export default function OrganisationManage() {
               <div className="w-24 h-24 md:w-28 md:h-28 rounded-2xl bg-white/10 backdrop-blur flex items-center justify-center border-2 border-dashed border-white/30">
                 <Building2 className="w-12 h-12 text-white/50" />
               </div>
-            )}
-            {isAdmin && (
-              <label className="absolute inset-0 flex items-center justify-center bg-black/50 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer">
-                <Camera className="w-6 h-6 text-white" />
-                <input type="file" accept="image/*" onChange={handleLogoUpload} className="hidden" />
-              </label>
             )}
           </div>
           
