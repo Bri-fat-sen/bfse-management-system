@@ -485,6 +485,7 @@ export default function Inventory() {
                           <th className="text-left p-4 font-medium">Product</th>
                           <th className="text-left p-4 font-medium">SKU</th>
                           <th className="text-left p-4 font-medium">Category</th>
+                          <th className="text-left p-4 font-medium">Locations</th>
                           <th className="text-right p-4 font-medium">Price</th>
                           <th className="text-right p-4 font-medium">Stock</th>
                           <th className="text-right p-4 font-medium">Actions</th>
