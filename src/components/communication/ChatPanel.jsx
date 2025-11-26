@@ -119,6 +119,11 @@ export default function ChatPanel({ isOpen, onClose, orgId, currentEmployee }) {
     return format(d, 'MMM d');
   };
 
+  const startCall = (type) => {
+    setCallType(type);
+    setCallDialogOpen(true);
+  };
+
   const getOtherParticipantName = (room) => {
     if (room.type === 'group') return room.name;
     const names = room.participant_names || [];
