@@ -309,11 +309,23 @@ export default function Finance() {
                         <Receipt className="w-5 h-5 text-green-600" />
                       </div>
                       <div>
-                        <p className="font-medium">Sales Revenue</p>
-                        <p className="text-sm text-gray-500">{sales.length} transactions</p>
+                        <p className="font-medium">Retail & Warehouse Sales</p>
+                        <p className="text-sm text-gray-500">{retailWarehouseSales.length} transactions</p>
                       </div>
                     </div>
-                    <p className="font-bold text-green-600">Le {totalSalesRevenue.toLocaleString()}</p>
+                    <p className="font-bold text-green-600">Le {totalRetailRevenue.toLocaleString()}</p>
+                  </div>
+                  <div className="flex items-center justify-between p-4 bg-purple-50 rounded-lg">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-full bg-purple-100 flex items-center justify-center">
+                        <DollarSign className="w-5 h-5 text-purple-600" />
+                      </div>
+                      <div>
+                        <p className="font-medium">Vehicle Sales</p>
+                        <p className="text-sm text-gray-500">{vehicleSales.length} sales</p>
+                      </div>
+                    </div>
+                    <p className="font-bold text-purple-600">Le {totalVehicleSalesRevenue.toLocaleString()}</p>
                   </div>
                   <div className="flex items-center justify-between p-4 bg-blue-50 rounded-lg">
                     <div className="flex items-center gap-3">
