@@ -269,7 +269,7 @@ export default function Inventory() {
     if (showProductDialog) {
       setSelectedLocations(editingProduct?.location_ids || []);
     }
-  }, [showProductDialog, editingProduct]);
+  }, [showProductDialog]);
 
   return (
     <div className="space-y-6">
