@@ -32,6 +32,7 @@ import {
   MapPin,
   ChevronUp
 } from "lucide-react";
+import { cn } from "@/lib/utils";
 import { PermissionsProvider } from "@/components/permissions/PermissionsContext";
 import { DEFAULT_ROLE_PERMISSIONS } from "@/components/permissions/PermissionsContext";
 import { Button } from "@/components/ui/button";
