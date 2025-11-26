@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { base44 } from "@/api/base44Client";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { format } from "date-fns";
+import { format, addDays, addWeeks, addMonths } from "date-fns";
 import {
   Dialog,
   DialogContent,
@@ -21,8 +21,9 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
-import { Calendar, Clock, Video, Phone, Users, MapPin } from "lucide-react";
+import { Calendar, Clock, Video, Phone, Users, MapPin, Repeat } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { ScrollArea } from "@/components/ui/scroll-area";
 
@@ -36,6 +37,9 @@ export default function MeetingDialog({
   const queryClient = useQueryClient();
   const [selectedAttendees, setSelectedAttendees] = useState([]);
   const [meetingType, setMeetingType] = useState("in_person");
+  const [isRecurring, setIsRecurring] = useState(false);
+  const [recurringFrequency, setRecurringFrequency] = useState("weekly");
+  const [recurringCount, setRecurringCount] = useState(4);
 
   const createMeetingMutation = useMutation({
     mutationFn: (data) => base44.entities.Meeting.create(data),
@@ -63,13 +67,12 @@ export default function MeetingDialog({
       employees.find(e => e.id === id)?.full_name
     ).filter(Boolean);
 
-    const data = {
+    const baseData = {
       organisation_id: orgId,
       title: formData.get('title'),
       description: formData.get('description'),
       organizer_id: currentEmployee?.id,
       organizer_name: currentEmployee?.full_name,
-      date: formData.get('date'),
       start_time: formData.get('start_time'),
       end_time: formData.get('end_time'),
       meeting_type: meetingType,
@@ -78,9 +81,57 @@ export default function MeetingDialog({
       attendees: selectedAttendees,
       attendee_names: attendeeNames,
       status: 'scheduled',
+      is_recurring: isRecurring,
+      recurring_frequency: isRecurring ? recurringFrequency : null,
     };
 
-    createMeetingMutation.mutate(data);
+    // Create recurring meetings if enabled
+    if (isRecurring) {
+      const baseDate = new Date(formData.get('date'));
+      const meetingsToCreate = [];
+      
+      for (let i = 0; i < recurringCount; i++) {
+        let meetingDate;
+        switch (recurringFrequency) {
+          case 'daily':
+            meetingDate = addDays(baseDate, i);
+            break;
+          case 'weekly':
+            meetingDate = addWeeks(baseDate, i);
+            break;
+          case 'biweekly':
+            meetingDate = addWeeks(baseDate, i * 2);
+            break;
+          case 'monthly':
+            meetingDate = addMonths(baseDate, i);
+            break;
+          default:
+            meetingDate = addWeeks(baseDate, i);
+        }
+        
+        meetingsToCreate.push({
+          ...baseData,
+          date: format(meetingDate, 'yyyy-MM-dd'),
+          recurring_index: i + 1,
+          recurring_total: recurringCount,
+        });
+      }
+      
+      // Create all meetings
+      Promise.all(meetingsToCreate.map(m => base44.entities.Meeting.create(m)))
+        .then(() => {
+          queryClient.invalidateQueries({ queryKey: ['meetings'] });
+          onOpenChange(false);
+          setSelectedAttendees([]);
+          setIsRecurring(false);
+          toast.success(`${recurringCount} recurring meetings scheduled`);
+        });
+    } else {
+      createMeetingMutation.mutate({
+        ...baseData,
+        date: formData.get('date'),
+      });
+    }
   };
 
   return (
@@ -166,6 +217,49 @@ export default function MeetingDialog({
               <Input name="meeting_link" placeholder="https://meet.google.com/..." className="mt-1" />
             </div>
           )}
+
+          {/* Recurring Meeting Options */}
+          <div className="p-3 bg-gray-50 rounded-lg space-y-3">
+            <div className="flex items-center justify-between">
+              <Label className="flex items-center gap-2">
+                <Repeat className="w-4 h-4" />
+                Recurring Meeting
+              </Label>
+              <Switch checked={isRecurring} onCheckedChange={setIsRecurring} />
+            </div>
+            
+            {isRecurring && (
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <Label className="text-xs">Frequency</Label>
+                  <Select value={recurringFrequency} onValueChange={setRecurringFrequency}>
+                    <SelectTrigger className="mt-1">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="daily">Daily</SelectItem>
+                      <SelectItem value="weekly">Weekly</SelectItem>
+                      <SelectItem value="biweekly">Every 2 Weeks</SelectItem>
+                      <SelectItem value="monthly">Monthly</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label className="text-xs">Occurrences</Label>
+                  <Select value={String(recurringCount)} onValueChange={(v) => setRecurringCount(parseInt(v))}>
+                    <SelectTrigger className="mt-1">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {[2, 4, 6, 8, 10, 12].map(n => (
+                        <SelectItem key={n} value={String(n)}>{n} meetings</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+            )}
+          </div>
 
           <div>
             <Label>Attendees</Label>
