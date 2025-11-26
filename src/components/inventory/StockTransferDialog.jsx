@@ -133,13 +133,19 @@ export default function StockTransferDialog({
     }
   });
 
-  const handleClose = () => {
+  const resetForm = () => {
     setSelectedProduct("");
     setFromLocation("");
     setToLocation("");
     setQuantity("");
     setNotes("");
-    onOpenChange(false);
+  };
+
+  const handleOpenChange = (isOpen) => {
+    if (!isOpen) {
+      resetForm();
+    }
+    onOpenChange(isOpen);
   };
 
   const handleSubmit = (e) => {
