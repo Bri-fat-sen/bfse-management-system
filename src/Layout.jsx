@@ -282,8 +282,8 @@ export default function Layout({ children, currentPageName }) {
                 </div>
               )}
               <div>
-                <p className="font-bold text-sm text-white">{currentOrg?.name || 'BRI-FAT-SEN'}</p>
-                <p className="text-[10px] text-gray-400">Enterprise</p>
+                <p className="font-bold text-sm text-white truncate max-w-[140px]">{currentOrg?.name || 'Loading...'}</p>
+                <p className="text-[10px] text-gray-400">{currentOrg?.subscription_type || 'Enterprise'}</p>
               </div>
             </div>
           ) : (
@@ -386,8 +386,8 @@ export default function Layout({ children, currentPageName }) {
                 <div className="w-full bg-gradient-to-b from-[#1EB053] via-white to-[#0072C6]" />
               </div>
               <div className="text-xs">
-                <p className="text-gray-400">🇸🇱 Sierra Leone</p>
-                <p className="text-gray-500">BFSE Management v1.0</p>
+                <p className="text-gray-400">🇸🇱 {currentOrg?.country || 'Sierra Leone'}</p>
+                <p className="text-gray-500">{currentOrg?.name || 'Business'} v1.0</p>
               </div>
             </div>
           </div>
