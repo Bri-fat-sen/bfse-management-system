@@ -17,14 +17,17 @@ import {
   Maximize2,
   Minimize2,
   Users,
-  Clock
+  Clock,
+  Grid,
+  LayoutGrid
 } from "lucide-react";
 import { toast } from "sonner";
+import { base44 } from "@/api/base44Client";
 
 export default function VideoCallDialog({
   open,
   onOpenChange,
-  callType = "video", // "video" or "audio"
+  callType = "video",
   room,
   currentEmployee,
   isIncoming = false,
@@ -32,49 +35,140 @@ export default function VideoCallDialog({
   onAccept,
   onReject
 }) {
-  const [callStatus, setCallStatus] = useState(isIncoming ? "incoming" : "calling"); // incoming, calling, connected, ended
+  const [callStatus, setCallStatus] = useState(isIncoming ? "incoming" : "calling");
   const [isMuted, setIsMuted] = useState(false);
   const [isVideoOff, setIsVideoOff] = useState(callType === "audio");
   const [isScreenSharing, setIsScreenSharing] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [callDuration, setCallDuration] = useState(0);
+  const [remoteUsers, setRemoteUsers] = useState([]);
+  const [viewMode, setViewMode] = useState("grid"); // "grid" or "speaker"
+  const [activeSpeaker, setActiveSpeaker] = useState(null);
   
   const localVideoRef = useRef(null);
-  const remoteVideoRef = useRef(null);
-  const localStreamRef = useRef(null);
   const screenStreamRef = useRef(null);
   const callTimerRef = useRef(null);
   const containerRef = useRef(null);
+  const agoraClientRef = useRef(null);
+  const localTracksRef = useRef({ audioTrack: null, videoTrack: null });
 
   const otherName = room?.type === 'group'
     ? room?.name
     : room?.participant_names?.find(n => n !== currentEmployee?.full_name) || callerName || "Unknown";
 
-  // Initialize media stream
+  const isGroupCall = room?.type === 'group' || room?.participants?.length > 2;
+
+  // Initialize Agora client
   useEffect(() => {
     if (open && (callStatus === "calling" || callStatus === "connected")) {
-      startLocalStream();
+      initializeAgora();
     }
     return () => {
-      stopAllStreams();
+      leaveChannel();
       if (callTimerRef.current) clearInterval(callTimerRef.current);
     };
   }, [open]);
 
-  // Simulate call connection after 2 seconds (in real implementation, this would be WebRTC signaling)
-  useEffect(() => {
-    if (callStatus === "calling") {
-      const timer = setTimeout(() => {
-        // Simulate remote user answering
-        setCallStatus("connected");
-        startCallTimer();
-        toast.success("Call connected");
-      }, 2000);
-      return () => clearTimeout(timer);
-    }
-  }, [callStatus]);
+  const initializeAgora = async () => {
+    try {
+      // Dynamically import Agora SDK
+      const AgoraRTC = (await import("agora-rtc-sdk-ng")).default;
+      
+      // Get token from backend
+      const channelName = `call_${room?.id || Date.now()}`;
+      const { data } = await base44.functions.invoke('generateAgoraToken', {
+        channelName,
+        uid: currentEmployee?.id ? parseInt(currentEmployee.id.replace(/\D/g, '').slice(0, 8)) : 0
+      });
 
-  const startLocalStream = async () => {
+      if (!data.token || !data.appId) {
+        throw new Error("Failed to get Agora credentials");
+      }
+
+      // Create client
+      const client = AgoraRTC.createClient({ mode: "rtc", codec: "vp8" });
+      agoraClientRef.current = client;
+
+      // Set up event listeners
+      client.on("user-published", async (user, mediaType) => {
+        await client.subscribe(user, mediaType);
+        
+        if (mediaType === "video") {
+          setRemoteUsers(prev => {
+            const exists = prev.find(u => u.uid === user.uid);
+            if (exists) {
+              return prev.map(u => u.uid === user.uid ? { ...u, videoTrack: user.videoTrack } : u);
+            }
+            return [...prev, { uid: user.uid, videoTrack: user.videoTrack, audioTrack: user.audioTrack }];
+          });
+        }
+        
+        if (mediaType === "audio") {
+          user.audioTrack?.play();
+          setRemoteUsers(prev => {
+            const exists = prev.find(u => u.uid === user.uid);
+            if (exists) {
+              return prev.map(u => u.uid === user.uid ? { ...u, audioTrack: user.audioTrack } : u);
+            }
+            return [...prev, { uid: user.uid, audioTrack: user.audioTrack }];
+          });
+        }
+      });
+
+      client.on("user-unpublished", (user, mediaType) => {
+        if (mediaType === "video") {
+          setRemoteUsers(prev => prev.map(u => u.uid === user.uid ? { ...u, videoTrack: null } : u));
+        }
+      });
+
+      client.on("user-left", (user) => {
+        setRemoteUsers(prev => prev.filter(u => u.uid !== user.uid));
+        toast.info("A participant left the call");
+      });
+
+      client.on("user-joined", (user) => {
+        toast.success("A participant joined the call");
+      });
+
+      // Join channel
+      await client.join(data.appId, channelName, data.token, data.uid);
+
+      // Create and publish local tracks
+      const tracks = await AgoraRTC.createMicrophoneAndCameraTracks(
+        { encoderConfig: "speech_low_quality" },
+        { encoderConfig: callType === "video" ? "720p_1" : undefined }
+      );
+
+      localTracksRef.current.audioTrack = tracks[0];
+      localTracksRef.current.videoTrack = tracks[1];
+
+      // Play local video
+      if (localVideoRef.current && tracks[1]) {
+        tracks[1].play(localVideoRef.current);
+      }
+
+      // Publish tracks
+      if (callType === "video") {
+        await client.publish(tracks);
+      } else {
+        await client.publish([tracks[0]]);
+      }
+
+      setCallStatus("connected");
+      startCallTimer();
+      toast.success("Call connected");
+
+    } catch (error) {
+      console.error("Agora initialization error:", error);
+      toast.error("Could not connect to call", {
+        description: error.message || "Please check your permissions and try again."
+      });
+      // Fallback to simple mode
+      startLocalStreamFallback();
+    }
+  };
+
+  const startLocalStreamFallback = async () => {
     try {
       const constraints = {
         audio: true,
@@ -82,32 +176,44 @@ export default function VideoCallDialog({
       };
       
       const stream = await navigator.mediaDevices.getUserMedia(constraints);
-      localStreamRef.current = stream;
       
       if (localVideoRef.current) {
         localVideoRef.current.srcObject = stream;
       }
-
-      // In a real implementation, you would set up WebRTC peer connection here
-      // and send the stream to the remote peer
+      
+      // Simulate connection for fallback mode
+      setTimeout(() => {
+        setCallStatus("connected");
+        startCallTimer();
+      }, 2000);
       
     } catch (error) {
       console.error("Error accessing media devices:", error);
-      toast.error("Could not access camera/microphone", {
-        description: "Please check your permissions and try again."
-      });
+      toast.error("Could not access camera/microphone");
     }
   };
 
-  const stopAllStreams = () => {
-    if (localStreamRef.current) {
-      localStreamRef.current.getTracks().forEach(track => track.stop());
-      localStreamRef.current = null;
+  const leaveChannel = async () => {
+    // Stop local tracks
+    if (localTracksRef.current.audioTrack) {
+      localTracksRef.current.audioTrack.stop();
+      localTracksRef.current.audioTrack.close();
+    }
+    if (localTracksRef.current.videoTrack) {
+      localTracksRef.current.videoTrack.stop();
+      localTracksRef.current.videoTrack.close();
     }
     if (screenStreamRef.current) {
       screenStreamRef.current.getTracks().forEach(track => track.stop());
-      screenStreamRef.current = null;
     }
+
+    // Leave Agora channel
+    if (agoraClientRef.current) {
+      await agoraClientRef.current.leave();
+      agoraClientRef.current = null;
+    }
+
+    setRemoteUsers([]);
   };
 
   const startCallTimer = () => {
@@ -122,64 +228,68 @@ export default function VideoCallDialog({
     return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
   };
 
-  const toggleMute = () => {
-    if (localStreamRef.current) {
-      const audioTrack = localStreamRef.current.getAudioTracks()[0];
-      if (audioTrack) {
-        audioTrack.enabled = !audioTrack.enabled;
-        setIsMuted(!audioTrack.enabled);
-      }
+  const toggleMute = async () => {
+    if (localTracksRef.current.audioTrack) {
+      await localTracksRef.current.audioTrack.setEnabled(isMuted);
+      setIsMuted(!isMuted);
     }
   };
 
-  const toggleVideo = () => {
-    if (localStreamRef.current) {
-      const videoTrack = localStreamRef.current.getVideoTracks()[0];
-      if (videoTrack) {
-        videoTrack.enabled = !videoTrack.enabled;
-        setIsVideoOff(!videoTrack.enabled);
-      }
+  const toggleVideo = async () => {
+    if (localTracksRef.current.videoTrack) {
+      await localTracksRef.current.videoTrack.setEnabled(isVideoOff);
+      setIsVideoOff(!isVideoOff);
     }
   };
 
   const toggleScreenShare = async () => {
-    if (isScreenSharing) {
-      // Stop screen sharing
-      if (screenStreamRef.current) {
-        screenStreamRef.current.getTracks().forEach(track => track.stop());
-        screenStreamRef.current = null;
-      }
-      // Restore camera
-      if (localVideoRef.current && localStreamRef.current) {
-        localVideoRef.current.srcObject = localStreamRef.current;
-      }
-      setIsScreenSharing(false);
-    } else {
-      try {
-        const screenStream = await navigator.mediaDevices.getDisplayMedia({
-          video: { cursor: "always" },
-          audio: false
-        });
-        screenStreamRef.current = screenStream;
-        
-        if (localVideoRef.current) {
-          localVideoRef.current.srcObject = screenStream;
+    if (!agoraClientRef.current) return;
+
+    try {
+      const AgoraRTC = (await import("agora-rtc-sdk-ng")).default;
+
+      if (isScreenSharing) {
+        // Stop screen sharing, restore camera
+        if (screenStreamRef.current) {
+          await agoraClientRef.current.unpublish(screenStreamRef.current);
+          screenStreamRef.current.stop();
+          screenStreamRef.current.close();
+          screenStreamRef.current = null;
         }
-        
-        // Handle when user stops sharing via browser UI
-        screenStream.getVideoTracks()[0].onended = () => {
+        if (localTracksRef.current.videoTrack) {
+          await agoraClientRef.current.publish(localTracksRef.current.videoTrack);
+          localTracksRef.current.videoTrack.play(localVideoRef.current);
+        }
+        setIsScreenSharing(false);
+      } else {
+        // Start screen sharing
+        const screenTrack = await AgoraRTC.createScreenVideoTrack({
+          encoderConfig: "1080p_1"
+        }, "disable");
+
+        if (localTracksRef.current.videoTrack) {
+          await agoraClientRef.current.unpublish(localTracksRef.current.videoTrack);
+        }
+
+        await agoraClientRef.current.publish(screenTrack);
+        screenStreamRef.current = screenTrack;
+
+        screenTrack.on("track-ended", async () => {
           setIsScreenSharing(false);
-          if (localVideoRef.current && localStreamRef.current) {
-            localVideoRef.current.srcObject = localStreamRef.current;
+          await agoraClientRef.current.unpublish(screenTrack);
+          screenTrack.close();
+          if (localTracksRef.current.videoTrack) {
+            await agoraClientRef.current.publish(localTracksRef.current.videoTrack);
+            localTracksRef.current.videoTrack.play(localVideoRef.current);
           }
-        };
-        
+        });
+
         setIsScreenSharing(true);
         toast.success("Screen sharing started");
-      } catch (error) {
-        console.error("Error sharing screen:", error);
-        toast.error("Could not share screen");
       }
+    } catch (error) {
+      console.error("Error toggling screen share:", error);
+      toast.error("Could not share screen");
     }
   };
 
@@ -194,7 +304,7 @@ export default function VideoCallDialog({
   };
 
   const handleEndCall = () => {
-    stopAllStreams();
+    leaveChannel();
     if (callTimerRef.current) clearInterval(callTimerRef.current);
     setCallStatus("ended");
     toast.info("Call ended", { description: `Duration: ${formatDuration(callDuration)}` });
@@ -203,8 +313,7 @@ export default function VideoCallDialog({
 
   const handleAcceptCall = () => {
     setCallStatus("connected");
-    startLocalStream();
-    startCallTimer();
+    initializeAgora();
     onAccept?.();
   };
 
@@ -214,100 +323,152 @@ export default function VideoCallDialog({
     onOpenChange(false);
   };
 
+  // Calculate grid layout based on number of participants
+  const getGridClass = (count) => {
+    if (count <= 1) return "grid-cols-1";
+    if (count <= 2) return "grid-cols-2";
+    if (count <= 4) return "grid-cols-2 grid-rows-2";
+    if (count <= 6) return "grid-cols-3 grid-rows-2";
+    return "grid-cols-3 grid-rows-3";
+  };
+
+  const totalParticipants = remoteUsers.length + 1; // +1 for local user
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent 
         ref={containerRef}
-        className="max-w-4xl w-[95vw] h-[80vh] p-0 overflow-hidden bg-gray-900"
+        className="max-w-5xl w-[95vw] h-[85vh] p-0 overflow-hidden bg-gray-900"
       >
-        {/* Main video area */}
         <div className="relative w-full h-full">
-          {/* Remote video (or avatar if no video) */}
-          <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-gray-800 to-gray-900">
+          {/* Video Grid Area */}
+          <div className="absolute inset-0 p-2">
             {callStatus === "connected" && callType === "video" ? (
-              <video
-                ref={remoteVideoRef}
-                autoPlay
-                playsInline
-                className="w-full h-full object-cover"
-              />
+              <div className={`grid ${getGridClass(totalParticipants)} gap-2 h-full`}>
+                {/* Local Video */}
+                <div className="relative rounded-lg overflow-hidden bg-gray-800">
+                  <div 
+                    ref={localVideoRef}
+                    className="w-full h-full"
+                    style={{ transform: "scaleX(-1)" }}
+                  />
+                  {isVideoOff && (
+                    <div className="absolute inset-0 flex items-center justify-center bg-gray-800">
+                      <Avatar className="w-20 h-20">
+                        <AvatarFallback className="text-2xl bg-gradient-to-br from-[#1EB053] to-[#0072C6] text-white">
+                          {currentEmployee?.full_name?.charAt(0) || "Y"}
+                        </AvatarFallback>
+                      </Avatar>
+                    </div>
+                  )}
+                  <div className="absolute bottom-2 left-2 px-2 py-1 bg-black/60 rounded text-white text-xs">
+                    You {isScreenSharing && "(Sharing)"}
+                  </div>
+                  {isMuted && (
+                    <div className="absolute top-2 right-2 p-1 bg-red-500 rounded-full">
+                      <MicOff className="w-3 h-3 text-white" />
+                    </div>
+                  )}
+                </div>
+
+                {/* Remote Videos */}
+                {remoteUsers.map((user, index) => (
+                  <RemoteVideoPlayer 
+                    key={user.uid} 
+                    user={user} 
+                    index={index}
+                    participantName={room?.participant_names?.[index + 1] || `Participant ${index + 1}`}
+                  />
+                ))}
+
+                {/* Empty slots placeholder for group calls */}
+                {isGroupCall && remoteUsers.length === 0 && (
+                  <div className="rounded-lg overflow-hidden bg-gray-800 flex items-center justify-center">
+                    <div className="text-center text-gray-400">
+                      <Users className="w-12 h-12 mx-auto mb-2 opacity-50" />
+                      <p className="text-sm">Waiting for others to join...</p>
+                    </div>
+                  </div>
+                )}
+              </div>
             ) : (
-              <div className="text-center">
-                <Avatar className="w-32 h-32 mx-auto mb-4 border-4 border-white/20">
-                  <AvatarFallback className="text-4xl bg-gradient-to-br from-[#1EB053] to-[#0072C6] text-white">
-                    {otherName?.charAt(0)}
-                  </AvatarFallback>
-                </Avatar>
-                <h2 className="text-2xl font-bold text-white mb-2">{otherName}</h2>
-                <p className="text-gray-400 flex items-center justify-center gap-2">
-                  {callStatus === "incoming" && (
-                    <>
-                      <Phone className="w-4 h-4 animate-pulse" />
-                      Incoming {callType} call...
-                    </>
+              // Calling/Incoming state
+              <div className="h-full flex items-center justify-center bg-gradient-to-br from-gray-800 to-gray-900">
+                <div className="text-center">
+                  <Avatar className="w-32 h-32 mx-auto mb-4 border-4 border-white/20">
+                    <AvatarFallback className="text-4xl bg-gradient-to-br from-[#1EB053] to-[#0072C6] text-white">
+                      {isGroupCall ? <Users className="w-12 h-12" /> : otherName?.charAt(0)}
+                    </AvatarFallback>
+                  </Avatar>
+                  <h2 className="text-2xl font-bold text-white mb-2">{otherName}</h2>
+                  {isGroupCall && (
+                    <p className="text-gray-400 text-sm mb-2">
+                      {room?.participants?.length || 0} participants
+                    </p>
                   )}
-                  {callStatus === "calling" && (
-                    <>
-                      <Phone className="w-4 h-4 animate-bounce" />
-                      Calling...
-                    </>
-                  )}
-                  {callStatus === "connected" && (
-                    <>
-                      <Clock className="w-4 h-4" />
-                      {formatDuration(callDuration)}
-                    </>
-                  )}
-                  {callStatus === "ended" && "Call ended"}
-                </p>
+                  <p className="text-gray-400 flex items-center justify-center gap-2">
+                    {callStatus === "incoming" && (
+                      <>
+                        <Phone className="w-4 h-4 animate-pulse" />
+                        Incoming {callType} call...
+                      </>
+                    )}
+                    {callStatus === "calling" && (
+                      <>
+                        <Phone className="w-4 h-4 animate-bounce" />
+                        Connecting...
+                      </>
+                    )}
+                    {callStatus === "ended" && "Call ended"}
+                  </p>
+                </div>
               </div>
             )}
           </div>
-
-          {/* Local video (picture-in-picture) */}
-          {callStatus === "connected" && callType === "video" && !isVideoOff && (
-            <div className="absolute bottom-24 right-4 w-48 h-36 rounded-lg overflow-hidden border-2 border-white/20 shadow-xl">
-              <video
-                ref={localVideoRef}
-                autoPlay
-                playsInline
-                muted
-                className="w-full h-full object-cover mirror"
-              />
-              {isScreenSharing && (
-                <div className="absolute top-2 left-2 bg-red-500 text-white text-xs px-2 py-0.5 rounded">
-                  Sharing Screen
-                </div>
-              )}
-            </div>
-          )}
 
           {/* Call info bar */}
           <div className="absolute top-0 left-0 right-0 p-4 bg-gradient-to-b from-black/60 to-transparent">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
-                {room?.type === "group" && (
-                  <div className="flex items-center gap-1 text-white/80 text-sm">
+                {callStatus === "connected" && (
+                  <div className="flex items-center gap-2 text-white text-sm">
+                    <Clock className="w-4 h-4" />
+                    <span>{formatDuration(callDuration)}</span>
+                  </div>
+                )}
+                {isGroupCall && (
+                  <div className="flex items-center gap-1 text-white/80 text-sm ml-4">
                     <Users className="w-4 h-4" />
-                    <span>{room?.participants?.length || 0} participants</span>
+                    <span>{totalParticipants} participant{totalParticipants > 1 ? 's' : ''}</span>
                   </div>
                 )}
               </div>
-              <Button
-                variant="ghost"
-                size="icon"
-                className="text-white hover:bg-white/20"
-                onClick={toggleFullscreen}
-              >
-                {isFullscreen ? <Minimize2 className="w-5 h-5" /> : <Maximize2 className="w-5 h-5" />}
-              </Button>
+              <div className="flex items-center gap-2">
+                {isGroupCall && callStatus === "connected" && (
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="text-white hover:bg-white/20"
+                    onClick={() => setViewMode(viewMode === "grid" ? "speaker" : "grid")}
+                  >
+                    {viewMode === "grid" ? <LayoutGrid className="w-5 h-5" /> : <Grid className="w-5 h-5" />}
+                  </Button>
+                )}
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="text-white hover:bg-white/20"
+                  onClick={toggleFullscreen}
+                >
+                  {isFullscreen ? <Minimize2 className="w-5 h-5" /> : <Maximize2 className="w-5 h-5" />}
+                </Button>
+              </div>
             </div>
           </div>
 
           {/* Controls */}
           <div className="absolute bottom-0 left-0 right-0 p-6 bg-gradient-to-t from-black/80 to-transparent">
             {callStatus === "incoming" ? (
-              // Incoming call controls
               <div className="flex items-center justify-center gap-8">
                 <Button
                   size="lg"
@@ -325,7 +486,6 @@ export default function VideoCallDialog({
                 </Button>
               </div>
             ) : (
-              // Active call controls
               <div className="flex items-center justify-center gap-4">
                 <Button
                   variant="ghost"
@@ -369,13 +529,40 @@ export default function VideoCallDialog({
             )}
           </div>
         </div>
-
-        <style>{`
-          .mirror {
-            transform: scaleX(-1);
-          }
-        `}</style>
       </DialogContent>
     </Dialog>
+  );
+}
+
+// Remote Video Player Component
+function RemoteVideoPlayer({ user, index, participantName }) {
+  const videoRef = useRef(null);
+
+  useEffect(() => {
+    if (user.videoTrack && videoRef.current) {
+      user.videoTrack.play(videoRef.current);
+    }
+    return () => {
+      user.videoTrack?.stop();
+    };
+  }, [user.videoTrack]);
+
+  return (
+    <div className="relative rounded-lg overflow-hidden bg-gray-800">
+      {user.videoTrack ? (
+        <div ref={videoRef} className="w-full h-full" />
+      ) : (
+        <div className="w-full h-full flex items-center justify-center">
+          <Avatar className="w-20 h-20">
+            <AvatarFallback className="text-2xl bg-gradient-to-br from-purple-500 to-pink-500 text-white">
+              {participantName?.charAt(0) || (index + 1)}
+            </AvatarFallback>
+          </Avatar>
+        </div>
+      )}
+      <div className="absolute bottom-2 left-2 px-2 py-1 bg-black/60 rounded text-white text-xs">
+        {participantName}
+      </div>
+    </div>
   );
 }
