@@ -539,58 +539,90 @@ export default function Reports() {
         {/* Inventory Tab */}
         <TabsContent value="inventory" className="mt-6 space-y-6">
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            <Card className="border-t-4 border-t-[#1EB053]">
-              <CardContent className="p-4 text-center">
-                <p className="text-sm text-gray-500">Total Products</p>
-                <p className="text-2xl font-bold text-[#1EB053]">{products.length}</p>
+            {[
+              { label: "Total Products", value: products.length, color: "#1EB053", icon: Package },
+              { label: "Low Stock", value: products.filter(p => p.stock_quantity <= (p.low_stock_threshold || 10) && p.stock_quantity > 0).length, color: "#F59E0B", icon: TrendingDown },
+              { label: "Out of Stock", value: products.filter(p => p.stock_quantity === 0).length, color: "#EF4444", icon: Package }
+            ].map((stat, i) => (
+              <Card key={i} className="overflow-hidden group hover:shadow-lg transition-all duration-300">
+                <CardContent className="p-6">
+                  <div className="flex items-center gap-4">
+                    <div className="p-3 rounded-xl bg-gradient-to-br transition-transform group-hover:scale-110" style={{ background: `linear-gradient(135deg, ${stat.color}20, ${stat.color}10)` }}>
+                      <stat.icon className="w-6 h-6" style={{ color: stat.color }} />
+                    </div>
+                    <div>
+                      <p className="text-sm text-gray-500">{stat.label}</p>
+                      <p className="text-3xl font-bold" style={{ color: stat.color }}>{stat.value}</p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <Card className="overflow-hidden">
+              <CardHeader className="bg-gradient-to-r from-[#1EB053]/5 to-[#10B981]/5 border-b">
+                <CardTitle className="flex items-center gap-2">
+                  <div className="p-2 rounded-lg bg-gradient-to-br from-[#1EB053] to-[#10B981]">
+                    <Package className="w-4 h-4 text-white" />
+                  </div>
+                  Stock by Category
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="pt-6">
+                {(() => {
+                  const byCategory = {};
+                  products.forEach(p => {
+                    const cat = p.category || 'Uncategorized';
+                    if (!byCategory[cat]) byCategory[cat] = { count: 0, value: 0 };
+                    byCategory[cat].count += p.stock_quantity || 0;
+                    byCategory[cat].value += (p.stock_quantity || 0) * (p.unit_price || 0);
+                  });
+                  const data = Object.entries(byCategory).map(([name, { count, value }]) => ({ name, count, value }));
+                  return (
+                    <ColorfulBarChart 
+                      data={data}
+                      dataKey="count"
+                      xKey="name"
+                      height={300}
+                      formatter={(v) => `${v.toLocaleString()} units`}
+                    />
+                  );
+                })()}
               </CardContent>
             </Card>
-            <Card className="border-t-4 border-t-amber-500">
-              <CardContent className="p-4 text-center">
-                <p className="text-sm text-gray-500">Low Stock</p>
-                <p className="text-2xl font-bold text-amber-600">
-                  {products.filter(p => p.stock_quantity <= (p.low_stock_threshold || 10)).length}
-                </p>
-              </CardContent>
-            </Card>
-            <Card className="border-t-4 border-t-red-500">
-              <CardContent className="p-4 text-center">
-                <p className="text-sm text-gray-500">Out of Stock</p>
-                <p className="text-2xl font-bold text-red-600">
-                  {products.filter(p => p.stock_quantity === 0).length}
-                </p>
+
+            <Card className="overflow-hidden">
+              <CardHeader className="bg-gradient-to-r from-[#0072C6]/5 to-[#6366F1]/5 border-b">
+                <CardTitle className="flex items-center gap-2">
+                  <div className="p-2 rounded-lg bg-gradient-to-br from-[#0072C6] to-[#6366F1]">
+                    <DollarSign className="w-4 h-4 text-white" />
+                  </div>
+                  Stock Value Distribution
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="pt-6">
+                {(() => {
+                  const byCategory = {};
+                  products.forEach(p => {
+                    const cat = p.category || 'Uncategorized';
+                    if (!byCategory[cat]) byCategory[cat] = 0;
+                    byCategory[cat] += (p.stock_quantity || 0) * (p.unit_price || 0);
+                  });
+                  const data = Object.entries(byCategory).map(([name, value]) => ({ name, value }));
+                  return (
+                    <DonutChart 
+                      data={data}
+                      height={300}
+                      formatter={(v) => `Le ${v.toLocaleString()}`}
+                      showLabels={false}
+                    />
+                  );
+                })()}
               </CardContent>
             </Card>
           </div>
-
-          <Card>
-            <CardHeader>
-              <CardTitle>Stock Levels by Category</CardTitle>
-            </CardHeader>
-            <CardContent>
-              {(() => {
-                const byCategory = {};
-                products.forEach(p => {
-                  const cat = p.category || 'Uncategorized';
-                  if (!byCategory[cat]) byCategory[cat] = { count: 0, value: 0 };
-                  byCategory[cat].count += p.stock_quantity || 0;
-                  byCategory[cat].value += (p.stock_quantity || 0) * (p.unit_price || 0);
-                });
-                const data = Object.entries(byCategory).map(([name, { count, value }]) => ({ name, count, value }));
-                return (
-                  <ResponsiveContainer width="100%" height={300}>
-                    <BarChart data={data}>
-                      <CartesianGrid strokeDasharray="3 3" />
-                      <XAxis dataKey="name" />
-                      <YAxis />
-                      <Tooltip />
-                      <Bar dataKey="count" fill="#1EB053" name="Units" />
-                    </BarChart>
-                  </ResponsiveContainer>
-                );
-              })()}
-            </CardContent>
-          </Card>
         </TabsContent>
 
         {/* Predictions Tab */}
