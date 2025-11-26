@@ -40,24 +40,18 @@ import AdvancedFilters from "@/components/analytics/AdvancedFilters";
 import PredictiveAnalytics from "@/components/analytics/PredictiveAnalytics";
 import SavedReportsManager from "@/components/analytics/SavedReportsManager";
 import {
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  ResponsiveContainer,
-  LineChart,
-  Line,
-  PieChart as RePieChart,
-  Pie,
-  Cell,
-  Legend,
-  AreaChart,
-  Area
-} from 'recharts';
+  GradientAreaChart,
+  MultiAreaChart,
+  GradientBarChart,
+  ColorfulBarChart,
+  DonutChart,
+  GlowLineChart,
+  StackedBarChart,
+  ProgressRing,
+  SL_COLORS
+} from "@/components/charts/AdvancedCharts";
 
-const COLORS = ['#1EB053', '#0072C6', '#D4AF37', '#0F1F3C', '#9333ea', '#f59e0b', '#ef4444', '#10b981'];
+const COLORS = SL_COLORS.chart;
 
 export default function Reports() {
   const [activeTab, setActiveTab] = useState("sales");
