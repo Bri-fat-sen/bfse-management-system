@@ -53,6 +53,7 @@ import GlobalSearch from "@/components/search/GlobalSearch";
 import { Toaster } from "sonner";
 import InstallPrompt from "@/components/pwa/InstallPrompt";
 import ChatPanel from "@/components/communication/ChatPanel";
+import { ChatNotificationProvider } from "@/components/communication/ChatNotificationManager";
 
 const menuSections = [
   {
@@ -512,13 +513,15 @@ export default function Layout({ children, currentPageName }) {
                     {/* PWA Install Prompt */}
                     <InstallPrompt />
 
-                    {/* Chat Panel */}
-                    <ChatPanel 
-                      isOpen={chatPanelOpen}
-                      onClose={() => setChatPanelOpen(false)}
-                      orgId={orgId}
-                      currentEmployee={currentEmployee}
-                    />
+                    {/* Chat Panel with Notification Provider */}
+                    <ChatNotificationProvider>
+                      <ChatPanel 
+                        isOpen={chatPanelOpen}
+                        onClose={() => setChatPanelOpen(false)}
+                        orgId={orgId}
+                        currentEmployee={currentEmployee}
+                      />
+                    </ChatNotificationProvider>
                     </div>
                     </div>
                     );
