@@ -29,7 +29,7 @@ export default function ReceiptDialog({ open, onOpenChange, sale, organisation }
           <meta charset="UTF-8">
           <title>Receipt - ${sale?.sale_number}</title>
           <style>
-            * { margin: 0; padding: 0; box-sizing: border-box; }
+            * { margin: 0; padding: 0; box-sizing: border-box; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; color-adjust: exact !important; }
             body { 
               font-family: 'Segoe UI', Arial, sans-serif; 
               background: #f5f5f5;
@@ -47,35 +47,39 @@ export default function ReceiptDialog({ open, onOpenChange, sale, organisation }
               height: 8px;
               display: flex;
             }
-            .flag-stripe .green { flex: 1; background: #1EB053; }
-            .flag-stripe .white { flex: 1; background: #FFFFFF; }
-            .flag-stripe .blue { flex: 1; background: #0072C6; }
+            .flag-stripe .green { flex: 1; background-color: #1EB053 !important; -webkit-print-color-adjust: exact !important; }
+            .flag-stripe .white { flex: 1; background-color: #FFFFFF !important; border-top: 1px solid #ddd; border-bottom: 1px solid #ddd; }
+            .flag-stripe .blue { flex: 1; background-color: #0072C6 !important; -webkit-print-color-adjust: exact !important; }
             .header {
-              background: linear-gradient(135deg, #1EB053 0%, #0072C6 100%);
-              color: white;
+              background-color: #1EB053 !important;
+              -webkit-print-color-adjust: exact !important;
+              color: white !important;
               padding: 24px;
               text-align: center;
+              border-bottom: 4px solid #0072C6;
             }
             .header .logo {
               font-size: 24px;
               font-weight: bold;
               margin-bottom: 4px;
+              color: white !important;
             }
             .header .tagline {
               font-size: 11px;
-              opacity: 0.9;
+              color: rgba(255,255,255,0.9) !important;
             }
             .header .address {
               font-size: 12px;
-              opacity: 0.8;
+              color: rgba(255,255,255,0.8) !important;
               margin-top: 8px;
             }
             .receipt-info {
-              background: #f8f9fa;
+              background-color: #f0fdf4 !important;
+              -webkit-print-color-adjust: exact !important;
               padding: 16px 24px;
-              border-bottom: 1px solid #eee;
+              border-bottom: 2px solid #1EB053;
               font-size: 13px;
-              color: #666;
+              color: #333;
             }
             .receipt-info p { margin: 4px 0; }
             .items {
@@ -86,10 +90,10 @@ export default function ReceiptDialog({ open, onOpenChange, sale, organisation }
               justify-content: space-between;
               font-weight: 600;
               font-size: 12px;
-              color: #888;
+              color: #1EB053 !important;
               text-transform: uppercase;
               padding-bottom: 10px;
-              border-bottom: 1px dashed #ddd;
+              border-bottom: 2px dashed #1EB053;
               margin-bottom: 12px;
             }
             .item {
@@ -97,13 +101,16 @@ export default function ReceiptDialog({ open, onOpenChange, sale, organisation }
               justify-content: space-between;
               padding: 8px 0;
               font-size: 14px;
+              border-bottom: 1px dotted #ddd;
             }
+            .item:last-child { border-bottom: none; }
             .item-name { flex: 1; }
-            .item-qty { color: #888; font-size: 12px; }
+            .item-qty { color: #0072C6 !important; font-size: 12px; font-weight: 600; }
             .totals {
               padding: 16px 24px;
-              background: #f8f9fa;
-              border-top: 2px dashed #ddd;
+              background-color: #e0f2fe !important;
+              -webkit-print-color-adjust: exact !important;
+              border-top: 3px solid #0072C6;
             }
             .total-row {
               display: flex;
@@ -114,15 +121,16 @@ export default function ReceiptDialog({ open, onOpenChange, sale, organisation }
             .total-row.grand {
               font-size: 20px;
               font-weight: bold;
-              color: #1EB053;
+              color: #1EB053 !important;
               padding-top: 12px;
               margin-top: 8px;
-              border-top: 2px solid #1EB053;
+              border-top: 3px solid #1EB053;
             }
             .payment-badge {
               display: inline-block;
-              background: #E8F5E9;
-              color: #1EB053;
+              background-color: #1EB053 !important;
+              -webkit-print-color-adjust: exact !important;
+              color: white !important;
               padding: 4px 12px;
               border-radius: 20px;
               font-size: 12px;
@@ -132,21 +140,28 @@ export default function ReceiptDialog({ open, onOpenChange, sale, organisation }
             .footer {
               text-align: center;
               padding: 24px;
-              background: linear-gradient(135deg, #0F1F3C 0%, #1a3a5c 100%);
-              color: white;
+              background-color: #0F1F3C !important;
+              -webkit-print-color-adjust: exact !important;
+              color: white !important;
+              border-top: 4px solid #1EB053;
             }
             .footer .thanks {
               font-size: 16px;
               font-weight: 600;
               margin-bottom: 8px;
+              color: white !important;
             }
             .footer .pride {
               font-size: 13px;
-              opacity: 0.9;
+              color: rgba(255,255,255,0.9) !important;
             }
             .footer .sl-flag {
               margin-top: 12px;
               font-size: 24px;
+            }
+            @media print {
+              body { background: white; padding: 0; }
+              .receipt { box-shadow: none; border: 2px solid #1EB053; }
             }
           </style>
         </head>
@@ -159,7 +174,7 @@ export default function ReceiptDialog({ open, onOpenChange, sale, organisation }
             </div>
             
             <div class="header">
-              <div class="logo">${organisation?.name || 'BFSE'}</div>
+              <div class="logo">🇸🇱 ${organisation?.name || 'BFSE'}</div>
               <div class="tagline">Business Management System</div>
               <div class="address">
                 ${organisation?.address || 'Freetown'}, Sierra Leone<br>
