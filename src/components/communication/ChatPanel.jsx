@@ -397,6 +397,15 @@ export default function ChatPanel({ isOpen, onClose, orgId, currentEmployee }) {
           </div>
         </>
       )}
+
+      {/* Video/Audio Call Dialog */}
+      <VideoCallDialog
+        open={callDialogOpen}
+        onOpenChange={setCallDialogOpen}
+        callType={callType}
+        room={selectedRoom}
+        currentEmployee={currentEmployee}
+      />
     </div>
   );
 }
