@@ -75,10 +75,10 @@ const actions = [
   },
   { 
     icon: ClipboardList, 
-    label: "Forms", 
-    page: "Forms", 
+    label: "Reports", 
+    page: "Reports", 
     color: "from-[#D4AF37] to-amber-600",
-    description: "Premium forms"
+    description: "View reports"
   },
 ];
 
