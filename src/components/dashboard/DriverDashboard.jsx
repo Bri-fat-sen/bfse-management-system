@@ -16,9 +16,9 @@ import {
   TrendingUp,
   Fuel,
   Navigation,
-  Package,
   FileText,
-  TrendingDown
+  Receipt,
+  Wrench
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -69,7 +69,7 @@ export default function DriverDashboard({ currentEmployee, orgId }) {
     enabled: !!currentEmployee?.id,
   });
 
-  // Fetch driver's truck contracts
+  // My truck contracts
   const { data: myContracts = [] } = useQuery({
     queryKey: ['driverContracts', currentEmployee?.id],
     queryFn: () => base44.entities.TruckContract.filter({
@@ -80,37 +80,34 @@ export default function DriverDashboard({ currentEmployee, orgId }) {
 
   const isClockedIn = todayAttendance?.clock_in_time && !todayAttendance?.clock_out_time;
   
-  // Today's trip revenue and expenses
+  // Today's trip revenue & expenses
   const todayTripRevenue = todayTrips.reduce((sum, t) => sum + (t.total_revenue || 0), 0);
   const todayTripExpenses = todayTrips.reduce((sum, t) => sum + (t.fuel_cost || 0) + (t.other_expenses || 0), 0);
   const todayPassengers = todayTrips.reduce((sum, t) => sum + (t.passengers_count || 0), 0);
   
-  // Today's contract revenue and expenses
+  // Today's contract revenue
   const todayContracts = myContracts.filter(c => c.contract_date === today);
-  const todayContractRevenue = todayContracts.reduce((sum, c) => sum + (c.contract_amount || 0), 0);
+  const todayContractRevenue = todayContracts.filter(c => c.status === 'completed').reduce((sum, c) => sum + (c.contract_amount || 0), 0);
   const todayContractExpenses = todayContracts.reduce((sum, c) => sum + (c.total_expenses || 0), 0);
   
-  // Combined totals
-  const todayRevenue = todayTripRevenue + todayContractRevenue;
-  const todayExpenses = todayTripExpenses + todayContractExpenses;
-  const todayNetRevenue = todayRevenue - todayExpenses;
+  // Total today
+  const todayTotalRevenue = todayTripRevenue + todayContractRevenue;
+  const todayTotalExpenses = todayTripExpenses + todayContractExpenses;
+  const todayNetEarnings = todayTotalRevenue - todayTotalExpenses;
   
   // Week calculations
   const weekAgo = new Date();
   weekAgo.setDate(weekAgo.getDate() - 7);
   
-  const weekTripRevenue = weekTrips.filter(t => new Date(t.date) >= weekAgo)
-    .reduce((sum, t) => sum + (t.total_revenue || 0), 0);
-  const weekTripExpenses = weekTrips.filter(t => new Date(t.date) >= weekAgo)
-    .reduce((sum, t) => sum + (t.fuel_cost || 0) + (t.other_expenses || 0), 0);
+  const weekTripRevenue = weekTrips.filter(t => new Date(t.date) >= weekAgo).reduce((sum, t) => sum + (t.total_revenue || 0), 0);
+  const weekTripExpenses = weekTrips.filter(t => new Date(t.date) >= weekAgo).reduce((sum, t) => sum + (t.fuel_cost || 0) + (t.other_expenses || 0), 0);
   
-  const weekContractRevenue = myContracts.filter(c => new Date(c.contract_date) >= weekAgo)
-    .reduce((sum, c) => sum + (c.contract_amount || 0), 0);
-  const weekContractExpenses = myContracts.filter(c => new Date(c.contract_date) >= weekAgo)
-    .reduce((sum, c) => sum + (c.total_expenses || 0), 0);
+  const weekContractRevenue = myContracts.filter(c => new Date(c.contract_date) >= weekAgo && c.status === 'completed').reduce((sum, c) => sum + (c.contract_amount || 0), 0);
+  const weekContractExpenses = myContracts.filter(c => new Date(c.contract_date) >= weekAgo).reduce((sum, c) => sum + (c.total_expenses || 0), 0);
   
-  const weekRevenue = weekTripRevenue + weekContractRevenue;
-  const weekExpenses = weekTripExpenses + weekContractExpenses;
+  const weekTotalRevenue = weekTripRevenue + weekContractRevenue;
+  const weekTotalExpenses = weekTripExpenses + weekContractExpenses;
+  const weekNetEarnings = weekTotalRevenue - weekTotalExpenses;
 
   const scheduledTrips = todayTrips.filter(t => t.status === 'scheduled');
   const completedTrips = todayTrips.filter(t => t.status === 'completed');
@@ -122,31 +119,102 @@ export default function DriverDashboard({ currentEmployee, orgId }) {
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         <StatCard
           title="Today's Revenue"
-          value={`Le ${todayRevenue.toLocaleString()}`}
+          value={`Le ${todayTotalRevenue.toLocaleString()}`}
           icon={DollarSign}
           color="green"
-          subtitle={`Net: Le ${todayNetRevenue.toLocaleString()}`}
+          subtitle="Trips + Contracts"
         />
         <StatCard
           title="Today's Expenses"
-          value={`Le ${todayExpenses.toLocaleString()}`}
-          icon={TrendingDown}
+          value={`Le ${todayTotalExpenses.toLocaleString()}`}
+          icon={Receipt}
           color="red"
           subtitle="Fuel & other costs"
         />
         <StatCard
-          title="Trips & Contracts"
-          value={`${completedTrips.length} / ${activeContracts.length}`}
-          icon={Truck}
-          color="blue"
-          subtitle="Completed / Active"
+          title="Today's Net"
+          value={`Le ${todayNetEarnings.toLocaleString()}`}
+          icon={TrendingUp}
+          color={todayNetEarnings >= 0 ? "green" : "red"}
         />
         <StatCard
           title="Week Net"
-          value={`Le ${(weekRevenue - weekExpenses).toLocaleString()}`}
+          value={`Le ${weekNetEarnings.toLocaleString()}`}
           icon={TrendingUp}
+          color={weekNetEarnings >= 0 ? "navy" : "red"}
+        />
+      </div>
+
+      {/* Revenue & Expense Breakdown */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-lg">My Earnings Breakdown</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="p-3 bg-green-50 rounded-lg">
+              <div className="flex items-center gap-2 mb-1">
+                <Truck className="w-4 h-4 text-green-600" />
+                <span className="text-sm font-medium text-green-800">Trip Revenue</span>
+              </div>
+              <p className="text-lg font-bold text-green-700">Le {todayTripRevenue.toLocaleString()}</p>
+              <p className="text-xs text-green-600">{completedTrips.length} trips</p>
+            </div>
+            <div className="p-3 bg-teal-50 rounded-lg">
+              <div className="flex items-center gap-2 mb-1">
+                <FileText className="w-4 h-4 text-teal-600" />
+                <span className="text-sm font-medium text-teal-800">Contract Revenue</span>
+              </div>
+              <p className="text-lg font-bold text-teal-700">Le {todayContractRevenue.toLocaleString()}</p>
+              <p className="text-xs text-teal-600">{todayContracts.filter(c => c.status === 'completed').length} completed</p>
+            </div>
+            <div className="p-3 bg-orange-50 rounded-lg">
+              <div className="flex items-center gap-2 mb-1">
+                <Fuel className="w-4 h-4 text-orange-600" />
+                <span className="text-sm font-medium text-orange-800">Trip Expenses</span>
+              </div>
+              <p className="text-lg font-bold text-orange-700">Le {todayTripExpenses.toLocaleString()}</p>
+              <p className="text-xs text-orange-600">Fuel & other</p>
+            </div>
+            <div className="p-3 bg-violet-50 rounded-lg">
+              <div className="flex items-center gap-2 mb-1">
+                <Receipt className="w-4 h-4 text-violet-600" />
+                <span className="text-sm font-medium text-violet-800">Contract Expenses</span>
+              </div>
+              <p className="text-lg font-bold text-violet-700">Le {todayContractExpenses.toLocaleString()}</p>
+              <p className="text-xs text-violet-600">Loading, tolls, etc.</p>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Activity Stats */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        <StatCard
+          title="Trips Today"
+          value={completedTrips.length}
+          icon={Truck}
+          color="blue"
+          subtitle={`${scheduledTrips.length} scheduled`}
+        />
+        <StatCard
+          title="Passengers"
+          value={todayPassengers}
+          icon={Users}
+          color="gold"
+        />
+        <StatCard
+          title="Active Contracts"
+          value={activeContracts.length}
+          icon={FileText}
           color="navy"
-          subtitle={`Revenue: Le ${weekRevenue.toLocaleString()}`}
+          subtitle="In progress"
+        />
+        <StatCard
+          title="Week Revenue"
+          value={`Le ${weekTotalRevenue.toLocaleString()}`}
+          icon={TrendingUp}
+          color="green"
         />
       </div>
 
@@ -185,7 +253,7 @@ export default function DriverDashboard({ currentEmployee, orgId }) {
         </Card>
 
         {/* Today's Trips */}
-        <Card className="border-t-4 border-t-[#1EB053]">
+        <Card className="lg:col-span-2 border-t-4 border-t-[#1EB053]">
           <CardHeader className="pb-2 flex flex-row items-center justify-between">
             <CardTitle className="flex items-center gap-2 text-lg">
               <Navigation className="w-5 h-5 text-[#1EB053]" />
@@ -197,90 +265,37 @@ export default function DriverDashboard({ currentEmployee, orgId }) {
           </CardHeader>
           <CardContent>
             {todayTrips.length === 0 ? (
-              <div className="text-center py-6 text-gray-500">
-                <Truck className="w-10 h-10 mx-auto mb-2 text-gray-300" />
-                <p className="text-sm">No trips today</p>
+              <div className="text-center py-8 text-gray-500">
+                <Truck className="w-12 h-12 mx-auto mb-2 text-gray-300" />
+                <p>No trips scheduled for today</p>
               </div>
             ) : (
-              <div className="space-y-2">
-                {todayTrips.slice(0, 4).map((trip) => (
-                  <div key={trip.id} className="flex items-center justify-between p-2 bg-gray-50 rounded-lg">
-                    <div className="flex items-center gap-2">
-                      <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
+              <div className="space-y-3">
+                {todayTrips.slice(0, 5).map((trip) => (
+                  <div key={trip.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                    <div className="flex items-center gap-3">
+                      <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
                         trip.status === 'completed' ? 'bg-green-100' : 
                         trip.status === 'in_progress' ? 'bg-blue-100' : 'bg-gray-100'
                       }`}>
                         {trip.status === 'completed' ? (
-                          <CheckCircle className="w-4 h-4 text-green-600" />
+                          <CheckCircle className="w-5 h-5 text-green-600" />
                         ) : trip.status === 'in_progress' ? (
-                          <Play className="w-4 h-4 text-blue-600" />
+                          <Play className="w-5 h-5 text-blue-600" />
                         ) : (
-                          <Clock className="w-4 h-4 text-gray-600" />
+                          <Clock className="w-5 h-5 text-gray-600" />
                         )}
                       </div>
                       <div>
-                        <p className="font-medium text-sm">{trip.route_name}</p>
-                        <p className="text-xs text-gray-500">
-                          {trip.passengers_count} passengers
+                        <p className="font-medium">{trip.route_name}</p>
+                        <p className="text-sm text-gray-500">
+                          {trip.start_time} • {trip.passengers_count} passengers
                         </p>
                       </div>
                     </div>
                     <div className="text-right">
-                      <p className="font-bold text-sm text-[#1EB053]">Le {trip.total_revenue?.toLocaleString()}</p>
-                      {(trip.fuel_cost > 0 || trip.other_expenses > 0) && (
-                        <p className="text-xs text-red-500">-Le {((trip.fuel_cost || 0) + (trip.other_expenses || 0)).toLocaleString()}</p>
-                      )}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </CardContent>
-        </Card>
-
-        {/* My Contracts */}
-        <Card className="border-t-4 border-t-[#D4AF37]">
-          <CardHeader className="pb-2 flex flex-row items-center justify-between">
-            <CardTitle className="flex items-center gap-2 text-lg">
-              <FileText className="w-5 h-5 text-[#D4AF37]" />
-              My Contracts
-            </CardTitle>
-            <Link to={createPageUrl("Transport")}>
-              <Button variant="ghost" size="sm">View All</Button>
-            </Link>
-          </CardHeader>
-          <CardContent>
-            {myContracts.length === 0 ? (
-              <div className="text-center py-6 text-gray-500">
-                <Package className="w-10 h-10 mx-auto mb-2 text-gray-300" />
-                <p className="text-sm">No contracts assigned</p>
-              </div>
-            ) : (
-              <div className="space-y-2">
-                {myContracts.slice(0, 4).map((contract) => (
-                  <div key={contract.id} className="flex items-center justify-between p-2 bg-gray-50 rounded-lg">
-                    <div className="flex items-center gap-2">
-                      <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
-                        contract.status === 'completed' ? 'bg-green-100' : 
-                        contract.status === 'in_progress' ? 'bg-blue-100' : 'bg-amber-100'
-                      }`}>
-                        <Package className={`w-4 h-4 ${
-                          contract.status === 'completed' ? 'text-green-600' : 
-                          contract.status === 'in_progress' ? 'text-blue-600' : 'text-amber-600'
-                        }`} />
-                      </div>
-                      <div>
-                        <p className="font-medium text-sm">{contract.client_name}</p>
-                        <p className="text-xs text-gray-500">
-                          {contract.pickup_location} → {contract.delivery_location}
-                        </p>
-                      </div>
-                    </div>
-                    <div className="text-right">
-                      <p className="font-bold text-sm text-[#1EB053]">Le {contract.contract_amount?.toLocaleString()}</p>
-                      {contract.total_expenses > 0 && (
-                        <p className="text-xs text-red-500">-Le {contract.total_expenses?.toLocaleString()}</p>
-                      )}
+                      <p className="font-bold text-[#1EB053]">Le {trip.total_revenue?.toLocaleString()}</p>
+                      <Badge variant="outline" className="text-xs">{trip.status}</Badge>
                     </div>
                   </div>
                 ))}
