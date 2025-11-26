@@ -383,68 +383,67 @@ export default function HRAnalytics() {
         <TabsContent value="performance" className="space-y-4">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
             {/* Performance Trend */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-lg">Performance Trend</CardTitle>
+            <Card className="overflow-hidden border-0 shadow-sm">
+              <CardHeader className="bg-gradient-to-r from-[#1EB053]/5 to-[#0072C6]/5 border-b">
+                <CardTitle className="text-lg flex items-center gap-2">
+                  <div className="p-2 rounded-lg bg-gradient-to-br from-[#1EB053] to-[#0072C6]">
+                    <TrendingUp className="w-4 h-4 text-white" />
+                  </div>
+                  Performance Trend
+                </CardTitle>
               </CardHeader>
-              <CardContent>
-                <ResponsiveContainer width="100%" height={300}>
-                  <LineChart data={performanceTrend}>
-                    <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis dataKey="month" tick={{ fontSize: 12 }} />
-                    <YAxis domain={[0, 5]} tick={{ fontSize: 12 }} />
-                    <Tooltip />
-                    <Line 
-                      type="monotone" 
-                      dataKey="avgRating" 
-                      stroke="#1EB053" 
-                      strokeWidth={2}
-                      dot={{ fill: '#1EB053' }}
-                      name="Avg Rating"
-                      connectNulls
-                    />
-                  </LineChart>
-                </ResponsiveContainer>
+              <CardContent className="pt-6">
+                <GlowLineChart 
+                  data={performanceTrend}
+                  xKey="month"
+                  height={300}
+                  lines={[{ dataKey: "avgRating", name: "Avg Rating", color: "#1EB053" }]}
+                  formatter={(v) => `${v}/5`}
+                />
               </CardContent>
             </Card>
 
             {/* Rating Distribution */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-lg">Rating Distribution</CardTitle>
+            <Card className="overflow-hidden border-0 shadow-sm">
+              <CardHeader className="bg-gradient-to-r from-[#D4AF37]/5 to-[#F59E0B]/5 border-b">
+                <CardTitle className="text-lg flex items-center gap-2">
+                  <div className="p-2 rounded-lg bg-gradient-to-br from-[#D4AF37] to-[#F59E0B]">
+                    <Award className="w-4 h-4 text-white" />
+                  </div>
+                  Rating Distribution
+                </CardTitle>
               </CardHeader>
-              <CardContent>
-                <ResponsiveContainer width="100%" height={300}>
-                  <BarChart data={ratingDistribution}>
-                    <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis dataKey="rating" tick={{ fontSize: 12 }} />
-                    <YAxis tick={{ fontSize: 12 }} />
-                    <Tooltip />
-                    <Bar dataKey="count" name="Reviews">
-                      {ratingDistribution.map((entry, index) => (
-                        <Cell key={index} fill={COLORS[index]} />
-                      ))}
-                    </Bar>
-                  </BarChart>
-                </ResponsiveContainer>
+              <CardContent className="pt-6">
+                <ColorfulBarChart 
+                  data={ratingDistribution}
+                  dataKey="count"
+                  xKey="rating"
+                  height={300}
+                  formatter={(v) => `${v} reviews`}
+                />
               </CardContent>
             </Card>
 
             {/* Department Performance */}
-            <Card className="lg:col-span-2">
-              <CardHeader>
-                <CardTitle className="text-lg">Performance by Department</CardTitle>
+            <Card className="lg:col-span-2 overflow-hidden border-0 shadow-sm">
+              <CardHeader className="bg-gradient-to-r from-[#0072C6]/5 to-[#6366F1]/5 border-b">
+                <CardTitle className="text-lg flex items-center gap-2">
+                  <div className="p-2 rounded-lg bg-gradient-to-br from-[#0072C6] to-[#6366F1]">
+                    <Users className="w-4 h-4 text-white" />
+                  </div>
+                  Performance by Department
+                </CardTitle>
               </CardHeader>
-              <CardContent>
-                <ResponsiveContainer width="100%" height={300}>
-                  <BarChart data={departmentPerformance} layout="vertical">
-                    <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis type="number" domain={[0, 5]} tick={{ fontSize: 12 }} />
-                    <YAxis dataKey="department" type="category" width={120} tick={{ fontSize: 12 }} />
-                    <Tooltip />
-                    <Bar dataKey="avgRating" fill="#0072C6" name="Avg Rating" radius={[0, 4, 4, 0]} />
-                  </BarChart>
-                </ResponsiveContainer>
+              <CardContent className="pt-6">
+                <GradientBarChart 
+                  data={departmentPerformance}
+                  dataKey="avgRating"
+                  xKey="department"
+                  height={300}
+                  horizontal={true}
+                  formatter={(v) => `${v}/5 rating`}
+                  barSize={24}
+                />
               </CardContent>
             </Card>
           </div>
