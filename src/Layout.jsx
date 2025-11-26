@@ -281,10 +281,7 @@ export default function Layout({ children, currentPageName }) {
                   <div className="flex-1 bg-[#0072C6]" />
                 </div>
               )}
-              <div>
-                <p className="font-bold text-sm text-white truncate max-w-[140px]">{currentOrg?.name || 'Loading...'}</p>
-                <p className="text-[10px] text-gray-400">{currentOrg?.subscription_type || 'Enterprise'}</p>
-              </div>
+              <p className="font-bold text-sm text-white truncate max-w-[140px]">{currentOrg?.name || 'Loading...'}</p>
             </div>
           ) : (
             currentOrg?.logo_url ? (
@@ -387,7 +384,6 @@ export default function Layout({ children, currentPageName }) {
               </div>
               <div className="text-xs">
                 <p className="text-gray-400">🇸🇱 {currentOrg?.country || 'Sierra Leone'}</p>
-                <p className="text-gray-500">{currentOrg?.name || 'Business'} v1.0</p>
               </div>
             </div>
           </div>
