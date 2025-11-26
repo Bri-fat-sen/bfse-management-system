@@ -32,6 +32,8 @@ export default function ChatPanel({ isOpen, onClose, orgId, currentEmployee }) {
   const [selectedRoom, setSelectedRoom] = useState(null);
   const [messageText, setMessageText] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
+  const [callDialogOpen, setCallDialogOpen] = useState(false);
+  const [callType, setCallType] = useState("video");
 
   const { data: chatRooms = [] } = useQuery({
     queryKey: ['chatRooms', orgId],
