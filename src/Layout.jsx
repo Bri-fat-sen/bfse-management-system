@@ -149,6 +149,22 @@ export default function Layout({ children, currentPageName }) {
 
   const currentOrg = organisation?.[0];
 
+  // Fetch chat rooms to get unread count
+  const { data: chatRooms = [] } = useQuery({
+    queryKey: ['chatRooms', orgId],
+    queryFn: () => base44.entities.ChatRoom.filter({ organisation_id: orgId }),
+    enabled: !!orgId,
+    refetchInterval: 10000,
+  });
+
+  // Calculate unread messages count
+  const unreadChatCount = useMemo(() => {
+    if (!currentEmployee?.id || !chatRooms.length) return 0;
+    return chatRooms
+      .filter(r => r.participants?.includes(currentEmployee.id))
+      .reduce((sum, r) => sum + (r.unread_count || 0), 0);
+  }, [chatRooms, currentEmployee?.id]);
+
   // Get permissions for the user's role
   const permissions = useMemo(() => {
     return DEFAULT_ROLE_PERMISSIONS[userRole] || DEFAULT_ROLE_PERMISSIONS.read_only;
@@ -420,6 +436,11 @@ export default function Layout({ children, currentPageName }) {
               )}
             >
               <MessageSquare className="w-5 h-5" />
+              {unreadChatCount > 0 && (
+                <span className="absolute -top-0.5 -right-0.5 w-4 h-4 bg-[#1EB053] text-white text-[10px] font-bold rounded-full flex items-center justify-center">
+                  {unreadChatCount > 9 ? '9+' : unreadChatCount}
+                </span>
+              )}
             </Button>
 
             {/* Dark Mode Toggle */}
