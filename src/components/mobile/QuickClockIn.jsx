@@ -53,6 +53,7 @@ export default function QuickClockIn({ currentEmployee, orgId, todayAttendance }
       queryClient.invalidateQueries({ queryKey: ['todayAttendance'] });
       queryClient.invalidateQueries({ queryKey: ['myAttendance'] });
       queryClient.invalidateQueries({ queryKey: ['attendance'] });
+      queryClient.invalidateQueries({ queryKey: ['allAttendance'] });
       toast.success(`Clocked In! Welcome, ${currentEmployee?.first_name}!`);
     },
     onError: (error) => {
@@ -80,6 +81,7 @@ export default function QuickClockIn({ currentEmployee, orgId, todayAttendance }
       queryClient.invalidateQueries({ queryKey: ['todayAttendance'] });
       queryClient.invalidateQueries({ queryKey: ['myAttendance'] });
       queryClient.invalidateQueries({ queryKey: ['attendance'] });
+      queryClient.invalidateQueries({ queryKey: ['allAttendance'] });
       toast.success("Clocked Out! Have a great day!");
     },
     onError: (error) => {
