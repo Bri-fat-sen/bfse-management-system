@@ -20,8 +20,7 @@ import {
   Truck,
   Store,
   X,
-  ArrowLeftRight,
-  Eye
+  ArrowLeftRight
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -77,7 +76,7 @@ export default function Inventory() {
   const [showTransferDialog, setShowTransferDialog] = useState(false);
   const [selectedLocations, setSelectedLocations] = useState([]);
   const [showProductDetails, setShowProductDetails] = useState(false);
-  const [viewingProduct, setViewingProduct] = useState(null);
+  const [selectedProduct, setSelectedProduct] = useState(null);
 
   const { data: user } = useQuery({
     queryKey: ['currentUser'],
@@ -447,7 +446,11 @@ export default function Inventory() {
               {/* Mobile Cards */}
               <div className="block md:hidden space-y-3">
                 {filteredProducts.map((product) => (
-                  <Card key={product.id} className="overflow-hidden">
+                  <Card 
+                    key={product.id} 
+                    className="overflow-hidden cursor-pointer hover:shadow-md transition-shadow"
+                    onClick={() => { setSelectedProduct(product); setShowProductDetails(true); }}
+                  >
                     <CardContent className="p-3">
                       <div className="flex items-start gap-3">
                         {product.image_url ? (
@@ -495,7 +498,8 @@ export default function Inventory() {
                                 variant="ghost"
                                 size="icon"
                                 className="h-8 w-8"
-                                onClick={() => {
+                                onClick={(e) => {
+                                  e.stopPropagation();
                                   setEditingProduct(product);
                                   setShowProductDialog(true);
                                 }}
@@ -506,7 +510,10 @@ export default function Inventory() {
                                 variant="ghost"
                                 size="icon"
                                 className="h-8 w-8 text-red-500"
-                                onClick={() => deleteProductMutation.mutate(product.id)}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  deleteProductMutation.mutate(product.id);
+                                }}
                               >
                                 <Trash2 className="w-4 h-4" />
                               </Button>
@@ -537,7 +544,11 @@ export default function Inventory() {
                       </thead>
                       <tbody>
                         {filteredProducts.map((product) => (
-                          <tr key={product.id} className="border-b hover:bg-gray-50">
+                          <tr 
+                          key={product.id} 
+                          className="border-b hover:bg-gray-50 cursor-pointer"
+                          onClick={() => { setSelectedProduct(product); setShowProductDetails(true); }}
+                        >
                             <td className="p-4">
                               <div className="flex items-center gap-3">
                                 {product.image_url ? (
@@ -590,7 +601,8 @@ export default function Inventory() {
                                 <Button
                                   variant="ghost"
                                   size="icon"
-                                  onClick={() => {
+                                  onClick={(e) => {
+                                    e.stopPropagation();
                                     setEditingProduct(product);
                                     setShowProductDialog(true);
                                   }}
@@ -601,7 +613,10 @@ export default function Inventory() {
                                   variant="ghost"
                                   size="icon"
                                   className="text-red-500"
-                                  onClick={() => deleteProductMutation.mutate(product.id)}
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    deleteProductMutation.mutate(product.id);
+                                  }}
                                 >
                                   <Trash2 className="w-4 h-4" />
                                 </Button>
@@ -781,6 +796,17 @@ export default function Inventory() {
         stockLevels={stockLevels}
         orgId={orgId}
         currentEmployee={currentEmployee}
+      />
+
+      {/* Product Details Dialog */}
+      <ProductDetailsDialog
+        open={showProductDetails}
+        onOpenChange={setShowProductDetails}
+        product={selectedProduct}
+        warehouses={warehouses}
+        vehicles={vehicles}
+        stockLevels={stockLevels}
+        orgId={orgId}
       />
 
       {/* Product Dialog */}
