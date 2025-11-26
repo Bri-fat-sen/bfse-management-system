@@ -24,6 +24,7 @@ import {
 } from "lucide-react";
 import TypingIndicator from "./TypingIndicator";
 import MessageReactions from "./MessageReactions";
+import VideoCallDialog from "./VideoCallDialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -58,6 +59,8 @@ export default function ChatWindow({
   const [replyTo, setReplyTo] = useState(null);
   const [attachments, setAttachments] = useState([]);
   const [isUploading, setIsUploading] = useState(false);
+  const [showVideoCall, setShowVideoCall] = useState(false);
+  const [callType, setCallType] = useState("video");
   const messagesEndRef = useRef(null);
   const fileInputRef = useRef(null);
 
@@ -210,7 +213,10 @@ export default function ChatWindow({
                   variant="ghost" 
                   size="icon" 
                   className="h-9 w-9"
-                  onClick={() => toast.info("Voice calling feature coming soon!", { description: "This feature is under development." })}
+                  onClick={() => {
+                    setCallType("audio");
+                    setShowVideoCall(true);
+                  }}
                 >
                   <Phone className="w-4 h-4" />
                 </Button>
@@ -223,7 +229,10 @@ export default function ChatWindow({
                   variant="ghost" 
                   size="icon" 
                   className="h-9 w-9"
-                  onClick={() => toast.info("Video calling feature coming soon!", { description: "This feature is under development." })}
+                  onClick={() => {
+                    setCallType("video");
+                    setShowVideoCall(true);
+                  }}
                 >
                   <Video className="w-4 h-4" />
                 </Button>
@@ -427,6 +436,15 @@ export default function ChatWindow({
           </Button>
         </div>
       </div>
+
+      {/* Video/Voice Call Dialog */}
+      <VideoCallDialog
+        open={showVideoCall}
+        onOpenChange={setShowVideoCall}
+        callType={callType}
+        room={room}
+        currentEmployee={currentEmployee}
+      />
     </div>
   );
 }
