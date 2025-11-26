@@ -494,47 +494,44 @@ export default function Reports() {
 
         {/* Transport Tab */}
         <TabsContent value="transport" className="mt-6 space-y-6">
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            <Card className="border-t-4 border-t-[#1EB053]">
-              <CardContent className="p-4 text-center">
-                <p className="text-sm text-gray-500">Total Revenue</p>
-                <p className="text-2xl font-bold text-[#1EB053]">Le {transportAnalytics.totalRevenue.toLocaleString()}</p>
-              </CardContent>
-            </Card>
-            <Card className="border-t-4 border-t-[#0072C6]">
-              <CardContent className="p-4 text-center">
-                <p className="text-sm text-gray-500">Total Trips</p>
-                <p className="text-2xl font-bold text-[#0072C6]">{transportAnalytics.totalTrips}</p>
-              </CardContent>
-            </Card>
-            <Card className="border-t-4 border-t-[#D4AF37]">
-              <CardContent className="p-4 text-center">
-                <p className="text-sm text-gray-500">Passengers</p>
-                <p className="text-2xl font-bold text-[#D4AF37]">{transportAnalytics.totalPassengers}</p>
-              </CardContent>
-            </Card>
-            <Card className="border-t-4 border-t-purple-500">
-              <CardContent className="p-4 text-center">
-                <p className="text-sm text-gray-500">Net Revenue</p>
-                <p className="text-2xl font-bold text-purple-600">Le {transportAnalytics.netRevenue.toLocaleString()}</p>
-              </CardContent>
-            </Card>
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+            {[
+              { label: "Total Revenue", value: `Le ${transportAnalytics.totalRevenue.toLocaleString()}`, color: "#1EB053", percent: 100 },
+              { label: "Total Trips", value: transportAnalytics.totalTrips, color: "#0072C6", percent: 75 },
+              { label: "Passengers", value: transportAnalytics.totalPassengers, color: "#D4AF37", percent: 85 },
+              { label: "Net Revenue", value: `Le ${transportAnalytics.netRevenue.toLocaleString()}`, color: "#9333EA", percent: transportAnalytics.totalRevenue > 0 ? Math.round((transportAnalytics.netRevenue / transportAnalytics.totalRevenue) * 100) : 0 }
+            ].map((stat, i) => (
+              <Card key={i} className="overflow-hidden">
+                <CardContent className="p-4">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-xs text-gray-500 uppercase tracking-wide">{stat.label}</p>
+                      <p className="text-xl font-bold mt-1" style={{ color: stat.color }}>{stat.value}</p>
+                    </div>
+                    <ProgressRing value={stat.percent} size={50} strokeWidth={5} color={stat.color} />
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
           </div>
 
-          <Card>
-            <CardHeader>
-              <CardTitle>Revenue by Route</CardTitle>
+          <Card className="overflow-hidden">
+            <CardHeader className="bg-gradient-to-r from-[#1EB053]/5 to-[#0072C6]/5 border-b">
+              <CardTitle className="flex items-center gap-2">
+                <div className="p-2 rounded-lg bg-gradient-to-br from-[#1EB053] to-[#0072C6]">
+                  <Truck className="w-4 h-4 text-white" />
+                </div>
+                Revenue by Route
+              </CardTitle>
             </CardHeader>
-            <CardContent>
-              <ResponsiveContainer width="100%" height={300}>
-                <BarChart data={transportAnalytics.byRoute}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="name" />
-                  <YAxis />
-                  <Tooltip formatter={(value) => `Le ${value.toLocaleString()}`} />
-                  <Bar dataKey="value" fill="url(#colorGradient)" radius={[4, 4, 0, 0]} />
-                </BarChart>
-              </ResponsiveContainer>
+            <CardContent className="pt-6">
+              <GradientBarChart 
+                data={transportAnalytics.byRoute}
+                dataKey="value"
+                xKey="name"
+                height={300}
+                formatter={(v) => `Le ${v.toLocaleString()}`}
+              />
             </CardContent>
           </Card>
         </TabsContent>
