@@ -32,9 +32,11 @@ import {
   Trash2,
   Clock,
   CheckCircle,
-  XCircle
+  XCircle,
+  MapPin
 } from "lucide-react";
 import EmptyState from "@/components/ui/EmptyState";
+import BatchStockAllocation from "./BatchStockAllocation";
 
 const STATUS_COLORS = {
   active: "bg-green-100 text-green-700",
