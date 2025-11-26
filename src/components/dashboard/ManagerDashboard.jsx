@@ -31,7 +31,7 @@ import StatCard from "@/components/ui/StatCard";
 import QuickActions from "@/components/dashboard/QuickActions";
 import RecentActivity from "@/components/dashboard/RecentActivity";
 
-export default function ManagerDashboard({ currentEmployee, orgId, user }) {
+export default function ManagerDashboard({ currentEmployee, orgId, user, organisation }) {
   const today = format(new Date(), 'yyyy-MM-dd');
 
   const { data: employees = [] } = useQuery({
@@ -197,7 +197,7 @@ export default function ManagerDashboard({ currentEmployee, orgId, user }) {
         <div className="sl-hero-pattern p-6 text-white">
           <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
             <div>
-              <p className="text-white/70 text-sm mb-1">🇸🇱 BRI-FAT-SEN Enterprise</p>
+              <p className="text-white/70 text-sm mb-1">🇸🇱 {organisation?.name || ''}</p>
               <h1 className="text-2xl md:text-3xl font-bold">
                 Welcome back, {user?.full_name?.split(' ')[0] || 'Manager'}!
               </h1>
