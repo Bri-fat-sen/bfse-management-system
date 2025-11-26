@@ -41,8 +41,6 @@ export default function PurchaseOrderDialog({
   const [shippingCost, setShippingCost] = useState(purchaseOrder?.shipping_cost || 0);
   const [taxAmount, setTaxAmount] = useState(purchaseOrder?.tax_amount || 0);
   const [paymentMethod, setPaymentMethod] = useState(purchaseOrder?.payment_method || "bank_transfer");
-  
-  const isCashOnly = supplier?.cash_only || false;
 
   const { data: supplierProducts = [] } = useQuery({
     queryKey: ['supplierProducts', selectedSupplier],
@@ -51,6 +49,7 @@ export default function PurchaseOrderDialog({
   });
 
   const supplier = suppliers.find(s => s.id === selectedSupplier);
+  const isCashOnly = supplier?.cash_only || false;
 
   useEffect(() => {
     if (purchaseOrder) {
