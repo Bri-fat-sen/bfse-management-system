@@ -227,6 +227,9 @@ export default function OrganisationManage() {
     }
   };
 
+  const activeCount = employees.filter(e => e.status === 'active').length;
+  const adminCount = employees.filter(e => ['super_admin', 'org_admin'].includes(e.role)).length;
+
   if (isLoading || !formData) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -237,16 +240,104 @@ export default function OrganisationManage() {
 
   return (
     <div className="space-y-6">
-      <PageHeader
-        title="Organisation Settings"
-        subtitle={`Manage ${organisation?.name || 'your organisation'}`}
-      />
+      {/* Hero Header */}
+      <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-[#0F1F3C] via-[#1a3a5c] to-[#0F1F3C] p-6 md:p-8">
+        <div className="absolute inset-0 opacity-10">
+          <div className="absolute top-0 left-0 w-40 h-40 bg-[#1EB053] rounded-full blur-3xl" />
+          <div className="absolute bottom-0 right-0 w-60 h-60 bg-[#0072C6] rounded-full blur-3xl" />
+        </div>
+        
+        <div className="relative flex flex-col md:flex-row items-start md:items-center gap-6">
+          {/* Logo */}
+          <div className="relative group">
+            {formData.logo_url ? (
+              <img 
+                src={formData.logo_url} 
+                alt={formData.name} 
+                className="w-24 h-24 md:w-28 md:h-28 object-contain bg-white rounded-2xl p-2 shadow-xl"
+              />
+            ) : (
+              <div className="w-24 h-24 md:w-28 md:h-28 rounded-2xl bg-white/10 backdrop-blur flex items-center justify-center border-2 border-dashed border-white/30">
+                <Building2 className="w-12 h-12 text-white/50" />
+              </div>
+            )}
+            {isAdmin && (
+              <label className="absolute inset-0 flex items-center justify-center bg-black/50 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer">
+                <Camera className="w-6 h-6 text-white" />
+                <input type="file" accept="image/*" onChange={handleLogoUpload} className="hidden" />
+              </label>
+            )}
+          </div>
+          
+          {/* Info */}
+          <div className="flex-1">
+            <div className="flex items-center gap-3 mb-2">
+              <h1 className="text-2xl md:text-3xl font-bold text-white">{formData.name}</h1>
+              <Badge className="bg-[#1EB053]/20 text-[#1EB053] border-[#1EB053]/30">
+                {organisation?.subscription_type || 'Free'}
+              </Badge>
+            </div>
+            <p className="text-white/70 flex items-center gap-2 mb-4">
+              <MapPin className="w-4 h-4" />
+              {formData.city ? `${formData.city}, ${formData.country}` : formData.country || 'Sierra Leone'}
+            </p>
+            
+            {/* Quick Stats */}
+            <div className="flex flex-wrap gap-4 md:gap-6">
+              <div className="flex items-center gap-2">
+                <div className="w-10 h-10 rounded-lg bg-white/10 flex items-center justify-center">
+                  <Users className="w-5 h-5 text-[#1EB053]" />
+                </div>
+                <div>
+                  <p className="text-white font-semibold">{employees.length}</p>
+                  <p className="text-white/50 text-xs">Team Members</p>
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="w-10 h-10 rounded-lg bg-white/10 flex items-center justify-center">
+                  <CheckCircle2 className="w-5 h-5 text-[#0072C6]" />
+                </div>
+                <div>
+                  <p className="text-white font-semibold">{activeCount}</p>
+                  <p className="text-white/50 text-xs">Active</p>
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="w-10 h-10 rounded-lg bg-white/10 flex items-center justify-center">
+                  <Crown className="w-5 h-5 text-[#D4AF37]" />
+                </div>
+                <div>
+                  <p className="text-white font-semibold">{adminCount}</p>
+                  <p className="text-white/50 text-xs">Admins</p>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          {/* Code Badge */}
+          <div className="absolute top-4 right-4 md:static">
+            <div className="px-4 py-2 rounded-xl bg-white/10 backdrop-blur border border-white/20">
+              <p className="text-white/50 text-xs mb-1">Organisation Code</p>
+              <p className="text-white font-mono font-bold text-lg">{formData.code}</p>
+            </div>
+          </div>
+        </div>
+      </div>
 
       <Tabs defaultValue="general">
-        <TabsList className="flex flex-wrap h-auto gap-1 p-1 bg-gray-100">
-          <TabsTrigger value="general" className="text-xs sm:text-sm data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#1EB053] data-[state=active]:to-[#0072C6] data-[state=active]:text-white">General</TabsTrigger>
-          <TabsTrigger value="branding" className="text-xs sm:text-sm data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#1EB053] data-[state=active]:to-[#0072C6] data-[state=active]:text-white">Branding</TabsTrigger>
-          <TabsTrigger value="members" className="text-xs sm:text-sm data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#1EB053] data-[state=active]:to-[#0072C6] data-[state=active]:text-white">Members</TabsTrigger>
+        <TabsList className="flex flex-wrap h-auto gap-1 p-1.5 bg-gray-100 rounded-xl">
+          <TabsTrigger value="general" className="flex items-center gap-2 text-xs sm:text-sm px-4 py-2.5 rounded-lg data-[state=active]:bg-white data-[state=active]:shadow-sm data-[state=active]:text-[#0F1F3C]">
+            <Building2 className="w-4 h-4" />
+            General
+          </TabsTrigger>
+          <TabsTrigger value="branding" className="flex items-center gap-2 text-xs sm:text-sm px-4 py-2.5 rounded-lg data-[state=active]:bg-white data-[state=active]:shadow-sm data-[state=active]:text-[#0F1F3C]">
+            <Palette className="w-4 h-4" />
+            Branding
+          </TabsTrigger>
+          <TabsTrigger value="members" className="flex items-center gap-2 text-xs sm:text-sm px-4 py-2.5 rounded-lg data-[state=active]:bg-white data-[state=active]:shadow-sm data-[state=active]:text-[#0F1F3C]">
+            <Users className="w-4 h-4" />
+            Members ({employees.length})
+          </TabsTrigger>
         </TabsList>
 
         {/* General Tab */}
