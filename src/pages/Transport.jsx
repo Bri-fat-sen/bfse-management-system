@@ -16,7 +16,9 @@ import {
   Play,
   CheckCircle,
   FileText,
-  Package
+  Package,
+  Wrench,
+  AlertTriangle
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -45,6 +47,9 @@ import StatCard from "@/components/ui/StatCard";
 import RouteDialog from "@/components/transport/RouteDialog";
 import TripReportExport from "@/components/transport/TripReportExport";
 import TruckContractDialog from "@/components/transport/TruckContractDialog";
+import MaintenanceDialog from "@/components/transport/MaintenanceDialog";
+import { MaintenanceCard, UpcomingMaintenanceCard, MaintenanceStats } from "@/components/transport/MaintenanceList";
+import { isPast, differenceInDays } from "date-fns";
 
 export default function Transport() {
   const { toast } = useToast();
@@ -55,6 +60,9 @@ export default function Transport() {
   const [showRouteDialog, setShowRouteDialog] = useState(false);
   const [showContractDialog, setShowContractDialog] = useState(false);
   const [editingContract, setEditingContract] = useState(null);
+  const [showMaintenanceDialog, setShowMaintenanceDialog] = useState(false);
+  const [editingMaintenance, setEditingMaintenance] = useState(null);
+  const [selectedVehicleForMaintenance, setSelectedVehicleForMaintenance] = useState(null);
 
   const { data: user } = useQuery({
     queryKey: ['currentUser'],
@@ -112,6 +120,12 @@ export default function Transport() {
     enabled: !!orgId,
   });
 
+  const { data: maintenanceRecords = [], isLoading: loadingMaintenance } = useQuery({
+    queryKey: ['vehicleMaintenance', orgId],
+    queryFn: () => base44.entities.VehicleMaintenance.filter({ organisation_id: orgId }, '-date_performed', 200),
+    enabled: !!orgId,
+  });
+
   const createTripMutation = useMutation({
     mutationFn: (data) => base44.entities.Trip.create(data),
     onSuccess: () => {
@@ -144,6 +158,15 @@ export default function Transport() {
   const activeVehicles = vehicles.filter(v => v.status === 'active');
   const activeContracts = truckContracts.filter(c => c.status === 'in_progress' || c.status === 'pending');
   const totalContractRevenue = truckContracts.filter(c => c.status === 'completed').reduce((sum, c) => sum + (c.net_revenue || 0), 0);
+
+  // Upcoming and overdue maintenance
+  const upcomingMaintenance = maintenanceRecords.filter(m => 
+    m.next_due_date && !isPast(new Date(m.next_due_date)) && 
+    differenceInDays(new Date(m.next_due_date), new Date()) <= 30
+  );
+  const overdueMaintenance = maintenanceRecords.filter(m => 
+    m.next_due_date && isPast(new Date(m.next_due_date))
+  );
 
   const handleTripSubmit = (e) => {
     e.preventDefault();
@@ -251,6 +274,14 @@ export default function Transport() {
           </TabsTrigger>
           <TabsTrigger value="contracts" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#1EB053] data-[state=active]:to-[#0072C6] data-[state=active]:text-white">
             Contracts
+          </TabsTrigger>
+          <TabsTrigger value="maintenance" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#1EB053] data-[state=active]:to-[#0072C6] data-[state=active]:text-white">
+            Maintenance
+            {overdueMaintenance.length > 0 && (
+              <span className="ml-1 px-1.5 py-0.5 text-xs bg-red-500 text-white rounded-full">
+                {overdueMaintenance.length}
+              </span>
+            )}
           </TabsTrigger>
         </TabsList>
 
@@ -579,7 +610,89 @@ export default function Transport() {
             </CardContent>
           </Card>
         </TabsContent>
+
+        <TabsContent value="maintenance" className="mt-6 space-y-6">
+          {/* Maintenance Stats */}
+          <MaintenanceStats maintenanceRecords={maintenanceRecords} vehicles={vehicles} />
+
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            {/* Upcoming/Overdue Maintenance */}
+            <Card className="lg:col-span-1">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2 text-base">
+                  <AlertTriangle className="w-4 h-4 text-amber-500" />
+                  Upcoming & Overdue
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                {[...overdueMaintenance, ...upcomingMaintenance].length === 0 ? (
+                  <p className="text-sm text-gray-500 text-center py-4">No upcoming maintenance</p>
+                ) : (
+                  <div className="space-y-2">
+                    {[...overdueMaintenance, ...upcomingMaintenance].slice(0, 8).map((record) => (
+                      <UpcomingMaintenanceCard 
+                        key={record.id} 
+                        record={record}
+                        vehicle={vehicles.find(v => v.id === record.vehicle_id)}
+                        onClick={() => { setEditingMaintenance(record); setShowMaintenanceDialog(true); }}
+                      />
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+
+            {/* All Maintenance Records */}
+            <Card className="lg:col-span-2">
+              <CardHeader className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+                <CardTitle>Maintenance History</CardTitle>
+                <Button onClick={() => { setEditingMaintenance(null); setSelectedVehicleForMaintenance(null); setShowMaintenanceDialog(true); }} className="sl-gradient">
+                  <Plus className="w-4 h-4 mr-2" />
+                  Log Maintenance
+                </Button>
+              </CardHeader>
+              <CardContent>
+                {loadingMaintenance ? (
+                  <div className="space-y-3">
+                    {[...Array(5)].map((_, i) => (
+                      <div key={i} className="h-20 bg-gray-100 rounded-lg animate-pulse" />
+                    ))}
+                  </div>
+                ) : maintenanceRecords.length === 0 ? (
+                  <EmptyState
+                    icon={Wrench}
+                    title="No Maintenance Records"
+                    description="Log maintenance to track vehicle service history"
+                    action={() => setShowMaintenanceDialog(true)}
+                    actionLabel="Log Maintenance"
+                  />
+                ) : (
+                  <div className="space-y-3 max-h-[500px] overflow-y-auto">
+                    {maintenanceRecords.map((record) => (
+                      <MaintenanceCard 
+                        key={record.id} 
+                        record={record}
+                        onClick={() => { setEditingMaintenance(record); setShowMaintenanceDialog(true); }}
+                      />
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </div>
+        </TabsContent>
       </Tabs>
+
+      {/* Maintenance Dialog */}
+      <MaintenanceDialog
+        open={showMaintenanceDialog}
+        onOpenChange={setShowMaintenanceDialog}
+        maintenance={editingMaintenance}
+        vehicles={vehicles}
+        currentEmployee={currentEmployee}
+        orgId={orgId}
+        preselectedVehicleId={selectedVehicleForMaintenance}
+      />
 
       {/* Truck Contract Dialog */}
       <TruckContractDialog
