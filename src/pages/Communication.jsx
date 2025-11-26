@@ -293,12 +293,23 @@ export default function Communication() {
             </Card>
 
             {/* Chat Window */}
-            <Card className="lg:col-span-8 xl:col-span-9 overflow-hidden">
+            <Card className="lg:col-span-8 xl:col-span-9 overflow-hidden relative">
               {showSharedFiles && selectedRoom ? (
-                <SharedFilesGallery 
-                  messages={messages} 
-                  roomName={selectedRoom?.name}
-                />
+                <>
+                  <div className="absolute top-2 right-2 z-10">
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      onClick={() => setShowSharedFiles(false)}
+                    >
+                      Back to Chat
+                    </Button>
+                  </div>
+                  <SharedFilesGallery 
+                    messages={messages} 
+                    roomName={selectedRoom?.name}
+                  />
+                </>
               ) : (
                 <ChatWindow
                   room={selectedRoom}
@@ -309,17 +320,6 @@ export default function Communication() {
                   onOpenSearch={() => setShowMessageSearch(true)}
                   onOpenFiles={() => setShowSharedFiles(true)}
                 />
-              )}
-              {showSharedFiles && (
-                <div className="absolute top-2 right-2">
-                  <Button 
-                    variant="ghost" 
-                    size="sm"
-                    onClick={() => setShowSharedFiles(false)}
-                  >
-                    Back to Chat
-                  </Button>
-                </div>
               )}
             </Card>
           </div>
