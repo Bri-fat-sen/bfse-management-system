@@ -448,22 +448,48 @@ export default function Reports() {
 
         {/* Expenses Tab */}
         <TabsContent value="expenses" className="mt-6 space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle>Total Expenses: Le {expenseAnalytics.totalExpenses.toLocaleString()}</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <ResponsiveContainer width="100%" height={400}>
-                <BarChart data={expenseAnalytics.byCategory}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="name" />
-                  <YAxis />
-                  <Tooltip formatter={(value) => `Le ${value.toLocaleString()}`} />
-                  <Bar dataKey="value" fill="#ef4444" radius={[4, 4, 0, 0]} />
-                </BarChart>
-              </ResponsiveContainer>
-            </CardContent>
-          </Card>
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <Card className="lg:col-span-2 overflow-hidden">
+              <CardHeader className="bg-gradient-to-r from-red-500/5 to-orange-500/5 border-b">
+                <CardTitle className="flex items-center gap-2">
+                  <div className="p-2 rounded-lg bg-gradient-to-br from-red-500 to-orange-500">
+                    <TrendingDown className="w-4 h-4 text-white" />
+                  </div>
+                  Expenses by Category
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="pt-6">
+                <ColorfulBarChart 
+                  data={expenseAnalytics.byCategory}
+                  dataKey="value"
+                  xKey="name"
+                  height={400}
+                  formatter={(v) => `Le ${v.toLocaleString()}`}
+                  colors={['#EF4444', '#F97316', '#F59E0B', '#84CC16', '#22C55E', '#14B8A6', '#06B6D4', '#3B82F6']}
+                />
+              </CardContent>
+            </Card>
+            <Card className="overflow-hidden">
+              <CardHeader className="bg-gradient-to-r from-purple-500/5 to-pink-500/5 border-b">
+                <CardTitle className="flex items-center gap-2">
+                  <div className="p-2 rounded-lg bg-gradient-to-br from-purple-500 to-pink-500">
+                    <DollarSign className="w-4 h-4 text-white" />
+                  </div>
+                  Distribution
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="pt-6">
+                <DonutChart 
+                  data={expenseAnalytics.byCategory}
+                  height={400}
+                  innerRadius={60}
+                  outerRadius={90}
+                  formatter={(v) => `Le ${v.toLocaleString()}`}
+                  showLabels={false}
+                />
+              </CardContent>
+            </Card>
+          </div>
         </TabsContent>
 
         {/* Transport Tab */}
