@@ -263,11 +263,13 @@ export default function Inventory() {
   };
 
   const toggleLocation = (locationId) => {
-    setSelectedLocations(prev => 
-      prev.includes(locationId) 
-        ? prev.filter(id => id !== locationId)
-        : [...prev, locationId]
-    );
+    setSelectedLocations(prev => {
+      if (prev.includes(locationId)) {
+        return prev.filter(id => id !== locationId);
+      } else {
+        return [...prev, locationId];
+      }
+    });
   };
 
   // Reset selected locations when dialog opens or editingProduct changes
@@ -851,19 +853,27 @@ export default function Inventory() {
                 ) : (
                   <div className="grid grid-cols-1 gap-2 max-h-40 overflow-y-auto border rounded-lg p-3 bg-gray-50">
                     {allLocations.map((location) => (
-                      <div 
-                        key={location.id} 
+                      <label 
+                        key={location.id}
+                        htmlFor={`location-${location.id}`}
                         className={`flex items-center gap-3 p-2 rounded-lg cursor-pointer transition-colors ${
                           selectedLocations.includes(location.id) 
                             ? 'bg-[#1EB053]/10 border border-[#1EB053]' 
                             : 'bg-white border border-gray-200 hover:border-gray-300'
                         }`}
-                        onClick={() => toggleLocation(location.id)}
                       >
                         <Checkbox 
+                          id={`location-${location.id}`}
                           checked={selectedLocations.includes(location.id)}
-                          onClick={(e) => e.stopPropagation()}
-                          onCheckedChange={() => toggleLocation(location.id)}
+                          onCheckedChange={(checked) => {
+                            setSelectedLocations(prev => {
+                              if (checked) {
+                                return [...prev, location.id];
+                              } else {
+                                return prev.filter(id => id !== location.id);
+                              }
+                            });
+                          }}
                         />
                         {location.type === 'warehouse' ? (
                           <Warehouse className="w-4 h-4 text-blue-600" />
@@ -872,7 +882,7 @@ export default function Inventory() {
                         )}
                         <span className="text-sm flex-1">{location.name}</span>
                         <span className="text-xs text-gray-400 capitalize">{location.type}</span>
-                      </div>
+                      </label>
                     ))}
                   </div>
                 )}
