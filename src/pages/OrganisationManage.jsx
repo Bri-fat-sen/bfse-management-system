@@ -312,7 +312,7 @@ export default function OrganisationManage() {
           <div className="absolute top-4 right-4 md:static">
             <div className="px-4 py-2 rounded-xl bg-white/10 backdrop-blur border border-white/20">
               <p className="text-white/50 text-xs mb-1">Organisation Code</p>
-              <p className="text-white font-mono font-bold text-lg">{formData.code}</p>
+              <p className="text-white font-mono font-bold text-lg">{organisation?.code || formData.code}</p>
             </div>
           </div>
         </div>
