@@ -441,6 +441,24 @@ export default function Inventory() {
                               {product.stock_quantity}
                             </Badge>
                           </div>
+                          <div className="flex items-center gap-1 mt-1">
+                            {product.location_ids?.length > 0 ? (
+                              product.location_ids.slice(0, 2).map(locId => {
+                                const loc = allLocations.find(l => l.id === locId);
+                                if (!loc) return null;
+                                return (
+                                  <Badge key={locId} variant="outline" className="text-[10px] px-1">
+                                    {loc.type === 'warehouse' ? <Warehouse className="w-2 h-2" /> : <Truck className="w-2 h-2" />}
+                                  </Badge>
+                                );
+                              })
+                            ) : (
+                              <span className="text-[10px] text-gray-400">All</span>
+                            )}
+                            {product.location_ids?.length > 2 && (
+                              <span className="text-[10px] text-gray-400">+{product.location_ids.length - 2}</span>
+                            )}
+                          </div>
                           <div className="flex items-center justify-between mt-2">
                             <div className="flex items-center gap-2">
                               <Badge variant="outline" className="text-xs">{product.category || 'Other'}</Badge>
