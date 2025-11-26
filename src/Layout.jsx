@@ -103,7 +103,12 @@ export default function Layout({ children, currentPageName }) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [darkMode, setDarkMode] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
-  const [collapsedSections, setCollapsedSections] = useState({});
+  const [collapsedSections, setCollapsedSections] = useState({
+    "Operations": true,
+    "People": true,
+    "Insights": true,
+    "Admin": true
+  });
 
   const toggleSection = (title) => {
     setCollapsedSections(prev => ({ ...prev, [title]: !prev[title] }));
