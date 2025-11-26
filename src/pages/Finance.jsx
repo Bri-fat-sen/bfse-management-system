@@ -116,14 +116,16 @@ export default function Finance() {
     },
   });
 
-  // Calculate totals - separate vehicle sales from retail/warehouse sales
-  const retailWarehouseSales = sales.filter(s => s.sale_type !== 'vehicle');
+  // Calculate totals - separate all revenue streams
+  const retailSales = sales.filter(s => s.sale_type === 'retail');
+  const warehouseSales = sales.filter(s => s.sale_type === 'warehouse');
   const vehicleSales = sales.filter(s => s.sale_type === 'vehicle');
   
-  const totalRetailRevenue = retailWarehouseSales.reduce((sum, s) => sum + (s.total_amount || 0), 0);
+  const totalRetailRevenue = retailSales.reduce((sum, s) => sum + (s.total_amount || 0), 0);
+  const totalWarehouseRevenue = warehouseSales.reduce((sum, s) => sum + (s.total_amount || 0), 0);
   const totalVehicleSalesRevenue = vehicleSales.reduce((sum, s) => sum + (s.total_amount || 0), 0);
   const totalTransportRevenue = trips.reduce((sum, t) => sum + (t.total_revenue || 0), 0);
-  const totalRevenue = totalRetailRevenue + totalVehicleSalesRevenue + totalTransportRevenue;
+  const totalRevenue = totalRetailRevenue + totalWarehouseRevenue + totalVehicleSalesRevenue + totalTransportRevenue;
   const totalExpenses = expenses.reduce((sum, e) => sum + (e.amount || 0), 0);
   const netProfit = totalRevenue - totalExpenses;
 
