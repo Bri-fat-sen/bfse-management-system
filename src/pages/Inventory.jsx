@@ -242,6 +242,7 @@ export default function Inventory() {
       stock_quantity: parseInt(formData.get('stock_quantity')) || 0,
       low_stock_threshold: parseInt(formData.get('low_stock_threshold')) || 10,
       unit: formData.get('unit'),
+      location_ids: selectedLocations,
       is_active: true,
     };
 
@@ -251,6 +252,21 @@ export default function Inventory() {
       createProductMutation.mutate(data);
     }
   };
+
+  const toggleLocation = (locationId) => {
+    setSelectedLocations(prev => 
+      prev.includes(locationId) 
+        ? prev.filter(id => id !== locationId)
+        : [...prev, locationId]
+    );
+  };
+
+  // Reset selected locations when dialog opens
+  useEffect(() => {
+    if (showProductDialog) {
+      setSelectedLocations(editingProduct?.location_ids || []);
+    }
+  }, [showProductDialog, editingProduct]);
 
   return (
     <div className="space-y-6">
