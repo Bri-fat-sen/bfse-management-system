@@ -1,19 +1,27 @@
 import React, { useState } from "react";
 import { format, isToday, isYesterday } from "date-fns";
 import {
-  MessageSquare,
   Search,
   Plus,
   Users,
+  MessageSquare,
   Hash,
-  Circle
+  Bell,
+  Pin,
+  MoreHorizontal
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 export default function ChatSidebar({
   rooms,
@@ -22,13 +30,13 @@ export default function ChatSidebar({
   onNewChat,
   onNewGroup,
   currentEmployeeId,
-  currentEmployeeName,
+  onlineUsers = [],
   unreadCounts = {}
 }) {
   const [searchTerm, setSearchTerm] = useState("");
-  const [activeFilter, setActiveFilter] = useState("all");
+  const [filter, setFilter] = useState("all");
 
-  const formatMessageTime = (dateStr) => {
+  const formatTime = (dateStr) => {
     if (!dateStr) return "";
     const date = new Date(dateStr);
     if (isToday(date)) return format(date, 'HH:mm');
@@ -40,125 +48,137 @@ export default function ChatSidebar({
     const matchesSearch = r.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       r.participant_names?.some(n => n?.toLowerCase().includes(searchTerm.toLowerCase()));
     
-    if (activeFilter === "direct") return matchesSearch && r.type === 'direct';
-    if (activeFilter === "groups") return matchesSearch && r.type === 'group';
+    if (filter === "direct") return matchesSearch && r.type === 'direct';
+    if (filter === "groups") return matchesSearch && r.type === 'group';
+    if (filter === "unread") return matchesSearch && unreadCounts[r.id] > 0;
     return matchesSearch;
   });
 
-  const directChats = filteredRooms.filter(r => r.type === 'direct');
-  const groupChats = filteredRooms.filter(r => r.type === 'group');
-
-  const getRoomDisplayName = (room) => {
-    if (room.type === 'group') return room.name;
-    return room.participant_names?.find(n => n !== currentEmployeeName) || room.name;
-  };
+  // Sort by last message time
+  const sortedRooms = [...filteredRooms].sort((a, b) => {
+    if (a.is_pinned && !b.is_pinned) return -1;
+    if (!a.is_pinned && b.is_pinned) return 1;
+    return new Date(b.last_message_time || 0) - new Date(a.last_message_time || 0);
+  });
 
   return (
     <div className="flex flex-col h-full">
       {/* Header */}
       <div className="p-4 border-b">
         <div className="flex items-center justify-between mb-3">
-          <h2 className="font-bold text-lg">Messages</h2>
-          <div className="flex gap-1">
-            <Button size="icon" variant="ghost" onClick={onNewChat} title="New Chat">
-              <Plus className="w-4 h-4" />
-            </Button>
-            <Button size="icon" variant="ghost" onClick={onNewGroup} title="New Group">
-              <Users className="w-4 h-4" />
-            </Button>
-          </div>
+          <h2 className="text-lg font-bold">Messages</h2>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button size="icon" variant="ghost" className="h-8 w-8">
+                <Plus className="w-4 h-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem onClick={onNewChat}>
+                <MessageSquare className="w-4 h-4 mr-2" />
+                New Chat
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={onNewGroup}>
+                <Users className="w-4 h-4 mr-2" />
+                New Group
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
+        
         <div className="relative">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
           <Input
             placeholder="Search conversations..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="pl-10 bg-gray-50 border-0"
+            className="pl-10 h-9 bg-gray-50"
           />
         </div>
-      </div>
 
-      {/* Filters */}
-      <div className="px-4 py-2 border-b">
-        <div className="flex gap-2">
-          {["all", "direct", "groups"].map((filter) => (
-            <Button
-              key={filter}
-              size="sm"
-              variant={activeFilter === filter ? "default" : "ghost"}
-              className={activeFilter === filter ? "bg-[#1EB053] hover:bg-[#178f43]" : ""}
-              onClick={() => setActiveFilter(filter)}
-            >
-              {filter === "all" ? "All" : filter === "direct" ? "Direct" : "Groups"}
-            </Button>
-          ))}
-        </div>
+        <Tabs value={filter} onValueChange={setFilter} className="mt-3">
+          <TabsList className="w-full h-8 bg-gray-100 p-0.5">
+            <TabsTrigger value="all" className="flex-1 text-xs h-7">All</TabsTrigger>
+            <TabsTrigger value="direct" className="flex-1 text-xs h-7">Direct</TabsTrigger>
+            <TabsTrigger value="groups" className="flex-1 text-xs h-7">Groups</TabsTrigger>
+          </TabsList>
+        </Tabs>
       </div>
 
       {/* Chat List */}
       <ScrollArea className="flex-1">
-        {filteredRooms.length === 0 ? (
+        {sortedRooms.length === 0 ? (
           <div className="p-6 text-center text-gray-500">
-            <MessageSquare className="w-12 h-12 mx-auto mb-3 text-gray-300" />
-            <p className="font-medium">No conversations</p>
-            <p className="text-sm mt-1">Start chatting with your team</p>
-            <Button variant="link" onClick={onNewChat} className="mt-2 text-[#1EB053]">
+            <MessageSquare className="w-12 h-12 mx-auto mb-2 text-gray-300" />
+            <p className="text-sm">No conversations</p>
+            <Button variant="link" size="sm" onClick={onNewChat}>
               Start a chat
             </Button>
           </div>
         ) : (
-          <div className="py-2">
-            {filteredRooms.map((room) => {
+          <div className="py-1">
+            {sortedRooms.map((room) => {
+              const otherName = room.type === 'group' 
+                ? room.name 
+                : room.participant_names?.find(n => n !== room.participant_names?.[0]) || room.name;
               const isSelected = selectedRoom?.id === room.id;
-              const displayName = getRoomDisplayName(room);
               const unread = unreadCounts[room.id] || 0;
-              
+              const isOnline = room.type === 'direct' && 
+                room.participants?.some(p => p !== currentEmployeeId && onlineUsers.includes(p));
+
               return (
                 <div
                   key={room.id}
-                  className={`mx-2 mb-1 px-3 py-3 rounded-xl cursor-pointer transition-all ${
+                  className={`px-3 py-2.5 cursor-pointer transition-all ${
                     isSelected 
-                      ? 'bg-gradient-to-r from-[#1EB053]/10 to-[#0072C6]/10 border border-[#1EB053]/20' 
+                      ? 'bg-gradient-to-r from-[#1EB053]/10 to-[#0072C6]/10 border-l-3 border-l-[#1EB053]' 
                       : 'hover:bg-gray-50'
                   }`}
                   onClick={() => onSelectRoom(room)}
                 >
                   <div className="flex items-center gap-3">
                     <div className="relative">
-                      <Avatar className="w-12 h-12">
+                      <Avatar className="w-11 h-11">
                         {room.type === 'group' ? (
                           <AvatarFallback className="bg-gradient-to-br from-purple-500 to-pink-500 text-white">
                             <Hash className="w-5 h-5" />
                           </AvatarFallback>
                         ) : (
-                          <AvatarFallback className="bg-gradient-to-br from-[#1EB053] to-[#0072C6] text-white">
-                            {displayName?.charAt(0)}
-                          </AvatarFallback>
+                          <>
+                            <AvatarImage src={room.avatar_url} />
+                            <AvatarFallback className="bg-gradient-to-br from-[#1EB053] to-[#0072C6] text-white font-medium">
+                              {otherName?.charAt(0)}
+                            </AvatarFallback>
+                          </>
                         )}
                       </Avatar>
-                      {room.type === 'direct' && (
-                        <Circle className="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 fill-green-500 text-white stroke-white stroke-2" />
+                      {isOnline && (
+                        <span className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 border-2 border-white rounded-full" />
                       )}
                     </div>
+                    
                     <div className="flex-1 min-w-0">
-                      <div className="flex items-center justify-between">
-                        <p className={`font-semibold truncate ${unread > 0 ? 'text-gray-900' : 'text-gray-700'}`}>
-                          {displayName}
-                        </p>
-                        <span className="text-xs text-gray-400 flex-shrink-0 ml-2">
-                          {formatMessageTime(room.last_message_time)}
+                      <div className="flex items-center justify-between gap-2">
+                        <div className="flex items-center gap-1.5 min-w-0">
+                          {room.is_pinned && <Pin className="w-3 h-3 text-gray-400 flex-shrink-0" />}
+                          <p className={`font-medium truncate ${unread > 0 ? 'text-gray-900' : 'text-gray-700'}`}>
+                            {otherName}
+                          </p>
+                        </div>
+                        <span className="text-xs text-gray-400 flex-shrink-0">
+                          {formatTime(room.last_message_time)}
                         </span>
                       </div>
-                      <div className="flex items-center justify-between mt-0.5">
-                        <p className={`text-sm truncate ${unread > 0 ? 'text-gray-800 font-medium' : 'text-gray-500'}`}>
-                          {room.last_message_sender && room.last_message_sender !== currentEmployeeName && (
-                            <span className="text-gray-400">{room.last_message_sender.split(' ')[0]}: </span>
+                      <div className="flex items-center justify-between gap-2 mt-0.5">
+                        <p className={`text-sm truncate ${unread > 0 ? 'text-gray-700 font-medium' : 'text-gray-500'}`}>
+                          {room.is_typing ? (
+                            <span className="text-[#1EB053] italic">typing...</span>
+                          ) : (
+                            room.last_message || 'No messages yet'
                           )}
-                          {room.last_message || 'Start a conversation'}
                         </p>
                         {unread > 0 && (
-                          <Badge className="bg-[#1EB053] text-white text-[10px] h-5 min-w-5 flex items-center justify-center ml-2">
+                          <Badge className="bg-[#1EB053] text-white h-5 min-w-5 px-1.5 text-xs flex-shrink-0">
                             {unread > 99 ? '99+' : unread}
                           </Badge>
                         )}
