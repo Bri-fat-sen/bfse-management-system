@@ -107,14 +107,14 @@ export default function ManagerDashboard({ currentEmployee, orgId, user }) {
   });
 
   // Calculate metrics
-  const todaySales = sales.filter(s => s.created_date?.startsWith(today));
-  const todaySalesRevenue = todaySales.reduce((sum, s) => sum + (s.total_amount || 0), 0);
+  const todaySales = (sales || []).filter(s => s?.created_date?.startsWith(today));
+  const todaySalesRevenue = todaySales.reduce((sum, s) => sum + (s?.total_amount || 0), 0);
   
-  const todayTrips = trips.filter(t => t.date === today);
-  const todayTransportRevenue = todayTrips.reduce((sum, t) => sum + (t.total_revenue || 0), 0);
+  const todayTrips = (trips || []).filter(t => t?.date === today);
+  const todayTransportRevenue = todayTrips.reduce((sum, t) => sum + (t?.total_revenue || 0), 0);
   
-  const todayContracts = truckContracts.filter(c => c.contract_date === today && c.status === 'completed');
-  const todayContractRevenue = todayContracts.reduce((sum, c) => sum + (c.contract_amount || 0), 0);
+  const todayContracts = (truckContracts || []).filter(c => c?.contract_date === today && c?.status === 'completed');
+  const todayContractRevenue = todayContracts.reduce((sum, c) => sum + (c?.contract_amount || 0), 0);
   
   // Total today's revenue from all sources
   const todayTotalRevenue = todaySalesRevenue + todayTransportRevenue + todayContractRevenue;

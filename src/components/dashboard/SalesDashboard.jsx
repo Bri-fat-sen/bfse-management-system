@@ -55,8 +55,8 @@ export default function SalesDashboard({ currentEmployee, orgId }) {
 
   const isClockedIn = todayAttendance?.clock_in_time && !todayAttendance?.clock_out_time;
   
-  const todaySales = mySales.filter(s => s.created_date?.startsWith(today));
-  const monthSales = mySales.filter(s => s.created_date >= monthStart);
+  const todaySales = (mySales || []).filter(s => s?.created_date?.startsWith(today));
+  const monthSales = (mySales || []).filter(s => s?.created_date >= monthStart);
   
   const todayRevenue = todaySales.reduce((sum, s) => sum + (s.total_amount || 0), 0);
   const monthRevenue = monthSales.reduce((sum, s) => sum + (s.total_amount || 0), 0);

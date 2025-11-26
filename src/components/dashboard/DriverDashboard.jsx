@@ -81,14 +81,14 @@ export default function DriverDashboard({ currentEmployee, orgId }) {
   const isClockedIn = todayAttendance?.clock_in_time && !todayAttendance?.clock_out_time;
   
   // Today's trip revenue & expenses
-  const todayTripRevenue = todayTrips.reduce((sum, t) => sum + (t.total_revenue || 0), 0);
-  const todayTripExpenses = todayTrips.reduce((sum, t) => sum + (t.fuel_cost || 0) + (t.other_expenses || 0), 0);
-  const todayPassengers = todayTrips.reduce((sum, t) => sum + (t.passengers_count || 0), 0);
+  const todayTripRevenue = (todayTrips || []).reduce((sum, t) => sum + (t?.total_revenue || 0), 0);
+  const todayTripExpenses = (todayTrips || []).reduce((sum, t) => sum + (t?.fuel_cost || 0) + (t?.other_expenses || 0), 0);
+  const todayPassengers = (todayTrips || []).reduce((sum, t) => sum + (t?.passengers_count || 0), 0);
   
   // Today's contract revenue
-  const todayContracts = myContracts.filter(c => c.contract_date === today);
-  const todayContractRevenue = todayContracts.filter(c => c.status === 'completed').reduce((sum, c) => sum + (c.contract_amount || 0), 0);
-  const todayContractExpenses = todayContracts.reduce((sum, c) => sum + (c.total_expenses || 0), 0);
+  const todayContracts = (myContracts || []).filter(c => c?.contract_date === today);
+  const todayContractRevenue = todayContracts.filter(c => c?.status === 'completed').reduce((sum, c) => sum + (c?.contract_amount || 0), 0);
+  const todayContractExpenses = todayContracts.reduce((sum, c) => sum + (c?.total_expenses || 0), 0);
   
   // Total today
   const todayTotalRevenue = todayTripRevenue + todayContractRevenue;
