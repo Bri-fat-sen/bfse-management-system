@@ -1,7 +1,7 @@
 import React, { useState, useMemo } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery } from "@tanstack/react-query";
-import { format, startOfWeek, endOfWeek, eachDayOfInterval, parseISO, getDay } from "date-fns";
+import { format, startOfWeek, endOfWeek, startOfMonth, eachDayOfInterval, parseISO, getDay } from "date-fns";
 import {
   Calendar,
   Clock,
