@@ -55,6 +55,7 @@ import InventoryReport from "@/components/inventory/InventoryReport";
 import BatchManagement from "@/components/inventory/BatchManagement";
 import ExpiryAlerts from "@/components/inventory/ExpiryAlerts";
 import BatchReports from "@/components/inventory/BatchReports";
+import StockTransferDialog from "@/components/inventory/StockTransferDialog";
 
 const DEFAULT_CATEGORIES = ["Water", "Beverages", "Food", "Electronics", "Clothing", "Other"];
 
@@ -70,6 +71,7 @@ export default function Inventory() {
   const [showLocationsDialog, setShowLocationsDialog] = useState(false);
   const [showAlertsDialog, setShowAlertsDialog] = useState(false);
   const [showReportDialog, setShowReportDialog] = useState(false);
+  const [showTransferDialog, setShowTransferDialog] = useState(false);
   const [selectedLocations, setSelectedLocations] = useState([]);
 
   const { data: user } = useQuery({
