@@ -84,6 +84,18 @@ export default function ManagerDashboard({ currentEmployee, orgId, user }) {
     enabled: !!orgId,
   });
 
+  const { data: truckContracts = [] } = useQuery({
+    queryKey: ['truckContracts', orgId],
+    queryFn: () => base44.entities.TruckContract.filter({ organisation_id: orgId }, '-contract_date', 100),
+    enabled: !!orgId,
+  });
+
+  const { data: maintenanceRecords = [] } = useQuery({
+    queryKey: ['vehicleMaintenance', orgId],
+    queryFn: () => base44.entities.VehicleMaintenance.filter({ organisation_id: orgId }, '-date_performed', 100),
+    enabled: !!orgId,
+  });
+
   const { data: recentActivity = [] } = useQuery({
     queryKey: ['activity', orgId],
     queryFn: () => base44.entities.ActivityLog.filter({ organisation_id: orgId }, '-created_date', 10),
@@ -92,10 +104,16 @@ export default function ManagerDashboard({ currentEmployee, orgId, user }) {
 
   // Calculate metrics
   const todaySales = sales.filter(s => s.created_date?.startsWith(today));
-  const todayRevenue = todaySales.reduce((sum, s) => sum + (s.total_amount || 0), 0);
+  const todaySalesRevenue = todaySales.reduce((sum, s) => sum + (s.total_amount || 0), 0);
   
   const todayTrips = trips.filter(t => t.date === today);
-  const transportRevenue = todayTrips.reduce((sum, t) => sum + (t.total_revenue || 0), 0);
+  const todayTransportRevenue = todayTrips.reduce((sum, t) => sum + (t.total_revenue || 0), 0);
+  
+  const todayContracts = truckContracts.filter(c => c.contract_date === today && c.status === 'completed');
+  const todayContractRevenue = todayContracts.reduce((sum, c) => sum + (c.contract_amount || 0), 0);
+  
+  // Total today's revenue from all sources
+  const todayRevenue = todaySalesRevenue + todayTransportRevenue + todayContractRevenue;
   
   const activeEmployees = employees.filter(e => e.status === 'active');
   const clockedIn = attendance.filter(a => a.clock_in_time && !a.clock_out_time);
@@ -113,17 +131,47 @@ export default function ManagerDashboard({ currentEmployee, orgId, user }) {
     return differenceInDays(new Date(b.expiry_date), new Date()) < 0;
   });
 
-  const monthExpenses = expenses.filter(e => {
+  // Month calculations - ALL revenue sources
+  const now = new Date();
+  const monthSalesRevenue = sales.filter(s => {
+    const saleDate = new Date(s.created_date);
+    return saleDate.getMonth() === now.getMonth() && saleDate.getFullYear() === now.getFullYear();
+  }).reduce((sum, s) => sum + (s.total_amount || 0), 0);
+
+  const monthTripsRevenue = trips.filter(t => {
+    const tripDate = new Date(t.date);
+    return tripDate.getMonth() === now.getMonth() && tripDate.getFullYear() === now.getFullYear();
+  }).reduce((sum, t) => sum + (t.total_revenue || 0), 0);
+
+  const monthContractsRevenue = truckContracts.filter(c => {
+    const contractDate = new Date(c.contract_date);
+    return contractDate.getMonth() === now.getMonth() && contractDate.getFullYear() === now.getFullYear() && c.status === 'completed';
+  }).reduce((sum, c) => sum + (c.contract_amount || 0), 0);
+
+  const totalMonthRevenue = monthSalesRevenue + monthTripsRevenue + monthContractsRevenue;
+
+  // Month expenses - ALL sources
+  const monthRecordedExpenses = expenses.filter(e => {
     const expDate = new Date(e.date);
-    const now = new Date();
     return expDate.getMonth() === now.getMonth() && expDate.getFullYear() === now.getFullYear();
   }).reduce((sum, e) => sum + (e.amount || 0), 0);
 
-  const monthSales = sales.filter(s => {
-    const saleDate = new Date(s.created_date);
-    const now = new Date();
-    return saleDate.getMonth() === now.getMonth() && saleDate.getFullYear() === now.getFullYear();
-  }).reduce((sum, s) => sum + (s.total_amount || 0), 0);
+  const monthTripExpenses = trips.filter(t => {
+    const tripDate = new Date(t.date);
+    return tripDate.getMonth() === now.getMonth() && tripDate.getFullYear() === now.getFullYear();
+  }).reduce((sum, t) => sum + (t.fuel_cost || 0) + (t.other_expenses || 0), 0);
+
+  const monthContractExpenses = truckContracts.filter(c => {
+    const contractDate = new Date(c.contract_date);
+    return contractDate.getMonth() === now.getMonth() && contractDate.getFullYear() === now.getFullYear();
+  }).reduce((sum, c) => sum + (c.total_expenses || 0), 0);
+
+  const monthMaintenanceExpenses = maintenanceRecords.filter(m => {
+    const maintDate = new Date(m.date_performed);
+    return maintDate.getMonth() === now.getMonth() && maintDate.getFullYear() === now.getFullYear();
+  }).reduce((sum, m) => sum + (m.cost || 0), 0);
+
+  const totalMonthExpenses = monthRecordedExpenses + monthTripExpenses + monthContractExpenses + monthMaintenanceExpenses;
 
   const criticalAlerts = [
     ...(expiredBatches.length > 0 ? [{ type: 'danger', title: `${expiredBatches.length} Expired Batches`, link: 'Inventory' }] : []),
@@ -200,7 +248,7 @@ export default function ManagerDashboard({ currentEmployee, orgId, user }) {
           icon={DollarSign}
           color="green"
           trend="up"
-          trendValue={`${todaySales.length} sales`}
+          trendValue={`All sources combined`}
         />
         <StatCard
           title="Staff Present"
@@ -210,18 +258,18 @@ export default function ManagerDashboard({ currentEmployee, orgId, user }) {
           subtitle="Clocked in today"
         />
         <StatCard
-          title="Transport Revenue"
-          value={`Le ${transportRevenue.toLocaleString()}`}
-          icon={Truck}
+          title="Month Revenue"
+          value={`Le ${totalMonthRevenue.toLocaleString()}`}
+          icon={TrendingUp}
           color="gold"
-          subtitle={`${todayTrips.length} trips`}
+          subtitle="Sales + Transport + Contracts"
         />
         <StatCard
           title="Month Profit"
-          value={`Le ${(monthSales - monthExpenses).toLocaleString()}`}
+          value={`Le ${(totalMonthRevenue - totalMonthExpenses).toLocaleString()}`}
           icon={TrendingUp}
-          color="navy"
-          subtitle={monthSales - monthExpenses >= 0 ? 'Positive' : 'Negative'}
+          color={totalMonthRevenue - totalMonthExpenses >= 0 ? "green" : "red"}
+          subtitle={`Expenses: Le ${totalMonthExpenses.toLocaleString()}`}
         />
       </div>
 
@@ -237,7 +285,22 @@ export default function ManagerDashboard({ currentEmployee, orgId, user }) {
                 </div>
                 <ShoppingCart className="w-8 h-8 text-[#1EB053]" />
               </div>
-              <p className="text-xs text-gray-400 mt-2">Le {todayRevenue.toLocaleString()} revenue</p>
+              <p className="text-xs text-gray-400 mt-2">Le {todaySalesRevenue.toLocaleString()} revenue</p>
+            </CardContent>
+          </Card>
+        </Link>
+
+        <Link to={createPageUrl("Transport")}>
+          <Card className="hover:shadow-lg transition-shadow cursor-pointer border-t-4 border-t-[#D4AF37]">
+            <CardContent className="p-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-gray-500">Transport</p>
+                  <p className="text-xl font-bold">{todayTrips.length} trips</p>
+                </div>
+                <Truck className="w-8 h-8 text-[#D4AF37]" />
+              </div>
+              <p className="text-xs text-gray-400 mt-2">Le {(todayTransportRevenue + todayContractRevenue).toLocaleString()} revenue</p>
             </CardContent>
           </Card>
         </Link>
@@ -253,21 +316,6 @@ export default function ManagerDashboard({ currentEmployee, orgId, user }) {
                 <Package className="w-8 h-8 text-[#0072C6]" />
               </div>
               <p className="text-xs text-gray-400 mt-2">{lowStockProducts.length} low stock alerts</p>
-            </CardContent>
-          </Card>
-        </Link>
-
-        <Link to={createPageUrl("Transport")}>
-          <Card className="hover:shadow-lg transition-shadow cursor-pointer border-t-4 border-t-[#D4AF37]">
-            <CardContent className="p-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-gray-500">Transport</p>
-                  <p className="text-xl font-bold">{todayTrips.length} trips</p>
-                </div>
-                <Truck className="w-8 h-8 text-[#D4AF37]" />
-              </div>
-              <p className="text-xs text-gray-400 mt-2">Le {transportRevenue.toLocaleString()} revenue</p>
             </CardContent>
           </Card>
         </Link>
