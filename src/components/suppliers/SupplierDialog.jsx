@@ -21,6 +21,7 @@ import {
 } from "@/components/ui/select";
 import { useToast } from "@/components/ui/use-toast";
 import { Star } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
 
 const PAYMENT_TERMS = [
   { value: "immediate", label: "Immediate Payment" },
@@ -39,9 +40,11 @@ export default function SupplierDialog({
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [rating, setRating] = React.useState(supplier?.rating || 0);
+  const [cashOnly, setCashOnly] = React.useState(supplier?.cash_only || false);
 
   React.useEffect(() => {
     setRating(supplier?.rating || 0);
+    setCashOnly(supplier?.cash_only || false);
   }, [supplier]);
 
   const createMutation = useMutation({
@@ -83,6 +86,7 @@ export default function SupplierDialog({
       bank_account: formData.get('bank_account'),
       notes: formData.get('notes'),
       rating: rating,
+      cash_only: cashOnly,
       status: formData.get('status') || 'active',
     };
 
@@ -175,6 +179,16 @@ export default function SupplierDialog({
                     <SelectItem value="blocked">Blocked</SelectItem>
                   </SelectContent>
                 </Select>
+              </div>
+              <div className="flex items-center space-x-2 pt-6">
+                <Checkbox 
+                  id="cash_only" 
+                  checked={cashOnly} 
+                  onCheckedChange={setCashOnly}
+                />
+                <Label htmlFor="cash_only" className="text-sm font-normal cursor-pointer">
+                  Cash Only Account
+                </Label>
               </div>
               <div>
                 <Label>Bank Name</Label>
