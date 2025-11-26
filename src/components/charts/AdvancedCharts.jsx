@@ -76,7 +76,7 @@ export function GradientAreaChart({
   
   return (
     <ResponsiveContainer width="100%" height={height}>
-      <AreaChart data={data} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
+      <AreaChart data={data} margin={{ top: 5, right: 5, left: -20, bottom: 0 }}>
         <defs>
           <linearGradient id={gradientId} x1="0" y1="0" x2="0" y2="1">
             <stop offset="0%" stopColor={color} stopOpacity={areaOpacity} />
@@ -131,7 +131,7 @@ export function MultiAreaChart({
 }) {
   return (
     <ResponsiveContainer width="100%" height={height}>
-      <AreaChart data={data} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
+      <AreaChart data={data} margin={{ top: 5, right: 5, left: -20, bottom: 0 }}>
         <defs>
           {lines.map((line, i) => (
             <linearGradient key={i} id={`gradient-multi-${i}`} x1="0" y1="0" x2="0" y2="1">
@@ -197,7 +197,7 @@ export function GradientBarChart({
       <BarChart 
         data={data} 
         layout={horizontal ? "vertical" : "horizontal"}
-        margin={{ top: 10, right: 10, left: horizontal ? 10 : 0, bottom: 0 }}
+        margin={{ top: 5, right: 5, left: horizontal ? 0 : -20, bottom: 0 }}
       >
         <defs>
           <linearGradient id={gradientId} x1="0" y1="0" x2={horizontal ? "1" : "0"} y2={horizontal ? "0" : "1"}>
@@ -246,18 +246,18 @@ export function ColorfulBarChart({
       <BarChart 
         data={data} 
         layout={horizontal ? "vertical" : "horizontal"}
-        margin={{ top: 10, right: 10, left: horizontal ? 10 : 0, bottom: 0 }}
+        margin={{ top: 5, right: 5, left: horizontal ? 0 : -20, bottom: 0 }}
       >
         {showGrid && <CartesianGrid strokeDasharray="3 3" stroke="#E5E7EB" />}
         {horizontal ? (
           <>
-            <XAxis type="number" tick={{ fontSize: 11, fill: '#6B7280' }} tickLine={false} axisLine={false} />
-            <YAxis dataKey={xKey} type="category" width={120} tick={{ fontSize: 11, fill: '#6B7280' }} tickLine={false} axisLine={false} />
+            <XAxis type="number" tick={{ fontSize: 10, fill: '#6B7280' }} tickLine={false} axisLine={false} />
+            <YAxis dataKey={xKey} type="category" width={80} tick={{ fontSize: 10, fill: '#6B7280' }} tickLine={false} axisLine={false} />
           </>
         ) : (
           <>
-            <XAxis dataKey={xKey} tick={{ fontSize: 11, fill: '#6B7280' }} tickLine={false} axisLine={{ stroke: '#E5E7EB' }} />
-            <YAxis tick={{ fontSize: 11, fill: '#6B7280' }} tickLine={false} axisLine={false} />
+            <XAxis dataKey={xKey} tick={{ fontSize: 10, fill: '#6B7280' }} tickLine={false} axisLine={{ stroke: '#E5E7EB' }} />
+            <YAxis tick={{ fontSize: 10, fill: '#6B7280' }} tickLine={false} axisLine={false} />
           </>
         )}
         <Tooltip content={<CustomTooltip formatter={formatter} />} cursor={{ fill: 'rgba(0,0,0,0.05)', radius: 8 }} />
@@ -277,10 +277,10 @@ export function DonutChart({
   dataKey = "value",
   nameKey = "name",
   height = 300,
-  innerRadius = 60,
-  outerRadius = 100,
+  innerRadius = 50,
+  outerRadius = 80,
   formatter,
-  showLabels = true,
+  showLabels = false,
   colors = SL_COLORS.chart,
   centerLabel,
   centerValue
@@ -289,7 +289,7 @@ export function DonutChart({
   
   return (
     <ResponsiveContainer width="100%" height={height}>
-      <PieChart>
+      <PieChart margin={{ top: 0, right: 0, left: 0, bottom: 0 }}>
         <defs>
           {colors.map((color, i) => (
             <linearGradient key={i} id={`pie-gradient-${i}`} x1="0" y1="0" x2="1" y2="1">
@@ -371,7 +371,7 @@ export function GlowLineChart({
 }) {
   return (
     <ResponsiveContainer width="100%" height={height}>
-      <LineChart data={data} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
+      <LineChart data={data} margin={{ top: 5, right: 5, left: -20, bottom: 0 }}>
         <defs>
           {lines.map((line, i) => (
             <filter key={i} id={`glow-${i}`} x="-50%" y="-50%" width="200%" height="200%">
@@ -433,7 +433,7 @@ export function AdvancedRadarChart({
 }) {
   return (
     <ResponsiveContainer width="100%" height={height}>
-      <RadarChart cx="50%" cy="50%" outerRadius="70%" data={data}>
+      <RadarChart cx="50%" cy="50%" outerRadius="65%" data={data} margin={{ top: 0, right: 20, left: 20, bottom: 0 }}>
         <defs>
           {dataKeys.map((key, i) => (
             <linearGradient key={i} id={`radar-gradient-${i}`} x1="0" y1="0" x2="0" y2="1">
@@ -547,7 +547,7 @@ export function StackedBarChart({
 }) {
   return (
     <ResponsiveContainer width="100%" height={height}>
-      <BarChart data={data} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
+      <BarChart data={data} margin={{ top: 5, right: 5, left: -20, bottom: 0 }}>
         <defs>
           {bars.map((bar, i) => (
             <linearGradient key={i} id={`stacked-gradient-${i}`} x1="0" y1="0" x2="0" y2="1">
