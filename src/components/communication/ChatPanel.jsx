@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
@@ -16,7 +16,15 @@ import {
   Smile,
   ArrowLeft,
   Phone,
-  Video
+  Video,
+  MoreVertical,
+  Edit2,
+  Trash2,
+  Pin,
+  Check,
+  CheckCheck,
+  Copy,
+  Reply
 } from "lucide-react";
 import VideoCallDialog from "./VideoCallDialog";
 import { Button } from "@/components/ui/button";
@@ -26,6 +34,24 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
 import { format, isToday, isYesterday } from "date-fns";
+import { toast } from "sonner";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Textarea } from "@/components/ui/textarea";
 
 export default function ChatPanel({ isOpen, onClose, orgId, currentEmployee }) {
   const queryClient = useQueryClient();
@@ -34,18 +60,29 @@ export default function ChatPanel({ isOpen, onClose, orgId, currentEmployee }) {
   const [searchTerm, setSearchTerm] = useState("");
   const [callDialogOpen, setCallDialogOpen] = useState(false);
   const [callType, setCallType] = useState("video");
+  const [editingMessage, setEditingMessage] = useState(null);
+  const [editText, setEditText] = useState("");
+  const [replyingTo, setReplyingTo] = useState(null);
+  const [showNewGroupDialog, setShowNewGroupDialog] = useState(false);
+  const [groupName, setGroupName] = useState("");
+  const [selectedMembers, setSelectedMembers] = useState([]);
+  const [showPinnedMessages, setShowPinnedMessages] = useState(false);
+  const [lastMessageCount, setLastMessageCount] = useState(0);
+  const messagesEndRef = useRef(null);
+  const typingTimeoutRef = useRef(null);
 
   const { data: chatRooms = [] } = useQuery({
     queryKey: ['chatRooms', orgId],
     queryFn: () => base44.entities.ChatRoom.filter({ organisation_id: orgId }),
     enabled: !!orgId && isOpen,
+    refetchInterval: isOpen ? 5000 : false,
   });
 
   const { data: messages = [] } = useQuery({
     queryKey: ['panelMessages', selectedRoom?.id],
-    queryFn: () => base44.entities.ChatMessage.filter({ room_id: selectedRoom?.id }, 'created_date', 50),
+    queryFn: () => base44.entities.ChatMessage.filter({ room_id: selectedRoom?.id, is_deleted: false }, 'created_date', 50),
     enabled: !!selectedRoom?.id,
-    refetchInterval: isOpen ? 3000 : false,
+    refetchInterval: isOpen && selectedRoom ? 2000 : false,
   });
 
   const { data: employees = [] } = useQuery({
@@ -54,11 +91,53 @@ export default function ChatPanel({ isOpen, onClose, orgId, currentEmployee }) {
     enabled: !!orgId && isOpen,
   });
 
+  // Real-time notification for new messages
+  useEffect(() => {
+    if (messages.length > lastMessageCount && lastMessageCount > 0) {
+      const newMessage = messages[messages.length - 1];
+      if (newMessage?.sender_id !== currentEmployee?.id) {
+        toast.info(`New message from ${newMessage?.sender_name}`, {
+          description: newMessage?.content?.substring(0, 50) + (newMessage?.content?.length > 50 ? '...' : ''),
+          duration: 3000,
+        });
+      }
+    }
+    setLastMessageCount(messages.length);
+  }, [messages.length]);
+
+  // Auto-scroll to bottom on new messages
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [messages]);
+
+  // Mark messages as read
+  useEffect(() => {
+    if (selectedRoom && messages.length > 0 && currentEmployee) {
+      const unreadMessages = messages.filter(
+        m => m.sender_id !== currentEmployee.id && !m.read_by?.includes(currentEmployee.id)
+      );
+      unreadMessages.forEach(msg => {
+        const newReadBy = [...(msg.read_by || []), currentEmployee.id];
+        base44.entities.ChatMessage.update(msg.id, { read_by: newReadBy, is_read: true });
+      });
+    }
+  }, [messages, selectedRoom, currentEmployee]);
+
   const sendMessageMutation = useMutation({
     mutationFn: (data) => base44.entities.ChatMessage.create(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['panelMessages'] });
       setMessageText("");
+      setReplyingTo(null);
+    },
+  });
+
+  const updateMessageMutation = useMutation({
+    mutationFn: ({ id, data }) => base44.entities.ChatMessage.update(id, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['panelMessages'] });
+      setEditingMessage(null);
+      setEditText("");
     },
   });
 
@@ -67,6 +146,17 @@ export default function ChatPanel({ isOpen, onClose, orgId, currentEmployee }) {
     onSuccess: (room) => {
       queryClient.invalidateQueries({ queryKey: ['chatRooms'] });
       setSelectedRoom(room);
+      setShowNewGroupDialog(false);
+      setGroupName("");
+      setSelectedMembers([]);
+      toast.success("Group created!");
+    },
+  });
+
+  const updateRoomMutation = useMutation({
+    mutationFn: ({ id, data }) => base44.entities.ChatRoom.update(id, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['chatRooms'] });
     },
   });
 
@@ -75,6 +165,8 @@ export default function ChatPanel({ isOpen, onClose, orgId, currentEmployee }) {
   const filteredRooms = myRooms.filter(room => 
     room.name?.toLowerCase().includes(searchTerm.toLowerCase())
   );
+
+  const pinnedMessages = messages.filter(m => m.is_pinned);
 
   const startChat = (emp) => {
     const existingRoom = chatRooms.find(r =>
@@ -101,7 +193,7 @@ export default function ChatPanel({ isOpen, onClose, orgId, currentEmployee }) {
   const handleSendMessage = () => {
     if (!messageText.trim() || !selectedRoom) return;
 
-    sendMessageMutation.mutate({
+    const messageData = {
       organisation_id: orgId,
       room_id: selectedRoom.id,
       sender_id: currentEmployee?.id,
@@ -109,7 +201,123 @@ export default function ChatPanel({ isOpen, onClose, orgId, currentEmployee }) {
       sender_photo: currentEmployee?.profile_photo,
       content: messageText,
       message_type: 'text',
+      read_by: [currentEmployee?.id],
+    };
+
+    if (replyingTo) {
+      messageData.reply_to_id = replyingTo.id;
+      messageData.reply_to_content = replyingTo.content?.substring(0, 100);
+      messageData.reply_to_sender = replyingTo.sender_name;
+    }
+
+    sendMessageMutation.mutate(messageData);
+
+    // Update room's last message
+    updateRoomMutation.mutate({
+      id: selectedRoom.id,
+      data: {
+        last_message: messageText.substring(0, 50),
+        last_message_at: new Date().toISOString(),
+        last_message_sender: currentEmployee?.full_name,
+      }
     });
+  };
+
+  const handleEditMessage = (msg) => {
+    setEditingMessage(msg);
+    setEditText(msg.content);
+  };
+
+  const handleSaveEdit = () => {
+    if (!editText.trim() || !editingMessage) return;
+    updateMessageMutation.mutate({
+      id: editingMessage.id,
+      data: {
+        content: editText,
+        is_edited: true,
+        edited_at: new Date().toISOString(),
+      }
+    });
+  };
+
+  const handleDeleteMessage = (msg) => {
+    updateMessageMutation.mutate({
+      id: msg.id,
+      data: { is_deleted: true }
+    });
+    toast.success("Message deleted");
+  };
+
+  const handlePinMessage = (msg) => {
+    const isPinned = !msg.is_pinned;
+    updateMessageMutation.mutate({
+      id: msg.id,
+      data: {
+        is_pinned: isPinned,
+        pinned_by: isPinned ? currentEmployee?.id : null,
+        pinned_at: isPinned ? new Date().toISOString() : null,
+      }
+    });
+    toast.success(isPinned ? "Message pinned" : "Message unpinned");
+  };
+
+  const handleCopyMessage = (msg) => {
+    navigator.clipboard.writeText(msg.content);
+    toast.success("Copied to clipboard");
+  };
+
+  const handleCreateGroup = () => {
+    if (!groupName.trim() || selectedMembers.length === 0) {
+      toast.error("Please enter a group name and select members");
+      return;
+    }
+
+    const allParticipants = [currentEmployee?.id, ...selectedMembers];
+    const allNames = [
+      currentEmployee?.full_name,
+      ...selectedMembers.map(id => employees.find(e => e.id === id)?.full_name)
+    ].filter(Boolean);
+
+    createRoomMutation.mutate({
+      organisation_id: orgId,
+      name: groupName,
+      type: 'group',
+      participants: allParticipants,
+      participant_names: allNames,
+      admins: [currentEmployee?.id],
+      is_active: true,
+    });
+  };
+
+  const handleTyping = () => {
+    if (!selectedRoom || !currentEmployee) return;
+
+    // Update typing status
+    const currentTyping = selectedRoom.typing_users || [];
+    const isAlreadyTyping = currentTyping.some(t => t.user_id === currentEmployee.id);
+    
+    if (!isAlreadyTyping) {
+      updateRoomMutation.mutate({
+        id: selectedRoom.id,
+        data: {
+          typing_users: [
+            ...currentTyping.filter(t => t.user_id !== currentEmployee.id),
+            { user_id: currentEmployee.id, user_name: currentEmployee.full_name, timestamp: new Date().toISOString() }
+          ]
+        }
+      });
+    }
+
+    // Clear typing after 3 seconds
+    if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
+    typingTimeoutRef.current = setTimeout(() => {
+      updateRoomMutation.mutate({
+        id: selectedRoom.id,
+        data: {
+          typing_users: (selectedRoom.typing_users || []).filter(t => t.user_id !== currentEmployee.id)
+        }
+      });
+    }, 3000);
   };
 
   const formatMessageTime = (date) => {
@@ -130,6 +338,22 @@ export default function ChatPanel({ isOpen, onClose, orgId, currentEmployee }) {
     return names.find(n => n !== currentEmployee?.full_name) || room.name;
   };
 
+  const getTypingIndicator = () => {
+    if (!selectedRoom?.typing_users?.length) return null;
+    const typingOthers = selectedRoom.typing_users.filter(t => t.user_id !== currentEmployee?.id);
+    if (!typingOthers.length) return null;
+    
+    const names = typingOthers.map(t => t.user_name).join(', ');
+    return `${names} ${typingOthers.length > 1 ? 'are' : 'is'} typing...`;
+  };
+
+  const getReadReceipt = (msg) => {
+    if (msg.sender_id !== currentEmployee?.id) return null;
+    const readCount = msg.read_by?.filter(id => id !== currentEmployee?.id).length || 0;
+    if (readCount > 0) return <CheckCheck className="w-3 h-3 text-blue-500" />;
+    return <Check className="w-3 h-3 text-gray-400" />;
+  };
+
   if (!isOpen) return null;
 
   return (
@@ -141,7 +365,7 @@ export default function ChatPanel({ isOpen, onClose, orgId, currentEmployee }) {
             <Button
               variant="ghost"
               size="icon"
-              onClick={() => setSelectedRoom(null)}
+              onClick={() => { setSelectedRoom(null); setReplyingTo(null); }}
               className="text-white hover:bg-white/10"
             >
               <ArrowLeft className="w-5 h-5" />
@@ -154,15 +378,32 @@ export default function ChatPanel({ isOpen, onClose, orgId, currentEmployee }) {
             <h3 className="font-semibold text-white text-sm">
               {selectedRoom ? getOtherParticipantName(selectedRoom) : 'Messages'}
             </h3>
-            {!selectedRoom && (
+            {!selectedRoom ? (
               <p className="text-xs text-gray-300">{myRooms.length} conversations</p>
+            ) : (
+              <p className="text-xs text-gray-300">
+                {getTypingIndicator() || (selectedRoom.type === 'group' ? `${selectedRoom.participants?.length} members` : 'Online')}
+              </p>
             )}
           </div>
         </div>
         <div className="flex items-center gap-1">
-          {/* Call buttons when in a chat */}
           {selectedRoom && (
             <>
+              {pinnedMessages.length > 0 && (
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => setShowPinnedMessages(!showPinnedMessages)}
+                  className="text-white hover:bg-white/10 relative"
+                  title="Pinned messages"
+                >
+                  <Pin className="w-4 h-4" />
+                  <span className="absolute -top-0.5 -right-0.5 w-4 h-4 bg-[#1EB053] text-white text-[10px] font-bold rounded-full flex items-center justify-center">
+                    {pinnedMessages.length}
+                  </span>
+                </Button>
+              )}
               <Button
                 variant="ghost"
                 size="icon"
@@ -204,8 +445,21 @@ export default function ChatPanel({ isOpen, onClose, orgId, currentEmployee }) {
         </div>
       </div>
 
+      {/* Pinned Messages Bar */}
+      {showPinnedMessages && pinnedMessages.length > 0 && (
+        <div className="p-2 bg-yellow-50 border-b max-h-32 overflow-y-auto">
+          <p className="text-xs font-medium text-yellow-800 mb-1 flex items-center gap-1">
+            <Pin className="w-3 h-3" /> Pinned Messages
+          </p>
+          {pinnedMessages.map(msg => (
+            <div key={msg.id} className="text-xs text-gray-600 truncate p-1 bg-white rounded mb-1">
+              <span className="font-medium">{msg.sender_name}:</span> {msg.content}
+            </div>
+          ))}
+        </div>
+      )}
+
       {!selectedRoom ? (
-        // Chat List View
         <>
           {/* Search */}
           <div className="p-3 border-b">
@@ -222,12 +476,8 @@ export default function ChatPanel({ isOpen, onClose, orgId, currentEmployee }) {
 
           {/* Quick Actions */}
           <div className="flex gap-2 p-3 border-b">
-            <Button variant="outline" size="sm" className="flex-1 text-xs">
+            <Button variant="outline" size="sm" className="flex-1 text-xs" onClick={() => setShowNewGroupDialog(true)}>
               <Plus className="w-3 h-3 mr-1" />
-              New Chat
-            </Button>
-            <Button variant="outline" size="sm" className="flex-1 text-xs">
-              <Users className="w-3 h-3 mr-1" />
               New Group
             </Button>
           </div>
@@ -292,7 +542,7 @@ export default function ChatPanel({ isOpen, onClose, orgId, currentEmployee }) {
 
           {/* Online Team Members */}
           <div className="p-3 border-t bg-gray-50">
-            <p className="text-xs font-medium text-gray-500 mb-2">Team Members</p>
+            <p className="text-xs font-medium text-gray-500 mb-2">Start a chat</p>
             <div className="flex gap-1 overflow-x-auto pb-1">
               {employees.filter(e => e.id !== currentEmployee?.id).slice(0, 8).map((emp) => (
                 <button
@@ -313,7 +563,6 @@ export default function ChatPanel({ isOpen, onClose, orgId, currentEmployee }) {
           </div>
         </>
       ) : (
-        // Chat View
         <>
           {/* Messages */}
           <ScrollArea className="flex-1 p-4">
@@ -330,7 +579,7 @@ export default function ChatPanel({ isOpen, onClose, orgId, currentEmployee }) {
                   return (
                     <div
                       key={msg.id}
-                      className={cn("flex gap-2", isOwn && "flex-row-reverse")}
+                      className={cn("flex gap-2 group", isOwn && "flex-row-reverse")}
                     >
                       {!isOwn && (
                         <Avatar className="w-7 h-7 flex-shrink-0">
@@ -340,31 +589,112 @@ export default function ChatPanel({ isOpen, onClose, orgId, currentEmployee }) {
                           </AvatarFallback>
                         </Avatar>
                       )}
-                      <div className={cn(
-                        "max-w-[75%] rounded-2xl px-3 py-2",
-                        isOwn 
-                          ? "bg-gradient-to-r from-[#1EB053] to-[#0072C6] text-white rounded-br-sm"
-                          : "bg-gray-100 text-gray-900 rounded-bl-sm"
-                      )}>
-                        {!isOwn && selectedRoom?.type === 'group' && (
-                          <p className="text-[10px] font-medium text-[#1EB053] mb-0.5">
-                            {msg.sender_name}
-                          </p>
+                      <div className="flex flex-col max-w-[75%]">
+                        {/* Reply preview */}
+                        {msg.reply_to_content && (
+                          <div className={cn(
+                            "text-[10px] px-2 py-1 mb-1 rounded border-l-2",
+                            isOwn ? "bg-white/20 border-white/50 text-white/80" : "bg-gray-100 border-gray-300 text-gray-500"
+                          )}>
+                            <span className="font-medium">{msg.reply_to_sender}:</span> {msg.reply_to_content}
+                          </div>
                         )}
-                        <p className="text-sm whitespace-pre-wrap">{msg.content}</p>
-                        <p className={cn(
-                          "text-[10px] mt-1",
-                          isOwn ? "text-white/70" : "text-gray-400"
+                        <div className={cn(
+                          "rounded-2xl px-3 py-2 relative",
+                          isOwn 
+                            ? "bg-gradient-to-r from-[#1EB053] to-[#0072C6] text-white rounded-br-sm"
+                            : "bg-gray-100 text-gray-900 rounded-bl-sm",
+                          msg.is_pinned && "ring-2 ring-yellow-400"
                         )}>
-                          {format(new Date(msg.created_date), 'HH:mm')}
-                        </p>
+                          {msg.is_pinned && (
+                            <Pin className="absolute -top-2 -right-2 w-4 h-4 text-yellow-500 fill-yellow-500" />
+                          )}
+                          {!isOwn && selectedRoom?.type === 'group' && (
+                            <p className="text-[10px] font-medium text-[#1EB053] mb-0.5">
+                              {msg.sender_name}
+                            </p>
+                          )}
+                          <p className="text-sm whitespace-pre-wrap">{msg.content}</p>
+                          <div className={cn(
+                            "flex items-center gap-1 mt-1",
+                            isOwn ? "justify-end" : ""
+                          )}>
+                            <span className={cn(
+                              "text-[10px]",
+                              isOwn ? "text-white/70" : "text-gray-400"
+                            )}>
+                              {format(new Date(msg.created_date), 'HH:mm')}
+                              {msg.is_edited && " (edited)"}
+                            </span>
+                            {getReadReceipt(msg)}
+                          </div>
+                        </div>
                       </div>
+                      {/* Message actions */}
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button 
+                            variant="ghost" 
+                            size="icon" 
+                            className="w-6 h-6 opacity-0 group-hover:opacity-100 transition-opacity"
+                          >
+                            <MoreVertical className="w-3 h-3" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align={isOwn ? "end" : "start"} className="w-40">
+                          <DropdownMenuItem onClick={() => setReplyingTo(msg)}>
+                            <Reply className="w-4 h-4 mr-2" /> Reply
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => handleCopyMessage(msg)}>
+                            <Copy className="w-4 h-4 mr-2" /> Copy
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => handlePinMessage(msg)}>
+                            <Pin className="w-4 h-4 mr-2" /> {msg.is_pinned ? 'Unpin' : 'Pin'}
+                          </DropdownMenuItem>
+                          {isOwn && (
+                            <>
+                              <DropdownMenuSeparator />
+                              <DropdownMenuItem onClick={() => handleEditMessage(msg)}>
+                                <Edit2 className="w-4 h-4 mr-2" /> Edit
+                              </DropdownMenuItem>
+                              <DropdownMenuItem onClick={() => handleDeleteMessage(msg)} className="text-red-600">
+                                <Trash2 className="w-4 h-4 mr-2" /> Delete
+                              </DropdownMenuItem>
+                            </>
+                          )}
+                        </DropdownMenuContent>
+                      </DropdownMenu>
                     </div>
                   );
                 })
               )}
+              <div ref={messagesEndRef} />
             </div>
           </ScrollArea>
+
+          {/* Reply indicator */}
+          {replyingTo && (
+            <div className="px-3 py-2 bg-gray-50 border-t flex items-center justify-between">
+              <div className="text-xs text-gray-500 truncate flex-1">
+                <span className="font-medium">Replying to {replyingTo.sender_name}:</span> {replyingTo.content?.substring(0, 40)}...
+              </div>
+              <Button variant="ghost" size="icon" className="w-6 h-6" onClick={() => setReplyingTo(null)}>
+                <X className="w-3 h-3" />
+              </Button>
+            </div>
+          )}
+
+          {/* Typing indicator */}
+          {getTypingIndicator() && (
+            <div className="px-4 py-1 text-xs text-gray-500 italic flex items-center gap-1">
+              <span className="flex gap-0.5">
+                <span className="w-1.5 h-1.5 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
+                <span className="w-1.5 h-1.5 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
+                <span className="w-1.5 h-1.5 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
+              </span>
+              {getTypingIndicator()}
+            </div>
+          )}
 
           {/* Message Input */}
           <div className="p-3 border-t bg-white">
@@ -372,19 +702,16 @@ export default function ChatPanel({ isOpen, onClose, orgId, currentEmployee }) {
               <Button variant="ghost" size="icon" className="text-gray-400 hover:text-gray-600 h-8 w-8">
                 <Paperclip className="w-4 h-4" />
               </Button>
-              <Button variant="ghost" size="icon" className="text-gray-400 hover:text-gray-600 h-8 w-8">
-                <Image className="w-4 h-4" />
-              </Button>
               <Input
                 placeholder="Type a message..."
                 value={messageText}
-                onChange={(e) => setMessageText(e.target.value)}
+                onChange={(e) => {
+                  setMessageText(e.target.value);
+                  handleTyping();
+                }}
                 onKeyDown={(e) => e.key === 'Enter' && !e.shiftKey && handleSendMessage()}
                 className="flex-1 h-9"
               />
-              <Button variant="ghost" size="icon" className="text-gray-400 hover:text-gray-600 h-8 w-8">
-                <Smile className="w-4 h-4" />
-              </Button>
               <Button
                 size="icon"
                 onClick={handleSendMessage}
@@ -397,6 +724,78 @@ export default function ChatPanel({ isOpen, onClose, orgId, currentEmployee }) {
           </div>
         </>
       )}
+
+      {/* Edit Message Dialog */}
+      <Dialog open={!!editingMessage} onOpenChange={() => setEditingMessage(null)}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle>Edit Message</DialogTitle>
+          </DialogHeader>
+          <Textarea
+            value={editText}
+            onChange={(e) => setEditText(e.target.value)}
+            className="min-h-[80px]"
+          />
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setEditingMessage(null)}>Cancel</Button>
+            <Button onClick={handleSaveEdit} className="bg-[#1EB053] hover:bg-[#178f43]">Save</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* New Group Dialog */}
+      <Dialog open={showNewGroupDialog} onOpenChange={setShowNewGroupDialog}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle>Create New Group</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <Label>Group Name</Label>
+              <Input
+                value={groupName}
+                onChange={(e) => setGroupName(e.target.value)}
+                placeholder="Enter group name"
+                className="mt-1"
+              />
+            </div>
+            <div>
+              <Label>Select Members</Label>
+              <div className="mt-2 max-h-48 overflow-y-auto space-y-2">
+                {employees.filter(e => e.id !== currentEmployee?.id).map((emp) => (
+                  <label key={emp.id} className="flex items-center gap-2 p-2 hover:bg-gray-50 rounded cursor-pointer">
+                    <Checkbox
+                      checked={selectedMembers.includes(emp.id)}
+                      onCheckedChange={(checked) => {
+                        if (checked) {
+                          setSelectedMembers([...selectedMembers, emp.id]);
+                        } else {
+                          setSelectedMembers(selectedMembers.filter(id => id !== emp.id));
+                        }
+                      }}
+                    />
+                    <Avatar className="w-6 h-6">
+                      <AvatarImage src={emp.profile_photo} />
+                      <AvatarFallback className="text-xs">{emp.full_name?.charAt(0)}</AvatarFallback>
+                    </Avatar>
+                    <span className="text-sm">{emp.full_name}</span>
+                  </label>
+                ))}
+              </div>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowNewGroupDialog(false)}>Cancel</Button>
+            <Button 
+              onClick={handleCreateGroup} 
+              className="bg-[#1EB053] hover:bg-[#178f43]"
+              disabled={!groupName.trim() || selectedMembers.length === 0}
+            >
+              Create Group
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* Video/Audio Call Dialog */}
       <VideoCallDialog
