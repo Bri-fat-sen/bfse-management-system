@@ -206,7 +206,12 @@ export default function ChatWindow({
             </Tooltip>
             <Tooltip>
               <TooltipTrigger asChild>
-                <Button variant="ghost" size="icon" className="h-9 w-9">
+                <Button 
+                  variant="ghost" 
+                  size="icon" 
+                  className="h-9 w-9"
+                  onClick={() => toast.info("Voice calling feature coming soon!", { description: "This feature is under development." })}
+                >
                   <Phone className="w-4 h-4" />
                 </Button>
               </TooltipTrigger>
@@ -214,7 +219,12 @@ export default function ChatWindow({
             </Tooltip>
             <Tooltip>
               <TooltipTrigger asChild>
-                <Button variant="ghost" size="icon" className="h-9 w-9">
+                <Button 
+                  variant="ghost" 
+                  size="icon" 
+                  className="h-9 w-9"
+                  onClick={() => toast.info("Video calling feature coming soon!", { description: "This feature is under development." })}
+                >
                   <Video className="w-4 h-4" />
                 </Button>
               </TooltipTrigger>
