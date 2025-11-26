@@ -49,6 +49,18 @@ export default function Analytics() {
     enabled: !!orgId,
   });
 
+  const { data: truckContracts = [] } = useQuery({
+    queryKey: ['truckContracts', orgId],
+    queryFn: () => base44.entities.TruckContract.filter({ organisation_id: orgId }, '-contract_date', 200),
+    enabled: !!orgId,
+  });
+
+  const { data: maintenanceRecords = [] } = useQuery({
+    queryKey: ['vehicleMaintenance', orgId],
+    queryFn: () => base44.entities.VehicleMaintenance.filter({ organisation_id: orgId }, '-date_performed', 200),
+    enabled: !!orgId,
+  });
+
   return (
     <div className="space-y-6">
       <PageHeader
@@ -62,6 +74,8 @@ export default function Analytics() {
         products={products}
         employees={employees}
         trips={trips}
+        truckContracts={truckContracts}
+        maintenanceRecords={maintenanceRecords}
       />
     </div>
   );
