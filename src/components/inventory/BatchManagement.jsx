@@ -45,7 +45,7 @@ const STATUS_COLORS = {
   quarantine: "bg-yellow-100 text-yellow-700"
 };
 
-export default function BatchManagement({ products = [], warehouses = [], orgId, currentEmployee }) {
+export default function BatchManagement({ products = [], warehouses = [], vehicles = [], stockLevels = [], orgId, currentEmployee }) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [searchTerm, setSearchTerm] = useState("");
@@ -53,6 +53,8 @@ export default function BatchManagement({ products = [], warehouses = [], orgId,
   const [statusFilter, setStatusFilter] = useState("all");
   const [showBatchDialog, setShowBatchDialog] = useState(false);
   const [editingBatch, setEditingBatch] = useState(null);
+  const [showAllocationDialog, setShowAllocationDialog] = useState(false);
+  const [allocatingBatch, setAllocatingBatch] = useState(null);
 
   const { data: batches = [], isLoading } = useQuery({
     queryKey: ['inventoryBatches', orgId],
