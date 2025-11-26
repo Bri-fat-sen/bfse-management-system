@@ -304,18 +304,30 @@ export default function Finance() {
                 <CardTitle>Revenue Sources</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="space-y-4">
+                <div className="space-y-3">
                   <div className="flex items-center justify-between p-4 bg-green-50 rounded-lg">
                     <div className="flex items-center gap-3">
                       <div className="w-10 h-10 rounded-full bg-green-100 flex items-center justify-center">
                         <Receipt className="w-5 h-5 text-green-600" />
                       </div>
                       <div>
-                        <p className="font-medium">Retail & Warehouse Sales</p>
-                        <p className="text-sm text-gray-500">{retailWarehouseSales.length} transactions</p>
+                        <p className="font-medium">Retail Sales</p>
+                        <p className="text-sm text-gray-500">{retailSales.length} transactions</p>
                       </div>
                     </div>
                     <p className="font-bold text-green-600">Le {totalRetailRevenue.toLocaleString()}</p>
+                  </div>
+                  <div className="flex items-center justify-between p-4 bg-amber-50 rounded-lg">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-full bg-amber-100 flex items-center justify-center">
+                        <Receipt className="w-5 h-5 text-amber-600" />
+                      </div>
+                      <div>
+                        <p className="font-medium">Warehouse Sales</p>
+                        <p className="text-sm text-gray-500">{warehouseSales.length} transactions</p>
+                      </div>
+                    </div>
+                    <p className="font-bold text-amber-600">Le {totalWarehouseRevenue.toLocaleString()}</p>
                   </div>
                   <div className="flex items-center justify-between p-4 bg-purple-50 rounded-lg">
                     <div className="flex items-center gap-3">
