@@ -8,13 +8,15 @@ import {
   ShoppingCart,
   DollarSign,
   TrendingUp,
+  TrendingDown,
   Package,
   Target,
   Award,
   Clock,
   CreditCard,
   Banknote,
-  ArrowRight
+  ArrowRight,
+  Receipt
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -52,6 +54,15 @@ export default function SalesDashboard({ currentEmployee, orgId }) {
     enabled: !!orgId,
   });
 
+  // Fetch expenses recorded by this employee
+  const { data: myExpenses = [] } = useQuery({
+    queryKey: ['myExpenses', currentEmployee?.id],
+    queryFn: () => base44.entities.Expense.filter({
+      recorded_by: currentEmployee?.id
+    }, '-date', 50),
+    enabled: !!currentEmployee?.id,
+  });
+
   const isClockedIn = todayAttendance?.clock_in_time && !todayAttendance?.clock_out_time;
   
   const todaySales = mySales.filter(s => s.created_date?.startsWith(today));
@@ -59,6 +70,10 @@ export default function SalesDashboard({ currentEmployee, orgId }) {
   
   const todayRevenue = todaySales.reduce((sum, s) => sum + (s.total_amount || 0), 0);
   const monthRevenue = monthSales.reduce((sum, s) => sum + (s.total_amount || 0), 0);
+  
+  // My expenses
+  const todayExpenses = myExpenses.filter(e => e.date === today).reduce((sum, e) => sum + (e.amount || 0), 0);
+  const monthExpenses = myExpenses.filter(e => e.date >= monthStart).reduce((sum, e) => sum + (e.amount || 0), 0);
   
   // Monthly target (example: Le 5,000,000)
   const monthlyTarget = 5000000;
@@ -123,17 +138,18 @@ export default function SalesDashboard({ currentEmployee, orgId }) {
           subtitle={`${todaySales.length} transactions`}
         />
         <StatCard
+          title="Today's Expenses"
+          value={`Le ${todayExpenses.toLocaleString()}`}
+          icon={TrendingDown}
+          color="red"
+          subtitle="My recorded expenses"
+        />
+        <StatCard
           title="Month Sales"
           value={`Le ${monthRevenue.toLocaleString()}`}
           icon={TrendingUp}
           color="blue"
-          subtitle={`${monthSales.length} transactions`}
-        />
-        <StatCard
-          title="Avg Transaction"
-          value={`Le ${todaySales.length > 0 ? Math.round(todayRevenue / todaySales.length).toLocaleString() : 0}`}
-          icon={CreditCard}
-          color="gold"
+          subtitle={`Expenses: Le ${monthExpenses.toLocaleString()}`}
         />
         <StatCard
           title="Products Available"
