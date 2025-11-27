@@ -144,9 +144,7 @@ export default function PayslipGenerator({ payroll, employee, organisation }) {
             <div class="header">
               <div class="company-info" style="display: flex; align-items: center; gap: 16px;">
                 ${organisation?.logo_url ? `
-                  <div style="background: white; padding: 8px; border-radius: 8px; flex-shrink: 0;">
-                    <img src="${organisation.logo_url}" alt="${organisation?.name}" style="max-height: 50px; max-width: 80px; object-fit: contain;" />
-                  </div>
+                  <img src="${organisation.logo_url}" alt="${organisation?.name}" style="height: 50px; object-fit: contain; background: white; padding: 6px; border-radius: 8px;" />
                 ` : ''}
                 <div>
                   <h1>${organisation?.name || 'BFSE'}</h1>
