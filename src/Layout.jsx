@@ -55,7 +55,11 @@ import { Toaster } from "sonner";
 import InstallPrompt from "@/components/pwa/InstallPrompt";
 import ChatPanel from "@/components/communication/ChatPanel";
 import { ChatNotificationProvider } from "@/components/communication/ChatNotificationManager";
-import { AlertChecker } from "@/components/notifications/PushNotificationManager";
+import MobileQuickActions from "@/components/mobile/MobileQuickActions";
+import MobileQuickSale from "@/components/mobile/MobileQuickSale";
+import MobileStockCheck from "@/components/mobile/MobileStockCheck";
+import MobileDeliveryUpdate from "@/components/mobile/MobileDeliveryUpdate";
+import PushNotificationManager from "@/components/notifications/PushNotificationManager";
 
 const menuSections = [
   {
@@ -117,6 +121,9 @@ export default function Layout({ children, currentPageName }) {
     "Admin": true
   });
   const [chatPanelOpen, setChatPanelOpen] = useState(false);
+  const [showQuickSale, setShowQuickSale] = useState(false);
+  const [showStockCheck, setShowStockCheck] = useState(false);
+  const [showDeliveryUpdate, setShowDeliveryUpdate] = useState(false);
 
   const toggleSection = (title) => {
     setCollapsedSections(prev => ({ ...prev, [title]: !prev[title] }));
@@ -499,7 +506,43 @@ export default function Layout({ children, currentPageName }) {
         </main>
 
         {/* Mobile Bottom Navigation */}
-                    <MobileNav currentPageName={currentPageName} />
+                                  <MobileNav currentPageName={currentPageName} />
+
+                                  {/* Mobile Quick Actions FAB */}
+                                  <MobileQuickActions
+                                    onQuickSale={() => setShowQuickSale(true)}
+                                    onStockCheck={() => setShowStockCheck(true)}
+                                    onDeliveryUpdate={() => setShowDeliveryUpdate(true)}
+                                  />
+
+                                  {/* Mobile Quick Sale Sheet */}
+                                  <MobileQuickSale
+                                    open={showQuickSale}
+                                    onOpenChange={setShowQuickSale}
+                                    orgId={orgId}
+                                    currentEmployee={currentEmployee}
+                                  />
+
+                                  {/* Mobile Stock Check Sheet */}
+                                  <MobileStockCheck
+                                    open={showStockCheck}
+                                    onOpenChange={setShowStockCheck}
+                                    orgId={orgId}
+                                  />
+
+                                  {/* Mobile Delivery Update Sheet */}
+                                  <MobileDeliveryUpdate
+                                    open={showDeliveryUpdate}
+                                    onOpenChange={setShowDeliveryUpdate}
+                                    orgId={orgId}
+                                    currentEmployee={currentEmployee}
+                                  />
+
+                                  {/* Push Notification Manager */}
+                                  <PushNotificationManager
+                                    orgId={orgId}
+                                    currentEmployee={currentEmployee}
+                                  />
 
                     {/* Global Search Dialog */}
                     <GlobalSearch 
@@ -519,9 +562,6 @@ export default function Layout({ children, currentPageName }) {
 
                     {/* PWA Install Prompt */}
                     <InstallPrompt />
-
-                    {/* Push Notification Alert Checker */}
-                    <AlertChecker orgId={orgId} currentEmployee={currentEmployee} />
 
                     {/* Chat Panel with Notification Provider */}
                     <ChatNotificationProvider>
