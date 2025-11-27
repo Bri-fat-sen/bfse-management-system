@@ -553,45 +553,7 @@ const generateFormHTML = (formType, orgName) => {
   `;
 
   const forms = {
-    expense_general: `
-      <div class="form-title-banner">General Expense Form</div>
-      <div class="form-content">
-      <div class="field-row">
-        <div class="field"><label>Date</label><div class="field-input"></div></div>
-        <div class="field"><label>Receipt/Invoice No.</label><div class="field-input"></div></div>
-        <div class="field"><label>Vendor/Supplier</label><div class="field-input"></div></div>
-      </div>
-      <div class="section-title">Expense Category (Check One)</div>
-      <div class="checkbox-group">
-        <div class="checkbox-item"><span class="checkbox"></span> Office Supplies</div>
-        <div class="checkbox-item"><span class="checkbox"></span> Utilities</div>
-        <div class="checkbox-item"><span class="checkbox"></span> Rent</div>
-        <div class="checkbox-item"><span class="checkbox"></span> Communication</div>
-        <div class="checkbox-item"><span class="checkbox"></span> Travel</div>
-        <div class="checkbox-item"><span class="checkbox"></span> Food/Refreshments</div>
-        <div class="checkbox-item"><span class="checkbox"></span> Other: ____________</div>
-      </div>
-      <div class="section-title">Expense Details</div>
-      <table>
-        <tr><th>Description</th><th>Quantity</th><th>Unit Price (Le)</th><th>Total (Le)</th></tr>
-        <tr><td>&nbsp;</td><td></td><td></td><td></td></tr>
-        <tr><td>&nbsp;</td><td></td><td></td><td></td></tr>
-        <tr><td>&nbsp;</td><td></td><td></td><td></td></tr>
-        <tr><td>&nbsp;</td><td></td><td></td><td></td></tr>
-        <tr class="total-row"><td colspan="3">TOTAL AMOUNT</td><td></td></tr>
-      </table>
-      <div class="section-title">Payment Method (Check One)</div>
-      <div class="checkbox-group">
-        <div class="checkbox-item"><span class="checkbox"></span> Cash</div>
-        <div class="checkbox-item"><span class="checkbox"></span> Bank Transfer</div>
-        <div class="checkbox-item"><span class="checkbox"></span> Mobile Money</div>
-        <div class="checkbox-item"><span class="checkbox"></span> Credit</div>
-      </div>
-      <div class="field-row" style="margin-top: 15px;">
-        <div class="field"><label>Notes/Remarks</label><div class="field-input large"></div></div>
-      </div>
-      </div>
-    `,
+    // EXPENSE FORMS
     expense_fuel: `
       <div class="form-title-banner">Fuel Expense Form</div>
       <div class="form-content">
@@ -628,43 +590,181 @@ const generateFormHTML = (formType, orgName) => {
       </div>
     `,
     expense_maintenance: `
-      <div class="form-title-banner">Maintenance Expense Form</div>
+      <div class="form-title-banner">Vehicle Maintenance Expense Form</div>
       <div class="form-content">
       <div class="field-row">
-        <div class="field"><label>Date</label><div class="field-input"></div></div>
-        <div class="field"><label>Vehicle/Equipment</label><div class="field-input"></div></div>
+        <div class="field"><label>Date Performed</label><div class="field-input"></div></div>
+        <div class="field"><label>Vehicle Registration</label><div class="field-input"></div></div>
         <div class="field"><label>Current Mileage</label><div class="field-input"></div></div>
       </div>
       <div class="section-title">Maintenance Type (Check All That Apply)</div>
       <div class="checkbox-group">
         <div class="checkbox-item"><span class="checkbox"></span> Oil Change</div>
-        <div class="checkbox-item"><span class="checkbox"></span> Tire Service</div>
+        <div class="checkbox-item"><span class="checkbox"></span> Tire Rotation</div>
+        <div class="checkbox-item"><span class="checkbox"></span> Tire Replacement</div>
         <div class="checkbox-item"><span class="checkbox"></span> Brake Service</div>
         <div class="checkbox-item"><span class="checkbox"></span> Engine Repair</div>
+        <div class="checkbox-item"><span class="checkbox"></span> Transmission</div>
+        <div class="checkbox-item"><span class="checkbox"></span> Battery</div>
+        <div class="checkbox-item"><span class="checkbox"></span> Air Filter</div>
+        <div class="checkbox-item"><span class="checkbox"></span> Fuel Filter</div>
+        <div class="checkbox-item"><span class="checkbox"></span> Coolant Flush</div>
+        <div class="checkbox-item"><span class="checkbox"></span> Inspection</div>
+        <div class="checkbox-item"><span class="checkbox"></span> Body Repair</div>
         <div class="checkbox-item"><span class="checkbox"></span> Electrical</div>
-        <div class="checkbox-item"><span class="checkbox"></span> Body Work</div>
         <div class="checkbox-item"><span class="checkbox"></span> Scheduled Service</div>
         <div class="checkbox-item"><span class="checkbox"></span> Other: ____________</div>
       </div>
-      <div class="section-title">Parts & Labour</div>
+      <div class="section-title">Category</div>
+      <div class="checkbox-group">
+        <div class="checkbox-item"><span class="checkbox"></span> Scheduled</div>
+        <div class="checkbox-item"><span class="checkbox"></span> Unscheduled</div>
+        <div class="checkbox-item"><span class="checkbox"></span> Emergency</div>
+      </div>
+      <div class="section-title">Parts Replaced</div>
       <table>
-        <tr><th>Description</th><th>Qty</th><th>Unit Price (Le)</th><th>Total (Le)</th></tr>
+        <tr><th>Part Name</th><th>Qty</th><th>Unit Cost (Le)</th><th>Total (Le)</th></tr>
         <tr><td>&nbsp;</td><td></td><td></td><td></td></tr>
         <tr><td>&nbsp;</td><td></td><td></td><td></td></tr>
         <tr><td>&nbsp;</td><td></td><td></td><td></td></tr>
         <tr><td>Labour Cost</td><td>-</td><td>-</td><td></td></tr>
-        <tr class="total-row"><td colspan="3">TOTAL AMOUNT</td><td></td></tr>
+        <tr class="total-row"><td colspan="3">TOTAL COST</td><td></td></tr>
       </table>
       <div class="field-row">
-        <div class="field"><label>Mechanic/Vendor</label><div class="field-input"></div></div>
-        <div class="field"><label>Contact</label><div class="field-input"></div></div>
+        <div class="field"><label>Vendor/Mechanic</label><div class="field-input"></div></div>
+        <div class="field"><label>Vendor Contact</label><div class="field-input"></div></div>
       </div>
       <div class="field-row">
-        <div class="field"><label>Next Service Due (Date/Mileage)</label><div class="field-input"></div></div>
+        <div class="field"><label>Next Service Due Date</label><div class="field-input"></div></div>
+        <div class="field"><label>Next Service Due Mileage</label><div class="field-input"></div></div>
+      </div>
+      <div class="field-row">
+        <div class="field"><label>Performed By</label><div class="field-input"></div></div>
+        <div class="field"><label>Notes</label><div class="field-input"></div></div>
       </div>
       </div>
     `,
-    expense_salary: `
+    expense_utilities: `
+      <div class="form-title-banner">Utilities Expense Form</div>
+      <div class="form-content">
+      <div class="field-row">
+        <div class="field"><label>Date</label><div class="field-input"></div></div>
+        <div class="field"><label>Bill Reference No.</label><div class="field-input"></div></div>
+        <div class="field"><label>Billing Period</label><div class="field-input"></div></div>
+      </div>
+      <div class="section-title">Utility Type (Check One)</div>
+      <div class="checkbox-group">
+        <div class="checkbox-item"><span class="checkbox"></span> Electricity (EDSA)</div>
+        <div class="checkbox-item"><span class="checkbox"></span> Water (Guma Valley)</div>
+        <div class="checkbox-item"><span class="checkbox"></span> Internet/WiFi</div>
+        <div class="checkbox-item"><span class="checkbox"></span> Phone/Mobile</div>
+        <div class="checkbox-item"><span class="checkbox"></span> Generator Fuel</div>
+        <div class="checkbox-item"><span class="checkbox"></span> Other: ____________</div>
+      </div>
+      <div class="section-title">Payment Details</div>
+      <table>
+        <tr><th>Description</th><th>Previous Reading</th><th>Current Reading</th><th>Amount (Le)</th></tr>
+        <tr><td>&nbsp;</td><td></td><td></td><td></td></tr>
+        <tr><td>VAT/Tax</td><td>-</td><td>-</td><td></td></tr>
+        <tr class="total-row"><td colspan="3">TOTAL AMOUNT</td><td></td></tr>
+      </table>
+      <div class="field-row">
+        <div class="field"><label>Service Provider</label><div class="field-input"></div></div>
+        <div class="field"><label>Account Number</label><div class="field-input"></div></div>
+      </div>
+      <div class="section-title">Payment Method</div>
+      <div class="checkbox-group">
+        <div class="checkbox-item"><span class="checkbox"></span> Cash</div>
+        <div class="checkbox-item"><span class="checkbox"></span> Bank Transfer</div>
+        <div class="checkbox-item"><span class="checkbox"></span> Mobile Money</div>
+      </div>
+      <div class="field-row" style="margin-top: 15px;">
+        <div class="field"><label>Notes</label><div class="field-input large"></div></div>
+      </div>
+      </div>
+    `,
+    expense_supplies: `
+      <div class="form-title-banner">Supplies Expense Form</div>
+      <div class="form-content">
+      <div class="field-row">
+        <div class="field"><label>Date</label><div class="field-input"></div></div>
+        <div class="field"><label>Vendor/Supplier</label><div class="field-input"></div></div>
+        <div class="field"><label>Receipt/Invoice No.</label><div class="field-input"></div></div>
+      </div>
+      <div class="section-title">Supply Type (Check One)</div>
+      <div class="checkbox-group">
+        <div class="checkbox-item"><span class="checkbox"></span> Office Supplies</div>
+        <div class="checkbox-item"><span class="checkbox"></span> Cleaning Supplies</div>
+        <div class="checkbox-item"><span class="checkbox"></span> Stationery</div>
+        <div class="checkbox-item"><span class="checkbox"></span> Safety Equipment</div>
+        <div class="checkbox-item"><span class="checkbox"></span> Tools</div>
+        <div class="checkbox-item"><span class="checkbox"></span> Other: ____________</div>
+      </div>
+      <div class="section-title">Items Purchased</div>
+      <table>
+        <tr><th>Item Description</th><th>Qty</th><th>Unit Price (Le)</th><th>Total (Le)</th></tr>
+        <tr><td>&nbsp;</td><td></td><td></td><td></td></tr>
+        <tr><td>&nbsp;</td><td></td><td></td><td></td></tr>
+        <tr><td>&nbsp;</td><td></td><td></td><td></td></tr>
+        <tr><td>&nbsp;</td><td></td><td></td><td></td></tr>
+        <tr class="total-row"><td colspan="3">TOTAL AMOUNT</td><td></td></tr>
+      </table>
+      <div class="section-title">Payment Method</div>
+      <div class="checkbox-group">
+        <div class="checkbox-item"><span class="checkbox"></span> Cash</div>
+        <div class="checkbox-item"><span class="checkbox"></span> Bank Transfer</div>
+        <div class="checkbox-item"><span class="checkbox"></span> Mobile Money</div>
+      </div>
+      <div class="field-row" style="margin-top: 15px;">
+        <div class="field"><label>Received By</label><div class="field-input"></div></div>
+        <div class="field"><label>Location/Department</label><div class="field-input"></div></div>
+      </div>
+      </div>
+    `,
+    expense_rent: `
+      <div class="form-title-banner">Rent Expense Form</div>
+      <div class="form-content">
+      <div class="field-row">
+        <div class="field"><label>Payment Date</label><div class="field-input"></div></div>
+        <div class="field"><label>Rental Period</label><div class="field-input"></div></div>
+      </div>
+      <div class="section-title">Property Type (Check One)</div>
+      <div class="checkbox-group">
+        <div class="checkbox-item"><span class="checkbox"></span> Office Space</div>
+        <div class="checkbox-item"><span class="checkbox"></span> Warehouse</div>
+        <div class="checkbox-item"><span class="checkbox"></span> Shop/Retail</div>
+        <div class="checkbox-item"><span class="checkbox"></span> Parking Space</div>
+        <div class="checkbox-item"><span class="checkbox"></span> Land</div>
+        <div class="checkbox-item"><span class="checkbox"></span> Other: ____________</div>
+      </div>
+      <div class="section-title">Rental Details</div>
+      <table>
+        <tr><th>Description</th><th>Amount (Le)</th></tr>
+        <tr><td>Monthly Rent</td><td></td></tr>
+        <tr><td>Service Charge</td><td></td></tr>
+        <tr><td>Security Deposit</td><td></td></tr>
+        <tr><td>Other Charges: ____________</td><td></td></tr>
+        <tr class="total-row"><td>TOTAL AMOUNT</td><td></td></tr>
+      </table>
+      <div class="field-row">
+        <div class="field"><label>Landlord Name</label><div class="field-input"></div></div>
+        <div class="field"><label>Landlord Contact</label><div class="field-input"></div></div>
+      </div>
+      <div class="field-row">
+        <div class="field"><label>Property Address</label><div class="field-input large"></div></div>
+      </div>
+      <div class="section-title">Payment Method</div>
+      <div class="checkbox-group">
+        <div class="checkbox-item"><span class="checkbox"></span> Cash</div>
+        <div class="checkbox-item"><span class="checkbox"></span> Bank Transfer</div>
+        <div class="checkbox-item"><span class="checkbox"></span> Cheque</div>
+      </div>
+      <div class="field-row" style="margin-top: 15px;">
+        <div class="field"><label>Receipt Number</label><div class="field-input"></div></div>
+      </div>
+      </div>
+    `,
+    expense_salaries: `
       <div class="form-title-banner">Salary / Wages Payment Form</div>
       <div class="form-content">
       <div class="field-row">
@@ -673,14 +773,14 @@ const generateFormHTML = (formType, orgName) => {
       </div>
       <div class="section-title">Employee Payment Details</div>
       <table>
-        <tr><th>Employee Name</th><th>Position</th><th>Days Worked</th><th>Basic Pay (Le)</th><th>Deductions (Le)</th><th>Net Pay (Le)</th></tr>
-        <tr><td>&nbsp;</td><td></td><td></td><td></td><td></td><td></td></tr>
-        <tr><td>&nbsp;</td><td></td><td></td><td></td><td></td><td></td></tr>
-        <tr><td>&nbsp;</td><td></td><td></td><td></td><td></td><td></td></tr>
-        <tr><td>&nbsp;</td><td></td><td></td><td></td><td></td><td></td></tr>
-        <tr><td>&nbsp;</td><td></td><td></td><td></td><td></td><td></td></tr>
-        <tr><td>&nbsp;</td><td></td><td></td><td></td><td></td><td></td></tr>
-        <tr class="total-row"><td colspan="5">TOTAL PAYROLL</td><td></td></tr>
+        <tr><th>Employee Name</th><th>Position</th><th>Days Worked</th><th>Basic Pay (Le)</th><th>Allowances (Le)</th><th>Deductions (Le)</th><th>Net Pay (Le)</th></tr>
+        <tr><td>&nbsp;</td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+        <tr><td>&nbsp;</td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+        <tr><td>&nbsp;</td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+        <tr><td>&nbsp;</td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+        <tr><td>&nbsp;</td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+        <tr><td>&nbsp;</td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+        <tr class="total-row"><td colspan="6">TOTAL PAYROLL</td><td></td></tr>
       </table>
       <div class="section-title">Payment Method</div>
       <div class="checkbox-group">
@@ -693,42 +793,235 @@ const generateFormHTML = (formType, orgName) => {
       </div>
       </div>
     `,
-    expense_inventory: `
-      <div class="form-title-banner">Inventory Purchase Form</div>
+    expense_transport: `
+      <div class="form-title-banner">Transport Expense Form</div>
       <div class="form-content">
       <div class="field-row">
         <div class="field"><label>Date</label><div class="field-input"></div></div>
-        <div class="field"><label>Supplier Name</label><div class="field-input"></div></div>
-        <div class="field"><label>Invoice/PO Number</label><div class="field-input"></div></div>
+        <div class="field"><label>Employee Name</label><div class="field-input"></div></div>
+        <div class="field"><label>Department</label><div class="field-input"></div></div>
       </div>
-      <div class="field-row">
-        <div class="field"><label>Supplier Contact</label><div class="field-input"></div></div>
-        <div class="field"><label>Delivery Date</label><div class="field-input"></div></div>
-      </div>
-      <div class="section-title">Items Purchased</div>
-      <table>
-        <tr><th>Product Name</th><th>SKU/Code</th><th>Qty</th><th>Unit</th><th>Unit Cost (Le)</th><th>Total (Le)</th></tr>
-        <tr><td>&nbsp;</td><td></td><td></td><td></td><td></td><td></td></tr>
-        <tr><td>&nbsp;</td><td></td><td></td><td></td><td></td><td></td></tr>
-        <tr><td>&nbsp;</td><td></td><td></td><td></td><td></td><td></td></tr>
-        <tr><td>&nbsp;</td><td></td><td></td><td></td><td></td><td></td></tr>
-        <tr><td>&nbsp;</td><td></td><td></td><td></td><td></td><td></td></tr>
-        <tr class="total-row"><td colspan="5">TOTAL AMOUNT</td><td></td></tr>
-      </table>
-      <div class="section-title">Payment Status</div>
+      <div class="section-title">Transport Type (Check One)</div>
       <div class="checkbox-group">
-        <div class="checkbox-item"><span class="checkbox"></span> Paid in Full</div>
-        <div class="checkbox-item"><span class="checkbox"></span> Partial Payment: ____________</div>
-        <div class="checkbox-item"><span class="checkbox"></span> Credit (Due Date: ____________)</div>
+        <div class="checkbox-item"><span class="checkbox"></span> Local Travel</div>
+        <div class="checkbox-item"><span class="checkbox"></span> Inter-city Travel</div>
+        <div class="checkbox-item"><span class="checkbox"></span> Taxi/Okada</div>
+        <div class="checkbox-item"><span class="checkbox"></span> Bus Fare</div>
+        <div class="checkbox-item"><span class="checkbox"></span> Fuel Reimbursement</div>
+        <div class="checkbox-item"><span class="checkbox"></span> Other: ____________</div>
+      </div>
+      <div class="section-title">Trip Details</div>
+      <table>
+        <tr><th>From</th><th>To</th><th>Purpose</th><th>Amount (Le)</th></tr>
+        <tr><td>&nbsp;</td><td></td><td></td><td></td></tr>
+        <tr><td>&nbsp;</td><td></td><td></td><td></td></tr>
+        <tr><td>&nbsp;</td><td></td><td></td><td></td></tr>
+        <tr class="total-row"><td colspan="3">TOTAL AMOUNT</td><td></td></tr>
+      </table>
+      <div class="section-title">Payment Method</div>
+      <div class="checkbox-group">
+        <div class="checkbox-item"><span class="checkbox"></span> Cash Advance</div>
+        <div class="checkbox-item"><span class="checkbox"></span> Reimbursement</div>
+        <div class="checkbox-item"><span class="checkbox"></span> Company Vehicle</div>
       </div>
       <div class="field-row" style="margin-top: 15px;">
-        <div class="field"><label>Received By</label><div class="field-input"></div></div>
-        <div class="field"><label>Warehouse/Location</label><div class="field-input"></div></div>
+        <div class="field"><label>Notes</label><div class="field-input large"></div></div>
       </div>
       </div>
     `,
-    revenue_sales: `
-      <div class="form-title-banner">Sales Revenue Form</div>
+    expense_marketing: `
+      <div class="form-title-banner">Marketing Expense Form</div>
+      <div class="form-content">
+      <div class="field-row">
+        <div class="field"><label>Date</label><div class="field-input"></div></div>
+        <div class="field"><label>Campaign/Project Name</label><div class="field-input"></div></div>
+      </div>
+      <div class="section-title">Marketing Type (Check All That Apply)</div>
+      <div class="checkbox-group">
+        <div class="checkbox-item"><span class="checkbox"></span> Print Advertising</div>
+        <div class="checkbox-item"><span class="checkbox"></span> Radio/TV</div>
+        <div class="checkbox-item"><span class="checkbox"></span> Social Media</div>
+        <div class="checkbox-item"><span class="checkbox"></span> Signage/Banners</div>
+        <div class="checkbox-item"><span class="checkbox"></span> Promotional Items</div>
+        <div class="checkbox-item"><span class="checkbox"></span> Events/Sponsorship</div>
+        <div class="checkbox-item"><span class="checkbox"></span> Other: ____________</div>
+      </div>
+      <div class="section-title">Expense Details</div>
+      <table>
+        <tr><th>Description</th><th>Vendor</th><th>Qty</th><th>Amount (Le)</th></tr>
+        <tr><td>&nbsp;</td><td></td><td></td><td></td></tr>
+        <tr><td>&nbsp;</td><td></td><td></td><td></td></tr>
+        <tr><td>&nbsp;</td><td></td><td></td><td></td></tr>
+        <tr class="total-row"><td colspan="3">TOTAL AMOUNT</td><td></td></tr>
+      </table>
+      <div class="section-title">Payment Method</div>
+      <div class="checkbox-group">
+        <div class="checkbox-item"><span class="checkbox"></span> Cash</div>
+        <div class="checkbox-item"><span class="checkbox"></span> Bank Transfer</div>
+        <div class="checkbox-item"><span class="checkbox"></span> Mobile Money</div>
+      </div>
+      <div class="field-row" style="margin-top: 15px;">
+        <div class="field"><label>Notes/Expected Results</label><div class="field-input large"></div></div>
+      </div>
+      </div>
+    `,
+    expense_insurance: `
+      <div class="form-title-banner">Insurance Expense Form</div>
+      <div class="form-content">
+      <div class="field-row">
+        <div class="field"><label>Payment Date</label><div class="field-input"></div></div>
+        <div class="field"><label>Policy Number</label><div class="field-input"></div></div>
+      </div>
+      <div class="section-title">Insurance Type (Check One)</div>
+      <div class="checkbox-group">
+        <div class="checkbox-item"><span class="checkbox"></span> Vehicle Insurance</div>
+        <div class="checkbox-item"><span class="checkbox"></span> Property Insurance</div>
+        <div class="checkbox-item"><span class="checkbox"></span> Liability Insurance</div>
+        <div class="checkbox-item"><span class="checkbox"></span> Health Insurance</div>
+        <div class="checkbox-item"><span class="checkbox"></span> Cargo Insurance</div>
+        <div class="checkbox-item"><span class="checkbox"></span> Other: ____________</div>
+      </div>
+      <div class="section-title">Policy Details</div>
+      <table>
+        <tr><th>Description</th><th>Coverage Period</th><th>Premium (Le)</th></tr>
+        <tr><td>&nbsp;</td><td></td><td></td></tr>
+        <tr><td>Processing Fee</td><td>-</td><td></td></tr>
+        <tr class="total-row"><td colspan="2">TOTAL AMOUNT</td><td></td></tr>
+      </table>
+      <div class="field-row">
+        <div class="field"><label>Insurance Company</label><div class="field-input"></div></div>
+        <div class="field"><label>Agent/Broker Name</label><div class="field-input"></div></div>
+      </div>
+      <div class="field-row">
+        <div class="field"><label>Coverage Start Date</label><div class="field-input"></div></div>
+        <div class="field"><label>Coverage End Date</label><div class="field-input"></div></div>
+      </div>
+      <div class="field-row">
+        <div class="field"><label>Asset/Vehicle Covered</label><div class="field-input large"></div></div>
+      </div>
+      </div>
+    `,
+    expense_petty_cash: `
+      <div class="form-title-banner">Petty Cash Expense Form</div>
+      <div class="form-content">
+      <div class="field-row">
+        <div class="field"><label>Date</label><div class="field-input"></div></div>
+        <div class="field"><label>Voucher Number</label><div class="field-input"></div></div>
+        <div class="field"><label>Requested By</label><div class="field-input"></div></div>
+      </div>
+      <div class="section-title">Expense Category (Check One)</div>
+      <div class="checkbox-group">
+        <div class="checkbox-item"><span class="checkbox"></span> Tea/Refreshments</div>
+        <div class="checkbox-item"><span class="checkbox"></span> Transport (local)</div>
+        <div class="checkbox-item"><span class="checkbox"></span> Stationery</div>
+        <div class="checkbox-item"><span class="checkbox"></span> Cleaning</div>
+        <div class="checkbox-item"><span class="checkbox"></span> Photocopying</div>
+        <div class="checkbox-item"><span class="checkbox"></span> Minor Repairs</div>
+        <div class="checkbox-item"><span class="checkbox"></span> Tips/Gratuity</div>
+        <div class="checkbox-item"><span class="checkbox"></span> Other: ____________</div>
+      </div>
+      <div class="section-title">Expense Details</div>
+      <table>
+        <tr><th>Description</th><th>Amount (Le)</th></tr>
+        <tr><td>&nbsp;</td><td></td></tr>
+        <tr><td>&nbsp;</td><td></td></tr>
+        <tr><td>&nbsp;</td><td></td></tr>
+        <tr><td>&nbsp;</td><td></td></tr>
+        <tr class="total-row"><td>TOTAL AMOUNT</td><td></td></tr>
+      </table>
+      <div class="field-row">
+        <div class="field"><label>Receipt Attached?</label>
+          <div class="checkbox-group" style="margin-top: 5px;">
+            <div class="checkbox-item"><span class="checkbox"></span> Yes</div>
+            <div class="checkbox-item"><span class="checkbox"></span> No (Reason: ____________)</div>
+          </div>
+        </div>
+      </div>
+      <div class="field-row" style="margin-top: 15px;">
+        <div class="field"><label>Notes</label><div class="field-input large"></div></div>
+      </div>
+      </div>
+    `,
+    expense_truck_contract: `
+      <div class="form-title-banner">Truck Contract Expense Form</div>
+      <div class="form-content">
+      <div class="field-row">
+        <div class="field"><label>Date</label><div class="field-input"></div></div>
+        <div class="field"><label>Contract Number</label><div class="field-input"></div></div>
+        <div class="field"><label>Vehicle Registration</label><div class="field-input"></div></div>
+      </div>
+      <div class="field-row">
+        <div class="field"><label>Driver Name</label><div class="field-input"></div></div>
+        <div class="field"><label>Route (From - To)</label><div class="field-input"></div></div>
+      </div>
+      <div class="section-title">Expense Category (Based on TruckContract)</div>
+      <table>
+        <tr><th>Category</th><th>Description</th><th>Amount (Le)</th></tr>
+        <tr><td><span class="checkbox"></span> Fuel</td><td></td><td></td></tr>
+        <tr><td><span class="checkbox"></span> Tolls</td><td></td><td></td></tr>
+        <tr><td><span class="checkbox"></span> Loading</td><td></td><td></td></tr>
+        <tr><td><span class="checkbox"></span> Unloading</td><td></td><td></td></tr>
+        <tr><td><span class="checkbox"></span> Repairs</td><td></td><td></td></tr>
+        <tr><td><span class="checkbox"></span> Food</td><td></td><td></td></tr>
+        <tr><td><span class="checkbox"></span> Accommodation</td><td></td><td></td></tr>
+        <tr><td><span class="checkbox"></span> Other</td><td></td><td></td></tr>
+        <tr class="total-row"><td colspan="2">TOTAL EXPENSES</td><td></td></tr>
+      </table>
+      <div class="field-row">
+        <div class="field"><label>Receipts Collected</label>
+          <div class="checkbox-group" style="margin-top: 5px;">
+            <div class="checkbox-item"><span class="checkbox"></span> All receipts attached</div>
+            <div class="checkbox-item"><span class="checkbox"></span> Some missing (List: ____________)</div>
+          </div>
+        </div>
+      </div>
+      <div class="field-row" style="margin-top: 15px;">
+        <div class="field"><label>Notes</label><div class="field-input large"></div></div>
+      </div>
+      </div>
+    `,
+    expense_general: `
+      <div class="form-title-banner">General Expense Form</div>
+      <div class="form-content">
+      <div class="field-row">
+        <div class="field"><label>Date</label><div class="field-input"></div></div>
+        <div class="field"><label>Receipt/Invoice No.</label><div class="field-input"></div></div>
+        <div class="field"><label>Vendor/Supplier</label><div class="field-input"></div></div>
+      </div>
+      <div class="section-title">Expense Category</div>
+      <div class="checkbox-group">
+        <div class="checkbox-item"><span class="checkbox"></span> Communication</div>
+        <div class="checkbox-item"><span class="checkbox"></span> Food/Entertainment</div>
+        <div class="checkbox-item"><span class="checkbox"></span> Training</div>
+        <div class="checkbox-item"><span class="checkbox"></span> Licenses/Permits</div>
+        <div class="checkbox-item"><span class="checkbox"></span> Bank Charges</div>
+        <div class="checkbox-item"><span class="checkbox"></span> Other: ____________</div>
+      </div>
+      <div class="section-title">Expense Details</div>
+      <table>
+        <tr><th>Description</th><th>Quantity</th><th>Unit Price (Le)</th><th>Total (Le)</th></tr>
+        <tr><td>&nbsp;</td><td></td><td></td><td></td></tr>
+        <tr><td>&nbsp;</td><td></td><td></td><td></td></tr>
+        <tr><td>&nbsp;</td><td></td><td></td><td></td></tr>
+        <tr><td>&nbsp;</td><td></td><td></td><td></td></tr>
+        <tr class="total-row"><td colspan="3">TOTAL AMOUNT</td><td></td></tr>
+      </table>
+      <div class="section-title">Payment Method</div>
+      <div class="checkbox-group">
+        <div class="checkbox-item"><span class="checkbox"></span> Cash</div>
+        <div class="checkbox-item"><span class="checkbox"></span> Bank Transfer</div>
+        <div class="checkbox-item"><span class="checkbox"></span> Mobile Money</div>
+        <div class="checkbox-item"><span class="checkbox"></span> Card</div>
+      </div>
+      <div class="field-row" style="margin-top: 15px;">
+        <div class="field"><label>Notes/Remarks</label><div class="field-input large"></div></div>
+      </div>
+      </div>
+    `,
+    
+    // REVENUE FORMS
+    revenue_retail_sales: `
+      <div class="form-title-banner">Retail Sales Revenue Form</div>
       <div class="form-content">
       <div class="field-row">
         <div class="field"><label>Date</label><div class="field-input"></div></div>
@@ -738,14 +1031,88 @@ const generateFormHTML = (formType, orgName) => {
       <div class="field-row">
         <div class="field"><label>Customer Name</label><div class="field-input"></div></div>
         <div class="field"><label>Customer Phone</label><div class="field-input"></div></div>
-      </div>
-      <div class="section-title">Sale Type</div>
-      <div class="checkbox-group">
-        <div class="checkbox-item"><span class="checkbox"></span> Retail</div>
-        <div class="checkbox-item"><span class="checkbox"></span> Wholesale</div>
-        <div class="checkbox-item"><span class="checkbox"></span> Vehicle Sales</div>
+        <div class="field"><label>Location/Store</label><div class="field-input"></div></div>
       </div>
       <div class="section-title">Items Sold</div>
+      <table>
+        <tr><th>Product Name</th><th>Qty</th><th>Unit Price (Le)</th><th>Total (Le)</th></tr>
+        <tr><td>&nbsp;</td><td></td><td></td><td></td></tr>
+        <tr><td>&nbsp;</td><td></td><td></td><td></td></tr>
+        <tr><td>&nbsp;</td><td></td><td></td><td></td></tr>
+        <tr><td>&nbsp;</td><td></td><td></td><td></td></tr>
+        <tr><td>&nbsp;</td><td></td><td></td><td></td></tr>
+        <tr><td colspan="3">Subtotal</td><td></td></tr>
+        <tr><td colspan="3">Discount</td><td></td></tr>
+        <tr><td colspan="3">Tax</td><td></td></tr>
+        <tr class="total-row"><td colspan="3">TOTAL AMOUNT</td><td></td></tr>
+      </table>
+      <div class="section-title">Payment Method</div>
+      <div class="checkbox-group">
+        <div class="checkbox-item"><span class="checkbox"></span> Cash</div>
+        <div class="checkbox-item"><span class="checkbox"></span> Mobile Money</div>
+        <div class="checkbox-item"><span class="checkbox"></span> Card</div>
+        <div class="checkbox-item"><span class="checkbox"></span> Credit</div>
+      </div>
+      <div class="section-title">Payment Status</div>
+      <div class="checkbox-group">
+        <div class="checkbox-item"><span class="checkbox"></span> Paid</div>
+        <div class="checkbox-item"><span class="checkbox"></span> Pending</div>
+        <div class="checkbox-item"><span class="checkbox"></span> Partial (Amount Paid: ____________)</div>
+      </div>
+      </div>
+    `,
+    revenue_warehouse_sales: `
+      <div class="form-title-banner">Warehouse/Wholesale Sales Form</div>
+      <div class="form-content">
+      <div class="field-row">
+        <div class="field"><label>Date</label><div class="field-input"></div></div>
+        <div class="field"><label>Invoice Number</label><div class="field-input"></div></div>
+        <div class="field"><label>Warehouse</label><div class="field-input"></div></div>
+      </div>
+      <div class="field-row">
+        <div class="field"><label>Customer/Business Name</label><div class="field-input"></div></div>
+        <div class="field"><label>Customer Phone</label><div class="field-input"></div></div>
+      </div>
+      <div class="section-title">Items Sold (Wholesale)</div>
+      <table>
+        <tr><th>Product Name</th><th>SKU</th><th>Qty</th><th>Wholesale Price (Le)</th><th>Total (Le)</th></tr>
+        <tr><td>&nbsp;</td><td></td><td></td><td></td><td></td></tr>
+        <tr><td>&nbsp;</td><td></td><td></td><td></td><td></td></tr>
+        <tr><td>&nbsp;</td><td></td><td></td><td></td><td></td></tr>
+        <tr><td>&nbsp;</td><td></td><td></td><td></td><td></td></tr>
+        <tr><td colspan="4">Subtotal</td><td></td></tr>
+        <tr><td colspan="4">Discount</td><td></td></tr>
+        <tr class="total-row"><td colspan="4">TOTAL AMOUNT</td><td></td></tr>
+      </table>
+      <div class="section-title">Payment Terms</div>
+      <div class="checkbox-group">
+        <div class="checkbox-item"><span class="checkbox"></span> Cash on Delivery</div>
+        <div class="checkbox-item"><span class="checkbox"></span> 7 Days Credit</div>
+        <div class="checkbox-item"><span class="checkbox"></span> 14 Days Credit</div>
+        <div class="checkbox-item"><span class="checkbox"></span> 30 Days Credit</div>
+        <div class="checkbox-item"><span class="checkbox"></span> Advance Payment</div>
+      </div>
+      <div class="section-title">Delivery</div>
+      <div class="field-row">
+        <div class="field"><label>Delivery Address</label><div class="field-input"></div></div>
+        <div class="field"><label>Delivery Date</label><div class="field-input"></div></div>
+      </div>
+      </div>
+    `,
+    revenue_vehicle_sales: `
+      <div class="form-title-banner">Vehicle Sales Form</div>
+      <div class="form-content">
+      <div class="field-row">
+        <div class="field"><label>Date</label><div class="field-input"></div></div>
+        <div class="field"><label>Vehicle Registration</label><div class="field-input"></div></div>
+        <div class="field"><label>Driver/Seller Name</label><div class="field-input"></div></div>
+      </div>
+      <div class="field-row">
+        <div class="field"><label>Location/Area</label><div class="field-input"></div></div>
+        <div class="field"><label>Customer Name</label><div class="field-input"></div></div>
+        <div class="field"><label>Customer Phone</label><div class="field-input"></div></div>
+      </div>
+      <div class="section-title">Products Sold from Vehicle</div>
       <table>
         <tr><th>Product Name</th><th>Qty</th><th>Unit Price (Le)</th><th>Total (Le)</th></tr>
         <tr><td>&nbsp;</td><td></td><td></td><td></td></tr>
@@ -761,17 +1128,62 @@ const generateFormHTML = (formType, orgName) => {
       <div class="checkbox-group">
         <div class="checkbox-item"><span class="checkbox"></span> Cash</div>
         <div class="checkbox-item"><span class="checkbox"></span> Mobile Money</div>
-        <div class="checkbox-item"><span class="checkbox"></span> Card</div>
         <div class="checkbox-item"><span class="checkbox"></span> Credit</div>
       </div>
       </div>
     `,
-    revenue_transport: `
-      <div class="form-title-banner">Transport Revenue Form</div>
+    revenue_trip: `
+      <div class="form-title-banner">Trip Revenue Form</div>
       <div class="form-content">
       <div class="field-row">
         <div class="field"><label>Date</label><div class="field-input"></div></div>
-        <div class="field"><label>Contract/Trip Number</label><div class="field-input"></div></div>
+        <div class="field"><label>Vehicle Registration</label><div class="field-input"></div></div>
+        <div class="field"><label>Driver Name</label><div class="field-input"></div></div>
+      </div>
+      <div class="field-row">
+        <div class="field"><label>Route Name</label><div class="field-input"></div></div>
+        <div class="field"><label>Start Time</label><div class="field-input"></div></div>
+        <div class="field"><label>End Time</label><div class="field-input"></div></div>
+      </div>
+      <div class="section-title">Trip Revenue Details (Based on Trip Entity)</div>
+      <table>
+        <tr><th>Description</th><th>Amount (Le)</th></tr>
+        <tr><td>Number of Passengers</td><td></td></tr>
+        <tr><td>Ticket Price per Passenger</td><td></td></tr>
+        <tr><td><strong>Total Ticket Revenue</strong></td><td></td></tr>
+      </table>
+      <div class="section-title">Trip Expenses</div>
+      <table>
+        <tr><th>Expense Type</th><th>Amount (Le)</th></tr>
+        <tr><td>Fuel Cost</td><td></td></tr>
+        <tr><td>Other Expenses</td><td></td></tr>
+        <tr><td><strong>Total Expenses</strong></td><td></td></tr>
+      </table>
+      <div class="section-title">Summary</div>
+      <table>
+        <tr><th>Description</th><th>Amount (Le)</th></tr>
+        <tr><td>Total Revenue</td><td></td></tr>
+        <tr><td>Total Expenses</td><td></td></tr>
+        <tr class="total-row"><td>NET REVENUE</td><td></td></tr>
+      </table>
+      <div class="section-title">Trip Status</div>
+      <div class="checkbox-group">
+        <div class="checkbox-item"><span class="checkbox"></span> Scheduled</div>
+        <div class="checkbox-item"><span class="checkbox"></span> In Progress</div>
+        <div class="checkbox-item"><span class="checkbox"></span> Completed</div>
+        <div class="checkbox-item"><span class="checkbox"></span> Cancelled</div>
+      </div>
+      <div class="field-row" style="margin-top: 15px;">
+        <div class="field"><label>Notes</label><div class="field-input large"></div></div>
+      </div>
+      </div>
+    `,
+    revenue_truck_contract: `
+      <div class="form-title-banner">Truck Contract Revenue Form</div>
+      <div class="form-content">
+      <div class="field-row">
+        <div class="field"><label>Contract Date</label><div class="field-input"></div></div>
+        <div class="field"><label>Contract Number</label><div class="field-input"></div></div>
         <div class="field"><label>Vehicle Registration</label><div class="field-input"></div></div>
       </div>
       <div class="field-row">
@@ -779,30 +1191,52 @@ const generateFormHTML = (formType, orgName) => {
         <div class="field"><label>Client Name</label><div class="field-input"></div></div>
         <div class="field"><label>Client Phone</label><div class="field-input"></div></div>
       </div>
-      <div class="section-title">Trip Details</div>
+      <div class="section-title">Contract Details (Based on TruckContract Entity)</div>
       <div class="field-row">
         <div class="field"><label>Pickup Location</label><div class="field-input"></div></div>
         <div class="field"><label>Delivery Location</label><div class="field-input"></div></div>
       </div>
       <div class="field-row">
         <div class="field"><label>Cargo Description</label><div class="field-input"></div></div>
-        <div class="field"><label>Weight (kg)</label><div class="field-input"></div></div>
+        <div class="field"><label>Cargo Weight (kg)</label><div class="field-input"></div></div>
+        <div class="field"><label>Delivery Date</label><div class="field-input"></div></div>
       </div>
-      <div class="section-title">Revenue & Expenses</div>
+      <div class="section-title">Financial Summary</div>
       <table>
         <tr><th>Description</th><th>Amount (Le)</th></tr>
-        <tr><td>Contract Amount</td><td></td></tr>
-        <tr><td>Fuel Cost</td><td></td></tr>
-        <tr><td>Tolls</td><td></td></tr>
-        <tr><td>Loading/Unloading</td><td></td></tr>
-        <tr><td>Other Expenses: ____________</td><td></td></tr>
-        <tr class="total-row"><td>NET REVENUE</td><td></td></tr>
+        <tr><td><strong>Contract Amount</strong></td><td></td></tr>
       </table>
+      <div class="section-title">Contract Expenses</div>
+      <table>
+        <tr><th>Category</th><th>Description</th><th>Amount (Le)</th></tr>
+        <tr><td>Fuel</td><td></td><td></td></tr>
+        <tr><td>Tolls</td><td></td><td></td></tr>
+        <tr><td>Loading</td><td></td><td></td></tr>
+        <tr><td>Unloading</td><td></td><td></td></tr>
+        <tr><td>Repairs</td><td></td><td></td></tr>
+        <tr><td>Food</td><td></td><td></td></tr>
+        <tr><td>Accommodation</td><td></td><td></td></tr>
+        <tr><td>Other</td><td></td><td></td></tr>
+        <tr><td colspan="2"><strong>Total Expenses</strong></td><td></td></tr>
+      </table>
+      <table style="margin-top: 10px;">
+        <tr class="total-row"><td>NET REVENUE (Contract - Expenses)</td><td style="width: 150px;"></td></tr>
+      </table>
+      <div class="section-title">Status</div>
+      <div class="checkbox-group">
+        <div class="checkbox-item"><span class="checkbox"></span> Pending</div>
+        <div class="checkbox-item"><span class="checkbox"></span> In Progress</div>
+        <div class="checkbox-item"><span class="checkbox"></span> Completed</div>
+        <div class="checkbox-item"><span class="checkbox"></span> Cancelled</div>
+      </div>
       <div class="section-title">Payment Status</div>
       <div class="checkbox-group">
+        <div class="checkbox-item"><span class="checkbox"></span> Unpaid</div>
+        <div class="checkbox-item"><span class="checkbox"></span> Partial (Amount: ____________)</div>
         <div class="checkbox-item"><span class="checkbox"></span> Paid</div>
-        <div class="checkbox-item"><span class="checkbox"></span> Partial: ____________</div>
-        <div class="checkbox-item"><span class="checkbox"></span> Pending</div>
+      </div>
+      <div class="field-row" style="margin-top: 15px;">
+        <div class="field"><label>Notes</label><div class="field-input large"></div></div>
       </div>
       </div>
     `,
@@ -820,6 +1254,7 @@ const generateFormHTML = (formType, orgName) => {
         <div class="checkbox-item"><span class="checkbox"></span> Commission</div>
         <div class="checkbox-item"><span class="checkbox"></span> Interest</div>
         <div class="checkbox-item"><span class="checkbox"></span> Refund</div>
+        <div class="checkbox-item"><span class="checkbox"></span> Asset Sale</div>
         <div class="checkbox-item"><span class="checkbox"></span> Other: ____________</div>
       </div>
       <div class="section-title">Income Details</div>
