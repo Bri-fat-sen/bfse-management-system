@@ -11,14 +11,16 @@ export default function InstallPrompt() {
   const [dismissed, setDismissed] = useState(false);
 
   useEffect(() => {
+    if (typeof window === 'undefined') return;
+    
     // Check if already installed (standalone mode)
-    const standalone = window.matchMedia('(display-mode: standalone)').matches 
-      || window.navigator.standalone 
-      || document.referrer.includes('android-app://');
-    setIsStandalone(standalone);
+    const standalone = window.matchMedia?.('(display-mode: standalone)')?.matches 
+      || window.navigator?.standalone 
+      || document.referrer?.includes('android-app://');
+    setIsStandalone(standalone || false);
 
     // Check if iOS
-    const iOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+    const iOS = /iPad|iPhone|iPod/.test(navigator.userAgent || '') && !window.MSStream;
     setIsIOS(iOS);
 
     // Check if dismissed recently
@@ -158,18 +160,22 @@ export function useIsPWAInstalled() {
   const [isInstalled, setIsInstalled] = useState(false);
 
   useEffect(() => {
+    if (typeof window === 'undefined') return;
+    
     const checkInstalled = () => {
-      const standalone = window.matchMedia('(display-mode: standalone)').matches 
-        || window.navigator.standalone 
-        || document.referrer.includes('android-app://');
-      setIsInstalled(standalone);
+      const standalone = window.matchMedia?.('(display-mode: standalone)')?.matches 
+        || window.navigator?.standalone 
+        || document.referrer?.includes('android-app://');
+      setIsInstalled(standalone || false);
     };
 
     checkInstalled();
-    window.addEventListener('appinstalled', () => setIsInstalled(true));
+    
+    const handleInstalled = () => setIsInstalled(true);
+    window.addEventListener('appinstalled', handleInstalled);
 
     return () => {
-      window.removeEventListener('appinstalled', () => setIsInstalled(true));
+      window.removeEventListener('appinstalled', handleInstalled);
     };
   }, []);
 
