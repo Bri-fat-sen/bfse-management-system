@@ -243,8 +243,11 @@ export default function Sales() {
       ))
       .map(p => ({
         ...p,
-        // Use location-specific stock if a location is selected, otherwise use product's general stock
-        location_stock: selectedLocation ? (locationStockMap[p.id] ?? 0) : p.stock_quantity
+        // Use location-specific stock if available, fall back to product's general stock
+        // For default locations (main_store, default_warehouse), use product stock directly
+        location_stock: selectedLocation && !selectedLocation.startsWith('main_') && !selectedLocation.startsWith('default_')
+          ? (locationStockMap[p.id] ?? p.stock_quantity ?? 0) 
+          : (p.stock_quantity ?? 0)
       }));
   }, [products, searchTerm, selectedLocation, locationStockMap]);
 
