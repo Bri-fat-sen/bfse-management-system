@@ -3,6 +3,7 @@ import { base44 } from "@/api/base44Client";
 import { useQuery } from "@tanstack/react-query";
 import PageHeader from "@/components/ui/PageHeader";
 import AnalyticsDashboard from "@/components/analytics/AnalyticsDashboard";
+import LoadingSpinner from "@/components/ui/LoadingSpinner";
 
 export default function Analytics() {
   const { data: user } = useQuery({
@@ -19,7 +20,7 @@ export default function Analytics() {
   const currentEmployee = employee?.[0];
   const orgId = currentEmployee?.organisation_id;
 
-  const { data: sales = [] } = useQuery({
+  const { data: sales = [], isLoading: loadingSales } = useQuery({
     queryKey: ['allSales', orgId],
     queryFn: () => base44.entities.Sale.filter({ organisation_id: orgId }, '-created_date', 500),
     enabled: !!orgId,
@@ -60,6 +61,11 @@ export default function Analytics() {
     queryFn: () => base44.entities.VehicleMaintenance.filter({ organisation_id: orgId }, '-date_performed', 200),
     enabled: !!orgId,
   });
+
+  // Show loading spinner
+  if (!orgId || loadingSales) {
+    return <LoadingSpinner message="Loading Analytics..." subtitle="Analyzing your business data" />;
+  }
 
   return (
     <div className="space-y-6">

@@ -169,6 +169,11 @@ export default function Transport() {
     m.next_due_date && isPast(new Date(m.next_due_date))
   );
 
+  // Show loading spinner while initial data loads
+  if (!orgId || loadingTrips) {
+    return <LoadingSpinner message="Loading Transport..." subtitle="Fetching vehicles and trips" />;
+  }
+
   const handleTripSubmit = (e) => {
     e.preventDefault();
     const formData = new FormData(e.target);
@@ -221,11 +226,6 @@ export default function Transport() {
 
     createVehicleMutation.mutate(data);
   };
-
-  // Show loading spinner while initial data loads
-  if (!orgId || loadingTrips) {
-    return <LoadingSpinner message="Loading Transport..." subtitle="Fetching vehicles and trips" />;
-  }
 
   return (
     <div className="space-y-6">

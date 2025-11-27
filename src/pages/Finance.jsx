@@ -231,7 +231,7 @@ export default function Finance() {
   if (!orgId || loadingExpenses) {
     return (
       <ProtectedPage module="finance">
-        <LoadingSpinner message="Loading Finance..." subtitle="Fetching revenue and expenses" />
+        <LoadingSpinner message="Loading Finance..." subtitle="Fetching financial data" />
       </ProtectedPage>
     );
   }

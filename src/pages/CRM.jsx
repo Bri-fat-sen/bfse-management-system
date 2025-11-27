@@ -47,7 +47,7 @@ export default function CRM() {
   const currentEmployee = employee?.[0];
   const orgId = currentEmployee?.organisation_id;
 
-  const { data: customers = [], isLoading: loadingCustomers } = useQuery({
+  const { data: customers = [] } = useQuery({
     queryKey: ['customers', orgId],
     queryFn: () => base44.entities.Customer.filter({ organisation_id: orgId }),
     enabled: !!orgId,
@@ -70,6 +70,17 @@ export default function CRM() {
     queryFn: () => base44.entities.Employee.filter({ organisation_id: orgId, status: 'active' }),
     enabled: !!orgId,
   });
+
+  const { data: customersData, isLoading: loadingCustomers } = useQuery({
+    queryKey: ['customers', orgId],
+    queryFn: () => base44.entities.Customer.filter({ organisation_id: orgId }),
+    enabled: !!orgId,
+  });
+
+  // Show loading spinner
+  if (!orgId || loadingCustomers) {
+    return <LoadingSpinner message="Loading CRM..." subtitle="Fetching customer data" />;
+  }
 
   // Filter customers
   const filteredCustomers = customers.filter(c => {
@@ -96,11 +107,6 @@ export default function CRM() {
     setSelectedCustomer(null);
     setDialogOpen(true);
   };
-
-  // Show loading spinner while initial data loads
-  if (!orgId || loadingCustomers) {
-    return <LoadingSpinner message="Loading Customers..." subtitle="Fetching customer data" />;
-  }
 
   if (viewCustomer) {
     return (
