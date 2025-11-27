@@ -9,33 +9,33 @@ export default function LoadingSpinner({
   const content = (
     <div className="flex flex-col items-center justify-center">
       {/* Large Animated Loading Spinner */}
-      <div className="relative mb-8">
-        <div className="w-28 h-28 relative">
-          <div className="absolute inset-0 rounded-full border-8 border-gray-100"></div>
-          <div className="absolute inset-0 rounded-full border-8 border-transparent border-t-[#1EB053] animate-spin"></div>
+      <div className="relative mb-10">
+        <div className="w-40 h-40 relative">
+          <div className="absolute inset-0 rounded-full border-[10px] border-gray-100"></div>
+          <div className="absolute inset-0 rounded-full border-[10px] border-transparent border-t-[#1EB053] animate-spin"></div>
           <div 
-            className="absolute inset-3 rounded-full border-8 border-transparent border-t-white animate-spin" 
+            className="absolute inset-4 rounded-full border-[10px] border-transparent border-t-white animate-spin" 
             style={{ animationDuration: '1.5s', animationDirection: 'reverse' }}
           ></div>
           <div 
-            className="absolute inset-6 rounded-full border-8 border-transparent border-t-[#0072C6] animate-spin" 
+            className="absolute inset-8 rounded-full border-[10px] border-transparent border-t-[#0072C6] animate-spin" 
             style={{ animationDuration: '2s' }}
           ></div>
           <div className="absolute inset-0 flex items-center justify-center">
-            <div className="text-3xl">🇸🇱</div>
+            <div className="text-5xl">🇸🇱</div>
           </div>
         </div>
         
         {/* Flag colors stripe */}
-        <div className="flex h-2 w-28 rounded-full overflow-hidden mt-5 mx-auto shadow-sm">
+        <div className="flex h-2.5 w-40 rounded-full overflow-hidden mt-6 mx-auto shadow-md">
           <div className="flex-1 bg-[#1EB053]"></div>
-          <div className="flex-1 bg-white border-y border-gray-200"></div>
+          <div className="flex-1 bg-white border-y-2 border-gray-200"></div>
           <div className="flex-1 bg-[#0072C6]"></div>
         </div>
       </div>
 
-      {message && <p className="text-gray-700 font-semibold text-lg">{message}</p>}
-      {subtitle && <p className="text-gray-400 text-sm mt-2">{subtitle}</p>}
+      {message && <p className="text-gray-700 font-semibold text-xl">{message}</p>}
+      {subtitle && <p className="text-gray-400 text-base mt-2">{subtitle}</p>}
     </div>
   );
 
