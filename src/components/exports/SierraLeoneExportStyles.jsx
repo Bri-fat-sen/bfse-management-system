@@ -476,6 +476,9 @@ export const generateExportHTML = ({
   });
 
   const orgInitials = (organisation?.name || 'BFSE').split(' ').map(w => w[0]).join('').slice(0, 3);
+  const logoHtml = organisation?.logo_url 
+    ? `<img src="${organisation.logo_url}" alt="${organisation?.name || 'Logo'}" />`
+    : `<span>${orgInitials}</span>`;
 
   return `
     <!DOCTYPE html>
@@ -495,7 +498,7 @@ export const generateExportHTML = ({
           </div>
           
           <div class="header">
-            <div class="org-logo"><span>${orgInitials}</span></div>
+            <div class="org-logo">${logoHtml}</div>
             <div class="org-name">${organisation?.name || 'BRI-FAT-SEN Enterprise'}</div>
             <div class="tagline">Business Management System</div>
             <div class="address">
