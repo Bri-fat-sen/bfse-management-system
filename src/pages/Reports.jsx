@@ -19,7 +19,9 @@ import {
   Printer,
   Brain,
   Save,
-  LayoutGrid
+  LayoutGrid,
+  Eye,
+  EyeOff
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -50,6 +52,8 @@ import {
   ProgressRing,
   SL_COLORS
 } from "@/components/charts/AdvancedCharts";
+import SaveReportDialog from "@/components/reports/SaveReportDialog";
+import { SalesCharts, ExpenseCharts, TransportCharts, ProfitLossChart } from "@/components/reports/ReportCharts";
 
 const COLORS = SL_COLORS.chart;
 
@@ -63,8 +67,12 @@ export default function Reports() {
     categories: [],
     payment_methods: [],
     sale_types: [],
-    statuses: []
+    statuses: [],
+    customer_types: [],
+    customer_segments: []
   });
+  const [showCharts, setShowCharts] = useState(true);
+  const [showSaveDialog, setShowSaveDialog] = useState(false);
 
   const { data: user } = useQuery({
     queryKey: ['currentUser'],
@@ -283,10 +291,28 @@ export default function Reports() {
         title="Reports & Analytics"
         subtitle="Comprehensive business insights with predictive analytics"
       >
-        <Button variant="outline" onClick={handlePrint}>
-          <Printer className="w-4 h-4 mr-2" />
-          Print
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button 
+            variant="outline" 
+            size="sm"
+            onClick={() => setShowCharts(!showCharts)}
+          >
+            {showCharts ? <EyeOff className="w-4 h-4 mr-2" /> : <Eye className="w-4 h-4 mr-2" />}
+            {showCharts ? 'Hide Charts' : 'Show Charts'}
+          </Button>
+          <Button 
+            variant="outline" 
+            size="sm"
+            onClick={() => setShowSaveDialog(true)}
+          >
+            <Save className="w-4 h-4 mr-2" />
+            Save Report
+          </Button>
+          <Button variant="outline" size="sm" onClick={handlePrint}>
+            <Printer className="w-4 h-4 mr-2" />
+            Print
+          </Button>
+        </div>
       </PageHeader>
 
       {/* Advanced Filters */}
@@ -299,6 +325,8 @@ export default function Reports() {
         showPaymentFilter={activeTab === 'sales'}
         showSaleTypeFilter={activeTab === 'sales'}
         showStatusFilter={true}
+        showCustomerTypeFilter={activeTab === 'sales'}
+        showCustomerSegmentFilter={activeTab === 'sales'}
       />
 
       {/* Summary Stats */}
@@ -371,169 +399,43 @@ export default function Reports() {
             <Card className="border-t-4 border-t-[#D4AF37]">
               <CardContent className="p-4 text-center">
                 <p className="text-sm text-gray-500">Avg. Transaction</p>
-                <p className="text-2xl font-bold text-[#D4AF37]">Le {salesAnalytics.avgTransaction.toLocaleString()}</p>
+                <p className="text-2xl font-bold text-[#D4AF37]">Le {Math.round(salesAnalytics.avgTransaction).toLocaleString()}</p>
               </CardContent>
             </Card>
           </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {/* Sales Trend */}
-            <Card className="overflow-hidden">
-              <CardHeader className="bg-gradient-to-r from-[#1EB053]/5 to-[#0072C6]/5 border-b">
-                <CardTitle className="flex items-center gap-2">
-                  <div className="p-2 rounded-lg bg-gradient-to-br from-[#1EB053] to-[#0072C6]">
-                    <TrendingUp className="w-4 h-4 text-white" />
-                  </div>
-                  Sales Trend
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="pt-6">
-                <GradientAreaChart 
-                  data={salesAnalytics.trendData}
-                  dataKey="revenue"
-                  xKey="date"
-                  height={300}
-                  formatter={(v) => `Le ${v.toLocaleString()}`}
-                />
-              </CardContent>
-            </Card>
-
-            {/* Payment Methods */}
-            <Card className="overflow-hidden">
-              <CardHeader className="bg-gradient-to-r from-[#0072C6]/5 to-[#9333EA]/5 border-b">
-                <CardTitle className="flex items-center gap-2">
-                  <div className="p-2 rounded-lg bg-gradient-to-br from-[#0072C6] to-[#9333EA]">
-                    <PieChart className="w-4 h-4 text-white" />
-                  </div>
-                  Payment Methods
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="pt-6">
-                <DonutChart 
-                  data={salesAnalytics.byPayment}
-                  height={300}
-                  innerRadius={70}
-                  outerRadius={110}
-                  formatter={(v) => `Le ${v.toLocaleString()}`}
-                  centerValue={salesAnalytics.totalTransactions}
-                  centerLabel="Transactions"
-                />
-              </CardContent>
-            </Card>
-
-            {/* Top Products */}
-            <Card className="lg:col-span-2 overflow-hidden">
-              <CardHeader className="bg-gradient-to-r from-[#D4AF37]/5 to-[#F59E0B]/5 border-b">
-                <CardTitle className="flex items-center gap-2">
-                  <div className="p-2 rounded-lg bg-gradient-to-br from-[#D4AF37] to-[#F59E0B]">
-                    <Package className="w-4 h-4 text-white" />
-                  </div>
-                  Top Selling Products
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="pt-6">
-                <GradientBarChart 
-                  data={salesAnalytics.topProducts}
-                  dataKey="value"
-                  xKey="name"
-                  height={300}
-                  horizontal={true}
-                  formatter={(v) => `Le ${v.toLocaleString()}`}
-                  barSize={24}
-                />
-              </CardContent>
-            </Card>
-          </div>
+          {showCharts && <SalesCharts salesAnalytics={salesAnalytics} />}
         </TabsContent>
 
         {/* Expenses Tab */}
         <TabsContent value="expenses" className="mt-6 space-y-6">
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            <Card className="lg:col-span-2 overflow-hidden">
-              <CardHeader className="bg-gradient-to-r from-red-500/5 to-orange-500/5 border-b">
-                <CardTitle className="flex items-center gap-2">
-                  <div className="p-2 rounded-lg bg-gradient-to-br from-red-500 to-orange-500">
-                    <TrendingDown className="w-4 h-4 text-white" />
-                  </div>
-                  Expenses by Category
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="pt-6">
-                <ColorfulBarChart 
-                  data={expenseAnalytics.byCategory}
-                  dataKey="value"
-                  xKey="name"
-                  height={400}
-                  formatter={(v) => `Le ${v.toLocaleString()}`}
-                  colors={['#EF4444', '#F97316', '#F59E0B', '#84CC16', '#22C55E', '#14B8A6', '#06B6D4', '#3B82F6']}
-                />
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <Card className="border-t-4 border-t-red-500">
+              <CardContent className="p-4 text-center">
+                <p className="text-sm text-gray-500">Total Expenses</p>
+                <p className="text-2xl font-bold text-red-500">Le {expenseAnalytics.totalExpenses.toLocaleString()}</p>
               </CardContent>
             </Card>
-            <Card className="overflow-hidden">
-              <CardHeader className="bg-gradient-to-r from-purple-500/5 to-pink-500/5 border-b">
-                <CardTitle className="flex items-center gap-2">
-                  <div className="p-2 rounded-lg bg-gradient-to-br from-purple-500 to-pink-500">
-                    <DollarSign className="w-4 h-4 text-white" />
-                  </div>
-                  Distribution
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="pt-6">
-                <DonutChart 
-                  data={expenseAnalytics.byCategory}
-                  height={400}
-                  innerRadius={60}
-                  outerRadius={90}
-                  formatter={(v) => `Le ${v.toLocaleString()}`}
-                  showLabels={false}
-                />
+            <Card className="border-t-4 border-t-orange-500">
+              <CardContent className="p-4 text-center">
+                <p className="text-sm text-gray-500">Categories</p>
+                <p className="text-2xl font-bold text-orange-500">{expenseAnalytics.byCategory?.length || 0}</p>
+              </CardContent>
+            </Card>
+            <Card className="border-t-4 border-t-amber-500">
+              <CardContent className="p-4 text-center">
+                <p className="text-sm text-gray-500">Records</p>
+                <p className="text-2xl font-bold text-amber-500">{filteredExpenses.length}</p>
               </CardContent>
             </Card>
           </div>
+
+          {showCharts && <ExpenseCharts expenseAnalytics={expenseAnalytics} />}
         </TabsContent>
 
         {/* Transport Tab */}
         <TabsContent value="transport" className="mt-6 space-y-6">
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-            {[
-              { label: "Total Revenue", value: `Le ${transportAnalytics.totalRevenue.toLocaleString()}`, color: "#1EB053", percent: 100 },
-              { label: "Total Trips", value: transportAnalytics.totalTrips, color: "#0072C6", percent: 75 },
-              { label: "Passengers", value: transportAnalytics.totalPassengers, color: "#D4AF37", percent: 85 },
-              { label: "Net Revenue", value: `Le ${transportAnalytics.netRevenue.toLocaleString()}`, color: "#9333EA", percent: transportAnalytics.totalRevenue > 0 ? Math.round((transportAnalytics.netRevenue / transportAnalytics.totalRevenue) * 100) : 0 }
-            ].map((stat, i) => (
-              <Card key={i} className="overflow-hidden">
-                <CardContent className="p-4">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-xs text-gray-500 uppercase tracking-wide">{stat.label}</p>
-                      <p className="text-xl font-bold mt-1" style={{ color: stat.color }}>{stat.value}</p>
-                    </div>
-                    <ProgressRing value={stat.percent} size={50} strokeWidth={5} color={stat.color} />
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-
-          <Card className="overflow-hidden">
-            <CardHeader className="bg-gradient-to-r from-[#1EB053]/5 to-[#0072C6]/5 border-b">
-              <CardTitle className="flex items-center gap-2">
-                <div className="p-2 rounded-lg bg-gradient-to-br from-[#1EB053] to-[#0072C6]">
-                  <Truck className="w-4 h-4 text-white" />
-                </div>
-                Revenue by Route
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="pt-6">
-              <GradientBarChart 
-                data={transportAnalytics.byRoute}
-                dataKey="value"
-                xKey="name"
-                height={300}
-                formatter={(v) => `Le ${v.toLocaleString()}`}
-              />
-            </CardContent>
-          </Card>
+          {showCharts && <TransportCharts transportAnalytics={transportAnalytics} />}
         </TabsContent>
 
         {/* Inventory Tab */}
@@ -642,6 +544,17 @@ export default function Reports() {
           />
         </TabsContent>
       </Tabs>
+
+      {/* Save Report Dialog */}
+      <SaveReportDialog
+        open={showSaveDialog}
+        onOpenChange={setShowSaveDialog}
+        orgId={orgId}
+        currentEmployeeId={currentEmployee?.id}
+        currentEmployeeName={currentEmployee?.full_name}
+        filters={filters}
+        reportType={activeTab}
+      />
     </div>
     </ProtectedPage>
   );
