@@ -21,7 +21,8 @@ import {
   Users,
   Eye,
   Download,
-  MoreVertical
+  MoreVertical,
+  FileText
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -51,6 +52,7 @@ import { toast } from "sonner";
 import PageHeader from "@/components/ui/PageHeader";
 import EmptyState from "@/components/ui/EmptyState";
 import ReceiptDialog from "@/components/sales/ReceiptDialog";
+import InvoiceDialog from "@/components/sales/InvoiceDialog";
 
 export default function Sales() {
   const queryClient = useQueryClient();
@@ -66,6 +68,7 @@ export default function Sales() {
   const [selectedLocation, setSelectedLocation] = useState("");
   const [selectedCustomer, setSelectedCustomer] = useState(null);
   const [customerSearch, setCustomerSearch] = useState("");
+  const [showInvoice, setShowInvoice] = useState(false);
 
   const { data: user } = useQuery({
     queryKey: ['currentUser'],
@@ -678,6 +681,16 @@ export default function Sales() {
                       <Receipt className="w-4 h-4 mr-2" />
                       Checkout
                     </Button>
+                    {(saleType === 'warehouse' || selectedCustomer?.customer_type === 'business') && (
+                      <Button
+                        variant="outline"
+                        className="w-full border-[#0072C6] text-[#0072C6] hover:bg-[#0072C6]/10"
+                        onClick={() => setShowInvoice(true)}
+                      >
+                        <FileText className="w-4 h-4 mr-2" />
+                        Create Invoice (B2B)
+                      </Button>
+                    )}
                   </div>
                 )}
               </CardContent>
@@ -777,6 +790,31 @@ export default function Sales() {
         onOpenChange={setShowReceipt}
         sale={lastSale}
         organisation={organisation?.[0]}
+      />
+
+      {/* Invoice Dialog */}
+      <InvoiceDialog
+        open={showInvoice}
+        onOpenChange={setShowInvoice}
+        cart={cart}
+        cartTotal={cartTotal}
+        customer={selectedCustomer}
+        organisation={organisation?.[0]}
+        currentEmployee={currentEmployee}
+        onInvoiceCreated={async (saleData) => {
+          const fullSaleData = {
+            ...saleData,
+            organisation_id: orgId,
+            employee_id: currentEmployee?.id,
+            employee_name: currentEmployee?.full_name,
+            vehicle_id: saleType === 'vehicle' ? selectedLocation : null,
+            location: selectedLocationData?.name || ''
+          };
+          await base44.entities.Sale.create(fullSaleData);
+          queryClient.invalidateQueries({ queryKey: ['sales'] });
+          setCart([]);
+          setSelectedCustomer(null);
+        }}
       />
 
       {/* Checkout Dialog */}
