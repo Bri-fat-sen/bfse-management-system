@@ -24,7 +24,6 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Checkbox } from "@/components/ui/checkbox";
 import {
   Dialog,
   DialogContent,
@@ -70,7 +69,6 @@ export default function Locations() {
   const [selectedLocation, setSelectedLocation] = useState(null);
   const [locationToDelete, setLocationToDelete] = useState(null);
   const [locationType, setLocationType] = useState("warehouse");
-  const [allowedSaleTypes, setAllowedSaleTypes] = useState([]);
 
   const { data: user } = useQuery({
     queryKey: ['currentUser'],
@@ -679,6 +677,35 @@ export default function Locations() {
                     placeholder="e.g. 1000 units"
                     className="mt-1"
                   />
+                </div>
+                <div>
+                  <Label className="flex items-center gap-2">
+                    <ShoppingCart className="w-4 h-4" />
+                    Allowed Sale Types
+                  </Label>
+                  <p className="text-xs text-gray-500 mb-2">Select which types of sales can be made from this location</p>
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-2">
+                      <Checkbox 
+                        id="sale_type_retail" 
+                        name="sale_type_retail"
+                        defaultChecked={!editingLocation?.allowed_sale_types || editingLocation?.allowed_sale_types?.length === 0 || editingLocation?.allowed_sale_types?.includes('retail')}
+                      />
+                      <label htmlFor="sale_type_retail" className="text-sm flex items-center gap-2">
+                        <Store className="w-4 h-4 text-green-600" /> Retail (Store Sales)
+                      </label>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Checkbox 
+                        id="sale_type_warehouse" 
+                        name="sale_type_warehouse"
+                        defaultChecked={!editingLocation?.allowed_sale_types || editingLocation?.allowed_sale_types?.length === 0 || editingLocation?.allowed_sale_types?.includes('warehouse')}
+                      />
+                      <label htmlFor="sale_type_warehouse" className="text-sm flex items-center gap-2">
+                        <Warehouse className="w-4 h-4 text-blue-600" /> Wholesale
+                      </label>
+                    </div>
+                  </div>
                 </div>
               </>
             )}
