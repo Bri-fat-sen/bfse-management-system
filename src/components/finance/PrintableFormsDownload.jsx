@@ -431,6 +431,7 @@ const generateFormHTML = (formType, orgName) => {
       <div class="field-row" style="margin-top: 15px;">
         <div class="field"><label>Notes/Remarks</label><div class="field-input large"></div></div>
       </div>
+      </div>
     `,
     expense_fuel: `
       <div class="form-title-banner">Fuel Expense Form</div>
@@ -464,6 +465,7 @@ const generateFormHTML = (formType, orgName) => {
       </div>
       <div class="field-row">
         <div class="field"><label>Notes</label><div class="field-input large"></div></div>
+      </div>
       </div>
     `,
     expense_maintenance: `
@@ -501,6 +503,7 @@ const generateFormHTML = (formType, orgName) => {
       <div class="field-row">
         <div class="field"><label>Next Service Due (Date/Mileage)</label><div class="field-input"></div></div>
       </div>
+      </div>
     `,
     expense_salary: `
       <div class="form-title-banner">Salary / Wages Payment Form</div>
@@ -528,6 +531,7 @@ const generateFormHTML = (formType, orgName) => {
       </div>
       <div class="field-row" style="margin-top: 15px;">
         <div class="field"><label>Notes</label><div class="field-input large"></div></div>
+      </div>
       </div>
     `,
     expense_inventory: `
@@ -561,6 +565,7 @@ const generateFormHTML = (formType, orgName) => {
       <div class="field-row" style="margin-top: 15px;">
         <div class="field"><label>Received By</label><div class="field-input"></div></div>
         <div class="field"><label>Warehouse/Location</label><div class="field-input"></div></div>
+      </div>
       </div>
     `,
     revenue_sales: `
@@ -599,6 +604,7 @@ const generateFormHTML = (formType, orgName) => {
         <div class="checkbox-item"><span class="checkbox"></span> Mobile Money</div>
         <div class="checkbox-item"><span class="checkbox"></span> Card</div>
         <div class="checkbox-item"><span class="checkbox"></span> Credit</div>
+      </div>
       </div>
     `,
     revenue_transport: `
@@ -639,6 +645,7 @@ const generateFormHTML = (formType, orgName) => {
         <div class="checkbox-item"><span class="checkbox"></span> Partial: ____________</div>
         <div class="checkbox-item"><span class="checkbox"></span> Pending</div>
       </div>
+      </div>
     `,
     revenue_other: `
       <div class="form-title-banner">Other Income Form</div>
@@ -677,6 +684,7 @@ const generateFormHTML = (formType, orgName) => {
       </div>
       <div class="field-row" style="margin-top: 15px;">
         <div class="field"><label>Notes/Remarks</label><div class="field-input large"></div></div>
+      </div>
       </div>
     `
   };
