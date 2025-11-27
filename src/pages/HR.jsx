@@ -47,6 +47,7 @@ import PageHeader from "@/components/ui/PageHeader";
 import EmptyState from "@/components/ui/EmptyState";
 import StatCard from "@/components/ui/StatCard";
 import LoadingSpinner from "@/components/ui/LoadingSpinner";
+import usePageLoader from "@/components/ui/usePageLoader";
 import PayrollProcessDialog from "@/components/hr/PayrollProcessDialog";
 import PayslipGenerator from "@/components/hr/PayslipGenerator";
 import AddEmployeeDialog from "@/components/hr/AddEmployeeDialog";
@@ -170,8 +171,9 @@ export default function HR() {
     }
   };
 
-  // Show loading spinner while initial data loads
-  if (!orgId || isLoading) {
+  const showLoader = usePageLoader(!!orgId && !isLoading);
+
+  if (showLoader) {
     return (
       <ProtectedPage module="hr">
         <LoadingSpinner message="Loading HR..." subtitle="Fetching employee data" />
