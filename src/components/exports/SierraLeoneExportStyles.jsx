@@ -476,9 +476,6 @@ export const generateExportHTML = ({
   });
 
   const orgInitials = (organisation?.name || 'BFSE').split(' ').map(w => w[0]).join('').slice(0, 3);
-  const logoHtml = organisation?.logo_url 
-    ? `<img src="${organisation.logo_url}" alt="${organisation?.name || 'Logo'}" />`
-    : `<span>${orgInitials}</span>`;
 
   return `
     <!DOCTYPE html>
@@ -498,7 +495,7 @@ export const generateExportHTML = ({
           </div>
           
           <div class="header">
-            <div class="org-logo">${logoHtml}</div>
+            <div class="org-logo"><span>${orgInitials}</span></div>
             <div class="org-name">${organisation?.name || 'BRI-FAT-SEN Enterprise'}</div>
             <div class="tagline">Business Management System</div>
             <div class="address">
@@ -637,8 +634,20 @@ export const downloadHTML = (html, filename) => {
   URL.revokeObjectURL(url);
 };
 
-export const exportToCSV = (columns, rows, filename) => {
-  let csvContent = columns.join(',') + '\n';
+export const exportToCSV = (columns, rows, filename, organisation = null) => {
+  let csvContent = '';
+  
+  // Add organisation header if provided
+  if (organisation) {
+    csvContent += `"${organisation.name || 'Organisation'}"\n`;
+    if (organisation.address) csvContent += `"${organisation.address}${organisation.city ? ', ' + organisation.city : ''}"\n`;
+    if (organisation.phone) csvContent += `"Phone: ${organisation.phone}"\n`;
+    if (organisation.email) csvContent += `"Email: ${organisation.email}"\n`;
+    csvContent += `"Generated: ${new Date().toLocaleString('en-GB')}"\n`;
+    csvContent += '\n'; // Empty row before data
+  }
+  
+  csvContent += columns.join(',') + '\n';
   rows.forEach(row => {
     const rowData = Array.isArray(row) ? row : Object.values(row);
     csvContent += rowData.map(cell => `"${cell}"`).join(',') + '\n';
