@@ -17,6 +17,7 @@ import {
   Truck,
   Wrench,
   Fuel,
+  FileText,
   Printer
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -45,7 +46,7 @@ import PageHeader from "@/components/ui/PageHeader";
 import EmptyState from "@/components/ui/EmptyState";
 import StatCard from "@/components/ui/StatCard";
 import ReportGenerator from "@/components/finance/ReportGenerator";
-import PrintableForms from "@/components/finance/PrintableForms";
+import PrintableFormsDownload from "@/components/finance/PrintableFormsDownload";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart as RePieChart, Pie, Cell } from 'recharts';
 
 const expenseCategories = [
@@ -234,9 +235,8 @@ export default function Finance() {
         action={() => setShowExpenseDialog(true)}
         actionLabel="Add Expense"
       >
-        <Button
-          variant="outline"
-          size="sm"
+        <Button 
+          variant="outline" 
           onClick={() => setShowFormsDialog(true)}
           className="border-[#0072C6]/30 hover:border-[#0072C6] hover:bg-[#0072C6]/10 hover:text-[#0072C6]"
         >
@@ -679,7 +679,7 @@ export default function Finance() {
       </Dialog>
 
       {/* Printable Forms Dialog */}
-      <PrintableForms
+      <PrintableFormsDownload
         open={showFormsDialog}
         onOpenChange={setShowFormsDialog}
         organisation={organisation?.[0]}
