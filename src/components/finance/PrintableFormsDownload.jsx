@@ -338,6 +338,53 @@ const generateFormHTML = (formType, orgName) => {
         font-size: 8px;
       }
       
+      /* About Us & Terms Section */
+      .about-terms-section {
+        margin-top: 30px;
+        page-break-inside: avoid;
+      }
+      .about-us-box, .terms-box {
+        background: linear-gradient(to bottom, #f8f9fa, #fff);
+        border: 1px solid #e0e0e0;
+        border-radius: 8px;
+        padding: 15px;
+        margin-bottom: 15px;
+      }
+      .about-us-box {
+        border-left: 4px solid #1EB053;
+      }
+      .terms-box {
+        border-left: 4px solid #0072C6;
+      }
+      .about-us-box h3, .terms-box h3 {
+        margin: 0 0 10px 0;
+        font-size: 12px;
+        color: #0F1F3C;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+      .about-us-box h3::before { content: '🏢'; }
+      .terms-box h3::before { content: '📜'; }
+      .about-us-box p, .terms-box p {
+        margin: 0;
+        font-size: 10px;
+        color: #555;
+        line-height: 1.5;
+      }
+      .terms-box ol {
+        margin: 0;
+        padding-left: 20px;
+        font-size: 9px;
+        color: #555;
+        line-height: 1.6;
+      }
+      .terms-box li {
+        margin-bottom: 3px;
+      }
+      
       @media print { 
         body { padding: 0; }
         .sl-header-container { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
@@ -346,6 +393,7 @@ const generateFormHTML = (formType, orgName) => {
         th { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
         .total-row { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
         .sl-footer-flag { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+        .about-us-box, .terms-box { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
       }
     </style>
   `;
