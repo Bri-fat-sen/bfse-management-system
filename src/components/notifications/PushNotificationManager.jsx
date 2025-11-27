@@ -14,18 +14,23 @@ export function usePushNotifications(orgId, currentEmployee) {
   );
   const [lastChecked, setLastChecked] = useState(Date.now());
 
-  // Request permission on mount
+  // Update permission state on mount
   useEffect(() => {
-    if ('Notification' in window && Notification.permission === 'default') {
-      // Don't auto-request, wait for user action
+    if (typeof window !== 'undefined' && 'Notification' in window) {
+      setPermission(Notification.permission);
     }
   }, []);
 
   const requestPermission = async () => {
-    if ('Notification' in window) {
-      const result = await Notification.requestPermission();
-      setPermission(result);
-      return result === 'granted';
+    if (typeof window !== 'undefined' && 'Notification' in window) {
+      try {
+        const result = await Notification.requestPermission();
+        setPermission(result);
+        return result === 'granted';
+      } catch (e) {
+        console.warn('Notification permission request failed:', e);
+        return false;
+      }
     }
     return false;
   };
@@ -65,14 +70,18 @@ export function usePushNotifications(orgId, currentEmployee) {
 
   // Show browser notification
   const showNotification = (title, body, icon = '🔔') => {
-    if (permission === 'granted' && document.hidden) {
-      new Notification(title, {
-        body,
-        icon: '/icon-192.png',
-        badge: '/icon-192.png',
-        tag: title,
-        renotify: true
-      });
+    if (typeof window !== 'undefined' && 'Notification' in window && permission === 'granted' && document.hidden) {
+      try {
+        new Notification(title, {
+          body,
+          icon: '/icon-192.png',
+          badge: '/icon-192.png',
+          tag: title,
+          renotify: true
+        });
+      } catch (e) {
+        console.warn('Notification failed:', e);
+      }
     }
     
     // Also show in-app toast
