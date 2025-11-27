@@ -23,6 +23,10 @@ import {
 } from "@/components/ui/accordion";
 import { useToast } from "@/components/ui/use-toast";
 import PageHeader from "@/components/ui/PageHeader";
+import LoadingSpinner from "@/components/ui/LoadingSpinner";
+import usePageLoader from "@/components/ui/usePageLoader";
+import { base44 } from "@/api/base44Client";
+import { useQuery } from "@tanstack/react-query";
 
 const faqs = [
   {
@@ -62,6 +66,17 @@ const faqs = [
 export default function Support() {
   const { toast } = useToast();
   const [searchTerm, setSearchTerm] = useState("");
+
+  const { data: user } = useQuery({
+    queryKey: ['currentUser'],
+    queryFn: () => base44.auth.me(),
+  });
+
+  const showLoader = usePageLoader(!!user);
+
+  if (showLoader) {
+    return <LoadingSpinner message="Loading Support..." subtitle="Getting help resources ready" />;
+  }
 
   const filteredFaqs = faqs.filter(faq => 
     faq.question.toLowerCase().includes(searchTerm.toLowerCase()) ||

@@ -30,6 +30,8 @@ import { Progress } from "@/components/ui/progress";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import PageHeader from "@/components/ui/PageHeader";
 import StatCard from "@/components/ui/StatCard";
+import LoadingSpinner from "@/components/ui/LoadingSpinner";
+import usePageLoader from "@/components/ui/usePageLoader";
 import QuickClockIn from "@/components/mobile/QuickClockIn";
 
 export default function EmployeeDashboard() {
@@ -38,7 +40,7 @@ export default function EmployeeDashboard() {
     queryFn: () => base44.auth.me(),
   });
 
-  const { data: employee } = useQuery({
+  const { data: employee, isLoading: loadingEmployee } = useQuery({
     queryKey: ['employee', user?.email],
     queryFn: () => base44.entities.Employee.filter({ user_email: user?.email }),
     enabled: !!user?.email,
@@ -46,6 +48,12 @@ export default function EmployeeDashboard() {
 
   const currentEmployee = employee?.[0];
   const orgId = currentEmployee?.organisation_id;
+
+  const showLoader = usePageLoader(!!user && !loadingEmployee);
+
+  if (showLoader) {
+    return <LoadingSpinner message="Loading Employee Portal..." subtitle="Preparing your dashboard" />;
+  }
 
   const { data: organisation } = useQuery({
     queryKey: ['organisation', orgId],
