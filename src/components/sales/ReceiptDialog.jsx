@@ -303,11 +303,15 @@ export default function ReceiptDialog({ open, onOpenChange, sale, organisation }
     }
     setSending(true);
     try {
-      await base44.functions.invoke('sendReceipt', {
-        sale: sale,
-        customerEmail: emailTo,
-        customerName: sale?.customer_name,
-        organisation: organisation
+      const receiptHTML = getReceiptHTML();
+      await base44.functions.invoke('sendEmailMailersend', {
+        to: emailTo,
+        toName: sale?.customer_name || 'Customer',
+        subject: `Receipt - ${sale?.sale_number} from ${organisation?.name || 'BFSE'}`,
+        htmlContent: receiptHTML,
+        textContent: `Thank you for your purchase!\n\nReceipt: ${sale?.sale_number}\nTotal: SLE ${sale?.total_amount?.toLocaleString()}\nPayment: ${sale?.payment_method}\n\nThank you for your patronage!`,
+        fromName: organisation?.name || 'BFSE Management System',
+        replyTo: organisation?.email
       });
       toast({ 
         title: "Email sent successfully", 
