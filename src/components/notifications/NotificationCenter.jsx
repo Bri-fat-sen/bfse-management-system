@@ -71,7 +71,7 @@ export default function NotificationCenter({ orgId, currentEmployee }) {
   // Request notification permission on mount
   useEffect(() => {
     if (typeof window !== 'undefined' && 'Notification' in window && Notification.permission === 'default') {
-      Notification.requestPermission().catch(() => {});
+      Notification.requestPermission();
     }
   }, []);
 
@@ -93,7 +93,7 @@ export default function NotificationCenter({ orgId, currentEmployee }) {
             tag: n.id
           });
         } catch (e) {
-          console.warn('Notification failed:', e);
+          // Ignore notification errors
         }
       });
     }
