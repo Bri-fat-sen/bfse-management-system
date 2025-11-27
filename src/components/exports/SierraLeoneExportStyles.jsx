@@ -65,8 +65,8 @@ export const getSierraLeoneStyles = () => `
     filter: drop-shadow(0 2px 4px rgba(0,0,0,0.2));
   }
   .header .org-logo {
-    width: 60px;
-    height: 60px;
+    width: 70px;
+    height: 70px;
     background: white;
     border-radius: 12px;
     display: flex;
@@ -74,6 +74,13 @@ export const getSierraLeoneStyles = () => `
     justify-content: center;
     margin-bottom: 12px;
     box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    overflow: hidden;
+    padding: 6px;
+  }
+  .header .org-logo img {
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain;
   }
   .header .org-logo span {
     font-size: 24px;
