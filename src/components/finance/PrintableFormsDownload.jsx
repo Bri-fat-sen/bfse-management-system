@@ -182,7 +182,12 @@ const FORM_TEMPLATES = [
 
 const generateFormHTML = (formType, org) => {
   const today = new Date().toLocaleDateString('en-GB');
-  const orgName = org?.name;
+  const orgName = org?.name || 'Organisation Name';
+  const orgAddress = org?.address || '';
+  const orgCity = org?.city || '';
+  const orgPhone = org?.phone || '';
+  const orgEmail = org?.email || '';
+  const orgOwner = org?.owner_name || '';
   
   const commonStyles = `
     <style>
