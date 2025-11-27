@@ -24,7 +24,6 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Checkbox } from "@/components/ui/checkbox";
 import {
   Dialog,
   DialogContent,
@@ -70,7 +69,6 @@ export default function Locations() {
   const [selectedLocation, setSelectedLocation] = useState(null);
   const [locationToDelete, setLocationToDelete] = useState(null);
   const [locationType, setLocationType] = useState("warehouse");
-  const [allowedSaleTypes, setAllowedSaleTypes] = useState([]);
 
   const { data: user } = useQuery({
     queryKey: ['currentUser'],
@@ -243,6 +241,11 @@ export default function Locations() {
         createVehicleMutation.mutate(vehicleData);
       }
     } else {
+      // Build allowed_sale_types array from checkboxes
+      const allowedSaleTypes = [];
+      if (formData.get('sale_type_retail') === 'on') allowedSaleTypes.push('retail');
+      if (formData.get('sale_type_warehouse') === 'on') allowedSaleTypes.push('warehouse');
+      
       const warehouseData = {
         organisation_id: orgId,
         name: formData.get('name'),
@@ -301,14 +304,12 @@ export default function Locations() {
   const openAddLocation = (type) => {
     setLocationType(type);
     setEditingLocation(null);
-    setAllowedSaleTypes(['retail', 'warehouse']); // Default to both
     setShowLocationDialog(true);
   };
 
   const openEditLocation = (location, type) => {
     setLocationType(type);
     setEditingLocation(location);
-    setAllowedSaleTypes(location.allowed_sale_types || ['retail', 'warehouse']);
     setShowLocationDialog(true);
   };
 
@@ -464,12 +465,30 @@ export default function Locations() {
             </div>
           )}
 
-          <Badge 
-            variant={location.is_active !== false && location.status !== 'inactive' ? 'outline' : 'secondary'}
-            className="mt-3"
-          >
-            {location.is_active !== false && location.status !== 'inactive' ? 'Active' : 'Inactive'}
-          </Badge>
+          <div className="flex flex-wrap gap-2 mt-3">
+            <Badge 
+              variant={location.is_active !== false && location.status !== 'inactive' ? 'outline' : 'secondary'}
+            >
+              {location.is_active !== false && location.status !== 'inactive' ? 'Active' : 'Inactive'}
+            </Badge>
+            {type !== 'vehicle' && location.allowed_sale_types?.length > 0 && (
+              <>
+                {location.allowed_sale_types.includes('retail') && (
+                  <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
+                    <Store className="w-3 h-3 mr-1" /> Retail
+                  </Badge>
+                )}
+                {location.allowed_sale_types.includes('warehouse') && (
+                  <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
+                    <Warehouse className="w-3 h-3 mr-1" /> Wholesale
+                  </Badge>
+                )}
+              </>
+            )}
+            {type !== 'vehicle' && (!location.allowed_sale_types || location.allowed_sale_types.length === 0) && (
+              <Badge variant="outline" className="bg-gray-50 text-gray-600">All Sales</Badge>
+            )}
+          </div>
         </CardContent>
       </Card>
     );
@@ -682,6 +701,35 @@ export default function Locations() {
                     placeholder="e.g. 1000 units"
                     className="mt-1"
                   />
+                </div>
+                <div>
+                  <Label className="flex items-center gap-2">
+                    <ShoppingCart className="w-4 h-4" />
+                    Allowed Sale Types
+                  </Label>
+                  <p className="text-xs text-gray-500 mb-2">Select which types of sales can be made from this location</p>
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-2">
+                      <Checkbox 
+                        id="sale_type_retail" 
+                        name="sale_type_retail"
+                        defaultChecked={!editingLocation?.allowed_sale_types || editingLocation?.allowed_sale_types?.length === 0 || editingLocation?.allowed_sale_types?.includes('retail')}
+                      />
+                      <label htmlFor="sale_type_retail" className="text-sm flex items-center gap-2">
+                        <Store className="w-4 h-4 text-green-600" /> Retail (Store Sales)
+                      </label>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Checkbox 
+                        id="sale_type_warehouse" 
+                        name="sale_type_warehouse"
+                        defaultChecked={!editingLocation?.allowed_sale_types || editingLocation?.allowed_sale_types?.length === 0 || editingLocation?.allowed_sale_types?.includes('warehouse')}
+                      />
+                      <label htmlFor="sale_type_warehouse" className="text-sm flex items-center gap-2">
+                        <Warehouse className="w-4 h-4 text-blue-600" /> Wholesale
+                      </label>
+                    </div>
+                  </div>
                 </div>
               </>
             )}
