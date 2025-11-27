@@ -40,6 +40,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import PageHeader from "@/components/ui/PageHeader";
 import StatCard from "@/components/ui/StatCard";
+import LoadingSpinner from "@/components/ui/LoadingSpinner";
 import AdvancedFilters from "@/components/analytics/AdvancedFilters";
 import PredictiveAnalytics from "@/components/analytics/PredictiveAnalytics";
 import SavedReportsManager from "@/components/analytics/SavedReportsManager";
@@ -362,25 +363,7 @@ export default function Reports() {
   if (isLoading) {
     return (
       <ProtectedPage module="finance">
-        <div className="min-h-[60vh] flex flex-col items-center justify-center">
-          <div className="relative">
-            {/* Sierra Leone themed loading spinner */}
-            <div className="w-20 h-20 relative">
-              <div className="absolute inset-0 rounded-full border-4 border-gray-200"></div>
-              <div className="absolute inset-0 rounded-full border-4 border-transparent border-t-[#1EB053] animate-spin"></div>
-              <div className="absolute inset-2 rounded-full border-4 border-transparent border-t-white animate-spin" style={{ animationDuration: '1.5s', animationDirection: 'reverse' }}></div>
-              <div className="absolute inset-4 rounded-full border-4 border-transparent border-t-[#0072C6] animate-spin" style={{ animationDuration: '2s' }}></div>
-            </div>
-            {/* Flag colors at bottom */}
-            <div className="flex h-1 w-20 rounded-full overflow-hidden mt-4">
-              <div className="flex-1 bg-[#1EB053]"></div>
-              <div className="flex-1 bg-white border-y border-gray-200"></div>
-              <div className="flex-1 bg-[#0072C6]"></div>
-            </div>
-          </div>
-          <p className="mt-6 text-gray-600 font-medium">Loading Reports...</p>
-          <p className="text-sm text-gray-400 mt-1">Fetching your business data</p>
-        </div>
+        <LoadingSpinner message="Loading Reports..." subtitle="Fetching your business data" />
       </ProtectedPage>
     );
   }
