@@ -304,15 +304,20 @@ export default function ReceiptDialog({ open, onOpenChange, sale, organisation }
     setSending(true);
     try {
       const receiptHTML = getReceiptHTML();
-      await base44.functions.invoke('sendEmailMailersend', {
+      const response = await base44.functions.invoke('sendEmailMailersend', {
         to: emailTo,
         toName: sale?.customer_name || 'Customer',
-        subject: `Receipt - ${sale?.sale_number} from ${organisation?.name || 'BFSE'}`,
+        subject: `Receipt - ${sale?.sale_number} from ${organisation?.name || 'Our Company'}`,
         htmlContent: receiptHTML,
         textContent: `Thank you for your purchase!\n\nReceipt: ${sale?.sale_number}\nTotal: SLE ${sale?.total_amount?.toLocaleString()}\nPayment: ${sale?.payment_method}\n\nThank you for your patronage!`,
-        fromName: organisation?.name || 'BFSE Management System',
+        fromName: organisation?.name || 'Our Company',
         replyTo: organisation?.email
       });
+      
+      if (response.data?.error) {
+        throw new Error(response.data.error);
+      }
+      
       toast({ 
         title: "Email sent successfully", 
         description: `Receipt sent to ${emailTo}` 
@@ -320,7 +325,8 @@ export default function ReceiptDialog({ open, onOpenChange, sale, organisation }
       setShowEmailInput(false);
       setEmailTo("");
     } catch (error) {
-      toast({ title: "Failed to send email", description: error.message, variant: "destructive" });
+      console.error('Email error:', error);
+      toast({ title: "Failed to send email", description: error.message || "Please try again", variant: "destructive" });
     }
     setSending(false);
   };
