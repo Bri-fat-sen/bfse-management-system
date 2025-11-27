@@ -21,7 +21,8 @@ import {
   Save,
   LayoutGrid,
   Eye,
-  EyeOff
+  EyeOff,
+  FileSpreadsheet
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -54,6 +55,14 @@ import {
 } from "@/components/charts/AdvancedCharts";
 import SaveReportDialog from "@/components/reports/SaveReportDialog";
 import { SalesCharts, ExpenseCharts, TransportCharts, ProfitLossChart } from "@/components/reports/ReportCharts";
+import { 
+  printSalesReport, 
+  printExpenseReport, 
+  printTransportReport, 
+  printInventoryReport,
+  printProfitLossReport,
+  exportReportCSV 
+} from "@/components/reports/ReportPrintExport";
 
 const COLORS = SL_COLORS.chart;
 
@@ -274,7 +283,68 @@ export default function Reports() {
   }, [salesAnalytics, transportAnalytics, expenseAnalytics]);
 
   const handlePrint = () => {
-    window.print();
+    const org = organisation?.[0];
+    
+    switch(activeTab) {
+      case 'sales':
+        printSalesReport({ 
+          salesAnalytics, 
+          filters, 
+          organisation: org,
+          filteredSales 
+        });
+        break;
+      case 'expenses':
+        printExpenseReport({ 
+          expenseAnalytics, 
+          filters, 
+          organisation: org,
+          filteredExpenses 
+        });
+        break;
+      case 'transport':
+        printTransportReport({ 
+          transportAnalytics, 
+          filters, 
+          organisation: org,
+          filteredTrips 
+        });
+        break;
+      case 'inventory':
+        printInventoryReport({ 
+          products, 
+          organisation: org 
+        });
+        break;
+      default:
+        printProfitLossReport({
+          profitLoss,
+          salesAnalytics,
+          transportAnalytics,
+          expenseAnalytics,
+          filters,
+          organisation: org
+        });
+    }
+  };
+
+  const handleExportCSV = () => {
+    const org = organisation?.[0];
+    
+    switch(activeTab) {
+      case 'sales':
+        exportReportCSV({ type: 'sales', data: filteredSales, organisation: org });
+        break;
+      case 'expenses':
+        exportReportCSV({ type: 'expenses', data: filteredExpenses, organisation: org });
+        break;
+      case 'transport':
+        exportReportCSV({ type: 'transport', data: filteredTrips, organisation: org });
+        break;
+      case 'inventory':
+        exportReportCSV({ type: 'inventory', data: products, organisation: org });
+        break;
+    }
   };
 
   const handleLoadSavedReport = (report) => {
@@ -306,11 +376,15 @@ export default function Reports() {
             onClick={() => setShowSaveDialog(true)}
           >
             <Save className="w-4 h-4 mr-2" />
-            Save Report
+            Save
           </Button>
-          <Button variant="outline" size="sm" onClick={handlePrint}>
+          <Button variant="outline" size="sm" onClick={handleExportCSV}>
+            <FileSpreadsheet className="w-4 h-4 mr-2" />
+            CSV
+          </Button>
+          <Button onClick={handlePrint} className="bg-[#1EB053] hover:bg-[#178f43]" size="sm">
             <Printer className="w-4 h-4 mr-2" />
-            Print
+            Print Report
           </Button>
         </div>
       </PageHeader>
