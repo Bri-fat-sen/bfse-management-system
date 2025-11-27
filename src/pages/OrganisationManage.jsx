@@ -330,6 +330,10 @@ export default function OrganisationManage() {
             <Building2 className="w-4 h-4" />
             General
           </TabsTrigger>
+          <TabsTrigger value="registrations" className="flex items-center gap-2 text-xs sm:text-sm px-4 py-2.5 rounded-lg data-[state=active]:bg-white data-[state=active]:shadow-sm data-[state=active]:text-[#0F1F3C]">
+            <FileText className="w-4 h-4" />
+            Registrations
+          </TabsTrigger>
           <TabsTrigger value="branding" className="flex items-center gap-2 text-xs sm:text-sm px-4 py-2.5 rounded-lg data-[state=active]:bg-white data-[state=active]:shadow-sm data-[state=active]:text-[#0F1F3C]">
             <Palette className="w-4 h-4" />
             Branding
