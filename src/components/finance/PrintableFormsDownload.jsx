@@ -380,6 +380,25 @@ const generateFormHTML = (formType, orgName) => {
       <p>This form is for manual record keeping. Please enter data into the system when ready.</p>
       <p class="form-id">Form ID: ${formType.toUpperCase()}-${Date.now().toString(36).toUpperCase()}</p>
     </div>
+    
+    <div class="about-terms-section">
+      <div class="about-us-box">
+        <h3>About Us</h3>
+        <p><strong>${orgName || 'Organisation Name'}</strong> is committed to providing excellent services and maintaining the highest standards of business operations in Sierra Leone. We value transparency, integrity, and accountability in all our financial transactions and record-keeping practices.</p>
+      </div>
+      <div class="terms-box">
+        <h3>Terms & Conditions</h3>
+        <ol>
+          <li>All information provided on this form must be accurate and complete.</li>
+          <li>This form serves as an official record and should be retained for audit purposes.</li>
+          <li>Falsification of records is a serious offense and may result in disciplinary action.</li>
+          <li>All financial transactions must comply with company policies and Sierra Leone regulations.</li>
+          <li>Original receipts and supporting documents must be attached where applicable.</li>
+          <li>Approval signatures are required before processing any financial transaction.</li>
+          <li>The organisation reserves the right to verify all information provided.</li>
+        </ol>
+      </div>
+    </div>
   `;
 
   const signatureSection = `
