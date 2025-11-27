@@ -55,6 +55,7 @@ import { Toaster } from "sonner";
 import InstallPrompt from "@/components/pwa/InstallPrompt";
 import ChatPanel from "@/components/communication/ChatPanel";
 import { ChatNotificationProvider } from "@/components/communication/ChatNotificationManager";
+import { AlertChecker } from "@/components/notifications/PushNotificationManager";
 
 const menuSections = [
   {
@@ -518,6 +519,9 @@ export default function Layout({ children, currentPageName }) {
 
                     {/* PWA Install Prompt */}
                     <InstallPrompt />
+
+                    {/* Push Notification Alert Checker */}
+                    <AlertChecker orgId={orgId} currentEmployee={currentEmployee} />
 
                     {/* Chat Panel with Notification Provider */}
                     <ChatNotificationProvider>
