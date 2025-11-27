@@ -267,37 +267,27 @@ export default function Layout({ children, currentPageName }) {
         {/* Logo */}
         <div className="h-16 flex items-center justify-between px-4 border-b border-white/10">
           {sidebarOpen ? (
-              <div className="flex items-center gap-2 min-w-0 flex-1">
-                {currentOrg?.logo_url ? (
-                  <img 
-                    src={currentOrg.logo_url} 
-                    alt={currentOrg.name} 
-                    className="w-10 h-10 object-contain flex-shrink-0"
-                  />
-                ) : (
-                  <div className="w-10 h-10 rounded-xl overflow-hidden flex flex-col shadow-lg flex-shrink-0">
-                    <div className="flex-1 bg-[#1EB053]" />
-                    <div className="flex-1 bg-white" />
-                    <div className="flex-1 bg-[#0072C6]" />
-                  </div>
-                )}
-                <p className="font-bold text-xs text-white leading-tight line-clamp-2 min-w-0">{currentOrg?.name || 'Loading...'}</p>
-              </div>
-            ) : (
-              currentOrg?.logo_url ? (
-                <img 
-                  src={currentOrg.logo_url} 
-                  alt={currentOrg.name} 
-                  className="w-10 h-10 object-contain mx-auto"
-                />
-              ) : (
-                <div className="w-10 h-10 rounded-xl overflow-hidden flex flex-col mx-auto shadow-lg">
-                  <div className="flex-1 bg-[#1EB053]" />
-                  <div className="flex-1 bg-white" />
-                  <div className="flex-1 bg-[#0072C6]" />
-                </div>
-              )
-            )}
+                              <div className="flex items-center gap-2 min-w-0 flex-1">
+                                {currentOrg?.logo_url && (
+                                  <img 
+                                    src={currentOrg.logo_url} 
+                                    alt={currentOrg.name} 
+                                    className="w-10 h-10 object-contain flex-shrink-0"
+                                  />
+                                )}
+                                <p className="font-bold text-xs text-white leading-tight line-clamp-2 min-w-0">{currentOrg?.name || 'Loading...'}</p>
+                              </div>
+                            ) : (
+                              currentOrg?.logo_url ? (
+                                <img 
+                                  src={currentOrg.logo_url} 
+                                  alt={currentOrg.name} 
+                                  className="w-10 h-10 object-contain mx-auto"
+                                />
+                              ) : (
+                                <p className="font-bold text-xs text-white text-center">{currentOrg?.name?.charAt(0) || '?'}</p>
+                              )
+                            )}
           <Button
             variant="ghost"
             size="icon"
