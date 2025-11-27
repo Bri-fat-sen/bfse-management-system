@@ -14,7 +14,7 @@ export function usePushNotifications(orgId, currentEmployee) {
   );
   const [lastChecked, setLastChecked] = useState(Date.now());
 
-  // Update permission state on mount
+  // Check permission on mount (safely)
   useEffect(() => {
     if (typeof window !== 'undefined' && 'Notification' in window) {
       setPermission(Notification.permission);
@@ -23,14 +23,9 @@ export function usePushNotifications(orgId, currentEmployee) {
 
   const requestPermission = async () => {
     if (typeof window !== 'undefined' && 'Notification' in window) {
-      try {
-        const result = await Notification.requestPermission();
-        setPermission(result);
-        return result === 'granted';
-      } catch (e) {
-        console.warn('Notification permission request failed:', e);
-        return false;
-      }
+      const result = await Notification.requestPermission();
+      setPermission(result);
+      return result === 'granted';
     }
     return false;
   };
@@ -80,7 +75,7 @@ export function usePushNotifications(orgId, currentEmployee) {
           renotify: true
         });
       } catch (e) {
-        console.warn('Notification failed:', e);
+        // Ignore notification errors
       }
     }
     
