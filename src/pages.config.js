@@ -20,6 +20,9 @@ import Locations from './pages/Locations';
 import HRAnalytics from './pages/HRAnalytics';
 import CRM from './pages/CRM';
 import WorkSchedules from './pages/WorkSchedules';
+import Landing from './pages/Landing';
+import Privacy from './pages/Privacy';
+import Terms from './pages/Terms';
 import __Layout from './Layout.jsx';
 
 
@@ -46,6 +49,9 @@ export const PAGES = {
     "HRAnalytics": HRAnalytics,
     "CRM": CRM,
     "WorkSchedules": WorkSchedules,
+    "Landing": Landing,
+    "Privacy": Privacy,
+    "Terms": Terms,
 }
 
 export const pagesConfig = {
