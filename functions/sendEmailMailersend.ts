@@ -24,7 +24,7 @@ Deno.serve(async (req) => {
     const emailPayload = {
       from: {
         email: "noreply@trial-z86org8jxd0lew13.mlsender.net",
-        name: fromName || "BFSE Management System"
+        name: fromName || "Business Management"
       },
       to: Array.isArray(to) 
         ? to.map((email, i) => ({ email, name: Array.isArray(toName) ? toName[i] : toName || email }))

@@ -174,8 +174,8 @@ export default function ReceiptDialog({ open, onOpenChange, sale, organisation }
             </div>
             
             <div class="header">
-              <div class="logo">🇸🇱 ${organisation?.name || 'BFSE'}</div>
-              <div class="tagline">Business Management System</div>
+              <div class="logo">${organisation?.logo_url ? `<img src="${organisation.logo_url}" style="max-height: 40px; margin-bottom: 8px;" />` : '🇸🇱'} ${organisation?.name || 'Our Company'}</div>
+              <div class="tagline">${organisation?.city || 'Sierra Leone'}</div>
               <div class="address">
                 ${organisation?.address || 'Freetown'}, Sierra Leone<br>
                 Tel: ${organisation?.phone || '+232 XX XXX XXX'}

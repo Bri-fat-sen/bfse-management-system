@@ -82,14 +82,16 @@ export default function SendEmailDialog({
     setIsSending(true);
     try {
       // Build HTML content with organisation branding
+      const primaryColor = organisation?.primary_color || '#1EB053';
+      const secondaryColor = organisation?.secondary_color || '#0072C6';
       const htmlContent = `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-          <div style="background: linear-gradient(135deg, #1EB053 0%, #0072C6 100%); padding: 20px; text-align: center;">
+          <div style="background: linear-gradient(135deg, ${primaryColor} 0%, ${secondaryColor} 100%); padding: 20px; text-align: center;">
             ${organisation?.logo_url 
               ? `<img src="${organisation.logo_url}" alt="${organisation.name}" style="max-height: 60px; margin-bottom: 10px;" />`
               : ''
             }
-            <h2 style="color: white; margin: 0;">${organisation?.name || 'BFSE Management System'}</h2>
+            <h2 style="color: white; margin: 0;">${organisation?.name || 'Our Company'}</h2>
           </div>
           <div style="padding: 30px; background: #f9f9f9;">
             <div style="background: white; padding: 25px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
@@ -98,9 +100,10 @@ export default function SendEmailDialog({
           </div>
           <div style="background: #0F1F3C; padding: 20px; text-align: center;">
             <p style="color: rgba(255,255,255,0.7); margin: 0; font-size: 12px;">
-              ${organisation?.address ? `${organisation.address}, ` : ''}${organisation?.city || 'Freetown'}, Sierra Leone
+              ${organisation?.address ? `${organisation.address}, ` : ''}${organisation?.city || ''}, ${organisation?.country || 'Sierra Leone'}
             </p>
             ${organisation?.phone ? `<p style="color: rgba(255,255,255,0.7); margin: 5px 0 0; font-size: 12px;">Tel: ${organisation.phone}</p>` : ''}
+            ${organisation?.email ? `<p style="color: rgba(255,255,255,0.7); margin: 5px 0 0; font-size: 12px;">${organisation.email}</p>` : ''}
           </div>
         </div>
       `;
