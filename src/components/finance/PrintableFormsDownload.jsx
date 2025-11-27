@@ -518,12 +518,11 @@ const generateFormHTML = (formType, org) => {
   const header = `
     <div class="sl-header-container">
       <div class="sl-header-inner">
-        ${org?.logo_url ? `<img src="${org.logo_url}" alt="${orgName}" style="height: 50px; object-fit: contain; background: rgba(255,255,255,0.1); border-radius: 6px; padding: 4px;" />` : `
         <div class="sl-flag-icon">
           <div class="green"></div>
           <div class="white"></div>
           <div class="blue"></div>
-        </div>`}
+        </div>
         <div class="sl-header-text">
           <h1>${orgName}</h1>
           <p>Sierra Leone • Date Printed: ${today}</p>
