@@ -110,7 +110,7 @@ export default function InvoiceDialog({
           <div class="invoice">
             <div class="header">
               <div class="company">
-                <h1>🇸🇱 ${organisation?.name || 'BFSE'}</h1>
+                <h1>${organisation?.logo_url ? `<img src="${organisation.logo_url}" style="max-height: 50px; margin-bottom: 8px;" />` : '🇸🇱'} ${organisation?.name || 'Our Company'}</h1>
                 <p>${organisation?.address || 'Freetown'}, Sierra Leone</p>
                 <p>Tel: ${organisation?.phone || '+232 XX XXX XXX'}</p>
                 ${organisation?.email ? `<p>Email: ${organisation.email}</p>` : ''}
@@ -236,19 +236,24 @@ export default function InvoiceDialog({
 
     setIsSending(true);
     try {
-      await base44.functions.invoke('sendEmailMailersend', {
+      const response = await base44.functions.invoke('sendEmailMailersend', {
         to: invoiceData.customer_email,
         toName: invoiceData.customer_name,
-        subject: `Invoice ${invoiceNumber} from ${organisation?.name || 'BFSE'} - Payment Due ${format(dueDate, 'dd MMM yyyy')}`,
+        subject: `Invoice ${invoiceNumber} from ${organisation?.name || 'Our Company'} - Payment Due ${format(dueDate, 'dd MMM yyyy')}`,
         htmlContent: getInvoiceHTML(),
         textContent: `Invoice ${invoiceNumber}\n\nDear ${invoiceData.customer_name},\n\nPlease find attached your invoice for SLE ${totalWithTax.toLocaleString()}.\n\nPayment Due: ${format(dueDate, 'dd MMMM yyyy')}\n\nThank you for your business!`,
-        fromName: organisation?.name || 'BFSE Management System',
+        fromName: organisation?.name || 'Our Company',
         replyTo: organisation?.email
       });
       
+      if (response.data?.error) {
+        throw new Error(response.data.error);
+      }
+      
       toast.success("Invoice sent!", { description: `Sent to ${invoiceData.customer_email}` });
     } catch (error) {
-      toast.error("Failed to send invoice", { description: error.message });
+      console.error('Email error:', error);
+      toast.error("Failed to send invoice", { description: error.message || "Please try again" });
     }
     setIsSending(false);
   };
