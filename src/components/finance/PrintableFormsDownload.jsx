@@ -590,10 +590,10 @@ const generateFormHTML = (formType, orgName) => {
       </div>
     `,
     expense_maintenance: `
-      <div class="form-title-banner">Vehicle Maintenance Expense Form</div>
+      <div class="form-title-banner">Maintenance Expense Form</div>
       <div class="form-content">
       <div class="field-row">
-        <div class="field"><label>Date Performed</label><div class="field-input"></div></div>
+        <div class="field"><label>Date</label><div class="field-input"></div></div>
         <div class="field"><label>Vehicle Registration</label><div class="field-input"></div></div>
         <div class="field"><label>Current Mileage</label><div class="field-input"></div></div>
       </div>
@@ -615,7 +615,7 @@ const generateFormHTML = (formType, orgName) => {
         <div class="checkbox-item"><span class="checkbox"></span> Scheduled Service</div>
         <div class="checkbox-item"><span class="checkbox"></span> Other: ____________</div>
       </div>
-      <div class="section-title">Category</div>
+      <div class="section-title">Service Category</div>
       <div class="checkbox-group">
         <div class="checkbox-item"><span class="checkbox"></span> Scheduled</div>
         <div class="checkbox-item"><span class="checkbox"></span> Unscheduled</div>
@@ -628,15 +628,15 @@ const generateFormHTML = (formType, orgName) => {
         <tr><td>&nbsp;</td><td></td><td></td><td></td></tr>
         <tr><td>&nbsp;</td><td></td><td></td><td></td></tr>
         <tr><td>Labour Cost</td><td>-</td><td>-</td><td></td></tr>
-        <tr class="total-row"><td colspan="3">TOTAL COST</td><td></td></tr>
+        <tr class="total-row"><td colspan="3">TOTAL AMOUNT</td><td></td></tr>
       </table>
       <div class="field-row">
         <div class="field"><label>Vendor/Mechanic</label><div class="field-input"></div></div>
         <div class="field"><label>Vendor Contact</label><div class="field-input"></div></div>
       </div>
       <div class="field-row">
-        <div class="field"><label>Next Service Due Date</label><div class="field-input"></div></div>
-        <div class="field"><label>Next Service Due Mileage</label><div class="field-input"></div></div>
+        <div class="field"><label>Next Due Date</label><div class="field-input"></div></div>
+        <div class="field"><label>Next Due Mileage</label><div class="field-input"></div></div>
       </div>
       <div class="field-row">
         <div class="field"><label>Performed By</label><div class="field-input"></div></div>
@@ -649,37 +649,31 @@ const generateFormHTML = (formType, orgName) => {
       <div class="form-content">
       <div class="field-row">
         <div class="field"><label>Date</label><div class="field-input"></div></div>
-        <div class="field"><label>Bill Reference No.</label><div class="field-input"></div></div>
-        <div class="field"><label>Billing Period</label><div class="field-input"></div></div>
+        <div class="field"><label>Bill Period (From - To)</label><div class="field-input"></div></div>
       </div>
       <div class="section-title">Utility Type (Check One)</div>
       <div class="checkbox-group">
         <div class="checkbox-item"><span class="checkbox"></span> Electricity (EDSA)</div>
         <div class="checkbox-item"><span class="checkbox"></span> Water (Guma Valley)</div>
         <div class="checkbox-item"><span class="checkbox"></span> Internet/WiFi</div>
-        <div class="checkbox-item"><span class="checkbox"></span> Phone/Mobile</div>
+        <div class="checkbox-item"><span class="checkbox"></span> Phone/Airtime</div>
         <div class="checkbox-item"><span class="checkbox"></span> Generator Fuel</div>
         <div class="checkbox-item"><span class="checkbox"></span> Other: ____________</div>
       </div>
-      <div class="section-title">Payment Details</div>
+      <div class="section-title">Bill Details</div>
       <table>
-        <tr><th>Description</th><th>Previous Reading</th><th>Current Reading</th><th>Amount (Le)</th></tr>
+        <tr><th>Description</th><th>Meter Reading</th><th>Units Used</th><th>Amount (Le)</th></tr>
         <tr><td>&nbsp;</td><td></td><td></td><td></td></tr>
-        <tr><td>VAT/Tax</td><td>-</td><td>-</td><td></td></tr>
+        <tr><td>&nbsp;</td><td></td><td></td><td></td></tr>
         <tr class="total-row"><td colspan="3">TOTAL AMOUNT</td><td></td></tr>
       </table>
       <div class="field-row">
-        <div class="field"><label>Service Provider</label><div class="field-input"></div></div>
-        <div class="field"><label>Account Number</label><div class="field-input"></div></div>
+        <div class="field"><label>Account/Meter Number</label><div class="field-input"></div></div>
+        <div class="field"><label>Receipt Number</label><div class="field-input"></div></div>
       </div>
-      <div class="section-title">Payment Method</div>
-      <div class="checkbox-group">
-        <div class="checkbox-item"><span class="checkbox"></span> Cash</div>
-        <div class="checkbox-item"><span class="checkbox"></span> Bank Transfer</div>
-        <div class="checkbox-item"><span class="checkbox"></span> Mobile Money</div>
-      </div>
-      <div class="field-row" style="margin-top: 15px;">
-        <div class="field"><label>Notes</label><div class="field-input large"></div></div>
+      <div class="field-row">
+        <div class="field"><label>Location/Premises</label><div class="field-input"></div></div>
+        <div class="field"><label>Payment Method</label><div class="field-input"></div></div>
       </div>
       </div>
     `,
@@ -688,36 +682,33 @@ const generateFormHTML = (formType, orgName) => {
       <div class="form-content">
       <div class="field-row">
         <div class="field"><label>Date</label><div class="field-input"></div></div>
-        <div class="field"><label>Vendor/Supplier</label><div class="field-input"></div></div>
-        <div class="field"><label>Receipt/Invoice No.</label><div class="field-input"></div></div>
+        <div class="field"><label>Supplier Name</label><div class="field-input"></div></div>
+        <div class="field"><label>Invoice/Receipt No.</label><div class="field-input"></div></div>
       </div>
-      <div class="section-title">Supply Type (Check One)</div>
+      <div class="section-title">Supply Category (Check One)</div>
       <div class="checkbox-group">
         <div class="checkbox-item"><span class="checkbox"></span> Office Supplies</div>
         <div class="checkbox-item"><span class="checkbox"></span> Cleaning Supplies</div>
         <div class="checkbox-item"><span class="checkbox"></span> Stationery</div>
-        <div class="checkbox-item"><span class="checkbox"></span> Safety Equipment</div>
-        <div class="checkbox-item"><span class="checkbox"></span> Tools</div>
+        <div class="checkbox-item"><span class="checkbox"></span> Equipment</div>
+        <div class="checkbox-item"><span class="checkbox"></span> Safety/PPE</div>
         <div class="checkbox-item"><span class="checkbox"></span> Other: ____________</div>
       </div>
       <div class="section-title">Items Purchased</div>
       <table>
-        <tr><th>Item Description</th><th>Qty</th><th>Unit Price (Le)</th><th>Total (Le)</th></tr>
-        <tr><td>&nbsp;</td><td></td><td></td><td></td></tr>
-        <tr><td>&nbsp;</td><td></td><td></td><td></td></tr>
-        <tr><td>&nbsp;</td><td></td><td></td><td></td></tr>
-        <tr><td>&nbsp;</td><td></td><td></td><td></td></tr>
-        <tr class="total-row"><td colspan="3">TOTAL AMOUNT</td><td></td></tr>
+        <tr><th>Item Description</th><th>Qty</th><th>Unit</th><th>Unit Price (Le)</th><th>Total (Le)</th></tr>
+        <tr><td>&nbsp;</td><td></td><td></td><td></td><td></td></tr>
+        <tr><td>&nbsp;</td><td></td><td></td><td></td><td></td></tr>
+        <tr><td>&nbsp;</td><td></td><td></td><td></td><td></td></tr>
+        <tr><td>&nbsp;</td><td></td><td></td><td></td><td></td></tr>
+        <tr class="total-row"><td colspan="4">TOTAL AMOUNT</td><td></td></tr>
       </table>
       <div class="section-title">Payment Method</div>
       <div class="checkbox-group">
         <div class="checkbox-item"><span class="checkbox"></span> Cash</div>
         <div class="checkbox-item"><span class="checkbox"></span> Bank Transfer</div>
         <div class="checkbox-item"><span class="checkbox"></span> Mobile Money</div>
-      </div>
-      <div class="field-row" style="margin-top: 15px;">
-        <div class="field"><label>Received By</label><div class="field-input"></div></div>
-        <div class="field"><label>Location/Department</label><div class="field-input"></div></div>
+        <div class="checkbox-item"><span class="checkbox"></span> Credit</div>
       </div>
       </div>
     `,
@@ -725,42 +716,32 @@ const generateFormHTML = (formType, orgName) => {
       <div class="form-title-banner">Rent Expense Form</div>
       <div class="form-content">
       <div class="field-row">
-        <div class="field"><label>Payment Date</label><div class="field-input"></div></div>
-        <div class="field"><label>Rental Period</label><div class="field-input"></div></div>
+        <div class="field"><label>Date Paid</label><div class="field-input"></div></div>
+        <div class="field"><label>Rent Period (Month/Year)</label><div class="field-input"></div></div>
       </div>
       <div class="section-title">Property Type (Check One)</div>
       <div class="checkbox-group">
         <div class="checkbox-item"><span class="checkbox"></span> Office Space</div>
         <div class="checkbox-item"><span class="checkbox"></span> Warehouse</div>
-        <div class="checkbox-item"><span class="checkbox"></span> Shop/Retail</div>
+        <div class="checkbox-item"><span class="checkbox"></span> Shop/Retail Space</div>
         <div class="checkbox-item"><span class="checkbox"></span> Parking Space</div>
-        <div class="checkbox-item"><span class="checkbox"></span> Land</div>
+        <div class="checkbox-item"><span class="checkbox"></span> Staff Quarters</div>
         <div class="checkbox-item"><span class="checkbox"></span> Other: ____________</div>
       </div>
-      <div class="section-title">Rental Details</div>
+      <div class="section-title">Rent Details</div>
       <table>
-        <tr><th>Description</th><th>Amount (Le)</th></tr>
-        <tr><td>Monthly Rent</td><td></td></tr>
-        <tr><td>Service Charge</td><td></td></tr>
-        <tr><td>Security Deposit</td><td></td></tr>
-        <tr><td>Other Charges: ____________</td><td></td></tr>
-        <tr class="total-row"><td>TOTAL AMOUNT</td><td></td></tr>
+        <tr><th>Property/Location</th><th>Address</th><th>Monthly Rent (Le)</th></tr>
+        <tr><td>&nbsp;</td><td></td><td></td></tr>
+        <tr><td>&nbsp;</td><td></td><td></td></tr>
+        <tr class="total-row"><td colspan="2">TOTAL RENT</td><td></td></tr>
       </table>
       <div class="field-row">
         <div class="field"><label>Landlord Name</label><div class="field-input"></div></div>
         <div class="field"><label>Landlord Contact</label><div class="field-input"></div></div>
       </div>
       <div class="field-row">
-        <div class="field"><label>Property Address</label><div class="field-input large"></div></div>
-      </div>
-      <div class="section-title">Payment Method</div>
-      <div class="checkbox-group">
-        <div class="checkbox-item"><span class="checkbox"></span> Cash</div>
-        <div class="checkbox-item"><span class="checkbox"></span> Bank Transfer</div>
-        <div class="checkbox-item"><span class="checkbox"></span> Cheque</div>
-      </div>
-      <div class="field-row" style="margin-top: 15px;">
         <div class="field"><label>Receipt Number</label><div class="field-input"></div></div>
+        <div class="field"><label>Payment Method</label><div class="field-input"></div></div>
       </div>
       </div>
     `,
@@ -799,15 +780,14 @@ const generateFormHTML = (formType, orgName) => {
       <div class="field-row">
         <div class="field"><label>Date</label><div class="field-input"></div></div>
         <div class="field"><label>Employee Name</label><div class="field-input"></div></div>
-        <div class="field"><label>Department</label><div class="field-input"></div></div>
       </div>
       <div class="section-title">Transport Type (Check One)</div>
       <div class="checkbox-group">
-        <div class="checkbox-item"><span class="checkbox"></span> Local Travel</div>
-        <div class="checkbox-item"><span class="checkbox"></span> Inter-city Travel</div>
+        <div class="checkbox-item"><span class="checkbox"></span> Staff Transport</div>
+        <div class="checkbox-item"><span class="checkbox"></span> Business Trip</div>
+        <div class="checkbox-item"><span class="checkbox"></span> Delivery</div>
         <div class="checkbox-item"><span class="checkbox"></span> Taxi/Okada</div>
-        <div class="checkbox-item"><span class="checkbox"></span> Bus Fare</div>
-        <div class="checkbox-item"><span class="checkbox"></span> Fuel Reimbursement</div>
+        <div class="checkbox-item"><span class="checkbox"></span> Poda-Poda</div>
         <div class="checkbox-item"><span class="checkbox"></span> Other: ____________</div>
       </div>
       <div class="section-title">Trip Details</div>
@@ -818,14 +798,9 @@ const generateFormHTML = (formType, orgName) => {
         <tr><td>&nbsp;</td><td></td><td></td><td></td></tr>
         <tr class="total-row"><td colspan="3">TOTAL AMOUNT</td><td></td></tr>
       </table>
-      <div class="section-title">Payment Method</div>
-      <div class="checkbox-group">
-        <div class="checkbox-item"><span class="checkbox"></span> Cash Advance</div>
-        <div class="checkbox-item"><span class="checkbox"></span> Reimbursement</div>
-        <div class="checkbox-item"><span class="checkbox"></span> Company Vehicle</div>
-      </div>
-      <div class="field-row" style="margin-top: 15px;">
-        <div class="field"><label>Notes</label><div class="field-input large"></div></div>
+      <div class="field-row">
+        <div class="field"><label>Receipt Number (if any)</label><div class="field-input"></div></div>
+        <div class="field"><label>Approved By</label><div class="field-input"></div></div>
       </div>
       </div>
     `,
@@ -834,16 +809,16 @@ const generateFormHTML = (formType, orgName) => {
       <div class="form-content">
       <div class="field-row">
         <div class="field"><label>Date</label><div class="field-input"></div></div>
-        <div class="field"><label>Campaign/Project Name</label><div class="field-input"></div></div>
+        <div class="field"><label>Campaign/Event Name</label><div class="field-input"></div></div>
       </div>
-      <div class="section-title">Marketing Type (Check All That Apply)</div>
+      <div class="section-title">Marketing Type (Check One)</div>
       <div class="checkbox-group">
-        <div class="checkbox-item"><span class="checkbox"></span> Print Advertising</div>
-        <div class="checkbox-item"><span class="checkbox"></span> Radio/TV</div>
+        <div class="checkbox-item"><span class="checkbox"></span> Radio/TV Advertisement</div>
+        <div class="checkbox-item"><span class="checkbox"></span> Print (Flyers/Posters)</div>
         <div class="checkbox-item"><span class="checkbox"></span> Social Media</div>
-        <div class="checkbox-item"><span class="checkbox"></span> Signage/Banners</div>
+        <div class="checkbox-item"><span class="checkbox"></span> Event/Sponsorship</div>
         <div class="checkbox-item"><span class="checkbox"></span> Promotional Items</div>
-        <div class="checkbox-item"><span class="checkbox"></span> Events/Sponsorship</div>
+        <div class="checkbox-item"><span class="checkbox"></span> Billboard/Signage</div>
         <div class="checkbox-item"><span class="checkbox"></span> Other: ____________</div>
       </div>
       <div class="section-title">Expense Details</div>
@@ -854,14 +829,8 @@ const generateFormHTML = (formType, orgName) => {
         <tr><td>&nbsp;</td><td></td><td></td><td></td></tr>
         <tr class="total-row"><td colspan="3">TOTAL AMOUNT</td><td></td></tr>
       </table>
-      <div class="section-title">Payment Method</div>
-      <div class="checkbox-group">
-        <div class="checkbox-item"><span class="checkbox"></span> Cash</div>
-        <div class="checkbox-item"><span class="checkbox"></span> Bank Transfer</div>
-        <div class="checkbox-item"><span class="checkbox"></span> Mobile Money</div>
-      </div>
-      <div class="field-row" style="margin-top: 15px;">
-        <div class="field"><label>Notes/Expected Results</label><div class="field-input large"></div></div>
+      <div class="field-row">
+        <div class="field"><label>Expected Reach/Outcome</label><div class="field-input large"></div></div>
       </div>
       </div>
     `,
@@ -869,35 +838,33 @@ const generateFormHTML = (formType, orgName) => {
       <div class="form-title-banner">Insurance Expense Form</div>
       <div class="form-content">
       <div class="field-row">
-        <div class="field"><label>Payment Date</label><div class="field-input"></div></div>
+        <div class="field"><label>Date Paid</label><div class="field-input"></div></div>
         <div class="field"><label>Policy Number</label><div class="field-input"></div></div>
       </div>
       <div class="section-title">Insurance Type (Check One)</div>
       <div class="checkbox-group">
         <div class="checkbox-item"><span class="checkbox"></span> Vehicle Insurance</div>
         <div class="checkbox-item"><span class="checkbox"></span> Property Insurance</div>
-        <div class="checkbox-item"><span class="checkbox"></span> Liability Insurance</div>
-        <div class="checkbox-item"><span class="checkbox"></span> Health Insurance</div>
+        <div class="checkbox-item"><span class="checkbox"></span> Business Insurance</div>
+        <div class="checkbox-item"><span class="checkbox"></span> Employee Insurance</div>
         <div class="checkbox-item"><span class="checkbox"></span> Cargo Insurance</div>
         <div class="checkbox-item"><span class="checkbox"></span> Other: ____________</div>
       </div>
       <div class="section-title">Policy Details</div>
       <table>
-        <tr><th>Description</th><th>Coverage Period</th><th>Premium (Le)</th></tr>
+        <tr><th>Item/Vehicle Insured</th><th>Coverage Period</th><th>Premium (Le)</th></tr>
         <tr><td>&nbsp;</td><td></td><td></td></tr>
-        <tr><td>Processing Fee</td><td>-</td><td></td></tr>
-        <tr class="total-row"><td colspan="2">TOTAL AMOUNT</td><td></td></tr>
+        <tr><td>&nbsp;</td><td></td><td></td></tr>
+        <tr><td>&nbsp;</td><td></td><td></td></tr>
+        <tr class="total-row"><td colspan="2">TOTAL PREMIUM</td><td></td></tr>
       </table>
       <div class="field-row">
         <div class="field"><label>Insurance Company</label><div class="field-input"></div></div>
-        <div class="field"><label>Agent/Broker Name</label><div class="field-input"></div></div>
+        <div class="field"><label>Agent/Broker</label><div class="field-input"></div></div>
       </div>
       <div class="field-row">
-        <div class="field"><label>Coverage Start Date</label><div class="field-input"></div></div>
-        <div class="field"><label>Coverage End Date</label><div class="field-input"></div></div>
-      </div>
-      <div class="field-row">
-        <div class="field"><label>Asset/Vehicle Covered</label><div class="field-input large"></div></div>
+        <div class="field"><label>Expiry Date</label><div class="field-input"></div></div>
+        <div class="field"><label>Receipt Number</label><div class="field-input"></div></div>
       </div>
       </div>
     `,
@@ -906,39 +873,26 @@ const generateFormHTML = (formType, orgName) => {
       <div class="form-content">
       <div class="field-row">
         <div class="field"><label>Date</label><div class="field-input"></div></div>
-        <div class="field"><label>Voucher Number</label><div class="field-input"></div></div>
         <div class="field"><label>Requested By</label><div class="field-input"></div></div>
       </div>
-      <div class="section-title">Expense Category (Check One)</div>
-      <div class="checkbox-group">
-        <div class="checkbox-item"><span class="checkbox"></span> Tea/Refreshments</div>
-        <div class="checkbox-item"><span class="checkbox"></span> Transport (local)</div>
-        <div class="checkbox-item"><span class="checkbox"></span> Stationery</div>
-        <div class="checkbox-item"><span class="checkbox"></span> Cleaning</div>
-        <div class="checkbox-item"><span class="checkbox"></span> Photocopying</div>
-        <div class="checkbox-item"><span class="checkbox"></span> Minor Repairs</div>
-        <div class="checkbox-item"><span class="checkbox"></span> Tips/Gratuity</div>
-        <div class="checkbox-item"><span class="checkbox"></span> Other: ____________</div>
+      <div class="field-row">
+        <div class="field"><label>Opening Balance (Le)</label><div class="field-input"></div></div>
+        <div class="field"><label>Closing Balance (Le)</label><div class="field-input"></div></div>
       </div>
-      <div class="section-title">Expense Details</div>
+      <div class="section-title">Expense Items</div>
       <table>
-        <tr><th>Description</th><th>Amount (Le)</th></tr>
-        <tr><td>&nbsp;</td><td></td></tr>
-        <tr><td>&nbsp;</td><td></td></tr>
-        <tr><td>&nbsp;</td><td></td></tr>
-        <tr><td>&nbsp;</td><td></td></tr>
-        <tr class="total-row"><td>TOTAL AMOUNT</td><td></td></tr>
+        <tr><th>Date</th><th>Description</th><th>Category</th><th>Amount (Le)</th><th>Receipt #</th></tr>
+        <tr><td>&nbsp;</td><td></td><td></td><td></td><td></td></tr>
+        <tr><td>&nbsp;</td><td></td><td></td><td></td><td></td></tr>
+        <tr><td>&nbsp;</td><td></td><td></td><td></td><td></td></tr>
+        <tr><td>&nbsp;</td><td></td><td></td><td></td><td></td></tr>
+        <tr><td>&nbsp;</td><td></td><td></td><td></td><td></td></tr>
+        <tr><td>&nbsp;</td><td></td><td></td><td></td><td></td></tr>
+        <tr class="total-row"><td colspan="3">TOTAL SPENT</td><td></td><td></td></tr>
       </table>
       <div class="field-row">
-        <div class="field"><label>Receipt Attached?</label>
-          <div class="checkbox-group" style="margin-top: 5px;">
-            <div class="checkbox-item"><span class="checkbox"></span> Yes</div>
-            <div class="checkbox-item"><span class="checkbox"></span> No (Reason: ____________)</div>
-          </div>
-        </div>
-      </div>
-      <div class="field-row" style="margin-top: 15px;">
-        <div class="field"><label>Notes</label><div class="field-input large"></div></div>
+        <div class="field"><label>Replenishment Needed (Le)</label><div class="field-input"></div></div>
+        <div class="field"><label>Approved By</label><div class="field-input"></div></div>
       </div>
       </div>
     `,
@@ -946,37 +900,34 @@ const generateFormHTML = (formType, orgName) => {
       <div class="form-title-banner">Truck Contract Expense Form</div>
       <div class="form-content">
       <div class="field-row">
-        <div class="field"><label>Date</label><div class="field-input"></div></div>
         <div class="field"><label>Contract Number</label><div class="field-input"></div></div>
-        <div class="field"><label>Vehicle Registration</label><div class="field-input"></div></div>
+        <div class="field"><label>Contract Date</label><div class="field-input"></div></div>
+        <div class="field"><label>Delivery Date</label><div class="field-input"></div></div>
       </div>
       <div class="field-row">
+        <div class="field"><label>Vehicle Registration</label><div class="field-input"></div></div>
         <div class="field"><label>Driver Name</label><div class="field-input"></div></div>
-        <div class="field"><label>Route (From - To)</label><div class="field-input"></div></div>
       </div>
-      <div class="section-title">Expense Category (Based on TruckContract)</div>
+      <div class="field-row">
+        <div class="field"><label>Pickup Location</label><div class="field-input"></div></div>
+        <div class="field"><label>Delivery Location</label><div class="field-input"></div></div>
+      </div>
+      <div class="section-title">Contract Expenses</div>
       <table>
-        <tr><th>Category</th><th>Description</th><th>Amount (Le)</th></tr>
-        <tr><td><span class="checkbox"></span> Fuel</td><td></td><td></td></tr>
-        <tr><td><span class="checkbox"></span> Tolls</td><td></td><td></td></tr>
-        <tr><td><span class="checkbox"></span> Loading</td><td></td><td></td></tr>
-        <tr><td><span class="checkbox"></span> Unloading</td><td></td><td></td></tr>
-        <tr><td><span class="checkbox"></span> Repairs</td><td></td><td></td></tr>
-        <tr><td><span class="checkbox"></span> Food</td><td></td><td></td></tr>
-        <tr><td><span class="checkbox"></span> Accommodation</td><td></td><td></td></tr>
-        <tr><td><span class="checkbox"></span> Other</td><td></td><td></td></tr>
+        <tr><th>Expense Category</th><th>Description</th><th>Amount (Le)</th></tr>
+        <tr><td><div class="checkbox-group"><div class="checkbox-item"><span class="checkbox"></span> Fuel</div></div></td><td></td><td></td></tr>
+        <tr><td><div class="checkbox-group"><div class="checkbox-item"><span class="checkbox"></span> Tolls</div></div></td><td></td><td></td></tr>
+        <tr><td><div class="checkbox-group"><div class="checkbox-item"><span class="checkbox"></span> Loading</div></div></td><td></td><td></td></tr>
+        <tr><td><div class="checkbox-group"><div class="checkbox-item"><span class="checkbox"></span> Unloading</div></div></td><td></td><td></td></tr>
+        <tr><td><div class="checkbox-group"><div class="checkbox-item"><span class="checkbox"></span> Repairs</div></div></td><td></td><td></td></tr>
+        <tr><td><div class="checkbox-group"><div class="checkbox-item"><span class="checkbox"></span> Food</div></div></td><td></td><td></td></tr>
+        <tr><td><div class="checkbox-group"><div class="checkbox-item"><span class="checkbox"></span> Accommodation</div></div></td><td></td><td></td></tr>
+        <tr><td><div class="checkbox-group"><div class="checkbox-item"><span class="checkbox"></span> Other</div></div></td><td></td><td></td></tr>
         <tr class="total-row"><td colspan="2">TOTAL EXPENSES</td><td></td></tr>
       </table>
       <div class="field-row">
-        <div class="field"><label>Receipts Collected</label>
-          <div class="checkbox-group" style="margin-top: 5px;">
-            <div class="checkbox-item"><span class="checkbox"></span> All receipts attached</div>
-            <div class="checkbox-item"><span class="checkbox"></span> Some missing (List: ____________)</div>
-          </div>
-        </div>
-      </div>
-      <div class="field-row" style="margin-top: 15px;">
-        <div class="field"><label>Notes</label><div class="field-input large"></div></div>
+        <div class="field"><label>Contract Amount (Le)</label><div class="field-input"></div></div>
+        <div class="field"><label>Net Revenue (Le)</label><div class="field-input"></div></div>
       </div>
       </div>
     `,
@@ -990,11 +941,11 @@ const generateFormHTML = (formType, orgName) => {
       </div>
       <div class="section-title">Expense Category</div>
       <div class="checkbox-group">
+        <div class="checkbox-item"><span class="checkbox"></span> Office Supplies</div>
         <div class="checkbox-item"><span class="checkbox"></span> Communication</div>
-        <div class="checkbox-item"><span class="checkbox"></span> Food/Entertainment</div>
-        <div class="checkbox-item"><span class="checkbox"></span> Training</div>
-        <div class="checkbox-item"><span class="checkbox"></span> Licenses/Permits</div>
-        <div class="checkbox-item"><span class="checkbox"></span> Bank Charges</div>
+        <div class="checkbox-item"><span class="checkbox"></span> Food/Refreshments</div>
+        <div class="checkbox-item"><span class="checkbox"></span> Repairs</div>
+        <div class="checkbox-item"><span class="checkbox"></span> Subscriptions</div>
         <div class="checkbox-item"><span class="checkbox"></span> Other: ____________</div>
       </div>
       <div class="section-title">Expense Details</div>
@@ -1025,13 +976,13 @@ const generateFormHTML = (formType, orgName) => {
       <div class="form-content">
       <div class="field-row">
         <div class="field"><label>Date</label><div class="field-input"></div></div>
-        <div class="field"><label>Sales Person</label><div class="field-input"></div></div>
         <div class="field"><label>Receipt Number</label><div class="field-input"></div></div>
+        <div class="field"><label>Sales Person</label><div class="field-input"></div></div>
       </div>
       <div class="field-row">
         <div class="field"><label>Customer Name</label><div class="field-input"></div></div>
         <div class="field"><label>Customer Phone</label><div class="field-input"></div></div>
-        <div class="field"><label>Location/Store</label><div class="field-input"></div></div>
+        <div class="field"><label>Location</label><div class="field-input"></div></div>
       </div>
       <div class="section-title">Items Sold</div>
       <table>
@@ -1053,12 +1004,6 @@ const generateFormHTML = (formType, orgName) => {
         <div class="checkbox-item"><span class="checkbox"></span> Card</div>
         <div class="checkbox-item"><span class="checkbox"></span> Credit</div>
       </div>
-      <div class="section-title">Payment Status</div>
-      <div class="checkbox-group">
-        <div class="checkbox-item"><span class="checkbox"></span> Paid</div>
-        <div class="checkbox-item"><span class="checkbox"></span> Pending</div>
-        <div class="checkbox-item"><span class="checkbox"></span> Partial (Amount Paid: ____________)</div>
-      </div>
       </div>
     `,
     revenue_warehouse_sales: `
@@ -1067,11 +1012,15 @@ const generateFormHTML = (formType, orgName) => {
       <div class="field-row">
         <div class="field"><label>Date</label><div class="field-input"></div></div>
         <div class="field"><label>Invoice Number</label><div class="field-input"></div></div>
-        <div class="field"><label>Warehouse</label><div class="field-input"></div></div>
+        <div class="field"><label>Sales Person</label><div class="field-input"></div></div>
       </div>
       <div class="field-row">
         <div class="field"><label>Customer/Business Name</label><div class="field-input"></div></div>
         <div class="field"><label>Customer Phone</label><div class="field-input"></div></div>
+      </div>
+      <div class="field-row">
+        <div class="field"><label>Warehouse Location</label><div class="field-input"></div></div>
+        <div class="field"><label>Delivery Address</label><div class="field-input"></div></div>
       </div>
       <div class="section-title">Items Sold (Wholesale)</div>
       <table>
@@ -1080,39 +1029,35 @@ const generateFormHTML = (formType, orgName) => {
         <tr><td>&nbsp;</td><td></td><td></td><td></td><td></td></tr>
         <tr><td>&nbsp;</td><td></td><td></td><td></td><td></td></tr>
         <tr><td>&nbsp;</td><td></td><td></td><td></td><td></td></tr>
+        <tr><td>&nbsp;</td><td></td><td></td><td></td><td></td></tr>
         <tr><td colspan="4">Subtotal</td><td></td></tr>
-        <tr><td colspan="4">Discount</td><td></td></tr>
+        <tr><td colspan="4">Bulk Discount</td><td></td></tr>
         <tr class="total-row"><td colspan="4">TOTAL AMOUNT</td><td></td></tr>
       </table>
-      <div class="section-title">Payment Terms</div>
+      <div class="section-title">Payment Status</div>
       <div class="checkbox-group">
-        <div class="checkbox-item"><span class="checkbox"></span> Cash on Delivery</div>
-        <div class="checkbox-item"><span class="checkbox"></span> 7 Days Credit</div>
-        <div class="checkbox-item"><span class="checkbox"></span> 14 Days Credit</div>
-        <div class="checkbox-item"><span class="checkbox"></span> 30 Days Credit</div>
-        <div class="checkbox-item"><span class="checkbox"></span> Advance Payment</div>
-      </div>
-      <div class="section-title">Delivery</div>
-      <div class="field-row">
-        <div class="field"><label>Delivery Address</label><div class="field-input"></div></div>
-        <div class="field"><label>Delivery Date</label><div class="field-input"></div></div>
+        <div class="checkbox-item"><span class="checkbox"></span> Paid in Full</div>
+        <div class="checkbox-item"><span class="checkbox"></span> Partial: ____________</div>
+        <div class="checkbox-item"><span class="checkbox"></span> Credit (Due: ____________)</div>
       </div>
       </div>
     `,
     revenue_vehicle_sales: `
-      <div class="form-title-banner">Vehicle Sales Form</div>
+      <div class="form-title-banner">Vehicle Sales Revenue Form</div>
       <div class="form-content">
       <div class="field-row">
         <div class="field"><label>Date</label><div class="field-input"></div></div>
-        <div class="field"><label>Vehicle Registration</label><div class="field-input"></div></div>
-        <div class="field"><label>Driver/Seller Name</label><div class="field-input"></div></div>
+        <div class="field"><label>Receipt Number</label><div class="field-input"></div></div>
       </div>
       <div class="field-row">
-        <div class="field"><label>Location/Area</label><div class="field-input"></div></div>
-        <div class="field"><label>Customer Name</label><div class="field-input"></div></div>
-        <div class="field"><label>Customer Phone</label><div class="field-input"></div></div>
+        <div class="field"><label>Vehicle Registration</label><div class="field-input"></div></div>
+        <div class="field"><label>Driver/Salesperson</label><div class="field-input"></div></div>
       </div>
-      <div class="section-title">Products Sold from Vehicle</div>
+      <div class="field-row">
+        <div class="field"><label>Sale Location/Route</label><div class="field-input"></div></div>
+        <div class="field"><label>Customer Name</label><div class="field-input"></div></div>
+      </div>
+      <div class="section-title">Items Sold from Vehicle</div>
       <table>
         <tr><th>Product Name</th><th>Qty</th><th>Unit Price (Le)</th><th>Total (Le)</th></tr>
         <tr><td>&nbsp;</td><td></td><td></td><td></td></tr>
@@ -1120,9 +1065,7 @@ const generateFormHTML = (formType, orgName) => {
         <tr><td>&nbsp;</td><td></td><td></td><td></td></tr>
         <tr><td>&nbsp;</td><td></td><td></td><td></td></tr>
         <tr><td>&nbsp;</td><td></td><td></td><td></td></tr>
-        <tr><td colspan="3">Subtotal</td><td></td></tr>
-        <tr><td colspan="3">Discount</td><td></td></tr>
-        <tr class="total-row"><td colspan="3">TOTAL AMOUNT</td><td></td></tr>
+        <tr class="total-row"><td colspan="3">TOTAL SALES</td><td></td></tr>
       </table>
       <div class="section-title">Payment Method</div>
       <div class="checkbox-group">
@@ -1137,15 +1080,20 @@ const generateFormHTML = (formType, orgName) => {
       <div class="form-content">
       <div class="field-row">
         <div class="field"><label>Date</label><div class="field-input"></div></div>
+        <div class="field"><label>Trip Number</label><div class="field-input"></div></div>
+      </div>
+      <div class="field-row">
         <div class="field"><label>Vehicle Registration</label><div class="field-input"></div></div>
         <div class="field"><label>Driver Name</label><div class="field-input"></div></div>
       </div>
       <div class="field-row">
         <div class="field"><label>Route Name</label><div class="field-input"></div></div>
+      </div>
+      <div class="field-row">
         <div class="field"><label>Start Time</label><div class="field-input"></div></div>
         <div class="field"><label>End Time</label><div class="field-input"></div></div>
       </div>
-      <div class="section-title">Trip Revenue Details (Based on Trip Entity)</div>
+      <div class="section-title">Trip Revenue</div>
       <table>
         <tr><th>Description</th><th>Amount (Le)</th></tr>
         <tr><td>Number of Passengers</td><td></td></tr>
@@ -1158,12 +1106,6 @@ const generateFormHTML = (formType, orgName) => {
         <tr><td>Fuel Cost</td><td></td></tr>
         <tr><td>Other Expenses</td><td></td></tr>
         <tr><td><strong>Total Expenses</strong></td><td></td></tr>
-      </table>
-      <div class="section-title">Summary</div>
-      <table>
-        <tr><th>Description</th><th>Amount (Le)</th></tr>
-        <tr><td>Total Revenue</td><td></td></tr>
-        <tr><td>Total Expenses</td><td></td></tr>
         <tr class="total-row"><td>NET REVENUE</td><td></td></tr>
       </table>
       <div class="section-title">Trip Status</div>
@@ -1182,16 +1124,18 @@ const generateFormHTML = (formType, orgName) => {
       <div class="form-title-banner">Truck Contract Revenue Form</div>
       <div class="form-content">
       <div class="field-row">
-        <div class="field"><label>Contract Date</label><div class="field-input"></div></div>
         <div class="field"><label>Contract Number</label><div class="field-input"></div></div>
-        <div class="field"><label>Vehicle Registration</label><div class="field-input"></div></div>
+        <div class="field"><label>Contract Date</label><div class="field-input"></div></div>
+        <div class="field"><label>Delivery Date</label><div class="field-input"></div></div>
       </div>
       <div class="field-row">
+        <div class="field"><label>Vehicle Registration</label><div class="field-input"></div></div>
         <div class="field"><label>Driver Name</label><div class="field-input"></div></div>
+      </div>
+      <div class="field-row">
         <div class="field"><label>Client Name</label><div class="field-input"></div></div>
         <div class="field"><label>Client Phone</label><div class="field-input"></div></div>
       </div>
-      <div class="section-title">Contract Details (Based on TruckContract Entity)</div>
       <div class="field-row">
         <div class="field"><label>Pickup Location</label><div class="field-input"></div></div>
         <div class="field"><label>Delivery Location</label><div class="field-input"></div></div>
@@ -1199,30 +1143,23 @@ const generateFormHTML = (formType, orgName) => {
       <div class="field-row">
         <div class="field"><label>Cargo Description</label><div class="field-input"></div></div>
         <div class="field"><label>Cargo Weight (kg)</label><div class="field-input"></div></div>
-        <div class="field"><label>Delivery Date</label><div class="field-input"></div></div>
       </div>
-      <div class="section-title">Financial Summary</div>
+      <div class="section-title">Contract Financial Summary</div>
       <table>
         <tr><th>Description</th><th>Amount (Le)</th></tr>
         <tr><td><strong>Contract Amount</strong></td><td></td></tr>
+        <tr><td>Less: Fuel</td><td></td></tr>
+        <tr><td>Less: Tolls</td><td></td></tr>
+        <tr><td>Less: Loading</td><td></td></tr>
+        <tr><td>Less: Unloading</td><td></td></tr>
+        <tr><td>Less: Repairs</td><td></td></tr>
+        <tr><td>Less: Food</td><td></td></tr>
+        <tr><td>Less: Accommodation</td><td></td></tr>
+        <tr><td>Less: Other</td><td></td></tr>
+        <tr><td><strong>Total Expenses</strong></td><td></td></tr>
+        <tr class="total-row"><td>NET REVENUE</td><td></td></tr>
       </table>
-      <div class="section-title">Contract Expenses</div>
-      <table>
-        <tr><th>Category</th><th>Description</th><th>Amount (Le)</th></tr>
-        <tr><td>Fuel</td><td></td><td></td></tr>
-        <tr><td>Tolls</td><td></td><td></td></tr>
-        <tr><td>Loading</td><td></td><td></td></tr>
-        <tr><td>Unloading</td><td></td><td></td></tr>
-        <tr><td>Repairs</td><td></td><td></td></tr>
-        <tr><td>Food</td><td></td><td></td></tr>
-        <tr><td>Accommodation</td><td></td><td></td></tr>
-        <tr><td>Other</td><td></td><td></td></tr>
-        <tr><td colspan="2"><strong>Total Expenses</strong></td><td></td></tr>
-      </table>
-      <table style="margin-top: 10px;">
-        <tr class="total-row"><td>NET REVENUE (Contract - Expenses)</td><td style="width: 150px;"></td></tr>
-      </table>
-      <div class="section-title">Status</div>
+      <div class="section-title">Contract Status</div>
       <div class="checkbox-group">
         <div class="checkbox-item"><span class="checkbox"></span> Pending</div>
         <div class="checkbox-item"><span class="checkbox"></span> In Progress</div>
@@ -1232,11 +1169,8 @@ const generateFormHTML = (formType, orgName) => {
       <div class="section-title">Payment Status</div>
       <div class="checkbox-group">
         <div class="checkbox-item"><span class="checkbox"></span> Unpaid</div>
-        <div class="checkbox-item"><span class="checkbox"></span> Partial (Amount: ____________)</div>
-        <div class="checkbox-item"><span class="checkbox"></span> Paid</div>
-      </div>
-      <div class="field-row" style="margin-top: 15px;">
-        <div class="field"><label>Notes</label><div class="field-input large"></div></div>
+        <div class="checkbox-item"><span class="checkbox"></span> Partial: ____________</div>
+        <div class="checkbox-item"><span class="checkbox"></span> Paid in Full</div>
       </div>
       </div>
     `,
@@ -1254,6 +1188,7 @@ const generateFormHTML = (formType, orgName) => {
         <div class="checkbox-item"><span class="checkbox"></span> Commission</div>
         <div class="checkbox-item"><span class="checkbox"></span> Interest</div>
         <div class="checkbox-item"><span class="checkbox"></span> Refund</div>
+        <div class="checkbox-item"><span class="checkbox"></span> Insurance Claim</div>
         <div class="checkbox-item"><span class="checkbox"></span> Asset Sale</div>
         <div class="checkbox-item"><span class="checkbox"></span> Other: ____________</div>
       </div>
