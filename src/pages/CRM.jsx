@@ -15,6 +15,7 @@ import {
 import PageHeader from "@/components/ui/PageHeader";
 import CustomerDialog from "@/components/crm/CustomerDialog";
 import CustomerDetail from "@/components/crm/CustomerDetail";
+import LoadingSpinner from "@/components/ui/LoadingSpinner";
 
 const segmentColors = {
   vip: "bg-amber-100 text-amber-800",
@@ -46,7 +47,7 @@ export default function CRM() {
   const currentEmployee = employee?.[0];
   const orgId = currentEmployee?.organisation_id;
 
-  const { data: customers = [] } = useQuery({
+  const { data: customers = [], isLoading: loadingCustomers } = useQuery({
     queryKey: ['customers', orgId],
     queryFn: () => base44.entities.Customer.filter({ organisation_id: orgId }),
     enabled: !!orgId,
@@ -95,6 +96,11 @@ export default function CRM() {
     setSelectedCustomer(null);
     setDialogOpen(true);
   };
+
+  // Show loading spinner while initial data loads
+  if (!orgId || loadingCustomers) {
+    return <LoadingSpinner message="Loading Customers..." subtitle="Fetching customer data" />;
+  }
 
   if (viewCustomer) {
     return (

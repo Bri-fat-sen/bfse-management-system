@@ -45,6 +45,7 @@ import { useToast } from "@/components/ui/use-toast";
 import PageHeader from "@/components/ui/PageHeader";
 import EmptyState from "@/components/ui/EmptyState";
 import StatCard from "@/components/ui/StatCard";
+import LoadingSpinner from "@/components/ui/LoadingSpinner";
 import ReportGenerator from "@/components/finance/ReportGenerator";
 import PrintableFormsDownload from "@/components/finance/PrintableFormsDownload";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart as RePieChart, Pie, Cell } from 'recharts';
@@ -225,6 +226,15 @@ export default function Finance() {
 
     createExpenseMutation.mutate(data);
   };
+
+  // Show loading spinner while initial data loads
+  if (!orgId || loadingExpenses) {
+    return (
+      <ProtectedPage module="finance">
+        <LoadingSpinner message="Loading Finance..." subtitle="Fetching revenue and expenses" />
+      </ProtectedPage>
+    );
+  }
 
   return (
     <ProtectedPage module="finance">

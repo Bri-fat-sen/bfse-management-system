@@ -44,6 +44,7 @@ import { useToast } from "@/components/ui/use-toast";
 import PageHeader from "@/components/ui/PageHeader";
 import EmptyState from "@/components/ui/EmptyState";
 import StatCard from "@/components/ui/StatCard";
+import LoadingSpinner from "@/components/ui/LoadingSpinner";
 import RouteDialog from "@/components/transport/RouteDialog";
 import TripReportExport from "@/components/transport/TripReportExport";
 import TruckContractDialog from "@/components/transport/TruckContractDialog";
@@ -220,6 +221,11 @@ export default function Transport() {
 
     createVehicleMutation.mutate(data);
   };
+
+  // Show loading spinner while initial data loads
+  if (!orgId || loadingTrips) {
+    return <LoadingSpinner message="Loading Transport..." subtitle="Fetching vehicles and trips" />;
+  }
 
   return (
     <div className="space-y-6">
