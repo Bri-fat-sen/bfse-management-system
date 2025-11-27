@@ -395,7 +395,8 @@ const generateFormHTML = (formType, orgName) => {
 
   const forms = {
     expense_general: `
-      <div class="form-title">GENERAL EXPENSE FORM</div>
+      <div class="form-title-banner">General Expense Form</div>
+      <div class="form-content">
       <div class="field-row">
         <div class="field"><label>Date</label><div class="field-input"></div></div>
         <div class="field"><label>Receipt/Invoice No.</label><div class="field-input"></div></div>
@@ -432,7 +433,8 @@ const generateFormHTML = (formType, orgName) => {
       </div>
     `,
     expense_fuel: `
-      <div class="form-title">FUEL EXPENSE FORM</div>
+      <div class="form-title-banner">Fuel Expense Form</div>
+      <div class="form-content">
       <div class="field-row">
         <div class="field"><label>Date</label><div class="field-input"></div></div>
         <div class="field"><label>Vehicle Registration</label><div class="field-input"></div></div>
@@ -465,7 +467,8 @@ const generateFormHTML = (formType, orgName) => {
       </div>
     `,
     expense_maintenance: `
-      <div class="form-title">MAINTENANCE EXPENSE FORM</div>
+      <div class="form-title-banner">Maintenance Expense Form</div>
+      <div class="form-content">
       <div class="field-row">
         <div class="field"><label>Date</label><div class="field-input"></div></div>
         <div class="field"><label>Vehicle/Equipment</label><div class="field-input"></div></div>
@@ -500,7 +503,8 @@ const generateFormHTML = (formType, orgName) => {
       </div>
     `,
     expense_salary: `
-      <div class="form-title">SALARY / WAGES PAYMENT FORM</div>
+      <div class="form-title-banner">Salary / Wages Payment Form</div>
+      <div class="form-content">
       <div class="field-row">
         <div class="field"><label>Pay Period</label><div class="field-input"></div></div>
         <div class="field"><label>Payment Date</label><div class="field-input"></div></div>
@@ -527,7 +531,8 @@ const generateFormHTML = (formType, orgName) => {
       </div>
     `,
     expense_inventory: `
-      <div class="form-title">INVENTORY PURCHASE FORM</div>
+      <div class="form-title-banner">Inventory Purchase Form</div>
+      <div class="form-content">
       <div class="field-row">
         <div class="field"><label>Date</label><div class="field-input"></div></div>
         <div class="field"><label>Supplier Name</label><div class="field-input"></div></div>
@@ -559,7 +564,8 @@ const generateFormHTML = (formType, orgName) => {
       </div>
     `,
     revenue_sales: `
-      <div class="form-title">SALES REVENUE FORM</div>
+      <div class="form-title-banner">Sales Revenue Form</div>
+      <div class="form-content">
       <div class="field-row">
         <div class="field"><label>Date</label><div class="field-input"></div></div>
         <div class="field"><label>Sales Person</label><div class="field-input"></div></div>
@@ -596,7 +602,8 @@ const generateFormHTML = (formType, orgName) => {
       </div>
     `,
     revenue_transport: `
-      <div class="form-title">TRANSPORT REVENUE FORM</div>
+      <div class="form-title-banner">Transport Revenue Form</div>
+      <div class="form-content">
       <div class="field-row">
         <div class="field"><label>Date</label><div class="field-input"></div></div>
         <div class="field"><label>Contract/Trip Number</label><div class="field-input"></div></div>
@@ -634,7 +641,8 @@ const generateFormHTML = (formType, orgName) => {
       </div>
     `,
     revenue_other: `
-      <div class="form-title">OTHER INCOME FORM</div>
+      <div class="form-title-banner">Other Income Form</div>
+      <div class="form-content">
       <div class="field-row">
         <div class="field"><label>Date</label><div class="field-input"></div></div>
         <div class="field"><label>Reference Number</label><div class="field-input"></div></div>
