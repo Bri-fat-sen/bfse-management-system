@@ -511,6 +511,17 @@ export default function OrganisationManage() {
           </div>
         </TabsContent>
 
+        {/* Registrations Tab */}
+        <TabsContent value="registrations" className="mt-6">
+          <RegistrationsTab 
+            formData={formData} 
+            setFormData={setFormData} 
+            isAdmin={isAdmin} 
+            handleSave={handleSave}
+            updateOrgMutation={updateOrgMutation}
+          />
+        </TabsContent>
+
         {/* Branding Tab */}
         <TabsContent value="branding" className="mt-6">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
