@@ -464,12 +464,34 @@ export default function Locations() {
             </div>
           )}
 
-          <Badge 
-            variant={location.is_active !== false && location.status !== 'inactive' ? 'outline' : 'secondary'}
-            className="mt-3"
-          >
-            {location.is_active !== false && location.status !== 'inactive' ? 'Active' : 'Inactive'}
-          </Badge>
+          <div className="flex flex-wrap gap-2 mt-3">
+            <Badge 
+              variant={location.is_active !== false && location.status !== 'inactive' ? 'outline' : 'secondary'}
+            >
+              {location.is_active !== false && location.status !== 'inactive' ? 'Active' : 'Inactive'}
+            </Badge>
+            {type !== 'vehicle' && location.allowed_sale_types?.length > 0 && (
+              <>
+                {location.allowed_sale_types.includes('retail') && (
+                  <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
+                    <Store className="w-3 h-3 mr-1" />
+                    Retail
+                  </Badge>
+                )}
+                {location.allowed_sale_types.includes('warehouse') && (
+                  <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
+                    <Warehouse className="w-3 h-3 mr-1" />
+                    Wholesale
+                  </Badge>
+                )}
+              </>
+            )}
+            {type !== 'vehicle' && (!location.allowed_sale_types || location.allowed_sale_types.length === 0) && (
+              <Badge variant="outline" className="bg-gray-50 text-gray-600">
+                All Sales
+              </Badge>
+            )}
+          </div>
         </CardContent>
       </Card>
     );
