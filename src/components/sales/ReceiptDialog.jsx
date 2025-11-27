@@ -12,6 +12,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Printer, Download, Mail, Loader2, Check } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
+import { getBrandedStyles, getBrandedHeader, getBrandedFooter } from "@/components/branding/BrandedDocumentStyles";
 
 export default function ReceiptDialog({ open, onOpenChange, sale, organisation }) {
   const receiptRef = useRef(null);
@@ -21,6 +22,9 @@ export default function ReceiptDialog({ open, onOpenChange, sale, organisation }
   const [sending, setSending] = useState(false);
   const [downloading, setDownloading] = useState(false);
 
+  const primaryColor = organisation?.primary_color || '#1EB053';
+  const secondaryColor = organisation?.secondary_color || '#0072C6';
+
   const getReceiptHTML = () => {
     return `
       <!DOCTYPE html>
@@ -29,214 +33,95 @@ export default function ReceiptDialog({ open, onOpenChange, sale, organisation }
           <meta charset="UTF-8">
           <title>Receipt - ${sale?.sale_number}</title>
           <style>
-            * { margin: 0; padding: 0; box-sizing: border-box; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; color-adjust: exact !important; }
-            body { 
-              font-family: 'Segoe UI', Arial, sans-serif; 
-              background: #f5f5f5;
-              padding: 20px;
-            }
+            ${getBrandedStyles(organisation)}
             .receipt {
-              max-width: 400px;
+              max-width: 420px;
               margin: 0 auto;
               background: white;
               border-radius: 12px;
               overflow: hidden;
               box-shadow: 0 4px 20px rgba(0,0,0,0.1);
             }
-            .flag-stripe {
-              height: 8px;
-              display: flex;
-            }
-            .flag-stripe .green { flex: 1; background-color: #1EB053 !important; -webkit-print-color-adjust: exact !important; }
-            .flag-stripe .white { flex: 1; background-color: #FFFFFF !important; border-top: 1px solid #ddd; border-bottom: 1px solid #ddd; }
-            .flag-stripe .blue { flex: 1; background-color: #0072C6 !important; -webkit-print-color-adjust: exact !important; }
-            .header {
-              background-color: #1EB053 !important;
-              -webkit-print-color-adjust: exact !important;
-              color: white !important;
-              padding: 24px;
+            .receipt .brand-header {
+              padding: 20px;
+              flex-direction: column;
               text-align: center;
-              border-bottom: 4px solid #0072C6;
+              gap: 12px;
             }
-            .header .logo {
-              font-size: 24px;
-              font-weight: bold;
-              margin-bottom: 4px;
-              color: white !important;
+            .receipt .brand-header .logo-container img {
+              max-height: 50px;
+              max-width: 120px;
             }
-            .header .tagline {
-              font-size: 11px;
-              color: rgba(255,255,255,0.9) !important;
-            }
-            .header .address {
-              font-size: 12px;
-              color: rgba(255,255,255,0.8) !important;
-              margin-top: 8px;
-            }
-            .receipt-info {
-              background-color: #f0fdf4 !important;
-              -webkit-print-color-adjust: exact !important;
-              padding: 16px 24px;
-              border-bottom: 2px solid #1EB053;
-              font-size: 13px;
-              color: #333;
-            }
-            .receipt-info p { margin: 4px 0; }
-            .items {
-              padding: 20px 24px;
-            }
-            .items-header {
-              display: flex;
-              justify-content: space-between;
-              font-weight: 600;
-              font-size: 12px;
-              color: #1EB053 !important;
-              text-transform: uppercase;
-              padding-bottom: 10px;
-              border-bottom: 2px dashed #1EB053;
-              margin-bottom: 12px;
-            }
-            .item {
-              display: flex;
-              justify-content: space-between;
-              padding: 8px 0;
-              font-size: 14px;
-              border-bottom: 1px dotted #ddd;
-            }
-            .item:last-child { border-bottom: none; }
-            .item-name { flex: 1; }
-            .item-qty { color: #0072C6 !important; font-size: 12px; font-weight: 600; }
-            .totals {
-              padding: 16px 24px;
-              background-color: #e0f2fe !important;
-              -webkit-print-color-adjust: exact !important;
-              border-top: 3px solid #0072C6;
-            }
-            .total-row {
-              display: flex;
-              justify-content: space-between;
-              padding: 6px 0;
-              font-size: 14px;
-            }
-            .total-row.grand {
-              font-size: 20px;
-              font-weight: bold;
-              color: #1EB053 !important;
-              padding-top: 12px;
-              margin-top: 8px;
-              border-top: 3px solid #1EB053;
-            }
-            .payment-badge {
-              display: inline-block;
-              background-color: #1EB053 !important;
-              -webkit-print-color-adjust: exact !important;
-              color: white !important;
-              padding: 4px 12px;
-              border-radius: 20px;
-              font-size: 12px;
-              font-weight: 600;
-              text-transform: uppercase;
-            }
-            .footer {
+            .receipt .brand-header .company-info {
               text-align: center;
-              padding: 24px;
-              background-color: #0F1F3C !important;
-              -webkit-print-color-adjust: exact !important;
-              color: white !important;
-              border-top: 4px solid #1EB053;
             }
-            .footer .thanks {
-              font-size: 16px;
-              font-weight: 600;
-              margin-bottom: 8px;
-              color: white !important;
-            }
-            .footer .pride {
-              font-size: 13px;
-              color: rgba(255,255,255,0.9) !important;
-            }
-            .footer .sl-flag {
-              margin-top: 12px;
-              font-size: 24px;
-            }
-            @media print {
-              body { background: white; padding: 0; }
-              .receipt { box-shadow: none; border: 2px solid #1EB053; }
+            .receipt .brand-header .document-info {
+              display: none;
             }
           </style>
         </head>
         <body>
           <div class="receipt">
-            <div class="flag-stripe">
-              <div class="green"></div>
-              <div class="white"></div>
-              <div class="blue"></div>
-            </div>
+            ${getBrandedHeader(organisation, 'Receipt', sale?.sale_number, format(new Date(sale?.created_date), 'dd MMM yyyy, HH:mm'))}
             
-            <div class="header">
-              <div class="logo">${organisation?.logo_url ? `<img src="${organisation.logo_url}" style="max-height: 40px; margin-bottom: 8px;" />` : '🇸🇱'} ${organisation?.name || 'Our Company'}</div>
-              <div class="tagline">${organisation?.city || 'Sierra Leone'}</div>
-              <div class="address">
-                ${organisation?.address || 'Freetown'}, Sierra Leone<br>
-                Tel: ${organisation?.phone || '+232 XX XXX XXX'}
-              </div>
-            </div>
-            
-            <div class="receipt-info">
+            <div class="brand-info-bar">
               <p><strong>Receipt:</strong> ${sale?.sale_number}</p>
               <p><strong>Date:</strong> ${format(new Date(sale?.created_date), 'dd MMMM yyyy, HH:mm')}</p>
               <p><strong>Cashier:</strong> ${sale?.employee_name || 'Staff'}</p>
               ${sale?.customer_name ? `<p><strong>Customer:</strong> ${sale.customer_name}</p>` : ''}
+              ${sale?.location ? `<p><strong>Location:</strong> ${sale.location}</p>` : ''}
             </div>
             
-            <div class="items">
-              <div class="items-header">
-                <span>Item</span>
-                <span>Amount</span>
-              </div>
-              ${sale?.items?.map(item => `
-                <div class="item">
-                  <span class="item-name">
-                    ${item.product_name}
-                    <span class="item-qty"> × ${item.quantity}</span>
-                  </span>
-                  <span>SLE ${item.total?.toLocaleString()}</span>
-                </div>
-              `).join('') || ''}
+            <div class="brand-content">
+              <table class="brand-table">
+                <thead>
+                  <tr>
+                    <th>Item</th>
+                    <th class="amount">Amount</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  ${sale?.items?.map(item => `
+                    <tr>
+                      <td>
+                        ${item.product_name}
+                        <span style="color: ${secondaryColor}; font-size: 12px; font-weight: 600;"> × ${item.quantity}</span>
+                      </td>
+                      <td class="amount">SLE ${item.total?.toLocaleString()}</td>
+                    </tr>
+                  `).join('') || ''}
+                </tbody>
+              </table>
             </div>
             
-            <div class="totals">
-              <div class="total-row">
+            <div class="brand-totals">
+              <div class="brand-totals-row">
                 <span>Subtotal</span>
                 <span>SLE ${sale?.subtotal?.toLocaleString()}</span>
               </div>
               ${sale?.tax > 0 ? `
-                <div class="total-row">
+                <div class="brand-totals-row">
                   <span>GST</span>
                   <span>SLE ${sale.tax?.toLocaleString()}</span>
                 </div>
               ` : ''}
               ${sale?.discount > 0 ? `
-                <div class="total-row">
+                <div class="brand-totals-row">
                   <span>Discount</span>
                   <span>-SLE ${sale.discount?.toLocaleString()}</span>
                 </div>
               ` : ''}
-              <div class="total-row grand">
+              <div class="brand-totals-row grand">
                 <span>Total</span>
                 <span>SLE ${sale?.total_amount?.toLocaleString()}</span>
               </div>
-              <div class="total-row" style="margin-top: 12px;">
+              <div class="brand-totals-row" style="margin-top: 12px;">
                 <span>Payment</span>
-                <span class="payment-badge">${sale?.payment_method}</span>
+                <span class="brand-badge paid">${sale?.payment_method}</span>
               </div>
             </div>
             
-            <div class="footer">
-              <div class="thanks">Thank you for your patronage!</div>
-              <div class="pride">Proudly serving Sierra Leone</div>
-              <div class="sl-flag">🇸🇱</div>
-            </div>
+            ${getBrandedFooter(organisation)}
           </div>
         </body>
       </html>
@@ -349,17 +234,27 @@ export default function ReceiptDialog({ open, onOpenChange, sale, organisation }
 
         {/* Receipt Preview */}
         <div ref={receiptRef} className="bg-gray-50 rounded-xl overflow-hidden border">
-          {/* Flag stripe */}
+          {/* Flag stripe with org colors */}
           <div className="h-2 flex">
-            <div className="flex-1 bg-[#1EB053]" />
+            <div className="flex-1" style={{ backgroundColor: primaryColor }} />
             <div className="flex-1 bg-white" />
-            <div className="flex-1 bg-[#0072C6]" />
+            <div className="flex-1" style={{ backgroundColor: secondaryColor }} />
           </div>
           
-          {/* Header */}
-          <div className="bg-gradient-to-r from-[#1EB053] to-[#0072C6] text-white p-4 text-center">
+          {/* Header with Logo */}
+          <div 
+            className="text-white p-4 text-center"
+            style={{ background: `linear-gradient(135deg, ${primaryColor} 0%, ${secondaryColor} 100%)` }}
+          >
+            {organisation?.logo_url && (
+              <img 
+                src={organisation.logo_url} 
+                alt={organisation?.name}
+                className="h-10 mx-auto mb-2 object-contain bg-white/20 rounded px-2 py-1"
+              />
+            )}
             <p className="font-bold text-lg">{organisation?.name || 'BFSE'}</p>
-            <p className="text-xs opacity-80">{organisation?.address || 'Freetown'}, Sierra Leone</p>
+            <p className="text-xs opacity-80">{organisation?.address || 'Freetown'}, {organisation?.country || 'Sierra Leone'}</p>
           </div>
 
           <div className="p-4 space-y-3">
@@ -395,13 +290,16 @@ export default function ReceiptDialog({ open, onOpenChange, sale, organisation }
 
             {/* Total */}
             <div className="border-t border-dashed pt-3">
-              <div className="flex justify-between text-lg font-bold text-[#1EB053]">
+              <div className="flex justify-between text-lg font-bold" style={{ color: primaryColor }}>
                 <span>Total</span>
                 <span>SLE {sale?.total_amount?.toLocaleString()}</span>
               </div>
               <div className="flex justify-between text-xs text-gray-500 mt-1">
                 <span>Payment</span>
-                <span className="capitalize bg-green-100 text-green-700 px-2 py-0.5 rounded-full">
+                <span 
+                  className="capitalize px-2 py-0.5 rounded-full"
+                  style={{ backgroundColor: `${primaryColor}20`, color: primaryColor }}
+                >
                   {sale?.payment_method}
                 </span>
               </div>
