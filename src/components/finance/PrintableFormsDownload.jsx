@@ -351,17 +351,34 @@ const generateFormHTML = (formType, orgName) => {
   `;
 
   const header = `
-    <div class="flag-stripe"></div>
-    <div class="header">
-      <h1>${orgName || 'Organisation Name'}</h1>
-      <p>Date Printed: ${today}</p>
+    <div class="sl-header-container">
+      <div class="sl-header-inner">
+        <div class="sl-flag-icon">
+          <div class="green"></div>
+          <div class="white"></div>
+          <div class="blue"></div>
+        </div>
+        <div class="sl-header-text">
+          <h1>${orgName || 'Organisation Name'}</h1>
+          <p>Sierra Leone • Date Printed: ${today}</p>
+        </div>
+      </div>
     </div>
+    <div class="sl-flag-stripe"></div>
   `;
 
   const footer = `
-    <div class="footer">
+    <div class="sl-footer">
+      <div class="sl-footer-flag">
+        <div class="mini-stripe">
+          <span class="g"></span>
+          <span class="w"></span>
+          <span class="b"></span>
+        </div>
+        <span>Sierra Leone</span>
+      </div>
       <p>This form is for manual record keeping. Please enter data into the system when ready.</p>
-      <p>Form ID: ${formType.toUpperCase()}-${Date.now().toString(36).toUpperCase()}</p>
+      <p class="form-id">Form ID: ${formType.toUpperCase()}-${Date.now().toString(36).toUpperCase()}</p>
     </div>
   `;
 
