@@ -53,6 +53,12 @@ export default function Dashboard() {
   const orgId = currentEmployee?.organisation_id;
   const userRole = currentEmployee?.role || 'read_only';
 
+  const { data: organisation } = useQuery({
+    queryKey: ['organisation', orgId],
+    queryFn: () => base44.entities.Organisation.filter({ id: orgId }),
+    enabled: !!orgId,
+  });
+
   // Role-based dashboard routing
   const isDriver = userRole === 'driver';
   const isSalesStaff = ['retail_cashier', 'vehicle_sales', 'warehouse_manager'].includes(userRole);
@@ -137,7 +143,8 @@ export default function Dashboard() {
   const showWelcome = usePageLoader(!!user && !!currentEmployee);
 
   if (showWelcome) {
-    return <WelcomeLoader orgName="BRI-FAT-SEN ENTERPRISE" />;
+    const org = organisation?.[0];
+    return <WelcomeLoader orgName={org?.name || "BRI-FAT-SEN ENTERPRISE"} orgLogo={org?.logo_url} />;
   }
 
   // Show role-specific dashboard
