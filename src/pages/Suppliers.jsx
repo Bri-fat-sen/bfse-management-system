@@ -48,6 +48,7 @@ import PageHeader from "@/components/ui/PageHeader";
 import EmptyState from "@/components/ui/EmptyState";
 import StatCard from "@/components/ui/StatCard";
 import LoadingSpinner from "@/components/ui/LoadingSpinner";
+import usePageLoader from "@/components/ui/usePageLoader";
 import SupplierDialog from "@/components/suppliers/SupplierDialog";
 import SupplierProductsDialog from "@/components/suppliers/SupplierProductsDialog";
 import PurchaseOrderDialog from "@/components/suppliers/PurchaseOrderDialog";
@@ -171,8 +172,9 @@ export default function Suppliers() {
     );
   };
 
-  // Show loading spinner
-  if (!orgId || loadingSuppliers) {
+  const showLoader = usePageLoader(!!orgId && !loadingSuppliers);
+
+  if (showLoader) {
     return (
       <PermissionGate module="inventory" action="view" showDenied>
         <LoadingSpinner message="Loading Suppliers..." subtitle="Fetching supplier information" />

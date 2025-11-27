@@ -46,6 +46,7 @@ import PageHeader from "@/components/ui/PageHeader";
 import EmptyState from "@/components/ui/EmptyState";
 import StatCard from "@/components/ui/StatCard";
 import LoadingSpinner from "@/components/ui/LoadingSpinner";
+import usePageLoader from "@/components/ui/usePageLoader";
 import ReportGenerator from "@/components/finance/ReportGenerator";
 import PrintableFormsDownload from "@/components/finance/PrintableFormsDownload";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart as RePieChart, Pie, Cell } from 'recharts';
@@ -227,8 +228,9 @@ export default function Finance() {
     createExpenseMutation.mutate(data);
   };
 
-  // Show loading spinner while initial data loads
-  if (!orgId || loadingExpenses) {
+  const showLoader = usePageLoader(!!orgId && !loadingExpenses);
+
+  if (showLoader) {
     return (
       <ProtectedPage module="finance">
         <LoadingSpinner message="Loading Finance..." subtitle="Fetching financial data" />
