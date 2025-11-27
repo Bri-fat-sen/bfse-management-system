@@ -681,16 +681,14 @@ export default function Sales() {
                       <Receipt className="w-4 h-4 mr-2" />
                       Checkout
                     </Button>
-                    {(saleType === 'warehouse' || selectedCustomer?.customer_type === 'business') && (
-                      <Button
-                        variant="outline"
-                        className="w-full border-[#0072C6] text-[#0072C6] hover:bg-[#0072C6]/10"
-                        onClick={() => setShowInvoice(true)}
-                      >
-                        <FileText className="w-4 h-4 mr-2" />
-                        Create Invoice (B2B)
-                      </Button>
-                    )}
+                    <Button
+                      variant="outline"
+                      className="w-full border-[#0072C6] text-[#0072C6] hover:bg-[#0072C6]/10"
+                      onClick={() => setShowInvoice(true)}
+                    >
+                      <FileText className="w-4 h-4 mr-2" />
+                      Create Invoice
+                    </Button>
                   </div>
                 )}
               </CardContent>
@@ -810,8 +808,7 @@ export default function Sales() {
             vehicle_id: saleType === 'vehicle' ? selectedLocation : null,
             location: selectedLocationData?.name || ''
           };
-          await base44.entities.Sale.create(fullSaleData);
-          queryClient.invalidateQueries({ queryKey: ['sales'] });
+          createSaleMutation.mutate(fullSaleData);
           setCart([]);
           setSelectedCustomer(null);
         }}
