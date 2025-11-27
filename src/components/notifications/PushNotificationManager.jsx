@@ -1,318 +1,237 @@
 import React, { useEffect, useState } from "react";
 import { base44 } from "@/api/base44Client";
-import { Bell, BellOff, AlertTriangle, Package, DollarSign, Users, Check } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
+import { Bell, BellRing, X, AlertTriangle, DollarSign, Users, Package } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Switch } from "@/components/ui/switch";
-import { Label } from "@/components/ui/label";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-} from "@/components/ui/dialog";
 import { toast } from "sonner";
 
-const NOTIFICATION_SETTINGS_KEY = 'bfse_notification_settings';
+// Check for critical alerts and show notifications
+export function usePushNotifications(orgId, currentEmployee) {
+  const [permission, setPermission] = useState(Notification?.permission || 'default');
+  const [lastChecked, setLastChecked] = useState(Date.now());
 
-export function usePushNotifications() {
-  const [permission, setPermission] = useState('default');
-  const [settings, setSettings] = useState({
-    low_stock: true,
-    overdue_payments: true,
-    new_customers: true,
-    critical_alerts: true
-  });
-
+  // Request permission on mount
   useEffect(() => {
-    // Check current permission
-    if ('Notification' in window) {
-      setPermission(Notification.permission);
-    }
-
-    // Load saved settings
-    const saved = localStorage.getItem(NOTIFICATION_SETTINGS_KEY);
-    if (saved) {
-      setSettings(JSON.parse(saved));
+    if ('Notification' in window && Notification.permission === 'default') {
+      // Don't auto-request, wait for user action
     }
   }, []);
 
   const requestPermission = async () => {
-    if (!('Notification' in window)) {
-      toast.error("Notifications not supported", { 
-        description: "Your browser doesn't support push notifications" 
-      });
-      return false;
+    if ('Notification' in window) {
+      const result = await Notification.requestPermission();
+      setPermission(result);
+      return result === 'granted';
     }
+    return false;
+  };
 
-    const result = await Notification.requestPermission();
-    setPermission(result);
+  // Check for low stock alerts
+  const { data: stockAlerts = [] } = useQuery({
+    queryKey: ['stockAlerts', orgId],
+    queryFn: () => base44.entities.StockAlert.filter({ 
+      organisation_id: orgId, 
+      status: 'active' 
+    }),
+    enabled: !!orgId,
+    refetchInterval: 5 * 60 * 1000, // Check every 5 minutes
+  });
+
+  // Check for pending sales (overdue payments)
+  const { data: pendingSales = [] } = useQuery({
+    queryKey: ['pendingSales', orgId],
+    queryFn: () => base44.entities.Sale.filter({ 
+      organisation_id: orgId, 
+      payment_status: 'pending' 
+    }),
+    enabled: !!orgId,
+    refetchInterval: 10 * 60 * 1000,
+  });
+
+  // Check for new customers (inquiries)
+  const { data: recentCustomers = [] } = useQuery({
+    queryKey: ['recentCustomers', orgId],
+    queryFn: () => base44.entities.Customer.filter({ 
+      organisation_id: orgId,
+      segment: 'new'
+    }, '-created_date', 10),
+    enabled: !!orgId,
+    refetchInterval: 10 * 60 * 1000,
+  });
+
+  // Show browser notification
+  const showNotification = (title, body, icon = '🔔') => {
+    if (permission === 'granted' && document.hidden) {
+      new Notification(title, {
+        body,
+        icon: '/icon-192.png',
+        badge: '/icon-192.png',
+        tag: title,
+        renotify: true
+      });
+    }
     
-    if (result === 'granted') {
-      toast.success("Notifications enabled", { 
-        description: "You'll receive alerts for important updates" 
-      });
-      return true;
-    } else {
-      toast.error("Notifications blocked", { 
-        description: "Please enable notifications in your browser settings" 
-      });
-      return false;
+    // Also show in-app toast
+    toast(title, { description: body });
+  };
+
+  // Monitor alerts and trigger notifications
+  useEffect(() => {
+    if (!orgId) return;
+
+    const criticalStockAlerts = stockAlerts.filter(a => 
+      a.alert_type === 'out_of_stock' || 
+      (a.alert_type === 'low_stock' && a.current_quantity <= 5)
+    );
+
+    if (criticalStockAlerts.length > 0) {
+      showNotification(
+        '⚠️ Stock Alert',
+        `${criticalStockAlerts.length} product(s) need immediate attention`
+      );
     }
-  };
 
-  const updateSettings = (key, value) => {
-    const newSettings = { ...settings, [key]: value };
-    setSettings(newSettings);
-    localStorage.setItem(NOTIFICATION_SETTINGS_KEY, JSON.stringify(newSettings));
-  };
-
-  const showNotification = (title, options = {}) => {
-    if (permission !== 'granted') return;
-
-    const notification = new Notification(title, {
-      icon: '/icon-192.png',
-      badge: '/icon-192.png',
-      vibrate: [200, 100, 200],
-      ...options
-    });
-
-    notification.onclick = () => {
-      window.focus();
-      notification.close();
-      if (options.onClick) options.onClick();
-    };
-
-    return notification;
-  };
+    if (pendingSales.length > 5) {
+      showNotification(
+        '💰 Overdue Payments',
+        `${pendingSales.length} pending payments require follow-up`
+      );
+    }
+  }, [stockAlerts.length, pendingSales.length, orgId]);
 
   return {
     permission,
-    settings,
     requestPermission,
-    updateSettings,
-    showNotification,
-    isSupported: 'Notification' in window
+    stockAlerts,
+    pendingSales,
+    recentCustomers
   };
 }
 
-// Alert Checker Component - polls for critical alerts
-export function AlertChecker({ orgId, currentEmployee }) {
-  const { permission, settings, showNotification } = usePushNotifications();
-  const [lastCheck, setLastCheck] = useState(Date.now());
+export default function PushNotificationManager({ orgId, currentEmployee }) {
+  const { 
+    permission, 
+    requestPermission, 
+    stockAlerts, 
+    pendingSales, 
+    recentCustomers 
+  } = usePushNotifications(orgId, currentEmployee);
 
-  useEffect(() => {
-    if (permission !== 'granted' || !orgId) return;
+  const [showPanel, setShowPanel] = useState(false);
 
-    const checkAlerts = async () => {
-      try {
-        // Check for low stock alerts
-        if (settings.low_stock) {
-          const stockAlerts = await base44.entities.StockAlert.filter({
-            organisation_id: orgId,
-            status: 'active'
-          }, '-created_date', 5);
+  const criticalAlerts = [
+    ...stockAlerts.filter(a => a.alert_type === 'out_of_stock').map(a => ({
+      type: 'stock',
+      icon: Package,
+      color: 'text-red-500 bg-red-50',
+      title: 'Out of Stock',
+      message: a.product_name,
+      urgent: true
+    })),
+    ...stockAlerts.filter(a => a.alert_type === 'low_stock').map(a => ({
+      type: 'stock',
+      icon: AlertTriangle,
+      color: 'text-amber-500 bg-amber-50',
+      title: 'Low Stock',
+      message: `${a.product_name}: ${a.current_quantity} left`,
+      urgent: a.current_quantity <= 5
+    })),
+    ...pendingSales.slice(0, 5).map(s => ({
+      type: 'payment',
+      icon: DollarSign,
+      color: 'text-orange-500 bg-orange-50',
+      title: 'Pending Payment',
+      message: `${s.sale_number}: Le ${s.total_amount?.toLocaleString()}`,
+      urgent: false
+    })),
+    ...recentCustomers.slice(0, 3).map(c => ({
+      type: 'customer',
+      icon: Users,
+      color: 'text-blue-500 bg-blue-50',
+      title: 'New Customer',
+      message: c.name,
+      urgent: false
+    }))
+  ];
 
-          const newAlerts = stockAlerts.filter(a => 
-            new Date(a.created_date).getTime() > lastCheck
-          );
+  const urgentCount = criticalAlerts.filter(a => a.urgent).length;
 
-          newAlerts.forEach(alert => {
-            showNotification(`⚠️ ${alert.alert_type === 'out_of_stock' ? 'Out of Stock' : 'Low Stock'}`, {
-              body: `${alert.product_name} at ${alert.warehouse_name}`,
-              tag: `stock-${alert.id}`,
-              data: { type: 'stock_alert', id: alert.id }
-            });
-          });
-        }
-
-        // Check for overdue payments
-        if (settings.overdue_payments) {
-          const pendingSales = await base44.entities.Sale.filter({
-            organisation_id: orgId,
-            payment_status: 'pending'
-          }, '-created_date', 10);
-
-          const overdue = pendingSales.filter(sale => {
-            const saleDate = new Date(sale.created_date);
-            const daysSince = (Date.now() - saleDate.getTime()) / (1000 * 60 * 60 * 24);
-            return daysSince > 7 && new Date(sale.created_date).getTime() > lastCheck - (24 * 60 * 60 * 1000);
-          });
-
-          if (overdue.length > 0) {
-            showNotification(`💰 ${overdue.length} Overdue Payment${overdue.length > 1 ? 's' : ''}`, {
-              body: `Total: Le ${overdue.reduce((s, o) => s + (o.total_amount || 0), 0).toLocaleString()}`,
-              tag: 'overdue-payments'
-            });
-          }
-        }
-
-        // Check for new customers
-        if (settings.new_customers) {
-          const recentCustomers = await base44.entities.Customer.filter({
-            organisation_id: orgId
-          }, '-created_date', 5);
-
-          const newCustomers = recentCustomers.filter(c => 
-            new Date(c.created_date).getTime() > lastCheck
-          );
-
-          newCustomers.forEach(customer => {
-            showNotification('👤 New Customer', {
-              body: customer.name,
-              tag: `customer-${customer.id}`
-            });
-          });
-        }
-
-        setLastCheck(Date.now());
-      } catch (error) {
-        console.error('Alert check error:', error);
-      }
-    };
-
-    // Check every 2 minutes
-    const interval = setInterval(checkAlerts, 2 * 60 * 1000);
-    
-    // Initial check after 10 seconds
-    const timeout = setTimeout(checkAlerts, 10000);
-
-    return () => {
-      clearInterval(interval);
-      clearTimeout(timeout);
-    };
-  }, [permission, settings, orgId, lastCheck]);
-
-  return null; // This is a background component
-}
-
-// Settings Dialog for notification preferences
-export function NotificationSettingsDialog({ open, onOpenChange }) {
-  const { permission, settings, requestPermission, updateSettings, isSupported } = usePushNotifications();
-
-  if (!isSupported) {
-    return (
-      <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent className="max-w-sm">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <BellOff className="w-5 h-5 text-gray-400" />
-              Notifications Not Supported
-            </DialogTitle>
-          </DialogHeader>
-          <p className="text-gray-600">
-            Your browser doesn't support push notifications. Try using a different browser or the mobile app.
-          </p>
-        </DialogContent>
-      </Dialog>
-    );
-  }
+  if (criticalAlerts.length === 0) return null;
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-md">
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <Bell className="w-5 h-5 text-[#1EB053]" />
-            Notification Settings
-          </DialogTitle>
-          <DialogDescription>
-            Configure which alerts you want to receive
-          </DialogDescription>
-        </DialogHeader>
+    <>
+      {/* Mobile Alert Badge */}
+      <button
+        onClick={() => setShowPanel(true)}
+        className="lg:hidden fixed top-20 right-4 z-40 p-3 bg-white rounded-full shadow-lg border"
+      >
+        <div className="relative">
+          {urgentCount > 0 ? (
+            <BellRing className="w-5 h-5 text-red-500 animate-pulse" />
+          ) : (
+            <Bell className="w-5 h-5 text-gray-600" />
+          )}
+          {criticalAlerts.length > 0 && (
+            <span className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center">
+              {criticalAlerts.length > 9 ? '9+' : criticalAlerts.length}
+            </span>
+          )}
+        </div>
+      </button>
 
-        <div className="space-y-4">
-          {/* Permission Status */}
-          <div className={`p-4 rounded-xl ${
-            permission === 'granted' 
-              ? 'bg-green-50 border border-green-200' 
-              : 'bg-amber-50 border border-amber-200'
-          }`}>
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                {permission === 'granted' ? (
-                  <Check className="w-5 h-5 text-green-600" />
-                ) : (
-                  <AlertTriangle className="w-5 h-5 text-amber-600" />
-                )}
-                <span className={permission === 'granted' ? 'text-green-700' : 'text-amber-700'}>
-                  {permission === 'granted' ? 'Notifications Enabled' : 'Notifications Disabled'}
-                </span>
-              </div>
-              {permission !== 'granted' && (
-                <Button size="sm" onClick={requestPermission} className="bg-[#1EB053]">
-                  Enable
+      {/* Alert Panel */}
+      {showPanel && (
+        <div className="fixed inset-0 z-50 lg:hidden">
+          <div className="absolute inset-0 bg-black/50" onClick={() => setShowPanel(false)} />
+          <div className="absolute right-0 top-0 bottom-0 w-80 bg-white shadow-xl overflow-y-auto">
+            <div className="sticky top-0 bg-white border-b p-4 flex items-center justify-between">
+              <h2 className="font-semibold flex items-center gap-2">
+                <BellRing className="w-5 h-5 text-[#1EB053]" />
+                Alerts ({criticalAlerts.length})
+              </h2>
+              <Button variant="ghost" size="icon" onClick={() => setShowPanel(false)}>
+                <X className="w-5 h-5" />
+              </Button>
+            </div>
+
+            {permission !== 'granted' && (
+              <div className="m-4 p-3 bg-blue-50 rounded-lg">
+                <p className="text-sm text-blue-700 mb-2">Enable push notifications for real-time alerts</p>
+                <Button size="sm" onClick={requestPermission} className="bg-blue-600">
+                  Enable Notifications
                 </Button>
-              )}
-            </div>
-          </div>
-
-          {/* Notification Types */}
-          <div className="space-y-3">
-            <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-              <div className="flex items-center gap-3">
-                <Package className="w-5 h-5 text-red-500" />
-                <div>
-                  <Label className="font-medium">Low Stock Alerts</Label>
-                  <p className="text-xs text-gray-500">When products are running low</p>
-                </div>
               </div>
-              <Switch
-                checked={settings.low_stock}
-                onCheckedChange={(v) => updateSettings('low_stock', v)}
-                disabled={permission !== 'granted'}
-              />
-            </div>
+            )}
 
-            <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-              <div className="flex items-center gap-3">
-                <DollarSign className="w-5 h-5 text-amber-500" />
-                <div>
-                  <Label className="font-medium">Overdue Payments</Label>
-                  <p className="text-xs text-gray-500">Pending invoices past due date</p>
-                </div>
-              </div>
-              <Switch
-                checked={settings.overdue_payments}
-                onCheckedChange={(v) => updateSettings('overdue_payments', v)}
-                disabled={permission !== 'granted'}
-              />
-            </div>
-
-            <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-              <div className="flex items-center gap-3">
-                <Users className="w-5 h-5 text-blue-500" />
-                <div>
-                  <Label className="font-medium">New Customers</Label>
-                  <p className="text-xs text-gray-500">When new customers are added</p>
-                </div>
-              </div>
-              <Switch
-                checked={settings.new_customers}
-                onCheckedChange={(v) => updateSettings('new_customers', v)}
-                disabled={permission !== 'granted'}
-              />
-            </div>
-
-            <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-              <div className="flex items-center gap-3">
-                <AlertTriangle className="w-5 h-5 text-red-600" />
-                <div>
-                  <Label className="font-medium">Critical Alerts</Label>
-                  <p className="text-xs text-gray-500">System and security alerts</p>
-                </div>
-              </div>
-              <Switch
-                checked={settings.critical_alerts}
-                onCheckedChange={(v) => updateSettings('critical_alerts', v)}
-                disabled={permission !== 'granted'}
-              />
+            <div className="p-4 space-y-3">
+              {criticalAlerts.map((alert, index) => {
+                const Icon = alert.icon;
+                return (
+                  <div 
+                    key={index} 
+                    className={`p-3 rounded-xl border ${alert.urgent ? 'border-red-200' : 'border-gray-100'}`}
+                  >
+                    <div className="flex items-start gap-3">
+                      <div className={`p-2 rounded-lg ${alert.color}`}>
+                        <Icon className="w-4 h-4" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="font-medium text-sm">{alert.title}</p>
+                        <p className="text-xs text-gray-500 truncate">{alert.message}</p>
+                      </div>
+                      {alert.urgent && (
+                        <span className="px-2 py-0.5 bg-red-100 text-red-600 text-[10px] font-bold rounded-full">
+                          URGENT
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
             </div>
           </div>
         </div>
-      </DialogContent>
-    </Dialog>
+      )}
+    </>
   );
 }
-
-export default { usePushNotifications, AlertChecker, NotificationSettingsDialog };
