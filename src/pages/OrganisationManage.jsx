@@ -20,7 +20,13 @@ import {
   CheckCircle2,
   Crown,
   Edit3,
-  Upload
+  Upload,
+  FileText,
+  AlertTriangle,
+  Calendar,
+  Plus,
+  Trash2,
+  ExternalLink
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
