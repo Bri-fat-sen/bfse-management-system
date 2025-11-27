@@ -34,7 +34,9 @@ export default function MobileQuickSale({
   currentEmployee,
   onSaleComplete 
 }) {
-  const { isOnline, queueAction } = useOffline() || { isOnline: true, queueAction: null };
+  const offlineContext = useOffline();
+  const isOnline = offlineContext?.isOnline ?? true;
+  const queueAction = offlineContext?.queueAction ?? null;
   const [searchTerm, setSearchTerm] = useState("");
   const [cart, setCart] = useState([]);
   const [paymentMethod, setPaymentMethod] = useState("cash");

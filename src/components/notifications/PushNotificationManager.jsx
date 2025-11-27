@@ -7,7 +7,11 @@ import { toast } from "sonner";
 
 // Check for critical alerts and show notifications
 export function usePushNotifications(orgId, currentEmployee) {
-  const [permission, setPermission] = useState(Notification?.permission || 'default');
+  const [permission, setPermission] = useState(
+    typeof window !== 'undefined' && 'Notification' in window 
+      ? Notification.permission 
+      : 'default'
+  );
   const [lastChecked, setLastChecked] = useState(Date.now());
 
   // Request permission on mount

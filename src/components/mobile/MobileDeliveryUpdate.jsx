@@ -33,7 +33,9 @@ export default function MobileDeliveryUpdate({
   currentEmployee 
 }) {
   const queryClient = useQueryClient();
-  const { isOnline, queueAction } = useOffline() || { isOnline: true, queueAction: null };
+  const offlineContext = useOffline();
+  const isOnline = offlineContext?.isOnline ?? true;
+  const queueAction = offlineContext?.queueAction ?? null;
   const [selectedTrip, setSelectedTrip] = useState(null);
   const [updateNote, setUpdateNote] = useState("");
 
