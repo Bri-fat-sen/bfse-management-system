@@ -101,7 +101,7 @@ export function useChatNotifications({
 
   // Request browser notification permission
   useEffect(() => {
-    if (notificationSettings?.settings?.browserNotifications && 'Notification' in window) {
+    if (notificationSettings?.settings?.browserNotifications && typeof window !== 'undefined' && 'Notification' in window) {
       Notification.requestPermission();
     }
   }, [notificationSettings?.settings?.browserNotifications]);
@@ -109,25 +109,29 @@ export function useChatNotifications({
   // Show browser notification
   const showBrowserNotification = (title, body, icon) => {
     if (!notificationSettings?.settings?.browserNotifications) return;
-    if (!('Notification' in window)) return;
+    if (typeof window === 'undefined' || !('Notification' in window)) return;
     if (Notification.permission !== 'granted') return;
     if (document.hasFocus()) return; // Don't show if app is focused
 
-    const notification = new Notification(title, {
-      body,
-      icon: icon || '/favicon.ico',
-      badge: '/favicon.ico',
-      tag: 'chat-message',
-      renotify: true,
-      silent: true, // We play our own sound
-    });
+    try {
+      const notification = new Notification(title, {
+        body,
+        icon: icon || '/favicon.ico',
+        badge: '/favicon.ico',
+        tag: 'chat-message',
+        renotify: true,
+        silent: true, // We play our own sound
+      });
 
-    notification.onclick = () => {
-      window.focus();
-      notification.close();
-    };
+      notification.onclick = () => {
+        window.focus();
+        notification.close();
+      };
 
-    setTimeout(() => notification.close(), 5000);
+      setTimeout(() => notification.close(), 5000);
+    } catch (e) {
+      // Ignore notification errors
+    }
   };
 
   // Handle new messages
