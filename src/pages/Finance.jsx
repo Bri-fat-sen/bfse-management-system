@@ -16,7 +16,8 @@ import {
   Calendar,
   Truck,
   Wrench,
-  Fuel
+  Fuel,
+  Printer
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -44,6 +45,7 @@ import PageHeader from "@/components/ui/PageHeader";
 import EmptyState from "@/components/ui/EmptyState";
 import StatCard from "@/components/ui/StatCard";
 import ReportGenerator from "@/components/finance/ReportGenerator";
+import PrintableForms from "@/components/finance/PrintableForms";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart as RePieChart, Pie, Cell } from 'recharts';
 
 const expenseCategories = [
@@ -59,6 +61,7 @@ export default function Finance() {
   const [activeTab, setActiveTab] = useState("overview");
   const [showExpenseDialog, setShowExpenseDialog] = useState(false);
   const [categoryFilter, setCategoryFilter] = useState("all");
+  const [showFormsDialog, setShowFormsDialog] = useState(false);
 
   const { data: user } = useQuery({
     queryKey: ['currentUser'],
@@ -230,7 +233,17 @@ export default function Finance() {
         subtitle="Track revenue, expenses, and profitability"
         action={() => setShowExpenseDialog(true)}
         actionLabel="Add Expense"
-      />
+      >
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => setShowFormsDialog(true)}
+          className="border-[#0072C6]/30 hover:border-[#0072C6] hover:bg-[#0072C6]/10 hover:text-[#0072C6]"
+        >
+          <Printer className="w-4 h-4 mr-2" />
+          Print Forms
+        </Button>
+      </PageHeader>
 
       {/* Stats */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -664,6 +677,13 @@ export default function Finance() {
           </form>
         </DialogContent>
       </Dialog>
+
+      {/* Printable Forms Dialog */}
+      <PrintableForms
+        open={showFormsDialog}
+        onOpenChange={setShowFormsDialog}
+        organisation={organisation?.[0]}
+      />
     </div>
     </ProtectedPage>
   );
