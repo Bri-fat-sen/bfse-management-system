@@ -31,6 +31,7 @@ import {
   Mail
 } from "lucide-react";
 import { toast } from "sonner";
+import { getBrandedStyles, getBrandedHeader, getBrandedFooter } from "@/components/branding/BrandedDocumentStyles";
 
 export default function InvoiceDialog({ 
   open, 
@@ -62,6 +63,9 @@ export default function InvoiceDialog({
   const dueDate = addDays(new Date(), parseInt(invoiceData.payment_terms) || 30);
   const invoiceNumber = `INV-${format(new Date(), 'yyyyMMdd')}-${Math.floor(1000 + Math.random() * 9000)}`;
 
+  const primaryColor = organisation?.primary_color || '#1EB053';
+  const secondaryColor = organisation?.secondary_color || '#0072C6';
+
   const getInvoiceHTML = () => {
     return `
       <!DOCTYPE html>
@@ -70,69 +74,63 @@ export default function InvoiceDialog({
           <meta charset="UTF-8">
           <title>Invoice - ${invoiceNumber}</title>
           <style>
-            * { margin: 0; padding: 0; box-sizing: border-box; }
-            body { font-family: 'Segoe UI', Arial, sans-serif; background: #f5f5f5; padding: 20px; }
-            .invoice { max-width: 800px; margin: 0 auto; background: white; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 20px rgba(0,0,0,0.1); }
-            .header { background: linear-gradient(135deg, #1EB053 0%, #0072C6 100%); color: white; padding: 30px; display: flex; justify-content: space-between; align-items: flex-start; }
-            .header .company { flex: 1; }
-            .header .company h1 { font-size: 28px; margin-bottom: 8px; }
-            .header .company p { opacity: 0.9; font-size: 14px; }
-            .header .invoice-info { text-align: right; }
-            .header .invoice-info h2 { font-size: 24px; margin-bottom: 8px; }
-            .header .invoice-info p { font-size: 14px; opacity: 0.9; }
-            .flag-stripe { height: 6px; display: flex; }
-            .flag-stripe .green { flex: 1; background: #1EB053; }
-            .flag-stripe .white { flex: 1; background: #FFFFFF; }
-            .flag-stripe .blue { flex: 1; background: #0072C6; }
-            .body { padding: 30px; }
-            .parties { display: flex; justify-content: space-between; margin-bottom: 30px; }
-            .party { flex: 1; }
-            .party h3 { color: #1EB053; font-size: 12px; text-transform: uppercase; margin-bottom: 8px; letter-spacing: 1px; }
-            .party p { font-size: 14px; color: #333; line-height: 1.6; }
-            .items-table { width: 100%; border-collapse: collapse; margin-bottom: 30px; }
-            .items-table th { background: #f8f9fa; padding: 12px; text-align: left; font-size: 12px; text-transform: uppercase; color: #666; border-bottom: 2px solid #1EB053; }
-            .items-table td { padding: 12px; border-bottom: 1px solid #eee; font-size: 14px; }
-            .items-table .amount { text-align: right; }
-            .totals { display: flex; justify-content: flex-end; }
-            .totals-table { width: 300px; }
-            .totals-table tr td { padding: 8px 12px; font-size: 14px; }
-            .totals-table tr td:last-child { text-align: right; }
-            .totals-table .grand-total { background: #1EB053; color: white; font-weight: bold; font-size: 18px; }
-            .footer { background: #0F1F3C; color: white; padding: 20px 30px; text-align: center; font-size: 12px; }
-            .notes { background: #f8f9fa; padding: 15px; border-radius: 8px; margin-bottom: 20px; }
-            .notes h4 { color: #0072C6; font-size: 12px; text-transform: uppercase; margin-bottom: 8px; }
-            .payment-info { background: #e8f5e9; padding: 15px; border-radius: 8px; border-left: 4px solid #1EB053; }
-            .payment-info h4 { color: #1EB053; margin-bottom: 8px; }
+            ${getBrandedStyles(organisation)}
+            .invoice {
+              max-width: 800px;
+              margin: 0 auto;
+              background: white;
+              border-radius: 8px;
+              overflow: hidden;
+              box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+            }
+            .totals-wrapper {
+              display: flex;
+              justify-content: flex-end;
+              margin-top: 20px;
+            }
+            .totals-box {
+              width: 300px;
+              border: 2px solid ${primaryColor}20;
+              border-radius: 8px;
+              overflow: hidden;
+            }
+            .totals-box .row {
+              display: flex;
+              justify-content: space-between;
+              padding: 10px 16px;
+              font-size: 14px;
+            }
+            .totals-box .row:not(:last-child) {
+              border-bottom: 1px solid #eee;
+            }
+            .totals-box .row.grand {
+              background: ${primaryColor};
+              color: white;
+              font-weight: 700;
+              font-size: 18px;
+            }
+            .payment-box {
+              background: ${primaryColor}10;
+              padding: 16px;
+              border-radius: 8px;
+              border-left: 4px solid ${primaryColor};
+              margin-top: 24px;
+            }
+            .payment-box h4 {
+              color: ${primaryColor};
+              margin-bottom: 8px;
+              font-weight: 600;
+            }
             @media print { body { background: white; padding: 0; } .invoice { box-shadow: none; } }
           </style>
         </head>
         <body>
           <div class="invoice">
-            <div class="header">
-              <div class="company">
-                <h1>${organisation?.logo_url ? `<img src="${organisation.logo_url}" style="max-height: 50px; margin-bottom: 8px;" />` : '🇸🇱'} ${organisation?.name || 'Our Company'}</h1>
-                <p>${organisation?.address || 'Freetown'}, Sierra Leone</p>
-                <p>Tel: ${organisation?.phone || '+232 XX XXX XXX'}</p>
-                ${organisation?.email ? `<p>Email: ${organisation.email}</p>` : ''}
-                ${organisation?.tin_number ? `<p>TIN: ${organisation.tin_number}</p>` : ''}
-              </div>
-              <div class="invoice-info">
-                <h2>INVOICE</h2>
-                <p><strong>${invoiceNumber}</strong></p>
-                <p>Date: ${format(new Date(), 'dd MMMM yyyy')}</p>
-                <p>Due: ${format(dueDate, 'dd MMMM yyyy')}</p>
-              </div>
-            </div>
+            ${getBrandedHeader(organisation, 'Invoice', invoiceNumber, format(new Date(), 'dd MMM yyyy'))}
             
-            <div class="flag-stripe">
-              <div class="green"></div>
-              <div class="white"></div>
-              <div class="blue"></div>
-            </div>
-            
-            <div class="body">
-              <div class="parties">
-                <div class="party">
+            <div class="brand-content">
+              <div class="brand-parties">
+                <div class="brand-party">
                   <h3>Bill To</h3>
                   ${invoiceData.company_name ? `<p><strong>${invoiceData.company_name}</strong></p>` : ''}
                   <p>${invoiceData.customer_name}</p>
@@ -141,21 +139,22 @@ export default function InvoiceDialog({
                   ${invoiceData.customer_email ? `<p>Email: ${invoiceData.customer_email}</p>` : ''}
                   ${invoiceData.tax_id ? `<p>Tax ID: ${invoiceData.tax_id}</p>` : ''}
                 </div>
-                <div class="party" style="text-align: right;">
+                <div class="brand-party" style="text-align: right;">
                   <h3>Payment Terms</h3>
                   <p>Net ${invoiceData.payment_terms} days</p>
-                  <p style="margin-top: 10px;"><strong>Status:</strong></p>
-                  <p style="color: #f59e0b; font-weight: bold;">PENDING</p>
+                  <p style="margin-top: 12px;"><strong>Due Date:</strong></p>
+                  <p style="font-size: 16px; font-weight: 600; color: ${secondaryColor};">${format(dueDate, 'dd MMMM yyyy')}</p>
+                  <p style="margin-top: 10px;"><span class="brand-badge pending">PENDING</span></p>
                 </div>
               </div>
               
-              <table class="items-table">
+              <table class="brand-table">
                 <thead>
                   <tr>
                     <th>Description</th>
-                    <th>Qty</th>
-                    <th class="amount">Unit Price</th>
-                    <th class="amount">Amount</th>
+                    <th style="width: 60px;">Qty</th>
+                    <th class="amount" style="width: 120px;">Unit Price</th>
+                    <th class="amount" style="width: 120px;">Amount</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -170,43 +169,40 @@ export default function InvoiceDialog({
                 </tbody>
               </table>
               
-              <div class="totals">
-                <table class="totals-table">
-                  <tr>
-                    <td>Subtotal</td>
-                    <td>SLE ${cartTotal.toLocaleString()}</td>
-                  </tr>
+              <div class="totals-wrapper">
+                <div class="totals-box">
+                  <div class="row">
+                    <span>Subtotal</span>
+                    <span>SLE ${cartTotal.toLocaleString()}</span>
+                  </div>
                   ${invoiceData.include_tax ? `
-                    <tr>
-                      <td>GST (${invoiceData.tax_rate}%)</td>
-                      <td>SLE ${taxAmount.toLocaleString()}</td>
-                    </tr>
+                    <div class="row">
+                      <span>GST (${invoiceData.tax_rate}%)</span>
+                      <span>SLE ${taxAmount.toLocaleString()}</span>
+                    </div>
                   ` : ''}
-                  <tr class="grand-total">
-                    <td>Total Due</td>
-                    <td>SLE ${totalWithTax.toLocaleString()}</td>
-                  </tr>
-                </table>
+                  <div class="row grand">
+                    <span>Total Due</span>
+                    <span>SLE ${totalWithTax.toLocaleString()}</span>
+                  </div>
+                </div>
               </div>
               
               ${invoiceData.notes ? `
-                <div class="notes">
+                <div class="brand-notes">
                   <h4>Notes</h4>
                   <p>${invoiceData.notes}</p>
                 </div>
               ` : ''}
               
-              <div class="payment-info">
+              <div class="payment-box">
                 <h4>Payment Information</h4>
                 <p>Please make payment within ${invoiceData.payment_terms} days to avoid late fees.</p>
-                <p>For questions regarding this invoice, please contact us.</p>
+                <p>For questions regarding this invoice, please contact us at ${organisation?.phone || ''} or ${organisation?.email || ''}.</p>
               </div>
             </div>
             
-            <div class="footer">
-              <p>Thank you for your business! 🇸🇱</p>
-              <p style="margin-top: 8px; opacity: 0.7;">${organisation?.name || ''}</p>
-            </div>
+            ${getBrandedFooter(organisation)}
           </div>
         </body>
       </html>
@@ -297,13 +293,18 @@ export default function InvoiceDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <div className="flex h-1 w-16 rounded-full overflow-hidden mb-3">
-            <div className="flex-1 bg-[#1EB053]" />
-            <div className="flex-1 bg-white border-y border-gray-200" />
-            <div className="flex-1 bg-[#0072C6]" />
+          <div className="flex items-center gap-3 mb-2">
+            {organisation?.logo_url && (
+              <img src={organisation.logo_url} alt="" className="h-8 object-contain" />
+            )}
+            <div className="flex h-1 w-16 rounded-full overflow-hidden">
+              <div className="flex-1" style={{ backgroundColor: primaryColor }} />
+              <div className="flex-1 bg-white border-y border-gray-200" />
+              <div className="flex-1" style={{ backgroundColor: secondaryColor }} />
+            </div>
           </div>
           <DialogTitle className="flex items-center gap-2">
-            <FileText className="w-5 h-5 text-[#0072C6]" />
+            <FileText className="w-5 h-5" style={{ color: secondaryColor }} />
             Create Invoice
           </DialogTitle>
         </DialogHeader>
@@ -436,7 +437,10 @@ export default function InvoiceDialog({
             </div>
 
             {/* Summary */}
-            <div className="p-4 bg-gradient-to-br from-[#1EB053]/10 to-[#0072C6]/10 rounded-xl border">
+            <div 
+              className="p-4 rounded-xl border"
+              style={{ background: `linear-gradient(135deg, ${primaryColor}10 0%, ${secondaryColor}10 100%)` }}
+            >
               <h4 className="font-semibold mb-3">Invoice Summary</h4>
               <div className="space-y-2 text-sm">
                 <div className="flex justify-between">
@@ -451,7 +455,7 @@ export default function InvoiceDialog({
                 )}
                 <div className="flex justify-between font-bold text-lg pt-2 border-t">
                   <span>Total Due</span>
-                  <span className="text-[#1EB053]">SLE {totalWithTax.toLocaleString()}</span>
+                  <span style={{ color: primaryColor }}>SLE {totalWithTax.toLocaleString()}</span>
                 </div>
               </div>
             </div>
@@ -481,7 +485,7 @@ export default function InvoiceDialog({
             <Button
               onClick={handleCreateInvoiceSale}
               disabled={isCreating || !invoiceData.customer_name}
-              className="bg-gradient-to-r from-[#1EB053] to-[#0072C6]"
+              style={{ background: `linear-gradient(135deg, ${primaryColor} 0%, ${secondaryColor} 100%)` }}
             >
               {isCreating ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Send className="w-4 h-4 mr-2" />}
               Create & Send Invoice
