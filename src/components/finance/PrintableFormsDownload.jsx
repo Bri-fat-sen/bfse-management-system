@@ -518,13 +518,14 @@ const generateFormHTML = (formType, org) => {
   const header = `
     <div class="sl-header-container">
       <div class="sl-header-inner">
+        ${org?.logo_url ? `<img src="${org.logo_url}" alt="${orgName}" style="height: 50px; object-fit: contain; background: rgba(255,255,255,0.1); border-radius: 6px; padding: 4px;" />` : `
         <div class="sl-flag-icon">
           <div class="green"></div>
           <div class="white"></div>
           <div class="blue"></div>
-        </div>
+        </div>`}
         <div class="sl-header-text">
-          <h1>${orgName || 'Organisation Name'}</h1>
+          <h1>${orgName}</h1>
           <p>Sierra Leone • Date Printed: ${today}</p>
         </div>
       </div>
@@ -532,10 +533,10 @@ const generateFormHTML = (formType, org) => {
     <div class="sl-flag-stripe"></div>
     <div class="business-details-bar">
       <div class="business-details-inner">
-        ${org?.address ? `<span>📍 ${org.address}${org?.city ? `, ${org.city}` : ''}</span>` : ''}
-        ${org?.phone ? `<span>📞 ${org.phone}</span>` : ''}
-        ${org?.email ? `<span>✉️ ${org.email}</span>` : ''}
-        ${org?.owner_name ? `<span>👤 ${org.owner_name}</span>` : ''}
+        ${orgAddress ? `<span>📍 ${orgAddress}${orgCity ? `, ${orgCity}` : ''}</span>` : ''}
+        ${orgPhone ? `<span>📞 ${orgPhone}</span>` : ''}
+        ${orgEmail ? `<span>✉️ ${orgEmail}</span>` : ''}
+        ${orgOwner ? `<span>👤 ${orgOwner}</span>` : ''}
       </div>
     </div>
   `;
