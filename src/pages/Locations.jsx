@@ -70,6 +70,7 @@ export default function Locations() {
   const [selectedLocation, setSelectedLocation] = useState(null);
   const [locationToDelete, setLocationToDelete] = useState(null);
   const [locationType, setLocationType] = useState("warehouse");
+  const [allowedSaleTypes, setAllowedSaleTypes] = useState([]);
 
   const { data: user } = useQuery({
     queryKey: ['currentUser'],
