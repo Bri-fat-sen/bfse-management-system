@@ -117,11 +117,11 @@ export function OfflineProvider({ children }) {
               }
             }
             break;
-          case 'create_stock_movement':
-            await base44.entities.StockMovement.create(action.data);
-            break;
-          case 'update_product_stock':
+          case 'update_stock':
             await base44.entities.Product.update(action.productId, action.data);
+            if (action.stockLevelId) {
+              await base44.entities.StockLevel.update(action.stockLevelId, action.stockData);
+            }
             break;
           case 'clock_in':
           case 'clock_out':
@@ -130,6 +130,9 @@ export function OfflineProvider({ children }) {
             } else {
               await base44.entities.Attendance.update(action.attendanceId, action.data);
             }
+            break;
+          case 'create_stock_movement':
+            await base44.entities.StockMovement.create(action.data);
             break;
           default:
             console.warn('Unknown action type:', action.type);
