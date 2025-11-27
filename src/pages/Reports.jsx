@@ -104,25 +104,25 @@ export default function Reports() {
     enabled: !!orgId,
   });
 
-  const { data: sales = [] } = useQuery({
+  const { data: sales = [], isLoading: mainSalesLoading } = useQuery({
     queryKey: ['sales', orgId],
     queryFn: () => base44.entities.Sale.filter({ organisation_id: orgId }, '-created_date', 500),
     enabled: !!orgId,
   });
 
-  const { data: expenses = [] } = useQuery({
+  const { data: expenses = [], isLoading: expensesLoading } = useQuery({
     queryKey: ['expenses', orgId],
     queryFn: () => base44.entities.Expense.filter({ organisation_id: orgId }, '-date', 500),
     enabled: !!orgId,
   });
 
-  const { data: products = [] } = useQuery({
+  const { data: products = [], isLoading: productsLoading } = useQuery({
     queryKey: ['products', orgId],
     queryFn: () => base44.entities.Product.filter({ organisation_id: orgId }),
     enabled: !!orgId,
   });
 
-  const { data: trips = [] } = useQuery({
+  const { data: trips = [], isLoading: tripsLoading } = useQuery({
     queryKey: ['trips', orgId],
     queryFn: () => base44.entities.Trip.filter({ organisation_id: orgId }, '-date', 500),
     enabled: !!orgId,
@@ -134,11 +134,14 @@ export default function Reports() {
     enabled: !!orgId,
   });
 
-  const { data: attendance = [] } = useQuery({
+  const { data: attendance = [], isLoading: attendanceLoading } = useQuery({
     queryKey: ['attendance', orgId],
     queryFn: () => base44.entities.Attendance.filter({ organisation_id: orgId }, '-date', 500),
     enabled: !!orgId,
   });
+
+  // Check if main data is loading
+  const isLoading = !orgId || mainSalesLoading || expensesLoading || productsLoading || tripsLoading;
 
   // Advanced filtering
   const filteredSales = useMemo(() => {
@@ -354,6 +357,33 @@ export default function Reports() {
     }
     setActiveTab(report.report_type === 'custom' ? 'sales' : report.report_type);
   };
+
+  // Loading state UI
+  if (isLoading) {
+    return (
+      <ProtectedPage module="finance">
+        <div className="min-h-[60vh] flex flex-col items-center justify-center">
+          <div className="relative">
+            {/* Sierra Leone themed loading spinner */}
+            <div className="w-20 h-20 relative">
+              <div className="absolute inset-0 rounded-full border-4 border-gray-200"></div>
+              <div className="absolute inset-0 rounded-full border-4 border-transparent border-t-[#1EB053] animate-spin"></div>
+              <div className="absolute inset-2 rounded-full border-4 border-transparent border-t-white animate-spin" style={{ animationDuration: '1.5s', animationDirection: 'reverse' }}></div>
+              <div className="absolute inset-4 rounded-full border-4 border-transparent border-t-[#0072C6] animate-spin" style={{ animationDuration: '2s' }}></div>
+            </div>
+            {/* Flag colors at bottom */}
+            <div className="flex h-1 w-20 rounded-full overflow-hidden mt-4">
+              <div className="flex-1 bg-[#1EB053]"></div>
+              <div className="flex-1 bg-white border-y border-gray-200"></div>
+              <div className="flex-1 bg-[#0072C6]"></div>
+            </div>
+          </div>
+          <p className="mt-6 text-gray-600 font-medium">Loading Reports...</p>
+          <p className="text-sm text-gray-400 mt-1">Fetching your business data</p>
+        </div>
+      </ProtectedPage>
+    );
+  }
 
   return (
     <ProtectedPage module="finance">
