@@ -431,6 +431,25 @@ const generateFormHTML = (formType, org) => {
         font-size: 8px;
       }
       
+      /* Business Details Bar */
+      .business-details-bar {
+        background: linear-gradient(90deg, #f8f9fa 0%, #fff 100%);
+        border-bottom: 1px solid #e0e0e0;
+        padding: 10px 20px;
+      }
+      .business-details-inner {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 15px;
+        font-size: 10px;
+        color: #555;
+      }
+      .business-details-inner span {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+      }
+      
       /* About Us & Terms Section */
       .about-terms-section {
         margin-top: 30px;
