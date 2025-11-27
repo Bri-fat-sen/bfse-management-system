@@ -51,6 +51,7 @@ import {
 import { toast } from "sonner";
 import PageHeader from "@/components/ui/PageHeader";
 import EmptyState from "@/components/ui/EmptyState";
+import LoadingSpinner from "@/components/ui/LoadingSpinner";
 import ReceiptDialog from "@/components/sales/ReceiptDialog";
 import InvoiceDialog from "@/components/sales/InvoiceDialog";
 
@@ -144,19 +145,25 @@ export default function Sales() {
     return map;
   }, [stockLevels]);
 
-  // Get location options based on sale type
+  // Get location options based on sale type, filtered by allowed_sale_types
   const getLocationOptions = () => {
     switch (saleType) {
       case 'vehicle':
         return vehicles.map(v => ({ id: v.id, name: `${v.registration_number} - ${v.brand || ''} ${v.model || ''}`.trim(), type: 'vehicle' }));
       case 'warehouse':
-        return warehouses.length > 0 
-          ? warehouses.map(w => ({ id: w.id, name: w.name, type: 'warehouse' }))
+        const warehouseLocations = warehouses.filter(w => 
+          !w.allowed_sale_types || w.allowed_sale_types.length === 0 || w.allowed_sale_types.includes('warehouse')
+        );
+        return warehouseLocations.length > 0 
+          ? warehouseLocations.map(w => ({ id: w.id, name: w.name, type: 'warehouse' }))
           : [{ id: 'default_warehouse', name: 'Main Warehouse', type: 'warehouse' }];
       case 'retail':
       default:
-        return warehouses.length > 0 
-          ? warehouses.map(w => ({ id: w.id, name: w.name, type: 'store' }))
+        const retailLocations = warehouses.filter(w => 
+          !w.allowed_sale_types || w.allowed_sale_types.length === 0 || w.allowed_sale_types.includes('retail')
+        );
+        return retailLocations.length > 0 
+          ? retailLocations.map(w => ({ id: w.id, name: w.name, type: 'store' }))
           : [{ id: 'main_store', name: 'Main Store', type: 'store' }];
     }
   };
@@ -469,6 +476,11 @@ export default function Sales() {
       description: `Completed ${saleType} sale for Le ${cartTotal.toLocaleString()}`
     });
   };
+
+  // Show loading spinner while initial data loads
+  if (!orgId || loadingProducts) {
+    return <LoadingSpinner message="Loading Sales..." subtitle="Setting up your point of sale" />;
+  }
 
   return (
     <div className="space-y-6">

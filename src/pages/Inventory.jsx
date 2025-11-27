@@ -49,6 +49,7 @@ import { toast } from "sonner";
 import PageHeader from "@/components/ui/PageHeader";
 import EmptyState from "@/components/ui/EmptyState";
 import StatCard from "@/components/ui/StatCard";
+import LoadingSpinner from "@/components/ui/LoadingSpinner";
 import StockAdjustmentDialog from "@/components/inventory/StockAdjustmentDialog";
 import CategoryManager from "@/components/inventory/CategoryManager";
 import StockLocations from "@/components/inventory/StockLocations";
@@ -284,6 +285,11 @@ export default function Inventory() {
       setSelectedLocations([]);
     }
   }, [showProductDialog, editingProduct]);
+
+  // Show loading spinner while initial data loads
+  if (!orgId || isLoading) {
+    return <LoadingSpinner message="Loading Inventory..." subtitle="Fetching your products and stock" />;
+  }
 
   return (
     <div className="space-y-6">

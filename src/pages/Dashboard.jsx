@@ -2,6 +2,7 @@ import React from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery } from "@tanstack/react-query";
 import { format, differenceInDays } from "date-fns";
+import LoadingSpinner, { WelcomeLoader } from "@/components/ui/LoadingSpinner";
 import {
   Users,
   ShoppingCart,
@@ -50,13 +51,6 @@ export default function Dashboard() {
   const currentEmployee = employee?.[0];
   const orgId = currentEmployee?.organisation_id;
   const userRole = currentEmployee?.role || 'read_only';
-
-  const { data: organisation } = useQuery({
-    queryKey: ['organisation', orgId],
-    queryFn: () => base44.entities.Organisation.filter({ id: orgId }),
-    enabled: !!orgId,
-  });
-  const currentOrg = organisation?.[0];
 
   // Role-based dashboard routing
   const isDriver = userRole === 'driver';
@@ -139,6 +133,11 @@ export default function Dashboard() {
     enabled: !!orgId && !isDriver && !isSalesStaff && !isManager,
   });
 
+  // Show loading state while user data is being fetched
+  if (!user || !currentEmployee) {
+    return <WelcomeLoader orgName="BRI-FAT-SEN ENTERPRISE" />;
+  }
+
   // Show role-specific dashboard
   if (isDriver) {
     return <DriverDashboard currentEmployee={currentEmployee} orgId={orgId} />;
@@ -149,7 +148,7 @@ export default function Dashboard() {
   }
 
   if (isManager) {
-    return <ManagerDashboard currentEmployee={currentEmployee} orgId={orgId} user={user} organisation={currentOrg} />;
+    return <ManagerDashboard currentEmployee={currentEmployee} orgId={orgId} user={user} />;
   }
 
   // Calculate statistics
@@ -206,7 +205,7 @@ export default function Dashboard() {
                 <div className="flex h-6 w-1.5 rounded-full overflow-hidden">
                   <div className="w-full bg-gradient-to-b from-[#1EB053] via-white to-[#0072C6]" />
                 </div>
-                <p className="text-[#D4AF37] text-sm font-semibold tracking-wide">🇸🇱 {currentOrg?.name || ''}</p>
+                <p className="text-[#D4AF37] text-sm font-semibold tracking-wide">🇸🇱 BRI-FAT-SEN ENTERPRISE</p>
               </div>
               <h1 className="text-2xl md:text-4xl font-bold bg-gradient-to-r from-white via-white to-[#D4AF37] bg-clip-text text-transparent">
                 Welcome back, {user?.full_name?.split(' ')[0] || 'User'}!

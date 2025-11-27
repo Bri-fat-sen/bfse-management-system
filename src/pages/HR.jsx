@@ -46,6 +46,7 @@ import { toast } from "sonner";
 import PageHeader from "@/components/ui/PageHeader";
 import EmptyState from "@/components/ui/EmptyState";
 import StatCard from "@/components/ui/StatCard";
+import LoadingSpinner from "@/components/ui/LoadingSpinner";
 import PayrollProcessDialog from "@/components/hr/PayrollProcessDialog";
 import PayslipGenerator from "@/components/hr/PayslipGenerator";
 import AddEmployeeDialog from "@/components/hr/AddEmployeeDialog";
@@ -168,6 +169,15 @@ export default function HR() {
       default: return 'bg-gray-100 text-gray-800';
     }
   };
+
+  // Show loading spinner while initial data loads
+  if (!orgId || isLoading) {
+    return (
+      <ProtectedPage module="hr">
+        <LoadingSpinner message="Loading HR..." subtitle="Fetching employee data" />
+      </ProtectedPage>
+    );
+  }
 
   return (
     <ProtectedPage module="hr">
