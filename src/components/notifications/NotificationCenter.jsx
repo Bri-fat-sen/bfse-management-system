@@ -70,14 +70,14 @@ export default function NotificationCenter({ orgId, currentEmployee }) {
 
   // Request notification permission on mount
   useEffect(() => {
-    if ('Notification' in window && Notification.permission === 'default') {
-      Notification.requestPermission();
+    if (typeof window !== 'undefined' && 'Notification' in window && Notification.permission === 'default') {
+      Notification.requestPermission().catch(() => {});
     }
   }, []);
 
   // Show browser notification for new unread items
   useEffect(() => {
-    if ('Notification' in window && Notification.permission === 'granted') {
+    if (typeof window !== 'undefined' && 'Notification' in window && Notification.permission === 'granted') {
       const recentUnread = notifications.filter(n => {
         if (n.is_read) return false;
         const created = new Date(n.created_date);
@@ -86,11 +86,15 @@ export default function NotificationCenter({ orgId, currentEmployee }) {
       });
 
       recentUnread.forEach(n => {
-        new Notification(n.title, {
-          body: n.message,
-          icon: '/favicon.ico',
-          tag: n.id
-        });
+        try {
+          new Notification(n.title, {
+            body: n.message,
+            icon: '/favicon.ico',
+            tag: n.id
+          });
+        } catch (e) {
+          console.warn('Notification failed:', e);
+        }
       });
     }
   }, [notifications]);
