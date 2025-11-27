@@ -1267,7 +1267,7 @@ export default function PrintableFormsDownload({ open, onOpenChange, organisatio
   const [selectedCategory, setSelectedCategory] = useState('all');
 
   const handleDownload = (formId) => {
-    const html = generateFormHTML(formId, organisation?.name);
+    const html = generateFormHTML(formId, organisation);
     const printWindow = window.open('', '_blank');
     printWindow.document.write(html);
     printWindow.document.close();
