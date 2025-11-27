@@ -102,6 +102,9 @@ export function OfflineProvider({ children }) {
           case 'create_trip':
             await base44.entities.Trip.create(action.data);
             break;
+          case 'update_trip':
+            await base44.entities.Trip.update(action.tripId, action.data);
+            break;
           case 'create_sale':
             await base44.entities.Sale.create(action.data);
             // Update stock
@@ -113,6 +116,12 @@ export function OfflineProvider({ children }) {
                 });
               }
             }
+            break;
+          case 'create_stock_movement':
+            await base44.entities.StockMovement.create(action.data);
+            break;
+          case 'update_product_stock':
+            await base44.entities.Product.update(action.productId, action.data);
             break;
           case 'clock_in':
           case 'clock_out':
