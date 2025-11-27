@@ -45,6 +45,8 @@ const CATEGORIES = ['fuel', 'maintenance', 'utilities', 'supplies', 'rent', 'sal
 const PAYMENT_METHODS = ['cash', 'card', 'mobile_money', 'credit', 'bank_transfer'];
 const SALE_TYPES = ['retail', 'wholesale', 'vehicle'];
 const STATUSES = ['paid', 'pending', 'partial', 'approved', 'rejected', 'completed', 'cancelled'];
+const CUSTOMER_TYPES = ['individual', 'business', 'wholesale', 'retail'];
+const CUSTOMER_SEGMENTS = ['vip', 'regular', 'new', 'at_risk', 'churned'];
 
 export default function AdvancedFilters({ 
   filters, 
@@ -54,7 +56,9 @@ export default function AdvancedFilters({
   showCategoryFilter = true,
   showPaymentFilter = true,
   showSaleTypeFilter = false,
-  showStatusFilter = true
+  showStatusFilter = true,
+  showCustomerTypeFilter = false,
+  showCustomerSegmentFilter = false
 }) {
   const [isOpen, setIsOpen] = useState(false);
   
@@ -64,6 +68,8 @@ export default function AdvancedFilters({
     filters.payment_methods?.length > 0,
     filters.sale_types?.length > 0,
     filters.statuses?.length > 0,
+    filters.customer_types?.length > 0,
+    filters.customer_segments?.length > 0,
   ].filter(Boolean).length;
 
   const handleDatePreset = (preset) => {
@@ -92,7 +98,9 @@ export default function AdvancedFilters({
       categories: [],
       payment_methods: [],
       sale_types: [],
-      statuses: []
+      statuses: [],
+      customer_types: [],
+      customer_segments: []
     });
   };
 
@@ -274,6 +282,46 @@ export default function AdvancedFilters({
                           onClick={() => toggleArrayFilter('statuses', status)}
                         >
                           {status}
+                        </Badge>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Customer Type Filter */}
+                {showCustomerTypeFilter && (
+                  <div>
+                    <Label className="text-sm font-medium flex items-center gap-2 mb-2">
+                      <Users className="w-4 h-4" /> Customer Type
+                    </Label>
+                    <div className="flex flex-wrap gap-1">
+                      {CUSTOMER_TYPES.map(type => (
+                        <Badge
+                          key={type}
+                          variant={filters.customer_types?.includes(type) ? "default" : "outline"}
+                          className={`cursor-pointer ${filters.customer_types?.includes(type) ? 'bg-[#10B981]' : ''}`}
+                          onClick={() => toggleArrayFilter('customer_types', type)}
+                        >
+                          {type}
+                        </Badge>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Customer Segment Filter */}
+                {showCustomerSegmentFilter && (
+                  <div>
+                    <Label className="text-sm font-medium mb-2 block">Customer Segment</Label>
+                    <div className="flex flex-wrap gap-1">
+                      {CUSTOMER_SEGMENTS.map(segment => (
+                        <Badge
+                          key={segment}
+                          variant={filters.customer_segments?.includes(segment) ? "default" : "outline"}
+                          className={`cursor-pointer ${filters.customer_segments?.includes(segment) ? 'bg-[#9333EA]' : ''}`}
+                          onClick={() => toggleArrayFilter('customer_segments', segment)}
+                        >
+                          {segment}
                         </Badge>
                       ))}
                     </div>
