@@ -558,7 +558,7 @@ const generateFormHTML = (formType, org) => {
     <div class="about-terms-section">
       <div class="about-us-box">
         <h3>About Us</h3>
-        <p><strong>${orgName || 'Organisation Name'}</strong> is committed to providing excellent services and maintaining the highest standards of business operations in Sierra Leone. We value transparency, integrity, and accountability in all our financial transactions and record-keeping practices.</p>
+        <p><strong>${orgName}</strong> is committed to providing excellent services and maintaining the highest standards of business operations in Sierra Leone. We value transparency, integrity, and accountability in all our financial transactions and record-keeping practices.</p>
       </div>
       <div class="terms-box">
         <h3>Terms & Conditions</h3>
