@@ -505,6 +505,14 @@ const generateFormHTML = (formType, orgName) => {
       </div>
     </div>
     <div class="sl-flag-stripe"></div>
+    <div class="business-details-bar">
+      <div class="business-details-inner">
+        ${org?.address ? `<span>📍 ${org.address}${org?.city ? `, ${org.city}` : ''}</span>` : ''}
+        ${org?.phone ? `<span>📞 ${org.phone}</span>` : ''}
+        ${org?.email ? `<span>✉️ ${org.email}</span>` : ''}
+        ${org?.owner_name ? `<span>👤 ${org.owner_name}</span>` : ''}
+      </div>
+    </div>
   `;
 
   const footer = `
