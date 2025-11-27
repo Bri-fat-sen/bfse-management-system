@@ -496,7 +496,7 @@ export const generateExportHTML = ({
           
           <div class="header">
             <div class="org-logo"><span>${orgInitials}</span></div>
-            <div class="org-name">${organisation?.name || 'BRI-FAT-SEN Enterprise'}</div>
+            <div class="org-name">${organisation?.name || 'Organisation'}</div>
             <div class="tagline">Business Management System</div>
             <div class="address">
               <span>📍 ${organisation?.address || 'Freetown'}, Sierra Leone</span>
@@ -598,7 +598,7 @@ export const generateExportHTML = ({
           
           ${footer ? `
             <div class="footer">
-              <div class="thanks">Thank you for using BRI-FAT-SEN Enterprise Management System</div>
+              <div class="thanks">Thank you for using ${organisation?.name || 'Our'} Management System</div>
               <div class="pride">Proudly serving businesses across Sierra Leone 🇸🇱</div>
               <div class="sl-flag">🇸🇱</div>
               <div class="generated-info">
@@ -607,7 +607,7 @@ export const generateExportHTML = ({
             </div>
           ` : ''}
         </div>
-        <div class="watermark">🇸🇱 BFSE Management</div>
+        <div class="watermark">🇸🇱 ${organisation?.name || 'Management'}</div>
       </body>
     </html>
   `;

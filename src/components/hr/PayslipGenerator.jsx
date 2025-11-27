@@ -142,17 +142,10 @@ export default function PayslipGenerator({ payroll, employee, organisation }) {
             </div>
             
             <div class="header">
-              <div class="company-info" style="display: flex; align-items: center; gap: 16px;">
-                ${organisation?.logo_url ? `
-                  <div style="background: white; padding: 8px; border-radius: 8px; flex-shrink: 0;">
-                    <img src="${organisation.logo_url}" alt="${organisation?.name}" style="max-height: 50px; max-width: 80px; object-fit: contain;" />
-                  </div>
-                ` : ''}
-                <div>
-                  <h1>${organisation?.name || 'BFSE'}</h1>
-                  <p>${organisation?.address || 'Freetown'}, Sierra Leone</p>
-                  <p>Tel: ${organisation?.phone || '+232 XX XXX XXX'}</p>
-                </div>
+              <div class="company-info">
+                <h1>${organisation?.name || 'Organisation'}</h1>
+                <p>${organisation?.address || ''}, Sierra Leone</p>
+                ${organisation?.phone ? `<p>Tel: ${organisation.phone}</p>` : ''}
               </div>
               <div class="payslip-title">
                 <h2>PAYSLIP</h2>
