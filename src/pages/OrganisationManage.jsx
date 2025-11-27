@@ -69,7 +69,7 @@ import {
 import { toast } from "sonner";
 import PageHeader from "@/components/ui/PageHeader";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import RegistrationsTab from "@/components/organisation/RegistrationsTab";
+import RegistrationsTab from "@/components/organisation/RegistrationsTab.jsx";
 
 export default function OrganisationManage() {
   const queryClient = useQueryClient();
