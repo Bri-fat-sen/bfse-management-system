@@ -21,6 +21,8 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Link } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import PageHeader from "@/components/ui/PageHeader";
+import LoadingSpinner from "@/components/ui/LoadingSpinner";
+import usePageLoader from "@/components/ui/usePageLoader";
 import EmployeeSkillsSection from "@/components/hr/EmployeeSkillsSection";
 import EmployeePerformanceSection from "@/components/hr/EmployeePerformanceSection";
 
@@ -30,7 +32,7 @@ export default function Profile() {
     queryFn: () => base44.auth.me(),
   });
 
-  const { data: employee } = useQuery({
+  const { data: employee, isLoading: loadingEmployee } = useQuery({
     queryKey: ['employee', user?.email],
     queryFn: () => base44.entities.Employee.filter({ user_email: user?.email }),
     enabled: !!user?.email,
@@ -38,6 +40,12 @@ export default function Profile() {
 
   const currentEmployee = employee?.[0];
   const orgId = currentEmployee?.organisation_id;
+
+  const showLoader = usePageLoader(!!user && !loadingEmployee);
+
+  if (showLoader) {
+    return <LoadingSpinner message="Loading Profile..." subtitle="Fetching your information" />;
+  }
 
   const { data: organisation } = useQuery({
     queryKey: ['organisation', orgId],

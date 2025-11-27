@@ -27,6 +27,8 @@ import {
 } from "@/components/ui/select";
 import PageHeader from "@/components/ui/PageHeader";
 import StatCard from "@/components/ui/StatCard";
+import LoadingSpinner from "@/components/ui/LoadingSpinner";
+import usePageLoader from "@/components/ui/usePageLoader";
 import WorkScheduleManager from "@/components/hr/WorkScheduleManager";
 
 
@@ -48,7 +50,7 @@ export default function WorkSchedules() {
   const currentEmployee = employee?.[0];
   const orgId = currentEmployee?.organisation_id;
 
-  const { data: employees = [] } = useQuery({
+  const { data: employees = [], isLoading: loadingEmployees } = useQuery({
     queryKey: ['employees', orgId],
     queryFn: () => base44.entities.Employee.filter({ organisation_id: orgId }),
     enabled: !!orgId,
@@ -59,6 +61,12 @@ export default function WorkSchedules() {
     queryFn: () => base44.entities.WorkSchedule.filter({ organisation_id: orgId }),
     enabled: !!orgId,
   });
+
+  const showLoader = usePageLoader(!!orgId && !loadingEmployees);
+
+  if (showLoader) {
+    return <LoadingSpinner message="Loading Work Schedules..." subtitle="Fetching employee schedules" />;
+  }
 
   const { data: attendance = [] } = useQuery({
     queryKey: ['monthAttendance', orgId],

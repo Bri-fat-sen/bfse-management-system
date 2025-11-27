@@ -26,6 +26,8 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import PageHeader from "@/components/ui/PageHeader";
 import StatCard from "@/components/ui/StatCard";
+import LoadingSpinner from "@/components/ui/LoadingSpinner";
+import usePageLoader from "@/components/ui/usePageLoader";
 import {
   GlowLineChart,
   ColorfulBarChart,
@@ -64,7 +66,7 @@ export default function HRAnalytics() {
   const currentEmployee = employee?.[0];
   const orgId = currentEmployee?.organisation_id;
 
-  const { data: employees = [] } = useQuery({
+  const { data: employees = [], isLoading: loadingEmployees } = useQuery({
     queryKey: ['allEmployees', orgId],
     queryFn: () => base44.entities.Employee.filter({ organisation_id: orgId }),
     enabled: !!orgId,
@@ -75,6 +77,12 @@ export default function HRAnalytics() {
     queryFn: () => base44.entities.PerformanceReview.filter({ organisation_id: orgId }),
     enabled: !!orgId,
   });
+
+  const showLoader = usePageLoader(!!orgId && !loadingEmployees);
+
+  if (showLoader) {
+    return <LoadingSpinner message="Loading HR Analytics..." subtitle="Analyzing employee performance data" />;
+  }
 
   // Date range calculation
   const dateRangeFilter = useMemo(() => {

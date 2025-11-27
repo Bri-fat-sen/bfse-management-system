@@ -33,6 +33,8 @@ import {
 } from "@/components/ui/select";
 import PageHeader from "@/components/ui/PageHeader";
 import EmptyState from "@/components/ui/EmptyState";
+import LoadingSpinner from "@/components/ui/LoadingSpinner";
+import usePageLoader from "@/components/ui/usePageLoader";
 
 const actionIcons = {
   login: User,
@@ -96,6 +98,12 @@ export default function ActivityLog() {
     queryFn: () => base44.entities.ActivityLog.filter({ organisation_id: orgId }, '-created_date', 200),
     enabled: !!orgId,
   });
+
+  const showLoader = usePageLoader(!!orgId && !isLoading);
+
+  if (showLoader) {
+    return <LoadingSpinner message="Loading Activity Log..." subtitle="Fetching system activities" />;
+  }
 
   const filteredActivities = activities.filter(activity => {
     const matchesSearch = 

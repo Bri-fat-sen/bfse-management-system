@@ -68,6 +68,8 @@ import {
 } from "@/components/ui/alert-dialog";
 import { toast } from "sonner";
 import PageHeader from "@/components/ui/PageHeader";
+import LoadingSpinner from "@/components/ui/LoadingSpinner";
+import usePageLoader from "@/components/ui/usePageLoader";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import RegistrationsTab from "@/components/organisation/RegistrationsTab";
 
@@ -263,6 +265,12 @@ export default function OrganisationManage() {
 
   const activeCount = employees.filter(e => e.status === 'active').length;
   const adminCount = employees.filter(e => ['super_admin', 'org_admin'].includes(e.role)).length;
+
+  const showLoader = usePageLoader(!!orgId && !isLoading && !!formData);
+
+  if (showLoader) {
+    return <LoadingSpinner message="Loading Organisation..." subtitle="Fetching organisation details" />;
+  }
 
   if (isLoading || !formData) {
     return (

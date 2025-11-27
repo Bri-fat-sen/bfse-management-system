@@ -44,6 +44,8 @@ import {
 } from "@/components/ui/tooltip";
 import { useToast } from "@/components/ui/use-toast";
 import PageHeader from "@/components/ui/PageHeader";
+import LoadingSpinner from "@/components/ui/LoadingSpinner";
+import usePageLoader from "@/components/ui/usePageLoader";
 import { MODULES, ROLES, DEFAULT_ROLE_PERMISSIONS } from "@/components/permissions/PermissionsContext";
 import { PermissionGate } from "@/components/permissions/PermissionGate";
 
@@ -77,7 +79,7 @@ export default function RolePermissions() {
   const currentEmployee = employee?.[0];
   const orgId = currentEmployee?.organisation_id;
 
-  const { data: customPermissions = [] } = useQuery({
+  const { data: customPermissions = [], isLoading: loadingPermissions } = useQuery({
     queryKey: ['allPermissions', orgId],
     queryFn: () => base44.entities.Permission.filter({ organisation_id: orgId }),
     enabled: !!orgId,
@@ -88,6 +90,16 @@ export default function RolePermissions() {
     queryFn: () => base44.entities.Employee.filter({ organisation_id: orgId }),
     enabled: !!orgId,
   });
+
+  const showLoader = usePageLoader(!!orgId && !loadingPermissions);
+
+  if (showLoader) {
+    return (
+      <PermissionGate module="settings" action="edit" showDenied>
+        <LoadingSpinner message="Loading Permissions..." subtitle="Fetching role configurations" />
+      </PermissionGate>
+    );
+  }
 
   const savePermissionMutation = useMutation({
     mutationFn: async ({ role, module, permissions }) => {

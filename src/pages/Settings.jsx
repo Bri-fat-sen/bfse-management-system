@@ -24,9 +24,10 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-
 import { toast } from "sonner";
 import PageHeader from "@/components/ui/PageHeader";
+import LoadingSpinner from "@/components/ui/LoadingSpinner";
+import usePageLoader from "@/components/ui/usePageLoader";
 
 export default function Settings() {
   const queryClient = useQueryClient();
@@ -37,13 +38,19 @@ export default function Settings() {
     queryFn: () => base44.auth.me(),
   });
 
-  const { data: employee } = useQuery({
+  const { data: employee, isLoading: loadingEmployee } = useQuery({
     queryKey: ['employee', user?.email],
     queryFn: () => base44.entities.Employee.filter({ user_email: user?.email }),
     enabled: !!user?.email,
   });
 
   const currentEmployee = employee?.[0];
+
+  const showLoader = usePageLoader(!!user && !loadingEmployee);
+
+  if (showLoader) {
+    return <LoadingSpinner message="Loading Settings..." subtitle="Fetching your preferences" />;
+  }
 
   const updateEmployeeMutation = useMutation({
     mutationFn: (data) => base44.entities.Employee.update(currentEmployee?.id, data),

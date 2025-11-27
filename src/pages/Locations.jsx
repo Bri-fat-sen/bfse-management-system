@@ -60,6 +60,8 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { toast } from "sonner";
 import PageHeader from "@/components/ui/PageHeader";
 import EmptyState from "@/components/ui/EmptyState";
+import LoadingSpinner from "@/components/ui/LoadingSpinner";
+import usePageLoader from "@/components/ui/usePageLoader";
 
 export default function Locations() {
   const queryClient = useQueryClient();
@@ -87,7 +89,7 @@ export default function Locations() {
   const orgId = currentEmployee?.organisation_id;
   const isSuperAdmin = ['super_admin', 'org_admin'].includes(currentEmployee?.role);
 
-  const { data: warehouses = [] } = useQuery({
+  const { data: warehouses = [], isLoading: loadingWarehouses } = useQuery({
     queryKey: ['warehouses', orgId],
     queryFn: () => base44.entities.Warehouse.filter({ organisation_id: orgId }),
     enabled: !!orgId,
@@ -98,6 +100,12 @@ export default function Locations() {
     queryFn: () => base44.entities.Vehicle.filter({ organisation_id: orgId }),
     enabled: !!orgId,
   });
+
+  const showLoader = usePageLoader(!!orgId && !loadingWarehouses);
+
+  if (showLoader) {
+    return <LoadingSpinner message="Loading Locations..." subtitle="Fetching warehouses and vehicles" />;
+  }
 
   const { data: employees = [] } = useQuery({
     queryKey: ['employees', orgId],
