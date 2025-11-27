@@ -222,7 +222,8 @@ export default function ReportGenerator({ sales = [], expenses = [], payrolls = 
     exportToCSV(
       reportData.columns,
       reportData.rows,
-      `${reportType}_report_${format(new Date(), 'yyyy-MM-dd')}.csv`
+      `${reportType}_report_${format(new Date(), 'yyyy-MM-dd')}.csv`,
+      organisation
     );
     toast({ title: "CSV exported successfully" });
   };

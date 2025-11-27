@@ -39,7 +39,7 @@ export default function AttendanceReportExport({ attendance = [], employee, empl
         a.status
       ]);
     
-    exportToCSV(columns, rows, `attendance-report-${format(new Date(), 'yyyy-MM-dd')}.csv`);
+    exportToCSV(columns, rows, `attendance-report-${format(new Date(), 'yyyy-MM-dd')}.csv`, organisation);
   };
 
   const handlePrint = () => {

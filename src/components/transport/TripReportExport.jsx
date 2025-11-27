@@ -25,7 +25,7 @@ export default function TripReportExport({ trips = [], routes = [], vehicles = [
       t.status
     ]);
     
-    exportToCSV(columns, rows, `trip-report-${format(new Date(), 'yyyy-MM-dd')}.csv`);
+    exportToCSV(columns, rows, `trip-report-${format(new Date(), 'yyyy-MM-dd')}.csv`, organisation);
   };
 
   const handlePrint = () => {
