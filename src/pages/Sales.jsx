@@ -252,12 +252,13 @@ export default function Sales() {
   }, [products, searchTerm, selectedLocation, locationStockMap]);
 
   const addToCart = (product) => {
-    if (!selectedLocation) {
+    // For default locations, always allow (no strict location requirement)
+    if (!selectedLocation && locationOptions.length > 1) {
       toast.error("Select Location", { description: `Please select a ${saleType === 'vehicle' ? 'vehicle' : saleType === 'warehouse' ? 'warehouse' : 'store'} first.` });
       return;
     }
 
-    const availableStock = product.location_stock;
+    const availableStock = product.location_stock ?? product.stock_quantity ?? 0;
     const existing = cart.find(item => item.product_id === product.id);
     
     if (existing) {
