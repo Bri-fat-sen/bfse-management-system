@@ -6,45 +6,42 @@ export default function LoadingSpinner({
   size = "lg",
   fullScreen = true 
 }) {
-  const sizes = {
-    sm: { spinner: "w-10 h-10", bar: "w-10" },
-    md: { spinner: "w-16 h-16", bar: "w-16" },
-    lg: { spinner: "w-20 h-20", bar: "w-20" }
-  };
-
-  const { spinner, bar } = sizes[size] || sizes.lg;
-
   const content = (
     <div className="flex flex-col items-center justify-center">
-      <div className="relative">
-        {/* Sierra Leone themed loading spinner */}
-        <div className={`${spinner} relative`}>
-          <div className="absolute inset-0 rounded-full border-4 border-gray-200"></div>
-          <div className="absolute inset-0 rounded-full border-4 border-transparent border-t-[#1EB053] animate-spin"></div>
+      {/* Large Animated Loading Spinner */}
+      <div className="relative mb-8">
+        <div className="w-28 h-28 relative">
+          <div className="absolute inset-0 rounded-full border-8 border-gray-100"></div>
+          <div className="absolute inset-0 rounded-full border-8 border-transparent border-t-[#1EB053] animate-spin"></div>
           <div 
-            className="absolute inset-2 rounded-full border-4 border-transparent border-t-white animate-spin" 
+            className="absolute inset-3 rounded-full border-8 border-transparent border-t-white animate-spin" 
             style={{ animationDuration: '1.5s', animationDirection: 'reverse' }}
           ></div>
           <div 
-            className="absolute inset-4 rounded-full border-4 border-transparent border-t-[#0072C6] animate-spin" 
+            className="absolute inset-6 rounded-full border-8 border-transparent border-t-[#0072C6] animate-spin" 
             style={{ animationDuration: '2s' }}
           ></div>
+          <div className="absolute inset-0 flex items-center justify-center">
+            <div className="text-3xl">🇸🇱</div>
+          </div>
         </div>
+        
         {/* Flag colors stripe */}
-        <div className={`flex h-1 ${bar} rounded-full overflow-hidden mt-4 mx-auto`}>
+        <div className="flex h-2 w-28 rounded-full overflow-hidden mt-5 mx-auto shadow-sm">
           <div className="flex-1 bg-[#1EB053]"></div>
           <div className="flex-1 bg-white border-y border-gray-200"></div>
           <div className="flex-1 bg-[#0072C6]"></div>
         </div>
       </div>
-      {message && <p className="mt-6 text-gray-600 font-medium">{message}</p>}
-      {subtitle && <p className="text-sm text-gray-400 mt-1">{subtitle}</p>}
+
+      {message && <p className="text-gray-700 font-semibold text-lg">{message}</p>}
+      {subtitle && <p className="text-gray-400 text-sm mt-2">{subtitle}</p>}
     </div>
   );
 
   if (fullScreen) {
     return (
-      <div className="min-h-[60vh] flex items-center justify-center">
+      <div className="fixed inset-0 bg-white flex items-center justify-center z-40">
         {content}
       </div>
     );
