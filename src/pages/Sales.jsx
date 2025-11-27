@@ -150,7 +150,9 @@ export default function Sales() {
       case 'vehicle':
         return vehicles.map(v => ({ id: v.id, name: `${v.registration_number} - ${v.brand || ''} ${v.model || ''}`.trim(), type: 'vehicle' }));
       case 'warehouse':
-        return warehouses.map(w => ({ id: w.id, name: w.name, type: 'warehouse' }));
+        return warehouses.length > 0 
+          ? warehouses.map(w => ({ id: w.id, name: w.name, type: 'warehouse' }))
+          : [{ id: 'default_warehouse', name: 'Main Warehouse', type: 'warehouse' }];
       case 'retail':
       default:
         return warehouses.length > 0 
@@ -162,11 +164,24 @@ export default function Sales() {
   const locationOptions = getLocationOptions();
   const selectedLocationData = locationOptions.find(l => l.id === selectedLocation);
 
+  // Auto-select location if only one option available
+  React.useEffect(() => {
+    if (locationOptions.length === 1 && !selectedLocation) {
+      setSelectedLocation(locationOptions[0].id);
+    }
+  }, [locationOptions, selectedLocation]);
+
   // Reset location and cart when sale type changes
   React.useEffect(() => {
-    setSelectedLocation("");
+    const options = getLocationOptions();
+    // Auto-select if only one option
+    if (options.length === 1) {
+      setSelectedLocation(options[0].id);
+    } else {
+      setSelectedLocation("");
+    }
     setCart([]);
-  }, [saleType]);
+  }, [saleType, warehouses.length, vehicles.length]);
 
   // Clear cart when location changes (stock is location-specific)
   React.useEffect(() => {
