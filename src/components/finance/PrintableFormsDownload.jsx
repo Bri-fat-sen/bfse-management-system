@@ -93,31 +93,260 @@ const generateFormHTML = (formType, orgName) => {
   
   const commonStyles = `
     <style>
-      @page { size: A4; margin: 15mm; }
-      body { font-family: Arial, sans-serif; font-size: 12px; line-height: 1.4; }
-      .header { text-align: center; border-bottom: 3px solid #1EB053; padding-bottom: 10px; margin-bottom: 20px; }
-      .header h1 { margin: 0; color: #0F1F3C; font-size: 20px; }
-      .header p { margin: 5px 0 0; color: #666; }
-      .flag-stripe { height: 6px; background: linear-gradient(to right, #1EB053 33.33%, #FFFFFF 33.33%, #FFFFFF 66.66%, #0072C6 66.66%); margin-bottom: 15px; }
-      .form-title { background: #0F1F3C; color: white; padding: 8px 15px; font-size: 14px; font-weight: bold; margin-bottom: 15px; }
-      .field-row { display: flex; margin-bottom: 12px; }
-      .field { flex: 1; margin-right: 15px; }
-      .field:last-child { margin-right: 0; }
-      .field label { display: block; font-weight: bold; font-size: 10px; color: #333; margin-bottom: 3px; text-transform: uppercase; }
-      .field-input { border: 1px solid #ccc; border-radius: 4px; padding: 8px; min-height: 20px; background: #fafafa; }
-      .field-input.large { min-height: 60px; }
-      .section-title { font-weight: bold; color: #1EB053; border-bottom: 1px solid #1EB053; padding-bottom: 5px; margin: 20px 0 10px; font-size: 12px; }
-      table { width: 100%; border-collapse: collapse; margin: 10px 0; }
-      th { background: #f0f0f0; padding: 8px; text-align: left; font-size: 10px; border: 1px solid #ccc; }
-      td { padding: 8px; border: 1px solid #ccc; min-height: 25px; }
-      .total-row { background: #e8f5e9; font-weight: bold; }
-      .signature-section { margin-top: 30px; display: flex; justify-content: space-between; }
-      .signature-box { width: 45%; }
-      .signature-line { border-top: 1px solid #333; margin-top: 40px; padding-top: 5px; font-size: 10px; }
-      .footer { margin-top: 20px; text-align: center; font-size: 9px; color: #999; border-top: 1px solid #eee; padding-top: 10px; }
-      .checkbox-group { display: flex; flex-wrap: wrap; gap: 10px; }
-      .checkbox-item { display: flex; align-items: center; gap: 5px; }
-      .checkbox { width: 14px; height: 14px; border: 1px solid #333; display: inline-block; }
+      @page { size: A4; margin: 12mm; }
+      * { box-sizing: border-box; }
+      body { 
+        font-family: 'Segoe UI', Arial, sans-serif; 
+        font-size: 11px; 
+        line-height: 1.4; 
+        color: #1a1a1a;
+        background: #fff;
+        margin: 0;
+        padding: 0;
+      }
+      
+      /* Sierra Leone Flag Header */
+      .sl-header-container {
+        background: linear-gradient(135deg, #0F1F3C 0%, #1a2d52 100%);
+        padding: 20px;
+        margin-bottom: 0;
+        position: relative;
+        overflow: hidden;
+      }
+      .sl-header-container::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        right: 0;
+        width: 150px;
+        height: 100%;
+        background: linear-gradient(135deg, transparent 0%, rgba(30, 176, 83, 0.15) 50%, rgba(0, 114, 198, 0.15) 100%);
+      }
+      .sl-header-inner {
+        display: flex;
+        align-items: center;
+        gap: 15px;
+      }
+      .sl-flag-icon {
+        width: 50px;
+        height: 35px;
+        border-radius: 4px;
+        overflow: hidden;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+        flex-shrink: 0;
+      }
+      .sl-flag-icon .green { background: #1EB053; height: 33.33%; }
+      .sl-flag-icon .white { background: #FFFFFF; height: 33.34%; }
+      .sl-flag-icon .blue { background: #0072C6; height: 33.33%; }
+      .sl-header-text h1 { 
+        margin: 0; 
+        color: #FFFFFF; 
+        font-size: 22px; 
+        font-weight: 700;
+        letter-spacing: 0.5px;
+      }
+      .sl-header-text p { 
+        margin: 4px 0 0; 
+        color: rgba(255,255,255,0.7); 
+        font-size: 11px;
+      }
+      
+      /* Flag Stripe Divider */
+      .sl-flag-stripe {
+        height: 8px;
+        background: linear-gradient(to right, #1EB053 33.33%, #FFFFFF 33.33%, #FFFFFF 66.66%, #0072C6 66.66%);
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      }
+      
+      /* Form Title Banner */
+      .form-title-banner {
+        background: linear-gradient(90deg, #1EB053 0%, #0072C6 100%);
+        color: white;
+        padding: 12px 20px;
+        font-size: 16px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        margin-bottom: 20px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+      .form-title-banner::before {
+        content: '📋';
+        font-size: 18px;
+      }
+      
+      /* Form Content */
+      .form-content {
+        padding: 20px;
+      }
+      
+      /* Field Styles */
+      .field-row { display: flex; margin-bottom: 15px; gap: 15px; }
+      .field { flex: 1; }
+      .field label { 
+        display: block; 
+        font-weight: 600; 
+        font-size: 9px; 
+        color: #0F1F3C; 
+        margin-bottom: 4px; 
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+      }
+      .field-input { 
+        border: 2px solid #e0e0e0; 
+        border-radius: 6px; 
+        padding: 10px 12px; 
+        min-height: 22px; 
+        background: linear-gradient(to bottom, #fafafa, #fff);
+        transition: border-color 0.2s;
+      }
+      .field-input:hover { border-color: #1EB053; }
+      .field-input.large { min-height: 70px; }
+      
+      /* Section Title */
+      .section-title { 
+        font-weight: 700; 
+        color: #0F1F3C;
+        background: linear-gradient(90deg, rgba(30, 176, 83, 0.1) 0%, transparent 100%);
+        border-left: 4px solid #1EB053;
+        padding: 8px 12px; 
+        margin: 25px 0 15px; 
+        font-size: 11px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+      }
+      
+      /* Table Styles */
+      table { 
+        width: 100%; 
+        border-collapse: collapse; 
+        margin: 15px 0;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+      }
+      th { 
+        background: linear-gradient(to bottom, #0F1F3C, #1a2d52);
+        color: white;
+        padding: 10px 8px; 
+        text-align: left; 
+        font-size: 9px; 
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        border: none;
+      }
+      td { 
+        padding: 12px 8px; 
+        border: 1px solid #e0e0e0; 
+        min-height: 30px;
+        background: #fff;
+      }
+      tr:nth-child(even) td { background: #f9f9f9; }
+      .total-row { 
+        background: linear-gradient(90deg, #e8f5e9, #e3f2fd) !important; 
+        font-weight: 700;
+      }
+      .total-row td { 
+        border-top: 2px solid #1EB053;
+        font-size: 12px;
+      }
+      
+      /* Checkbox Styles */
+      .checkbox-group { 
+        display: flex; 
+        flex-wrap: wrap; 
+        gap: 12px;
+        padding: 10px;
+        background: #f5f5f5;
+        border-radius: 8px;
+      }
+      .checkbox-item { 
+        display: flex; 
+        align-items: center; 
+        gap: 6px;
+        font-size: 10px;
+      }
+      .checkbox { 
+        width: 16px; 
+        height: 16px; 
+        border: 2px solid #1EB053; 
+        border-radius: 3px;
+        display: inline-block;
+        background: #fff;
+      }
+      
+      /* Signature Section */
+      .signature-section { 
+        margin-top: 40px; 
+        display: flex; 
+        justify-content: space-between;
+        gap: 30px;
+      }
+      .signature-box { 
+        flex: 1;
+        text-align: center;
+      }
+      .signature-line { 
+        border-top: 2px solid #0F1F3C; 
+        margin-top: 50px; 
+        padding-top: 8px; 
+        font-size: 10px;
+        color: #666;
+        font-weight: 600;
+      }
+      
+      /* Footer */
+      .sl-footer {
+        margin-top: 30px;
+        padding: 15px;
+        background: linear-gradient(to right, #f8f9fa, #fff);
+        border-top: 1px solid #e0e0e0;
+        text-align: center;
+      }
+      .sl-footer-flag {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 6px 15px;
+        background: #0F1F3C;
+        border-radius: 20px;
+        color: white;
+        font-size: 10px;
+        margin-bottom: 8px;
+      }
+      .sl-footer-flag .mini-stripe {
+        width: 30px;
+        height: 6px;
+        border-radius: 3px;
+        overflow: hidden;
+        display: flex;
+      }
+      .sl-footer-flag .mini-stripe span { flex: 1; }
+      .sl-footer-flag .mini-stripe .g { background: #1EB053; }
+      .sl-footer-flag .mini-stripe .w { background: #fff; }
+      .sl-footer-flag .mini-stripe .b { background: #0072C6; }
+      .sl-footer p {
+        margin: 5px 0 0;
+        font-size: 9px;
+        color: #999;
+      }
+      .sl-footer .form-id {
+        font-family: monospace;
+        background: #f0f0f0;
+        padding: 2px 8px;
+        border-radius: 4px;
+        font-size: 8px;
+      }
+      
+      @media print { 
+        body { padding: 0; }
+        .sl-header-container { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+        .sl-flag-stripe { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+        .form-title-banner { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+        th { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+        .total-row { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+        .sl-footer-flag { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      }
     </style>
   `;
 
