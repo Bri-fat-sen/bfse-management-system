@@ -18,18 +18,20 @@ import {
   Wrench,
   Users,
   Package,
-  Printer
+  Printer,
+  Zap,
+  Home,
+  Megaphone,
+  Shield,
+  Coins,
+  MapPin,
+  Bus,
+  FileCheck,
+  Briefcase
 } from "lucide-react";
 
 const FORM_TEMPLATES = [
-  {
-    id: 'expense_general',
-    name: 'General Expense Form',
-    description: 'Record any business expense',
-    icon: Receipt,
-    color: 'bg-red-100 text-red-600',
-    category: 'expense'
-  },
+  // EXPENSE FORMS - Based on Expense entity categories
   {
     id: 'expense_fuel',
     name: 'Fuel Expense Form',
@@ -47,41 +49,131 @@ const FORM_TEMPLATES = [
     category: 'expense'
   },
   {
-    id: 'expense_salary',
-    name: 'Salary/Wages Form',
-    description: 'Employee payment records',
-    icon: Users,
-    color: 'bg-purple-100 text-purple-600',
+    id: 'expense_utilities',
+    name: 'Utilities Expense Form',
+    description: 'Electricity, water, internet bills',
+    icon: Zap,
+    color: 'bg-sky-100 text-sky-600',
     category: 'expense'
   },
   {
-    id: 'expense_inventory',
-    name: 'Inventory Purchase Form',
-    description: 'Stock and supplies purchases',
+    id: 'expense_supplies',
+    name: 'Supplies Expense Form',
+    description: 'Office and operational supplies',
     icon: Package,
     color: 'bg-blue-100 text-blue-600',
     category: 'expense'
   },
   {
-    id: 'revenue_sales',
-    name: 'Sales Revenue Form',
-    description: 'Record product sales',
+    id: 'expense_rent',
+    name: 'Rent Expense Form',
+    description: 'Office, warehouse, parking rent',
+    icon: Home,
+    color: 'bg-purple-100 text-purple-600',
+    category: 'expense'
+  },
+  {
+    id: 'expense_salaries',
+    name: 'Salary/Wages Form',
+    description: 'Employee payment records',
+    icon: Users,
+    color: 'bg-indigo-100 text-indigo-600',
+    category: 'expense'
+  },
+  {
+    id: 'expense_transport',
+    name: 'Transport Expense Form',
+    description: 'Travel and transport costs',
+    icon: Bus,
+    color: 'bg-teal-100 text-teal-600',
+    category: 'expense'
+  },
+  {
+    id: 'expense_marketing',
+    name: 'Marketing Expense Form',
+    description: 'Advertising and promotions',
+    icon: Megaphone,
+    color: 'bg-pink-100 text-pink-600',
+    category: 'expense'
+  },
+  {
+    id: 'expense_insurance',
+    name: 'Insurance Expense Form',
+    description: 'Vehicle and business insurance',
+    icon: Shield,
+    color: 'bg-emerald-100 text-emerald-600',
+    category: 'expense'
+  },
+  {
+    id: 'expense_petty_cash',
+    name: 'Petty Cash Form',
+    description: 'Small daily expenses',
+    icon: Coins,
+    color: 'bg-amber-100 text-amber-600',
+    category: 'expense'
+  },
+  {
+    id: 'expense_truck_contract',
+    name: 'Truck Contract Expense Form',
+    description: 'Fuel, tolls, loading, accommodation',
+    icon: Truck,
+    color: 'bg-slate-100 text-slate-600',
+    category: 'expense'
+  },
+  {
+    id: 'expense_general',
+    name: 'General Expense Form',
+    description: 'Other miscellaneous expenses',
+    icon: Receipt,
+    color: 'bg-gray-100 text-gray-600',
+    category: 'expense'
+  },
+  
+  // REVENUE FORMS
+  {
+    id: 'revenue_retail_sales',
+    name: 'Retail Sales Form',
+    description: 'Direct customer sales',
     icon: ShoppingCart,
     color: 'bg-green-100 text-green-600',
     category: 'revenue'
   },
   {
-    id: 'revenue_transport',
-    name: 'Transport Revenue Form',
-    description: 'Truck contracts and trips',
+    id: 'revenue_warehouse_sales',
+    name: 'Warehouse/Wholesale Sales Form',
+    description: 'Bulk and wholesale sales',
+    icon: Package,
+    color: 'bg-lime-100 text-lime-600',
+    category: 'revenue'
+  },
+  {
+    id: 'revenue_vehicle_sales',
+    name: 'Vehicle Sales Form',
+    description: 'Mobile vehicle sales',
     icon: Truck,
+    color: 'bg-cyan-100 text-cyan-600',
+    category: 'revenue'
+  },
+  {
+    id: 'revenue_trip',
+    name: 'Trip Revenue Form',
+    description: 'Passenger trips and ticket sales',
+    icon: MapPin,
+    color: 'bg-violet-100 text-violet-600',
+    category: 'revenue'
+  },
+  {
+    id: 'revenue_truck_contract',
+    name: 'Truck Contract Revenue Form',
+    description: 'Cargo hauling contracts',
+    icon: FileCheck,
     color: 'bg-teal-100 text-teal-600',
     category: 'revenue'
   },
   {
     id: 'revenue_other',
     name: 'Other Income Form',
-    description: 'Miscellaneous revenue',
+    description: 'Miscellaneous revenue sources',
     icon: DollarSign,
     color: 'bg-emerald-100 text-emerald-600',
     category: 'revenue'
