@@ -180,8 +180,9 @@ const FORM_TEMPLATES = [
   }
 ];
 
-const generateFormHTML = (formType, orgName) => {
+const generateFormHTML = (formType, org) => {
   const today = new Date().toLocaleDateString('en-GB');
+  const orgName = org?.name;
   
   const commonStyles = `
     <style>
