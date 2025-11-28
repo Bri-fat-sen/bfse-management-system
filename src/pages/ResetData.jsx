@@ -154,41 +154,73 @@ export default function ResetData() {
     setIsResetting(true);
     const entities = getEntitiesToDelete();
     setResetProgress({ current: 0, total: entities.length, entity: '' });
+    
+    let deletedCount = 0;
+    let errorCount = 0;
 
-    try {
-      for (let i = 0; i < entities.length; i++) {
-        const entityName = entities[i];
-        setResetProgress({ current: i + 1, total: entities.length, entity: entityName });
+    for (let i = 0; i < entities.length; i++) {
+      const entityName = entities[i];
+      setResetProgress({ current: i + 1, total: entities.length, entity: entityName });
+      
+      try {
+        // Check if entity exists
+        if (!base44.entities[entityName]) {
+          console.log(`Entity ${entityName} not found, skipping`);
+          continue;
+        }
         
         // Get all records for this entity in this org
-        const records = await base44.entities[entityName].filter({ organisation_id: orgId });
+        let records = [];
+        try {
+          records = await base44.entities[entityName].filter({ organisation_id: orgId });
+        } catch (filterError) {
+          // Try without org filter for entities that might not have organisation_id
+          try {
+            records = await base44.entities[entityName].list();
+          } catch (listError) {
+            console.log(`Could not fetch ${entityName}:`, listError);
+            continue;
+          }
+        }
         
         // Delete each record
         for (const record of records) {
-          await base44.entities[entityName].delete(record.id);
+          try {
+            await base44.entities[entityName].delete(record.id);
+            deletedCount++;
+          } catch (deleteError) {
+            console.log(`Could not delete ${entityName} record:`, deleteError);
+            errorCount++;
+          }
         }
+      } catch (error) {
+        console.log(`Error processing ${entityName}:`, error);
+        errorCount++;
       }
-
-      // Log the reset action
-      await base44.entities.ActivityLog.create({
-        organisation_id: orgId,
-        action: 'data_reset',
-        entity_type: 'System',
-        description: `Data reset performed. Categories: ${selectedCategories.join(', ')}`,
-        performed_by: currentEmployee?.id,
-        performed_by_name: currentEmployee?.full_name,
-      });
-
-      toast.success("Data reset completed successfully");
-      setShowConfirmDialog(false);
-      setSelectedCategories([]);
-      setConfirmText("");
-    } catch (error) {
-      toast.error("Error during reset: " + error.message);
-    } finally {
-      setIsResetting(false);
-      setResetProgress({ current: 0, total: 0, entity: '' });
     }
+
+    // Log the reset action (only if ActivityLog wasn't deleted)
+    try {
+      if (!selectedCategories.includes('activity')) {
+        await base44.entities.ActivityLog.create({
+          organisation_id: orgId,
+          action: 'data_reset',
+          entity_type: 'System',
+          description: `Data reset performed. Categories: ${selectedCategories.join(', ')}. Deleted ${deletedCount} records.`,
+          performed_by: currentEmployee?.id,
+          performed_by_name: currentEmployee?.full_name,
+        });
+      }
+    } catch (logError) {
+      console.log('Could not log reset action:', logError);
+    }
+
+    toast.success(`Data reset completed. ${deletedCount} records deleted.${errorCount > 0 ? ` ${errorCount} errors.` : ''}`);
+    setShowConfirmDialog(false);
+    setSelectedCategories([]);
+    setConfirmText("");
+    setIsResetting(false);
+    setResetProgress({ current: 0, total: 0, entity: '' });
   };
 
   if (!isSuperAdmin) {
