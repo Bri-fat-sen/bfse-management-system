@@ -50,7 +50,7 @@ import PageHeader from "@/components/ui/PageHeader";
 import EmptyState from "@/components/ui/EmptyState";
 import StatCard from "@/components/ui/StatCard";
 import LoadingSpinner from "@/components/ui/LoadingSpinner";
-import usePageLoader from "@/components/ui/usePageLoader";
+
 import StockAdjustmentDialog from "@/components/inventory/StockAdjustmentDialog";
 import CategoryManager from "@/components/inventory/CategoryManager";
 import StockLocations from "@/components/inventory/StockLocations";
@@ -287,10 +287,8 @@ export default function Inventory() {
     }
   }, [showProductDialog, editingProduct]);
 
-  const showLoader = usePageLoader(!!orgId && !isLoading);
-
-  if (showLoader) {
-    return <LoadingSpinner message="Loading Inventory..." subtitle="Fetching your products and stock" />;
+  if (!user || !currentEmployee || !orgId || isLoading) {
+    return <LoadingSpinner message="Loading Inventory..." subtitle="Fetching your products and stock" fullScreen={true} />;
   }
 
   return (

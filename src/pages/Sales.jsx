@@ -52,7 +52,7 @@ import { toast } from "sonner";
 import PageHeader from "@/components/ui/PageHeader";
 import EmptyState from "@/components/ui/EmptyState";
 import LoadingSpinner from "@/components/ui/LoadingSpinner";
-import usePageLoader from "@/components/ui/usePageLoader";
+
 import ReceiptDialog from "@/components/sales/ReceiptDialog";
 import InvoiceDialog from "@/components/sales/InvoiceDialog";
 
@@ -478,10 +478,8 @@ export default function Sales() {
     });
   };
 
-  const showLoader = usePageLoader(!!orgId && !loadingProducts);
-
-  if (showLoader) {
-    return <LoadingSpinner message="Loading Sales..." subtitle="Setting up your point of sale" />;
+  if (!user || !currentEmployee || !orgId || loadingProducts) {
+    return <LoadingSpinner message="Loading Sales..." subtitle="Setting up your point of sale" fullScreen={true} />;
   }
 
   return (
