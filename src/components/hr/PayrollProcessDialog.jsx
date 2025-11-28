@@ -178,9 +178,32 @@ export default function PayrollProcessDialog({
   ]);
 
   const createPayrollMutation = useMutation({
-    mutationFn: (data) => base44.entities.Payroll.create(data),
+    mutationFn: async (data) => {
+      const payroll = await base44.entities.Payroll.create(data);
+      
+      // Create audit log
+      await base44.entities.PayrollAudit.create({
+        organisation_id: orgId,
+        payroll_id: payroll.id,
+        employee_id: data.employee_id,
+        employee_name: data.employee_name,
+        action: 'created',
+        changed_by_id: currentEmployee?.id,
+        changed_by_name: currentEmployee?.full_name,
+        new_values: {
+          gross_pay: data.gross_pay,
+          net_pay: data.net_pay,
+          total_deductions: data.total_deductions,
+          period: `${data.period_start} to ${data.period_end}`
+        },
+        reason: 'Individual payroll processing'
+      });
+      
+      return payroll;
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['payrolls'] });
+      queryClient.invalidateQueries({ queryKey: ['payrollAudit'] });
       onOpenChange(false);
       resetForm();
       toast.success("Payroll processed successfully");
