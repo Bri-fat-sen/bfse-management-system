@@ -41,7 +41,6 @@ import { Label } from "@/components/ui/label";
 import PageHeader from "@/components/ui/PageHeader";
 import StatCard from "@/components/ui/StatCard";
 import LoadingSpinner from "@/components/ui/LoadingSpinner";
-import usePageLoader from "@/components/ui/usePageLoader";
 import AdvancedFilters from "@/components/analytics/AdvancedFilters";
 import PredictiveAnalytics from "@/components/analytics/PredictiveAnalytics";
 import SavedReportsManager from "@/components/analytics/SavedReportsManager";
@@ -360,9 +359,7 @@ export default function Reports() {
     setActiveTab(report.report_type === 'custom' ? 'sales' : report.report_type);
   };
 
-  const showLoader = usePageLoader(!isLoading);
-
-  if (showLoader) {
+  if (isLoading) {
     return (
       <ProtectedPage module="finance">
         <LoadingSpinner message="Loading Reports..." subtitle="Fetching your business data" />

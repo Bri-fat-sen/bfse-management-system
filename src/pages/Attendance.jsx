@@ -58,7 +58,6 @@ import ProtectedPage from "@/components/permissions/ProtectedPage";
 import QuickClockIn from "@/components/mobile/QuickClockIn";
 import AttendanceReportExport from "@/components/attendance/AttendanceReportExport";
 import LoadingSpinner from "@/components/ui/LoadingSpinner";
-import usePageLoader from "@/components/ui/usePageLoader";
 
 const COLORS = ['#1EB053', '#0072C6', '#D4AF37', '#EF4444', '#9333EA', '#F59E0B'];
 
@@ -248,9 +247,7 @@ export default function Attendance() {
     { name: 'On Leave', value: analytics.byStatus.leave, color: '#0072C6' },
   ].filter(d => d.value > 0);
 
-  const showLoader = usePageLoader(!!orgId && !loadingAttendance);
-
-  if (showLoader) {
+  if (!orgId || loadingAttendance) {
     return (
       <ProtectedPage module="attendance">
         <LoadingSpinner message="Loading Attendance..." subtitle="Fetching attendance records" />
