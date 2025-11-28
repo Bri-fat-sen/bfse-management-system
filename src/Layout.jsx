@@ -132,17 +132,23 @@ export default function Layout({ children, currentPageName }) {
   const { data: user } = useQuery({
     queryKey: ['currentUser'],
     queryFn: () => base44.auth.me(),
+    staleTime: 10 * 60 * 1000, // 10 minutes
+    refetchOnWindowFocus: false,
   });
 
   const { data: notifications = [] } = useQuery({
     queryKey: ['notifications'],
     queryFn: () => base44.entities.Notification.filter({ is_read: false }, '-created_date', 10),
+    staleTime: 60 * 1000, // 1 minute
+    refetchOnWindowFocus: false,
   });
 
   const { data: employee } = useQuery({
     queryKey: ['currentEmployee', user?.email],
     queryFn: () => base44.entities.Employee.filter({ user_email: user?.email }),
     enabled: !!user?.email,
+    staleTime: 10 * 60 * 1000,
+    refetchOnWindowFocus: false,
   });
 
   const currentEmployee = employee?.[0];
