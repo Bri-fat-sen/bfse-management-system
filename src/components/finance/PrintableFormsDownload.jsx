@@ -518,18 +518,12 @@ const generateFormHTML = (formType, org) => {
   const header = `
     <div class="sl-header-container">
       <div class="sl-header-inner">
-        <div class="sl-flag-icon">
-          <div class="green"></div>
-          <div class="white"></div>
-          <div class="blue"></div>
-        </div>
         <div class="sl-header-text">
           <h1>${orgName}</h1>
-          <p>Sierra Leone • Date Printed: ${today}</p>
+          <p>Date Printed: ${today}</p>
         </div>
       </div>
     </div>
-    <div class="sl-flag-stripe"></div>
     <div class="business-details-bar">
       <div class="business-details-inner">
         ${orgAddress ? `<span>📍 ${orgAddress}${orgCity ? `, ${orgCity}` : ''}</span>` : ''}
@@ -542,14 +536,6 @@ const generateFormHTML = (formType, org) => {
 
   const footer = `
     <div class="sl-footer">
-      <div class="sl-footer-flag">
-        <div class="mini-stripe">
-          <span class="g"></span>
-          <span class="w"></span>
-          <span class="b"></span>
-        </div>
-        <span>Sierra Leone</span>
-      </div>
       <p>This form is for manual record keeping. Please enter data into the system when ready.</p>
       <p class="form-id">Form ID: ${formType.toUpperCase()}-${Date.now().toString(36).toUpperCase()}</p>
     </div>
