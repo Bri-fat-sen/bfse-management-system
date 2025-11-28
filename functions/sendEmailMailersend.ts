@@ -23,7 +23,7 @@ Deno.serve(async (req) => {
     // Build email payload
     const emailPayload = {
       from: {
-        email: "noreply@trial-z86org8jxd0lew13.mlsender.net",
+        email: "noreply@brifatsenenterprise.com",
         name: fromName || "Business Management"
       },
       to: Array.isArray(to) 
