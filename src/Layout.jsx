@@ -602,15 +602,14 @@ export default function Layout({ children, currentPageName }) {
           visibleToasts={5}
           duration={4000}
           toastOptions={{
-            classNames: {
-              toast: 'bg-white border-l-4 shadow-lg rounded-lg',
-              success: 'border-l-[#1EB053] [&>div>svg]:text-[#1EB053]',
-              error: 'border-l-red-500 [&>div>svg]:text-red-500',
-              warning: 'border-l-amber-500 [&>div>svg]:text-amber-500',
-              info: 'border-l-[#0072C6] [&>div>svg]:text-[#0072C6]',
-              title: 'font-semibold text-[#0F1F3C]',
-              description: 'text-gray-600',
+            style: {
+              background: 'white',
+              borderRadius: '12px',
+              boxShadow: '0 10px 40px rgba(15, 31, 60, 0.15)',
+              padding: '16px',
+              borderLeft: '4px solid #1EB053',
             },
+            className: 'sl-toast',
           }}
         />
 
