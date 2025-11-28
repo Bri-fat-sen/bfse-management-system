@@ -98,9 +98,7 @@ export default function EmployeeDashboard() {
 
   const currentOrg = organisation?.[0];
 
-  const isLoading = !user || (!!user?.email && loadingEmployee);
-
-  if (isLoading) {
+  if (!user || !currentEmployee) {
     return <LoadingSpinner message="Loading Employee Portal..." subtitle="Preparing your dashboard" />;
   }
   
