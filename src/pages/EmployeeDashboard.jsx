@@ -30,7 +30,7 @@ import { Progress } from "@/components/ui/progress";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import PageHeader from "@/components/ui/PageHeader";
 import StatCard from "@/components/ui/StatCard";
-import LoadingSpinner from "@/components/ui/LoadingSpinner";
+import LoadingSpinner, { WelcomeLoader } from "@/components/ui/LoadingSpinner";
 import QuickClockIn from "@/components/mobile/QuickClockIn";
 
 export default function EmployeeDashboard() {
@@ -99,7 +99,7 @@ export default function EmployeeDashboard() {
   const currentOrg = organisation?.[0];
 
   if (!user || !currentEmployee) {
-    return <LoadingSpinner message="Loading Employee Portal..." subtitle="Preparing your dashboard" />;
+    return <WelcomeLoader orgName={currentOrg?.name} orgLogo={currentOrg?.logo_url} />;
   }
   
   const today = new Date();
