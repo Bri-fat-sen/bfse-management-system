@@ -31,8 +31,11 @@ import {
   BarChart3,
   MapPin,
   ChevronUp,
-  Calendar
+  Calendar,
+  Lock
 } from "lucide-react";
+import PinLockScreen from "@/components/auth/PinLockScreen";
+import SetPinDialog from "@/components/auth/SetPinDialog";
 import { cn } from "@/lib/utils";
 import { PermissionsProvider } from "@/components/permissions/PermissionsContext";
 import { DEFAULT_ROLE_PERMISSIONS } from "@/components/permissions/PermissionsContext";
@@ -124,6 +127,8 @@ export default function Layout({ children, currentPageName }) {
   const [showQuickSale, setShowQuickSale] = useState(false);
   const [showStockCheck, setShowStockCheck] = useState(false);
   const [showDeliveryUpdate, setShowDeliveryUpdate] = useState(false);
+  const [isPinUnlocked, setIsPinUnlocked] = useState(false);
+  const [showSetPinDialog, setShowSetPinDialog] = useState(false);
 
   const toggleSection = (title) => {
     setCollapsedSections(prev => ({ ...prev, [title]: !prev[title] }));
@@ -201,8 +206,37 @@ export default function Layout({ children, currentPageName }) {
   }, [userRole, permissions]);
 
   const handleLogout = () => {
+    setIsPinUnlocked(false);
     base44.auth.logout();
   };
+
+  const handlePinUnlock = () => {
+    setIsPinUnlocked(true);
+    sessionStorage.setItem('pinUnlocked', 'true');
+  };
+
+  // Check if already unlocked in this session
+  useEffect(() => {
+    const unlocked = sessionStorage.getItem('pinUnlocked');
+    if (unlocked === 'true') {
+      setIsPinUnlocked(true);
+    }
+  }, []);
+
+  // Show PIN lock screen if employee has a PIN set and not unlocked
+  const requiresPinAuth = currentEmployee?.pin_hash && !isPinUnlocked;
+
+  // Show lock screen
+  if (requiresPinAuth && user && currentEmployee) {
+    return (
+      <PinLockScreen
+        employee={currentEmployee}
+        organisation={currentOrg}
+        onUnlock={handlePinUnlock}
+        onLogout={handleLogout}
+      />
+    );
+  }
 
   return (
     <div className={`min-h-screen ${darkMode ? 'dark bg-[#0F1F3C]' : 'bg-gray-50'}`}>
@@ -471,6 +505,10 @@ export default function Layout({ children, currentPageName }) {
                     <span>Settings</span>
                   </Link>
                 </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => setShowSetPinDialog(true)}>
+                  <Lock className="w-4 h-4 mr-2" />
+                  <span>{currentEmployee?.pin_hash ? 'Change PIN' : 'Set PIN'}</span>
+                </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={handleLogout} className="text-red-600">
                   <LogOut className="w-4 h-4 mr-2" />
@@ -548,6 +586,12 @@ export default function Layout({ children, currentPageName }) {
             currentEmployee={currentEmployee}
           />
         </ChatNotificationProvider>
+
+        <SetPinDialog
+          open={showSetPinDialog}
+          onOpenChange={setShowSetPinDialog}
+          employee={currentEmployee}
+        />
       </div>
     </div>
   );
