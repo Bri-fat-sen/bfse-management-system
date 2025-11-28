@@ -66,6 +66,7 @@ import BulkPayrollDialog from "@/components/hr/BulkPayrollDialog";
 import BenefitsDeductionsManager from "@/components/hr/BenefitsDeductionsManager";
 import PayrollAuditLog from "@/components/hr/PayrollAuditLog";
 import TaxCalculatorInfo from "@/components/hr/TaxCalculatorInfo";
+import RemunerationPackageManager from "@/components/hr/RemunerationPackageManager";
 
 const roles = [
   "org_admin", "hr_admin", "payroll_admin", "warehouse_manager",
@@ -494,6 +495,7 @@ export default function HR() {
           <div className="flex flex-wrap gap-2 mb-6">
             {[
               { id: 'records', label: 'Payroll Records', icon: FileText },
+              { id: 'packages', label: 'Packages', icon: Users },
               { id: 'benefits', label: 'Benefits & Deductions', icon: DollarSign },
               { id: 'audit', label: 'Audit Trail', icon: Clock },
               { id: 'tax', label: 'Tax Info', icon: Building2 }
@@ -577,6 +579,10 @@ export default function HR() {
                 )}
               </CardContent>
             </Card>
+          )}
+
+          {payrollSubTab === 'packages' && (
+            <RemunerationPackageManager orgId={orgId} />
           )}
 
           {payrollSubTab === 'benefits' && (
