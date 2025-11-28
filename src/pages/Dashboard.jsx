@@ -40,12 +40,16 @@ export default function Dashboard() {
   const { data: user } = useQuery({
     queryKey: ['currentUser'],
     queryFn: () => base44.auth.me(),
+    staleTime: 5 * 60 * 1000, // 5 minutes
+    refetchOnWindowFocus: false,
   });
 
   const { data: employee } = useQuery({
     queryKey: ['employee', user?.email],
     queryFn: () => base44.entities.Employee.filter({ user_email: user?.email }),
     enabled: !!user?.email,
+    staleTime: 5 * 60 * 1000,
+    refetchOnWindowFocus: false,
   });
 
   const currentEmployee = employee?.[0];
@@ -56,6 +60,8 @@ export default function Dashboard() {
     queryKey: ['organisation', orgId],
     queryFn: () => base44.entities.Organisation.filter({ id: orgId }),
     enabled: !!orgId,
+    staleTime: 10 * 60 * 1000, // 10 minutes
+    refetchOnWindowFocus: false,
   });
 
   // Role-based dashboard routing
@@ -63,80 +69,99 @@ export default function Dashboard() {
   const isSalesStaff = ['retail_cashier', 'vehicle_sales', 'warehouse_manager'].includes(userRole);
   const isManager = ['super_admin', 'org_admin', 'hr_admin', 'payroll_admin', 'accountant'].includes(userRole);
 
-  // All hooks must be called before conditional returns
+  // All hooks must be called before conditional returns - with caching to reduce API calls
+  const queryConfig = { staleTime: 2 * 60 * 1000, refetchOnWindowFocus: false };
+  
   const { data: employees = [] } = useQuery({
     queryKey: ['employees', orgId],
     queryFn: () => base44.entities.Employee.filter({ organisation_id: orgId }),
     enabled: !!orgId && !isDriver && !isSalesStaff && !isManager,
+    ...queryConfig,
   });
 
   const { data: sales = [] } = useQuery({
     queryKey: ['sales', orgId],
-    queryFn: () => base44.entities.Sale.filter({ organisation_id: orgId }, '-created_date', 100),
+    queryFn: () => base44.entities.Sale.filter({ organisation_id: orgId }, '-created_date', 50),
     enabled: !!orgId && !isDriver && !isSalesStaff && !isManager,
+    ...queryConfig,
   });
 
   const { data: products = [] } = useQuery({
     queryKey: ['products', orgId],
     queryFn: () => base44.entities.Product.filter({ organisation_id: orgId }),
     enabled: !!orgId && !isDriver && !isSalesStaff && !isManager,
+    ...queryConfig,
   });
 
   const { data: trips = [] } = useQuery({
     queryKey: ['trips', orgId],
-    queryFn: () => base44.entities.Trip.filter({ organisation_id: orgId }, '-created_date', 50),
+    queryFn: () => base44.entities.Trip.filter({ organisation_id: orgId }, '-created_date', 20),
     enabled: !!orgId && !isDriver && !isSalesStaff && !isManager,
+    ...queryConfig,
   });
 
   const { data: recentActivity = [] } = useQuery({
     queryKey: ['activity', orgId],
-    queryFn: () => base44.entities.ActivityLog.filter({ organisation_id: orgId }, '-created_date', 10),
+    queryFn: () => base44.entities.ActivityLog.filter({ organisation_id: orgId }, '-created_date', 5),
     enabled: !!orgId && !isDriver && !isSalesStaff && !isManager,
+    ...queryConfig,
   });
 
   const { data: attendance = [] } = useQuery({
-    queryKey: ['attendance', orgId],
+    queryKey: ['todayAttendance', orgId],
     queryFn: () => base44.entities.Attendance.filter({ 
       organisation_id: orgId, 
       date: format(new Date(), 'yyyy-MM-dd') 
     }),
     enabled: !!orgId && !isDriver && !isSalesStaff && !isManager,
+    ...queryConfig,
   });
 
   const { data: stockAlerts = [] } = useQuery({
     queryKey: ['stockAlerts', orgId],
     queryFn: () => base44.entities.StockAlert.filter({ organisation_id: orgId, status: 'active' }),
     enabled: !!orgId && !isDriver && !isSalesStaff && !isManager,
+    staleTime: 5 * 60 * 1000,
+    refetchOnWindowFocus: false,
   });
 
   const { data: inventoryBatches = [] } = useQuery({
     queryKey: ['inventoryBatches', orgId],
     queryFn: () => base44.entities.InventoryBatch.filter({ organisation_id: orgId, status: 'active' }),
     enabled: !!orgId && !isDriver && !isSalesStaff && !isManager,
+    staleTime: 5 * 60 * 1000,
+    refetchOnWindowFocus: false,
   });
 
   const { data: meetings = [] } = useQuery({
     queryKey: ['meetings', orgId],
-    queryFn: () => base44.entities.Meeting.filter({ organisation_id: orgId }, '-date', 20),
+    queryFn: () => base44.entities.Meeting.filter({ organisation_id: orgId }, '-date', 10),
     enabled: !!orgId && !isDriver && !isSalesStaff && !isManager,
+    staleTime: 5 * 60 * 1000,
+    refetchOnWindowFocus: false,
   });
 
   const { data: expenses = [] } = useQuery({
     queryKey: ['expenses', orgId],
-    queryFn: () => base44.entities.Expense.filter({ organisation_id: orgId }, '-created_date', 100),
+    queryFn: () => base44.entities.Expense.filter({ organisation_id: orgId }, '-created_date', 50),
     enabled: !!orgId && !isDriver && !isSalesStaff && !isManager,
+    ...queryConfig,
   });
 
   const { data: vehicles = [] } = useQuery({
     queryKey: ['vehicles', orgId],
     queryFn: () => base44.entities.Vehicle.filter({ organisation_id: orgId }),
     enabled: !!orgId && !isDriver && !isSalesStaff && !isManager,
+    staleTime: 5 * 60 * 1000,
+    refetchOnWindowFocus: false,
   });
 
   const { data: routes = [] } = useQuery({
     queryKey: ['routes', orgId],
     queryFn: () => base44.entities.Route.filter({ organisation_id: orgId, is_active: true }),
     enabled: !!orgId && !isDriver && !isSalesStaff && !isManager,
+    staleTime: 5 * 60 * 1000,
+    refetchOnWindowFocus: false,
   });
 
   if (!user || !currentEmployee) {
