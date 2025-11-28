@@ -223,7 +223,8 @@ export default function ResetData() {
     setResetProgress({ current: 0, total: 0, entity: '' });
   };
 
-  if (!isSuperAdmin) {
+  // Show restricted access for non-super admins
+  if (!isSuperAdmin && currentEmployee) {
     return (
       <div className="space-y-6">
         <PageHeader title="Reset Data" subtitle="Start fresh with a clean database" />
@@ -232,6 +233,21 @@ export default function ResetData() {
             <Shield className="w-16 h-16 mx-auto text-gray-300 mb-4" />
             <h3 className="text-xl font-semibold mb-2">Access Restricted</h3>
             <p className="text-gray-500">Only Super Administrators can reset data.</p>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  // Show loading while fetching user data
+  if (!currentEmployee) {
+    return (
+      <div className="space-y-6">
+        <PageHeader title="Reset Data" subtitle="Start fresh with a clean database" />
+        <Card>
+          <CardContent className="p-8 text-center">
+            <RefreshCw className="w-12 h-12 mx-auto text-gray-300 mb-4 animate-spin" />
+            <p className="text-gray-500">Loading...</p>
           </CardContent>
         </Card>
       </div>
