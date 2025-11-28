@@ -563,11 +563,7 @@ export default function Layout({ children, currentPageName }) {
 
         <MobileNav currentPageName={currentPageName} />
 
-        <MobileQuickActions
-          onQuickSale={() => setShowQuickSale(true)}
-          onStockCheck={() => setShowStockCheck(true)}
-          onDeliveryUpdate={() => setShowDeliveryUpdate(true)}
-        />
+
 
         <MobileQuickSale
           open={showQuickSale}
