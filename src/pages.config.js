@@ -23,6 +23,8 @@ import WorkSchedules from './pages/WorkSchedules';
 import Landing from './pages/Landing';
 import Privacy from './pages/Privacy';
 import Terms from './pages/Terms';
+import StockAudit from './pages/StockAudit';
+import ResetData from './pages/ResetData';
 import __Layout from './Layout.jsx';
 
 
@@ -52,6 +54,8 @@ export const PAGES = {
     "Landing": Landing,
     "Privacy": Privacy,
     "Terms": Terms,
+    "StockAudit": StockAudit,
+    "ResetData": ResetData,
 }
 
 export const pagesConfig = {
