@@ -62,6 +62,10 @@ import PerformanceOverview from "@/components/hr/PerformanceOverview";
 import EmployeeDocuments from "@/components/hr/EmployeeDocuments";
 import SetPinDialog from "@/components/auth/SetPinDialog";
 import SendInviteEmailDialog from "@/components/email/SendInviteEmailDialog";
+import BulkPayrollDialog from "@/components/hr/BulkPayrollDialog";
+import BenefitsDeductionsManager from "@/components/hr/BenefitsDeductionsManager";
+import PayrollAuditLog from "@/components/hr/PayrollAuditLog";
+import TaxCalculatorInfo from "@/components/hr/TaxCalculatorInfo";
 
 const roles = [
   "org_admin", "hr_admin", "payroll_admin", "warehouse_manager",
@@ -91,6 +95,8 @@ export default function HR() {
   const [employeeToDelete, setEmployeeToDelete] = useState(null);
   const [isDeleting, setIsDeleting] = useState(false);
   const [showInviteDialog, setShowInviteDialog] = useState(false);
+  const [showBulkPayrollDialog, setShowBulkPayrollDialog] = useState(false);
+  const [payrollSubTab, setPayrollSubTab] = useState("records");
 
   const { data: user } = useQuery({
     queryKey: ['currentUser'],
@@ -484,58 +490,106 @@ export default function HR() {
         </TabsContent>
 
         <TabsContent value="payroll" className="mt-6">
-          <Card>
-            <CardHeader className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-              <CardTitle>Payroll Records</CardTitle>
-              <Button onClick={() => setShowPayrollDialog(true)} className="bg-gradient-to-r from-[#1EB053] to-[#0072C6] hover:from-[#178f43] hover:to-[#005a9e] w-full sm:w-auto">
-                <Plus className="w-4 h-4 mr-2" />
-                Process Payroll
+          {/* Payroll Sub-Navigation */}
+          <div className="flex flex-wrap gap-2 mb-6">
+            {[
+              { id: 'records', label: 'Payroll Records', icon: FileText },
+              { id: 'benefits', label: 'Benefits & Deductions', icon: DollarSign },
+              { id: 'audit', label: 'Audit Trail', icon: Clock },
+              { id: 'tax', label: 'Tax Info', icon: Building2 }
+            ].map(tab => (
+              <Button
+                key={tab.id}
+                variant={payrollSubTab === tab.id ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => setPayrollSubTab(tab.id)}
+                className={payrollSubTab === tab.id ? 'bg-[#1EB053] hover:bg-[#178f43]' : ''}
+              >
+                <tab.icon className="w-4 h-4 mr-1" />
+                {tab.label}
               </Button>
-            </CardHeader>
-            <CardContent>
-              {payrolls.length === 0 ? (
-                <EmptyState
-                  icon={DollarSign}
-                  title="No Payroll Records"
-                  description="Payroll records will appear here once processed"
-                />
-              ) : (
-                <div className="space-y-3">
-                  {payrolls.map((payroll) => (
-                    <div key={payroll.id} className="flex flex-col sm:flex-row sm:items-center justify-between p-4 bg-gray-50 rounded-lg gap-3">
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[#1EB053] to-[#1D5FC3] flex items-center justify-center">
-                          <DollarSign className="w-5 h-5 text-white" />
-                        </div>
-                        <div>
-                          <p className="font-medium">{payroll.employee_name}</p>
-                          <p className="text-sm text-gray-500">
-                            {format(new Date(payroll.period_start), 'MMM d')} - {format(new Date(payroll.period_end), 'MMM d, yyyy')}
-                          </p>
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-4">
-                        <div className="text-right">
-                          <p className="font-bold text-[#1EB053]">Le {payroll.net_pay?.toLocaleString()}</p>
-                          <Badge variant={
-                            payroll.status === 'paid' ? 'secondary' :
-                            payroll.status === 'approved' ? 'default' : 'outline'
-                          }>
-                            {payroll.status}
-                          </Badge>
-                        </div>
-                        <PayslipGenerator 
-                          payroll={payroll} 
-                          employee={employees.find(e => e.id === payroll.employee_id)}
-                          organisation={organisation?.[0]}
-                        />
-                      </div>
-                    </div>
-                  ))}
+            ))}
+          </div>
+
+          {payrollSubTab === 'records' && (
+            <Card>
+              <CardHeader className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+                <CardTitle>Payroll Records</CardTitle>
+                <div className="flex gap-2 w-full sm:w-auto">
+                  <Button 
+                    variant="outline"
+                    onClick={() => setShowBulkPayrollDialog(true)} 
+                    className="flex-1 sm:flex-none"
+                  >
+                    <Users className="w-4 h-4 mr-2" />
+                    Bulk Process
+                  </Button>
+                  <Button 
+                    onClick={() => setShowPayrollDialog(true)} 
+                    className="bg-gradient-to-r from-[#1EB053] to-[#0072C6] hover:from-[#178f43] hover:to-[#005a9e] flex-1 sm:flex-none"
+                  >
+                    <Plus className="w-4 h-4 mr-2" />
+                    Process Payroll
+                  </Button>
                 </div>
-              )}
-            </CardContent>
-          </Card>
+              </CardHeader>
+              <CardContent>
+                {payrolls.length === 0 ? (
+                  <EmptyState
+                    icon={DollarSign}
+                    title="No Payroll Records"
+                    description="Payroll records will appear here once processed"
+                  />
+                ) : (
+                  <div className="space-y-3">
+                    {payrolls.map((payroll) => (
+                      <div key={payroll.id} className="flex flex-col sm:flex-row sm:items-center justify-between p-4 bg-gray-50 rounded-lg gap-3">
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[#1EB053] to-[#1D5FC3] flex items-center justify-center">
+                            <DollarSign className="w-5 h-5 text-white" />
+                          </div>
+                          <div>
+                            <p className="font-medium">{payroll.employee_name}</p>
+                            <p className="text-sm text-gray-500">
+                              {format(new Date(payroll.period_start), 'MMM d')} - {format(new Date(payroll.period_end), 'MMM d, yyyy')}
+                            </p>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-4">
+                          <div className="text-right">
+                            <p className="font-bold text-[#1EB053]">Le {payroll.net_pay?.toLocaleString()}</p>
+                            <Badge variant={
+                              payroll.status === 'paid' ? 'secondary' :
+                              payroll.status === 'approved' ? 'default' : 'outline'
+                            }>
+                              {payroll.status}
+                            </Badge>
+                          </div>
+                          <PayslipGenerator 
+                            payroll={payroll} 
+                            employee={employees.find(e => e.id === payroll.employee_id)}
+                            organisation={organisation?.[0]}
+                          />
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          )}
+
+          {payrollSubTab === 'benefits' && (
+            <BenefitsDeductionsManager orgId={orgId} employees={employees} />
+          )}
+
+          {payrollSubTab === 'audit' && (
+            <PayrollAuditLog orgId={orgId} />
+          )}
+
+          {payrollSubTab === 'tax' && (
+            <TaxCalculatorInfo />
+          )}
         </TabsContent>
 
         {/* Leave Tab */}
@@ -571,6 +625,15 @@ export default function HR() {
       <PayrollProcessDialog
         open={showPayrollDialog}
         onOpenChange={setShowPayrollDialog}
+        employees={employees}
+        orgId={orgId}
+        currentEmployee={currentEmployee}
+      />
+
+      {/* Bulk Payroll Dialog */}
+      <BulkPayrollDialog
+        open={showBulkPayrollDialog}
+        onOpenChange={setShowBulkPayrollDialog}
         employees={employees}
         orgId={orgId}
         currentEmployee={currentEmployee}
