@@ -49,12 +49,6 @@ export default function EmployeeDashboard() {
   const currentEmployee = employee?.[0];
   const orgId = currentEmployee?.organisation_id;
 
-  const showLoader = usePageLoader(!!user && !loadingEmployee);
-
-  if (showLoader) {
-    return <LoadingSpinner message="Loading Employee Portal..." subtitle="Preparing your dashboard" />;
-  }
-
   const { data: organisation } = useQuery({
     queryKey: ['organisation', orgId],
     queryFn: () => base44.entities.Organisation.filter({ id: orgId }),
@@ -103,7 +97,13 @@ export default function EmployeeDashboard() {
     enabled: !!currentEmployee?.id,
   });
 
+  const showLoader = usePageLoader(!!user && !loadingEmployee);
+
   const currentOrg = organisation?.[0];
+
+  if (showLoader) {
+    return <LoadingSpinner message="Loading Employee Portal..." subtitle="Preparing your dashboard" />;
+  }
   const today = new Date();
 
   // Calculate stats
