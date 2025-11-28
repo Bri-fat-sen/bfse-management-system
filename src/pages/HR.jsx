@@ -67,6 +67,7 @@ import BenefitsDeductionsManager from "@/components/hr/BenefitsDeductionsManager
 import PayrollAuditLog from "@/components/hr/PayrollAuditLog";
 import TaxCalculatorInfo from "@/components/hr/TaxCalculatorInfo";
 import RemunerationPackageManager from "@/components/hr/RemunerationPackageManager";
+import { Package } from "lucide-react";
 
 const roles = [
   "org_admin", "hr_admin", "payroll_admin", "warehouse_manager",
@@ -150,6 +151,12 @@ export default function HR() {
     enabled: !!orgId,
   });
 
+  const { data: remunerationPackages = [] } = useQuery({
+    queryKey: ['remunerationPackages', orgId],
+    queryFn: () => base44.entities.RemunerationPackage.filter({ organisation_id: orgId, is_active: true }),
+    enabled: !!orgId,
+  });
+
   const updateEmployeeMutation = useMutation({
     mutationFn: ({ id, data }) => base44.entities.Employee.update(id, data),
     onSuccess: () => {
@@ -191,6 +198,9 @@ export default function HR() {
   const handleSubmit = (e) => {
     e.preventDefault();
     const formData = new FormData(e.target);
+    const packageId = formData.get('remuneration_package_id');
+    const selectedPackage = packageId ? remunerationPackages.find(p => p.id === packageId) : null;
+    
     const data = {
       first_name: formData.get('first_name'),
       last_name: formData.get('last_name'),
@@ -203,6 +213,8 @@ export default function HR() {
       salary_type: formData.get('salary_type'),
       base_salary: parseFloat(formData.get('base_salary')) || 0,
       status: formData.get('status'),
+      remuneration_package_id: packageId || null,
+      remuneration_package_name: selectedPackage?.name || null,
     };
 
     updateEmployeeMutation.mutate({ id: editingEmployee.id, data });
@@ -847,6 +859,37 @@ export default function HR() {
                   <Input name="base_salary" type="number" defaultValue={editingEmployee.base_salary} className="mt-1" />
                 </div>
               </div>
+              
+              {/* Remuneration Package */}
+              <div className="p-4 bg-green-50 rounded-lg border border-green-200">
+                <Label className="text-xs text-green-700 flex items-center gap-1 mb-2">
+                  <Package className="w-3 h-3" /> Remuneration Package
+                </Label>
+                <Select name="remuneration_package_id" defaultValue={editingEmployee.remuneration_package_id || ""}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select a package (optional)" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value={null}>No package</SelectItem>
+                    {remunerationPackages.map(pkg => (
+                      <SelectItem key={pkg.id} value={pkg.id}>
+                        <div className="flex items-center gap-2">
+                          <span>{pkg.name}</span>
+                          <Badge variant="secondary" className="text-xs">
+                            SLE {pkg.base_salary?.toLocaleString()}
+                          </Badge>
+                        </div>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                {editingEmployee.remuneration_package_name && (
+                  <p className="text-xs text-green-600 mt-2">
+                    Current: {editingEmployee.remuneration_package_name}
+                  </p>
+                )}
+              </div>
+              
               <DialogFooter className="flex-col sm:flex-row gap-2">
                 <Button type="button" variant="outline" onClick={() => setShowEmployeeDialog(false)} className="w-full sm:w-auto">
                   Cancel
