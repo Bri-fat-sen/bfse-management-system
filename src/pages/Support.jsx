@@ -71,8 +71,6 @@ export default function Support() {
     queryFn: () => base44.auth.me(),
   });
 
-  const showLoader = usePageLoader(!!user);
-
   const filteredFaqs = faqs.filter(faq => 
     faq.question.toLowerCase().includes(searchTerm.toLowerCase()) ||
     faq.answer.toLowerCase().includes(searchTerm.toLowerCase())
@@ -86,10 +84,6 @@ export default function Support() {
     });
     e.target.reset();
   };
-
-  if (showLoader) {
-    return <LoadingSpinner message="Loading Support..." subtitle="Getting help resources ready" />;
-  }
 
   return (
     <div className="space-y-6">

@@ -96,13 +96,14 @@ export default function EmployeeDashboard() {
     enabled: !!currentEmployee?.id,
   });
 
-  const showLoader = usePageLoader(!!user && !loadingEmployee);
-
   const currentOrg = organisation?.[0];
 
-  if (showLoader) {
+  const isLoading = !user || (!!user?.email && loadingEmployee);
+
+  if (isLoading) {
     return <LoadingSpinner message="Loading Employee Portal..." subtitle="Preparing your dashboard" />;
   }
+  
   const today = new Date();
 
   // Calculate stats
