@@ -140,7 +140,7 @@ export default function Dashboard() {
   });
 
   if (!user || !currentEmployee) {
-    return <LoadingSpinner message="Loading Dashboard..." subtitle="Preparing your overview" />;
+    return <LoadingSpinner message="Loading Dashboard..." subtitle="Preparing your overview" fullScreen={true} />;
   }
 
   // Show role-specific dashboard

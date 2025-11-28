@@ -91,11 +91,7 @@ export default function RolePermissions() {
   });
 
   if (!orgId || loadingPermissions) {
-    return (
-      <PermissionGate module="settings" action="edit" showDenied>
-        <LoadingSpinner message="Loading Permissions..." subtitle="Fetching role configurations" />
-      </PermissionGate>
-    );
+    return <LoadingSpinner message="Loading Permissions..." subtitle="Fetching role configurations" fullScreen={true} />;
   }
 
   const savePermissionMutation = useMutation({

@@ -99,7 +99,7 @@ export default function ActivityLog() {
   });
 
   if (!orgId || isLoading) {
-    return <LoadingSpinner message="Loading Activity Log..." subtitle="Fetching system activities" />;
+    return <LoadingSpinner message="Loading Activity Log..." subtitle="Fetching system activities" fullScreen={true} />;
   }
 
   const filteredActivities = activities.filter(activity => {

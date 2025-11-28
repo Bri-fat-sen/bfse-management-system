@@ -16,6 +16,7 @@ import PageHeader from "@/components/ui/PageHeader";
 import CustomerDialog from "@/components/crm/CustomerDialog";
 import CustomerDetail from "@/components/crm/CustomerDetail";
 import LoadingSpinner from "@/components/ui/LoadingSpinner";
+import usePageLoader from "@/components/ui/usePageLoader";
 
 const segmentColors = {
   vip: "bg-amber-100 text-amber-800",
@@ -77,7 +78,9 @@ export default function CRM() {
     enabled: !!orgId,
   });
 
-  if (!orgId || loadingCustomers) {
+  const showLoader = usePageLoader(!!orgId && !loadingCustomers);
+
+  if (showLoader) {
     return <LoadingSpinner message="Loading CRM..." subtitle="Fetching customer data" />;
   }
 

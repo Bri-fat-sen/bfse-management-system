@@ -266,7 +266,7 @@ export default function OrganisationManage() {
   const adminCount = employees.filter(e => ['super_admin', 'org_admin'].includes(e.role)).length;
 
   if (!orgId || isLoading || !formData) {
-    return <LoadingSpinner message="Loading Organisation..." subtitle="Fetching organisation details" />;
+    return <LoadingSpinner message="Loading Organisation..." subtitle="Fetching organisation details" fullScreen={true} />;
   }
 
   return (

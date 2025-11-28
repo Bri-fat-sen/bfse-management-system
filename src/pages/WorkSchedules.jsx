@@ -70,7 +70,7 @@ export default function WorkSchedules() {
   const isLoading = !orgId || loadingEmployees;
 
   if (isLoading) {
-    return <LoadingSpinner message="Loading Work Schedules..." subtitle="Fetching employee schedules" />;
+    return <LoadingSpinner message="Loading Work Schedules..." subtitle="Fetching employee schedules" fullScreen={true} />;
   }
 
   const departments = useMemo(() => {

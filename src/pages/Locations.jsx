@@ -318,8 +318,8 @@ export default function Locations() {
     setShowAssignStaffDialog(true);
   };
 
-  if (!orgId || loadingWarehouses) {
-    return <LoadingSpinner message="Loading Locations..." subtitle="Fetching warehouses and vehicles" />;
+  if (!user || !currentEmployee || !orgId || loadingWarehouses) {
+    return <LoadingSpinner message="Loading Locations..." subtitle="Fetching warehouses and vehicles" fullScreen={true} />;
   }
 
   if (!isSuperAdmin) {

@@ -45,6 +45,7 @@ import PageHeader from "@/components/ui/PageHeader";
 import EmptyState from "@/components/ui/EmptyState";
 import StatCard from "@/components/ui/StatCard";
 import LoadingSpinner from "@/components/ui/LoadingSpinner";
+import usePageLoader from "@/components/ui/usePageLoader";
 import RouteDialog from "@/components/transport/RouteDialog";
 import TripReportExport from "@/components/transport/TripReportExport";
 import TruckContractDialog from "@/components/transport/TruckContractDialog";
@@ -169,7 +170,9 @@ export default function Transport() {
     m.next_due_date && isPast(new Date(m.next_due_date))
   );
 
-  if (!orgId || loadingTrips) {
+  const showLoader = usePageLoader(!!orgId && !loadingTrips);
+
+  if (showLoader) {
     return <LoadingSpinner message="Loading Transport..." subtitle="Fetching vehicles and trips" />;
   }
 

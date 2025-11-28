@@ -78,7 +78,7 @@ export default function HRAnalytics() {
   });
 
   if (!orgId || loadingEmployees) {
-    return <LoadingSpinner message="Loading HR Analytics..." subtitle="Analyzing employee performance data" />;
+    return <LoadingSpinner message="Loading HR Analytics..." subtitle="Analyzing employee performance data" fullScreen={true} />;
   }
 
   // Date range calculation

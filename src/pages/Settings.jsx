@@ -68,7 +68,7 @@ export default function Settings() {
   const isLoading = !user || (!!user?.email && loadingEmployee);
 
   if (isLoading) {
-    return <LoadingSpinner message="Loading Settings..." subtitle="Fetching your preferences" />;
+    return <LoadingSpinner message="Loading Settings..." subtitle="Fetching your preferences" fullScreen={true} />;
   }
 
   return (

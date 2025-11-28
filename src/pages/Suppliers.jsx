@@ -172,11 +172,7 @@ export default function Suppliers() {
   };
 
   if (!orgId || loadingSuppliers) {
-    return (
-      <PermissionGate module="inventory" action="view" showDenied>
-        <LoadingSpinner message="Loading Suppliers..." subtitle="Fetching supplier information" />
-      </PermissionGate>
-    );
+    return <LoadingSpinner message="Loading Suppliers..." subtitle="Fetching supplier information" fullScreen={true} />;
   }
 
   return (

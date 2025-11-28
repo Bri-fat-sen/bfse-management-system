@@ -4,6 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import PageHeader from "@/components/ui/PageHeader";
 import AnalyticsDashboard from "@/components/analytics/AnalyticsDashboard";
 import LoadingSpinner from "@/components/ui/LoadingSpinner";
+import usePageLoader from "@/components/ui/usePageLoader";
 
 export default function Analytics() {
   const { data: user } = useQuery({
@@ -62,7 +63,9 @@ export default function Analytics() {
     enabled: !!orgId,
   });
 
-  if (!orgId || loadingSales) {
+  const showLoader = usePageLoader(!!orgId && !loadingSales);
+
+  if (showLoader) {
     return <LoadingSpinner message="Loading Analytics..." subtitle="Analyzing your business data" />;
   }
 
