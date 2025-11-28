@@ -668,7 +668,7 @@ export default function Sales() {
               </div>
 
               {loadingProducts ? (
-                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2 sm:gap-4">
                   {[...Array(8)].map((_, i) => (
                     <div key={i} className="h-32 bg-gray-100 rounded-xl animate-pulse" />
                   ))}
@@ -680,7 +680,7 @@ export default function Sales() {
                   description="Add products to your inventory to start selling"
                 />
               ) : (
-                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2 sm:gap-4">
                   {filteredProducts.map((product) => {
                     const stockAtLocation = product.location_stock;
                     const isOutOfStock = stockAtLocation < 1;
@@ -693,26 +693,26 @@ export default function Sales() {
                         }`}
                         onClick={() => addToCart(product)}
                       >
-                        <CardContent className="p-4">
+                        <CardContent className="p-2 sm:p-4">
                           {product.image_url ? (
                             <img
                               src={product.image_url}
                               alt={product.name}
-                              className="w-full h-20 object-cover rounded-lg mb-2"
+                              className="w-full h-14 sm:h-20 object-cover rounded-lg mb-2"
                             />
                           ) : (
-                            <div className="w-full h-20 bg-gradient-to-br from-[#1EB053]/20 to-[#1D5FC3]/20 rounded-lg mb-2 flex items-center justify-center">
-                              <Package className="w-8 h-8 text-[#1D5FC3]" />
+                            <div className="w-full h-14 sm:h-20 bg-gradient-to-br from-[#1EB053]/20 to-[#1D5FC3]/20 rounded-lg mb-2 flex items-center justify-center">
+                              <Package className="w-6 h-6 sm:w-8 sm:h-8 text-[#1D5FC3]" />
                             </div>
                           )}
-                          <h3 className="font-medium text-sm truncate">{product.name}</h3>
+                          <h3 className="font-medium text-xs sm:text-sm truncate">{product.name}</h3>
                           <div className="flex items-center justify-between mt-1">
-                            <p className="text-[#1EB053] font-bold">
+                            <p className="text-[#1EB053] font-bold text-xs sm:text-sm">
                               Le {(saleType === 'warehouse' ? (product.wholesale_price || product.unit_price) : product.unit_price)?.toLocaleString()}
                             </p>
                             <Badge 
                               variant={stockAtLocation > 0 ? "secondary" : "destructive"} 
-                              className="text-xs"
+                              className="text-[10px] sm:text-xs"
                               title={selectedLocation ? "Stock at this location" : "Total stock"}
                             >
                               {stockAtLocation}

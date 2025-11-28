@@ -248,8 +248,15 @@ export default function Layout({ children, currentPageName }) {
   }
 
   return (
-    <div className={`min-h-screen ${darkMode ? 'dark bg-[#0F1F3C]' : 'bg-gray-50'}`}>
+    <div className={`min-h-screen ${darkMode ? 'dark bg-[#0F1F3C]' : 'bg-gray-50'}`} style={{ minHeight: '100dvh' }}>
       <style>{`
+        @supports (height: 100dvh) {
+          .min-h-screen { min-height: 100dvh; }
+        }
+        .pb-safe { padding-bottom: max(1rem, env(safe-area-inset-bottom, 1rem)); }
+        @media (max-width: 768px) {
+          input, select, textarea { font-size: 16px !important; }
+        }
         :root {
           --sl-green: #1EB053;
           --sl-white: #FFFFFF;
@@ -543,7 +550,7 @@ export default function Layout({ children, currentPageName }) {
           onExit={() => setPreviewRole(null)} 
         />
 
-        <main className={`p-4 lg:p-6 pb-24 lg:pb-6 ${darkMode ? 'text-white' : ''}`}>
+        <main className={`p-4 lg:p-6 ${darkMode ? 'text-white' : ''}`} style={{ paddingBottom: 'max(6rem, calc(5rem + env(safe-area-inset-bottom, 0px)))' }}>
           <PermissionsProvider>
             <OfflineProvider>
               {children}

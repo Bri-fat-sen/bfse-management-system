@@ -275,22 +275,22 @@ export default function Dashboard() {
       </div>
 
       {/* Stats Grid with Sierra Leone themed cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
         <Card className="relative overflow-hidden border-0 shadow-lg hover:shadow-xl transition-all duration-300 group">
           <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-[#1EB053] to-[#0072C6]" />
-          <div className="absolute top-0 right-0 w-24 h-24 bg-gradient-to-br from-[#1EB053]/20 to-transparent rounded-full transform translate-x-8 -translate-y-8 group-hover:scale-150 transition-transform duration-500" />
-          <CardContent className="p-5">
+          <div className="absolute top-0 right-0 w-16 sm:w-24 h-16 sm:h-24 bg-gradient-to-br from-[#1EB053]/20 to-transparent rounded-full transform translate-x-4 sm:translate-x-8 -translate-y-4 sm:-translate-y-8 group-hover:scale-150 transition-transform duration-500" />
+          <CardContent className="p-3 sm:p-5">
             <div className="flex items-start justify-between">
-              <div>
-                <p className="text-sm text-gray-500 font-medium">Today's Sales</p>
-                <p className="text-2xl font-bold text-gray-900 mt-1">Le {totalRevenue.toLocaleString()}</p>
-                <div className="flex items-center gap-1 mt-2 text-[#1EB053] text-sm">
+              <div className="min-w-0 flex-1">
+                <p className="text-xs sm:text-sm text-gray-500 font-medium">Today's Sales</p>
+                <p className="text-lg sm:text-2xl font-bold text-gray-900 mt-1 truncate">Le {totalRevenue.toLocaleString()}</p>
+                <div className="hidden sm:flex items-center gap-1 mt-2 text-[#1EB053] text-sm">
                   <TrendingUp className="w-4 h-4" />
-                  <span className="font-medium">+12% from yesterday</span>
+                  <span className="font-medium">+12%</span>
                 </div>
               </div>
-              <div className="p-3 rounded-xl bg-gradient-to-br from-[#1EB053] to-[#0072C6] shadow-lg">
-                <DollarSign className="w-6 h-6 text-white" />
+              <div className="p-2 sm:p-3 rounded-lg sm:rounded-xl bg-gradient-to-br from-[#1EB053] to-[#0072C6] shadow-lg flex-shrink-0">
+                <DollarSign className="w-4 h-4 sm:w-6 sm:h-6 text-white" />
               </div>
             </div>
           </CardContent>
@@ -298,16 +298,16 @@ export default function Dashboard() {
 
         <Card className="relative overflow-hidden border-0 shadow-lg hover:shadow-xl transition-all duration-300 group">
           <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-[#0072C6] to-[#9333EA]" />
-          <div className="absolute top-0 right-0 w-24 h-24 bg-gradient-to-br from-[#0072C6]/20 to-transparent rounded-full transform translate-x-8 -translate-y-8 group-hover:scale-150 transition-transform duration-500" />
-          <CardContent className="p-5">
+          <div className="absolute top-0 right-0 w-16 sm:w-24 h-16 sm:h-24 bg-gradient-to-br from-[#0072C6]/20 to-transparent rounded-full transform translate-x-4 sm:translate-x-8 -translate-y-4 sm:-translate-y-8 group-hover:scale-150 transition-transform duration-500" />
+          <CardContent className="p-3 sm:p-5">
             <div className="flex items-start justify-between">
-              <div>
-                <p className="text-sm text-gray-500 font-medium">Active Staff</p>
-                <p className="text-2xl font-bold text-gray-900 mt-1">{activeEmployees.length}</p>
-                <p className="text-sm text-gray-500 mt-2">{clockedIn.length} clocked in today</p>
+              <div className="min-w-0 flex-1">
+                <p className="text-xs sm:text-sm text-gray-500 font-medium">Active Staff</p>
+                <p className="text-lg sm:text-2xl font-bold text-gray-900 mt-1">{activeEmployees.length}</p>
+                <p className="text-xs sm:text-sm text-gray-500 mt-1 sm:mt-2">{clockedIn.length} clocked in</p>
               </div>
-              <div className="p-3 rounded-xl bg-gradient-to-br from-[#0072C6] to-[#9333EA] shadow-lg">
-                <Users className="w-6 h-6 text-white" />
+              <div className="p-2 sm:p-3 rounded-lg sm:rounded-xl bg-gradient-to-br from-[#0072C6] to-[#9333EA] shadow-lg flex-shrink-0">
+                <Users className="w-4 h-4 sm:w-6 sm:h-6 text-white" />
               </div>
             </div>
           </CardContent>
@@ -315,16 +315,16 @@ export default function Dashboard() {
 
         <Card className="relative overflow-hidden border-0 shadow-lg hover:shadow-xl transition-all duration-300 group">
           <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-[#0F1F3C] to-[#1a3a5c]" />
-          <div className="absolute top-0 right-0 w-24 h-24 bg-gradient-to-br from-[#0F1F3C]/20 to-transparent rounded-full transform translate-x-8 -translate-y-8 group-hover:scale-150 transition-transform duration-500" />
-          <CardContent className="p-5">
+          <div className="absolute top-0 right-0 w-16 sm:w-24 h-16 sm:h-24 bg-gradient-to-br from-[#0F1F3C]/20 to-transparent rounded-full transform translate-x-4 sm:translate-x-8 -translate-y-4 sm:-translate-y-8 group-hover:scale-150 transition-transform duration-500" />
+          <CardContent className="p-3 sm:p-5">
             <div className="flex items-start justify-between">
-              <div>
-                <p className="text-sm text-gray-500 font-medium">Products</p>
-                <p className="text-2xl font-bold text-gray-900 mt-1">{products.length}</p>
-                <p className="text-sm text-gray-500 mt-2">{lowStockProducts.length} low stock alerts</p>
+              <div className="min-w-0 flex-1">
+                <p className="text-xs sm:text-sm text-gray-500 font-medium">Products</p>
+                <p className="text-lg sm:text-2xl font-bold text-gray-900 mt-1">{products.length}</p>
+                <p className="text-xs sm:text-sm text-gray-500 mt-1 sm:mt-2">{lowStockProducts.length} low stock</p>
               </div>
-              <div className="p-3 rounded-xl bg-gradient-to-br from-[#0F1F3C] to-[#1a3a5c] shadow-lg">
-                <Package className="w-6 h-6 text-white" />
+              <div className="p-2 sm:p-3 rounded-lg sm:rounded-xl bg-gradient-to-br from-[#0F1F3C] to-[#1a3a5c] shadow-lg flex-shrink-0">
+                <Package className="w-4 h-4 sm:w-6 sm:h-6 text-white" />
               </div>
             </div>
           </CardContent>
@@ -332,16 +332,16 @@ export default function Dashboard() {
 
         <Card className="relative overflow-hidden border-0 shadow-lg hover:shadow-xl transition-all duration-300 group">
           <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-[#D4AF37] to-[#F59E0B]" />
-          <div className="absolute top-0 right-0 w-24 h-24 bg-gradient-to-br from-[#D4AF37]/20 to-transparent rounded-full transform translate-x-8 -translate-y-8 group-hover:scale-150 transition-transform duration-500" />
-          <CardContent className="p-5">
+          <div className="absolute top-0 right-0 w-16 sm:w-24 h-16 sm:h-24 bg-gradient-to-br from-[#D4AF37]/20 to-transparent rounded-full transform translate-x-4 sm:translate-x-8 -translate-y-4 sm:-translate-y-8 group-hover:scale-150 transition-transform duration-500" />
+          <CardContent className="p-3 sm:p-5">
             <div className="flex items-start justify-between">
-              <div>
-                <p className="text-sm text-gray-500 font-medium">Transport Revenue</p>
-                <p className="text-2xl font-bold text-gray-900 mt-1">Le {transportRevenue.toLocaleString()}</p>
-                <p className="text-sm text-gray-500 mt-2">{todayTrips.length} trips today</p>
+              <div className="min-w-0 flex-1">
+                <p className="text-xs sm:text-sm text-gray-500 font-medium">Transport</p>
+                <p className="text-lg sm:text-2xl font-bold text-gray-900 mt-1 truncate">Le {transportRevenue.toLocaleString()}</p>
+                <p className="text-xs sm:text-sm text-gray-500 mt-1 sm:mt-2">{todayTrips.length} trips</p>
               </div>
-              <div className="p-3 rounded-xl bg-gradient-to-br from-[#D4AF37] to-[#F59E0B] shadow-lg">
-                <Truck className="w-6 h-6 text-white" />
+              <div className="p-2 sm:p-3 rounded-lg sm:rounded-xl bg-gradient-to-br from-[#D4AF37] to-[#F59E0B] shadow-lg flex-shrink-0">
+                <Truck className="w-4 h-4 sm:w-6 sm:h-6 text-white" />
               </div>
             </div>
           </CardContent>
@@ -488,7 +488,7 @@ export default function Dashboard() {
       </div>
 
       {/* Additional Dashboard Widgets */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
         <TodayAttendance attendance={attendance} employees={employees} />
         <UpcomingMeetings meetings={meetings} />
         <TransportSummary trips={trips} vehicles={vehicles} routes={routes} />
