@@ -13,7 +13,6 @@ import Profile from './pages/Profile';
 import RolePermissions from './pages/RolePermissions';
 import Suppliers from './pages/Suppliers';
 import OrganisationManage from './pages/OrganisationManage';
-import EmployeeDashboard from './pages/EmployeeDashboard';
 import Analytics from './pages/Analytics';
 import Reports from './pages/Reports';
 import Locations from './pages/Locations';
@@ -45,7 +44,6 @@ export const PAGES = {
     "RolePermissions": RolePermissions,
     "Suppliers": Suppliers,
     "OrganisationManage": OrganisationManage,
-    "EmployeeDashboard": EmployeeDashboard,
     "Analytics": Analytics,
     "Reports": Reports,
     "Locations": Locations,
