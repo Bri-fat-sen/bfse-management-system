@@ -48,10 +48,10 @@ export default function MobileQuickActions({
   ];
 
   return (
-    <div className="fixed bottom-20 right-4 z-40 lg:hidden">
+    <div className="fixed z-40 lg:hidden" style={{ bottom: 'calc(4.5rem + env(safe-area-inset-bottom, 0px))', right: '1rem' }}>
       {/* Action Buttons */}
       <div className={cn(
-        "flex flex-col-reverse gap-3 mb-3 transition-all duration-300",
+        "flex flex-col-reverse gap-2 mb-2 transition-all duration-300",
         isOpen ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4 pointer-events-none"
       )}>
         {actions.map((action, index) => (
@@ -59,14 +59,14 @@ export default function MobileQuickActions({
             key={action.label}
             onClick={action.onClick}
             className={cn(
-              "flex items-center gap-3 px-4 py-3 rounded-full shadow-lg text-white transition-all",
+              "flex items-center gap-2 px-3 py-2.5 rounded-full shadow-lg text-white transition-all",
               action.color,
-              "animate-in slide-in-from-bottom duration-200"
+              "animate-in slide-in-from-bottom duration-200 min-h-[44px]"
             )}
             style={{ animationDelay: `${index * 50}ms` }}
           >
-            <action.icon className="w-5 h-5" />
-            <span className="font-medium text-sm">{action.label}</span>
+            <action.icon className="w-4 h-4 flex-shrink-0" />
+            <span className="font-medium text-xs whitespace-nowrap">{action.label}</span>
           </button>
         ))}
       </div>
@@ -76,13 +76,13 @@ export default function MobileQuickActions({
         size="lg"
         onClick={() => setIsOpen(!isOpen)}
         className={cn(
-          "w-14 h-14 rounded-full shadow-xl transition-all duration-300",
+          "w-12 h-12 rounded-full shadow-xl transition-all duration-300 p-0 min-w-[48px] min-h-[48px]",
           isOpen 
             ? "bg-gray-800 rotate-45" 
             : "bg-gradient-to-r from-[#1EB053] to-[#0072C6]"
         )}
       >
-        {isOpen ? <X className="w-6 h-6" /> : <Plus className="w-6 h-6" />}
+        {isOpen ? <X className="w-5 h-5" /> : <Plus className="w-5 h-5" />}
       </Button>
     </div>
   );
