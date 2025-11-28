@@ -2,7 +2,7 @@ import React from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery } from "@tanstack/react-query";
 import { format, differenceInDays } from "date-fns";
-import { WelcomeLoader } from "@/components/ui/LoadingSpinner";
+import LoadingSpinner from "@/components/ui/LoadingSpinner";
 import {
   Users,
   ShoppingCart,
@@ -140,7 +140,7 @@ export default function Dashboard() {
   });
 
   if (!user || !currentEmployee) {
-    return <WelcomeLoader />;
+    return <LoadingSpinner message="Loading Dashboard..." subtitle="Preparing your overview" />;
   }
 
   // Show role-specific dashboard

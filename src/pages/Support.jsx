@@ -66,10 +66,14 @@ export default function Support() {
   const { toast } = useToast();
   const [searchTerm, setSearchTerm] = useState("");
 
-  const { data: user } = useQuery({
+  const { data: user, isLoading } = useQuery({
     queryKey: ['currentUser'],
     queryFn: () => base44.auth.me(),
   });
+
+  if (isLoading) {
+    return <LoadingSpinner message="Loading Support..." subtitle="Setting up help center" />;
+  }
 
   const filteredFaqs = faqs.filter(faq => 
     faq.question.toLowerCase().includes(searchTerm.toLowerCase()) ||

@@ -60,7 +60,7 @@ export default function Profile() {
   const isLoading = loadingUser || (!!user?.email && loadingEmployee);
 
   if (isLoading) {
-    return <LoadingSpinner message="Loading Profile..." subtitle="Fetching your information" />;
+    return <LoadingSpinner message="Loading Profile..." subtitle="Fetching your information" fullScreen={true} />;
   }
 
   return (
