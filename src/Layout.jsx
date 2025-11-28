@@ -223,11 +223,11 @@ export default function Layout({ children, currentPageName }) {
     }
   }, []);
 
-  // Show PIN lock screen if employee has a PIN set and not unlocked
-  const requiresPinAuth = currentEmployee?.pin_hash && !isPinUnlocked;
+  // All users (including super_admin) need PIN to access the app
+  const requiresPinAuth = currentEmployee && !isPinUnlocked;
 
   // Show lock screen
-  if (requiresPinAuth && user && currentEmployee) {
+  if (requiresPinAuth && user && currentEmployee && currentEmployee.pin_hash) {
     return (
       <PinLockScreen
         employee={currentEmployee}
