@@ -297,7 +297,7 @@ export default function ResetData() {
                   `}
                 >
                   <div className="flex items-start gap-3">
-                    <Checkbox checked={isSelected} onChange={() => {}} />
+                    <Checkbox checked={isSelected} onCheckedChange={() => toggleCategory(category.id)} />
                     <div className="flex-1">
                       <div className="flex items-center gap-2 mb-1">
                         <category.icon className={`w-4 h-4 ${isSelected ? 'text-red-600' : 'text-gray-500'}`} />
