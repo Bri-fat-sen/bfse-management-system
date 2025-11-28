@@ -3,7 +3,6 @@ import { base44 } from "@/api/base44Client";
 import { useQuery } from "@tanstack/react-query";
 import { format, differenceInDays } from "date-fns";
 import LoadingSpinner, { WelcomeLoader } from "@/components/ui/LoadingSpinner";
-import usePageLoader from "@/components/ui/usePageLoader";
 import {
   Users,
   ShoppingCart,
@@ -140,9 +139,9 @@ export default function Dashboard() {
     enabled: !!orgId && !isDriver && !isSalesStaff && !isManager,
   });
 
-  const showWelcome = usePageLoader(!!user && !!currentEmployee);
+  const isLoading = !user || !currentEmployee;
 
-  if (showWelcome) {
+  if (isLoading) {
     const org = organisation?.[0];
     return <WelcomeLoader orgName={org?.name || "BRI-FAT-SEN ENTERPRISE"} orgLogo={org?.logo_url} />;
   }
