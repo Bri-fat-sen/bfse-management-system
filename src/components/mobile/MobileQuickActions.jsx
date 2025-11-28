@@ -47,43 +47,57 @@ export default function MobileQuickActions({
     },
   ];
 
+  // Hide on desktop (lg:hidden), position above mobile nav
   return (
-    <div className="fixed z-40 lg:hidden" style={{ bottom: 'calc(4.5rem + env(safe-area-inset-bottom, 0px))', right: '1rem' }}>
-      {/* Action Buttons */}
-      <div className={cn(
-        "flex flex-col-reverse gap-2 mb-2 transition-all duration-300",
-        isOpen ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4 pointer-events-none"
-      )}>
-        {actions.map((action, index) => (
-          <button
-            key={action.label}
-            onClick={action.onClick}
-            className={cn(
-              "flex items-center gap-2 px-3 py-2.5 rounded-full shadow-lg text-white transition-all",
-              action.color,
-              "animate-in slide-in-from-bottom duration-200 min-h-[44px]"
-            )}
-            style={{ animationDelay: `${index * 50}ms` }}
-          >
-            <action.icon className="w-4 h-4 flex-shrink-0" />
-            <span className="font-medium text-xs whitespace-nowrap">{action.label}</span>
-          </button>
-        ))}
-      </div>
+    <div 
+      className="fixed z-40 lg:hidden"
+      style={{ 
+        bottom: 'calc(5rem + env(safe-area-inset-bottom, 0px))', 
+        right: '0.75rem' 
+      }}
+    >
+      {/* Action Buttons - appears when FAB is clicked */}
+      {isOpen && (
+        <div className="flex flex-col-reverse gap-2 mb-2">
+          {actions.map((action, index) => (
+            <button
+              key={action.label}
+              onClick={action.onClick}
+              className={cn(
+                "flex items-center gap-2 px-3 py-2 rounded-full shadow-lg text-white",
+                action.color
+              )}
+              style={{ 
+                animation: `slideUp 0.2s ease-out ${index * 0.05}s both`
+              }}
+            >
+              <action.icon className="w-4 h-4 flex-shrink-0" />
+              <span className="font-medium text-xs whitespace-nowrap">{action.label}</span>
+            </button>
+          ))}
+        </div>
+      )}
 
-      {/* FAB */}
-      <Button
-        size="lg"
+      {/* FAB - Floating Action Button */}
+      <button
         onClick={() => setIsOpen(!isOpen)}
         className={cn(
-          "w-12 h-12 rounded-full shadow-xl transition-all duration-300 p-0 min-w-[48px] min-h-[48px]",
+          "w-12 h-12 rounded-full shadow-xl flex items-center justify-center transition-transform duration-200",
           isOpen 
-            ? "bg-gray-800 rotate-45" 
+            ? "bg-gray-700" 
             : "bg-gradient-to-r from-[#1EB053] to-[#0072C6]"
         )}
+        style={{ transform: isOpen ? 'rotate(45deg)' : 'rotate(0deg)' }}
       >
-        {isOpen ? <X className="w-5 h-5" /> : <Plus className="w-5 h-5" />}
-      </Button>
+        {isOpen ? <X className="w-5 h-5 text-white" /> : <Plus className="w-5 h-5 text-white" />}
+      </button>
+
+      <style>{`
+        @keyframes slideUp {
+          from { opacity: 0; transform: translateY(10px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+      `}</style>
     </div>
   );
 }
