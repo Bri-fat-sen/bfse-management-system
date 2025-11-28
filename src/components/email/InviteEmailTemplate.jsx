@@ -1,8 +1,8 @@
 import React from "react";
 
 // Generate HTML email template for user invitations
-// Default app domain - update this to your custom domain
-const APP_DOMAIN = "https://app.brifatsensystems.com";
+// Custom domain for the app
+const APP_DOMAIN = "https://www.brifatsensystems.com";
 
 export function generateInviteEmailHTML({ 
   recipientName, 

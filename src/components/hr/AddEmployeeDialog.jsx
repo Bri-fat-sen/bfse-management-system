@@ -112,7 +112,7 @@ export default function AddEmployeeDialog({ open, onOpenChange, orgId, employeeC
         try {
           const roleLabel = roles.find(r => r.value === result.role)?.label || result.role;
           // Use custom domain for login URL
-          const appDomain = "https://app.brifatsensystems.com";
+          const appDomain = "https://www.brifatsensystems.com";
           const htmlContent = generateInviteEmailHTML({
             recipientName: result.firstName,
             organisationName: organisation.name,
