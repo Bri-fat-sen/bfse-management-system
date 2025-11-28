@@ -20,7 +20,9 @@ import {
   FileText,
   Star,
   FolderOpen,
-  Lock
+  Lock,
+  Trash2,
+  AlertTriangle
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -83,6 +85,9 @@ export default function HR() {
   const [selectedEmployeeForDocs, setSelectedEmployeeForDocs] = useState(null);
   const [showSetPinDialog, setShowSetPinDialog] = useState(false);
   const [selectedEmployeeForPin, setSelectedEmployeeForPin] = useState(null);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [employeeToDelete, setEmployeeToDelete] = useState(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const { data: user } = useQuery({
     queryKey: ['currentUser'],
@@ -144,6 +149,23 @@ export default function HR() {
       toast.success("Employee updated successfully");
     },
   });
+
+  const handleDeleteEmployee = async () => {
+    if (!employeeToDelete) return;
+    
+    setIsDeleting(true);
+    try {
+      await base44.entities.Employee.delete(employeeToDelete.id);
+      queryClient.invalidateQueries({ queryKey: ['employees'] });
+      toast.success(`${employeeToDelete.full_name} has been removed`);
+      setShowDeleteDialog(false);
+      setEmployeeToDelete(null);
+    } catch (error) {
+      toast.error("Failed to delete employee: " + error.message);
+    } finally {
+      setIsDeleting(false);
+    }
+  };
 
   const filteredEmployees = employees.filter(e => {
     const matchesSearch = e.full_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -383,6 +405,20 @@ export default function HR() {
                           <Edit className="w-4 h-4 mr-1" />
                           Edit
                         </Button>
+                        {['super_admin', 'org_admin'].includes(currentEmployee?.role) && emp.id !== currentEmployee?.id && (
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => {
+                              setEmployeeToDelete(emp);
+                              setShowDeleteDialog(true);
+                            }}
+                            className="text-red-500 hover:text-red-700 hover:bg-red-50"
+                            title="Delete Employee"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </Button>
+                        )}
                       </div>
                     </div>
                   </CardContent>
@@ -584,6 +620,48 @@ export default function HR() {
           isAdmin={true}
         />
       )}
+
+      {/* Delete Employee Confirmation Dialog */}
+      <Dialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-red-600">
+              <AlertTriangle className="w-5 h-5" />
+              Delete Employee
+            </DialogTitle>
+          </DialogHeader>
+          <div className="py-4">
+            <p className="text-gray-600 mb-4">
+              Are you sure you want to remove <strong>{employeeToDelete?.full_name}</strong> from the organisation?
+            </p>
+            <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+              <p className="text-sm text-red-800">
+                <strong>Warning:</strong> This will permanently delete the employee record. 
+                Associated data like attendance, payroll, and leave records will remain but may be orphaned.
+              </p>
+            </div>
+          </div>
+          <DialogFooter className="gap-2">
+            <Button
+              variant="outline"
+              onClick={() => {
+                setShowDeleteDialog(false);
+                setEmployeeToDelete(null);
+              }}
+              disabled={isDeleting}
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={handleDeleteEmployee}
+              disabled={isDeleting}
+            >
+              {isDeleting ? 'Deleting...' : 'Delete Employee'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* Edit Employee Dialog */}
       <Dialog open={showEmployeeDialog} onOpenChange={setShowEmployeeDialog}>
