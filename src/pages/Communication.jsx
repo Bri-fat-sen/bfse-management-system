@@ -28,6 +28,7 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import PageHeader from "@/components/ui/PageHeader";
 import EmptyState from "@/components/ui/EmptyState";
+import LoadingSpinner from "@/components/ui/LoadingSpinner";
 import MeetingDialog from "@/components/communication/MeetingDialog";
 import ChatSidebar from "@/components/communication/ChatSidebar";
 import ChatWindow from "@/components/communication/ChatWindow";
@@ -120,6 +121,10 @@ export default function Communication() {
       is_active: true,
     });
   };
+
+  if (!user || !currentEmployee || !orgId) {
+    return <LoadingSpinner message="Loading Communication..." subtitle="Setting up your hub" fullScreen={true} />;
+  }
 
   const myRooms = chatRooms.filter(r => r.participants?.includes(currentEmployee?.id));
 
