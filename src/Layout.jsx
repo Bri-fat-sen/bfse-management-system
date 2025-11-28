@@ -207,7 +207,8 @@ export default function Layout({ children, currentPageName }) {
 
   const handleLogout = () => {
     setIsPinUnlocked(false);
-    base44.auth.logout();
+    sessionStorage.removeItem('pinUnlocked');
+    base44.auth.logout(createPageUrl('Landing'));
   };
 
   const handlePinUnlock = () => {
