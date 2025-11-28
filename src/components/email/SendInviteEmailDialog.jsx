@@ -43,12 +43,15 @@ const ROLES = [
   { value: 'read_only', label: 'Read Only Access' }
 ];
 
+// Default app domain - update this to your custom domain
+const APP_DOMAIN = "https://app.brifatsensystems.com";
+
 export default function SendInviteEmailDialog({ 
   open, 
   onOpenChange, 
   organisation,
   inviterName,
-  loginUrl = window.location.origin
+  loginUrl = APP_DOMAIN
 }) {
   const [recipientEmail, setRecipientEmail] = useState("");
   const [recipientName, setRecipientName] = useState("");

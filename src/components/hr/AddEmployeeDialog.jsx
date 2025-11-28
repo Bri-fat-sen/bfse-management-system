@@ -111,6 +111,8 @@ export default function AddEmployeeDialog({ open, onOpenChange, orgId, employeeC
         setIsSendingEmail(true);
         try {
           const roleLabel = roles.find(r => r.value === result.role)?.label || result.role;
+          // Use custom domain for login URL
+          const appDomain = "https://app.brifatsensystems.com";
           const htmlContent = generateInviteEmailHTML({
             recipientName: result.firstName,
             organisationName: organisation.name,
@@ -118,7 +120,7 @@ export default function AddEmployeeDialog({ open, onOpenChange, orgId, employeeC
             role: roleLabel,
             position: result.position,
             inviterName: inviterName,
-            loginUrl: window.location.origin,
+            loginUrl: appDomain,
           });
           
           await base44.functions.invoke('sendEmailMailersend', {
