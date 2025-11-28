@@ -27,7 +27,7 @@ import EmployeeSkillsSection from "@/components/hr/EmployeeSkillsSection";
 import EmployeePerformanceSection from "@/components/hr/EmployeePerformanceSection";
 
 export default function Profile() {
-  const { data: user } = useQuery({
+  const { data: user, isLoading: loadingUser } = useQuery({
     queryKey: ['currentUser'],
     queryFn: () => base44.auth.me(),
   });
@@ -53,13 +53,13 @@ export default function Profile() {
     enabled: !!currentEmployee?.id,
   });
 
-  const showLoader = usePageLoader(!!user && !loadingEmployee);
-
   const currentOrg = organisation?.[0];
   const totalHours = attendance.reduce((sum, a) => sum + (a.total_hours || 0), 0);
   const presentDays = attendance.filter(a => a.status === 'present').length;
 
-  if (showLoader) {
+  const isLoading = loadingUser || (!!user?.email && loadingEmployee);
+
+  if (isLoading) {
     return <LoadingSpinner message="Loading Profile..." subtitle="Fetching your information" />;
   }
 
