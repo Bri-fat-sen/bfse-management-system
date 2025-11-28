@@ -158,7 +158,7 @@ export default function AddEmployeeDialog({ open, onOpenChange, orgId, employeeC
       setSendWelcomeEmail(true);
     },
     onError: () => {
-      toast({ title: "Failed to add employee", variant: "destructive" });
+      toast.error("Failed to add employee");
     },
   });
 
