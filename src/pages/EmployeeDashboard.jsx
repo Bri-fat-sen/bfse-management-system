@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery } from "@tanstack/react-query";
 import { format, isAfter, isBefore, addDays } from "date-fns";
@@ -20,11 +20,16 @@ import {
   AlertCircle,
   ChevronRight,
   Award,
-  Folder
+  Folder,
+  DollarSign,
+  Edit,
+  GraduationCap,
+  Settings
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Progress } from "@/components/ui/progress";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -32,8 +37,16 @@ import PageHeader from "@/components/ui/PageHeader";
 import StatCard from "@/components/ui/StatCard";
 import LoadingSpinner from "@/components/ui/LoadingSpinner";
 import QuickClockIn from "@/components/mobile/QuickClockIn";
+import PersonalInfoEditor from "@/components/employee/PersonalInfoEditor";
+import MyPayslips from "@/components/employee/MyPayslips";
+import TrainingHistory from "@/components/employee/TrainingHistory";
+import LeaveRequestForm from "@/components/employee/LeaveRequestForm";
+import PerformanceReviews from "@/components/employee/PerformanceReviews";
 
 export default function EmployeeDashboard() {
+  const [activeTab, setActiveTab] = useState("overview");
+  const [showPersonalInfoEditor, setShowPersonalInfoEditor] = useState(false);
+
   const { data: user } = useQuery({
     queryKey: ['currentUser'],
     queryFn: () => base44.auth.me(),
@@ -146,12 +159,18 @@ export default function EmployeeDashboard() {
         title={`Welcome back, ${currentEmployee?.first_name || user?.full_name?.split(' ')[0] || 'Employee'}!`}
         subtitle={format(today, "EEEE, MMMM d, yyyy")}
       >
-        <Link to={createPageUrl("Profile")}>
-          <Button variant="outline">
-            <User className="w-4 h-4 mr-2" />
-            View Full Profile
+        <div className="flex gap-2">
+          <Button variant="outline" onClick={() => setShowPersonalInfoEditor(true)}>
+            <Edit className="w-4 h-4 mr-2" />
+            <span className="hidden sm:inline">Update Info</span>
           </Button>
-        </Link>
+          <Link to={createPageUrl("Profile")}>
+            <Button variant="outline">
+              <User className="w-4 h-4 mr-2" />
+              <span className="hidden sm:inline">Full Profile</span>
+            </Button>
+          </Link>
+        </div>
       </PageHeader>
 
       {/* Profile Summary Card */}
@@ -195,42 +214,69 @@ export default function EmployeeDashboard() {
         />
       )}
 
-      {/* Quick Stats */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <StatCard
-          title="Leave Balance"
-          value={`${pendingLeaves.length} Pending`}
-          subtitle={`${approvedLeaves.length} upcoming approved`}
-          icon={CalendarDays}
-          color="blue"
-        />
-        <StatCard
-          title="This Month"
-          value={`${presentDays} Days`}
-          subtitle={`${totalHours.toFixed(1)} hours worked`}
-          icon={Clock}
-          color="green"
-        />
-        <StatCard
-          title="Performance"
-          value={latestReview?.overall_rating ? `${latestReview.overall_rating}/5` : "No Review"}
-          subtitle={latestReview?.review_period || "Pending review"}
-          icon={Star}
-          color="gold"
-        />
-        <StatCard
-          title="Documents"
-          value={`${documents.length} Files`}
-          subtitle={expiringDocs.length > 0 ? `${expiringDocs.length} expiring soon` : "All up to date"}
-          icon={FileText}
-          color={expiringDocs.length > 0 ? "red" : "navy"}
-        />
-      </div>
+      {/* Self-Service Tabs */}
+      <Tabs value={activeTab} onValueChange={setActiveTab}>
+        <TabsList className="bg-gray-100 p-1 flex-wrap h-auto">
+          <TabsTrigger value="overview" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#1EB053] data-[state=active]:to-[#0072C6] data-[state=active]:text-white">
+            <User className="w-4 h-4 mr-1" />
+            Overview
+          </TabsTrigger>
+          <TabsTrigger value="payslips" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#1EB053] data-[state=active]:to-[#0072C6] data-[state=active]:text-white">
+            <DollarSign className="w-4 h-4 mr-1" />
+            Payslips
+          </TabsTrigger>
+          <TabsTrigger value="leave" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#1EB053] data-[state=active]:to-[#0072C6] data-[state=active]:text-white">
+            <CalendarDays className="w-4 h-4 mr-1" />
+            Leave
+          </TabsTrigger>
+          <TabsTrigger value="performance" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#1EB053] data-[state=active]:to-[#0072C6] data-[state=active]:text-white">
+            <Star className="w-4 h-4 mr-1" />
+            Performance
+          </TabsTrigger>
+          <TabsTrigger value="training" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#1EB053] data-[state=active]:to-[#0072C6] data-[state=active]:text-white">
+            <GraduationCap className="w-4 h-4 mr-1" />
+            Training
+          </TabsTrigger>
+        </TabsList>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Main Content */}
-        <div className="lg:col-span-2 space-y-6">
-          {/* Leave Requests */}
+        {/* Overview Tab */}
+        <TabsContent value="overview" className="mt-6">
+          {/* Quick Stats */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+            <StatCard
+              title="Leave Balance"
+              value={`${pendingLeaves.length} Pending`}
+              subtitle={`${approvedLeaves.length} upcoming approved`}
+              icon={CalendarDays}
+              color="blue"
+            />
+            <StatCard
+              title="This Month"
+              value={`${presentDays} Days`}
+              subtitle={`${totalHours.toFixed(1)} hours worked`}
+              icon={Clock}
+              color="green"
+            />
+            <StatCard
+              title="Performance"
+              value={latestReview?.overall_rating ? `${latestReview.overall_rating}/5` : "No Review"}
+              subtitle={latestReview?.review_period || "Pending review"}
+              icon={Star}
+              color="gold"
+            />
+            <StatCard
+              title="Documents"
+              value={`${documents.length} Files`}
+              subtitle={expiringDocs.length > 0 ? `${expiringDocs.length} expiring soon` : "All up to date"}
+              icon={FileText}
+              color={expiringDocs.length > 0 ? "red" : "navy"}
+            />
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            {/* Main Content */}
+            <div className="lg:col-span-2 space-y-6">
+              {/* Leave Requests */}
           <Card>
             <CardHeader className="flex flex-row items-center justify-between">
               <CardTitle className="flex items-center gap-2">
@@ -491,12 +537,55 @@ export default function EmployeeDashboard() {
                   <Badge variant={latestPayroll.status === 'paid' ? 'secondary' : 'outline'} className="w-full justify-center">
                     {latestPayroll.status}
                   </Badge>
+                  <Button 
+                    variant="outline" 
+                    className="w-full mt-2"
+                    onClick={() => setActiveTab('payslips')}
+                  >
+                    View All Payslips
+                  </Button>
                 </div>
               </CardContent>
             </Card>
           )}
-        </div>
-      </div>
+            </div>
+          </div>
+        </TabsContent>
+
+        {/* Payslips Tab */}
+        <TabsContent value="payslips" className="mt-6">
+          <MyPayslips 
+            employeeId={currentEmployee?.id}
+            employee={currentEmployee}
+            organisation={currentOrg}
+          />
+        </TabsContent>
+
+        {/* Leave Tab */}
+        <TabsContent value="leave" className="mt-6">
+          <LeaveRequestForm 
+            employee={currentEmployee}
+            orgId={orgId}
+          />
+        </TabsContent>
+
+        {/* Performance Tab */}
+        <TabsContent value="performance" className="mt-6">
+          <PerformanceReviews employeeId={currentEmployee?.id} />
+        </TabsContent>
+
+        {/* Training Tab */}
+        <TabsContent value="training" className="mt-6">
+          <TrainingHistory employee={currentEmployee} />
+        </TabsContent>
+      </Tabs>
+
+      {/* Personal Info Editor */}
+      <PersonalInfoEditor
+        employee={currentEmployee}
+        open={showPersonalInfoEditor}
+        onOpenChange={setShowPersonalInfoEditor}
+      />
     </div>
   );
 }
