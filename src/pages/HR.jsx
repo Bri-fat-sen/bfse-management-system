@@ -22,7 +22,8 @@ import {
   FolderOpen,
   Lock,
   Trash2,
-  AlertTriangle
+  AlertTriangle,
+  UserPlus
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -60,6 +61,7 @@ import PerformanceReviewDialog from "@/components/hr/PerformanceReviewDialog";
 import PerformanceOverview from "@/components/hr/PerformanceOverview";
 import EmployeeDocuments from "@/components/hr/EmployeeDocuments";
 import SetPinDialog from "@/components/auth/SetPinDialog";
+import SendInviteEmailDialog from "@/components/email/SendInviteEmailDialog";
 
 const roles = [
   "org_admin", "hr_admin", "payroll_admin", "warehouse_manager",
@@ -88,6 +90,7 @@ export default function HR() {
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [employeeToDelete, setEmployeeToDelete] = useState(null);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [showInviteDialog, setShowInviteDialog] = useState(false);
 
   const { data: user } = useQuery({
     queryKey: ['currentUser'],
@@ -219,7 +222,16 @@ export default function HR() {
         subtitle="Manage employees, attendance, and payroll"
         action={() => setShowAddEmployeeDialog(true)}
         actionLabel="Add Employee"
-      />
+      >
+        <Button
+          variant="outline"
+          onClick={() => setShowInviteDialog(true)}
+          className="border-[#0072C6]/30 hover:border-[#0072C6] hover:bg-[#0072C6]/10 hover:text-[#0072C6]"
+        >
+          <UserPlus className="w-4 h-4 mr-2" />
+          <span className="hidden sm:inline">Send Invite</span>
+        </Button>
+      </PageHeader>
 
       {/* Stats */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -662,6 +674,14 @@ export default function HR() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Send Invite Email Dialog */}
+      <SendInviteEmailDialog
+        open={showInviteDialog}
+        onOpenChange={setShowInviteDialog}
+        organisation={organisation?.[0]}
+        inviterName={currentEmployee?.full_name}
+      />
 
       {/* Edit Employee Dialog */}
       <Dialog open={showEmployeeDialog} onOpenChange={setShowEmployeeDialog}>
