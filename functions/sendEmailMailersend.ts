@@ -59,8 +59,12 @@ Deno.serve(async (req) => {
 
     if (!response.ok) {
       const errorData = await response.text();
-      console.error('MailerSend error:', errorData);
-      return Response.json({ error: 'Failed to send email', details: errorData }, { status: response.status });
+      console.error('MailerSend error:', response.status, errorData);
+      return Response.json({ 
+        error: 'Failed to send email', 
+        details: errorData,
+        status: response.status 
+      }, { status: response.status });
     }
 
     // MailerSend returns 202 with empty body on success
