@@ -42,18 +42,45 @@ html {
 /* Better touch targets */
 @media (max-width: 768px) {
   button, 
-  [role="button"],
-  a,
+  [role="button"] {
+    min-height: 44px;
+    min-width: 44px;
+    padding: 0.625rem 1rem;
+    touch-action: manipulation;
+  }
+  
+  /* Icon buttons specific sizing */
+  button[class*="size-icon"],
+  button[class*="h-8"],
+  button[class*="h-7"] {
+    min-height: 40px !important;
+    min-width: 40px !important;
+    padding: 0.5rem !important;
+  }
+  
   input,
   select,
   textarea {
     min-height: 44px;
+    padding: 0.75rem;
   }
   
   /* Larger tap targets for mobile */
   .touch-target {
-    min-width: 44px;
+    min-width: 48px;
+    min-height: 48px;
+  }
+  
+  /* Tab buttons */
+  [role="tablist"] button {
+    min-height: 40px;
+    padding: 0.5rem 0.75rem;
+  }
+  
+  /* Dropdown menu items */
+  [role="menuitem"] {
     min-height: 44px;
+    padding: 0.75rem 1rem;
   }
 }
 
@@ -109,7 +136,7 @@ body {
   }
 }
 
-/* Better focus states for mobile */
+/* Better focus and active states for mobile */
 @media (hover: none) and (pointer: coarse) {
   button:focus,
   a:focus,
@@ -118,6 +145,18 @@ body {
   textarea:focus {
     outline: 2px solid #1EB053;
     outline-offset: 2px;
+  }
+  
+  button:active,
+  [role="button"]:active {
+    transform: scale(0.97);
+    opacity: 0.9;
+  }
+  
+  /* Disable hover effects on touch devices */
+  button:hover,
+  a:hover {
+    opacity: 1;
   }
 }
 
