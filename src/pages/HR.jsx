@@ -25,7 +25,8 @@ import {
   AlertTriangle,
   UserPlus,
   RotateCcw,
-  MoreVertical
+  MoreVertical,
+  Package
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -76,7 +77,6 @@ import BenefitsDeductionsManager from "@/components/hr/BenefitsDeductionsManager
 import PayrollAuditLog from "@/components/hr/PayrollAuditLog";
 import TaxCalculatorInfo from "@/components/hr/TaxCalculatorInfo";
 import RemunerationPackageManager from "@/components/hr/RemunerationPackageManager";
-import { Package } from "lucide-react";
 
 const roles = [
   "org_admin", "hr_admin", "payroll_admin", "warehouse_manager",
