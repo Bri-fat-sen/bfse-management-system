@@ -25,6 +25,7 @@ import Terms from './pages/Terms';
 import StockAudit from './pages/StockAudit';
 import ResetData from './pages/ResetData';
 import EmployeeSelfService from './pages/EmployeeSelfService';
+import Calendar from './pages/Calendar';
 import __Layout from './Layout.jsx';
 
 
@@ -56,6 +57,7 @@ export const PAGES = {
     "StockAudit": StockAudit,
     "ResetData": ResetData,
     "EmployeeSelfService": EmployeeSelfService,
+    "Calendar": Calendar,
 }
 
 export const pagesConfig = {
