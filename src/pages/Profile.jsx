@@ -22,7 +22,7 @@ import { Link } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import PageHeader from "@/components/ui/PageHeader";
 import LoadingSpinner from "@/components/ui/LoadingSpinner";
-import usePageLoader from "@/components/ui/usePageLoader";
+
 import EmployeeSkillsSection from "@/components/hr/EmployeeSkillsSection";
 import EmployeePerformanceSection from "@/components/hr/EmployeePerformanceSection";
 
