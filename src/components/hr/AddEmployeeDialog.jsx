@@ -138,7 +138,7 @@ export default function AddEmployeeDialog({ open, onOpenChange, orgId, employeeC
           setIsSendingEmail(false);
         }
       } else {
-        toast({ title: "Employee added successfully" });
+        toast.success("Employee added successfully");
       }
       
       onOpenChange(false);
