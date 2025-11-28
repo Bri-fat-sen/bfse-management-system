@@ -164,6 +164,8 @@ export default function HR() {
     queryKey: ['remunerationPackages', orgId],
     queryFn: () => base44.entities.RemunerationPackage.filter({ organisation_id: orgId, is_active: true }),
     enabled: !!orgId,
+    staleTime: 5 * 60 * 1000,
+    refetchOnWindowFocus: false,
   });
 
   const updateEmployeeMutation = useMutation({
