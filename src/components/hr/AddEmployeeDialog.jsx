@@ -55,14 +55,42 @@ export default function AddEmployeeDialog({ open, onOpenChange, orgId, employeeC
     salary_type: 'monthly',
     base_salary: '',
     hire_date: new Date().toISOString().split('T')[0],
+    remuneration_package_id: '',
   });
   
   const [sendWelcomeEmail, setSendWelcomeEmail] = useState(true);
   const [isSendingEmail, setIsSendingEmail] = useState(false);
 
+  // Fetch remuneration packages
+  const { data: packages = [] } = useQuery({
+    queryKey: ['remunerationPackages', orgId],
+    queryFn: () => base44.entities.RemunerationPackage.filter({ organisation_id: orgId, is_active: true }),
+    enabled: !!orgId,
+  });
+
+  // Find packages applicable to selected role
+  const applicablePackages = packages.filter(pkg => 
+    !pkg.applicable_roles?.length || pkg.applicable_roles.includes(formData.role)
+  );
+
+  // Auto-apply package when selected
+  useEffect(() => {
+    if (formData.remuneration_package_id) {
+      const pkg = packages.find(p => p.id === formData.remuneration_package_id);
+      if (pkg) {
+        setFormData(prev => ({
+          ...prev,
+          base_salary: pkg.base_salary || prev.base_salary,
+          salary_type: pkg.salary_type || prev.salary_type,
+        }));
+      }
+    }
+  }, [formData.remuneration_package_id, packages]);
+
   const createEmployeeMutation = useMutation({
     mutationFn: async (data) => {
       const employeeCode = `EMP${String(employeeCount + 1).padStart(4, '0')}`;
+      const selectedPackage = packages.find(p => p.id === data.remuneration_package_id);
       const employee = await base44.entities.Employee.create({
         ...data,
         organisation_id: orgId,
@@ -70,6 +98,8 @@ export default function AddEmployeeDialog({ open, onOpenChange, orgId, employeeC
         full_name: `${data.first_name} ${data.last_name}`,
         status: 'active',
         base_salary: parseFloat(data.base_salary) || 0,
+        remuneration_package_id: data.remuneration_package_id || null,
+        remuneration_package_name: selectedPackage?.name || null,
       });
       return { employee, email: data.email, firstName: data.first_name, role: data.role, position: data.position };
     },
@@ -122,6 +152,7 @@ export default function AddEmployeeDialog({ open, onOpenChange, orgId, employeeC
         salary_type: 'monthly',
         base_salary: '',
         hire_date: new Date().toISOString().split('T')[0],
+        remuneration_package_id: '',
       });
       setSendWelcomeEmail(true);
     },
@@ -259,6 +290,41 @@ export default function AddEmployeeDialog({ open, onOpenChange, orgId, employeeC
               />
             </div>
           </div>
+
+          {/* Remuneration Package */}
+          {applicablePackages.length > 0 && (
+            <div className="p-4 bg-green-50 rounded-lg border border-green-200">
+              <Label className="text-xs text-green-700 flex items-center gap-1 mb-2">
+                <Package className="w-3 h-3" /> Remuneration Package
+              </Label>
+              <Select 
+                value={formData.remuneration_package_id} 
+                onValueChange={(v) => setFormData(prev => ({ ...prev, remuneration_package_id: v }))}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select a package (optional)" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value={null}>No package - Manual entry</SelectItem>
+                  {applicablePackages.map(pkg => (
+                    <SelectItem key={pkg.id} value={pkg.id}>
+                      <div className="flex items-center gap-2">
+                        <span>{pkg.name}</span>
+                        <Badge variant="secondary" className="text-xs">
+                          SLE {pkg.base_salary?.toLocaleString()}
+                        </Badge>
+                      </div>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              {formData.remuneration_package_id && (
+                <p className="text-xs text-green-600 mt-2">
+                  Package will auto-fill salary and benefits
+                </p>
+              )}
+            </div>
+          )}
 
           {/* Salary Info */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
