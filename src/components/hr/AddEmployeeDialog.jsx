@@ -130,7 +130,7 @@ export default function AddEmployeeDialog({ open, onOpenChange, orgId, employeeC
             fromName: organisation.name,
           });
           
-          toast({ title: "Employee added & welcome email sent!" });
+          toast.success("Employee added & welcome email sent!");
         } catch (emailError) {
           console.error('Failed to send welcome email:', emailError);
           toast({ title: "Employee added (email failed to send)", variant: "destructive" });
