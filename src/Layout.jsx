@@ -159,6 +159,8 @@ export default function Layout({ children, currentPageName }) {
     queryKey: ['organisation', orgId],
     queryFn: () => base44.entities.Organisation.filter({ id: orgId }),
     enabled: !!orgId,
+    staleTime: 10 * 60 * 1000,
+    refetchOnWindowFocus: false,
   });
 
   const currentOrg = organisation?.[0];
@@ -167,7 +169,9 @@ export default function Layout({ children, currentPageName }) {
     queryKey: ['chatRooms', orgId],
     queryFn: () => base44.entities.ChatRoom.filter({ organisation_id: orgId }),
     enabled: !!orgId,
-    refetchInterval: 10000,
+    staleTime: 30 * 1000,
+    refetchInterval: 30000,
+    refetchOnWindowFocus: false,
   });
 
   const unreadChatCount = useMemo(() => {
