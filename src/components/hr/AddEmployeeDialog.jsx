@@ -41,7 +41,6 @@ const roles = [
 const departments = ["Management", "Sales", "Operations", "Finance", "Transport", "Support", "HR", "IT"];
 
 export default function AddEmployeeDialog({ open, onOpenChange, orgId, employeeCount, organisation, inviterName }) {
-  const { toast } = useToast();
   const queryClient = useQueryClient();
   
   const [formData, setFormData] = useState({
