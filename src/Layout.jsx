@@ -320,7 +320,7 @@ export default function Layout({ children, currentPageName }) {
 
       <aside className={`
         fixed top-0 left-0 z-50 h-full bg-[#0F1F3C] text-white transition-all duration-300
-        ${sidebarOpen ? 'w-64' : 'w-20'}
+        w-[85vw] max-w-64 lg:${sidebarOpen ? 'w-64' : 'w-20'}
         ${mobileMenuOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
       `}>
         <div className="h-16 flex items-center justify-between px-4 border-b border-white/10">
