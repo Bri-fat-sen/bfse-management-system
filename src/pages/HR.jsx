@@ -19,7 +19,8 @@ import {
   Filter,
   FileText,
   Star,
-  FolderOpen
+  FolderOpen,
+  Lock
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -56,6 +57,7 @@ import LeaveManagement from "@/components/hr/LeaveManagement";
 import PerformanceReviewDialog from "@/components/hr/PerformanceReviewDialog";
 import PerformanceOverview from "@/components/hr/PerformanceOverview";
 import EmployeeDocuments from "@/components/hr/EmployeeDocuments";
+import SetPinDialog from "@/components/auth/SetPinDialog";
 
 const roles = [
   "org_admin", "hr_admin", "payroll_admin", "warehouse_manager",
@@ -79,6 +81,8 @@ export default function HR() {
   const [selectedEmployeeForReview, setSelectedEmployeeForReview] = useState(null);
   const [showDocumentsDialog, setShowDocumentsDialog] = useState(false);
   const [selectedEmployeeForDocs, setSelectedEmployeeForDocs] = useState(null);
+  const [showSetPinDialog, setShowSetPinDialog] = useState(false);
+  const [selectedEmployeeForPin, setSelectedEmployeeForPin] = useState(null);
 
   const { data: user } = useQuery({
     queryKey: ['currentUser'],
@@ -332,6 +336,20 @@ export default function HR() {
                         {emp.role?.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
                       </Badge>
                       <div className="flex items-center gap-1">
+                        {['super_admin', 'org_admin', 'hr_admin'].includes(currentEmployee?.role) && (
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => {
+                              setSelectedEmployeeForPin(emp);
+                              setShowSetPinDialog(true);
+                            }}
+                            title={emp.pin_hash ? "Change PIN" : "Set PIN"}
+                            className={!emp.pin_hash ? "text-amber-600" : ""}
+                          >
+                            <Lock className="w-4 h-4" />
+                          </Button>
+                        )}
                         <Button
                           variant="ghost"
                           size="icon"
@@ -551,6 +569,19 @@ export default function HR() {
           employee={selectedEmployeeForDocs}
           currentEmployee={currentEmployee}
           orgId={orgId}
+        />
+      )}
+
+      {/* Set PIN Dialog */}
+      {selectedEmployeeForPin && (
+        <SetPinDialog
+          open={showSetPinDialog}
+          onOpenChange={(open) => {
+            setShowSetPinDialog(open);
+            if (!open) setSelectedEmployeeForPin(null);
+          }}
+          employee={selectedEmployeeForPin}
+          isAdmin={true}
         />
       )}
 
