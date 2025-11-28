@@ -1,13 +1,16 @@
 import React from "react";
 
 // Generate HTML email template for user invitations
+// Default app domain - update this to your custom domain
+const APP_DOMAIN = "https://app.brifatsensystems.com";
+
 export function generateInviteEmailHTML({ 
   recipientName, 
   organisationName, 
   organisationLogo,
   role,
   inviterName,
-  loginUrl 
+  loginUrl = APP_DOMAIN 
 }) {
   const roleLabels = {
     'super_admin': 'Super Administrator',
@@ -268,7 +271,7 @@ export function generateInviteEmailText({
   organisationName, 
   role,
   inviterName,
-  loginUrl 
+  loginUrl = APP_DOMAIN 
 }) {
   const roleLabels = {
     'super_admin': 'Super Administrator',
