@@ -99,7 +99,7 @@ export default function EmployeeDashboard() {
   const currentOrg = organisation?.[0];
 
   if (!user || !currentEmployee) {
-    return <WelcomeLoader orgName={currentOrg?.name} orgLogo={currentOrg?.logo_url} />;
+    return <WelcomeLoader />;
   }
   
   const today = new Date();
