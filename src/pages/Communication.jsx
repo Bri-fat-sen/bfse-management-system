@@ -28,7 +28,6 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import PageHeader from "@/components/ui/PageHeader";
 import EmptyState from "@/components/ui/EmptyState";
-import LoadingSpinner from "@/components/ui/LoadingSpinner";
 import MeetingDialog from "@/components/communication/MeetingDialog";
 import ChatSidebar from "@/components/communication/ChatSidebar";
 import ChatWindow from "@/components/communication/ChatWindow";
@@ -53,12 +52,16 @@ export default function Communication() {
   const { data: user } = useQuery({
     queryKey: ['currentUser'],
     queryFn: () => base44.auth.me(),
+    staleTime: 5 * 60 * 1000,
+    refetchOnWindowFocus: false,
   });
 
   const { data: employee } = useQuery({
     queryKey: ['employee', user?.email],
     queryFn: () => base44.entities.Employee.filter({ user_email: user?.email }),
     enabled: !!user?.email,
+    staleTime: 5 * 60 * 1000,
+    refetchOnWindowFocus: false,
   });
 
   const currentEmployee = employee?.[0];
@@ -69,13 +72,17 @@ export default function Communication() {
     queryKey: ['chatRooms', orgId],
     queryFn: () => base44.entities.ChatRoom.filter({ organisation_id: orgId }),
     enabled: !!orgId,
+    staleTime: 30 * 1000,
+    refetchOnWindowFocus: false,
   });
 
   const { data: messages = [] } = useQuery({
     queryKey: ['messages', selectedRoom?.id],
     queryFn: () => base44.entities.ChatMessage.filter({ room_id: selectedRoom?.id }, 'created_date', 100),
     enabled: !!selectedRoom?.id,
-    refetchInterval: 3000,
+    staleTime: 5 * 1000,
+    refetchInterval: 5000,
+    refetchOnWindowFocus: false,
   });
 
   const { data: meetings = [] } = useQuery({
@@ -121,10 +128,6 @@ export default function Communication() {
       is_active: true,
     });
   };
-
-  if (!user || !currentEmployee || !orgId) {
-    return <LoadingSpinner message="Loading Communication..." subtitle="Setting up your hub" fullScreen={true} />;
-  }
 
   const myRooms = chatRooms.filter(r => r.participants?.includes(currentEmployee?.id));
 

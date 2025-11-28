@@ -75,12 +75,16 @@ export default function Sales() {
   const { data: user } = useQuery({
     queryKey: ['currentUser'],
     queryFn: () => base44.auth.me(),
+    staleTime: 5 * 60 * 1000,
+    refetchOnWindowFocus: false,
   });
 
   const { data: employee } = useQuery({
     queryKey: ['employee', user?.email],
     queryFn: () => base44.entities.Employee.filter({ user_email: user?.email }),
     enabled: !!user?.email,
+    staleTime: 5 * 60 * 1000,
+    refetchOnWindowFocus: false,
   });
 
   const currentEmployee = employee?.[0];
@@ -90,36 +94,48 @@ export default function Sales() {
     queryKey: ['organisation', orgId],
     queryFn: () => base44.entities.Organisation.filter({ id: orgId }),
     enabled: !!orgId,
+    staleTime: 10 * 60 * 1000,
+    refetchOnWindowFocus: false,
   });
 
   const { data: products = [], isLoading: loadingProducts } = useQuery({
     queryKey: ['products', orgId],
     queryFn: () => base44.entities.Product.filter({ organisation_id: orgId, is_active: true }),
     enabled: !!orgId,
+    staleTime: 2 * 60 * 1000,
+    refetchOnWindowFocus: false,
   });
 
   const { data: sales = [], isLoading: loadingSales } = useQuery({
     queryKey: ['sales', orgId],
     queryFn: () => base44.entities.Sale.filter({ organisation_id: orgId }, '-created_date', 100),
     enabled: !!orgId,
+    staleTime: 60 * 1000,
+    refetchOnWindowFocus: false,
   });
 
   const { data: vehicles = [] } = useQuery({
     queryKey: ['vehicles', orgId],
     queryFn: () => base44.entities.Vehicle.filter({ organisation_id: orgId, status: 'active' }),
     enabled: !!orgId,
+    staleTime: 5 * 60 * 1000,
+    refetchOnWindowFocus: false,
   });
 
   const { data: warehouses = [] } = useQuery({
     queryKey: ['warehouses', orgId],
     queryFn: () => base44.entities.Warehouse.filter({ organisation_id: orgId, is_active: true }),
     enabled: !!orgId,
+    staleTime: 5 * 60 * 1000,
+    refetchOnWindowFocus: false,
   });
 
   const { data: customers = [] } = useQuery({
     queryKey: ['customers', orgId],
     queryFn: () => base44.entities.Customer.filter({ organisation_id: orgId, status: 'active' }),
     enabled: !!orgId,
+    staleTime: 2 * 60 * 1000,
+    refetchOnWindowFocus: false,
   });
 
   const filteredCustomers = customers.filter(c =>

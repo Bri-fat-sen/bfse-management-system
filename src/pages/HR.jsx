@@ -83,12 +83,16 @@ export default function HR() {
   const { data: user } = useQuery({
     queryKey: ['currentUser'],
     queryFn: () => base44.auth.me(),
+    staleTime: 5 * 60 * 1000,
+    refetchOnWindowFocus: false,
   });
 
   const { data: employee } = useQuery({
     queryKey: ['employee', user?.email],
     queryFn: () => base44.entities.Employee.filter({ user_email: user?.email }),
     enabled: !!user?.email,
+    staleTime: 5 * 60 * 1000,
+    refetchOnWindowFocus: false,
   });
 
   const currentEmployee = employee?.[0];
@@ -98,18 +102,24 @@ export default function HR() {
     queryKey: ['organisation', orgId],
     queryFn: () => base44.entities.Organisation.filter({ id: orgId }),
     enabled: !!orgId,
+    staleTime: 10 * 60 * 1000,
+    refetchOnWindowFocus: false,
   });
 
   const { data: employees = [], isLoading } = useQuery({
     queryKey: ['employees', orgId],
     queryFn: () => base44.entities.Employee.filter({ organisation_id: orgId }),
     enabled: !!orgId,
+    staleTime: 2 * 60 * 1000,
+    refetchOnWindowFocus: false,
   });
 
   const { data: payrolls = [] } = useQuery({
     queryKey: ['payrolls', orgId],
     queryFn: () => base44.entities.Payroll.filter({ organisation_id: orgId }, '-created_date', 50),
     enabled: !!orgId,
+    staleTime: 2 * 60 * 1000,
+    refetchOnWindowFocus: false,
   });
 
   const { data: attendance = [] } = useQuery({

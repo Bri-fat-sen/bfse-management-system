@@ -69,12 +69,16 @@ export default function Transport() {
   const { data: user } = useQuery({
     queryKey: ['currentUser'],
     queryFn: () => base44.auth.me(),
+    staleTime: 5 * 60 * 1000,
+    refetchOnWindowFocus: false,
   });
 
   const { data: employee } = useQuery({
     queryKey: ['employee', user?.email],
     queryFn: () => base44.entities.Employee.filter({ user_email: user?.email }),
     enabled: !!user?.email,
+    staleTime: 5 * 60 * 1000,
+    refetchOnWindowFocus: false,
   });
 
   const currentEmployee = employee?.[0];
@@ -84,24 +88,32 @@ export default function Transport() {
     queryKey: ['organisation', orgId],
     queryFn: () => base44.entities.Organisation.filter({ id: orgId }),
     enabled: !!orgId,
+    staleTime: 10 * 60 * 1000,
+    refetchOnWindowFocus: false,
   });
 
   const { data: trips = [], isLoading: loadingTrips } = useQuery({
     queryKey: ['trips', orgId],
     queryFn: () => base44.entities.Trip.filter({ organisation_id: orgId }, '-created_date', 100),
     enabled: !!orgId,
+    staleTime: 60 * 1000,
+    refetchOnWindowFocus: false,
   });
 
   const { data: vehicles = [] } = useQuery({
     queryKey: ['vehicles', orgId],
     queryFn: () => base44.entities.Vehicle.filter({ organisation_id: orgId }),
     enabled: !!orgId,
+    staleTime: 5 * 60 * 1000,
+    refetchOnWindowFocus: false,
   });
 
   const { data: routes = [] } = useQuery({
     queryKey: ['routes', orgId],
     queryFn: () => base44.entities.Route.filter({ organisation_id: orgId }),
     enabled: !!orgId,
+    staleTime: 5 * 60 * 1000,
+    refetchOnWindowFocus: false,
   });
 
   const { data: drivers = [] } = useQuery({
