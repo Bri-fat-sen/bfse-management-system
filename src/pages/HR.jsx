@@ -582,6 +582,8 @@ export default function HR() {
         onOpenChange={setShowAddEmployeeDialog}
         orgId={orgId}
         employeeCount={employees.length}
+        organisation={organisation?.[0]}
+        inviterName={currentEmployee?.full_name}
       />
 
       {/* Leave Request Dialog */}
