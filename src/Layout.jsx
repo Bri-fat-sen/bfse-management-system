@@ -63,6 +63,7 @@ import MobileQuickSale from "@/components/mobile/MobileQuickSale";
 import MobileStockCheck from "@/components/mobile/MobileStockCheck";
 import MobileDeliveryUpdate from "@/components/mobile/MobileDeliveryUpdate";
 import PushNotificationManager from "@/components/notifications/PushNotificationManager";
+import RolePreviewSwitcher, { RolePreviewBanner } from "@/components/admin/RolePreviewSwitcher";
 
 const menuSections = [
   {
@@ -129,6 +130,7 @@ export default function Layout({ children, currentPageName }) {
   const [showDeliveryUpdate, setShowDeliveryUpdate] = useState(false);
   const [isPinUnlocked, setIsPinUnlocked] = useState(false);
   const [showSetPinDialog, setShowSetPinDialog] = useState(false);
+  const [previewRole, setPreviewRole] = useState(null);
 
   const toggleSection = (title) => {
     setCollapsedSections(prev => ({ ...prev, [title]: !prev[title] }));
@@ -157,7 +159,9 @@ export default function Layout({ children, currentPageName }) {
   });
 
   const currentEmployee = employee?.[0];
-  const userRole = currentEmployee?.role || 'read_only';
+  const actualRole = currentEmployee?.role || 'read_only';
+  // Use preview role if super_admin has one set, otherwise use actual role
+  const userRole = (actualRole === 'super_admin' && previewRole) ? previewRole : actualRole;
   const orgId = currentEmployee?.organisation_id;
 
   const { data: organisation } = useQuery({
@@ -191,19 +195,23 @@ export default function Layout({ children, currentPageName }) {
   }, [userRole]);
 
   const filteredMenuSections = useMemo(() => {
+    // When in preview mode, filter based on preview role permissions
+    const effectiveRole = (actualRole === 'super_admin' && previewRole) ? previewRole : userRole;
+    const effectivePermissions = previewRole ? (DEFAULT_ROLE_PERMISSIONS[previewRole] || DEFAULT_ROLE_PERMISSIONS.read_only) : permissions;
+    
     return menuSections.map(section => ({
       ...section,
       items: section.items.filter(item => {
-        if (item.adminOnly && !['super_admin', 'org_admin'].includes(userRole)) {
+        if (item.adminOnly && !['super_admin', 'org_admin'].includes(effectiveRole)) {
           return false;
         }
-        if (item.page === 'Reports' && !['super_admin', 'org_admin', 'accountant', 'hr_admin', 'warehouse_manager'].includes(userRole)) {
+        if (item.page === 'Reports' && !['super_admin', 'org_admin', 'accountant', 'hr_admin', 'warehouse_manager'].includes(effectiveRole)) {
           return false;
         }
-        return permissions[item.module]?.can_view ?? false;
+        return effectivePermissions[item.module]?.can_view ?? false;
       })
     })).filter(section => section.items.length > 0);
-  }, [userRole, permissions]);
+  }, [userRole, permissions, previewRole, actualRole]);
 
   const handleLogout = () => {
     setIsPinUnlocked(false);
@@ -443,6 +451,13 @@ export default function Layout({ children, currentPageName }) {
               <span>Search...</span>
               <kbd className="ml-auto px-2 py-0.5 text-xs bg-gray-100 rounded">⌘K</kbd>
             </Button>
+
+            {/* Role Preview Switcher for Super Admin */}
+            <RolePreviewSwitcher
+              currentPreviewRole={previewRole}
+              onPreviewRoleChange={setPreviewRole}
+              actualRole={actualRole}
+            />
           </div>
 
           <div className="flex items-center gap-2">
@@ -521,6 +536,12 @@ export default function Layout({ children, currentPageName }) {
         </header>
 
         <div className="h-1.5 sl-flag-stripe" />
+
+        {/* Role Preview Banner */}
+        <RolePreviewBanner 
+          previewRole={previewRole} 
+          onExit={() => setPreviewRole(null)} 
+        />
 
         <main className={`p-4 lg:p-6 pb-24 lg:pb-6 ${darkMode ? 'text-white' : ''}`}>
           <PermissionsProvider>
