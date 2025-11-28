@@ -60,17 +60,18 @@ export default function Sales() {
   const queryClient = useQueryClient();
   const [cart, setCart] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
-  const [saleType, setSaleType] = useState("retail");
+  const [saleType, setSaleType] = useState(null); // Will be set based on role
   const [paymentMethod, setPaymentMethod] = useState("cash");
   const [customerName, setCustomerName] = useState("");
   const [showCheckout, setShowCheckout] = useState(false);
   const [activeTab, setActiveTab] = useState("pos");
   const [showReceipt, setShowReceipt] = useState(false);
   const [lastSale, setLastSale] = useState(null);
-  const [selectedLocation, setSelectedLocation] = useState("");
+  const [selectedLocation, setSelectedLocation] = useState(null); // Will be set based on assigned location
   const [selectedCustomer, setSelectedCustomer] = useState(null);
   const [customerSearch, setCustomerSearch] = useState("");
   const [showInvoice, setShowInvoice] = useState(false);
+  const [autoSetupDone, setAutoSetupDone] = useState(false);
 
   const { data: user } = useQuery({
     queryKey: ['currentUser'],
@@ -188,21 +189,73 @@ export default function Sales() {
   const locationOptions = getLocationOptions();
   const selectedLocationData = locationOptions.find(l => l.id === selectedLocation);
 
-  // Auto-select location if only one option available
+  // Auto-setup sale type and location based on employee role and assigned location
   React.useEffect(() => {
-    if (locationOptions.length === 1 && !selectedLocation) {
-      setSelectedLocation(locationOptions[0].id);
+    if (autoSetupDone || !currentEmployee) return;
+    
+    const role = currentEmployee.role;
+    const assignedLocationId = currentEmployee.assigned_location_id;
+    const assignedLocationType = currentEmployee.assigned_location_type;
+    
+    // Determine default sale type based on role
+    let defaultSaleType = 'retail';
+    if (role === 'driver' || role === 'vehicle_sales') {
+      defaultSaleType = 'vehicle';
+    } else if (role === 'warehouse_manager') {
+      defaultSaleType = 'warehouse';
+    } else if (role === 'retail_cashier') {
+      defaultSaleType = 'retail';
     }
-  }, [locationOptions, selectedLocation]);
+    
+    // If employee has assigned location, use its type
+    if (assignedLocationType === 'vehicle') {
+      defaultSaleType = 'vehicle';
+    } else if (assignedLocationType === 'warehouse') {
+      defaultSaleType = 'warehouse';
+    } else if (assignedLocationType === 'store') {
+      defaultSaleType = 'retail';
+    }
+    
+    setSaleType(defaultSaleType);
+    
+    // Set assigned location if available
+    if (assignedLocationId) {
+      setSelectedLocation(assignedLocationId);
+    }
+    
+    setAutoSetupDone(true);
+  }, [currentEmployee, autoSetupDone]);
 
-  // Reset location and cart when sale type changes
+  // Auto-select location if only one option available (after initial setup)
   React.useEffect(() => {
+    if (!autoSetupDone || !saleType) return;
+    
     const options = getLocationOptions();
-    // Auto-select if only one option
-    if (options.length === 1) {
+    // Only auto-select if no location is set and there's only one option
+    if (!selectedLocation && options.length === 1) {
       setSelectedLocation(options[0].id);
-    } else {
-      setSelectedLocation("");
+    }
+  }, [locationOptions, selectedLocation, autoSetupDone, saleType]);
+
+  // Reset location and cart when sale type changes (but not on initial setup)
+  React.useEffect(() => {
+    if (!autoSetupDone || !saleType) return;
+    
+    const options = getLocationOptions();
+    // Don't reset if this is the employee's assigned location type
+    const isAssignedType = (
+      (currentEmployee?.assigned_location_type === 'vehicle' && saleType === 'vehicle') ||
+      (currentEmployee?.assigned_location_type === 'warehouse' && saleType === 'warehouse') ||
+      (currentEmployee?.assigned_location_type === 'store' && saleType === 'retail')
+    );
+    
+    if (!isAssignedType) {
+      // Auto-select if only one option
+      if (options.length === 1) {
+        setSelectedLocation(options[0].id);
+      } else if (selectedLocation && !options.find(o => o.id === selectedLocation)) {
+        setSelectedLocation("");
+      }
     }
     setCart([]);
   }, [saleType, warehouses.length, vehicles.length]);
@@ -494,7 +547,15 @@ export default function Sales() {
     });
   };
 
-  if (!user || !currentEmployee || !orgId || loadingProducts) {
+  // Determine if user can change sale type (admins can, role-specific users cannot)
+  const canChangeSaleType = ['super_admin', 'org_admin', 'warehouse_manager'].includes(currentEmployee?.role) || 
+    !currentEmployee?.assigned_location_id;
+  
+  // Determine if user can change location
+  const canChangeLocation = ['super_admin', 'org_admin', 'warehouse_manager'].includes(currentEmployee?.role) || 
+    !currentEmployee?.assigned_location_id;
+
+  if (!user || !currentEmployee || !orgId || loadingProducts || !saleType) {
     return <LoadingSpinner message="Loading Sales..." subtitle="Setting up your point of sale" fullScreen={true} />;
   }
 
@@ -524,8 +585,8 @@ export default function Sales() {
                 <div className="flex flex-col sm:flex-row gap-4">
                   <div className="flex-1">
                     <label className="text-xs font-medium text-gray-500 uppercase mb-1 block">Sale Type</label>
-                    <Select value={saleType} onValueChange={setSaleType}>
-                      <SelectTrigger>
+                    <Select value={saleType} onValueChange={setSaleType} disabled={!canChangeSaleType}>
+                      <SelectTrigger className={!canChangeSaleType ? "bg-gray-50" : ""}>
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
@@ -549,13 +610,16 @@ export default function Sales() {
                         </SelectItem>
                       </SelectContent>
                     </Select>
+                    {!canChangeSaleType && (
+                      <p className="text-xs text-gray-400 mt-1">Based on your role assignment</p>
+                    )}
                   </div>
                   <div className="flex-1">
                     <label className="text-xs font-medium text-gray-500 uppercase mb-1 block">
                       {saleType === 'vehicle' ? 'Select Vehicle' : saleType === 'warehouse' ? 'Select Warehouse' : 'Select Store'}
                     </label>
-                    <Select value={selectedLocation} onValueChange={setSelectedLocation}>
-                      <SelectTrigger className={!selectedLocation ? "border-amber-300 bg-amber-50" : ""}>
+                    <Select value={selectedLocation || ""} onValueChange={setSelectedLocation} disabled={!canChangeLocation}>
+                      <SelectTrigger className={!selectedLocation ? "border-amber-300 bg-amber-50" : !canChangeLocation ? "bg-gray-50" : ""}>
                         <SelectValue placeholder={`Choose ${saleType === 'vehicle' ? 'vehicle' : saleType === 'warehouse' ? 'warehouse' : 'store'}...`} />
                       </SelectTrigger>
                       <SelectContent>
@@ -577,6 +641,9 @@ export default function Sales() {
                         )}
                       </SelectContent>
                     </Select>
+                    {!canChangeLocation && currentEmployee?.assigned_location_name && (
+                      <p className="text-xs text-gray-400 mt-1">Assigned to: {currentEmployee.assigned_location_name}</p>
+                    )}
                   </div>
                 </div>
                 {selectedLocationData && (
