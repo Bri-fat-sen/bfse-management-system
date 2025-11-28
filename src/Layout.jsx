@@ -599,18 +599,9 @@ export default function Layout({ children, currentPageName }) {
         <Toaster 
           position="top-right" 
           expand={false}
-          visibleToasts={5}
-          duration={4000}
-          toastOptions={{
-            style: {
-              background: 'white',
-              borderRadius: '12px',
-              boxShadow: '0 10px 40px rgba(15, 31, 60, 0.15)',
-              padding: '16px',
-              borderLeft: '4px solid #1EB053',
-            },
-            className: 'sl-toast',
-          }}
+          visibleToasts={4}
+          duration={3000}
+          closeButton
         />
 
         <InstallPrompt />
