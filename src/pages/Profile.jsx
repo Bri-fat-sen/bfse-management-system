@@ -41,12 +41,6 @@ export default function Profile() {
   const currentEmployee = employee?.[0];
   const orgId = currentEmployee?.organisation_id;
 
-  const showLoader = usePageLoader(!!user && !loadingEmployee);
-
-  if (showLoader) {
-    return <LoadingSpinner message="Loading Profile..." subtitle="Fetching your information" />;
-  }
-
   const { data: organisation } = useQuery({
     queryKey: ['organisation', orgId],
     queryFn: () => base44.entities.Organisation.filter({ id: orgId }),
@@ -59,9 +53,15 @@ export default function Profile() {
     enabled: !!currentEmployee?.id,
   });
 
+  const showLoader = usePageLoader(!!user && !loadingEmployee);
+
   const currentOrg = organisation?.[0];
   const totalHours = attendance.reduce((sum, a) => sum + (a.total_hours || 0), 0);
   const presentDays = attendance.filter(a => a.status === 'present').length;
+
+  if (showLoader) {
+    return <LoadingSpinner message="Loading Profile..." subtitle="Fetching your information" />;
+  }
 
   return (
     <div className="space-y-6">
