@@ -72,6 +72,7 @@ const menuSections = [
     items: [
       { name: "Dashboard", icon: LayoutDashboard, page: "Dashboard", module: "dashboard" },
       { name: "Employee Portal", icon: User, page: "EmployeeDashboard", module: "dashboard" },
+      { name: "My Portal", icon: User, page: "EmployeeSelfService", module: "dashboard" },
     ]
   },
   {
