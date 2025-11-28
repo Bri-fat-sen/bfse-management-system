@@ -1,7 +1,7 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { base44 } from "@/api/base44Client";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { format, startOfMonth, endOfMonth, subMonths } from "date-fns";
+import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
+import { format, startOfMonth, endOfMonth, subMonths, differenceInDays } from "date-fns";
 import {
   Dialog,
   DialogContent,
@@ -21,53 +21,37 @@ import {
 } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/components/ui/use-toast";
-import { DollarSign, Plus, Minus, Calculator, Info } from "lucide-react";
+import { DollarSign, Plus, Minus, Calculator, Info, Clock, TrendingUp, AlertCircle, CheckCircle } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { Card } from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-
-// Sierra Leone Statutory Deductions (2024 rates)
-const SL_TAX_BRACKETS = [
-  { min: 0, max: 500000, rate: 0 },           // First SLE 500,000 - 0%
-  { min: 500001, max: 1000000, rate: 0.15 },  // Next SLE 500,000 - 15%
-  { min: 1000001, max: 1500000, rate: 0.20 }, // Next SLE 500,000 - 20%
-  { min: 1500001, max: 2000000, rate: 0.25 }, // Next SLE 500,000 - 25%
-  { min: 2000001, max: Infinity, rate: 0.30 } // Above SLE 2,000,000 - 30%
-];
-
-const NASSIT_EMPLOYEE_RATE = 0.05;  // 5% employee contribution
-const NASSIT_EMPLOYER_RATE = 0.10;  // 10% employer contribution (for reference)
+import {
+  calculatePayroll,
+  calculatePAYE,
+  calculateNASSIT,
+  getRoleAllowances,
+  calculateHourlyRate,
+  formatSLE,
+  getTaxBracketInfo,
+  OVERTIME_RATES,
+} from "./PayrollCalculator";
 
 // Common Sierra Leone allowances
 const SL_COMMON_ALLOWANCES = [
-  { name: "Transport Allowance", description: "Monthly transport to work" },
-  { name: "Housing Allowance", description: "Accommodation support" },
-  { name: "Medical Allowance", description: "Health care support" },
-  { name: "Risk Allowance", description: "For hazardous work conditions" },
-  { name: "Meal Allowance", description: "Daily meal subsidy" },
-  { name: "Communication Allowance", description: "Phone/internet allowance" },
-  { name: "Leave Allowance", description: "Annual leave bonus" },
+  { name: "Transport Allowance", type: "transport" },
+  { name: "Housing Allowance", type: "housing" },
+  { name: "Medical Allowance", type: "medical" },
+  { name: "Risk Allowance", type: "risk" },
+  { name: "Meal Allowance", type: "meal" },
+  { name: "Communication Allowance", type: "communication" },
+  { name: "Leave Allowance", type: "other" },
 ];
-
-// Calculate PAYE Tax for Sierra Leone
-const calculatePAYE = (annualIncome) => {
-  let tax = 0;
-  let remainingIncome = annualIncome;
-  
-  for (const bracket of SL_TAX_BRACKETS) {
-    if (remainingIncome <= 0) break;
-    const taxableInBracket = Math.min(remainingIncome, bracket.max - bracket.min + 1);
-    if (annualIncome > bracket.min) {
-      tax += Math.max(0, Math.min(taxableInBracket, remainingIncome)) * bracket.rate;
-      remainingIncome -= taxableInBracket;
-    }
-  }
-  return tax / 12; // Monthly PAYE
-};
 
 export default function PayrollProcessDialog({ 
   open, 
@@ -81,12 +65,75 @@ export default function PayrollProcessDialog({
   const [selectedEmployee, setSelectedEmployee] = useState("");
   const [allowances, setAllowances] = useState([]);
   const [deductions, setDeductions] = useState([]);
+  const [bonuses, setBonuses] = useState([]);
   const [applyNASSIT, setApplyNASSIT] = useState(true);
   const [applyPAYE, setApplyPAYE] = useState(true);
+  const [includeRoleAllowances, setIncludeRoleAllowances] = useState(true);
+  const [overtimeType, setOvertimeType] = useState("regular");
+  const [periodStart, setPeriodStart] = useState("");
+  const [periodEnd, setPeriodEnd] = useState("");
 
   const lastMonth = subMonths(new Date(), 1);
   const defaultPeriodStart = format(startOfMonth(lastMonth), 'yyyy-MM-dd');
   const defaultPeriodEnd = format(endOfMonth(lastMonth), 'yyyy-MM-dd');
+
+  // Set default periods on mount
+  useEffect(() => {
+    if (!periodStart) setPeriodStart(defaultPeriodStart);
+    if (!periodEnd) setPeriodEnd(defaultPeriodEnd);
+  }, []);
+
+  const employee = employees.find(e => e.id === selectedEmployee);
+
+  // Fetch attendance data for the selected employee and period
+  const { data: attendanceData = [] } = useQuery({
+    queryKey: ['attendance', selectedEmployee, periodStart, periodEnd],
+    queryFn: () => base44.entities.Attendance.filter({
+      organisation_id: orgId,
+      employee_id: selectedEmployee,
+    }),
+    enabled: !!selectedEmployee && !!periodStart && !!periodEnd,
+  });
+
+  // Fetch sales data for commission calculation
+  const { data: salesData = [] } = useQuery({
+    queryKey: ['sales', selectedEmployee, periodStart, periodEnd],
+    queryFn: () => base44.entities.Sale.filter({
+      organisation_id: orgId,
+      employee_id: selectedEmployee,
+    }),
+    enabled: !!selectedEmployee && ['vehicle_sales', 'retail_cashier', 'warehouse_manager'].includes(employee?.role),
+  });
+
+  // Calculate attendance summary for the period
+  const attendanceSummary = useMemo(() => {
+    if (!attendanceData.length || !periodStart || !periodEnd) return null;
+    
+    const periodAttendance = attendanceData.filter(a => {
+      const date = a.date;
+      return date >= periodStart && date <= periodEnd;
+    });
+
+    const present_days = periodAttendance.filter(a => a.status === 'present' || a.status === 'late').length;
+    const absent_days = periodAttendance.filter(a => a.status === 'absent').length;
+    const late_days = periodAttendance.filter(a => a.status === 'late').length;
+    const total_hours = periodAttendance.reduce((sum, a) => sum + (a.hours_worked || 0), 0);
+    const overtime_hours = periodAttendance.reduce((sum, a) => sum + (a.overtime_hours || 0), 0);
+
+    return { present_days, absent_days, late_days, total_hours, overtime_hours };
+  }, [attendanceData, periodStart, periodEnd]);
+
+  // Calculate total sales for commission
+  const totalSales = useMemo(() => {
+    if (!salesData.length || !periodStart || !periodEnd) return 0;
+    
+    return salesData
+      .filter(s => {
+        const date = s.created_date?.split('T')[0];
+        return date >= periodStart && date <= periodEnd;
+      })
+      .reduce((sum, s) => sum + (s.total_amount || 0), 0);
+  }, [salesData, periodStart, periodEnd]);
 
   const createPayrollMutation = useMutation({
     mutationFn: (data) => base44.entities.Payroll.create(data),
@@ -95,36 +142,78 @@ export default function PayrollProcessDialog({
       onOpenChange(false);
       setAllowances([]);
       setDeductions([]);
+      setBonuses([]);
       setSelectedEmployee("");
       toast({ title: "Payroll processed successfully" });
     },
   });
 
-  const employee = employees.find(e => e.id === selectedEmployee);
   const baseSalary = employee?.base_salary || 0;
-  const totalAllowances = allowances.reduce((sum, a) => sum + (parseFloat(a.amount) || 0), 0);
-  const manualDeductions = deductions.reduce((sum, d) => sum + (parseFloat(d.amount) || 0), 0);
-  const grossPay = baseSalary + totalAllowances;
+  const salaryType = employee?.salary_type || 'monthly';
+  const hourlyRate = calculateHourlyRate(baseSalary, salaryType);
   
-  // Calculate statutory deductions
-  const nassitDeduction = applyNASSIT ? grossPay * NASSIT_EMPLOYEE_RATE : 0;
-  const annualGross = grossPay * 12;
-  const payeDeduction = applyPAYE ? calculatePAYE(annualGross) : 0;
+  // Get role-based allowances
+  const roleAllowances = includeRoleAllowances ? getRoleAllowances(employee?.role) : [];
   
-  const totalStatutory = nassitDeduction + payeDeduction;
-  const totalDeductions = manualDeductions + totalStatutory;
+  // Calculate overtime from form or attendance
+  const [overtimeHours, setOvertimeHours] = useState(0);
+  const [overtimeRate, setOvertimeRate] = useState(0);
+
+  // Auto-populate overtime from attendance
+  useEffect(() => {
+    if (attendanceSummary?.overtime_hours) {
+      setOvertimeHours(attendanceSummary.overtime_hours);
+    }
+    if (hourlyRate) {
+      const multiplier = OVERTIME_RATES[overtimeType] || 1.5;
+      setOvertimeRate(Math.round(hourlyRate * multiplier));
+    }
+  }, [attendanceSummary, hourlyRate, overtimeType]);
+
+  // Full payroll calculation using the calculator
+  const payrollCalc = useMemo(() => {
+    return calculatePayroll({
+      baseSalary,
+      salaryType,
+      role: employee?.role,
+      hoursWorked: attendanceSummary?.total_hours || 176,
+      overtimeHours,
+      overtimeType,
+      customAllowances: allowances.map(a => ({ ...a, amount: parseFloat(a.amount) || 0 })),
+      customDeductions: deductions.map(d => ({ ...d, amount: parseFloat(d.amount) || 0 })),
+      attendanceSummary,
+      salesTotal: totalSales,
+      applyNASSIT,
+      applyPAYE,
+      includeRoleAllowances,
+    });
+  }, [baseSalary, salaryType, employee?.role, overtimeHours, overtimeType, allowances, deductions, attendanceSummary, totalSales, applyNASSIT, applyPAYE, includeRoleAllowances]);
+
+  // Add custom bonuses to calculation
+  const customBonusTotal = bonuses.reduce((sum, b) => sum + (parseFloat(b.amount) || 0), 0);
+  const allBonuses = [...payrollCalc.bonuses, ...bonuses.filter(b => b.name && b.amount)];
+  const totalBonuses = payrollCalc.totalBonuses + customBonusTotal;
+  
+  const grossPay = payrollCalc.grossPay + customBonusTotal;
+  const nassitDeduction = applyNASSIT ? calculateNASSIT(grossPay).employee : 0;
+  const payeDeduction = applyPAYE ? calculatePAYE(grossPay * 12) : 0;
+  const totalDeductions = payrollCalc.totalDeductions + (customBonusTotal * (applyNASSIT ? 0.05 : 0));
   const netPay = grossPay - totalDeductions;
 
   const addAllowance = (preset = null) => {
     if (preset) {
-      setAllowances([...allowances, { name: preset.name, amount: 0 }]);
+      setAllowances([...allowances, { name: preset.name, type: preset.type || 'other', amount: 0 }]);
     } else {
-      setAllowances([...allowances, { name: "", amount: 0 }]);
+      setAllowances([...allowances, { name: "", type: 'other', amount: 0 }]);
     }
   };
 
   const addDeduction = () => {
-    setDeductions([...deductions, { name: "", amount: 0 }]);
+    setDeductions([...deductions, { name: "", type: 'other', amount: 0 }]);
+  };
+
+  const addBonus = () => {
+    setBonuses([...bonuses, { name: "", type: 'other', amount: 0 }]);
   };
 
   const updateAllowance = (index, field, value) => {
@@ -139,6 +228,12 @@ export default function PayrollProcessDialog({
     setDeductions(updated);
   };
 
+  const updateBonus = (index, field, value) => {
+    const updated = [...bonuses];
+    updated[index][field] = value;
+    setBonuses(updated);
+  };
+
   const removeAllowance = (index) => {
     setAllowances(allowances.filter((_, i) => i !== index));
   };
@@ -147,36 +242,56 @@ export default function PayrollProcessDialog({
     setDeductions(deductions.filter((_, i) => i !== index));
   };
 
+  const removeBonus = (index) => {
+    setBonuses(bonuses.filter((_, i) => i !== index));
+  };
+
   const handleSubmit = (e) => {
     e.preventDefault();
-    const formData = new FormData(e.target);
+    
+    // Build complete allowances including role-based
+    const allAllowancesData = [
+      ...roleAllowances,
+      ...allowances.filter(a => a.name && a.amount).map(a => ({ ...a, amount: parseFloat(a.amount) }))
+    ];
     
     // Build deductions array including statutory
-    const allDeductions = [...deductions.filter(d => d.name && d.amount)];
+    const allDeductionsData = [...deductions.filter(d => d.name && d.amount).map(d => ({ ...d, amount: parseFloat(d.amount) }))];
     if (applyNASSIT && nassitDeduction > 0) {
-      allDeductions.push({ name: "NASSIT (5%)", amount: nassitDeduction, statutory: true });
+      allDeductionsData.push({ name: "NASSIT (5%)", amount: nassitDeduction, type: "statutory", statutory: true });
     }
     if (applyPAYE && payeDeduction > 0) {
-      allDeductions.push({ name: "PAYE Tax", amount: payeDeduction, statutory: true });
+      allDeductionsData.push({ name: "PAYE Tax", amount: payeDeduction, type: "statutory", statutory: true });
     }
     
     const data = {
       organisation_id: orgId,
       employee_id: selectedEmployee,
       employee_name: employee?.full_name,
-      period_start: formData.get('period_start'),
-      period_end: formData.get('period_end'),
+      employee_role: employee?.role,
+      employee_location: employee?.assigned_location_name || '',
+      period_start: periodStart,
+      period_end: periodEnd,
       base_salary: baseSalary,
-      overtime_hours: parseFloat(formData.get('overtime_hours')) || 0,
-      overtime_rate: parseFloat(formData.get('overtime_rate')) || 0,
-      overtime_pay: (parseFloat(formData.get('overtime_hours')) || 0) * (parseFloat(formData.get('overtime_rate')) || 0),
-      allowances: allowances.filter(a => a.name && a.amount),
-      total_allowances: totalAllowances,
-      deductions: allDeductions,
+      salary_type: salaryType,
+      hours_worked: attendanceSummary?.total_hours || 0,
+      days_worked: attendanceSummary?.present_days || 0,
+      overtime_hours: overtimeHours,
+      overtime_rate: overtimeRate,
+      overtime_pay: overtimeHours * overtimeRate,
+      bonuses: allBonuses,
+      total_bonuses: totalBonuses,
+      allowances: allAllowancesData,
+      total_allowances: payrollCalc.totalAllowances,
+      deductions: allDeductionsData,
       total_deductions: totalDeductions,
+      nassit_employee: nassitDeduction,
+      nassit_employer: applyNASSIT ? calculateNASSIT(grossPay).employer : 0,
+      paye_tax: payeDeduction,
       gross_pay: grossPay,
       net_pay: netPay,
       status: 'pending_approval',
+      attendance_summary: attendanceSummary,
     };
 
     createPayrollMutation.mutate(data);
@@ -212,7 +327,10 @@ export default function PayrollProcessDialog({
                 <SelectContent>
                   {employees.filter(e => e.status === 'active').map(e => (
                     <SelectItem key={e.id} value={e.id}>
-                      {e.full_name}
+                      <div className="flex items-center justify-between w-full">
+                        <span>{e.full_name}</span>
+                        <Badge variant="outline" className="ml-2 text-xs">{e.role}</Badge>
+                      </div>
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -221,9 +339,9 @@ export default function PayrollProcessDialog({
             <div>
               <Label>Period Start</Label>
               <Input 
-                name="period_start" 
                 type="date" 
-                defaultValue={defaultPeriodStart}
+                value={periodStart}
+                onChange={(e) => setPeriodStart(e.target.value)}
                 required 
                 className="mt-1" 
               />
@@ -231,9 +349,9 @@ export default function PayrollProcessDialog({
             <div>
               <Label>Period End</Label>
               <Input 
-                name="period_end" 
                 type="date" 
-                defaultValue={defaultPeriodEnd}
+                value={periodEnd}
+                onChange={(e) => setPeriodEnd(e.target.value)}
                 required 
                 className="mt-1" 
               />
@@ -242,30 +360,137 @@ export default function PayrollProcessDialog({
 
           {employee && (
             <div className="p-4 bg-gradient-to-r from-[#1EB053]/10 to-[#0072C6]/10 rounded-lg">
-              <div className="flex items-center justify-between">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                 <div>
                   <p className="font-semibold">{employee.full_name}</p>
                   <p className="text-sm text-gray-600">{employee.position} • {employee.department}</p>
+                  <div className="flex items-center gap-2 mt-1">
+                    <Badge variant="secondary">{employee.role?.replace('_', ' ')}</Badge>
+                    {employee.assigned_location_name && (
+                      <Badge variant="outline">{employee.assigned_location_name}</Badge>
+                    )}
+                  </div>
                 </div>
                 <div className="text-right">
-                  <p className="text-sm text-gray-500">Base Salary</p>
-                  <p className="text-xl font-bold text-[#1EB053]">SLE {baseSalary.toLocaleString()}</p>
+                  <p className="text-sm text-gray-500">Base Salary ({salaryType})</p>
+                  <p className="text-xl font-bold text-[#1EB053]">{formatSLE(baseSalary)}</p>
+                  {salaryType !== 'monthly' && (
+                    <p className="text-xs text-gray-500">Hourly: {formatSLE(hourlyRate)}</p>
+                  )}
                 </div>
               </div>
             </div>
           )}
 
+          {/* Attendance Summary */}
+          {employee && attendanceSummary && (
+            <Card className="p-4 bg-blue-50 border-blue-200">
+              <div className="flex items-center gap-2 mb-3">
+                <Clock className="w-4 h-4 text-blue-600" />
+                <h4 className="font-semibold text-blue-800">Attendance Summary</h4>
+              </div>
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-sm">
+                <div className="text-center p-2 bg-white rounded">
+                  <p className="text-gray-500">Present</p>
+                  <p className="text-lg font-bold text-green-600">{attendanceSummary.present_days}</p>
+                </div>
+                <div className="text-center p-2 bg-white rounded">
+                  <p className="text-gray-500">Absent</p>
+                  <p className="text-lg font-bold text-red-600">{attendanceSummary.absent_days}</p>
+                </div>
+                <div className="text-center p-2 bg-white rounded">
+                  <p className="text-gray-500">Late</p>
+                  <p className="text-lg font-bold text-amber-600">{attendanceSummary.late_days}</p>
+                </div>
+                <div className="text-center p-2 bg-white rounded">
+                  <p className="text-gray-500">Total Hours</p>
+                  <p className="text-lg font-bold text-blue-600">{attendanceSummary.total_hours?.toFixed(1)}</p>
+                </div>
+              </div>
+            </Card>
+          )}
+
+          {/* Sales Summary for commission-eligible roles */}
+          {employee && totalSales > 0 && (
+            <Card className="p-4 bg-green-50 border-green-200">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <TrendingUp className="w-4 h-4 text-green-600" />
+                  <h4 className="font-semibold text-green-800">Sales Performance</h4>
+                </div>
+                <div className="text-right">
+                  <p className="text-sm text-gray-500">Total Sales</p>
+                  <p className="text-lg font-bold text-green-600">{formatSLE(totalSales)}</p>
+                </div>
+              </div>
+            </Card>
+          )}
+
           {/* Overtime */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div>
+              <Label>Overtime Type</Label>
+              <Select value={overtimeType} onValueChange={setOvertimeType}>
+                <SelectTrigger className="mt-1">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="regular">Regular (1.5x)</SelectItem>
+                  <SelectItem value="weekend">Weekend (2x)</SelectItem>
+                  <SelectItem value="holiday">Holiday (2.5x)</SelectItem>
+                  <SelectItem value="night">Night Shift (1.25x)</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
             <div>
               <Label>Overtime Hours</Label>
-              <Input name="overtime_hours" type="number" step="0.5" defaultValue="0" className="mt-1" />
+              <Input 
+                type="number" 
+                step="0.5" 
+                value={overtimeHours}
+                onChange={(e) => setOvertimeHours(parseFloat(e.target.value) || 0)}
+                className="mt-1" 
+              />
+              {attendanceSummary?.overtime_hours > 0 && (
+                <p className="text-xs text-gray-500 mt-1">From attendance: {attendanceSummary.overtime_hours}h</p>
+              )}
             </div>
             <div>
               <Label>Overtime Rate (SLE/hr)</Label>
-              <Input name="overtime_rate" type="number" step="0.01" defaultValue="0" className="mt-1" />
+              <Input 
+                type="number" 
+                step="0.01" 
+                value={overtimeRate}
+                onChange={(e) => setOvertimeRate(parseFloat(e.target.value) || 0)}
+                className="mt-1" 
+              />
+              <p className="text-xs text-gray-500 mt-1">Pay: {formatSLE(overtimeHours * overtimeRate)}</p>
             </div>
           </div>
+
+          {/* Role-based Allowances */}
+          {employee && roleAllowances.length > 0 && (
+            <div className="p-4 bg-purple-50 rounded-lg border border-purple-200">
+              <div className="flex items-center justify-between mb-3">
+                <h4 className="font-semibold text-purple-800">Role-based Allowances ({employee.role?.replace('_', ' ')})</h4>
+                <Switch checked={includeRoleAllowances} onCheckedChange={setIncludeRoleAllowances} />
+              </div>
+              {includeRoleAllowances && (
+                <div className="space-y-2">
+                  {roleAllowances.map((allowance, idx) => (
+                    <div key={idx} className="flex justify-between text-sm">
+                      <span className="text-gray-600">{allowance.name}</span>
+                      <span className="font-medium">{formatSLE(allowance.amount)}</span>
+                    </div>
+                  ))}
+                  <div className="flex justify-between font-medium pt-2 border-t border-purple-200">
+                    <span>Total Role Allowances</span>
+                    <span className="text-purple-700">{formatSLE(roleAllowances.reduce((s, a) => s + a.amount, 0))}</span>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
 
           {/* Allowances */}
           <div>
@@ -356,6 +581,66 @@ export default function PayrollProcessDialog({
             </div>
           </div>
 
+          {/* Bonuses */}
+          <div>
+            <div className="flex items-center justify-between mb-2">
+              <Label className="text-amber-600">Bonuses</Label>
+              <Button type="button" variant="outline" size="sm" onClick={addBonus}>
+                <Plus className="w-4 h-4 mr-1" /> Add Bonus
+              </Button>
+            </div>
+            
+            {/* Auto-calculated bonuses */}
+            {payrollCalc.bonuses.length > 0 && (
+              <div className="mb-3 p-3 bg-amber-50 rounded-lg border border-amber-200">
+                <p className="text-xs font-medium text-amber-700 mb-2">Auto-calculated:</p>
+                {payrollCalc.bonuses.map((bonus, idx) => (
+                  <div key={idx} className="flex justify-between text-sm">
+                    <span className="flex items-center gap-1">
+                      <CheckCircle className="w-3 h-3 text-green-500" />
+                      {bonus.name}
+                    </span>
+                    <span className="font-medium">{formatSLE(bonus.amount)}</span>
+                  </div>
+                ))}
+              </div>
+            )}
+            
+            {/* Custom bonuses */}
+            <div className="space-y-2">
+              {bonuses.map((bonus, index) => (
+                <div key={index} className="flex gap-2">
+                  <Input 
+                    placeholder="e.g., Performance Bonus" 
+                    value={bonus.name}
+                    onChange={(e) => updateBonus(index, 'name', e.target.value)}
+                    className="flex-1"
+                  />
+                  <Select value={bonus.type} onValueChange={(v) => updateBonus(index, 'type', v)}>
+                    <SelectTrigger className="w-28">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="performance">Performance</SelectItem>
+                      <SelectItem value="holiday">Holiday</SelectItem>
+                      <SelectItem value="other">Other</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <Input 
+                    type="number" 
+                    placeholder="Amount"
+                    value={bonus.amount}
+                    onChange={(e) => updateBonus(index, 'amount', e.target.value)}
+                    className="w-28"
+                  />
+                  <Button type="button" variant="ghost" size="icon" onClick={() => removeBonus(index)}>
+                    <Minus className="w-4 h-4 text-red-500" />
+                  </Button>
+                </div>
+              ))}
+            </div>
+          </div>
+
           {/* Other Deductions */}
           <div>
             <div className="flex items-center justify-between mb-2">
@@ -373,12 +658,23 @@ export default function PayrollProcessDialog({
                     onChange={(e) => updateDeduction(index, 'name', e.target.value)}
                     className="flex-1"
                   />
+                  <Select value={deduction.type} onValueChange={(v) => updateDeduction(index, 'type', v)}>
+                    <SelectTrigger className="w-28">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="loan">Loan</SelectItem>
+                      <SelectItem value="advance">Advance</SelectItem>
+                      <SelectItem value="penalty">Penalty</SelectItem>
+                      <SelectItem value="other">Other</SelectItem>
+                    </SelectContent>
+                  </Select>
                   <Input 
                     type="number" 
                     placeholder="Amount"
                     value={deduction.amount}
                     onChange={(e) => updateDeduction(index, 'amount', e.target.value)}
-                    className="w-32"
+                    className="w-28"
                   />
                   <Button type="button" variant="ghost" size="icon" onClick={() => removeDeduction(index)}>
                     <Minus className="w-4 h-4 text-red-500" />
@@ -395,42 +691,73 @@ export default function PayrollProcessDialog({
           <div className="border-t pt-4 space-y-2">
             <div className="flex justify-between">
               <span className="text-gray-600">Base Salary</span>
-              <span>SLE {baseSalary.toLocaleString()}</span>
+              <span>{formatSLE(baseSalary)}</span>
             </div>
-            <div className="flex justify-between text-green-600">
-              <span>+ Allowances</span>
-              <span>SLE {totalAllowances.toLocaleString()}</span>
-            </div>
+            {overtimeHours > 0 && (
+              <div className="flex justify-between text-blue-600 text-sm">
+                <span>+ Overtime ({overtimeHours}h × {formatSLE(overtimeRate)})</span>
+                <span>{formatSLE(overtimeHours * overtimeRate)}</span>
+              </div>
+            )}
+            {payrollCalc.totalAllowances > 0 && (
+              <div className="flex justify-between text-green-600">
+                <span>+ Allowances</span>
+                <span>{formatSLE(payrollCalc.totalAllowances)}</span>
+              </div>
+            )}
+            {totalBonuses > 0 && (
+              <div className="flex justify-between text-amber-600">
+                <span>+ Bonuses</span>
+                <span>{formatSLE(totalBonuses)}</span>
+              </div>
+            )}
             <div className="flex justify-between font-medium border-t pt-2">
               <span>Gross Pay</span>
-              <span>SLE {grossPay.toLocaleString()}</span>
+              <span>{formatSLE(grossPay)}</span>
             </div>
-            {applyNASSIT && (
+            {applyNASSIT && nassitDeduction > 0 && (
               <div className="flex justify-between text-red-500 text-sm">
                 <span>- NASSIT (5%)</span>
-                <span>SLE {nassitDeduction.toLocaleString()}</span>
+                <span>{formatSLE(nassitDeduction)}</span>
               </div>
             )}
-            {applyPAYE && (
+            {applyPAYE && payeDeduction > 0 && (
               <div className="flex justify-between text-red-500 text-sm">
                 <span>- PAYE Tax</span>
-                <span>SLE {payeDeduction.toLocaleString()}</span>
+                <span>{formatSLE(payeDeduction)}</span>
               </div>
             )}
-            {manualDeductions > 0 && (
+            {deductions.length > 0 && (
               <div className="flex justify-between text-red-500 text-sm">
                 <span>- Other Deductions</span>
-                <span>SLE {manualDeductions.toLocaleString()}</span>
+                <span>{formatSLE(deductions.reduce((s, d) => s + (parseFloat(d.amount) || 0), 0))}</span>
               </div>
             )}
             <div className="flex justify-between text-red-600">
               <span>Total Deductions</span>
-              <span>SLE {totalDeductions.toLocaleString()}</span>
+              <span>{formatSLE(totalDeductions)}</span>
             </div>
             <div className="flex justify-between text-xl font-bold pt-2 border-t bg-gradient-to-r from-[#1EB053]/10 to-[#0072C6]/10 -mx-4 px-4 py-3 rounded-lg">
               <span>Net Pay</span>
-              <span className="text-[#1EB053]">SLE {netPay.toLocaleString()}</span>
+              <span className="text-[#1EB053]">{formatSLE(netPay)}</span>
             </div>
+            
+            {/* Employer costs info */}
+            {applyNASSIT && (
+              <div className="text-xs text-gray-500 text-right mt-2">
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger className="flex items-center gap-1 ml-auto">
+                      <Info className="w-3 h-3" />
+                      Employer NASSIT (10%): {formatSLE(calculateNASSIT(grossPay).employer)}
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p className="text-xs">Total employer cost: {formatSLE(grossPay + calculateNASSIT(grossPay).employer)}</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+              </div>
+            )}
           </div>
 
           <DialogFooter className="flex-col sm:flex-row gap-2">
