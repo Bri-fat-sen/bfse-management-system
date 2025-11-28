@@ -165,7 +165,7 @@ export default function AddEmployeeDialog({ open, onOpenChange, orgId, employeeC
   const handleSubmit = (e) => {
     e.preventDefault();
     if (!formData.first_name || !formData.last_name) {
-      toast({ title: "Please fill in required fields", variant: "destructive" });
+      toast.error("Please fill in required fields");
       return;
     }
     createEmployeeMutation.mutate(formData);
