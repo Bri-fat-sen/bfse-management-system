@@ -61,7 +61,6 @@ import { toast } from "sonner";
 import PageHeader from "@/components/ui/PageHeader";
 import EmptyState from "@/components/ui/EmptyState";
 import LoadingSpinner from "@/components/ui/LoadingSpinner";
-import usePageLoader from "@/components/ui/usePageLoader";
 
 export default function Locations() {
   const queryClient = useQueryClient();
@@ -100,12 +99,6 @@ export default function Locations() {
     queryFn: () => base44.entities.Vehicle.filter({ organisation_id: orgId }),
     enabled: !!orgId,
   });
-
-  const showLoader = usePageLoader(!!orgId && !loadingWarehouses);
-
-  if (showLoader) {
-    return <LoadingSpinner message="Loading Locations..." subtitle="Fetching warehouses and vehicles" />;
-  }
 
   const { data: employees = [] } = useQuery({
     queryKey: ['employees', orgId],
@@ -324,6 +317,10 @@ export default function Locations() {
     setSelectedLocation({ ...location, type });
     setShowAssignStaffDialog(true);
   };
+
+  if (!orgId || loadingWarehouses) {
+    return <LoadingSpinner message="Loading Locations..." subtitle="Fetching warehouses and vehicles" />;
+  }
 
   if (!isSuperAdmin) {
     return (

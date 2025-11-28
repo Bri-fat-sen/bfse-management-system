@@ -34,7 +34,6 @@ import {
 import PageHeader from "@/components/ui/PageHeader";
 import EmptyState from "@/components/ui/EmptyState";
 import LoadingSpinner from "@/components/ui/LoadingSpinner";
-import usePageLoader from "@/components/ui/usePageLoader";
 
 const actionIcons = {
   login: User,
@@ -99,9 +98,7 @@ export default function ActivityLog() {
     enabled: !!orgId,
   });
 
-  const showLoader = usePageLoader(!!orgId && !isLoading);
-
-  if (showLoader) {
+  if (!orgId || isLoading) {
     return <LoadingSpinner message="Loading Activity Log..." subtitle="Fetching system activities" />;
   }
 

@@ -45,7 +45,6 @@ import {
 import { useToast } from "@/components/ui/use-toast";
 import PageHeader from "@/components/ui/PageHeader";
 import LoadingSpinner from "@/components/ui/LoadingSpinner";
-import usePageLoader from "@/components/ui/usePageLoader";
 import { MODULES, ROLES, DEFAULT_ROLE_PERMISSIONS } from "@/components/permissions/PermissionsContext";
 import { PermissionGate } from "@/components/permissions/PermissionGate";
 
@@ -91,9 +90,7 @@ export default function RolePermissions() {
     enabled: !!orgId,
   });
 
-  const showLoader = usePageLoader(!!orgId && !loadingPermissions);
-
-  if (showLoader) {
+  if (!orgId || loadingPermissions) {
     return (
       <PermissionGate module="settings" action="edit" showDenied>
         <LoadingSpinner message="Loading Permissions..." subtitle="Fetching role configurations" />

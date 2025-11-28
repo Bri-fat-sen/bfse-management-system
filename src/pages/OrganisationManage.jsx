@@ -69,7 +69,6 @@ import {
 import { toast } from "sonner";
 import PageHeader from "@/components/ui/PageHeader";
 import LoadingSpinner from "@/components/ui/LoadingSpinner";
-import usePageLoader from "@/components/ui/usePageLoader";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import RegistrationsTab from "@/components/organisation/RegistrationsTab";
 
@@ -266,18 +265,8 @@ export default function OrganisationManage() {
   const activeCount = employees.filter(e => e.status === 'active').length;
   const adminCount = employees.filter(e => ['super_admin', 'org_admin'].includes(e.role)).length;
 
-  const showLoader = usePageLoader(!!orgId && !isLoading && !!formData);
-
-  if (showLoader) {
+  if (!orgId || isLoading || !formData) {
     return <LoadingSpinner message="Loading Organisation..." subtitle="Fetching organisation details" />;
-  }
-
-  if (isLoading || !formData) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <Loader2 className="w-8 h-8 animate-spin text-[#1EB053]" />
-      </div>
-    );
   }
 
   return (

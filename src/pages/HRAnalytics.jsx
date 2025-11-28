@@ -27,7 +27,6 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import PageHeader from "@/components/ui/PageHeader";
 import StatCard from "@/components/ui/StatCard";
 import LoadingSpinner from "@/components/ui/LoadingSpinner";
-import usePageLoader from "@/components/ui/usePageLoader";
 import {
   GlowLineChart,
   ColorfulBarChart,
@@ -78,9 +77,7 @@ export default function HRAnalytics() {
     enabled: !!orgId,
   });
 
-  const showLoader = usePageLoader(!!orgId && !loadingEmployees);
-
-  if (showLoader) {
+  if (!orgId || loadingEmployees) {
     return <LoadingSpinner message="Loading HR Analytics..." subtitle="Analyzing employee performance data" />;
   }
 
