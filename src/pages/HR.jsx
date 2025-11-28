@@ -23,7 +23,9 @@ import {
   Lock,
   Trash2,
   AlertTriangle,
-  UserPlus
+  UserPlus,
+  RotateCcw,
+  MoreVertical
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -44,6 +46,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { Label } from "@/components/ui/label";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { toast } from "sonner";
@@ -164,6 +173,59 @@ export default function HR() {
       setShowEmployeeDialog(false);
       setEditingEmployee(null);
       toast.success("Employee updated successfully");
+    },
+  });
+
+  const deletePayrollMutation = useMutation({
+    mutationFn: async (payroll) => {
+      // Create audit log
+      await base44.entities.PayrollAudit.create({
+        organisation_id: orgId,
+        payroll_id: payroll.id,
+        employee_id: payroll.employee_id,
+        employee_name: payroll.employee_name,
+        action: 'cancelled',
+        changed_by_id: currentEmployee.id,
+        changed_by_name: currentEmployee.full_name,
+        previous_values: { net_pay: payroll.net_pay, status: payroll.status },
+        reason: 'Payroll deleted by admin',
+      });
+      // Delete payroll
+      await base44.entities.Payroll.delete(payroll.id);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['payrolls'] });
+      toast.success("Payroll deleted successfully");
+    },
+    onError: () => {
+      toast.error("Failed to delete payroll");
+    },
+  });
+
+  const reversePayrollMutation = useMutation({
+    mutationFn: async (payroll) => {
+      // Create audit log
+      await base44.entities.PayrollAudit.create({
+        organisation_id: orgId,
+        payroll_id: payroll.id,
+        employee_id: payroll.employee_id,
+        employee_name: payroll.employee_name,
+        action: 'cancelled',
+        changed_by_id: currentEmployee.id,
+        changed_by_name: currentEmployee.full_name,
+        previous_values: { net_pay: payroll.net_pay, status: payroll.status },
+        new_values: { status: 'cancelled' },
+        reason: 'Payroll reversed by admin',
+      });
+      // Update payroll status to cancelled
+      await base44.entities.Payroll.update(payroll.id, { status: 'cancelled' });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['payrolls'] });
+      toast.success("Payroll reversed successfully");
+    },
+    onError: () => {
+      toast.error("Failed to reverse payroll");
     },
   });
 
@@ -569,12 +631,13 @@ export default function HR() {
                             </p>
                           </div>
                         </div>
-                        <div className="flex items-center gap-4">
+                        <div className="flex items-center gap-2">
                           <div className="text-right">
                             <p className="font-bold text-[#1EB053]">Le {payroll.net_pay?.toLocaleString()}</p>
                             <Badge variant={
                               payroll.status === 'paid' ? 'secondary' :
-                              payroll.status === 'approved' ? 'default' : 'outline'
+                              payroll.status === 'approved' ? 'default' : 
+                              payroll.status === 'cancelled' ? 'destructive' : 'outline'
                             }>
                               {payroll.status}
                             </Badge>
@@ -584,6 +647,40 @@ export default function HR() {
                             employee={employees.find(e => e.id === payroll.employee_id)}
                             organisation={organisation?.[0]}
                           />
+                          {['super_admin', 'org_admin', 'payroll_admin'].includes(currentEmployee?.role) && payroll.status !== 'cancelled' && (
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                <Button variant="ghost" size="icon">
+                                  <MoreVertical className="w-4 h-4" />
+                                </Button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent align="end">
+                                <DropdownMenuItem
+                                  onClick={() => {
+                                    if (confirm(`Reverse payroll for ${payroll.employee_name}? This will mark it as cancelled.`)) {
+                                      reversePayrollMutation.mutate(payroll);
+                                    }
+                                  }}
+                                  className="text-amber-600"
+                                >
+                                  <RotateCcw className="w-4 h-4 mr-2" />
+                                  Reverse Payroll
+                                </DropdownMenuItem>
+                                <DropdownMenuSeparator />
+                                <DropdownMenuItem
+                                  onClick={() => {
+                                    if (confirm(`Delete payroll for ${payroll.employee_name}? This cannot be undone.`)) {
+                                      deletePayrollMutation.mutate(payroll);
+                                    }
+                                  }}
+                                  className="text-red-600"
+                                >
+                                  <Trash2 className="w-4 h-4 mr-2" />
+                                  Delete Payroll
+                                </DropdownMenuItem>
+                              </DropdownMenuContent>
+                            </DropdownMenu>
+                          )}
                         </div>
                       </div>
                     ))}
