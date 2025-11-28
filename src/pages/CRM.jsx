@@ -137,59 +137,59 @@ export default function CRM() {
       />
 
       {/* Stats */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
         <Card className="border-0 shadow-lg overflow-hidden">
           <div className="h-1 bg-gradient-to-r from-[#1EB053] to-[#0072C6]" />
-          <CardContent className="p-4">
+          <CardContent className="p-3 sm:p-4">
             <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-gray-500">Total Customers</p>
-                <p className="text-2xl font-bold">{totalCustomers}</p>
+              <div className="min-w-0 flex-1">
+                <p className="text-xs sm:text-sm text-gray-500">Total Customers</p>
+                <p className="text-lg sm:text-2xl font-bold">{totalCustomers}</p>
               </div>
-              <div className="p-3 rounded-xl bg-gradient-to-br from-[#1EB053] to-[#0072C6]">
-                <Users className="w-5 h-5 text-white" />
+              <div className="p-2 sm:p-3 rounded-lg sm:rounded-xl bg-gradient-to-br from-[#1EB053] to-[#0072C6] flex-shrink-0">
+                <Users className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
               </div>
             </div>
           </CardContent>
         </Card>
         <Card className="border-0 shadow-lg overflow-hidden">
           <div className="h-1 bg-gradient-to-r from-amber-500 to-orange-500" />
-          <CardContent className="p-4">
+          <CardContent className="p-3 sm:p-4">
             <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-gray-500">VIP Customers</p>
-                <p className="text-2xl font-bold">{vipCustomers}</p>
+              <div className="min-w-0 flex-1">
+                <p className="text-xs sm:text-sm text-gray-500">VIP Customers</p>
+                <p className="text-lg sm:text-2xl font-bold">{vipCustomers}</p>
               </div>
-              <div className="p-3 rounded-xl bg-gradient-to-br from-amber-500 to-orange-500">
-                <Star className="w-5 h-5 text-white" />
+              <div className="p-2 sm:p-3 rounded-lg sm:rounded-xl bg-gradient-to-br from-amber-500 to-orange-500 flex-shrink-0">
+                <Star className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
               </div>
             </div>
           </CardContent>
         </Card>
         <Card className="border-0 shadow-lg overflow-hidden">
           <div className="h-1 bg-gradient-to-r from-[#0072C6] to-purple-500" />
-          <CardContent className="p-4">
+          <CardContent className="p-3 sm:p-4">
             <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-gray-500">Total Revenue</p>
-                <p className="text-2xl font-bold">Le {totalRevenue.toLocaleString()}</p>
+              <div className="min-w-0 flex-1">
+                <p className="text-xs sm:text-sm text-gray-500">Total Revenue</p>
+                <p className="text-lg sm:text-2xl font-bold truncate">Le {totalRevenue.toLocaleString()}</p>
               </div>
-              <div className="p-3 rounded-xl bg-gradient-to-br from-[#0072C6] to-purple-500">
-                <DollarSign className="w-5 h-5 text-white" />
+              <div className="p-2 sm:p-3 rounded-lg sm:rounded-xl bg-gradient-to-br from-[#0072C6] to-purple-500 flex-shrink-0">
+                <DollarSign className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
               </div>
             </div>
           </CardContent>
         </Card>
         <Card className="border-0 shadow-lg overflow-hidden">
           <div className="h-1 bg-gradient-to-r from-green-500 to-teal-500" />
-          <CardContent className="p-4">
+          <CardContent className="p-3 sm:p-4">
             <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-gray-500">Avg Customer Value</p>
-                <p className="text-2xl font-bold">Le {avgOrderValue.toLocaleString()}</p>
+              <div className="min-w-0 flex-1">
+                <p className="text-xs sm:text-sm text-gray-500">Avg Value</p>
+                <p className="text-lg sm:text-2xl font-bold truncate">Le {avgOrderValue.toLocaleString()}</p>
               </div>
-              <div className="p-3 rounded-xl bg-gradient-to-br from-green-500 to-teal-500">
-                <TrendingUp className="w-5 h-5 text-white" />
+              <div className="p-2 sm:p-3 rounded-lg sm:rounded-xl bg-gradient-to-br from-green-500 to-teal-500 flex-shrink-0">
+                <TrendingUp className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
               </div>
             </div>
           </CardContent>

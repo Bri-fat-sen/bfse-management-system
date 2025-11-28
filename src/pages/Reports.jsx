@@ -375,30 +375,32 @@ export default function Reports() {
         title="Reports & Analytics"
         subtitle="Comprehensive business insights with predictive analytics"
       >
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-1 sm:gap-2">
           <Button 
             variant="outline" 
             size="sm"
             onClick={() => setShowCharts(!showCharts)}
+            className="text-xs sm:text-sm"
           >
-            {showCharts ? <EyeOff className="w-4 h-4 mr-2" /> : <Eye className="w-4 h-4 mr-2" />}
-            {showCharts ? 'Hide Charts' : 'Show Charts'}
+            {showCharts ? <EyeOff className="w-3 h-3 sm:w-4 sm:h-4 sm:mr-2" /> : <Eye className="w-3 h-3 sm:w-4 sm:h-4 sm:mr-2" />}
+            <span className="hidden sm:inline">{showCharts ? 'Hide' : 'Show'}</span>
           </Button>
           <Button 
             variant="outline" 
             size="sm"
             onClick={() => setShowSaveDialog(true)}
+            className="text-xs sm:text-sm"
           >
-            <Save className="w-4 h-4 mr-2" />
-            Save
+            <Save className="w-3 h-3 sm:w-4 sm:h-4 sm:mr-2" />
+            <span className="hidden sm:inline">Save</span>
           </Button>
-          <Button variant="outline" size="sm" onClick={handleExportCSV}>
-            <FileSpreadsheet className="w-4 h-4 mr-2" />
-            CSV
+          <Button variant="outline" size="sm" onClick={handleExportCSV} className="text-xs sm:text-sm">
+            <FileSpreadsheet className="w-3 h-3 sm:w-4 sm:h-4 sm:mr-2" />
+            <span className="hidden sm:inline">CSV</span>
           </Button>
-          <Button onClick={handlePrint} className="bg-[#1EB053] hover:bg-[#178f43]" size="sm">
-            <Printer className="w-4 h-4 mr-2" />
-            Print Report
+          <Button onClick={handlePrint} className="bg-[#1EB053] hover:bg-[#178f43] text-xs sm:text-sm" size="sm">
+            <Printer className="w-3 h-3 sm:w-4 sm:h-4 sm:mr-2" />
+            <span className="hidden sm:inline">Print</span>
           </Button>
         </div>
       </PageHeader>
@@ -446,26 +448,26 @@ export default function Reports() {
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="bg-gray-100 p-1 flex-wrap">
-          <TabsTrigger value="sales" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#1EB053] data-[state=active]:to-[#0072C6] data-[state=active]:text-white">
+        <TabsList className="bg-gray-100 p-1 flex flex-wrap h-auto gap-1">
+          <TabsTrigger value="sales" className="text-xs sm:text-sm px-2 sm:px-3 data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#1EB053] data-[state=active]:to-[#0072C6] data-[state=active]:text-white">
             Sales
           </TabsTrigger>
-          <TabsTrigger value="expenses" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#1EB053] data-[state=active]:to-[#0072C6] data-[state=active]:text-white">
+          <TabsTrigger value="expenses" className="text-xs sm:text-sm px-2 sm:px-3 data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#1EB053] data-[state=active]:to-[#0072C6] data-[state=active]:text-white">
             Expenses
           </TabsTrigger>
-          <TabsTrigger value="transport" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#1EB053] data-[state=active]:to-[#0072C6] data-[state=active]:text-white">
+          <TabsTrigger value="transport" className="text-xs sm:text-sm px-2 sm:px-3 data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#1EB053] data-[state=active]:to-[#0072C6] data-[state=active]:text-white">
             Transport
           </TabsTrigger>
-          <TabsTrigger value="inventory" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#1EB053] data-[state=active]:to-[#0072C6] data-[state=active]:text-white">
+          <TabsTrigger value="inventory" className="text-xs sm:text-sm px-2 sm:px-3 data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#1EB053] data-[state=active]:to-[#0072C6] data-[state=active]:text-white">
             Inventory
           </TabsTrigger>
-          <TabsTrigger value="predictions" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#1EB053] data-[state=active]:to-[#0072C6] data-[state=active]:text-white">
-            <Brain className="w-4 h-4 mr-1" />
-            Predictions
+          <TabsTrigger value="predictions" className="text-xs sm:text-sm px-2 sm:px-3 data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#1EB053] data-[state=active]:to-[#0072C6] data-[state=active]:text-white">
+            <Brain className="w-3 h-3 sm:w-4 sm:h-4 sm:mr-1" />
+            <span className="hidden sm:inline">Predictions</span>
           </TabsTrigger>
-          <TabsTrigger value="saved" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#1EB053] data-[state=active]:to-[#0072C6] data-[state=active]:text-white">
-            <Save className="w-4 h-4 mr-1" />
-            Saved
+          <TabsTrigger value="saved" className="text-xs sm:text-sm px-2 sm:px-3 data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#1EB053] data-[state=active]:to-[#0072C6] data-[state=active]:text-white">
+            <Save className="w-3 h-3 sm:w-4 sm:h-4 sm:mr-1" />
+            <span className="hidden sm:inline">Saved</span>
           </TabsTrigger>
         </TabsList>
 
