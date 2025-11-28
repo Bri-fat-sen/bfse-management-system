@@ -19,7 +19,10 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useToast } from "@/components/ui/use-toast";
-import { Loader2, User, Mail, Phone, Building2, Briefcase } from "lucide-react";
+import { Loader2, User, Mail, Phone, Building2, Briefcase, Send, AlertCircle } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { generateInviteEmailHTML } from "@/components/email/InviteEmailTemplate";
 
 const roles = [
   { value: "org_admin", label: "Organisation Admin" },
@@ -36,7 +39,7 @@ const roles = [
 
 const departments = ["Management", "Sales", "Operations", "Finance", "Transport", "Support", "HR", "IT"];
 
-export default function AddEmployeeDialog({ open, onOpenChange, orgId, employeeCount }) {
+export default function AddEmployeeDialog({ open, onOpenChange, orgId, employeeCount, organisation, inviterName }) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   
@@ -52,11 +55,14 @@ export default function AddEmployeeDialog({ open, onOpenChange, orgId, employeeC
     base_salary: '',
     hire_date: new Date().toISOString().split('T')[0],
   });
+  
+  const [sendWelcomeEmail, setSendWelcomeEmail] = useState(true);
+  const [isSendingEmail, setIsSendingEmail] = useState(false);
 
   const createEmployeeMutation = useMutation({
     mutationFn: async (data) => {
       const employeeCode = `EMP${String(employeeCount + 1).padStart(4, '0')}`;
-      return base44.entities.Employee.create({
+      const employee = await base44.entities.Employee.create({
         ...data,
         organisation_id: orgId,
         employee_code: employeeCode,
@@ -64,10 +70,45 @@ export default function AddEmployeeDialog({ open, onOpenChange, orgId, employeeC
         status: 'active',
         base_salary: parseFloat(data.base_salary) || 0,
       });
+      return { employee, email: data.email, firstName: data.first_name, role: data.role, position: data.position };
     },
-    onSuccess: () => {
+    onSuccess: async (result) => {
       queryClient.invalidateQueries({ queryKey: ['employees'] });
-      toast({ title: "Employee added successfully" });
+      
+      // Send welcome email if enabled and email is provided
+      if (sendWelcomeEmail && result.email && organisation) {
+        setIsSendingEmail(true);
+        try {
+          const roleLabel = roles.find(r => r.value === result.role)?.label || result.role;
+          const htmlContent = generateInviteEmailHTML({
+            recipientName: result.firstName,
+            organisationName: organisation.name,
+            organisationLogo: organisation.logo_url,
+            role: roleLabel,
+            position: result.position,
+            inviterName: inviterName,
+            loginUrl: window.location.origin,
+          });
+          
+          await base44.functions.invoke('sendEmailMailersend', {
+            to: result.email,
+            toName: result.firstName,
+            subject: `Welcome to ${organisation.name}! 🇸🇱`,
+            htmlContent: htmlContent,
+            fromName: organisation.name,
+          });
+          
+          toast({ title: "Employee added & welcome email sent!" });
+        } catch (emailError) {
+          console.error('Failed to send welcome email:', emailError);
+          toast({ title: "Employee added (email failed to send)", variant: "destructive" });
+        } finally {
+          setIsSendingEmail(false);
+        }
+      } else {
+        toast({ title: "Employee added successfully" });
+      }
+      
       onOpenChange(false);
       setFormData({
         first_name: '',
@@ -81,6 +122,7 @@ export default function AddEmployeeDialog({ open, onOpenChange, orgId, employeeC
         base_salary: '',
         hire_date: new Date().toISOString().split('T')[0],
       });
+      setSendWelcomeEmail(true);
     },
     onError: () => {
       toast({ title: "Failed to add employee", variant: "destructive" });
@@ -246,6 +288,36 @@ export default function AddEmployeeDialog({ open, onOpenChange, orgId, employeeC
             </div>
           </div>
 
+          {/* Welcome Email Option */}
+          <div className="flex items-start gap-3 p-3 bg-blue-50 rounded-lg border border-blue-100">
+            <Checkbox
+              id="sendWelcomeEmail"
+              checked={sendWelcomeEmail}
+              onCheckedChange={setSendWelcomeEmail}
+              disabled={!formData.email}
+              className="mt-0.5"
+            />
+            <div className="flex-1">
+              <label htmlFor="sendWelcomeEmail" className="text-sm font-medium text-gray-700 cursor-pointer flex items-center gap-2">
+                <Send className="w-4 h-4 text-[#0072C6]" />
+                Send branded welcome email
+              </label>
+              <p className="text-xs text-gray-500 mt-1">
+                {formData.email 
+                  ? "A Sierra Leone themed welcome email will be sent with login instructions"
+                  : "Enter an email address to enable this option"}
+              </p>
+            </div>
+          </div>
+
+          {/* Dashboard Invite Reminder */}
+          <Alert className="border-amber-200 bg-amber-50">
+            <AlertCircle className="h-4 w-4 text-amber-600" />
+            <AlertDescription className="text-xs text-amber-800">
+              <strong>Important:</strong> To allow this employee to log in, you must also invite them via the Base44 dashboard using the same email address.
+            </AlertDescription>
+          </Alert>
+
           <DialogFooter className="flex-col sm:flex-row gap-2">
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)} className="w-full sm:w-auto">
               Cancel
@@ -253,10 +325,10 @@ export default function AddEmployeeDialog({ open, onOpenChange, orgId, employeeC
             <Button 
               type="submit" 
               className="bg-gradient-to-r from-[#1EB053] to-[#0072C6] hover:from-[#178f43] hover:to-[#005a9e] text-white shadow-lg w-full sm:w-auto"
-              disabled={createEmployeeMutation.isPending}
+              disabled={createEmployeeMutation.isPending || isSendingEmail}
             >
-              {createEmployeeMutation.isPending && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
-              Add Employee
+              {(createEmployeeMutation.isPending || isSendingEmail) && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+              {isSendingEmail ? 'Sending Email...' : 'Add Employee'}
             </Button>
           </DialogFooter>
         </form>
