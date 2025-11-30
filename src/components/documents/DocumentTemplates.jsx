@@ -1096,19 +1096,19 @@ export const DEFAULT_TEMPLATES = {
     `,
     variables: [
       { key: "company_name", label: "Company Name", type: "text", auto_fill: "organisation.name" },
-      { key: "document_ref", label: "Reference Number", type: "text", default: "2024-001" },
+      { key: "document_ref", label: "Reference Number", type: "text", auto_fill: "auto" },
       { key: "employee_name", label: "Employee Name", type: "text", auto_fill: "employee.full_name" },
       { key: "position", label: "Position", type: "text", auto_fill: "employee.position" },
       { key: "department", label: "Department", type: "text", auto_fill: "employee.department" },
-      { key: "warning_date", label: "Warning Date", type: "date" },
+      { key: "warning_date", label: "Warning Date", type: "date", auto_fill: "today" },
       { key: "warning_type", label: "Warning Type", type: "select", options: ["Attendance", "Performance", "Conduct", "Policy Violation", "Other"], default: "Conduct" },
       { key: "warning_level", label: "Warning Level", type: "select", options: ["First", "Second", "Final"], default: "First" },
       { key: "incident_date", label: "Incident Date", type: "date" },
-      { key: "incident_description", label: "Incident Description", type: "text" },
-      { key: "policy_violated", label: "Policy Violated", type: "text" },
-      { key: "corrective_action", label: "Required Corrective Action", type: "text" },
-      { key: "issuing_manager", label: "Issuing Manager Name", type: "text" },
-      { key: "issuing_manager_title", label: "Issuing Manager Title", type: "text" }
+      { key: "incident_description", label: "Description", type: "text", default: "Employee violated company policy as detailed below." },
+      { key: "policy_violated", label: "Policy Violated", type: "text", default: "Employee Code of Conduct" },
+      { key: "corrective_action", label: "Corrective Action", type: "text", default: "Employee must adhere to company policies going forward." },
+      { key: "issuing_manager", label: "Issuing Manager", type: "text", default: "HR Manager" },
+      { key: "issuing_manager_title", label: "Manager Title", type: "text", default: "Human Resources" }
     ]
   },
 
