@@ -1,7 +1,7 @@
 import React from "react";
 import { format } from "date-fns";
 import { generateExportHTML, printDocument, exportToCSV } from "@/components/exports/SierraLeoneExportStyles";
-import { generateProfessionalReport, printProfessionalReport } from "@/components/exports/ProfessionalReportExport";
+import { generateProfessionalReport, downloadProfessionalReportAsPDF } from "@/components/exports/ProfessionalReportExport";
 
 export function printSalesReport({ salesAnalytics = {}, filters = {}, organisation, filteredSales = [] }) {
   const analytics = salesAnalytics || {};
@@ -73,7 +73,7 @@ export function printSalesReport({ salesAnalytics = {}, filters = {}, organisati
     reportType: 'financial'
   });
 
-  printProfessionalReport(html);
+  downloadProfessionalReportAsPDF(html);
 }
 
 export function printExpenseReport({ expenseAnalytics = {}, filters = {}, organisation, filteredExpenses = [] }) {
@@ -140,7 +140,7 @@ export function printExpenseReport({ expenseAnalytics = {}, filters = {}, organi
     reportType: 'financial'
   });
 
-  printProfessionalReport(html);
+  downloadProfessionalReportAsPDF(html);
 }
 
 export function printTransportReport({ transportAnalytics = {}, filters = {}, organisation, filteredTrips = [] }) {
@@ -212,7 +212,7 @@ export function printTransportReport({ transportAnalytics = {}, filters = {}, or
     reportType: 'standard'
   });
 
-  printProfessionalReport(html);
+  downloadProfessionalReportAsPDF(html);
 }
 
 export function printInventoryReport({ products = [], organisation }) {
@@ -292,7 +292,7 @@ export function printInventoryReport({ products = [], organisation }) {
     reportType: 'standard'
   });
 
-  printProfessionalReport(html);
+  downloadProfessionalReportAsPDF(html);
 }
 
 export function printProfitLossReport({ profitLoss = {}, salesAnalytics = {}, transportAnalytics = {}, expenseAnalytics = {}, filters = {}, organisation }) {
@@ -378,7 +378,7 @@ export function printProfitLossReport({ profitLoss = {}, salesAnalytics = {}, tr
     reportType: 'financial'
   });
 
-  printProfessionalReport(html);
+  downloadProfessionalReportAsPDF(html);
 }
 
 export function exportReportCSV({ type, data, organisation }) {

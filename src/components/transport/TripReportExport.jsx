@@ -3,7 +3,7 @@ import { format } from "date-fns";
 import { Button } from "@/components/ui/button";
 import { Download, Printer } from "lucide-react";
 import { exportToCSV } from "@/components/exports/SierraLeoneExportStyles";
-import { generateProfessionalReport, printProfessionalReport } from "@/components/exports/ProfessionalReportExport";
+import { generateProfessionalReport, downloadProfessionalReportAsPDF } from "@/components/exports/ProfessionalReportExport";
 
 export default function TripReportExport({ trips = [], routes = [], vehicles = [], organisation }) {
   // Calculate summary stats
@@ -84,7 +84,7 @@ export default function TripReportExport({ trips = [], routes = [], vehicles = [
       reportType: 'standard'
     });
 
-    printProfessionalReport(html);
+    downloadProfessionalReportAsPDF(html);
   };
 
   return (

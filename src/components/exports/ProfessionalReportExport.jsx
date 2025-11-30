@@ -793,13 +793,40 @@ export const generateProfessionalReport = ({
   `;
 };
 
-export const printProfessionalReport = (html) => {
+export const printProfessionalReport = (html, filename = 'report') => {
+  // Open in new window and trigger print-to-PDF
   const printWindow = window.open('', '_blank', 'width=900,height=800');
   printWindow.document.write(html);
   printWindow.document.close();
+  
+  // Auto-trigger print dialog (user can save as PDF)
   setTimeout(() => {
     printWindow.print();
   }, 400);
+};
+
+export const downloadProfessionalReportAsPDF = async (html, filename = 'report') => {
+  // Create iframe to render HTML and trigger print-to-PDF
+  const iframe = document.createElement('iframe');
+  iframe.style.position = 'fixed';
+  iframe.style.right = '0';
+  iframe.style.bottom = '0';
+  iframe.style.width = '0';
+  iframe.style.height = '0';
+  iframe.style.border = '0';
+  document.body.appendChild(iframe);
+  
+  iframe.contentDocument.write(html);
+  iframe.contentDocument.close();
+  
+  // Wait for content to load then trigger print
+  setTimeout(() => {
+    iframe.contentWindow.print();
+    // Clean up after print dialog
+    setTimeout(() => {
+      document.body.removeChild(iframe);
+    }, 1000);
+  }, 500);
 };
 
 export const downloadProfessionalReport = (html, filename) => {
@@ -817,5 +844,6 @@ export const downloadProfessionalReport = (html, filename) => {
 export default {
   generate: generateProfessionalReport,
   print: printProfessionalReport,
+  downloadPDF: downloadProfessionalReportAsPDF,
   download: downloadProfessionalReport
 };
