@@ -13,8 +13,10 @@ import Profile from './pages/Profile';
 import RolePermissions from './pages/RolePermissions';
 import Suppliers from './pages/Suppliers';
 import OrganisationManage from './pages/OrganisationManage';
+import Analytics from './pages/Analytics';
 import Reports from './pages/Reports';
 import Locations from './pages/Locations';
+import HRAnalytics from './pages/HRAnalytics';
 import CRM from './pages/CRM';
 import WorkSchedules from './pages/WorkSchedules';
 import Landing from './pages/Landing';
@@ -43,8 +45,10 @@ export const PAGES = {
     "RolePermissions": RolePermissions,
     "Suppliers": Suppliers,
     "OrganisationManage": OrganisationManage,
+    "Analytics": Analytics,
     "Reports": Reports,
     "Locations": Locations,
+    "HRAnalytics": HRAnalytics,
     "CRM": CRM,
     "WorkSchedules": WorkSchedules,
     "Landing": Landing,
