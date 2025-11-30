@@ -33,7 +33,7 @@ import {
   FileText, Plus, Search, Filter, MoreVertical, 
   Eye, Send, Trash2, Clock, CheckCircle2, XCircle,
   AlertCircle, Download, Mail, Users, FileCheck,
-  FilePlus, Settings, Bell
+  FilePlus, Settings, Bell, Sparkles, Loader2
 } from "lucide-react";
 import { format } from "date-fns";
 import PageHeader from "@/components/ui/PageHeader";
@@ -41,7 +41,8 @@ import LoadingSpinner from "@/components/ui/LoadingSpinner";
 import CreateDocumentDialog from "@/components/documents/CreateDocumentDialog";
 import DocumentSignatureDialog from "@/components/documents/DocumentSignatureDialog";
 import DocumentViewer from "@/components/documents/DocumentViewer";
-import { DOCUMENT_TYPE_INFO } from "@/components/documents/DocumentTemplates";
+import { DOCUMENT_TYPE_INFO, DEFAULT_TEMPLATES } from "@/components/documents/DocumentTemplates";
+import GenerateRequiredDocsDialog from "@/components/documents/GenerateRequiredDocsDialog";
 
 const STATUS_CONFIG = {
   draft: { label: "Draft", icon: Clock, color: "bg-gray-100 text-gray-800", dotColor: "bg-gray-400" },
@@ -62,6 +63,7 @@ export default function Documents() {
   const [selectedDocument, setSelectedDocument] = useState(null);
   const [showSignDialog, setShowSignDialog] = useState(false);
   const [showViewer, setShowViewer] = useState(false);
+  const [showGenerateDialog, setShowGenerateDialog] = useState(false);
 
   // Fetch current user and employee
   const { data: user } = useQuery({
@@ -199,13 +201,23 @@ export default function Documents() {
         icon={FileText}
         actions={
           isAdmin && (
-            <Button 
-              onClick={() => setShowCreateDialog(true)}
-              className="bg-gradient-to-r from-[#1EB053] to-[#0072C6]"
-            >
-              <Plus className="w-4 h-4 mr-2" />
-              Create Document
-            </Button>
+            <div className="flex gap-2">
+              <Button 
+                variant="outline"
+                onClick={() => setShowGenerateDialog(true)}
+                className="border-[#1EB053] text-[#1EB053] hover:bg-[#1EB053]/10"
+              >
+                <Sparkles className="w-4 h-4 mr-2" />
+                Generate SL Required Docs
+              </Button>
+              <Button 
+                onClick={() => setShowCreateDialog(true)}
+                className="bg-gradient-to-r from-[#1EB053] to-[#0072C6]"
+              >
+                <Plus className="w-4 h-4 mr-2" />
+                Create Document
+              </Button>
+            </div>
           )
         }
       />
@@ -471,6 +483,16 @@ export default function Documents() {
         employees={allEmployees}
         organisation={organisation}
         currentEmployee={currentEmployee}
+        orgId={orgId}
+      />
+
+      <GenerateRequiredDocsDialog
+        open={showGenerateDialog}
+        onOpenChange={setShowGenerateDialog}
+        employees={allEmployees}
+        organisation={organisation}
+        currentEmployee={currentEmployee}
+        existingDocuments={documents}
         orgId={orgId}
       />
 
