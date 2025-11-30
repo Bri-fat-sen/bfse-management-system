@@ -433,85 +433,142 @@ export default function CreateDocumentDialog({
             )}
 
           {step === 2 && (
-            <div className="space-y-4 py-4">
-              <div className="flex items-center justify-between">
-                <Label>Select Recipients ({selectedEmployees.length} selected)</Label>
-                <Button variant="outline" size="sm" onClick={handleSelectAll}>
-                  {selectAll ? 'Deselect All' : 'Select All Active'}
-                </Button>
-              </div>
-              
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-2 max-h-48 overflow-y-auto">
-                {activeEmployees.map(emp => (
-                  <div
-                    key={emp.id}
-                    onClick={() => toggleEmployee(emp.id)}
-                    className={`p-3 rounded-lg border cursor-pointer transition-all ${
-                      selectedEmployees.includes(emp.id)
-                        ? 'border-[#1EB053] bg-[#1EB053]/5'
-                        : 'border-gray-200 hover:border-gray-300'
-                    }`}
-                  >
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <p className="font-medium text-sm">{emp.full_name}</p>
-                        <p className="text-xs text-gray-500">{emp.position} • {emp.department}</p>
-                      </div>
-                      {selectedEmployees.includes(emp.id) && (
-                        <CheckCircle2 className="w-5 h-5 text-[#1EB053]" />
-                      )}
+            <div className="space-y-6">
+              {/* Recipients Section */}
+              <div className="bg-white rounded-xl border shadow-sm overflow-hidden">
+                <div className="px-5 py-4 bg-gradient-to-r from-gray-50 to-white border-b flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 rounded-lg bg-[#0072C6]/10 flex items-center justify-center">
+                      <Users className="w-4 h-4 text-[#0072C6]" />
+                    </div>
+                    <div>
+                      <h4 className="font-semibold text-[#0F1F3C]">Select Recipients</h4>
+                      <p className="text-xs text-gray-500">{selectedEmployees.length} of {activeEmployees.length} employees selected</p>
                     </div>
                   </div>
-                ))}
+                  <Button 
+                    variant={selectAll ? "default" : "outline"} 
+                    size="sm" 
+                    onClick={handleSelectAll}
+                    className={selectAll ? "bg-[#1EB053] hover:bg-[#178f43]" : ""}
+                  >
+                    {selectAll ? 'Deselect All' : 'Select All'}
+                  </Button>
+                </div>
+                
+                <div className="p-4">
+                  <div className="relative mb-4">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                    <Input
+                      placeholder="Search employees by name, position, or department..."
+                      value={employeeSearch}
+                      onChange={(e) => setEmployeeSearch(e.target.value)}
+                      className="pl-10"
+                    />
+                  </div>
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 max-h-[200px] overflow-y-auto pr-1">
+                    {filteredActiveEmployees.map(emp => {
+                      const isSelected = selectedEmployees.includes(emp.id);
+                      return (
+                        <div
+                          key={emp.id}
+                          onClick={() => toggleEmployee(emp.id)}
+                          className={`group p-3 rounded-xl border-2 cursor-pointer transition-all duration-200 ${
+                            isSelected
+                              ? 'border-[#1EB053] bg-gradient-to-br from-[#1EB053]/5 to-[#1EB053]/10 shadow-sm'
+                              : 'border-gray-100 hover:border-[#0072C6]/30 hover:bg-gray-50'
+                          }`}
+                        >
+                          <div className="flex items-center gap-3">
+                            <div className={`w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold transition-colors ${
+                              isSelected 
+                                ? 'bg-[#1EB053] text-white' 
+                                : 'bg-gray-100 text-gray-600 group-hover:bg-[#0072C6]/10'
+                            }`}>
+                              {emp.full_name?.charAt(0) || '?'}
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <p className="font-medium text-sm text-[#0F1F3C] truncate">{emp.full_name}</p>
+                              <p className="text-xs text-gray-500 truncate">{emp.position}</p>
+                            </div>
+                            {isSelected && (
+                              <CheckCircle2 className="w-5 h-5 text-[#1EB053] flex-shrink-0" />
+                            )}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
               </div>
 
-              {selectedTemplate?.variables?.length > 0 && (
-                <div className="mt-6 space-y-4">
-                  <div className="flex items-center justify-between">
-                    <Label>Document Details</Label>
-                    <span className="text-xs text-gray-500">* Fields are auto-filled where possible</span>
-                  </div>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-h-[35vh] overflow-y-auto p-1">
-                    {selectedTemplate.variables
-                      .filter(v => !v.auto_fill || !variables[v.key]) // Show non-auto-filled OR empty auto-filled
-                      .map(v => (
-                      <div key={v.key}>
-                        <Label className="text-xs text-gray-500 flex items-center gap-1">
-                          {v.label}
-                          {v.auto_fill && <span className="text-green-600 text-[10px]">(auto)</span>}
-                        </Label>
-                        {v.type === 'select' ? (
-                          <Select
-                            value={variables[v.key] || v.default || ''}
-                            onValueChange={(val) => setVariables(prev => ({ ...prev, [v.key]: val }))}
-                          >
-                            <SelectTrigger className="mt-1">
-                              <SelectValue placeholder={`Select ${v.label}`} />
-                            </SelectTrigger>
-                            <SelectContent>
-                              {v.options?.map(opt => (
-                                <SelectItem key={opt} value={opt}>{opt}</SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                        ) : v.type === 'date' ? (
-                          <Input
-                            type="date"
-                            value={variables[v.key] || ''}
-                            onChange={(e) => setVariables(prev => ({ ...prev, [v.key]: e.target.value }))}
-                            className="mt-1"
-                          />
-                        ) : (
-                          <Input
-                            type={v.type === 'number' ? 'number' : 'text'}
-                            value={variables[v.key] || ''}
-                            onChange={(e) => setVariables(prev => ({ ...prev, [v.key]: e.target.value }))}
-                            placeholder={v.default || ''}
-                            className="mt-1"
-                          />
-                        )}
+              {/* Document Details Section */}
+              {selectedTemplate?.variables?.length > 0 && selectedEmployees.length > 0 && (
+                <div className="bg-white rounded-xl border shadow-sm overflow-hidden">
+                  <div className="px-5 py-4 bg-gradient-to-r from-gray-50 to-white border-b flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className="w-8 h-8 rounded-lg bg-[#1EB053]/10 flex items-center justify-center">
+                        <FileText className="w-4 h-4 text-[#1EB053]" />
                       </div>
-                    ))}
+                      <div>
+                        <h4 className="font-semibold text-[#0F1F3C]">Document Details</h4>
+                        <p className="text-xs text-gray-500">Auto-filled where possible • Review and customize as needed</p>
+                      </div>
+                    </div>
+                    {Object.keys(variables).length > 0 && (
+                      <Badge className="bg-[#1EB053]/10 text-[#1EB053] border-0">
+                        <CheckCircle2 className="w-3 h-3 mr-1" />
+                        Ready to send
+                      </Badge>
+                    )}
+                  </div>
+                  
+                  <div className="p-5">
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                      {selectedTemplate.variables
+                        .filter(v => !v.auto_fill || !variables[v.key])
+                        .map(v => (
+                        <div key={v.key} className="space-y-1.5">
+                          <Label className="text-xs font-medium text-gray-600 flex items-center gap-1.5">
+                            {v.label}
+                            {v.auto_fill && (
+                              <span className="px-1.5 py-0.5 bg-[#1EB053]/10 text-[#1EB053] rounded text-[10px] font-medium">AUTO</span>
+                            )}
+                          </Label>
+                          {v.type === 'select' ? (
+                            <Select
+                              value={variables[v.key] || v.default || ''}
+                              onValueChange={(val) => setVariables(prev => ({ ...prev, [v.key]: val }))}
+                            >
+                              <SelectTrigger className="bg-gray-50 border-gray-200 focus:bg-white">
+                                <SelectValue placeholder={`Select ${v.label}`} />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {v.options?.map(opt => (
+                                  <SelectItem key={opt} value={opt}>{opt}</SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          ) : v.type === 'date' ? (
+                            <Input
+                              type="date"
+                              value={variables[v.key] || ''}
+                              onChange={(e) => setVariables(prev => ({ ...prev, [v.key]: e.target.value }))}
+                              className="bg-gray-50 border-gray-200 focus:bg-white"
+                            />
+                          ) : (
+                            <Input
+                              type={v.type === 'number' ? 'number' : 'text'}
+                              value={variables[v.key] || ''}
+                              onChange={(e) => setVariables(prev => ({ ...prev, [v.key]: e.target.value }))}
+                              placeholder={v.default || ''}
+                              className="bg-gray-50 border-gray-200 focus:bg-white"
+                            />
+                          )}
+                        </div>
+                      ))}
+                    </div>
                   </div>
                 </div>
               )}
