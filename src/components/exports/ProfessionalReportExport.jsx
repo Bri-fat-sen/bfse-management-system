@@ -806,27 +806,32 @@ export const printProfessionalReport = (html, filename = 'report') => {
 };
 
 export const downloadProfessionalReportAsPDF = async (html, filename = 'report') => {
-  // Create iframe to render HTML and trigger print-to-PDF
-  const iframe = document.createElement('iframe');
-  iframe.style.position = 'fixed';
-  iframe.style.right = '0';
-  iframe.style.bottom = '0';
-  iframe.style.width = '0';
-  iframe.style.height = '0';
-  iframe.style.border = '0';
-  document.body.appendChild(iframe);
+  // Open the report in a new window for proper PDF generation
+  const pdfWindow = window.open('', '_blank', 'width=900,height=800');
   
-  iframe.contentDocument.write(html);
-  iframe.contentDocument.close();
+  if (!pdfWindow) {
+    alert('Please allow popups to download the PDF report');
+    return;
+  }
   
-  // Wait for content to load then trigger print
-  setTimeout(() => {
-    iframe.contentWindow.print();
-    // Clean up after print dialog
+  // Write HTML content
+  pdfWindow.document.write(html);
+  pdfWindow.document.close();
+  
+  // Set the document title for the PDF filename
+  pdfWindow.document.title = filename;
+  
+  // Wait for content and fonts to load, then trigger print
+  pdfWindow.onload = () => {
     setTimeout(() => {
-      document.body.removeChild(iframe);
-    }, 1000);
-  }, 500);
+      pdfWindow.print();
+    }, 600);
+  };
+  
+  // Fallback if onload doesn't fire
+  setTimeout(() => {
+    pdfWindow.print();
+  }, 800);
 };
 
 export const downloadProfessionalReport = (html, filename) => {
