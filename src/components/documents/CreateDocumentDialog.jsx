@@ -71,36 +71,70 @@ export default function CreateDocumentDialog({
 
   // Auto-fill variables when employee or template changes
   useEffect(() => {
-    if (selectedTemplate && selectedEmployees.length === 1) {
+    if (selectedTemplate && selectedEmployees.length >= 1) {
       const employee = employees.find(e => e.id === selectedEmployees[0]);
-      if (employee) {
-        const autoFilled = {};
-        
-        // Auto-fill company initial from organisation name
-        if (organisation?.name) {
-          autoFilled['company_initial'] = organisation.name.charAt(0).toUpperCase();
-        }
-        
-        // Auto-fill document reference
-        autoFilled['document_ref'] = `${new Date().getFullYear()}-${String(Math.floor(Math.random() * 1000)).padStart(3, '0')}`;
-        
-        (selectedTemplate.variables || []).forEach(v => {
-          if (v.auto_fill) {
-            const [entity, field] = v.auto_fill.split('.');
-            if (entity === 'employee' && employee[field]) {
-              autoFilled[v.key] = employee[field];
-            } else if (entity === 'organisation' && organisation?.[field]) {
-              autoFilled[v.key] = organisation[field];
-            }
-          }
-          if (v.default && !autoFilled[v.key]) {
-            autoFilled[v.key] = v.default;
-          }
-        });
-        setVariables(prev => ({ ...autoFilled, ...prev }));
+      const autoFilled = {};
+      
+      // Auto-fill company information
+      if (organisation?.name) {
+        autoFilled['company_name'] = organisation.name;
+        autoFilled['company_initial'] = organisation.name.charAt(0).toUpperCase();
+        autoFilled['company_address'] = organisation.address || 'Freetown, Sierra Leone';
+        autoFilled['company_registration'] = organisation.business_registration_number || '';
+        autoFilled['company_phone'] = organisation.phone || '';
       }
+      
+      // Auto-fill document reference and dates
+      autoFilled['document_ref'] = `${new Date().getFullYear()}-${String(Math.floor(Math.random() * 1000)).padStart(3, '0')}`;
+      autoFilled['issue_date'] = format(new Date(), 'yyyy-MM-dd');
+      autoFilled['effective_date'] = format(new Date(), 'yyyy-MM-dd');
+      autoFilled['start_date'] = format(new Date(), 'yyyy-MM-dd');
+      autoFilled['warning_date'] = format(new Date(), 'yyyy-MM-dd');
+      autoFilled['incident_date'] = format(new Date(), 'yyyy-MM-dd');
+      
+      // Auto-fill employee information
+      if (employee) {
+        autoFilled['employee_name'] = employee.full_name;
+        autoFilled['employee_email'] = employee.email || employee.user_email || '';
+        autoFilled['employee_address'] = employee.address || '';
+        autoFilled['position'] = employee.position || '';
+        autoFilled['department'] = employee.department || '';
+        autoFilled['previous_position'] = employee.position || '';
+        autoFilled['monthly_salary'] = employee.base_salary || '';
+        autoFilled['previous_salary'] = employee.base_salary || '';
+        autoFilled['work_location'] = employee.assigned_location_name || 'Head Office';
+      }
+      
+      // Auto-fill current user as signatory
+      if (currentEmployee) {
+        autoFilled['employer_signatory'] = currentEmployee.full_name;
+        autoFilled['employer_title'] = currentEmployee.position || 'HR Manager';
+        autoFilled['authorized_signatory'] = currentEmployee.full_name;
+        autoFilled['signatory_title'] = currentEmployee.position || 'HR Manager';
+        autoFilled['company_signatory'] = currentEmployee.full_name;
+        autoFilled['company_signatory_title'] = currentEmployee.position || 'HR Manager';
+        autoFilled['issuing_manager'] = currentEmployee.full_name;
+        autoFilled['issuing_manager_title'] = currentEmployee.position || 'HR Manager';
+      }
+      
+      // Apply template-specific defaults
+      (selectedTemplate.variables || []).forEach(v => {
+        if (v.auto_fill && !autoFilled[v.key]) {
+          const [entity, field] = v.auto_fill.split('.');
+          if (entity === 'employee' && employee?.[field]) {
+            autoFilled[v.key] = employee[field];
+          } else if (entity === 'organisation' && organisation?.[field]) {
+            autoFilled[v.key] = organisation[field];
+          }
+        }
+        if (v.default && !autoFilled[v.key]) {
+          autoFilled[v.key] = v.default;
+        }
+      });
+      
+      setVariables(prev => ({ ...autoFilled, ...prev }));
     }
-  }, [selectedTemplate, selectedEmployees, employees, organisation]);
+  }, [selectedTemplate, selectedEmployees, employees, organisation, currentEmployee]);
 
   // Generate preview
   useEffect(() => {
@@ -347,25 +381,32 @@ export default function CreateDocumentDialog({
               {selectedTemplate?.variables?.length > 0 && (
                 <div className="mt-6 space-y-4">
                   <div className="flex items-center justify-between">
-                    <Label>Document Details</Label>
-                    <span className="text-xs text-gray-500">* Fields are auto-filled where possible</span>
+                    <Label>Additional Details (Optional)</Label>
+                    <span className="text-xs text-green-600">✓ Most fields auto-filled</span>
                   </div>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-h-[35vh] overflow-y-auto p-1">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3 max-h-[35vh] overflow-y-auto p-1">
                     {selectedTemplate.variables
-                      .filter(v => !v.auto_fill || !variables[v.key]) // Show non-auto-filled OR empty auto-filled
+                      .filter(v => {
+                        // Hide fields that are auto-filled and have values
+                        const isAutoFilled = variables[v.key] && (v.auto_fill || 
+                          ['company_name', 'company_initial', 'company_address', 'company_registration', 'company_phone',
+                           'employee_name', 'employee_email', 'position', 'department', 'document_ref',
+                           'employer_signatory', 'employer_title', 'authorized_signatory', 'signatory_title',
+                           'company_signatory', 'company_signatory_title', 'issuing_manager', 'issuing_manager_title',
+                           'issue_date', 'effective_date', 'start_date', 'monthly_salary', 'previous_salary',
+                           'previous_position', 'work_location', 'employee_address', 'warning_date', 'incident_date'].includes(v.key));
+                        return !isAutoFilled;
+                      })
                       .map(v => (
                       <div key={v.key}>
-                        <Label className="text-xs text-gray-500 flex items-center gap-1">
-                          {v.label}
-                          {v.auto_fill && <span className="text-green-600 text-[10px]">(auto)</span>}
-                        </Label>
+                        <Label className="text-xs text-gray-600">{v.label}</Label>
                         {v.type === 'select' ? (
                           <Select
                             value={variables[v.key] || v.default || ''}
                             onValueChange={(val) => setVariables(prev => ({ ...prev, [v.key]: val }))}
                           >
-                            <SelectTrigger className="mt-1">
-                              <SelectValue placeholder={`Select ${v.label}`} />
+                            <SelectTrigger className="mt-1 h-9">
+                              <SelectValue placeholder={`Select...`} />
                             </SelectTrigger>
                             <SelectContent>
                               {v.options?.map(opt => (
@@ -378,20 +419,35 @@ export default function CreateDocumentDialog({
                             type="date"
                             value={variables[v.key] || ''}
                             onChange={(e) => setVariables(prev => ({ ...prev, [v.key]: e.target.value }))}
-                            className="mt-1"
+                            className="mt-1 h-9"
                           />
                         ) : (
                           <Input
                             type={v.type === 'number' ? 'number' : 'text'}
                             value={variables[v.key] || ''}
                             onChange={(e) => setVariables(prev => ({ ...prev, [v.key]: e.target.value }))}
-                            placeholder={v.default || ''}
-                            className="mt-1"
+                            placeholder={v.default || `Enter ${v.label.toLowerCase()}...`}
+                            className="mt-1 h-9"
                           />
                         )}
                       </div>
                     ))}
                   </div>
+                  {selectedTemplate.variables.filter(v => {
+                    const isAutoFilled = variables[v.key] && (v.auto_fill || 
+                      ['company_name', 'company_initial', 'company_address', 'company_registration', 'company_phone',
+                       'employee_name', 'employee_email', 'position', 'department', 'document_ref',
+                       'employer_signatory', 'employer_title', 'authorized_signatory', 'signatory_title',
+                       'company_signatory', 'company_signatory_title', 'issuing_manager', 'issuing_manager_title',
+                       'issue_date', 'effective_date', 'start_date', 'monthly_salary', 'previous_salary',
+                       'previous_position', 'work_location', 'employee_address', 'warning_date', 'incident_date'].includes(v.key));
+                    return !isAutoFilled;
+                  }).length === 0 && (
+                    <div className="bg-green-50 border border-green-200 rounded-lg p-3 text-center">
+                      <CheckCircle2 className="w-5 h-5 text-green-600 mx-auto mb-1" />
+                      <p className="text-sm text-green-700">All fields auto-filled! Ready to preview.</p>
+                    </div>
+                  )}
                 </div>
               )}
             </div>
