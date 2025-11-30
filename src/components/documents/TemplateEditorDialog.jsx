@@ -26,9 +26,11 @@ import {
 import { toast } from "sonner";
 import {
   FileText, Plus, Trash2, Loader2, Save, Eye, Code,
-  Variable, Settings, Users, GripVertical, Sparkles
+  Variable, Settings, Users, GripVertical, Sparkles, Wand2,
+  ChevronRight, Copy, FileSignature, CheckCircle2
 } from "lucide-react";
-import { DOCUMENT_TYPE_INFO, SL_DOCUMENT_STYLES } from "./DocumentTemplates";
+import { Card, CardContent } from "@/components/ui/card";
+import { DOCUMENT_TYPE_INFO, SL_DOCUMENT_STYLES, DEFAULT_TEMPLATES } from "./DocumentTemplates";
 
 const TEMPLATE_CATEGORIES = [
   { value: "employment", label: "Employment" },
@@ -77,6 +79,25 @@ const AUTO_FILL_OPTIONS = [
   { value: "auto", label: "Auto-Generate" }
 ];
 
+const DOCUMENT_TYPE_CATEGORY = {
+  employment_contract: "employment",
+  nda: "policy",
+  code_of_conduct: "policy",
+  privacy_policy: "policy",
+  health_safety_policy: "policy",
+  anti_harassment_policy: "policy",
+  it_acceptable_use: "policy",
+  disciplinary_policy: "disciplinary",
+  leave_policy: "leave",
+  remote_work_policy: "policy",
+  probation_confirmation: "employment",
+  promotion_letter: "compensation",
+  termination_letter: "employment",
+  warning_letter: "disciplinary",
+  salary_revision: "compensation",
+  custom: "other"
+};
+
 export default function TemplateEditorDialog({
   open,
   onOpenChange,
@@ -86,7 +107,9 @@ export default function TemplateEditorDialog({
   currentEmployee
 }) {
   const queryClient = useQueryClient();
+  const [step, setStep] = useState(1);
   const [activeTab, setActiveTab] = useState("details");
+  const [showStarterTemplates, setShowStarterTemplates] = useState(false);
   
   const [formData, setFormData] = useState({
     name: "",
@@ -114,6 +137,7 @@ export default function TemplateEditorDialog({
         allowed_roles: template.allowed_roles || [],
         variables: template.variables || []
       });
+      setStep(2);
     } else if (duplicateFrom) {
       setFormData({
         name: `${duplicateFrom.name} (Copy)`,
@@ -125,19 +149,22 @@ export default function TemplateEditorDialog({
         allowed_roles: duplicateFrom.allowed_roles || [],
         variables: duplicateFrom.variables || []
       });
+      setStep(2);
     } else {
       setFormData({
         name: "",
         document_type: "custom",
         category: "other",
-        content: getDefaultContent(),
+        content: "",
         requires_signature: true,
         is_active: true,
         allowed_roles: [],
         variables: []
       });
+      setStep(1);
     }
     setActiveTab("details");
+    setShowStarterTemplates(false);
   }, [template, duplicateFrom, open]);
 
   // Update preview
@@ -252,29 +279,156 @@ export default function TemplateEditorDialog({
     }));
   };
 
+  const addCommonVariables = () => {
+    const commonVars = [
+      { key: "employee_name", label: "Employee Name", type: "text", auto_fill: "employee.full_name" },
+      { key: "employee_position", label: "Position", type: "text", auto_fill: "employee.position" },
+      { key: "company_name", label: "Company Name", type: "text", auto_fill: "organisation.name" },
+      { key: "effective_date", label: "Effective Date", type: "date", auto_fill: "today" },
+    ];
+    const existingKeys = formData.variables.map(v => v.key);
+    const newVars = commonVars.filter(v => !existingKeys.includes(v.key));
+    if (newVars.length === 0) {
+      toast.info("All common variables already added");
+      return;
+    }
+    setFormData(prev => ({ ...prev, variables: [...prev.variables, ...newVars] }));
+    toast.success(`Added ${newVars.length} common variables`);
+  };
+
+  const handleStartFromScratch = () => {
+    setFormData(prev => ({
+      ...prev,
+      content: getDefaultContent(),
+      variables: [
+        { key: "company_name", label: "Company Name", type: "text", auto_fill: "organisation.name" },
+        { key: "employee_name", label: "Employee Name", type: "text", auto_fill: "employee.full_name" },
+      ]
+    }));
+    setStep(2);
+  };
+
+  const handleUseStarterTemplate = (starterKey) => {
+    const starter = DEFAULT_TEMPLATES[starterKey];
+    if (starter) {
+      setFormData({
+        name: "",
+        document_type: starterKey,
+        category: DOCUMENT_TYPE_CATEGORY[starterKey] || "other",
+        content: starter.content,
+        requires_signature: starter.requires_signature !== false,
+        is_active: true,
+        allowed_roles: [],
+        variables: starter.variables || []
+      });
+      setStep(2);
+    }
+  };
+
   const isEditing = !!template && !duplicateFrom;
   const isSaving = createMutation.isPending || updateMutation.isPending;
 
+  // Step 1: Choose creation method
+  if (step === 1 && !template && !duplicateFrom) {
+    return (
+      <Dialog open={open} onOpenChange={onOpenChange}>
+        <DialogContent className="max-w-3xl p-0 overflow-hidden">
+          <DialogHeader className="px-6 py-5 border-b bg-gradient-to-r from-[#0F1F3C] to-[#1a3a6e]">
+            <DialogTitle className="text-white flex items-center gap-2">
+              <Plus className="w-5 h-5" />
+              Create New Template
+            </DialogTitle>
+          </DialogHeader>
+
+          <div className="p-6">
+            <p className="text-gray-600 mb-6">Choose how you want to create your template</p>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+              <Card 
+                className="cursor-pointer hover:shadow-lg hover:border-[#1EB053] transition-all group"
+                onClick={handleStartFromScratch}
+              >
+                <CardContent className="p-6">
+                  <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-[#1EB053] to-[#0072C6] flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+                    <FileText className="w-6 h-6 text-white" />
+                  </div>
+                  <h3 className="font-semibold text-lg mb-2">Start from Scratch</h3>
+                  <p className="text-sm text-gray-500">Create a blank template with a basic structure</p>
+                  <div className="flex items-center gap-1 mt-4 text-[#1EB053] font-medium text-sm">
+                    Get started <ChevronRight className="w-4 h-4" />
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card 
+                className="cursor-pointer hover:shadow-lg hover:border-amber-400 transition-all group"
+                onClick={() => setShowStarterTemplates(true)}
+              >
+                <CardContent className="p-6">
+                  <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+                    <Wand2 className="w-6 h-6 text-white" />
+                  </div>
+                  <h3 className="font-semibold text-lg mb-2">Use a Starter Template</h3>
+                  <p className="text-sm text-gray-500">Start with a pre-built template and customize it</p>
+                  <div className="flex items-center gap-1 mt-4 text-amber-600 font-medium text-sm">
+                    Browse templates <ChevronRight className="w-4 h-4" />
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+
+            {showStarterTemplates && (
+              <div className="border rounded-lg p-4 bg-gray-50">
+                <h4 className="font-medium mb-3 flex items-center gap-2">
+                  <Sparkles className="w-4 h-4 text-amber-500" />
+                  Select a Starter Template
+                </h4>
+                <ScrollArea className="h-[250px]">
+                  <div className="grid grid-cols-2 gap-3 pr-4">
+                    {Object.entries(DEFAULT_TEMPLATES).map(([key, tmpl]) => (
+                      <div
+                        key={key}
+                        onClick={() => handleUseStarterTemplate(key)}
+                        className="p-3 bg-white border rounded-lg cursor-pointer hover:border-amber-400 hover:shadow-sm transition-all"
+                      >
+                        <div className="flex items-start gap-3">
+                          <div className="w-8 h-8 rounded-lg bg-amber-100 flex items-center justify-center flex-shrink-0">
+                            <FileSignature className="w-4 h-4 text-amber-600" />
+                          </div>
+                          <div className="min-w-0 flex-1">
+                            <p className="font-medium text-sm truncate">{tmpl.name}</p>
+                            <p className="text-xs text-gray-500">{DOCUMENT_TYPE_INFO[key]?.label || key}</p>
+                            <Badge variant="outline" className="text-[10px] mt-1">{tmpl.variables?.length || 0} vars</Badge>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </ScrollArea>
+              </div>
+            )}
+          </div>
+
+          <DialogFooter className="px-6 py-4 border-t bg-gray-50">
+            <Button variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    );
+  }
+
+  // Step 2: Template Editor
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-5xl h-[90vh] overflow-hidden flex flex-col p-0">
         <DialogHeader className="px-6 py-4 border-b bg-gradient-to-r from-[#0F1F3C] to-[#1a3a6e]">
           <DialogTitle className="text-white flex items-center gap-2">
             {isEditing ? (
-              <>
-                <FileText className="w-5 h-5" />
-                Edit Template
-              </>
+              <><FileText className="w-5 h-5" /> Edit Template</>
             ) : duplicateFrom ? (
-              <>
-                <Sparkles className="w-5 h-5 text-amber-400" />
-                Duplicate Template
-              </>
+              <><Copy className="w-5 h-5 text-amber-400" /> Duplicate Template</>
             ) : (
-              <>
-                <Plus className="w-5 h-5" />
-                Create New Template
-              </>
+              <><Sparkles className="w-5 h-5 text-amber-400" /> Create New Template</>
             )}
           </DialogTitle>
         </DialogHeader>
@@ -374,26 +528,55 @@ export default function TemplateEditorDialog({
                 </div>
               </TabsContent>
 
-              <TabsContent value="content" className="m-0 space-y-4">
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between">
-                    <Label>Template Content (HTML)</Label>
-                    <p className="text-xs text-gray-500">
-                      Use {"{{variable_name}}"} for dynamic fields
-                    </p>
+              <TabsContent value="content" className="m-0">
+                <div className="grid grid-cols-2 gap-4 h-[450px]">
+                  {/* Editor Panel */}
+                  <div className="flex flex-col h-full border rounded-lg overflow-hidden">
+                    <div className="bg-gray-100 px-3 py-2 border-b flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <Code className="w-4 h-4 text-gray-500" />
+                        <span className="text-sm font-medium">HTML Editor</span>
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <Button variant="ghost" size="sm" className="h-7 text-xs"
+                          onClick={() => setFormData(prev => ({ ...prev, content: prev.content + `\n<div class="sl-section">\n  <h2>Section</h2>\n  <p>Content...</p>\n</div>` }))}>
+                          <Plus className="w-3 h-3 mr-1" />Section
+                        </Button>
+                      </div>
+                    </div>
+                    <Textarea
+                      value={formData.content}
+                      onChange={(e) => setFormData(prev => ({ ...prev, content: e.target.value }))}
+                      placeholder="Enter HTML content..."
+                      className="flex-1 font-mono text-sm border-0 rounded-none resize-none focus-visible:ring-0"
+                    />
+                    <div className="bg-gray-50 px-3 py-2 border-t">
+                      <div className="flex items-center gap-2 overflow-x-auto">
+                        <span className="text-[10px] text-gray-500 flex-shrink-0">Insert:</span>
+                        {formData.variables.map((v, i) => (
+                          <Badge key={i} variant="outline" className="text-[10px] cursor-pointer hover:bg-[#1EB053]/10 flex-shrink-0"
+                            onClick={() => { navigator.clipboard.writeText(`{{${v.key}}}`); toast.success(`Copied`); }}>
+                            {v.label}
+                          </Badge>
+                        ))}
+                      </div>
+                    </div>
                   </div>
-                  <Textarea
-                    value={formData.content}
-                    onChange={(e) => setFormData(prev => ({ ...prev, content: e.target.value }))}
-                    placeholder="Enter HTML content with {{variables}}..."
-                    className="min-h-[400px] font-mono text-sm"
-                  />
-                </div>
-                <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
-                  <p className="text-sm text-blue-800">
-                    <strong>Tip:</strong> Use the provided CSS classes like <code className="bg-blue-100 px-1 rounded">sl-document</code>, 
-                    <code className="bg-blue-100 px-1 rounded">sl-header</code>, <code className="bg-blue-100 px-1 rounded">sl-section</code> for consistent styling.
-                  </p>
+                  
+                  {/* Live Preview Panel */}
+                  <div className="flex flex-col h-full border rounded-lg overflow-hidden">
+                    <div className="bg-gray-100 px-3 py-2 border-b flex items-center gap-2">
+                      <Eye className="w-4 h-4 text-gray-500" />
+                      <span className="text-sm font-medium">Live Preview</span>
+                    </div>
+                    <ScrollArea className="flex-1 bg-gray-50">
+                      <div className="p-4">
+                        <style dangerouslySetInnerHTML={{ __html: SL_DOCUMENT_STYLES }} />
+                        <div className="bg-white shadow rounded-lg mx-auto" style={{ maxWidth: '100%', transform: 'scale(0.65)', transformOrigin: 'top center' }}
+                          dangerouslySetInnerHTML={{ __html: previewContent }} />
+                      </div>
+                    </ScrollArea>
+                  </div>
                 </div>
               </TabsContent>
 
@@ -403,108 +586,91 @@ export default function TemplateEditorDialog({
                     <h3 className="font-medium">Template Variables</h3>
                     <p className="text-sm text-gray-500">Define variables that can be filled when creating documents</p>
                   </div>
-                  <Button onClick={addVariable} variant="outline" size="sm">
-                    <Plus className="w-4 h-4 mr-2" />
-                    Add Variable
-                  </Button>
+                  <div className="flex gap-2">
+                    <Button onClick={addCommonVariables} variant="outline" size="sm">
+                      <Wand2 className="w-4 h-4 mr-2" />
+                      Add Common
+                    </Button>
+                    <Button onClick={addVariable} size="sm" className="bg-[#1EB053] hover:bg-[#178f43]">
+                      <Plus className="w-4 h-4 mr-2" />
+                      Add Variable
+                    </Button>
+                  </div>
                 </div>
 
                 {formData.variables.length === 0 ? (
                   <div className="text-center py-8 border rounded-lg bg-gray-50">
                     <Variable className="w-10 h-10 mx-auto text-gray-300 mb-3" />
-                    <p className="text-gray-500">No variables defined</p>
-                    <Button onClick={addVariable} variant="outline" size="sm" className="mt-3">
-                      <Plus className="w-4 h-4 mr-2" />
-                      Add First Variable
-                    </Button>
+                    <p className="text-gray-500 mb-1">No variables defined</p>
+                    <p className="text-xs text-gray-400 mb-4">Variables allow dynamic content in documents</p>
+                    <div className="flex gap-2 justify-center">
+                      <Button onClick={addCommonVariables} variant="outline" size="sm">
+                        <Wand2 className="w-4 h-4 mr-2" />
+                        Add Common Variables
+                      </Button>
+                      <Button onClick={addVariable} size="sm" className="bg-[#1EB053] hover:bg-[#178f43]">
+                        <Plus className="w-4 h-4 mr-2" />
+                        Add Custom
+                      </Button>
+                    </div>
                   </div>
                 ) : (
                   <div className="space-y-3">
                     {formData.variables.map((variable, index) => (
-                      <Card key={index} className="p-4 border">
+                      <Card key={index} className="p-4 border hover:shadow-sm transition-shadow">
                         <div className="flex items-start gap-3">
                           <GripVertical className="w-4 h-4 text-gray-400 mt-2 cursor-move" />
                           <div className="flex-1 grid grid-cols-4 gap-3">
                             <div className="space-y-1">
                               <Label className="text-xs">Key</Label>
-                              <Input
-                                value={variable.key}
-                                onChange={(e) => updateVariable(index, { key: e.target.value.replace(/\s/g, '_').toLowerCase() })}
-                                placeholder="variable_key"
-                                className="font-mono text-sm"
-                              />
+                              <Input value={variable.key} onChange={(e) => updateVariable(index, { key: e.target.value.replace(/\s/g, '_').toLowerCase() })}
+                                placeholder="variable_key" className="font-mono text-sm h-9" />
                             </div>
                             <div className="space-y-1">
                               <Label className="text-xs">Label</Label>
-                              <Input
-                                value={variable.label}
-                                onChange={(e) => updateVariable(index, { label: e.target.value })}
-                                placeholder="Display Label"
-                              />
+                              <Input value={variable.label} onChange={(e) => updateVariable(index, { label: e.target.value })}
+                                placeholder="Display Label" className="h-9" />
                             </div>
                             <div className="space-y-1">
                               <Label className="text-xs">Type</Label>
-                              <Select
-                                value={variable.type}
-                                onValueChange={(val) => updateVariable(index, { type: val })}
-                              >
-                                <SelectTrigger className="h-9">
-                                  <SelectValue />
-                                </SelectTrigger>
+                              <Select value={variable.type} onValueChange={(val) => updateVariable(index, { type: val })}>
+                                <SelectTrigger className="h-9"><SelectValue /></SelectTrigger>
                                 <SelectContent>
-                                  {VARIABLE_TYPES.map(t => (
-                                    <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>
-                                  ))}
+                                  {VARIABLE_TYPES.map(t => <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>)}
                                 </SelectContent>
                               </Select>
                             </div>
                             <div className="space-y-1">
                               <Label className="text-xs">Auto-Fill</Label>
-                              <Select
-                                value={variable.auto_fill || ""}
-                                onValueChange={(val) => updateVariable(index, { auto_fill: val })}
-                              >
-                                <SelectTrigger className="h-9">
-                                  <SelectValue placeholder="Manual" />
-                                </SelectTrigger>
+                              <Select value={variable.auto_fill || ""} onValueChange={(val) => updateVariable(index, { auto_fill: val })}>
+                                <SelectTrigger className="h-9"><SelectValue placeholder="Manual" /></SelectTrigger>
                                 <SelectContent>
-                                  {AUTO_FILL_OPTIONS.map(opt => (
-                                    <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
-                                  ))}
+                                  {AUTO_FILL_OPTIONS.map(opt => <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>)}
                                 </SelectContent>
                               </Select>
                             </div>
                           </div>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => removeVariable(index)}
-                            className="text-red-500 hover:text-red-700 hover:bg-red-50"
-                          >
+                          <Button variant="ghost" size="icon" onClick={() => removeVariable(index)} className="text-red-500 hover:text-red-700 hover:bg-red-50 h-9 w-9">
                             <Trash2 className="w-4 h-4" />
                           </Button>
                         </div>
-                        {variable.type === "select" && (
-                          <div className="mt-3 ml-7">
-                            <Label className="text-xs">Options (comma-separated)</Label>
-                            <Input
-                              value={(variable.options || []).join(", ")}
-                              onChange={(e) => updateVariable(index, { 
-                                options: e.target.value.split(",").map(s => s.trim()).filter(Boolean)
-                              })}
-                              placeholder="Option 1, Option 2, Option 3"
-                              className="mt-1"
-                            />
+                        <div className="grid grid-cols-2 gap-3 mt-3 ml-7">
+                          {variable.type === "select" && (
+                            <div className="space-y-1">
+                              <Label className="text-xs">Options (comma-separated)</Label>
+                              <Input value={(variable.options || []).join(", ")}
+                                onChange={(e) => updateVariable(index, { options: e.target.value.split(",").map(s => s.trim()).filter(Boolean) })}
+                                placeholder="Option 1, Option 2" className="h-9" />
+                            </div>
+                          )}
+                          <div className="space-y-1">
+                            <Label className="text-xs">Default Value</Label>
+                            <Input value={variable.default || ""} onChange={(e) => updateVariable(index, { default: e.target.value })}
+                              placeholder="Default value" className="h-9" />
                           </div>
-                        )}
-                        <div className="mt-3 ml-7">
-                          <Label className="text-xs">Default Value</Label>
-                          <Input
-                            value={variable.default || ""}
-                            onChange={(e) => updateVariable(index, { default: e.target.value })}
-                            placeholder="Default value"
-                            className="mt-1"
-                          />
+                        </div>
+                        <div className="mt-2 ml-7">
+                          <code className="text-xs bg-gray-100 px-2 py-1 rounded text-gray-600">{`{{${variable.key}}}`}</code>
                         </div>
                       </Card>
                     ))}
@@ -580,25 +746,13 @@ export default function TemplateEditorDialog({
         </Tabs>
 
         <DialogFooter className="px-6 py-4 border-t bg-gray-50">
-          <Button variant="outline" onClick={() => onOpenChange(false)}>
-            Cancel
-          </Button>
-          <Button 
-            onClick={handleSave} 
-            disabled={isSaving}
-            className="bg-[#1EB053] hover:bg-[#178f43]"
-          >
-            {isSaving ? (
-              <>
-                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                Saving...
-              </>
-            ) : (
-              <>
-                <Save className="w-4 h-4 mr-2" />
-                {isEditing ? "Update Template" : "Create Template"}
-              </>
-            )}
+          {!template && !duplicateFrom && (
+            <Button variant="ghost" onClick={() => setStep(1)} className="mr-auto">Back</Button>
+          )}
+          <Button variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
+          <Button onClick={handleSave} disabled={isSaving || !formData.name.trim() || !formData.content.trim()}
+            className="bg-[#1EB053] hover:bg-[#178f43]">
+            {isSaving ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Saving...</> : <><Save className="w-4 h-4 mr-2" />{isEditing ? "Update" : "Create"} Template</>}
           </Button>
         </DialogFooter>
       </DialogContent>
