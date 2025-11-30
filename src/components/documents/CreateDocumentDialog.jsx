@@ -1,7 +1,6 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { base44 } from "@/api/base44Client";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { format } from "date-fns";
 import {
   Dialog,
   DialogContent,
@@ -20,193 +19,208 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Switch } from "@/components/ui/switch";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
-import { FileText, Send, Save, Loader2, ChevronRight, ChevronLeft } from "lucide-react";
-import { DOCUMENT_TYPES, DEFAULT_TEMPLATES, getDocumentTypeLabel } from "./DocumentTemplates";
+import { 
+  FileText, Users, Send, Save, Eye, Loader2, 
+  ChevronRight, CheckCircle2, AlertCircle
+} from "lucide-react";
+import { DOCUMENT_TYPE_INFO, DEFAULT_TEMPLATES, SL_DOCUMENT_STYLES } from "./DocumentTemplates";
+import { format } from "date-fns";
 
 export default function CreateDocumentDialog({
   open,
   onOpenChange,
-  orgId,
-  organisation,
   employees = [],
-  currentEmployee
+  organisation,
+  currentEmployee,
+  orgId
 }) {
   const queryClient = useQueryClient();
   const [step, setStep] = useState(1);
   const [documentType, setDocumentType] = useState("");
-  const [selectedEmployee, setSelectedEmployee] = useState("");
-  const [selectedTemplate, setSelectedTemplate] = useState(null);
-  const [title, setTitle] = useState("");
-  const [content, setContent] = useState("");
-  const [placeholderValues, setPlaceholderValues] = useState({});
-  const [requiresSignature, setRequiresSignature] = useState(true);
-  const [effectiveDate, setEffectiveDate] = useState(format(new Date(), 'yyyy-MM-dd'));
-  const [sendImmediately, setSendImmediately] = useState(false);
+  const [selectedEmployees, setSelectedEmployees] = useState([]);
+  const [selectAll, setSelectAll] = useState(false);
+  const [variables, setVariables] = useState({});
+  const [customContent, setCustomContent] = useState("");
+  const [customTitle, setCustomTitle] = useState("");
+  const [previewContent, setPreviewContent] = useState("");
+  const [sending, setSending] = useState(false);
 
-  const { data: templates = [] } = useQuery({
+  // Fetch custom templates
+  const { data: customTemplates = [] } = useQuery({
     queryKey: ['documentTemplates', orgId],
     queryFn: () => base44.entities.DocumentTemplate.filter({ organisation_id: orgId, is_active: true }),
     enabled: !!orgId,
   });
 
-  const employee = employees.find(e => e.id === selectedEmployee);
+  const activeEmployees = employees.filter(e => e.status === 'active');
 
-  // Auto-fill placeholders when employee is selected
-  useEffect(() => {
-    if (employee && organisation) {
-      setPlaceholderValues(prev => ({
-        ...prev,
-        employee_name: employee.full_name,
-        employee_position: employee.position || employee.role?.replace('_', ' '),
-        employee_address: employee.address || '',
-        employee_email: employee.email || employee.user_email,
-        position: employee.position || employee.role?.replace('_', ' '),
-        department: employee.department || '',
-        start_date: employee.hire_date || format(new Date(), 'yyyy-MM-dd'),
-        monthly_salary: employee.base_salary?.toString() || '',
-        company_name: organisation.name,
-        company_address: organisation.address || '',
-        company_registration: organisation.business_registration_number || '',
-        company_nassit: organisation.nassit_number || '',
-        effective_date: effectiveDate,
-        issue_date: format(new Date(), 'yyyy-MM-dd'),
-        issuer_name: currentEmployee?.full_name,
-        issuer_position: currentEmployee?.position || currentEmployee?.role?.replace('_', ' '),
-        version: '1.0',
-        annual_leave_days: '21',
-        sick_leave_days: '5',
-        carry_forward_days: '5',
-        probation_months: '6',
-        work_start_time: '08:00',
-        work_end_time: '17:00',
-        work_location: organisation.address || '',
-        contract_type: 'Permanent',
-        payment_day: '25th',
-        payment_method: 'Bank Transfer',
-        confidentiality_years: '2'
-      }));
-    }
-  }, [employee, organisation, currentEmployee, effectiveDate]);
+  const selectedTemplate = useMemo(() => {
+    if (!documentType) return null;
+    
+    // Check custom templates first
+    const custom = customTemplates.find(t => t.id === documentType);
+    if (custom) return custom;
+    
+    // Fall back to default templates
+    return DEFAULT_TEMPLATES[documentType] || null;
+  }, [documentType, customTemplates]);
 
-  // When document type changes, load default template
+  // Auto-fill variables when employee or template changes
   useEffect(() => {
-    if (documentType) {
-      const customTemplate = templates.find(t => t.document_type === documentType && t.is_default);
-      const defaultTemplate = DEFAULT_TEMPLATES[documentType];
-      
-      if (customTemplate) {
-        setSelectedTemplate(customTemplate);
-        setContent(customTemplate.content);
-        setTitle(customTemplate.name);
-        setRequiresSignature(customTemplate.requires_signature ?? true);
-      } else if (defaultTemplate) {
-        setContent(defaultTemplate.content);
-        setTitle(defaultTemplate.name);
-        setRequiresSignature(DOCUMENT_TYPES.find(d => d.value === documentType)?.requiresSignature ?? true);
+    if (selectedTemplate && selectedEmployees.length === 1) {
+      const employee = employees.find(e => e.id === selectedEmployees[0]);
+      if (employee) {
+        const autoFilled = {};
+        (selectedTemplate.variables || []).forEach(v => {
+          if (v.auto_fill) {
+            const [entity, field] = v.auto_fill.split('.');
+            if (entity === 'employee' && employee[field]) {
+              autoFilled[v.key] = employee[field];
+            } else if (entity === 'organisation' && organisation?.[field]) {
+              autoFilled[v.key] = organisation[field];
+            }
+          }
+          if (v.default && !autoFilled[v.key]) {
+            autoFilled[v.key] = v.default;
+          }
+        });
+        setVariables(prev => ({ ...autoFilled, ...prev }));
       }
     }
-  }, [documentType, templates]);
+  }, [selectedTemplate, selectedEmployees, employees, organisation]);
 
-  const processContent = () => {
-    let processed = content;
-    Object.entries(placeholderValues).forEach(([key, value]) => {
-      const regex = new RegExp(`{{${key}}}`, 'g');
-      processed = processed.replace(regex, value || `[${key}]`);
-    });
-    return processed;
-  };
+  // Generate preview
+  useEffect(() => {
+    if (selectedTemplate && selectedEmployees.length > 0) {
+      let content = selectedTemplate.content;
+      Object.entries(variables).forEach(([key, value]) => {
+        content = content.replace(new RegExp(`{{${key}}}`, 'g'), value || `[${key}]`);
+      });
+      // Replace signature placeholders
+      content = content.replace(/{{signature_date}}/g, format(new Date(), 'MMMM d, yyyy'));
+      content = content.replace(/{{digital_signature}}/g, '[Pending Signature]');
+      setPreviewContent(content);
+    }
+  }, [selectedTemplate, variables, selectedEmployees]);
 
   const createDocumentMutation = useMutation({
-    mutationFn: async (data) => {
-      const doc = await base44.entities.EmployeeDocument.create(data);
-      
-      if (sendImmediately && data.status === 'pending_signature') {
-        // Send email notification
-        await base44.integrations.Core.SendEmail({
-          to: employee.email || employee.user_email,
-          subject: `Document Pending Your Signature: ${data.title}`,
-          body: `
-            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-              <div style="background: linear-gradient(135deg, #1EB053 0%, #0072C6 100%); padding: 20px; text-align: center;">
-                <h1 style="color: white; margin: 0;">🇸🇱 ${organisation?.name}</h1>
-              </div>
-              <div style="padding: 30px; background: white;">
-                <h2>Document Pending Signature</h2>
-                <p>Dear ${employee.full_name},</p>
-                <p>A new document requires your signature:</p>
-                <div style="background: #f5f5f5; padding: 15px; border-radius: 8px; margin: 20px 0;">
-                  <p style="margin: 0;"><strong>Document:</strong> ${data.title}</p>
-                  <p style="margin: 5px 0 0;"><strong>Type:</strong> ${getDocumentTypeLabel(data.document_type)}</p>
-                </div>
-                <p>Please log in to the employee portal to review and sign this document.</p>
-                <p>Best regards,<br/>${currentEmployee?.full_name}<br/>${organisation?.name}</p>
-              </div>
-              <div style="background: #f5f5f5; padding: 15px; text-align: center; font-size: 12px; color: #666;">
-                <p>Republic of Sierra Leone | ${organisation?.name}</p>
-              </div>
-            </div>
-          `
+    mutationFn: async (documents) => {
+      const results = [];
+      for (const doc of documents) {
+        const created = await base44.entities.EmployeeDocument.create(doc);
+        results.push(created);
+        
+        // Send notification to employee
+        await base44.entities.Notification.create({
+          organisation_id: orgId,
+          employee_id: doc.employee_id,
+          type: 'document',
+          title: 'New Document Requires Your Signature',
+          message: `You have received "${doc.title}" that requires your signature. Please review and sign at your earliest convenience.`,
+          priority: 'high',
+          action_url: `/documents/${created.id}`,
+          is_read: false
         });
       }
-      
-      return doc;
+      return results;
     },
-    onSuccess: () => {
+    onSuccess: (results) => {
       queryClient.invalidateQueries({ queryKey: ['employeeDocuments'] });
-      toast.success("Document created successfully");
+      toast.success(`${results.length} document(s) created and sent for signature`);
       onOpenChange(false);
       resetForm();
     },
     onError: (error) => {
-      toast.error("Failed to create document", { description: error.message });
+      toast.error("Failed to create documents", { description: error.message });
     }
   });
 
   const resetForm = () => {
     setStep(1);
     setDocumentType("");
-    setSelectedEmployee("");
-    setSelectedTemplate(null);
-    setTitle("");
-    setContent("");
-    setPlaceholderValues({});
-    setRequiresSignature(true);
-    setSendImmediately(false);
+    setSelectedEmployees([]);
+    setSelectAll(false);
+    setVariables({});
+    setCustomContent("");
+    setCustomTitle("");
+    setPreviewContent("");
   };
 
-  const handleSubmit = (asDraft = false) => {
-    const processedContent = processContent();
+  const handleSelectAll = () => {
+    if (selectAll) {
+      setSelectedEmployees([]);
+    } else {
+      setSelectedEmployees(activeEmployees.map(e => e.id));
+    }
+    setSelectAll(!selectAll);
+  };
+
+  const toggleEmployee = (empId) => {
+    setSelectedEmployees(prev => 
+      prev.includes(empId) 
+        ? prev.filter(id => id !== empId)
+        : [...prev, empId]
+    );
+  };
+
+  const handleCreateDocuments = async () => {
+    if (!selectedTemplate || selectedEmployees.length === 0) return;
+
+    setSending(true);
     
-    createDocumentMutation.mutate({
-      organisation_id: orgId,
-      employee_id: selectedEmployee,
-      employee_name: employee?.full_name,
-      employee_email: employee?.email || employee?.user_email,
-      document_type: documentType,
-      title,
-      content: processedContent,
-      template_id: selectedTemplate?.id,
-      version: placeholderValues.version || "1.0",
-      status: asDraft ? 'draft' : 'pending_signature',
-      requires_signature: requiresSignature,
-      issued_by_id: currentEmployee?.id,
-      issued_by_name: currentEmployee?.full_name,
-      issued_at: new Date().toISOString(),
-      effective_date: effectiveDate,
-      metadata: placeholderValues
+    const documents = selectedEmployees.map(empId => {
+      const employee = employees.find(e => e.id === empId);
+      
+      // Replace variables for this specific employee
+      let content = selectedTemplate.content;
+      const empVariables = { ...variables };
+      
+      // Auto-fill employee-specific variables
+      (selectedTemplate.variables || []).forEach(v => {
+        if (v.auto_fill) {
+          const [entity, field] = v.auto_fill.split('.');
+          if (entity === 'employee' && employee[field]) {
+            empVariables[v.key] = employee[field];
+          } else if (entity === 'organisation' && organisation?.[field]) {
+            empVariables[v.key] = organisation[field];
+          }
+        }
+      });
+      
+      Object.entries(empVariables).forEach(([key, value]) => {
+        content = content.replace(new RegExp(`{{${key}}}`, 'g'), value || '');
+      });
+      
+      return {
+        organisation_id: orgId,
+        employee_id: empId,
+        employee_name: employee.full_name,
+        employee_email: employee.email || employee.user_email,
+        document_type: documentType.includes('-') ? 'custom' : documentType,
+        title: customTitle || DOCUMENT_TYPE_INFO[documentType]?.label || selectedTemplate.name,
+        content,
+        template_id: selectedTemplate.id,
+        variables: empVariables,
+        status: 'pending_signature',
+        requires_signature: selectedTemplate.requires_signature !== false,
+        issued_by_id: currentEmployee?.id,
+        issued_by_name: currentEmployee?.full_name,
+        issued_at: new Date().toISOString(),
+        effective_date: variables.effective_date || variables.start_date || format(new Date(), 'yyyy-MM-dd')
+      };
     });
-  };
 
-  const placeholders = selectedTemplate?.placeholders || 
-    DEFAULT_TEMPLATES[documentType]?.placeholders || [];
+    createDocumentMutation.mutate(documents);
+    setSending(false);
+  };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-hidden">
+      <DialogContent className="max-w-4xl max-h-[90vh] overflow-hidden flex flex-col">
         <DialogHeader>
           <div className="flex h-1 w-16 rounded-full overflow-hidden mb-3">
             <div className="flex-1 bg-[#1EB053]" />
@@ -215,218 +229,229 @@ export default function CreateDocumentDialog({
           </div>
           <DialogTitle className="flex items-center gap-2">
             <FileText className="w-5 h-5 text-[#1EB053]" />
-            Create Document - Step {step} of 3
+            Create HR Document
           </DialogTitle>
         </DialogHeader>
 
-        <ScrollArea className="max-h-[60vh] pr-4">
-          {step === 1 && (
-            <div className="space-y-4">
-              <div>
-                <Label>Document Type</Label>
-                <Select value={documentType} onValueChange={setDocumentType}>
-                  <SelectTrigger className="mt-1">
-                    <SelectValue placeholder="Select document type" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {DOCUMENT_TYPES.map(type => (
-                      <SelectItem key={type.value} value={type.value}>
-                        {type.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div>
-                <Label>Employee</Label>
-                <Select value={selectedEmployee} onValueChange={setSelectedEmployee}>
-                  <SelectTrigger className="mt-1">
-                    <SelectValue placeholder="Select employee" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {employees.filter(e => e.status === 'active').map(emp => (
-                      <SelectItem key={emp.id} value={emp.id}>
-                        <div className="flex items-center gap-2">
-                          <span>{emp.full_name}</span>
-                          <Badge variant="outline" className="text-xs">{emp.role?.replace('_', ' ')}</Badge>
-                        </div>
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div>
-                <Label>Document Title</Label>
-                <Input
-                  value={title}
-                  onChange={(e) => setTitle(e.target.value)}
-                  placeholder="Enter document title"
-                  className="mt-1"
-                />
-              </div>
-
-              <div>
-                <Label>Effective Date</Label>
-                <Input
-                  type="date"
-                  value={effectiveDate}
-                  onChange={(e) => setEffectiveDate(e.target.value)}
-                  className="mt-1"
-                />
-              </div>
-
-              <div className="flex items-center justify-between">
-                <div>
-                  <Label>Requires Employee Signature</Label>
-                  <p className="text-xs text-gray-500">Employee must sign to accept</p>
+        {/* Steps indicator */}
+        <div className="flex items-center gap-2 py-4 border-b">
+          {[1, 2, 3].map((s) => (
+            <React.Fragment key={s}>
+              <div className={`flex items-center gap-2 ${step >= s ? 'text-[#1EB053]' : 'text-gray-400'}`}>
+                <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
+                  step > s ? 'bg-[#1EB053] text-white' : 
+                  step === s ? 'border-2 border-[#1EB053] text-[#1EB053]' : 
+                  'border-2 border-gray-300'
+                }`}>
+                  {step > s ? <CheckCircle2 className="w-5 h-5" /> : s}
                 </div>
-                <Switch checked={requiresSignature} onCheckedChange={setRequiresSignature} />
+                <span className="text-sm font-medium hidden sm:inline">
+                  {s === 1 ? 'Select Type' : s === 2 ? 'Choose Recipients' : 'Review & Send'}
+                </span>
               </div>
+              {s < 3 && <ChevronRight className="w-4 h-4 text-gray-400" />}
+            </React.Fragment>
+          ))}
+        </div>
+
+        <ScrollArea className="flex-1 pr-4">
+          {step === 1 && (
+            <div className="space-y-4 py-4">
+              <Label>Select Document Type</Label>
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                {Object.entries(DOCUMENT_TYPE_INFO).map(([type, info]) => (
+                  <button
+                    key={type}
+                    onClick={() => setDocumentType(type)}
+                    className={`p-4 rounded-lg border-2 text-left transition-all ${
+                      documentType === type 
+                        ? 'border-[#1EB053] bg-[#1EB053]/5' 
+                        : 'border-gray-200 hover:border-gray-300'
+                    }`}
+                  >
+                    <p className="font-medium text-sm">{info.label}</p>
+                    <p className="text-xs text-gray-500 mt-1">{info.description}</p>
+                    {info.requiresSignature && (
+                      <Badge variant="outline" className="mt-2 text-xs">Requires Signature</Badge>
+                    )}
+                  </button>
+                ))}
+              </div>
+
+              {customTemplates.length > 0 && (
+                <>
+                  <Label className="mt-6">Or Choose Custom Template</Label>
+                  <div className="grid grid-cols-2 gap-3">
+                    {customTemplates.map(template => (
+                      <button
+                        key={template.id}
+                        onClick={() => setDocumentType(template.id)}
+                        className={`p-4 rounded-lg border-2 text-left transition-all ${
+                          documentType === template.id 
+                            ? 'border-[#1EB053] bg-[#1EB053]/5' 
+                            : 'border-gray-200 hover:border-gray-300'
+                        }`}
+                      >
+                        <p className="font-medium text-sm">{template.name}</p>
+                        <Badge variant="secondary" className="mt-2 text-xs">Custom</Badge>
+                      </button>
+                    ))}
+                  </div>
+                </>
+              )}
             </div>
           )}
 
           {step === 2 && (
-            <div className="space-y-4">
-              <div className="bg-blue-50 p-4 rounded-lg">
-                <h4 className="font-medium mb-2">Fill in Document Details</h4>
-                <p className="text-sm text-gray-600">
-                  Complete the fields below. These will be automatically inserted into the document.
-                </p>
+            <div className="space-y-4 py-4">
+              <div className="flex items-center justify-between">
+                <Label>Select Recipients ({selectedEmployees.length} selected)</Label>
+                <Button variant="outline" size="sm" onClick={handleSelectAll}>
+                  {selectAll ? 'Deselect All' : 'Select All Active'}
+                </Button>
               </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                {placeholders.map(placeholder => (
-                  <div key={placeholder.key}>
-                    <Label>
-                      {placeholder.label}
-                      {placeholder.required && <span className="text-red-500 ml-1">*</span>}
-                    </Label>
-                    {placeholder.type === 'date' ? (
-                      <Input
-                        type="date"
-                        value={placeholderValues[placeholder.key] || ''}
-                        onChange={(e) => setPlaceholderValues(prev => ({
-                          ...prev,
-                          [placeholder.key]: e.target.value
-                        }))}
-                        className="mt-1"
-                      />
-                    ) : placeholder.type === 'currency' || placeholder.type === 'number' ? (
-                      <Input
-                        type="number"
-                        value={placeholderValues[placeholder.key] || ''}
-                        onChange={(e) => setPlaceholderValues(prev => ({
-                          ...prev,
-                          [placeholder.key]: e.target.value
-                        }))}
-                        className="mt-1"
-                      />
-                    ) : placeholder.key === 'job_duties' || placeholder.key === 'allowances_list' ? (
-                      <Textarea
-                        value={placeholderValues[placeholder.key] || ''}
-                        onChange={(e) => setPlaceholderValues(prev => ({
-                          ...prev,
-                          [placeholder.key]: e.target.value
-                        }))}
-                        className="mt-1"
-                        rows={3}
-                      />
-                    ) : (
-                      <Input
-                        value={placeholderValues[placeholder.key] || ''}
-                        onChange={(e) => setPlaceholderValues(prev => ({
-                          ...prev,
-                          [placeholder.key]: e.target.value
-                        }))}
-                        className="mt-1"
-                      />
-                    )}
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-2 max-h-64 overflow-y-auto">
+                {activeEmployees.map(emp => (
+                  <div
+                    key={emp.id}
+                    onClick={() => toggleEmployee(emp.id)}
+                    className={`p-3 rounded-lg border cursor-pointer transition-all ${
+                      selectedEmployees.includes(emp.id)
+                        ? 'border-[#1EB053] bg-[#1EB053]/5'
+                        : 'border-gray-200 hover:border-gray-300'
+                    }`}
+                  >
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="font-medium text-sm">{emp.full_name}</p>
+                        <p className="text-xs text-gray-500">{emp.position} • {emp.department}</p>
+                      </div>
+                      {selectedEmployees.includes(emp.id) && (
+                        <CheckCircle2 className="w-5 h-5 text-[#1EB053]" />
+                      )}
+                    </div>
                   </div>
                 ))}
               </div>
+
+              {selectedTemplate?.variables?.length > 0 && (
+                <div className="mt-6 space-y-4">
+                  <Label>Fill Document Variables</Label>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {selectedTemplate.variables.map(v => (
+                      <div key={v.key}>
+                        <Label className="text-xs text-gray-500">{v.label}</Label>
+                        {v.type === 'select' ? (
+                          <Select
+                            value={variables[v.key] || v.default || ''}
+                            onValueChange={(val) => setVariables(prev => ({ ...prev, [v.key]: val }))}
+                          >
+                            <SelectTrigger className="mt-1">
+                              <SelectValue placeholder={`Select ${v.label}`} />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {v.options?.map(opt => (
+                                <SelectItem key={opt} value={opt}>{opt}</SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        ) : v.type === 'date' ? (
+                          <Input
+                            type="date"
+                            value={variables[v.key] || ''}
+                            onChange={(e) => setVariables(prev => ({ ...prev, [v.key]: e.target.value }))}
+                            className="mt-1"
+                          />
+                        ) : (
+                          <Input
+                            type={v.type === 'number' ? 'number' : 'text'}
+                            value={variables[v.key] || ''}
+                            onChange={(e) => setVariables(prev => ({ ...prev, [v.key]: e.target.value }))}
+                            placeholder={v.auto_fill ? `Auto-filled from ${v.auto_fill}` : ''}
+                            className="mt-1"
+                          />
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
           )}
 
           {step === 3 && (
-            <div className="space-y-4">
-              <div className="bg-green-50 p-4 rounded-lg">
-                <h4 className="font-medium mb-2">Preview Document</h4>
-                <p className="text-sm text-gray-600">
-                  Review the document before sending for signature.
-                </p>
+            <div className="space-y-4 py-4">
+              <div className="flex items-center justify-between">
+                <Label>Document Preview</Label>
+                <Badge variant="secondary">
+                  {selectedEmployees.length} recipient(s)
+                </Badge>
+              </div>
+              
+              <div className="border rounded-lg overflow-hidden">
+                <style dangerouslySetInnerHTML={{ __html: SL_DOCUMENT_STYLES }} />
+                <div 
+                  className="bg-white p-4 max-h-96 overflow-y-auto"
+                  dangerouslySetInnerHTML={{ __html: previewContent }}
+                />
               </div>
 
-              <div className="border rounded-lg p-6 bg-white prose prose-sm max-w-none">
-                <div dangerouslySetInnerHTML={{ 
-                  __html: processContent()
-                    .replace(/\n/g, '<br/>')
-                    .replace(/#{3}\s(.+)/g, '<h3>$1</h3>')
-                    .replace(/#{2}\s(.+)/g, '<h2>$1</h2>')
-                    .replace(/#{1}\s(.+)/g, '<h1>$1</h1>')
-                    .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
-                }} />
-              </div>
-
-              <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
-                <div>
-                  <Label>Send notification immediately</Label>
-                  <p className="text-xs text-gray-500">Email the employee to sign</p>
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                <div className="flex items-start gap-3">
+                  <AlertCircle className="w-5 h-5 text-blue-600 mt-0.5" />
+                  <div>
+                    <p className="font-medium text-blue-800">What happens next?</p>
+                    <ul className="text-sm text-blue-700 mt-2 space-y-1">
+                      <li>• Documents will be sent to {selectedEmployees.length} employee(s)</li>
+                      <li>• Each employee will receive a notification to sign</li>
+                      <li>• Employees can review and digitally sign with their full name</li>
+                      <li>• Signed copies will be emailed automatically</li>
+                    </ul>
+                  </div>
                 </div>
-                <Switch checked={sendImmediately} onCheckedChange={setSendImmediately} />
               </div>
             </div>
           )}
         </ScrollArea>
 
-        <DialogFooter className="flex justify-between">
-          <div>
-            {step > 1 && (
-              <Button variant="outline" onClick={() => setStep(step - 1)}>
-                <ChevronLeft className="w-4 h-4 mr-2" />
-                Back
-              </Button>
-            )}
-          </div>
-          <div className="flex gap-2">
-            <Button variant="outline" onClick={() => onOpenChange(false)}>
-              Cancel
+        <DialogFooter className="border-t pt-4">
+          {step > 1 && (
+            <Button variant="outline" onClick={() => setStep(step - 1)}>
+              Back
             </Button>
-            {step < 3 ? (
-              <Button 
-                onClick={() => setStep(step + 1)}
-                disabled={step === 1 && (!documentType || !selectedEmployee || !title)}
-                className="bg-[#1EB053] hover:bg-[#178f43]"
-              >
-                Next
-                <ChevronRight className="w-4 h-4 ml-2" />
-              </Button>
-            ) : (
-              <>
-                <Button 
-                  variant="outline" 
-                  onClick={() => handleSubmit(true)}
-                  disabled={createDocumentMutation.isPending}
-                >
-                  <Save className="w-4 h-4 mr-2" />
-                  Save as Draft
-                </Button>
-                <Button 
-                  onClick={() => handleSubmit(false)}
-                  disabled={createDocumentMutation.isPending}
-                  className="bg-gradient-to-r from-[#1EB053] to-[#0072C6]"
-                >
-                  {createDocumentMutation.isPending ? (
-                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                  ) : (
-                    <Send className="w-4 h-4 mr-2" />
-                  )}
+          )}
+          {step < 3 ? (
+            <Button 
+              onClick={() => setStep(step + 1)}
+              disabled={
+                (step === 1 && !documentType) ||
+                (step === 2 && selectedEmployees.length === 0)
+              }
+              className="bg-[#1EB053] hover:bg-[#178f43]"
+            >
+              Continue
+              <ChevronRight className="w-4 h-4 ml-1" />
+            </Button>
+          ) : (
+            <Button 
+              onClick={handleCreateDocuments}
+              disabled={sending || createDocumentMutation.isPending}
+              className="bg-gradient-to-r from-[#1EB053] to-[#0072C6]"
+            >
+              {(sending || createDocumentMutation.isPending) ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  Sending...
+                </>
+              ) : (
+                <>
+                  <Send className="w-4 h-4 mr-2" />
                   Send for Signature
-                </Button>
-              </>
-            )}
-          </div>
+                </>
+              )}
+            </Button>
+          )}
         </DialogFooter>
       </DialogContent>
     </Dialog>

@@ -26,7 +26,7 @@ import EmployeeSelfService from './pages/EmployeeSelfService';
 import Calendar from './pages/Calendar';
 import HRAnalytics from './pages/HRAnalytics';
 import Reports from './pages/Reports';
-import EmployeeDocuments from './pages/EmployeeDocuments';
+import Documents from './pages/Documents';
 import __Layout from './Layout.jsx';
 
 
@@ -59,7 +59,7 @@ export const PAGES = {
     "Calendar": Calendar,
     "HRAnalytics": HRAnalytics,
     "Reports": Reports,
-    "EmployeeDocuments": EmployeeDocuments,
+    "Documents": Documents,
 }
 
 export const pagesConfig = {
