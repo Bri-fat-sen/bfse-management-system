@@ -249,6 +249,49 @@ export function getRoleBasedAllowances(role, baseSalary) {
 }
 
 /**
+ * Apply benefit/deduction templates to an employee
+ */
+export function applyTemplates(templates, employee, baseSalary, grossPay = null) {
+  const allowances = [];
+  const deductions = [];
+
+  templates.forEach(template => {
+    if (!template.is_active) return;
+
+    // Check if template applies to this employee
+    const appliesToEmployee = 
+      (template.applies_to_employees?.length > 0 && template.applies_to_employees.includes(employee.id)) ||
+      (template.applies_to_roles?.length > 0 && template.applies_to_roles.includes(employee.role)) ||
+      (!template.applies_to_employees?.length && !template.applies_to_roles?.length);
+
+    if (!appliesToEmployee) return;
+
+    // Calculate amount
+    let amount = template.amount || 0;
+    if (template.calculation_type === 'percentage') {
+      const base = template.percentage_of === 'gross_pay' && grossPay ? grossPay : baseSalary;
+      amount = Math.round(base * (template.amount / 100));
+    }
+
+    const item = {
+      name: template.name,
+      amount,
+      type: template.category,
+      template_id: template.id,
+      is_taxable: template.is_taxable
+    };
+
+    if (template.type === 'benefit') {
+      allowances.push(item);
+    } else {
+      deductions.push(item);
+    }
+  });
+
+  return { allowances, deductions };
+}
+
+/**
  * Calculate complete payroll for an employee
  */
 export function calculateFullPayroll({
@@ -260,6 +303,7 @@ export function calculateFullPayroll({
   customAllowances = [],
   customDeductions = [],
   customBonuses = [],
+  templates = [],
   applyNASSIT = true,
   applyPAYE = true
 }) {
@@ -292,7 +336,11 @@ export function calculateFullPayroll({
   
   // Get role-based allowances
   const roleAllowances = getRoleBasedAllowances(role, baseSalary);
-  const allAllowances = [...roleAllowances, ...customAllowances];
+  
+  // Apply templates if provided
+  const templateItems = templates.length > 0 ? applyTemplates(templates, employee, baseSalary) : { allowances: [], deductions: [] };
+  
+  const allAllowances = [...roleAllowances, ...templateItems.allowances, ...customAllowances];
   const totalAllowances = allAllowances.reduce((sum, a) => sum + (a.amount || 0), 0);
   
   // Calculate bonuses
@@ -321,8 +369,8 @@ export function calculateFullPayroll({
   const nassit = applyNASSIT ? calculateNASSIT(grossPay) : { employee: 0, employer: 0 };
   const paye = applyPAYE ? calculatePAYE(grossPay * 12) : { monthlyTax: 0, taxBracket: "N/A", effectiveRate: 0 };
   
-  // Build deductions array
-  const deductions = [...customDeductions];
+  // Build deductions array - include template deductions
+  const deductions = [...templateItems.deductions, ...customDeductions];
   if (applyNASSIT && nassit.employee > 0) {
     deductions.push({ name: "NASSIT (5%)", amount: nassit.employee, type: "statutory" });
   }
@@ -331,8 +379,9 @@ export function calculateFullPayroll({
   }
   
   const totalStatutoryDeductions = (applyNASSIT ? nassit.employee : 0) + (applyPAYE ? paye.monthlyTax : 0);
+  const templateDeductionsTotal = templateItems.deductions.reduce((sum, d) => sum + (d.amount || 0), 0);
   const customDeductionsTotal = customDeductions.reduce((sum, d) => sum + (d.amount || 0), 0);
-  const totalDeductions = totalStatutoryDeductions + customDeductionsTotal;
+  const totalDeductions = totalStatutoryDeductions + templateDeductionsTotal + customDeductionsTotal;
   
   // Calculate net pay
   const netPay = grossPay - totalDeductions;
