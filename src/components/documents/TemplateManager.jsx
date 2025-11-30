@@ -1,18 +1,10 @@
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
-import { Switch } from "@/components/ui/switch";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import {
   Select,
@@ -21,278 +13,429 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { toast } from "sonner";
-import { FileText, Plus, Edit, Trash2, Save, Loader2, Copy } from "lucide-react";
-import { DOCUMENT_TYPES, DEFAULT_TEMPLATES, getDocumentTypeLabel } from "./DocumentTemplates";
+import {
+  FileText, Plus, Search, MoreVertical, Edit, Copy, Trash2,
+  Lock, Users, Shield, FileSignature, Eye, Monitor, Heart,
+  AlertTriangle, Calendar, Home, TrendingUp, XCircle, DollarSign,
+  Settings, CheckCircle2, Sparkles
+} from "lucide-react";
+import { format } from "date-fns";
+import { DOCUMENT_TYPE_INFO, DEFAULT_TEMPLATES } from "./DocumentTemplates";
+import TemplateEditorDialog from "./TemplateEditorDialog";
 
-export default function TemplateManager({ open, onOpenChange, orgId }) {
+const TEMPLATE_CATEGORIES = [
+  { value: "employment", label: "Employment", icon: FileSignature },
+  { value: "policy", label: "Policies", icon: Shield },
+  { value: "disciplinary", label: "Disciplinary", icon: AlertTriangle },
+  { value: "compensation", label: "Compensation", icon: DollarSign },
+  { value: "leave", label: "Leave & Benefits", icon: Calendar },
+  { value: "other", label: "Other", icon: FileText }
+];
+
+const DOCUMENT_TYPE_CATEGORY = {
+  employment_contract: "employment",
+  nda: "policy",
+  code_of_conduct: "policy",
+  privacy_policy: "policy",
+  health_safety_policy: "policy",
+  anti_harassment_policy: "policy",
+  it_acceptable_use: "policy",
+  disciplinary_policy: "disciplinary",
+  leave_policy: "leave",
+  remote_work_policy: "policy",
+  probation_confirmation: "employment",
+  promotion_letter: "compensation",
+  termination_letter: "employment",
+  warning_letter: "disciplinary",
+  salary_revision: "compensation",
+  custom: "other"
+};
+
+const ROLE_OPTIONS = [
+  { value: "super_admin", label: "Super Admin" },
+  { value: "org_admin", label: "Org Admin" },
+  { value: "hr_admin", label: "HR Admin" },
+  { value: "payroll_admin", label: "Payroll Admin" },
+  { value: "warehouse_manager", label: "Warehouse Manager" },
+  { value: "all", label: "All Roles" }
+];
+
+const DOCUMENT_ICONS = {
+  employment_contract: FileSignature,
+  nda: Lock,
+  code_of_conduct: Shield,
+  privacy_policy: Eye,
+  health_safety_policy: Heart,
+  anti_harassment_policy: Shield,
+  it_acceptable_use: Monitor,
+  disciplinary_policy: AlertTriangle,
+  leave_policy: Calendar,
+  remote_work_policy: Home,
+  probation_confirmation: CheckCircle2,
+  promotion_letter: TrendingUp,
+  termination_letter: XCircle,
+  warning_letter: AlertTriangle,
+  salary_revision: DollarSign,
+  custom: FileText
+};
+
+export default function TemplateManager({ orgId, currentEmployee }) {
   const queryClient = useQueryClient();
-  const [activeTab, setActiveTab] = useState("custom");
-  const [editingTemplate, setEditingTemplate] = useState(null);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [categoryFilter, setCategoryFilter] = useState("all");
   const [showEditor, setShowEditor] = useState(false);
+  const [editingTemplate, setEditingTemplate] = useState(null);
+  const [duplicatingTemplate, setDuplicatingTemplate] = useState(null);
 
+  // Fetch custom templates
   const { data: customTemplates = [], isLoading } = useQuery({
     queryKey: ['documentTemplates', orgId],
     queryFn: () => base44.entities.DocumentTemplate.filter({ organisation_id: orgId }),
     enabled: !!orgId,
   });
 
-  const createTemplateMutation = useMutation({
-    mutationFn: (data) => base44.entities.DocumentTemplate.create(data),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['documentTemplates'] });
-      toast.success("Template created successfully");
-      setShowEditor(false);
-      setEditingTemplate(null);
-    }
-  });
+  // Combine default and custom templates
+  const allTemplates = useMemo(() => {
+    const defaults = Object.entries(DEFAULT_TEMPLATES).map(([key, template]) => ({
+      id: `default-${key}`,
+      document_type: key,
+      name: template.name,
+      content: template.content,
+      variables: template.variables,
+      requires_signature: template.requires_signature !== false,
+      is_system: true,
+      is_active: true,
+      category: DOCUMENT_TYPE_CATEGORY[key] || "other",
+      allowed_roles: ["all"]
+    }));
 
-  const updateTemplateMutation = useMutation({
-    mutationFn: ({ id, data }) => base44.entities.DocumentTemplate.update(id, data),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['documentTemplates'] });
-      toast.success("Template updated successfully");
-      setShowEditor(false);
-      setEditingTemplate(null);
+    const customs = customTemplates.map(t => ({
+      ...t,
+      is_system: false,
+      category: t.category || DOCUMENT_TYPE_CATEGORY[t.document_type] || "other"
+    }));
+
+    return [...defaults, ...customs];
+  }, [customTemplates]);
+
+  // Filter templates
+  const filteredTemplates = useMemo(() => {
+    let filtered = allTemplates;
+
+    if (searchTerm) {
+      const term = searchTerm.toLowerCase();
+      filtered = filtered.filter(t =>
+        t.name?.toLowerCase().includes(term) ||
+        t.document_type?.toLowerCase().includes(term)
+      );
     }
-  });
+
+    if (categoryFilter !== "all") {
+      filtered = filtered.filter(t => t.category === categoryFilter);
+    }
+
+    return filtered;
+  }, [allTemplates, searchTerm, categoryFilter]);
+
+  // Group by category
+  const templatesByCategory = useMemo(() => {
+    const grouped = {};
+    TEMPLATE_CATEGORIES.forEach(cat => {
+      grouped[cat.value] = filteredTemplates.filter(t => t.category === cat.value);
+    });
+    return grouped;
+  }, [filteredTemplates]);
 
   const deleteTemplateMutation = useMutation({
-    mutationFn: (id) => base44.entities.DocumentTemplate.delete(id),
+    mutationFn: (templateId) => base44.entities.DocumentTemplate.delete(templateId),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['documentTemplates'] });
       toast.success("Template deleted");
+    },
+    onError: (error) => {
+      toast.error("Failed to delete template", { description: error.message });
     }
   });
 
-  const handleCopyDefault = (type) => {
-    const defaultTemplate = DEFAULT_TEMPLATES[type];
-    if (defaultTemplate) {
-      setEditingTemplate({
-        document_type: type,
-        name: `Custom - ${defaultTemplate.name}`,
-        content: defaultTemplate.content,
-        placeholders: defaultTemplate.placeholders,
-        requires_signature: true,
-        is_active: true,
-        is_default: false
-      });
-      setShowEditor(true);
+  const handleEdit = (template) => {
+    if (template.is_system) {
+      toast.error("System templates cannot be edited. You can duplicate them instead.");
+      return;
     }
+    setEditingTemplate(template);
+    setDuplicatingTemplate(null);
+    setShowEditor(true);
   };
 
-  const handleSaveTemplate = () => {
-    if (!editingTemplate) return;
+  const handleDuplicate = (template) => {
+    setDuplicatingTemplate(template);
+    setEditingTemplate(null);
+    setShowEditor(true);
+  };
 
-    const data = {
-      ...editingTemplate,
-      organisation_id: orgId
-    };
+  const handleCreateNew = () => {
+    setEditingTemplate(null);
+    setDuplicatingTemplate(null);
+    setShowEditor(true);
+  };
 
-    if (editingTemplate.id) {
-      updateTemplateMutation.mutate({ id: editingTemplate.id, data });
-    } else {
-      createTemplateMutation.mutate(data);
+  const handleDelete = (template) => {
+    if (template.is_system) {
+      toast.error("System templates cannot be deleted");
+      return;
+    }
+    if (confirm(`Are you sure you want to delete "${template.name}"?`)) {
+      deleteTemplateMutation.mutate(template.id);
     }
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-hidden">
-        <DialogHeader>
-          <div className="flex h-1 w-16 rounded-full overflow-hidden mb-3">
-            <div className="flex-1 bg-[#1EB053]" />
-            <div className="flex-1 bg-white border-y border-gray-200" />
-            <div className="flex-1 bg-[#0072C6]" />
-          </div>
-          <DialogTitle className="flex items-center gap-2">
-            <FileText className="w-5 h-5 text-[#1EB053]" />
-            Document Templates
-          </DialogTitle>
-        </DialogHeader>
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+        <div>
+          <h2 className="text-xl font-bold text-[#0F1F3C]">Document Templates</h2>
+          <p className="text-sm text-gray-500">Manage and customize document templates for your organization</p>
+        </div>
+        <Button onClick={handleCreateNew} className="bg-[#1EB053] hover:bg-[#178f43]">
+          <Plus className="w-4 h-4 mr-2" />
+          Create Template
+        </Button>
+      </div>
 
-        {showEditor ? (
-          <div className="space-y-4">
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <Label>Document Type</Label>
-                <Select 
-                  value={editingTemplate?.document_type || ""} 
-                  onValueChange={(v) => setEditingTemplate(prev => ({ ...prev, document_type: v }))}
-                >
-                  <SelectTrigger className="mt-1">
-                    <SelectValue placeholder="Select type" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {DOCUMENT_TYPES.map(type => (
-                      <SelectItem key={type.value} value={type.value}>{type.label}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div>
-                <Label>Template Name</Label>
-                <Input
-                  value={editingTemplate?.name || ""}
-                  onChange={(e) => setEditingTemplate(prev => ({ ...prev, name: e.target.value }))}
-                  className="mt-1"
-                />
-              </div>
-            </div>
+      {/* Filters */}
+      <div className="flex flex-col sm:flex-row gap-3">
+        <div className="relative flex-1">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+          <Input
+            placeholder="Search templates..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="pl-9"
+          />
+        </div>
+        <Select value={categoryFilter} onValueChange={setCategoryFilter}>
+          <SelectTrigger className="w-48">
+            <SelectValue placeholder="All Categories" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All Categories</SelectItem>
+            {TEMPLATE_CATEGORIES.map(cat => (
+              <SelectItem key={cat.value} value={cat.value}>
+                {cat.label}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
 
-            <div>
-              <Label>Template Content (Markdown)</Label>
-              <p className="text-xs text-gray-500 mb-1">
-                Use {"{{placeholder_name}}"} for dynamic content. E.g. {"{{employee_name}}"}, {"{{company_name}}"}
-              </p>
-              <Textarea
-                value={editingTemplate?.content || ""}
-                onChange={(e) => setEditingTemplate(prev => ({ ...prev, content: e.target.value }))}
-                className="mt-1 font-mono text-sm"
-                rows={15}
-              />
-            </div>
-
+      {/* Stats */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <Card className="border-t-4 border-t-[#1EB053]">
+          <CardContent className="p-4">
             <div className="flex items-center justify-between">
-              <div className="flex items-center gap-4">
-                <div className="flex items-center gap-2">
-                  <Switch 
-                    checked={editingTemplate?.is_active ?? true}
-                    onCheckedChange={(v) => setEditingTemplate(prev => ({ ...prev, is_active: v }))}
-                  />
-                  <Label>Active</Label>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Switch 
-                    checked={editingTemplate?.requires_signature ?? true}
-                    onCheckedChange={(v) => setEditingTemplate(prev => ({ ...prev, requires_signature: v }))}
-                  />
-                  <Label>Requires Signature</Label>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Switch 
-                    checked={editingTemplate?.is_default ?? false}
-                    onCheckedChange={(v) => setEditingTemplate(prev => ({ ...prev, is_default: v }))}
-                  />
-                  <Label>Set as Default</Label>
-                </div>
+              <div>
+                <p className="text-2xl font-bold">{allTemplates.length}</p>
+                <p className="text-xs text-gray-500">Total Templates</p>
               </div>
+              <FileText className="w-8 h-8 text-[#1EB053]/20" />
             </div>
-
-            <div className="flex justify-end gap-2">
-              <Button variant="outline" onClick={() => { setShowEditor(false); setEditingTemplate(null); }}>
-                Cancel
-              </Button>
-              <Button
-                onClick={handleSaveTemplate}
-                disabled={createTemplateMutation.isPending || updateTemplateMutation.isPending}
-                className="bg-[#1EB053] hover:bg-[#178f43]"
-              >
-                {(createTemplateMutation.isPending || updateTemplateMutation.isPending) ? (
-                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                ) : (
-                  <Save className="w-4 h-4 mr-2" />
-                )}
-                Save Template
-              </Button>
-            </div>
-          </div>
-        ) : (
-          <Tabs value={activeTab} onValueChange={setActiveTab}>
-            <TabsList className="grid w-full grid-cols-2">
-              <TabsTrigger value="custom">Custom Templates</TabsTrigger>
-              <TabsTrigger value="default">Default Templates</TabsTrigger>
-            </TabsList>
-
-            <TabsContent value="custom" className="mt-4">
-              <div className="flex justify-between items-center mb-4">
-                <p className="text-sm text-gray-500">
-                  Create and manage your organization's custom document templates
-                </p>
-                <Button onClick={() => { setEditingTemplate({}); setShowEditor(true); }}>
-                  <Plus className="w-4 h-4 mr-2" />
-                  New Template
-                </Button>
+          </CardContent>
+        </Card>
+        <Card className="border-t-4 border-t-[#0072C6]">
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-2xl font-bold">{Object.keys(DEFAULT_TEMPLATES).length}</p>
+                <p className="text-xs text-gray-500">System Templates</p>
               </div>
+              <Shield className="w-8 h-8 text-[#0072C6]/20" />
+            </div>
+          </CardContent>
+        </Card>
+        <Card className="border-t-4 border-t-amber-500">
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-2xl font-bold">{customTemplates.length}</p>
+                <p className="text-xs text-gray-500">Custom Templates</p>
+              </div>
+              <Sparkles className="w-8 h-8 text-amber-500/20" />
+            </div>
+          </CardContent>
+        </Card>
+        <Card className="border-t-4 border-t-purple-500">
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-2xl font-bold">{TEMPLATE_CATEGORIES.length}</p>
+                <p className="text-xs text-gray-500">Categories</p>
+              </div>
+              <Settings className="w-8 h-8 text-purple-500/20" />
+            </div>
+          </CardContent>
+        </Card>
+      </div>
 
-              <ScrollArea className="h-[400px]">
-                {customTemplates.length === 0 ? (
-                  <div className="text-center py-12 text-gray-500">
-                    <FileText className="w-12 h-12 mx-auto mb-4 text-gray-300" />
-                    <p>No custom templates yet</p>
-                    <p className="text-sm">Create one or copy from default templates</p>
-                  </div>
-                ) : (
-                  <div className="space-y-3">
-                    {customTemplates.map(template => (
-                      <div
-                        key={template.id}
-                        className="flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50"
+      {/* Templates by Category */}
+      <ScrollArea className="h-[calc(100vh-400px)]">
+        <div className="space-y-6 pr-4">
+          {TEMPLATE_CATEGORIES.map(category => {
+            const templates = templatesByCategory[category.value] || [];
+            if (templates.length === 0 && categoryFilter !== "all") return null;
+            if (templates.length === 0) return null;
+
+            const CategoryIcon = category.icon;
+
+            return (
+              <div key={category.value}>
+                <div className="flex items-center gap-2 mb-3">
+                  <CategoryIcon className="w-4 h-4 text-gray-500" />
+                  <h3 className="font-semibold text-gray-700">{category.label}</h3>
+                  <Badge variant="outline" className="text-xs">{templates.length}</Badge>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {templates.map(template => {
+                    const TypeIcon = DOCUMENT_ICONS[template.document_type] || FileText;
+                    
+                    return (
+                      <Card 
+                        key={template.id} 
+                        className={`hover:shadow-md transition-shadow ${
+                          template.is_system ? 'border-l-4 border-l-[#0072C6]' : 'border-l-4 border-l-amber-400'
+                        }`}
                       >
-                        <div>
-                          <p className="font-medium">{template.name}</p>
-                          <div className="flex items-center gap-2 mt-1">
-                            <Badge variant="outline">{getDocumentTypeLabel(template.document_type)}</Badge>
-                            {template.is_default && <Badge className="bg-[#1EB053]">Default</Badge>}
-                            {!template.is_active && <Badge variant="secondary">Inactive</Badge>}
+                        <CardContent className="p-4">
+                          <div className="flex items-start justify-between">
+                            <div className="flex items-start gap-3 flex-1 min-w-0">
+                              <div className={`w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0 ${
+                                template.is_system 
+                                  ? 'bg-[#0072C6]/10 text-[#0072C6]' 
+                                  : 'bg-amber-100 text-amber-600'
+                              }`}>
+                                <TypeIcon className="w-5 h-5" />
+                              </div>
+                              <div className="min-w-0 flex-1">
+                                <p className="font-medium text-sm truncate">{template.name}</p>
+                                <p className="text-xs text-gray-500 truncate">
+                                  {DOCUMENT_TYPE_INFO[template.document_type]?.label || template.document_type}
+                                </p>
+                                <div className="flex items-center gap-2 mt-2 flex-wrap">
+                                  {template.is_system ? (
+                                    <Badge variant="outline" className="text-[10px] bg-[#0072C6]/5 text-[#0072C6] border-[#0072C6]/20">
+                                      <Shield className="w-2.5 h-2.5 mr-1" />
+                                      System
+                                    </Badge>
+                                  ) : (
+                                    <Badge variant="outline" className="text-[10px] bg-amber-50 text-amber-700 border-amber-200">
+                                      <Sparkles className="w-2.5 h-2.5 mr-1" />
+                                      Custom
+                                    </Badge>
+                                  )}
+                                  {template.requires_signature && (
+                                    <Badge variant="outline" className="text-[10px]">
+                                      <FileSignature className="w-2.5 h-2.5 mr-1" />
+                                      Signature
+                                    </Badge>
+                                  )}
+                                </div>
+                              </div>
+                            </div>
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                <Button variant="ghost" size="icon" className="h-8 w-8">
+                                  <MoreVertical className="w-4 h-4" />
+                                </Button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent align="end">
+                                <DropdownMenuItem onClick={() => handleDuplicate(template)}>
+                                  <Copy className="w-4 h-4 mr-2" />
+                                  Duplicate
+                                </DropdownMenuItem>
+                                {!template.is_system && (
+                                  <>
+                                    <DropdownMenuItem onClick={() => handleEdit(template)}>
+                                      <Edit className="w-4 h-4 mr-2" />
+                                      Edit
+                                    </DropdownMenuItem>
+                                    <DropdownMenuSeparator />
+                                    <DropdownMenuItem 
+                                      onClick={() => handleDelete(template)}
+                                      className="text-red-600"
+                                    >
+                                      <Trash2 className="w-4 h-4 mr-2" />
+                                      Delete
+                                    </DropdownMenuItem>
+                                  </>
+                                )}
+                              </DropdownMenuContent>
+                            </DropdownMenu>
                           </div>
-                        </div>
-                        <div className="flex gap-2">
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => { setEditingTemplate(template); setShowEditor(true); }}
-                          >
-                            <Edit className="w-4 h-4" />
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="text-red-500 hover:text-red-700"
-                            onClick={() => deleteTemplateMutation.mutate(template.id)}
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </Button>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </ScrollArea>
-            </TabsContent>
 
-            <TabsContent value="default" className="mt-4">
-              <p className="text-sm text-gray-500 mb-4">
-                Sierra Leone compliant document templates. Copy to customize for your organization.
-              </p>
-
-              <ScrollArea className="h-[400px]">
-                <div className="space-y-3">
-                  {Object.entries(DEFAULT_TEMPLATES).map(([type, template]) => (
-                    <div
-                      key={type}
-                      className="flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50"
-                    >
-                      <div>
-                        <p className="font-medium">{template.name}</p>
-                        <div className="flex items-center gap-2 mt-1">
-                          <Badge variant="outline">{getDocumentTypeLabel(type)}</Badge>
-                          <Badge variant="secondary">System Template</Badge>
-                        </div>
-                      </div>
-                      <Button variant="outline" onClick={() => handleCopyDefault(type)}>
-                        <Copy className="w-4 h-4 mr-2" />
-                        Copy & Customize
-                      </Button>
-                    </div>
-                  ))}
+                          {/* Role permissions */}
+                          {template.allowed_roles && template.allowed_roles.length > 0 && !template.allowed_roles.includes("all") && (
+                            <div className="mt-3 pt-3 border-t">
+                              <p className="text-[10px] text-gray-500 uppercase tracking-wide mb-1">Allowed Roles</p>
+                              <div className="flex flex-wrap gap-1">
+                                {template.allowed_roles.slice(0, 3).map(role => (
+                                  <Badge key={role} variant="secondary" className="text-[10px]">
+                                    {ROLE_OPTIONS.find(r => r.value === role)?.label || role}
+                                  </Badge>
+                                ))}
+                                {template.allowed_roles.length > 3 && (
+                                  <Badge variant="secondary" className="text-[10px]">
+                                    +{template.allowed_roles.length - 3} more
+                                  </Badge>
+                                )}
+                              </div>
+                            </div>
+                          )}
+                        </CardContent>
+                      </Card>
+                    );
+                  })}
                 </div>
-              </ScrollArea>
-            </TabsContent>
-          </Tabs>
-        )}
-      </DialogContent>
-    </Dialog>
+              </div>
+            );
+          })}
+
+          {filteredTemplates.length === 0 && (
+            <div className="text-center py-12">
+              <FileText className="w-12 h-12 mx-auto text-gray-300 mb-4" />
+              <p className="text-gray-500">No templates found</p>
+              <Button variant="outline" className="mt-4" onClick={handleCreateNew}>
+                <Plus className="w-4 h-4 mr-2" />
+                Create Your First Template
+              </Button>
+            </div>
+          )}
+        </div>
+      </ScrollArea>
+
+      {/* Template Editor Dialog */}
+      <TemplateEditorDialog
+        open={showEditor}
+        onOpenChange={(open) => {
+          setShowEditor(open);
+          if (!open) {
+            setEditingTemplate(null);
+            setDuplicatingTemplate(null);
+          }
+        }}
+        template={editingTemplate}
+        duplicateFrom={duplicatingTemplate}
+        orgId={orgId}
+        currentEmployee={currentEmployee}
+      />
+    </div>
   );
 }
