@@ -757,13 +757,13 @@ export const DEFAULT_TEMPLATES = {
     `,
     variables: [
       { key: "company_name", label: "Company Name", type: "text", auto_fill: "organisation.name" },
-      { key: "document_ref", label: "Document Reference", type: "text", default: "2024-001" },
+      { key: "document_ref", label: "Document Reference", type: "text", auto_fill: "auto" },
       { key: "employee_name", label: "Employee Name", type: "text", auto_fill: "employee.full_name" },
-      { key: "effective_date", label: "Effective Date", type: "date" },
-      { key: "duration_years", label: "Duration (years after termination)", type: "select", options: ["1", "2", "3", "5"], default: "2" },
-      { key: "company_signatory", label: "Company Signatory", type: "text" },
-      { key: "company_signatory_title", label: "Signatory Title", type: "text" },
-      { key: "issue_date", label: "Issue Date", type: "date" }
+      { key: "effective_date", label: "Effective Date", type: "date", auto_fill: "today" },
+      { key: "duration_years", label: "Duration (years)", type: "select", options: ["1", "2", "3", "5"], default: "2" },
+      { key: "company_signatory", label: "Company Signatory", type: "text", default: "HR Manager" },
+      { key: "company_signatory_title", label: "Signatory Title", type: "text", default: "Human Resources" },
+      { key: "issue_date", label: "Issue Date", type: "date", auto_fill: "today" }
     ]
   },
 
