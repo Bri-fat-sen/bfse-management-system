@@ -61,6 +61,7 @@ import ExpiryAlerts from "@/components/inventory/ExpiryAlerts";
 import BatchReports from "@/components/inventory/BatchReports";
 import StockTransferDialog from "@/components/inventory/StockTransferDialog";
 import ProductDetailsDialog from "@/components/inventory/ProductDetailsDialog";
+import InventoryAIRecommendations from "@/components/ai/InventoryAIRecommendations";
 
 const DEFAULT_CATEGORIES = ["Water", "Beverages", "Food", "Electronics", "Clothing", "Other"];
 
@@ -367,31 +368,59 @@ export default function Inventory() {
 
       {/* Stats */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <StatCard
-          title="Total Products"
-          value={products.length}
-          icon={Package}
-          color="blue"
-        />
-        <StatCard
-          title="Low Stock Items"
-          value={lowStockProducts.length}
-          icon={AlertTriangle}
-          color="gold"
-          subtitle={`${outOfStockProducts.length} out of stock`}
-        />
-        <StatCard
-          title="Inventory Value"
-          value={`Le ${totalValue.toLocaleString()}`}
-          icon={Warehouse}
-          color="green"
-        />
-        <StatCard
-          title="Warehouses"
-          value={warehouses.length}
-          icon={Warehouse}
-          color="navy"
-        />
+        <Card className="border-l-4 border-l-[#0072C6]">
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-xs text-gray-500 uppercase tracking-wide">Total Products</p>
+                <p className="text-2xl font-bold text-[#0072C6]">{products.length}</p>
+              </div>
+              <div className="w-12 h-12 rounded-full bg-blue-100 flex items-center justify-center">
+                <Package className="w-6 h-6 text-[#0072C6]" />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+        <Card className="border-l-4 border-l-[#f59e0b]">
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-xs text-gray-500 uppercase tracking-wide">Low Stock Items</p>
+                <p className="text-2xl font-bold text-[#f59e0b]">{lowStockProducts.length}</p>
+                <p className="text-xs text-gray-500 mt-1">{outOfStockProducts.length} out of stock</p>
+              </div>
+              <div className="w-12 h-12 rounded-full bg-orange-100 flex items-center justify-center">
+                <AlertTriangle className="w-6 h-6 text-[#f59e0b]" />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+        <Card className="border-l-4 border-l-[#1EB053]">
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-xs text-gray-500 uppercase tracking-wide">Inventory Value</p>
+                <p className="text-2xl font-bold text-[#1EB053]">Le {totalValue.toLocaleString()}</p>
+              </div>
+              <div className="w-12 h-12 rounded-full bg-green-100 flex items-center justify-center">
+                <Warehouse className="w-6 h-6 text-[#1EB053]" />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+        <Card className="border-l-4 border-l-[#8b5cf6]">
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-xs text-gray-500 uppercase tracking-wide">Warehouses</p>
+                <p className="text-2xl font-bold text-[#8b5cf6]">{warehouses.length}</p>
+              </div>
+              <div className="w-12 h-12 rounded-full bg-purple-100 flex items-center justify-center">
+                <Warehouse className="w-6 h-6 text-[#8b5cf6]" />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab}>
