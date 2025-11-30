@@ -3,7 +3,7 @@ import { format } from "date-fns";
 import { Button } from "@/components/ui/button";
 import { Download, Printer } from "lucide-react";
 import { exportToCSV } from "@/components/exports/SierraLeoneExportStyles";
-import { generateProfessionalReport, printProfessionalReport } from "@/components/exports/ProfessionalReportGenerator";
+import { generateProfessionalReport, printProfessionalReport } from "@/components/exports/ProfessionalReportExport";
 
 export default function TripReportExport({ trips = [], routes = [], vehicles = [], organisation }) {
   // Calculate summary stats
@@ -11,8 +11,6 @@ export default function TripReportExport({ trips = [], routes = [], vehicles = [
   const totalPassengers = trips.reduce((sum, t) => sum + (t.passengers_count || 0), 0);
   const totalFuelCost = trips.reduce((sum, t) => sum + (t.fuel_cost || 0), 0);
   const netRevenue = trips.reduce((sum, t) => sum + (t.net_revenue || 0), 0);
-  const avgPassengers = trips.length > 0 ? Math.round(totalPassengers / trips.length) : 0;
-  const profitMargin = totalRevenue > 0 ? Math.round((netRevenue / totalRevenue) * 100) : 0;
 
   const handleExportCSV = () => {
     const columns = ['Date', 'Route', 'Vehicle', 'Driver', 'Passengers', 'Revenue', 'Fuel Cost', 'Net Revenue', 'Status'];
@@ -32,44 +30,58 @@ export default function TripReportExport({ trips = [], routes = [], vehicles = [
   };
 
   const handlePrint = () => {
-    const keyMetrics = [
-      { icon: '🚌', label: 'Total Trips', value: trips.length.toString() },
-      { icon: '👥', label: 'Passengers', value: totalPassengers.toLocaleString() },
-      { icon: '💰', label: 'Revenue', value: `Le ${totalRevenue.toLocaleString()}` },
-      { icon: '📈', label: 'Net Revenue', value: `Le ${netRevenue.toLocaleString()}`, trend: netRevenue >= 0 ? 'positive' : 'negative' }
+    const summaryCards = [
+      { label: 'Total Trips', value: trips.length.toString(), subtext: 'Completed trips' },
+      { label: 'Total Passengers', value: totalPassengers.toLocaleString(), subtext: 'Passengers carried' },
+      { label: 'Total Revenue', value: `SLE ${totalRevenue.toLocaleString()}`, subtext: 'Gross income' },
+      { label: 'Net Revenue', value: `SLE ${netRevenue.toLocaleString()}`, subtext: 'After fuel costs', highlight: netRevenue >= 0 ? 'green' : 'red' }
     ];
 
-    const columns = ['Date', 'Route', 'Vehicle', 'Driver', 'Passengers', 'Revenue', 'Fuel', 'Net', 'Status'];
-    const rows = trips.map(t => [
-      t.date ? format(new Date(t.date), 'dd MMM yyyy') : '-',
-      t.route_name || 'N/A',
-      t.vehicle_registration || 'N/A',
-      t.driver_name || 'N/A',
-      t.passengers_count || 0,
-      `Le ${(t.total_revenue || 0).toLocaleString()}`,
-      `Le ${(t.fuel_cost || 0).toLocaleString()}`,
-      `Le ${(t.net_revenue || 0).toLocaleString()}`,
-      t.status
-    ]);
-    rows.push(['', '', '', 'TOTALS', totalPassengers, `Le ${totalRevenue.toLocaleString()}`, `Le ${totalFuelCost.toLocaleString()}`, `Le ${netRevenue.toLocaleString()}`, '']);
+    // Route breakdown
+    const routeBreakdown = {};
+    trips.forEach(t => {
+      const route = t.route_name || 'Unknown Route';
+      if (!routeBreakdown[route]) routeBreakdown[route] = 0;
+      routeBreakdown[route] += t.total_revenue || 0;
+    });
 
-    const insights = [
-      `Completed ${trips.length} trips with ${totalPassengers.toLocaleString()} passengers`,
-      `Average ${avgPassengers} passengers per trip`,
-      `Profit margin of ${profitMargin}% after fuel costs`,
-      `Total fuel expenditure: Le ${totalFuelCost.toLocaleString()}`
+    const sections = [
+      {
+        title: 'Revenue by Route',
+        icon: '🛣️',
+        breakdown: routeBreakdown
+      },
+      {
+        title: 'Trip Records',
+        icon: '🚐',
+        table: {
+          columns: ['Date', 'Route', 'Vehicle', 'Driver', 'Passengers', 'Revenue', 'Fuel', 'Net (SLE)', 'Status'],
+          rows: [
+            ...trips.map(t => [
+              t.date ? format(new Date(t.date), 'dd MMM yyyy') : '-',
+              t.route_name || 'N/A',
+              t.vehicle_registration || 'N/A',
+              t.driver_name || 'N/A',
+              t.passengers_count || 0,
+              `SLE ${(t.total_revenue || 0).toLocaleString()}`,
+              `SLE ${(t.fuel_cost || 0).toLocaleString()}`,
+              `SLE ${(t.net_revenue || 0).toLocaleString()}`,
+              t.status || 'completed'
+            ]),
+            ['GRAND TOTAL', '', '', '', totalPassengers, `SLE ${totalRevenue.toLocaleString()}`, `SLE ${totalFuelCost.toLocaleString()}`, `SLE ${netRevenue.toLocaleString()}`, '']
+          ]
+        }
+      }
     ];
 
     const html = generateProfessionalReport({
-      reportType: 'Transport Operations',
-      title: 'Trip Report',
-      subtitle: 'Detailed trip operations and revenue summary',
+      title: 'Transport Trip Report',
+      subtitle: 'Passenger trips, revenue, and fuel cost analysis',
       organisation,
-      dateRange: `As of ${format(new Date(), 'MMMM d, yyyy')}`,
-      executiveSummary: `This report summarizes ${trips.length} transport trips. Total revenue was Le ${totalRevenue.toLocaleString()} with fuel costs of Le ${totalFuelCost.toLocaleString()}, resulting in net revenue of Le ${netRevenue.toLocaleString()} (${profitMargin}% margin).`,
-      keyMetrics,
-      tables: [{ title: 'Trip Details', icon: '🚌', columns, rows }],
-      insights
+      dateRange: `Generated ${format(new Date(), 'MMMM d, yyyy')}`,
+      summaryCards,
+      sections,
+      reportType: 'standard'
     });
 
     printProfessionalReport(html);
