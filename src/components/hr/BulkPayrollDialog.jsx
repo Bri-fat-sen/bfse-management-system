@@ -28,7 +28,8 @@ import {
 } from "@/components/ui/collapsible";
 import {
   calculateFullPayroll,
-  formatSLE
+  formatSLE,
+  applyTemplates
 } from "./PayrollCalculator";
 
 export default function BulkPayrollDialog({ 
@@ -93,32 +94,11 @@ export default function BulkPayrollDialog({
         return true;
       });
 
-      const customAllowances = empTemplates
-        .filter(t => t.type === 'benefit')
-        .map(t => ({
-          name: t.name,
-          amount: t.calculation_type === 'percentage' 
-            ? (employee.base_salary * (t.amount / 100))
-            : t.amount,
-          type: t.category
-        }));
-
-      const customDeductions = empTemplates
-        .filter(t => t.type === 'deduction')
-        .map(t => ({
-          name: t.name,
-          amount: t.calculation_type === 'percentage'
-            ? (employee.base_salary * (t.amount / 100))
-            : t.amount,
-          type: t.category
-        }));
-
       return calculateFullPayroll({
         employee,
         periodStart,
         periodEnd,
-        customAllowances,
-        customDeductions,
+        templates: empTemplates,
         applyNASSIT: true,
         applyPAYE: true
       });
