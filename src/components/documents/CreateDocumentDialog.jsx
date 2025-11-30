@@ -263,9 +263,9 @@ export default function CreateDocumentDialog({
           ))}
         </div>
 
-        <ScrollArea className="flex-1 pr-4">
+        <ScrollArea className="flex-1 min-h-0 pr-4">
           {step === 1 && (
-            <div className="space-y-4 py-4">
+            <div className="space-y-4 py-4 max-h-[50vh] overflow-y-auto">
               <Label>Select Document Type</Label>
               <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
                 {Object.entries(DOCUMENT_TYPE_INFO).map(([type, info]) => (
