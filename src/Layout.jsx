@@ -98,8 +98,8 @@ const menuSections = [
   {
     title: "Insights",
     items: [
-      { name: "Finance & Reports", icon: DollarSign, page: "Finance", module: "finance" },
-      { name: "HR Analytics", icon: BarChart3, page: "Analytics", module: "dashboard" },
+      { name: "Analytics & Reports", icon: BarChart3, page: "Analytics", module: "dashboard" },
+      { name: "Finance", icon: DollarSign, page: "Finance", module: "finance" },
       { name: "Activity Log", icon: Activity, page: "ActivityLog", module: "activity_log" },
     ]
   },
@@ -601,7 +601,7 @@ export default function Layout({ children, currentPageName }) {
           onExit={() => setPreviewRole(null)} 
         />
 
-        <main className={`p-4 lg:p-6 ${darkMode ? 'text-white' : ''}`} style={{ paddingBottom: 'max(6rem, calc(5rem + env(safe-area-inset-bottom, 0px)))' }}>
+        <main className={`p-4 lg:p-6 ${darkMode ? 'text-white' : ''} overflow-x-hidden`} style={{ paddingBottom: 'max(6rem, calc(5rem + env(safe-area-inset-bottom, 0px)))', minHeight: 'calc(100vh - 4.5rem)' }}>
           <PermissionsProvider>
             <OfflineProvider>
               {children}
