@@ -79,7 +79,8 @@ export default function Documents() {
 
   const currentEmployee = employees[0];
   const orgId = currentEmployee?.organisation_id;
-  const isAdmin = ['super_admin', 'org_admin', 'hr_admin'].includes(currentEmployee?.role);
+  // Check both employee role and base44 user role for admin access
+  const isAdmin = ['super_admin', 'org_admin', 'hr_admin'].includes(currentEmployee?.role) || user?.role === 'admin';
 
   // Fetch organisation
   const { data: organisations = [] } = useQuery({
