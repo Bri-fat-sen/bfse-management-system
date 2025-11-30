@@ -54,6 +54,7 @@ export default function SavedReportsManager({ orgId, onLoadReport }) {
   const queryClient = useQueryClient();
   const [searchTerm, setSearchTerm] = useState('');
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(null);
+  const [showScheduleDialog, setShowScheduleDialog] = useState(null);
 
   const { data: savedReports = [], isLoading } = useQuery({
     queryKey: ['savedReports', orgId],
