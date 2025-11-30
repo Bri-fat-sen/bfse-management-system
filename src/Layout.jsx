@@ -90,11 +90,11 @@ const menuSections = [
     title: "People",
     items: [
       { name: "HR & Payroll", icon: Users, page: "HR", module: "hr" },
+      { name: "Documents", icon: FileText, page: "Documents", module: "hr" },
       { name: "Attendance", icon: Clock, page: "Attendance", module: "attendance" },
       { name: "Work Schedules", icon: Calendar, page: "WorkSchedules", module: "hr" },
-      { name: "Documents", icon: FileText, page: "EmployeeDocuments", module: "hr" },
     ]
-    },
+  },
   {
     title: "Insights",
     items: [
