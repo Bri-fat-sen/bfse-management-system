@@ -1,114 +1,252 @@
 // Sierra Leone Payroll Calculator
-// All amounts in SLE (Sierra Leonean Leone)
+// All amounts in SLE (New Sierra Leonean Leone - Redenominated March 2024)
+// Reference: Finance Act 2024, Employment Act 2023, NASSIT Act
 
 // ============================================
-// STATUTORY RATES (2024)
+// STATUTORY RATES (2025)
+// Based on Sierra Leone Finance Act 2024 & NRA Guidelines
 // ============================================
 
 // NASSIT (National Social Security and Insurance Trust)
+// Per NASSIT Act - mandatory for all formal sector employees
 export const NASSIT_EMPLOYEE_RATE = 0.05;  // 5% employee contribution
 export const NASSIT_EMPLOYER_RATE = 0.10;  // 10% employer contribution
 
-// PAYE Tax Brackets (Annual Income)
+// PAYE Tax Brackets (Annual Income) - 2025
+// Based on Finance Act 2024 and sl.icalculator.com/income-tax-rates/2025
+// Note: First SLE 6,000,000 annually (SLE 500,000 monthly) is tax-free
 export const SL_TAX_BRACKETS = [
-  { min: 0, max: 500000, rate: 0, label: "0%" },
+  { min: 0, max: 6000000, rate: 0, label: "0% (Tax-Free)" },
+  { min: 6000001, max: 12000000, rate: 0.15, label: "15%" },
+  { min: 12000001, max: 18000000, rate: 0.20, label: "20%" },
+  { min: 18000001, max: 24000000, rate: 0.25, label: "25%" },
+  { min: 24000001, max: Infinity, rate: 0.30, label: "30%" }
+];
+
+// Monthly equivalents for reference (annual / 12)
+export const SL_TAX_BRACKETS_MONTHLY = [
+  { min: 0, max: 500000, rate: 0, label: "0% (Tax-Free)" },
   { min: 500001, max: 1000000, rate: 0.15, label: "15%" },
   { min: 1000001, max: 1500000, rate: 0.20, label: "20%" },
   { min: 1500001, max: 2000000, rate: 0.25, label: "25%" },
   { min: 2000001, max: Infinity, rate: 0.30, label: "30%" }
 ];
 
-// Overtime Multipliers
+// Overtime Multipliers - Per Employment Act 2023 Section 42
 export const OVERTIME_MULTIPLIERS = {
-  regular: 1.5,      // Regular overtime (time-and-a-half)
-  weekend: 2.0,      // Weekend work (double time)
+  regular: 1.5,      // Regular overtime (time-and-a-half) - Employment Act 2023
+  weekend: 2.0,      // Weekend/Rest day work (double time)
   holiday: 2.5,      // Public holiday work
-  night: 1.25        // Night shift differential
+  night: 1.25        // Night shift differential (8pm - 6am per Employment Act 2023)
 };
 
-// Role-based bonus configurations
+// Sierra Leone Public Holidays (for payroll calculations)
+export const SL_PUBLIC_HOLIDAYS_2025 = [
+  { date: "2025-01-01", name: "New Year's Day" },
+  { date: "2025-03-08", name: "International Women's Day" },
+  { date: "2025-03-29", name: "Eid ul-Fitr" }, // Approximate - varies by moon sighting
+  { date: "2025-04-18", name: "Good Friday" },
+  { date: "2025-04-21", name: "Easter Monday" },
+  { date: "2025-04-27", name: "Independence Day" },
+  { date: "2025-06-05", name: "Eid ul-Adha" }, // Approximate - varies by moon sighting
+  { date: "2025-08-12", name: "Maulid-un-Nabi" }, // Prophet's Birthday
+  { date: "2025-12-25", name: "Christmas Day" },
+  { date: "2025-12-26", name: "Boxing Day" }
+];
+
+// Sierra Leone Minimum Wage (as of 2024)
+// Per Minimum Wage Act and subsequent amendments
+export const SL_MINIMUM_WAGE = {
+  monthly: 800000,  // SLE 800,000 per month (increased from SLE 600,000)
+  daily: 36364,     // Approximately SLE 36,364 per day
+  hourly: 4545      // Approximately SLE 4,545 per hour
+};
+
+// Role-based allowances configuration
+// Per Employment Act 2023 Section 5 - casual/temporary workers entitled to:
+// rent, transport, medical, relocation, risk allowances
 export const ROLE_BONUS_CONFIG = {
+  super_admin: {
+    allowances: [
+      { name: "Executive Allowance", percentage: 0.20 },
+      { name: "Transport Allowance", fixed: 500000 },
+      { name: "Housing Allowance", percentage: 0.20 },
+      { name: "Communication Allowance", fixed: 200000 },
+      { name: "Medical Allowance", fixed: 300000 }
+    ],
+    bonusEligible: ["performance"]
+  },
+  org_admin: {
+    allowances: [
+      { name: "Executive Allowance", percentage: 0.15 },
+      { name: "Transport Allowance", fixed: 500000 },
+      { name: "Housing Allowance", percentage: 0.20 },
+      { name: "Communication Allowance", fixed: 200000 },
+      { name: "Medical Allowance", fixed: 300000 }
+    ],
+    bonusEligible: ["performance"]
+  },
+  hr_admin: {
+    allowances: [
+      { name: "Responsibility Allowance", percentage: 0.10 },
+      { name: "Transport Allowance", fixed: 250000 },
+      { name: "Housing Allowance", percentage: 0.10 },
+      { name: "Communication Allowance", fixed: 75000 },
+      { name: "Medical Allowance", fixed: 150000 }
+    ],
+    bonusEligible: ["performance"]
+  },
+  payroll_admin: {
+    allowances: [
+      { name: "Responsibility Allowance", percentage: 0.10 },
+      { name: "Transport Allowance", fixed: 250000 },
+      { name: "Housing Allowance", percentage: 0.10 },
+      { name: "Communication Allowance", fixed: 75000 },
+      { name: "Medical Allowance", fixed: 150000 }
+    ],
+    bonusEligible: ["performance"]
+  },
+  warehouse_manager: {
+    allowances: [
+      { name: "Responsibility Allowance", percentage: 0.10 },
+      { name: "Transport Allowance", fixed: 250000 },
+      { name: "Housing Allowance", percentage: 0.10 },
+      { name: "Communication Allowance", fixed: 75000 },
+      { name: "Medical Allowance", fixed: 150000 }
+    ],
+    bonusEligible: ["performance", "attendance"]
+  },
+  accountant: {
+    allowances: [
+      { name: "Professional Allowance", percentage: 0.08 },
+      { name: "Transport Allowance", fixed: 250000 },
+      { name: "Housing Allowance", percentage: 0.10 },
+      { name: "Communication Allowance", fixed: 75000 },
+      { name: "Medical Allowance", fixed: 150000 }
+    ],
+    bonusEligible: ["performance"]
+  },
   driver: {
     allowances: [
-      { name: "Fuel Allowance", percentage: 0.05 },
-      { name: "Risk Allowance", percentage: 0.03 }
+      { name: "Risk Allowance", percentage: 0.15 },
+      { name: "Transport Allowance", fixed: 150000 },
+      { name: "Fuel Allowance", fixed: 100000 },
+      { name: "Meal Allowance", fixed: 100000 },
+      { name: "Medical Allowance", fixed: 150000 },
+      { name: "Uniform Allowance", fixed: 50000 }
     ],
     bonusEligible: ["performance", "attendance", "sales_commission"]
   },
   vehicle_sales: {
     allowances: [
-      { name: "Communication Allowance", percentage: 0.02 }
+      { name: "Sales Allowance", percentage: 0.02 },
+      { name: "Transport Allowance", fixed: 150000 },
+      { name: "Communication Allowance", fixed: 75000 },
+      { name: "Meal Allowance", fixed: 100000 },
+      { name: "Medical Allowance", fixed: 150000 }
     ],
     bonusEligible: ["performance", "sales_commission"]
   },
   retail_cashier: {
     allowances: [
-      { name: "Meal Allowance", fixed: 50000 }
+      { name: "Transport Allowance", fixed: 150000 },
+      { name: "Meal Allowance", fixed: 100000 },
+      { name: "Medical Allowance", fixed: 150000 },
+      { name: "Uniform Allowance", fixed: 50000 }
     ],
     bonusEligible: ["performance", "attendance"]
-  },
-  warehouse_manager: {
-    allowances: [
-      { name: "Responsibility Allowance", percentage: 0.10 },
-      { name: "Transport Allowance", percentage: 0.05 }
-    ],
-    bonusEligible: ["performance", "attendance"]
-  },
-  hr_admin: {
-    allowances: [
-      { name: "Administrative Allowance", percentage: 0.05 }
-    ],
-    bonusEligible: ["performance"]
-  },
-  accountant: {
-    allowances: [
-      { name: "Professional Allowance", percentage: 0.08 }
-    ],
-    bonusEligible: ["performance"]
   },
   support_staff: {
     allowances: [
-      { name: "Meal Allowance", fixed: 30000 }
+      { name: "Transport Allowance", fixed: 150000 },
+      { name: "Meal Allowance", fixed: 100000 },
+      { name: "Medical Allowance", fixed: 150000 },
+      { name: "Uniform Allowance", fixed: 50000 }
     ],
     bonusEligible: ["attendance"]
   },
-  org_admin: {
+  read_only: {
     allowances: [
-      { name: "Executive Allowance", percentage: 0.15 },
-      { name: "Transport Allowance", percentage: 0.10 }
+      { name: "Transport Allowance", fixed: 150000 },
+      { name: "Meal Allowance", fixed: 100000 },
+      { name: "Medical Allowance", fixed: 150000 }
     ],
-    bonusEligible: ["performance"]
-  },
-  super_admin: {
-    allowances: [],
     bonusEligible: []
   }
 };
 
-// Common allowances
+// Common allowances - Per Employment Act 2023 Section 5
+// Workers entitled to: rent, transport, medical, relocation, risk allowances
 export const COMMON_ALLOWANCES = [
-  { name: "Transport Allowance", description: "Monthly transport to work" },
-  { name: "Housing Allowance", description: "Accommodation support" },
-  { name: "Medical Allowance", description: "Health care support" },
-  { name: "Risk Allowance", description: "For hazardous work conditions" },
-  { name: "Meal Allowance", description: "Daily meal subsidy" },
+  { name: "Transport Allowance", description: "Monthly transport to work (per Employment Act 2023)" },
+  { name: "Housing/Rent Allowance", description: "Accommodation support (per Employment Act 2023)" },
+  { name: "Medical Allowance", description: "Health care support (per Employment Act 2023)" },
+  { name: "Risk Allowance", description: "For hazardous work conditions (per Employment Act 2023)" },
+  { name: "Relocation Allowance", description: "For transferred employees (per Employment Act 2023)" },
+  { name: "Meal Allowance", description: "Daily meal/subsistence subsidy" },
   { name: "Communication Allowance", description: "Phone/internet allowance" },
   { name: "Leave Allowance", description: "Annual leave bonus" },
   { name: "Fuel Allowance", description: "Vehicle fuel support" },
-  { name: "Responsibility Allowance", description: "Management responsibility" },
-  { name: "Professional Allowance", description: "Professional certification" },
-  { name: "Hardship Allowance", description: "Remote/difficult location" }
+  { name: "Responsibility Allowance", description: "Management/supervisory responsibility" },
+  { name: "Professional Allowance", description: "Professional certification/qualification" },
+  { name: "Hardship Allowance", description: "Remote/difficult location posting" },
+  { name: "Acting Allowance", description: "Temporarily performing higher duties (per Employment Act 2023)" },
+  { name: "Uniform Allowance", description: "Work uniform maintenance" },
+  { name: "Entertainment Allowance", description: "Client entertainment (management)" },
+  { name: "Night Shift Allowance", description: "Night work differential (8pm-6am per Employment Act 2023)" }
 ];
 
 // Common deduction types
 export const COMMON_DEDUCTIONS = [
-  { name: "Loan Repayment", type: "loan" },
-  { name: "Salary Advance", type: "advance" },
-  { name: "Equipment Damage", type: "other" },
-  { name: "Unauthorized Absence", type: "other" },
-  { name: "Union Dues", type: "voluntary" },
-  { name: "Cooperative Contribution", type: "voluntary" }
+  { name: "NASSIT Employee (5%)", type: "statutory", description: "National Social Security contribution" },
+  { name: "PAYE Tax", type: "statutory", description: "Pay As You Earn income tax" },
+  { name: "Loan Repayment", type: "loan", description: "Staff loan repayment" },
+  { name: "Salary Advance", type: "advance", description: "Advance salary deduction" },
+  { name: "Equipment Damage", type: "other", description: "Damage to company property" },
+  { name: "Unauthorized Absence", type: "other", description: "Unpaid leave deduction" },
+  { name: "Union Dues", type: "voluntary", description: "Trade union membership" },
+  { name: "Cooperative Savings", type: "voluntary", description: "Staff cooperative contribution" },
+  { name: "Health Insurance", type: "voluntary", description: "Optional health coverage" },
+  { name: "Pension Top-up", type: "voluntary", description: "Additional pension contribution" }
 ];
+
+// Sierra Leone Leave Entitlements - Per Employment Act 2023
+export const SL_LEAVE_ENTITLEMENTS = {
+  annual: {
+    days: 21, // Minimum 21 working days per year after 1 year service
+    description: "Annual leave (after 1 year continuous service)"
+  },
+  sick: {
+    days: 5, // Minimum 5 days paid sick leave
+    description: "Paid sick leave per year"
+  },
+  maternity: {
+    days: 90, // 14 weeks (approx 90 days)
+    description: "Maternity leave (14 weeks per Employment Act 2023)"
+  },
+  paternity: {
+    days: 5,
+    description: "Paternity leave"
+  },
+  compassionate: {
+    days: 5,
+    description: "Bereavement/compassionate leave"
+  }
+};
+
+// Probation period - Per Employment Act 2023
+export const SL_PROBATION_PERIOD = {
+  maxMonths: 6,
+  description: "Maximum probationary period per Employment Act 2023"
+};
+
+// Notice periods - Per Employment Act 2023
+export const SL_NOTICE_PERIODS = {
+  probation: { days: 7, description: "During probation" },
+  lessThan3Years: { days: 30, description: "Less than 3 years service" },
+  moreThan3Years: { days: 60, description: "3+ years service" },
+  moreThan5Years: { days: 90, description: "5+ years service" }
+};
 
 // ============================================
 // CALCULATION FUNCTIONS
