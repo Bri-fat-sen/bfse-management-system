@@ -1,16 +1,12 @@
 import React, { useState, useMemo } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery } from "@tanstack/react-query";
-import { format, subMonths } from "date-fns";
+import { format } from "date-fns";
 import { 
   Star,
   TrendingUp,
-  TrendingDown,
   User,
   FileText,
-  Eye,
-  Filter,
-  Download,
   ChevronRight,
   BarChart3,
   Target,
