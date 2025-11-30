@@ -703,7 +703,11 @@ export default function HR() {
           )}
 
           {payrollSubTab === 'reports' && (
-            <PayrollReportingModule orgId={orgId} employees={employees} organisation={organisation?.[0]} />
+            <PayrollReportingModule 
+              orgId={orgId} 
+              employees={employees} 
+              organisation={organisation?.[0]} 
+            />
           )}
 
           {payrollSubTab === 'audit' && (
