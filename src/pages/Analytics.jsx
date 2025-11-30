@@ -776,10 +776,6 @@ export default function Analytics() {
                 <Package className="w-4 h-4" />
                 Inventory
               </TabsTrigger>
-              <TabsTrigger value="payroll" className="gap-1 data-[state=active]:bg-white">
-                <Users className="w-4 h-4" />
-                Payroll
-              </TabsTrigger>
             </TabsList>
 
             <TabsContent value="sales" className="mt-4 space-y-4">
@@ -813,29 +809,6 @@ export default function Analytics() {
                 <StatCard title="Total Products" value={inventoryMetrics.totalProducts} icon={Package} color="blue" />
                 <StatCard title="Total Stock" value={inventoryMetrics.totalStock.toLocaleString()} icon={Package} color="green" />
                 <StatCard title="Low Stock Items" value={inventoryMetrics.lowStock} icon={TrendingDown} color="red" />
-              </div>
-            </TabsContent>
-
-            <TabsContent value="payroll" className="mt-4 space-y-4">
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                <StatCard 
-                  title="Total Payroll" 
-                  value={`SLE ${payrolls.reduce((sum, p) => sum + (p.net_pay || 0), 0).toLocaleString()}`} 
-                  icon={DollarSign} 
-                  color="green" 
-                />
-                <StatCard 
-                  title="Employees Paid" 
-                  value={payrolls.filter(p => p.status === 'paid').length} 
-                  icon={Users} 
-                  color="blue" 
-                />
-                <StatCard 
-                  title="Pending" 
-                  value={payrolls.filter(p => p.status === 'pending_approval' || p.status === 'approved').length} 
-                  icon={Clock} 
-                  color="gold" 
-                />
               </div>
             </TabsContent>
           </Tabs>
