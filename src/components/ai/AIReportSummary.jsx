@@ -4,7 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Sparkles, FileText, RefreshCw, TrendingUp, TrendingDown } from "lucide-react";
+import { Sparkles, FileText, RefreshCw, TrendingUp, TrendingDown, AlertTriangle, Lightbulb } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export default function AIReportSummary({ 
