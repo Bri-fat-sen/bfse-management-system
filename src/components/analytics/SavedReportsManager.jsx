@@ -16,8 +16,11 @@ import {
   Plus,
   Calendar,
   Mail,
-  Send
+  Send,
+  CheckCircle,
+  AlertCircle
 } from "lucide-react";
+import ReportScheduleDialog from "@/components/reports/ReportScheduleDialog";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -38,7 +41,6 @@ import {
 } from "@/components/ui/dialog";
 import { useToast } from "@/components/ui/use-toast";
 import EmptyState from "@/components/ui/EmptyState";
-import ReportScheduleDialog from "@/components/reports/ReportScheduleDialog";
 
 const REPORT_TYPE_COLORS = {
   sales: '#1EB053',
@@ -54,7 +56,7 @@ export default function SavedReportsManager({ orgId, onLoadReport }) {
   const queryClient = useQueryClient();
   const [searchTerm, setSearchTerm] = useState('');
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(null);
-  const [showScheduleDialog, setShowScheduleDialog] = useState(null);
+  const [scheduleReport, setScheduleReport] = useState(null);
 
   const { data: savedReports = [], isLoading } = useQuery({
     queryKey: ['savedReports', orgId],
@@ -137,7 +139,7 @@ export default function SavedReportsManager({ orgId, onLoadReport }) {
                     onLoad={onLoadReport}
                     onToggleFavorite={toggleFavorite}
                     onDelete={() => setShowDeleteConfirm(report)}
-                    onSchedule={() => setShowScheduleDialog(report)}
+                    onSchedule={() => setScheduleReport(report)}
                   />
                 ))}
               </div>
@@ -158,7 +160,7 @@ export default function SavedReportsManager({ orgId, onLoadReport }) {
                     onLoad={onLoadReport}
                     onToggleFavorite={toggleFavorite}
                     onDelete={() => setShowDeleteConfirm(report)}
-                    onSchedule={() => setShowScheduleDialog(report)}
+                    onSchedule={() => setScheduleReport(report)}
                   />
                 ))}
               </div>
@@ -166,14 +168,6 @@ export default function SavedReportsManager({ orgId, onLoadReport }) {
           )}
         </div>
       )}
-
-      {/* Schedule Dialog */}
-      <ReportScheduleDialog
-        open={!!showScheduleDialog}
-        onOpenChange={() => setShowScheduleDialog(null)}
-        report={showScheduleDialog}
-        onSave={() => queryClient.invalidateQueries({ queryKey: ['savedReports'] })}
-      />
 
       {/* Delete Confirmation Dialog */}
       <Dialog open={!!showDeleteConfirm} onOpenChange={() => setShowDeleteConfirm(null)}>
@@ -198,21 +192,36 @@ export default function SavedReportsManager({ orgId, onLoadReport }) {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Schedule Report Dialog */}
+      <ReportScheduleDialog
+        open={!!scheduleReport}
+        onOpenChange={() => setScheduleReport(null)}
+        report={scheduleReport}
+        onUpdate={() => queryClient.invalidateQueries({ queryKey: ['savedReports'] })}
+      />
     </div>
   );
 }
 
-function ReportCard({ report, onLoad, onToggleFavorite, onDelete }) {
+function ReportCard({ report, onLoad, onToggleFavorite, onDelete, onSchedule }) {
   const typeColor = REPORT_TYPE_COLORS[report.report_type] || REPORT_TYPE_COLORS.custom;
+  const schedule = report.schedule || {};
+  const isScheduled = schedule.enabled && schedule.recipients?.length > 0;
   
   return (
     <Card className="hover:shadow-lg transition-all cursor-pointer group" style={{ borderTop: `4px solid ${typeColor}` }}>
       <CardContent className="p-4">
         <div className="flex items-start justify-between mb-3">
           <div className="flex-1 min-w-0" onClick={() => onLoad(report)}>
-            <h3 className="font-semibold truncate group-hover:text-[#1EB053] transition-colors">
-              {report.name}
-            </h3>
+            <div className="flex items-center gap-2">
+              <h3 className="font-semibold truncate group-hover:text-[#1EB053] transition-colors">
+                {report.name}
+              </h3>
+              {isScheduled && (
+                <div className={`w-2 h-2 rounded-full ${schedule.last_status === 'failed' ? 'bg-red-500' : 'bg-green-500'}`} title="Scheduled" />
+              )}
+            </div>
             {report.description && (
               <p className="text-sm text-gray-500 truncate">{report.description}</p>
             )}
@@ -241,6 +250,10 @@ function ReportCard({ report, onLoad, onToggleFavorite, onDelete }) {
                   </>
                 )}
               </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => onSchedule(report)}>
+                <Calendar className="w-4 h-4 mr-2" />
+                Schedule Report
+              </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem onClick={onDelete} className="text-red-600">
                 <Trash2 className="w-4 h-4 mr-2" />
@@ -250,33 +263,51 @@ function ReportCard({ report, onLoad, onToggleFavorite, onDelete }) {
           </DropdownMenu>
         </div>
         
-        <div className="flex items-center gap-3 text-xs text-gray-500">
+        <div className="flex items-center gap-2 flex-wrap text-xs text-gray-500">
           <Badge 
             variant="outline" 
             style={{ borderColor: typeColor, color: typeColor }}
           >
             {report.report_type}
           </Badge>
+          {isScheduled && (
+            <Badge variant="outline" className="text-green-600 border-green-200 bg-green-50">
+              <Mail className="w-3 h-3 mr-1" />
+              {schedule.frequency}
+            </Badge>
+          )}
           <span className="flex items-center gap-1">
             <Clock className="w-3 h-3" />
             {format(new Date(report.created_date), 'MMM d, yyyy')}
           </span>
         </div>
-        
-        {report.widgets?.length > 0 && (
-          <p className="text-xs text-gray-400 mt-2">
-            {report.widgets.length} widgets
+
+        {isScheduled && schedule.next_run && (
+          <p className="text-xs text-gray-400 mt-2 flex items-center gap-1">
+            <Send className="w-3 h-3" />
+            Next: {format(new Date(schedule.next_run), 'MMM d, h:mm a')}
           </p>
         )}
         
-        <Button 
-          variant="ghost" 
-          size="sm" 
-          className="w-full mt-3 text-[#1EB053] hover:text-[#178f43] hover:bg-green-50"
-          onClick={() => onLoad(report)}
-        >
-          Load Dashboard
-        </Button>
+        <div className="flex gap-2 mt-3">
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            className="flex-1 text-[#1EB053] hover:text-[#178f43] hover:bg-green-50"
+            onClick={() => onLoad(report)}
+          >
+            Load
+          </Button>
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            className="flex-1 text-[#0072C6] hover:text-[#005a9e] hover:bg-blue-50"
+            onClick={() => onSchedule(report)}
+          >
+            <Calendar className="w-3 h-3 mr-1" />
+            Schedule
+          </Button>
+        </div>
       </CardContent>
     </Card>
   );
