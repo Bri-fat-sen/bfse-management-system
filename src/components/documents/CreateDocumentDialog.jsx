@@ -339,53 +339,98 @@ export default function CreateDocumentDialog({
           </div>
         </div>
 
-        <ScrollArea className="flex-1 min-h-0 pr-4">
-          {step === 1 && (
-            <div className="space-y-4 py-4 max-h-[50vh] overflow-y-auto">
-              <Label>Select Document Type</Label>
-              <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-                {Object.entries(DOCUMENT_TYPE_INFO).map(([type, info]) => (
-                  <button
-                    key={type}
-                    onClick={() => setDocumentType(type)}
-                    className={`p-4 rounded-lg border-2 text-left transition-all ${
-                      documentType === type 
-                        ? 'border-[#1EB053] bg-[#1EB053]/5' 
-                        : 'border-gray-200 hover:border-gray-300'
-                    }`}
-                  >
-                    <p className="font-medium text-sm">{info.label}</p>
-                    <p className="text-xs text-gray-500 mt-1">{info.description}</p>
-                    {info.requiresSignature && (
-                      <Badge variant="outline" className="mt-2 text-xs">Requires Signature</Badge>
-                    )}
-                  </button>
-                ))}
-              </div>
-
-              {customTemplates.length > 0 && (
-                <>
-                  <Label className="mt-6">Or Choose Custom Template</Label>
-                  <div className="grid grid-cols-2 gap-3">
-                    {customTemplates.map(template => (
+        <ScrollArea className="flex-1 min-h-0">
+          <div className="px-8 py-6">
+            {step === 1 && (
+              <div className="space-y-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h3 className="text-lg font-semibold text-[#0F1F3C]">Choose Document Type</h3>
+                    <p className="text-sm text-gray-500">Select the type of document you want to create</p>
+                  </div>
+                  <Badge variant="outline" className="bg-amber-50 text-amber-700 border-amber-200">
+                    {Object.keys(DOCUMENT_TYPE_INFO).length} templates available
+                  </Badge>
+                </div>
+                
+                <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
+                  {Object.entries(DOCUMENT_TYPE_INFO).map(([type, info]) => {
+                    const IconComponent = DOCUMENT_ICONS[type] || FileText;
+                    const isSelected = documentType === type;
+                    return (
                       <button
-                        key={template.id}
-                        onClick={() => setDocumentType(template.id)}
-                        className={`p-4 rounded-lg border-2 text-left transition-all ${
-                          documentType === template.id 
-                            ? 'border-[#1EB053] bg-[#1EB053]/5' 
-                            : 'border-gray-200 hover:border-gray-300'
+                        key={type}
+                        onClick={() => setDocumentType(type)}
+                        className={`group relative p-5 rounded-xl border-2 text-left transition-all duration-200 ${
+                          isSelected 
+                            ? 'border-[#1EB053] bg-gradient-to-br from-[#1EB053]/5 to-[#0072C6]/5 shadow-lg shadow-[#1EB053]/10' 
+                            : 'border-gray-200 hover:border-[#0072C6]/50 hover:shadow-md hover:bg-gray-50/50'
                         }`}
                       >
-                        <p className="font-medium text-sm">{template.name}</p>
-                        <Badge variant="secondary" className="mt-2 text-xs">Custom</Badge>
+                        {isSelected && (
+                          <div className="absolute top-3 right-3">
+                            <CheckCircle2 className="w-5 h-5 text-[#1EB053]" />
+                          </div>
+                        )}
+                        <div className={`w-10 h-10 rounded-lg flex items-center justify-center mb-3 transition-colors ${
+                          isSelected 
+                            ? 'bg-gradient-to-br from-[#1EB053] to-[#0072C6] text-white' 
+                            : 'bg-gray-100 text-gray-500 group-hover:bg-[#0072C6]/10 group-hover:text-[#0072C6]'
+                        }`}>
+                          <IconComponent className="w-5 h-5" />
+                        </div>
+                        <p className={`font-semibold text-sm ${isSelected ? 'text-[#0F1F3C]' : 'text-gray-700'}`}>
+                          {info.label}
+                        </p>
+                        <p className="text-xs text-gray-500 mt-1 line-clamp-2">{info.description}</p>
+                        {info.requiresSignature && (
+                          <div className="flex items-center gap-1 mt-3">
+                            <FileSignature className="w-3 h-3 text-[#0072C6]" />
+                            <span className="text-[10px] font-medium text-[#0072C6]">Signature Required</span>
+                          </div>
+                        )}
                       </button>
-                    ))}
+                    );
+                  })}
+                </div>
+
+                {customTemplates.length > 0 && (
+                  <div className="mt-8 pt-6 border-t">
+                    <div className="flex items-center gap-2 mb-4">
+                      <Sparkles className="w-4 h-4 text-amber-500" />
+                      <h4 className="font-semibold text-[#0F1F3C]">Custom Templates</h4>
+                    </div>
+                    <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
+                      {customTemplates.map(template => {
+                        const isSelected = documentType === template.id;
+                        return (
+                          <button
+                            key={template.id}
+                            onClick={() => setDocumentType(template.id)}
+                            className={`group relative p-5 rounded-xl border-2 text-left transition-all duration-200 ${
+                              isSelected 
+                                ? 'border-amber-400 bg-gradient-to-br from-amber-50 to-orange-50 shadow-lg' 
+                                : 'border-gray-200 hover:border-amber-300 hover:shadow-md'
+                            }`}
+                          >
+                            {isSelected && (
+                              <div className="absolute top-3 right-3">
+                                <CheckCircle2 className="w-5 h-5 text-amber-500" />
+                              </div>
+                            )}
+                            <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-amber-400 to-orange-500 text-white flex items-center justify-center mb-3">
+                              <FileText className="w-5 h-5" />
+                            </div>
+                            <p className="font-semibold text-sm text-gray-700">{template.name}</p>
+                            <Badge className="mt-2 bg-amber-100 text-amber-700 border-0 text-[10px]">Custom Template</Badge>
+                          </button>
+                        );
+                      })}
+                    </div>
                   </div>
-                </>
-              )}
-            </div>
-          )}
+                )}
+              </div>
+            )}
 
           {step === 2 && (
             <div className="space-y-4 py-4">
