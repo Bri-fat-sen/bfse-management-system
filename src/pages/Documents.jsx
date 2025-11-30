@@ -100,17 +100,18 @@ export default function Documents() {
   // Moved AFTER all hooks to avoid conditional hook issues
   const isAdmin = ['super_admin', 'org_admin', 'hr_admin'].includes(currentEmployee?.role) || user?.role === 'admin';
 
-  // Fetch documents
+  // Fetch documents - for admins without employee record, fetch all org docs
   const { data: documents = [], isLoading } = useQuery({
     queryKey: ['employeeDocuments', orgId, currentEmployee?.id, isAdmin],
     queryFn: async () => {
       if (['super_admin', 'org_admin', 'hr_admin'].includes(currentEmployee?.role) || user?.role === 'admin') {
         return base44.entities.EmployeeDocument.filter({ organisation_id: orgId });
-      } else {
+      } else if (currentEmployee?.id) {
         return base44.entities.EmployeeDocument.filter({ employee_id: currentEmployee?.id });
       }
+      return [];
     },
-    enabled: !!orgId && !!currentEmployee?.id,
+    enabled: !!orgId,
   });
 
   // Filter documents
