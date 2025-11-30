@@ -2124,7 +2124,7 @@ export const DEFAULT_TEMPLATES = {
     <div class="sl-flag-bar"></div>
     <div class="sl-company-logo" style="background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);">⚠️</div>
     <h1>Official Warning Letter</h1>
-    <p class="sl-subtitle">{{company_name}} • Disciplinary Notice</p>
+    <p class="sl-subtitle">{{company_name}} • Formal Disciplinary Notice</p>
     <p class="sl-ref-number">Ref: WL-{{document_ref}}</p>
   </div>
 
@@ -2135,6 +2135,10 @@ export const DEFAULT_TEMPLATES = {
         <span>{{employee_name}}</span>
       </div>
       <div class="sl-info-item">
+        <label>Employee Code</label>
+        <span>{{employee_code}}</span>
+      </div>
+      <div class="sl-info-item">
         <label>Position</label>
         <span>{{position}}</span>
       </div>
@@ -2143,64 +2147,198 @@ export const DEFAULT_TEMPLATES = {
         <span>{{department}}</span>
       </div>
       <div class="sl-info-item">
-        <label>Warning Date</label>
+        <label>Warning Issued</label>
         <span>{{warning_date}}</span>
+      </div>
+      <div class="sl-info-item">
+        <label>Incident Date</label>
+        <span>{{incident_date}}</span>
       </div>
     </div>
   </div>
 
   <div class="sl-section">
-    <h2>Warning Type</h2>
+    <p>Dear <strong>{{employee_name}}</strong>,</p>
+    <p>Following the disciplinary meeting held on {{meeting_date}} regarding {{violation_category}}, this letter serves as formal notification that you are receiving an <strong>official written warning</strong> in accordance with {{company_name}}'s Disciplinary Policy and the Employment Act 2023 of Sierra Leone.</p>
+  </div>
+
+  <div class="sl-section">
+    <h2>Warning Classification</h2>
     <div class="sl-highlight-box" style="background: linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%); border-color: #dc2626;">
-      <h3 style="color: #dc2626;">{{warning_type}}</h3>
-      <p>This is a formal {{warning_level}} warning issued in accordance with the company's Disciplinary Policy and the Employment Act 2023 of Sierra Leone.</p>
+      <h3 style="color: #dc2626;">⚠️ {{warning_level}} Warning</h3>
+      <div class="sl-info-grid">
+        <div class="sl-info-item" style="border-left-color: #dc2626;">
+          <label>Warning Type</label>
+          <span>{{warning_type}}</span>
+        </div>
+        <div class="sl-info-item" style="border-left-color: #dc2626;">
+          <label>Severity Level</label>
+          <span>{{warning_level}}</span>
+        </div>
+        <div class="sl-info-item" style="border-left-color: #dc2626;">
+          <label>Active Until</label>
+          <span>{{warning_expiry_date}}</span>
+        </div>
+        <div class="sl-info-item" style="border-left-color: #dc2626;">
+          <label>Warning Validity Period</label>
+          <span>{{warning_validity}}</span>
+        </div>
+      </div>
     </div>
   </div>
 
   <div class="sl-section">
-    <h2>Details of Violation</h2>
-    <p><strong>Date of Incident:</strong> {{incident_date}}</p>
-    <p><strong>Description:</strong></p>
+    <h2>Details of Incident/Violation</h2>
+    <div class="sl-info-grid">
+      <div class="sl-info-item">
+        <label>Date of Incident</label>
+        <span>{{incident_date}}</span>
+      </div>
+      <div class="sl-info-item">
+        <label>Time of Incident</label>
+        <span>{{incident_time}}</span>
+      </div>
+      <div class="sl-info-item">
+        <label>Location</label>
+        <span>{{incident_location}}</span>
+      </div>
+      <div class="sl-info-item">
+        <label>Witnesses Present</label>
+        <span>{{witnesses}}</span>
+      </div>
+    </div>
+    <p><strong>Description of Incident:</strong></p>
     <p>{{incident_description}}</p>
+    <p>{{incident_details}}</p>
   </div>
 
   <div class="sl-section">
-    <h2>Policy Violated</h2>
-    <p>{{policy_violated}}</p>
+    <h2>Policy/Standard Violated</h2>
+    <p>Your conduct/performance has been found to be in violation of:</p>
+    <p><strong>{{policy_violated}}</strong></p>
+    <p>{{policy_details}}</p>
+    <p>This violation is considered a breach of the terms of your employment and the standards of conduct expected of all employees at {{company_name}}.</p>
   </div>
 
   <div class="sl-section">
-    <h2>Required Corrective Action</h2>
+    <h2>Previous Warnings & Disciplinary History</h2>
+    <p>{{previous_warnings}}</p>
+  </div>
+
+  <div class="sl-section">
+    <h2>Your Response During Meeting</h2>
+    <p>During the disciplinary meeting on {{meeting_date}}, you provided the following explanation:</p>
+    <p>{{employee_response}}</p>
+    <p>After careful consideration of your explanation, the facts, and all available evidence, the decision has been made to issue this formal warning.</p>
+  </div>
+
+  <div class="sl-section">
+    <h2>Required Corrective Action & Improvement Expectations</h2>
+    <p>You are required to take the following immediate corrective actions:</p>
     <p>{{corrective_action}}</p>
+    
+    <p><strong>Performance Expectations Going Forward:</strong></p>
+    <ul>
+      <li>{{expectation_1}}</li>
+      <li>{{expectation_2}}</li>
+      <li>{{expectation_3}}</li>
+    </ul>
+
+    <p><strong>Review Period:</strong> Your conduct/performance will be monitored closely for the next {{review_period}}, during which time you must demonstrate sustained improvement.</p>
+  </div>
+
+  <div class="sl-section">
+    <h2>Support Offered</h2>
+    <p>To help you improve and succeed, the following support is being offered:</p>
+    <ul>
+      <li>Regular meetings with your supervisor to discuss progress ({{meeting_frequency}})</li>
+      <li>Additional training or coaching as needed: {{training_offered}}</li>
+      <li>Access to HR for guidance and support</li>
+      <li>Clear performance targets and measurable goals</li>
+    </ul>
   </div>
 
   <div class="sl-section">
     <h2>Consequences of Further Violations</h2>
-    <p>Please be advised that any further violations of company policies may result in additional disciplinary action, including but not limited to:</p>
+    <div class="sl-highlight-box" style="background: linear-gradient(135deg, #fef2f2 0%, #fecaca 100%); border-color: #ef4444;">
+      <h3 style="color: #dc2626;">⚠️ Important: Escalation Path</h3>
+      <p>This is a <strong>{{warning_level}} Written Warning</strong>. Please be clearly advised that any further violations of company policies, rules, or standards of conduct, OR failure to demonstrate the required improvement, may result in escalated disciplinary action:</p>
+      <ul>
+        <li><strong>Further Written Warning:</strong> Escalation to next warning level if improvement not sustained</li>
+        <li><strong>Final Written Warning:</strong> Last formal warning before potential dismissal</li>
+        <li><strong>Suspension Without Pay:</strong> Temporary removal from duties as a disciplinary measure</li>
+        <li><strong>Demotion:</strong> Reduction in position, responsibilities, or compensation</li>
+        <li><strong>Termination of Employment:</strong> Dismissal from {{company_name}} with notice period</li>
+      </ul>
+    </div>
+    <p><strong>Gross Misconduct:</strong> Any act of gross misconduct, as defined in Section 91 of the Employment Act 2023 and the company's Disciplinary Policy, may result in immediate summary dismissal without prior warning and without notice.</p>
+  </div>
+
+  <div class="sl-section">
+    <h2>Warning Validity & Expiry</h2>
     <ul>
-      <li>Additional written warnings</li>
-      <li>Suspension from duties</li>
-      <li>Termination of employment</li>
+      <li>This {{warning_level}} Warning will remain active on your personnel record for <strong>{{warning_validity}}</strong></li>
+      <li>The warning will expire on <strong>{{warning_expiry_date}}</strong> provided there are no further violations during this period</li>
+      <li>After expiry, this warning will be considered "spent" for future disciplinary purposes</li>
+      <li>However, patterns of similar behavior may still be considered even after warnings expire</li>
+      <li>The record will be retained in your personnel file as per company policy and legal requirements</li>
+    </ul>
+  </div>
+
+  <div class="sl-section">
+    <h2>Right of Appeal</h2>
+    <div class="sl-highlight-box" style="background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%); border-color: #3b82f6;">
+      <h3 style="color: #2563eb;">⚖️ You Have the Right to Appeal</h3>
+      <p>If you disagree with this warning or believe the disciplinary process was unfair, you have the right to appeal this decision.</p>
+      <ul>
+        <li><strong>Appeal Deadline:</strong> Within <strong>{{appeal_days}} working days</strong> of receiving this letter</li>
+        <li><strong>How to Appeal:</strong> Submit a written appeal to {{appeal_authority}} clearly stating your grounds for appeal</li>
+        <li><strong>Grounds for Appeal:</strong> Procedural irregularities, new evidence, sanction is too harsh, mitigating circumstances not considered</li>
+        <li><strong>Appeal Meeting:</strong> You will be invited to an appeal hearing where you may be accompanied by a colleague or union representative</li>
+        <li><strong>Appeal Decision:</strong> The appeal decision will be communicated in writing and is final</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="sl-section">
+    <h2>Next Steps</h2>
+    <p>Following this warning:</p>
+    <ul>
+      <li>Please sign this letter to acknowledge receipt and return it to HR within 3 working days</li>
+      <li>Schedule a meeting with your supervisor to discuss improvement plan and expectations</li>
+      <li>{{next_review_meeting}}</li>
+      <li>Contact HR if you have questions or wish to appeal</li>
     </ul>
   </div>
 
   <div class="sl-acknowledgment">
-    <h2>Employee Acknowledgment</h2>
-    <p>I, <strong>{{employee_name}}</strong>, acknowledge that I have received this warning letter. I understand the nature of the violation and the corrective actions required. I acknowledge that further violations may result in additional disciplinary action.</p>
-    <p><em>Note: Signing this letter does not necessarily indicate agreement with the content, but confirms receipt of this notice.</em></p>
+    <h2>Employee Acknowledgment of Receipt</h2>
+    <p>I, <strong>{{employee_name}}</strong>, acknowledge that:</p>
+    <ul>
+      <li>I have received this {{warning_level}} Warning Letter on {{warning_date}}</li>
+      <li>I understand the nature of the violation and the policy/rule that was breached</li>
+      <li>I understand the corrective actions required and the performance expectations</li>
+      <li>I understand the consequences of further violations or failure to improve</li>
+      <li>I understand my right to appeal this decision within {{appeal_days}} working days</li>
+      <li>I had the opportunity to provide my explanation during the disciplinary hearing on {{meeting_date}}</li>
+      <li>This warning will remain on my personnel file for {{warning_validity}}</li>
+    </ul>
+    <p style="font-size: 12px; color: #666; margin-top: 15px;"><em><strong>Important Note:</strong> Signing this letter acknowledges receipt and understanding of the warning. It does not necessarily indicate agreement with the findings or the decision. You retain the right to appeal if you believe the warning is unjustified or the process was unfair.</em></p>
   </div>
 
   <div class="sl-signatures">
     <div class="sl-signature-block">
-      <h4>Issuing Manager</h4>
+      <h4>Issued By</h4>
       <p><strong>{{issuing_manager}}</strong></p>
       <p>{{issuing_manager_title}}</p>
       <p>Date: {{warning_date}}</p>
       <div class="sl-signature-line"></div>
+      <p style="font-size: 10px; color: #888; margin-top: 5px;">Authorized Signature</p>
     </div>
     <div class="sl-signature-block">
-      <h4>Employee</h4>
+      <h4>Employee Acknowledgment</h4>
       <p><strong>{{employee_name}}</strong></p>
+      <p>{{position}}</p>
       <p>Date: <span class="sl-signature-date">{{signature_date}}</span></p>
       <div class="sl-digital-signature">{{digital_signature}}</div>
     </div>
@@ -2211,7 +2349,7 @@ export const DEFAULT_TEMPLATES = {
     <div class="sl-footer-logo">🇸🇱</div>
     <p><strong>{{company_name}}</strong></p>
     <p>Republic of Sierra Leone</p>
-    <p class="sl-legal-note">This document will be retained in the employee's personnel file.</p>
+    <p class="sl-legal-note">This warning letter will be retained in the employee's personnel file as per company record-keeping policy and Employment Act 2023 requirements. Copies provided to: Employee, HR Department, Supervisor.</p>
   </div>
 </div>
     `,
@@ -2219,17 +2357,38 @@ export const DEFAULT_TEMPLATES = {
       { key: "company_name", label: "Company Name", type: "text", auto_fill: "organisation.name" },
       { key: "document_ref", label: "Reference Number", type: "text", auto_fill: "auto" },
       { key: "employee_name", label: "Employee Name", type: "text", auto_fill: "employee.full_name" },
+      { key: "employee_code", label: "Employee Code", type: "text", auto_fill: "employee.employee_code" },
       { key: "position", label: "Position", type: "text", auto_fill: "employee.position" },
       { key: "department", label: "Department", type: "text", auto_fill: "employee.department" },
-      { key: "warning_date", label: "Warning Date", type: "date", auto_fill: "today" },
-      { key: "warning_type", label: "Warning Type", type: "select", options: ["Attendance", "Performance", "Conduct", "Policy Violation", "Other"], default: "Conduct" },
-      { key: "warning_level", label: "Warning Level", type: "select", options: ["First", "Second", "Final"], default: "First" },
+      { key: "warning_date", label: "Warning Issued Date", type: "date", auto_fill: "today" },
+      { key: "meeting_date", label: "Disciplinary Meeting Date", type: "date" },
+      { key: "violation_category", label: "Violation Category", type: "select", options: ["attendance and punctuality issues", "performance concerns", "workplace conduct", "policy violations", "health and safety breaches"], default: "workplace conduct" },
+      { key: "warning_type", label: "Warning Type/Category", type: "select", options: ["Attendance & Punctuality", "Performance Below Standard", "Conduct & Behavior", "Policy Violation", "Insubordination", "Health & Safety Violation", "Other"], default: "Conduct & Behavior" },
+      { key: "warning_level", label: "Warning Level", type: "select", options: ["First Written", "Second Written", "Final Written"], default: "First Written" },
       { key: "incident_date", label: "Incident Date", type: "date" },
-      { key: "incident_description", label: "Description", type: "text", default: "Employee violated company policy as detailed below." },
-      { key: "policy_violated", label: "Policy Violated", type: "text", default: "Employee Code of Conduct" },
-      { key: "corrective_action", label: "Corrective Action", type: "text", default: "Employee must adhere to company policies going forward." },
-      { key: "issuing_manager", label: "Issuing Manager", type: "text", default: "HR Manager" },
-      { key: "issuing_manager_title", label: "Manager Title", type: "text", default: "Human Resources" }
+      { key: "incident_time", label: "Incident Time", type: "text", default: "During working hours" },
+      { key: "incident_location", label: "Incident Location", type: "text", default: "Company premises" },
+      { key: "witnesses", label: "Witnesses", type: "text", default: "As documented in investigation report" },
+      { key: "incident_description", label: "Brief Description", type: "text", default: "The employee's conduct/performance was found to be in violation of company policy." },
+      { key: "incident_details", label: "Detailed Description", type: "text", default: "As discussed during the disciplinary hearing, the investigation found that [provide specific details of the violation, including dates, times, and factual observations]." },
+      { key: "policy_violated", label: "Policy/Rule Violated", type: "text", default: "Employee Code of Conduct - Section 2: Workplace Behavior" },
+      { key: "policy_details", label: "Policy Details/Context", type: "text", default: "This section specifically prohibits [relevant prohibited behavior] and requires employees to [required standard]." },
+      { key: "previous_warnings", label: "Previous Warnings/History", type: "text", default: "No previous warnings on file" },
+      { key: "employee_response", label: "Employee's Explanation", type: "text", default: "You stated that [summarize employee's explanation provided during hearing]." },
+      { key: "corrective_action", label: "Required Corrective Action", type: "text", default: "1. Immediately cease the behavior in question. 2. Attend a meeting with your supervisor to review expectations. 3. Demonstrate consistent compliance with company policies going forward." },
+      { key: "expectation_1", label: "Expectation 1", type: "text", default: "Adhere strictly to all company policies and procedures" },
+      { key: "expectation_2", label: "Expectation 2", type: "text", default: "Maintain professional conduct and behavior at all times" },
+      { key: "expectation_3", label: "Expectation 3", type: "text", default: "Demonstrate sustained improvement over the review period" },
+      { key: "review_period", label: "Review/Monitoring Period", type: "select", options: ["30 days", "60 days", "90 days", "6 months"], default: "90 days" },
+      { key: "meeting_frequency", label: "Progress Meeting Frequency", type: "select", options: ["weekly", "bi-weekly", "monthly"], default: "bi-weekly" },
+      { key: "training_offered", label: "Training/Support Offered", type: "text", default: "As assessed and agreed with supervisor" },
+      { key: "warning_validity", label: "Warning Validity Period", type: "select", options: ["6 months", "12 months", "18 months", "24 months"], default: "12 months" },
+      { key: "warning_expiry_date", label: "Warning Expiry Date", type: "date" },
+      { key: "appeal_days", label: "Appeal Period (Working Days)", type: "select", options: ["5", "7", "10"], default: "5" },
+      { key: "appeal_authority", label: "Appeal To", type: "text", default: "Human Resources Director or designated senior manager" },
+      { key: "next_review_meeting", label: "Next Review Meeting", type: "text", default: "A progress review meeting will be scheduled in 30 days to assess improvement" },
+      { key: "issuing_manager", label: "Issuing Manager Name", type: "text", default: "HR Manager" },
+      { key: "issuing_manager_title", label: "Issuing Manager Title", type: "text", default: "Human Resources" }
     ]
   },
 
