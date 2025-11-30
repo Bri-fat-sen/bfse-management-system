@@ -82,9 +82,6 @@ export default function Documents() {
   // Check employee role OR base44 admin role (for users without employee record yet)
   const isAdmin = ['super_admin', 'org_admin', 'hr_admin'].includes(currentEmployee?.role) || user?.role === 'admin';
 
-  // Debug log - remove after testing
-  console.log('Documents page - user:', user?.role, 'employee:', currentEmployee?.role, 'isAdmin:', isAdmin);
-
   // Fetch organisation
   const { data: organisations = [] } = useQuery({
     queryKey: ['organisation', orgId],
@@ -94,11 +91,11 @@ export default function Documents() {
 
   const organisation = organisations[0];
 
-  // Fetch all employees for admin
+  // Fetch all employees for admin - always fetch if org exists
   const { data: allEmployees = [] } = useQuery({
     queryKey: ['allEmployees', orgId],
     queryFn: () => base44.entities.Employee.filter({ organisation_id: orgId }),
-    enabled: !!orgId && isAdmin,
+    enabled: !!orgId,
   });
 
   // Fetch documents
@@ -204,25 +201,23 @@ export default function Documents() {
         subtitle="Manage employment contracts, policies, and other HR documents"
         icon={FileText}
         actions={
-          isAdmin && (
-            <div className="flex gap-2">
-              <Button 
-                variant="outline"
-                onClick={() => setShowGenerateDialog(true)}
-                className="border-[#1EB053] text-[#1EB053] hover:bg-[#1EB053]/10"
-              >
-                <Sparkles className="w-4 h-4 mr-2" />
-                Generate SL Required Docs
-              </Button>
-              <Button 
-                onClick={() => setShowCreateDialog(true)}
-                className="bg-gradient-to-r from-[#1EB053] to-[#0072C6]"
-              >
-                <Plus className="w-4 h-4 mr-2" />
-                Create Document
-              </Button>
-            </div>
-          )
+          <div className="flex gap-2">
+            <Button 
+              variant="outline"
+              onClick={() => setShowGenerateDialog(true)}
+              className="border-[#1EB053] text-[#1EB053] hover:bg-[#1EB053]/10"
+            >
+              <Sparkles className="w-4 h-4 mr-2" />
+              Generate SL Required Docs
+            </Button>
+            <Button 
+              onClick={() => setShowCreateDialog(true)}
+              className="bg-gradient-to-r from-[#1EB053] to-[#0072C6]"
+            >
+              <Plus className="w-4 h-4 mr-2" />
+              Create Document
+            </Button>
+          </div>
         }
       />
 
