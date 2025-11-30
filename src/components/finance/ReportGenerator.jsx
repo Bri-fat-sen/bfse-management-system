@@ -41,7 +41,6 @@ import { generateExportHTML, printDocument, downloadHTML, exportToCSV } from "@/
 const reportTypes = [
   { id: "sales", name: "Sales Report", icon: ShoppingCart, color: "green" },
   { id: "expenses", name: "Expense Report", icon: TrendingDown, color: "red" },
-  { id: "payroll", name: "Payroll Report", icon: Users, color: "blue" },
   { id: "profit_loss", name: "Profit & Loss", icon: DollarSign, color: "gold" },
 ];
 
@@ -50,7 +49,7 @@ const expenseCategories = [
   "salaries", "transport", "marketing", "insurance", "petty_cash", "other"
 ];
 
-export default function ReportGenerator({ sales = [], expenses = [], payrolls = [], employees = [], trips = [], organisation }) {
+export default function ReportGenerator({ sales = [], expenses = [], employees = [], trips = [], organisation }) {
   const { toast } = useToast();
   const [reportType, setReportType] = useState("sales");
   const [dateFrom, setDateFrom] = useState(format(startOfMonth(subMonths(new Date(), 1)), 'yyyy-MM-dd'));
@@ -134,35 +133,6 @@ export default function ReportGenerator({ sales = [], expenses = [], payrolls = 
             `SLE ${(e.amount || 0).toLocaleString()}`
           ])),
           rawData: filteredExpenses
-        };
-      }
-      case "payroll": {
-        let filteredPayrolls = filterByDate(payrolls, 'period_start');
-        if (employeeFilter !== "all") {
-          filteredPayrolls = filteredPayrolls.filter(p => p.employee_id === employeeFilter);
-        }
-        const totalGross = filteredPayrolls.reduce((sum, p) => sum + (p.gross_pay || 0), 0);
-        const totalNet = filteredPayrolls.reduce((sum, p) => sum + (p.net_pay || 0), 0);
-        const totalDeductions = filteredPayrolls.reduce((sum, p) => sum + (p.total_deductions || 0), 0);
-        return {
-          title: "Payroll Report",
-          summary: [
-            { label: "Payroll Records", value: filteredPayrolls.length },
-            { label: "Total Gross Pay", value: `SLE ${totalGross.toLocaleString()}` },
-            { label: "Total Deductions", value: `SLE ${totalDeductions.toLocaleString()}` },
-            { label: "Total Net Pay", value: `SLE ${totalNet.toLocaleString()}` },
-          ],
-          columns: ["Period", "Employee", "Base Salary", "Allowances", "Deductions", "Net Pay", "Status"],
-          rows: filteredPayrolls.map(p => ([
-            `${format(parseISO(p.period_start), 'MMM d')} - ${format(parseISO(p.period_end), 'MMM d, yyyy')}`,
-            p.employee_name || '-',
-            `SLE ${(p.base_salary || 0).toLocaleString()}`,
-            `SLE ${(p.total_allowances || 0).toLocaleString()}`,
-            `SLE ${(p.total_deductions || 0).toLocaleString()}`,
-            `SLE ${(p.net_pay || 0).toLocaleString()}`,
-            p.status || '-'
-          ])),
-          rawData: filteredPayrolls
         };
       }
       case "profit_loss": {

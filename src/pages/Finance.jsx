@@ -605,7 +605,6 @@ export default function Finance() {
           <ReportGenerator 
             sales={sales}
             expenses={expenses}
-            payrolls={payrolls}
             employees={employees}
             trips={trips}
             organisation={organisation?.[0]}
