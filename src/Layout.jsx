@@ -98,8 +98,8 @@ const menuSections = [
   {
     title: "Insights",
     items: [
-      { name: "Analytics & Reports", icon: BarChart3, page: "Analytics", module: "dashboard" },
-      { name: "Finance", icon: DollarSign, page: "Finance", module: "finance" },
+      { name: "Finance & Reports", icon: DollarSign, page: "Finance", module: "finance" },
+      { name: "HR Analytics", icon: BarChart3, page: "Analytics", module: "dashboard" },
       { name: "Activity Log", icon: Activity, page: "ActivityLog", module: "activity_log" },
     ]
   },

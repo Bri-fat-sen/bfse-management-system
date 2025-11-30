@@ -1,31 +1,17 @@
 import React, { useState, useMemo } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery } from "@tanstack/react-query";
-import { format, subMonths, startOfMonth, endOfMonth, isWithinInterval, parseISO, subDays, startOfWeek, endOfWeek, startOfQuarter, endOfQuarter, startOfYear, endOfYear } from "date-fns";
+import { format, subMonths, startOfMonth, endOfMonth, isWithinInterval, parseISO } from "date-fns";
 import {
   BarChart3,
   Users,
-  FileText,
   TrendingUp,
   TrendingDown,
   Award,
   BookOpen,
   UserMinus,
   Filter,
-  Download,
-  RefreshCw,
-  DollarSign,
-  Package,
-  Truck,
-  ShoppingCart,
-  Calendar,
-  Printer,
-  Save,
-  Eye,
-  EyeOff,
-  FileSpreadsheet,
-  Clock,
-  Plus
+  RefreshCw
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -43,27 +29,14 @@ import PageHeader from "@/components/ui/PageHeader";
 import StatCard from "@/components/ui/StatCard";
 import LoadingSpinner from "@/components/ui/LoadingSpinner";
 import ProtectedPage from "@/components/permissions/ProtectedPage";
-import AnalyticsDashboard from "@/components/analytics/AnalyticsDashboard";
-import SavedReportsManager from "@/components/analytics/SavedReportsManager";
 import {
   GlowLineChart,
   ColorfulBarChart,
   GradientBarChart,
   DonutChart,
-  AdvancedRadarChart,
   ProgressRing,
   SL_COLORS
 } from "@/components/charts/AdvancedCharts";
-import { SalesCharts, ExpenseCharts, TransportCharts, ProfitLossChart } from "@/components/reports/ReportCharts";
-import { 
-  printSalesReport, 
-  printExpenseReport, 
-  printTransportReport, 
-  printInventoryReport,
-  printProfitLossReport,
-  exportReportCSV 
-} from "@/components/reports/ReportPrintExport";
-import SaveReportDialog from "@/components/reports/SaveReportDialog";
 
 const COLORS = SL_COLORS.chart;
 
@@ -75,19 +48,12 @@ const SKILL_LEVELS = {
 };
 
 export default function Analytics() {
-  const [mainTab, setMainTab] = useState("overview");
   const [hrTab, setHrTab] = useState("performance");
-  const [reportTab, setReportTab] = useState("sales");
   
   // HR Filters
   const [department, setDepartment] = useState("all");
   const [role, setRole] = useState("all");
   const [dateRange, setDateRange] = useState("12");
-  
-  // Report Filters
-  const [reportDateRange, setReportDateRange] = useState("this_month");
-  const [showCharts, setShowCharts] = useState(true);
-  const [showSaveDialog, setShowSaveDialog] = useState(false);
 
   // Fetch current user and employee
   const { data: user } = useQuery({
@@ -146,33 +112,9 @@ export default function Analytics() {
     enabled: !!orgId,
   });
 
-  const { data: truckContracts = [] } = useQuery({
-    queryKey: ['truckContracts', orgId],
-    queryFn: () => base44.entities.TruckContract.filter({ organisation_id: orgId }, '-contract_date', 200),
-    enabled: !!orgId,
-  });
-
-  const { data: maintenanceRecords = [] } = useQuery({
-    queryKey: ['vehicleMaintenance', orgId],
-    queryFn: () => base44.entities.VehicleMaintenance.filter({ organisation_id: orgId }, '-date_performed', 200),
-    enabled: !!orgId,
-  });
-
   const { data: performanceReviews = [] } = useQuery({
     queryKey: ['allReviews', orgId],
     queryFn: () => base44.entities.PerformanceReview.filter({ organisation_id: orgId }),
-    enabled: !!orgId,
-  });
-
-  const { data: payrolls = [] } = useQuery({
-    queryKey: ['payrolls', orgId],
-    queryFn: () => base44.entities.Payroll.filter({ organisation_id: orgId }, '-created_date', 500),
-    enabled: !!orgId,
-  });
-
-  const { data: stockLevels = [] } = useQuery({
-    queryKey: ['stockLevels', orgId],
-    queryFn: () => base44.entities.StockLevel.filter({ organisation_id: orgId }),
     enabled: !!orgId,
   });
 
@@ -332,90 +274,7 @@ export default function Analytics() {
     }));
   }, [filteredReviews]);
 
-  // Reports date filtering
-  const getReportDateRange = useMemo(() => {
-    const today = new Date();
-    switch (reportDateRange) {
-      case "today": return { start: today, end: today };
-      case "yesterday": return { start: subDays(today, 1), end: subDays(today, 1) };
-      case "this_week": return { start: startOfWeek(today), end: endOfWeek(today) };
-      case "last_week": const lw = subDays(today, 7); return { start: startOfWeek(lw), end: endOfWeek(lw) };
-      case "this_month": return { start: startOfMonth(today), end: endOfMonth(today) };
-      case "last_month": const lm = subDays(startOfMonth(today), 1); return { start: startOfMonth(lm), end: endOfMonth(lm) };
-      case "this_quarter": return { start: startOfQuarter(today), end: endOfQuarter(today) };
-      case "this_year": return { start: startOfYear(today), end: endOfYear(today) };
-      default: return { start: startOfMonth(today), end: today };
-    }
-  }, [reportDateRange]);
-
-  const filteredSales = useMemo(() => {
-    return sales.filter(s => {
-      const saleDate = new Date(s.created_date);
-      return saleDate >= getReportDateRange.start && saleDate <= getReportDateRange.end;
-    });
-  }, [sales, getReportDateRange]);
-
-  const filteredExpenses = useMemo(() => {
-    return expenses.filter(e => {
-      const expDate = new Date(e.date || e.created_date);
-      return expDate >= getReportDateRange.start && expDate <= getReportDateRange.end;
-    });
-  }, [expenses, getReportDateRange]);
-
-  const filteredTrips = useMemo(() => {
-    return trips.filter(t => {
-      const tripDate = new Date(t.date || t.created_date);
-      return tripDate >= getReportDateRange.start && tripDate <= getReportDateRange.end;
-    });
-  }, [trips, getReportDateRange]);
-
-  // Report calculations
-  const salesMetrics = useMemo(() => {
-    const totalRevenue = filteredSales.reduce((sum, s) => sum + (s.total_amount || 0), 0);
-    const avgSale = filteredSales.length > 0 ? totalRevenue / filteredSales.length : 0;
-    return { totalRevenue, count: filteredSales.length, avgSale };
-  }, [filteredSales]);
-
-  const expenseMetrics = useMemo(() => {
-    const totalExpenses = filteredExpenses.reduce((sum, e) => sum + (e.amount || 0), 0);
-    return { totalExpenses, count: filteredExpenses.length };
-  }, [filteredExpenses]);
-
-  const transportMetrics = useMemo(() => {
-    const totalRevenue = filteredTrips.reduce((sum, t) => sum + (t.ticket_revenue || 0), 0);
-    const totalFuel = filteredTrips.reduce((sum, t) => sum + (t.fuel_cost || 0), 0);
-    return { totalRevenue, totalFuel, count: filteredTrips.length };
-  }, [filteredTrips]);
-
-  const inventoryMetrics = useMemo(() => {
-    const totalStock = stockLevels.reduce((sum, s) => sum + (s.quantity || 0), 0);
-    const lowStock = products.filter(p => {
-      const stock = stockLevels.find(s => s.product_id === p.id);
-      return (stock?.quantity || 0) < (p.low_stock_threshold || 10);
-    }).length;
-    return { totalStock, totalProducts: products.length, lowStock };
-  }, [products, stockLevels]);
-
-  const handlePrint = () => {
-    const org = organisation?.[0];
-    switch (reportTab) {
-      case 'sales': printSalesReport(filteredSales, org, getReportDateRange); break;
-      case 'expenses': printExpenseReport(filteredExpenses, org, getReportDateRange); break;
-      case 'transport': printTransportReport(filteredTrips, org, getReportDateRange); break;
-      case 'inventory': printInventoryReport(products, stockLevels, org); break;
-    }
-  };
-
-  const handleExportCSV = () => {
-    switch (reportTab) {
-      case 'sales': exportReportCSV(filteredSales, 'sales'); break;
-      case 'expenses': exportReportCSV(filteredExpenses, 'expenses'); break;
-      case 'transport': exportReportCSV(filteredTrips, 'transport'); break;
-      case 'inventory': exportReportCSV(products, 'inventory'); break;
-    }
-  };
-
-  if (!user || !currentEmployee || !orgId || loadingSales || loadingEmployees) {
+  if (!user || !currentEmployee || !orgId || loadingEmployees) {
     return <LoadingSpinner message="Loading Analytics..." subtitle="Analyzing your business data" fullScreen={true} />;
   }
 
@@ -423,47 +282,12 @@ export default function Analytics() {
     <ProtectedPage module="dashboard">
     <div className="space-y-6">
       <PageHeader
-        title="Analytics & Reports"
-        subtitle="Comprehensive business insights, HR analytics, and reports"
-        icon={<BarChart3 className="w-6 h-6" />}
+        title="HR Analytics"
+        subtitle="Employee performance, skills, and training insights"
+        icon={<Users className="w-6 h-6" />}
       />
 
-      {/* Main Navigation Tabs */}
-      <Tabs value={mainTab} onValueChange={setMainTab}>
-        <TabsList className="grid grid-cols-4 w-full max-w-2xl">
-          <TabsTrigger value="overview" className="gap-2 data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#1EB053] data-[state=active]:to-[#0072C6] data-[state=active]:text-white">
-            <BarChart3 className="w-4 h-4" />
-            <span className="hidden sm:inline">Overview</span>
-          </TabsTrigger>
-          <TabsTrigger value="hr" className="gap-2 data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#1EB053] data-[state=active]:to-[#0072C6] data-[state=active]:text-white">
-            <Users className="w-4 h-4" />
-            <span className="hidden sm:inline">HR Analytics</span>
-          </TabsTrigger>
-          <TabsTrigger value="reports" className="gap-2 data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#1EB053] data-[state=active]:to-[#0072C6] data-[state=active]:text-white">
-            <FileText className="w-4 h-4" />
-            <span className="hidden sm:inline">Reports</span>
-          </TabsTrigger>
-          <TabsTrigger value="saved" className="gap-2 data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#1EB053] data-[state=active]:to-[#0072C6] data-[state=active]:text-white">
-            <Save className="w-4 h-4" />
-            <span className="hidden sm:inline">Saved</span>
-          </TabsTrigger>
-        </TabsList>
-
-        {/* Overview Tab - Business Analytics */}
-        <TabsContent value="overview" className="mt-6">
-          <AnalyticsDashboard
-            sales={sales}
-            expenses={expenses}
-            products={products}
-            employees={employees}
-            trips={trips}
-            truckContracts={truckContracts}
-            maintenanceRecords={maintenanceRecords}
-          />
-        </TabsContent>
-
-        {/* HR Analytics Tab */}
-        <TabsContent value="hr" className="mt-6 space-y-6">
+      <div className="space-y-6">
           {/* HR Filters */}
           <Card>
             <CardContent className="p-4">
@@ -706,138 +530,7 @@ export default function Analytics() {
               </div>
             </TabsContent>
           </Tabs>
-        </TabsContent>
-
-        {/* Reports Tab */}
-        <TabsContent value="reports" className="mt-6 space-y-6">
-          {/* Report Controls */}
-          <Card>
-            <CardContent className="p-4">
-              <div className="flex flex-wrap items-center justify-between gap-4">
-                <div className="flex flex-wrap items-center gap-4">
-                  <div className="flex items-center gap-2">
-                    <Calendar className="w-4 h-4 text-gray-500" />
-                    <span className="text-sm font-medium">Period:</span>
-                  </div>
-                  <Select value={reportDateRange} onValueChange={setReportDateRange}>
-                    <SelectTrigger className="w-40">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="today">Today</SelectItem>
-                      <SelectItem value="yesterday">Yesterday</SelectItem>
-                      <SelectItem value="this_week">This Week</SelectItem>
-                      <SelectItem value="last_week">Last Week</SelectItem>
-                      <SelectItem value="this_month">This Month</SelectItem>
-                      <SelectItem value="last_month">Last Month</SelectItem>
-                      <SelectItem value="this_quarter">This Quarter</SelectItem>
-                      <SelectItem value="this_year">This Year</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="flex flex-wrap items-center gap-2">
-                  <Button variant="outline" size="sm" onClick={() => setShowCharts(!showCharts)}>
-                    {showCharts ? <EyeOff className="w-4 h-4 mr-1" /> : <Eye className="w-4 h-4 mr-1" />}
-                    {showCharts ? 'Hide Charts' : 'Show Charts'}
-                  </Button>
-                  <Button variant="outline" size="sm" onClick={() => setShowSaveDialog(true)}>
-                    <Save className="w-4 h-4 mr-1" />
-                    Save
-                  </Button>
-                  <Button variant="outline" size="sm" onClick={handleExportCSV}>
-                    <FileSpreadsheet className="w-4 h-4 mr-1" />
-                    CSV
-                  </Button>
-                  <Button size="sm" onClick={handlePrint} className="bg-[#1EB053]">
-                    <Printer className="w-4 h-4 mr-1" />
-                    Print
-                  </Button>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Report Type Tabs */}
-          <Tabs value={reportTab} onValueChange={setReportTab}>
-            <TabsList className="bg-gray-100 p-1">
-              <TabsTrigger value="sales" className="gap-1 data-[state=active]:bg-white">
-                <ShoppingCart className="w-4 h-4" />
-                Sales
-              </TabsTrigger>
-              <TabsTrigger value="expenses" className="gap-1 data-[state=active]:bg-white">
-                <DollarSign className="w-4 h-4" />
-                Expenses
-              </TabsTrigger>
-              <TabsTrigger value="transport" className="gap-1 data-[state=active]:bg-white">
-                <Truck className="w-4 h-4" />
-                Transport
-              </TabsTrigger>
-              <TabsTrigger value="inventory" className="gap-1 data-[state=active]:bg-white">
-                <Package className="w-4 h-4" />
-                Inventory
-              </TabsTrigger>
-            </TabsList>
-
-            <TabsContent value="sales" className="mt-4 space-y-4">
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                <StatCard title="Total Revenue" value={`SLE ${salesMetrics.totalRevenue.toLocaleString()}`} icon={DollarSign} color="green" />
-                <StatCard title="Total Sales" value={salesMetrics.count} icon={ShoppingCart} color="blue" />
-                <StatCard title="Avg Sale" value={`SLE ${salesMetrics.avgSale.toLocaleString()}`} icon={TrendingUp} color="gold" />
-              </div>
-              {showCharts && <SalesCharts sales={filteredSales} />}
-            </TabsContent>
-
-            <TabsContent value="expenses" className="mt-4 space-y-4">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <StatCard title="Total Expenses" value={`SLE ${expenseMetrics.totalExpenses.toLocaleString()}`} icon={DollarSign} color="red" />
-                <StatCard title="Expense Count" value={expenseMetrics.count} icon={FileText} color="blue" />
-              </div>
-              {showCharts && <ExpenseCharts expenses={filteredExpenses} />}
-            </TabsContent>
-
-            <TabsContent value="transport" className="mt-4 space-y-4">
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                <StatCard title="Trip Revenue" value={`SLE ${transportMetrics.totalRevenue.toLocaleString()}`} icon={DollarSign} color="green" />
-                <StatCard title="Total Trips" value={transportMetrics.count} icon={Truck} color="blue" />
-                <StatCard title="Fuel Costs" value={`SLE ${transportMetrics.totalFuel.toLocaleString()}`} icon={TrendingDown} color="red" />
-              </div>
-              {showCharts && <TransportCharts trips={filteredTrips} />}
-            </TabsContent>
-
-            <TabsContent value="inventory" className="mt-4 space-y-4">
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                <StatCard title="Total Products" value={inventoryMetrics.totalProducts} icon={Package} color="blue" />
-                <StatCard title="Total Stock" value={inventoryMetrics.totalStock.toLocaleString()} icon={Package} color="green" />
-                <StatCard title="Low Stock Items" value={inventoryMetrics.lowStock} icon={TrendingDown} color="red" />
-              </div>
-            </TabsContent>
-          </Tabs>
-        </TabsContent>
-
-        {/* Saved Reports Tab */}
-        <TabsContent value="saved" className="mt-6">
-          <SavedReportsManager 
-            orgId={orgId} 
-            onLoadReport={(report) => {
-              if (report.report_type) {
-                setReportTab(report.report_type);
-                setMainTab("reports");
-              }
-            }}
-          />
-        </TabsContent>
-      </Tabs>
-
-      {/* Save Report Dialog */}
-      <SaveReportDialog
-        open={showSaveDialog}
-        onOpenChange={setShowSaveDialog}
-        orgId={orgId}
-        currentEmployeeId={currentEmployee?.id}
-        currentEmployeeName={currentEmployee?.full_name}
-        filters={{ dateRange: reportDateRange }}
-        reportType={reportTab}
-      />
+      </div>
     </div>
     </ProtectedPage>
   );
