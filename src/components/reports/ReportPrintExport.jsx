@@ -285,14 +285,16 @@ export function printProfitLossReport({ profitLoss = {}, salesAnalytics = {}, tr
   ];
 
   const revenueBreakdown = {
-    'Sales Revenue': salesAnalytics.totalRevenue || 0,
-    'Transport Revenue': transportAnalytics.totalRevenue || 0
+    'Sales Revenue': sales.totalRevenue || 0,
+    'Transport Revenue': transport.totalRevenue || 0
   };
 
   const expenseBreakdown = {};
-  expenseAnalytics.byCategory?.forEach(c => {
-    const name = c.name.replace(/_/g, ' ').split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
-    expenseBreakdown[name] = c.value;
+  (expenses.byCategory || []).forEach(c => {
+    if (c?.name) {
+      const name = c.name.replace(/_/g, ' ').split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+      expenseBreakdown[name] = c.value || 0;
+    }
   });
 
   const sections = [
