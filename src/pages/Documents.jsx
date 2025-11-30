@@ -33,7 +33,7 @@ import {
   FileText, Plus, Search, Filter, MoreVertical, 
   Eye, Send, Trash2, Clock, CheckCircle2, XCircle,
   AlertCircle, Download, Mail, Users, FileCheck,
-  FilePlus, Settings, Bell, Loader2
+  FilePlus, Settings, Bell, Loader2, LayoutTemplate
 } from "lucide-react";
 import { format } from "date-fns";
 import PageHeader from "@/components/ui/PageHeader";
@@ -42,6 +42,7 @@ import CreateDocumentDialog from "@/components/documents/CreateDocumentDialog";
 import DocumentSignatureDialog from "@/components/documents/DocumentSignatureDialog";
 import DocumentViewer from "@/components/documents/DocumentViewer";
 import { DOCUMENT_TYPE_INFO, DEFAULT_TEMPLATES } from "@/components/documents/DocumentTemplates";
+import TemplateManager from "@/components/documents/TemplateManager";
 
 
 const STATUS_CONFIG = {
@@ -55,6 +56,7 @@ const STATUS_CONFIG = {
 
 export default function Documents() {
   const queryClient = useQueryClient();
+  const [mainView, setMainView] = useState("documents"); // "documents" or "templates"
   const [activeTab, setActiveTab] = useState("all");
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
@@ -237,7 +239,35 @@ export default function Documents() {
         subtitle="Manage employment contracts, policies, and other HR documents"
         action={() => setShowCreateDialog(true)}
         actionLabel="Create Document"
-      />
+      >
+        {isAdmin && (
+          <div className="flex gap-2">
+            <Button
+              variant={mainView === "documents" ? "default" : "outline"}
+              size="sm"
+              onClick={() => setMainView("documents")}
+              className={mainView === "documents" ? "bg-[#0F1F3C]" : ""}
+            >
+              <FileText className="w-4 h-4 mr-2" />
+              Documents
+            </Button>
+            <Button
+              variant={mainView === "templates" ? "default" : "outline"}
+              size="sm"
+              onClick={() => setMainView("templates")}
+              className={mainView === "templates" ? "bg-[#0F1F3C]" : ""}
+            >
+              <LayoutTemplate className="w-4 h-4 mr-2" />
+              Templates
+            </Button>
+          </div>
+        )}
+      </PageHeader>
+
+      {mainView === "templates" && isAdmin ? (
+        <TemplateManager orgId={orgId} currentEmployee={currentEmployee} />
+      ) : (
+        <>
 
       {/* Pending documents alert */}
       {myPendingDocs.length > 0 && (
@@ -502,6 +532,8 @@ export default function Documents() {
           )}
         </CardContent>
       </Card>
+      </>
+      )}
 
       {/* Dialogs */}
       <CreateDocumentDialog
