@@ -1286,30 +1286,80 @@ export const DEFAULT_TEMPLATES = {
   </div>
 
   <div class="sl-section">
-    <h2>Details of Violation</h2>
-    <p><strong>Date of Incident:</strong> {{incident_date}}</p>
-    <p><strong>Description:</strong></p>
+    <h2>Details of Incident/Violation</h2>
+    <div class="sl-info-grid">
+      <div class="sl-info-item">
+        <label>Date of Incident</label>
+        <span>{{incident_date}}</span>
+      </div>
+      <div class="sl-info-item">
+        <label>Time of Incident</label>
+        <span>{{incident_time}}</span>
+      </div>
+      <div class="sl-info-item">
+        <label>Location</label>
+        <span>{{incident_location}}</span>
+      </div>
+      <div class="sl-info-item">
+        <label>Witnesses Present</label>
+        <span>{{witnesses}}</span>
+      </div>
+    </div>
+    <p><strong>Description of Incident:</strong></p>
     <p>{{incident_description}}</p>
   </div>
 
   <div class="sl-section">
-    <h2>Policy Violated</h2>
-    <p>{{policy_violated}}</p>
+    <h2>Policy/Rule Violated</h2>
+    <p>Your conduct has been found to be in violation of:</p>
+    <p><strong>{{policy_violated}}</strong></p>
+    <p>This violation is considered a breach of the terms of your employment and the standards of conduct expected of all employees at {{company_name}}.</p>
+  </div>
+
+  <div class="sl-section">
+    <h2>Previous Warnings (If Applicable)</h2>
+    <p>{{previous_warnings}}</p>
   </div>
 
   <div class="sl-section">
     <h2>Required Corrective Action</h2>
+    <p>You are required to take the following corrective actions immediately:</p>
     <p>{{corrective_action}}</p>
+    <p>You must demonstrate sustained improvement in your conduct/performance. Failure to do so will result in further disciplinary action.</p>
+  </div>
+
+  <div class="sl-section">
+    <h2>Support Offered</h2>
+    <p>To help you improve, the following support is being offered:</p>
+    <ul>
+      <li>Meeting with your supervisor to discuss expectations</li>
+      <li>Additional training if required</li>
+      <li>Regular check-ins to monitor progress</li>
+      <li>Access to HR for guidance</li>
+    </ul>
   </div>
 
   <div class="sl-section">
     <h2>Consequences of Further Violations</h2>
-    <p>Please be advised that any further violations of company policies may result in additional disciplinary action, including but not limited to:</p>
+    <p>This is a formal <strong>{{warning_level}} Warning</strong>. Please be clearly advised that any further violations of company policies, rules, or standards of conduct may result in escalated disciplinary action, which may include but is not limited to:</p>
     <ul>
-      <li>Additional written warnings</li>
-      <li>Suspension from duties</li>
-      <li>Termination of employment</li>
+      <li><strong>Second Written Warning:</strong> For continued violations after a first warning</li>
+      <li><strong>Final Written Warning:</strong> Issued before potential termination</li>
+      <li><strong>Suspension Without Pay:</strong> Temporary removal from duties</li>
+      <li><strong>Demotion:</strong> Reduction in position or responsibilities</li>
+      <li><strong>Termination of Employment:</strong> Dismissal from the Company</li>
     </ul>
+    <p>Any gross misconduct, as defined in Section 91 of the Employment Act 2023, may result in immediate dismissal without prior warning.</p>
+  </div>
+
+  <div class="sl-section">
+    <h2>Right of Appeal</h2>
+    <p>You have the right to appeal this warning within <strong>5 working days</strong> of receiving this letter. Appeals must be submitted in writing to {{appeal_authority}}, stating the grounds for your appeal. You may be accompanied by a colleague or union representative during any appeal meeting.</p>
+  </div>
+
+  <div class="sl-section">
+    <h2>Warning Validity</h2>
+    <p>This warning will remain on your personnel file for a period of <strong>{{warning_validity}}</strong>. After this period, if no further issues arise, it will be considered spent for future disciplinary purposes, although the record will be retained.</p>
   </div>
 
   <div class="sl-acknowledgment">
@@ -1353,9 +1403,15 @@ export const DEFAULT_TEMPLATES = {
       { key: "warning_type", label: "Warning Type", type: "select", options: ["Attendance", "Performance", "Conduct", "Policy Violation", "Other"], default: "Conduct" },
       { key: "warning_level", label: "Warning Level", type: "select", options: ["First", "Second", "Final"], default: "First" },
       { key: "incident_date", label: "Incident Date", type: "date" },
-      { key: "incident_description", label: "Description", type: "text", default: "Employee violated company policy as detailed below." },
-      { key: "policy_violated", label: "Policy Violated", type: "text", default: "Employee Code of Conduct" },
-      { key: "corrective_action", label: "Corrective Action", type: "text", default: "Employee must adhere to company policies going forward." },
+      { key: "incident_time", label: "Incident Time", type: "text", default: "During working hours" },
+      { key: "incident_location", label: "Incident Location", type: "text", default: "Company premises" },
+      { key: "witnesses", label: "Witnesses", type: "text", default: "As documented in investigation report" },
+      { key: "incident_description", label: "Description", type: "text", default: "The employee's conduct was found to be in violation of company policy as detailed in the investigation report and discussed during the disciplinary meeting." },
+      { key: "policy_violated", label: "Policy Violated", type: "text", default: "Employee Code of Conduct - Section 2: Workplace Behavior" },
+      { key: "previous_warnings", label: "Previous Warnings", type: "text", default: "No previous warnings on file" },
+      { key: "corrective_action", label: "Corrective Action", type: "text", default: "1. Immediately cease the behavior in question. 2. Attend a meeting with your supervisor to review expectations. 3. Demonstrate consistent compliance with company policies going forward." },
+      { key: "appeal_authority", label: "Appeal Authority", type: "text", default: "Human Resources Director" },
+      { key: "warning_validity", label: "Warning Validity", type: "select", options: ["6 months", "12 months", "18 months", "24 months"], default: "12 months" },
       { key: "issuing_manager", label: "Issuing Manager", type: "text", default: "HR Manager" },
       { key: "issuing_manager_title", label: "Manager Title", type: "text", default: "Human Resources" }
     ]
@@ -1404,29 +1460,56 @@ export const DEFAULT_TEMPLATES = {
   </div>
 
   <div class="sl-section">
-    <h2>Revised Compensation</h2>
-    <div class="sl-info-grid">
-      <div class="sl-info-item">
-        <label>New Monthly Salary</label>
-        <span>SLE {{new_salary}}</span>
-      </div>
-      <div class="sl-info-item">
-        <label>Reports To</label>
-        <span>{{reports_to}}</span>
+    <h2>Revised Compensation Package</h2>
+    <div class="sl-highlight-box" style="background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%); border-color: #059669;">
+      <h3 style="color: #059669;">💰 Your New Compensation</h3>
+      <div class="sl-info-grid">
+        <div class="sl-info-item" style="border-left-color: #059669;">
+          <label>Previous Salary</label>
+          <span>SLE {{previous_salary}}</span>
+        </div>
+        <div class="sl-info-item" style="border-left-color: #059669;">
+          <label>New Monthly Salary</label>
+          <span>SLE {{new_salary}}</span>
+        </div>
+        <div class="sl-info-item" style="border-left-color: #059669;">
+          <label>Salary Increase</label>
+          <span>{{salary_increase_percentage}}%</span>
+        </div>
+        <div class="sl-info-item" style="border-left-color: #059669;">
+          <label>Reports To</label>
+          <span>{{reports_to}}</span>
+        </div>
       </div>
     </div>
+    <p><strong>Additional Benefits:</strong></p>
     <p>{{additional_benefits}}</p>
+    <p>All statutory deductions (NASSIT 5%, PAYE as applicable) will be calculated on your new salary. Your first payment at the new rate will be processed in the next payroll cycle after the effective date.</p>
   </div>
 
   <div class="sl-section">
     <h2>New Responsibilities</h2>
+    <p>Your new role will include the following key responsibilities:</p>
     <p>{{new_responsibilities}}</p>
+    <p>A detailed job description will be provided by your supervisor. You will receive appropriate training and support to help you succeed in your new role.</p>
   </div>
 
   <div class="sl-section">
-    <p>We have full confidence in your ability to excel in this new role. Your hard work and dedication have been instrumental in your growth, and we look forward to your continued success.</p>
-    <p>Please sign below to acknowledge receipt of this promotion letter and acceptance of your new role.</p>
-    <p>Congratulations on this well-deserved achievement!</p>
+    <h2>Terms of Promotion</h2>
+    <ul>
+      <li>All other terms and conditions of your employment remain unchanged unless otherwise specified</li>
+      <li>Your annual leave entitlement remains as per company policy</li>
+      <li>Notice period requirements remain as per your original employment contract</li>
+      <li>This promotion is subject to continued satisfactory performance</li>
+    </ul>
+  </div>
+
+  <div class="sl-section">
+    <h2>Message from Management</h2>
+    <p>Dear {{employee_name}},</p>
+    <p>We have full confidence in your ability to excel in this new role. Your hard work, dedication, and commitment to excellence have been instrumental in your growth within {{company_name}}. This promotion is a recognition of your valuable contributions to our organization.</p>
+    <p>We look forward to your continued success and the positive impact you will make in your new position. Your leadership and expertise will be invaluable as we continue to grow together.</p>
+    <p><strong>Congratulations on this well-deserved achievement!</strong></p>
   </div>
 
   <div class="sl-acknowledgment">
@@ -1467,10 +1550,12 @@ export const DEFAULT_TEMPLATES = {
       { key: "new_position", label: "New Position", type: "text" },
       { key: "department", label: "Department", type: "text", auto_fill: "employee.department" },
       { key: "effective_date", label: "Effective Date", type: "date", auto_fill: "today" },
+      { key: "previous_salary", label: "Previous Salary (SLE)", type: "number", auto_fill: "employee.base_salary" },
       { key: "new_salary", label: "New Salary (SLE)", type: "number" },
-      { key: "reports_to", label: "Reports To", type: "text", default: "Line Manager" },
-      { key: "additional_benefits", label: "Additional Benefits", type: "text", default: "As per company policy" },
-      { key: "new_responsibilities", label: "New Responsibilities", type: "text", default: "As per new role requirements" },
+      { key: "salary_increase_percentage", label: "Salary Increase %", type: "number", default: "15" },
+      { key: "reports_to", label: "Reports To", type: "text", default: "Department Head" },
+      { key: "additional_benefits", label: "Additional Benefits", type: "text", default: "Enhanced medical coverage, transportation allowance, and eligibility for management bonus scheme" },
+      { key: "new_responsibilities", label: "New Responsibilities", type: "text", default: "1. Lead and manage team members\n2. Develop and implement departmental strategies\n3. Report on key performance indicators\n4. Collaborate with senior management on organizational goals\n5. Mentor and develop junior staff members" },
       { key: "authorized_signatory", label: "Authorized Signatory", type: "text", default: "HR Manager" },
       { key: "signatory_title", label: "Signatory Title", type: "text", default: "Human Resources" },
       { key: "issue_date", label: "Issue Date", type: "date", auto_fill: "today" }
