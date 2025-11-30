@@ -25,7 +25,7 @@ import {
   FileText, Plus, Search, MoreVertical, Edit, Copy, Trash2,
   Lock, Users, Shield, FileSignature, Eye, Monitor, Heart,
   AlertTriangle, Calendar, Home, TrendingUp, XCircle, DollarSign,
-  Settings, CheckCircle2, Sparkles
+  Settings, CheckCircle2, Sparkles, History, Tag
 } from "lucide-react";
 import { format } from "date-fns";
 import { DOCUMENT_TYPE_INFO, DEFAULT_TEMPLATES, SL_DOCUMENT_STYLES } from "./DocumentTemplates";
@@ -338,9 +338,6 @@ export default function TemplateManager({ orgId, currentEmployee }) {
                                 <p className="text-xs text-gray-500 truncate">
                                   {DOCUMENT_TYPE_INFO[template.document_type]?.label || template.document_type}
                                 </p>
-                                {template.version > 1 && (
-                                  <Badge variant="outline" className="text-[10px] mt-1">v{template.version}</Badge>
-                                )}
                                 <div className="flex items-center gap-2 mt-2 flex-wrap">
                                   {template.is_system ? (
                                     <Badge variant="outline" className="text-[10px] bg-[#0072C6]/5 text-[#0072C6] border-[#0072C6]/20">
@@ -359,7 +356,28 @@ export default function TemplateManager({ orgId, currentEmployee }) {
                                       Signature
                                     </Badge>
                                   )}
+                                  {!template.is_system && template.version > 1 && (
+                                    <Badge variant="outline" className="text-[10px] bg-blue-50 text-blue-600 border-blue-200">
+                                      <History className="w-2.5 h-2.5 mr-1" />
+                                      v{template.version}
+                                    </Badge>
+                                  )}
                                 </div>
+                                {/* Tags */}
+                                {template.tags?.length > 0 && (
+                                  <div className="flex flex-wrap gap-1 mt-2">
+                                    {template.tags.slice(0, 3).map(tag => (
+                                      <Badge key={tag} variant="secondary" className="text-[9px] px-1.5 py-0">
+                                        {tag}
+                                      </Badge>
+                                    ))}
+                                    {template.tags.length > 3 && (
+                                      <Badge variant="secondary" className="text-[9px] px-1.5 py-0">
+                                        +{template.tags.length - 3}
+                                      </Badge>
+                                    )}
+                                  </div>
+                                )}
                               </div>
                             </div>
                             <DropdownMenu>
@@ -396,6 +414,16 @@ export default function TemplateManager({ orgId, currentEmployee }) {
                               </DropdownMenuContent>
                             </DropdownMenu>
                           </div>
+
+                          {/* Description preview */}
+                          {template.description && (
+                            <div className="mt-3 pt-3 border-t">
+                              <div 
+                                className="text-xs text-gray-500 line-clamp-2 [&_p]:m-0 [&_ul]:m-0 [&_ol]:m-0"
+                                dangerouslySetInnerHTML={{ __html: template.description }}
+                              />
+                            </div>
+                          )}
 
                           {/* Role permissions */}
                           {template.allowed_roles && template.allowed_roles.length > 0 && !template.allowed_roles.includes("all") && (
