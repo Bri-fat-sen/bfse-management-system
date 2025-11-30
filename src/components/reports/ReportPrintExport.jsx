@@ -57,11 +57,17 @@ export function printSalesReport({ salesAnalytics = {}, filters = {}, organisati
     });
   }
 
+  const startDate = filters.start_date ? new Date(filters.start_date) : new Date();
+  const endDate = filters.end_date ? new Date(filters.end_date) : new Date();
+  const dateRange = (startDate instanceof Date && !isNaN(startDate) && endDate instanceof Date && !isNaN(endDate))
+    ? `${format(startDate, 'MMMM d, yyyy')} - ${format(endDate, 'MMMM d, yyyy')}`
+    : `As of ${format(new Date(), 'MMMM d, yyyy')}`;
+
   const html = generateProfessionalReport({
     title: "Sales Report",
     subtitle: "Revenue and transaction summary",
     organisation,
-    dateRange: `${format(new Date(filters.start_date), 'MMMM d, yyyy')} - ${format(new Date(filters.end_date), 'MMMM d, yyyy')}`,
+    dateRange,
     summaryCards,
     sections,
     reportType: 'financial'
@@ -100,26 +106,35 @@ export function printExpenseReport({ expenseAnalytics = {}, filters = {}, organi
       table: {
         columns: ["Date", "Category", "Description", "Vendor", "Payment", "Status", "Amount (SLE)"],
         rows: [
-          ...filteredExpenses.slice(0, 100).map(e => [
-            format(new Date(e.date || e.created_date), 'MMM d, yyyy'),
+          ...filteredExpenses.slice(0, 100).map(e => {
+            const expDate = e.date || e.created_date;
+            const formattedDate = expDate ? format(new Date(expDate), 'MMM d, yyyy') : '-';
+            return [
+            formattedDate,
             (e.category || 'other').replace(/_/g, ' ').split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' '),
             e.description || '-',
             e.vendor || '-',
             (e.payment_method || 'cash').replace(/_/g, ' ').charAt(0).toUpperCase() + (e.payment_method || 'cash').replace(/_/g, ' ').slice(1),
             e.status || 'pending',
             `SLE ${(e.amount || 0).toLocaleString()}`
-          ]),
+          ]; }),
           ['GRAND TOTAL', '', '', '', '', '', `SLE ${(analytics.totalExpenses || 0).toLocaleString()}`]
         ]
       }
     }
   ];
 
+  const startDate = filters.start_date ? new Date(filters.start_date) : new Date();
+  const endDate = filters.end_date ? new Date(filters.end_date) : new Date();
+  const dateRange = (startDate instanceof Date && !isNaN(startDate) && endDate instanceof Date && !isNaN(endDate))
+    ? `${format(startDate, 'MMMM d, yyyy')} - ${format(endDate, 'MMMM d, yyyy')}`
+    : `As of ${format(new Date(), 'MMMM d, yyyy')}`;
+
   const html = generateProfessionalReport({
     title: "Expense Report",
     subtitle: "Expenditure summary and breakdown by category",
     organisation,
-    dateRange: `${format(new Date(filters.start_date), 'MMMM d, yyyy')} - ${format(new Date(filters.end_date), 'MMMM d, yyyy')}`,
+    dateRange,
     summaryCards,
     sections,
     reportType: 'financial'
@@ -157,8 +172,11 @@ export function printTransportReport({ transportAnalytics = {}, filters = {}, or
       table: {
         columns: ["Date", "Route", "Vehicle", "Driver", "Passengers", "Revenue", "Fuel Cost", "Net (SLE)"],
         rows: [
-          ...filteredTrips.slice(0, 100).map(t => [
-            format(new Date(t.date || t.created_date), 'MMM d, yyyy'),
+          ...filteredTrips.slice(0, 100).map(t => {
+            const tripDate = t.date || t.created_date;
+            const formattedDate = tripDate ? format(new Date(tripDate), 'MMM d, yyyy') : '-';
+            return [
+            formattedDate,
             t.route_name || '-',
             t.vehicle_registration || '-',
             t.driver_name || '-',
@@ -166,7 +184,7 @@ export function printTransportReport({ transportAnalytics = {}, filters = {}, or
             `SLE ${(t.total_revenue || 0).toLocaleString()}`,
             `SLE ${(t.fuel_cost || 0).toLocaleString()}`,
             `SLE ${(t.net_revenue || 0).toLocaleString()}`
-          ]),
+          ]; }),
           ['GRAND TOTAL', '', '', '', 
             analytics.totalPassengers || 0,
             `SLE ${(analytics.totalRevenue || 0).toLocaleString()}`,
@@ -178,11 +196,17 @@ export function printTransportReport({ transportAnalytics = {}, filters = {}, or
     }
   ];
 
+  const startDate = filters.start_date ? new Date(filters.start_date) : new Date();
+  const endDate = filters.end_date ? new Date(filters.end_date) : new Date();
+  const dateRange = (startDate instanceof Date && !isNaN(startDate) && endDate instanceof Date && !isNaN(endDate))
+    ? `${format(startDate, 'MMMM d, yyyy')} - ${format(endDate, 'MMMM d, yyyy')}`
+    : `As of ${format(new Date(), 'MMMM d, yyyy')}`;
+
   const html = generateProfessionalReport({
     title: "Transport Report",
     subtitle: "Trip revenue, fuel costs, and route performance",
     organisation,
-    dateRange: `${format(new Date(filters.start_date), 'MMMM d, yyyy')} - ${format(new Date(filters.end_date), 'MMMM d, yyyy')}`,
+    dateRange,
     summaryCards,
     sections,
     reportType: 'standard'
@@ -338,11 +362,17 @@ export function printProfitLossReport({ profitLoss = {}, salesAnalytics = {}, tr
     }
   ];
 
+  const startDate = filters.start_date ? new Date(filters.start_date) : new Date();
+  const endDate = filters.end_date ? new Date(filters.end_date) : new Date();
+  const dateRange = (startDate instanceof Date && !isNaN(startDate) && endDate instanceof Date && !isNaN(endDate))
+    ? `${format(startDate, 'MMMM d, yyyy')} - ${format(endDate, 'MMMM d, yyyy')}`
+    : `As of ${format(new Date(), 'MMMM d, yyyy')}`;
+
   const html = generateProfessionalReport({
     title: "Profit & Loss Statement",
     subtitle: "Financial performance summary",
     organisation,
-    dateRange: `${format(new Date(filters.start_date), 'MMMM d, yyyy')} - ${format(new Date(filters.end_date), 'MMMM d, yyyy')}`,
+    dateRange,
     summaryCards,
     sections,
     reportType: 'financial'
