@@ -103,6 +103,23 @@ export default function Documents() {
   // Moved AFTER all hooks to avoid conditional hook issues
   const isAdmin = ['super_admin', 'org_admin', 'hr_admin'].includes(currentEmployee?.role) || user?.role === 'admin';
 
+  // Fetch custom templates
+  const { data: customTemplates = [] } = useQuery({
+    queryKey: ['documentTemplates', orgId],
+    queryFn: () => base44.entities.DocumentTemplate.filter({ organisation_id: orgId, is_active: true }),
+    enabled: !!orgId,
+  });
+
+  // Combine all templates for AI assistant
+  const allTemplates = useMemo(() => [
+    ...customTemplates,
+    ...Object.entries(DEFAULT_TEMPLATES).map(([key, tmpl]) => ({
+      id: key,
+      document_type: key,
+      ...tmpl
+    }))
+  ], [customTemplates]);
+
   // Fetch documents - for admins without employee record, fetch all org docs
   const { data: documents = [], isLoading } = useQuery({
     queryKey: ['employeeDocuments', orgId, currentEmployee?.id, isAdmin],
