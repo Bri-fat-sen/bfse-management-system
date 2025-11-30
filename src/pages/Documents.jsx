@@ -202,27 +202,23 @@ export default function Documents() {
       <PageHeader
         title="HR Documents"
         subtitle="Manage employment contracts, policies, and other HR documents"
-        icon={FileText}
-        actions={
-          <div className="flex gap-2">
-            <Button 
-              variant="outline"
-              onClick={() => setShowGenerateDialog(true)}
-              className="border-[#1EB053] text-[#1EB053] hover:bg-[#1EB053]/10"
-            >
-              <Sparkles className="w-4 h-4 mr-2" />
-              Generate SL Required Docs
-            </Button>
-            <Button 
-              onClick={() => setShowCreateDialog(true)}
-              className="bg-gradient-to-r from-[#1EB053] to-[#0072C6]"
-            >
-              <Plus className="w-4 h-4 mr-2" />
-              Create Document
-            </Button>
-          </div>
-        }
-      />
+      >
+        <Button 
+          variant="outline"
+          onClick={() => setShowGenerateDialog(true)}
+          className="border-[#1EB053] text-[#1EB053] hover:bg-[#1EB053]/10"
+        >
+          <Sparkles className="w-4 h-4 mr-2" />
+          Generate SL Required Docs
+        </Button>
+        <Button 
+          onClick={() => setShowCreateDialog(true)}
+          className="bg-gradient-to-r from-[#1EB053] to-[#0072C6]"
+        >
+          <Plus className="w-4 h-4 mr-2" />
+          Create Document
+        </Button>
+      </PageHeader>
 
       {/* Pending documents alert */}
       {myPendingDocs.length > 0 && (
