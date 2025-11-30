@@ -483,10 +483,12 @@ export default function ConsolidatedReportPrint({
     // Take first 4 summary cards for the main summary
     const mainSummaryCards = allSummaryCards.slice(0, 4);
 
+    const orgName = organisation?.name || 'Business Report';
+    
     const html = generateProfessionalReport({
-      title: "Consolidated Business Report",
+      title: `${orgName} - Consolidated Report`,
       subtitle: `Comprehensive report covering ${reportsToInclude.length} areas`,
-      organisation,
+      organisation: organisation || {},
       dateRange: dateLabel,
       summaryCards: mainSummaryCards,
       sections: allSections,
