@@ -4,17 +4,20 @@ import { generateExportHTML, printDocument, exportToCSV } from "@/components/exp
 import { generateProfessionalReport, printProfessionalReport } from "@/components/exports/ProfessionalReportExport";
 
 export function printSalesReport({ salesAnalytics = {}, filters = {}, organisation, filteredSales = [] }) {
+  const analytics = salesAnalytics || {};
   const summaryCards = [
-    { label: "Total Revenue", value: `SLE ${(salesAnalytics?.totalRevenue || 0).toLocaleString()}`, subtext: 'Gross sales revenue' },
-    { label: "Transactions", value: salesAnalytics.totalTransactions || 0, subtext: 'Total orders' },
-    { label: "Avg Transaction", value: `SLE ${Math.round(salesAnalytics.avgTransaction || 0).toLocaleString()}`, subtext: 'Per order' },
-    { label: "Top Channel", value: salesAnalytics.byChannel?.[0]?.name || 'N/A', subtext: 'Best performer' }
+    { label: "Total Revenue", value: `SLE ${(analytics.totalRevenue || 0).toLocaleString()}`, subtext: 'Gross sales revenue' },
+    { label: "Transactions", value: analytics.totalTransactions || 0, subtext: 'Total orders' },
+    { label: "Avg Transaction", value: `SLE ${Math.round(analytics.avgTransaction || 0).toLocaleString()}`, subtext: 'Per order' },
+    { label: "Top Channel", value: analytics.byChannel?.[0]?.name || 'N/A', subtext: 'Best performer' }
   ];
 
   // Payment method breakdown
   const paymentBreakdown = {};
-  salesAnalytics.byPayment?.forEach(p => {
-    paymentBreakdown[p.name.charAt(0).toUpperCase() + p.name.slice(1)] = p.value;
+  (analytics.byPayment || []).forEach(p => {
+    if (p?.name) {
+      paymentBreakdown[p.name.charAt(0).toUpperCase() + p.name.slice(1)] = p.value || 0;
+    }
   });
 
   const sections = [
@@ -30,7 +33,7 @@ export function printSalesReport({ salesAnalytics = {}, filters = {}, organisati
         columns: ["Date", "Sale #", "Customer", "Employee", "Payment", "Status", "Amount (SLE)"],
         rows: [
           ...filteredSales.slice(0, 100).map(s => [
-            format(new Date(s.created_date), 'MMM d, yyyy'),
+            s.created_date ? format(new Date(s.created_date), 'MMM d, yyyy') : '-',
             s.sale_number || '-',
             s.customer_name || 'Walk-in',
             s.employee_name || '-',
@@ -38,7 +41,7 @@ export function printSalesReport({ salesAnalytics = {}, filters = {}, organisati
             s.payment_status || 'paid',
             `SLE ${(s.total_amount || 0).toLocaleString()}`
           ]),
-          ['GRAND TOTAL', '', '', '', '', '', `SLE ${salesAnalytics.totalRevenue?.toLocaleString() || 0}`]
+          ['GRAND TOTAL', '', '', '', '', '', `SLE ${(analytics.totalRevenue || 0).toLocaleString()}`]
         ]
       }
     }
@@ -68,18 +71,21 @@ export function printSalesReport({ salesAnalytics = {}, filters = {}, organisati
 }
 
 export function printExpenseReport({ expenseAnalytics = {}, filters = {}, organisation, filteredExpenses = [] }) {
+  const analytics = expenseAnalytics || {};
   const summaryCards = [
-    { label: "Total Expenses", value: `SLE ${(expenseAnalytics?.totalExpenses || 0).toLocaleString()}`, subtext: 'All categories', highlight: 'red' },
-    { label: "Categories", value: expenseAnalytics.byCategory?.length || 0, subtext: 'Expense types' },
+    { label: "Total Expenses", value: `SLE ${(analytics.totalExpenses || 0).toLocaleString()}`, subtext: 'All categories', highlight: 'red' },
+    { label: "Categories", value: analytics.byCategory?.length || 0, subtext: 'Expense types' },
     { label: "Records", value: filteredExpenses.length, subtext: 'Total entries' },
-    { label: "Highest Category", value: expenseAnalytics.byCategory?.[0]?.name || 'N/A', subtext: 'Top expense' }
+    { label: "Highest Category", value: analytics.byCategory?.[0]?.name || 'N/A', subtext: 'Top expense' }
   ];
 
   // Category breakdown
   const categoryBreakdown = {};
-  expenseAnalytics.byCategory?.forEach(c => {
-    const name = c.name.replace(/_/g, ' ').split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
-    categoryBreakdown[name] = c.value;
+  (analytics.byCategory || []).forEach(c => {
+    if (c?.name) {
+      const name = c.name.replace(/_/g, ' ').split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+      categoryBreakdown[name] = c.value || 0;
+    }
   });
 
   const sections = [
@@ -103,7 +109,7 @@ export function printExpenseReport({ expenseAnalytics = {}, filters = {}, organi
             e.status || 'pending',
             `SLE ${(e.amount || 0).toLocaleString()}`
           ]),
-          ['GRAND TOTAL', '', '', '', '', '', `SLE ${expenseAnalytics.totalExpenses?.toLocaleString() || 0}`]
+          ['GRAND TOTAL', '', '', '', '', '', `SLE ${(analytics.totalExpenses || 0).toLocaleString()}`]
         ]
       }
     }
@@ -123,17 +129,20 @@ export function printExpenseReport({ expenseAnalytics = {}, filters = {}, organi
 }
 
 export function printTransportReport({ transportAnalytics = {}, filters = {}, organisation, filteredTrips = [] }) {
+  const analytics = transportAnalytics || {};
   const summaryCards = [
-    { label: "Total Revenue", value: `SLE ${(transportAnalytics?.totalRevenue || 0).toLocaleString()}`, subtext: 'Gross revenue' },
-    { label: "Total Trips", value: transportAnalytics.totalTrips || 0, subtext: 'Completed trips' },
-    { label: "Passengers", value: transportAnalytics.totalPassengers || 0, subtext: 'Total carried' },
-    { label: "Net Revenue", value: `SLE ${transportAnalytics.netRevenue?.toLocaleString() || 0}`, subtext: 'After fuel costs', highlight: transportAnalytics.netRevenue >= 0 ? 'green' : 'red' }
+    { label: "Total Revenue", value: `SLE ${(analytics.totalRevenue || 0).toLocaleString()}`, subtext: 'Gross revenue' },
+    { label: "Total Trips", value: analytics.totalTrips || 0, subtext: 'Completed trips' },
+    { label: "Passengers", value: analytics.totalPassengers || 0, subtext: 'Total carried' },
+    { label: "Net Revenue", value: `SLE ${(analytics.netRevenue || 0).toLocaleString()}`, subtext: 'After fuel costs', highlight: (analytics.netRevenue || 0) >= 0 ? 'green' : 'red' }
   ];
 
   // Route breakdown
   const routeBreakdown = {};
-  transportAnalytics.byRoute?.forEach(r => {
-    routeBreakdown[r.name] = r.value;
+  (analytics.byRoute || []).forEach(r => {
+    if (r?.name) {
+      routeBreakdown[r.name] = r.value || 0;
+    }
   });
 
   const sections = [
@@ -159,10 +168,10 @@ export function printTransportReport({ transportAnalytics = {}, filters = {}, or
             `SLE ${(t.net_revenue || 0).toLocaleString()}`
           ]),
           ['GRAND TOTAL', '', '', '', 
-            transportAnalytics.totalPassengers || 0,
-            `SLE ${transportAnalytics.totalRevenue?.toLocaleString() || 0}`,
-            `SLE ${transportAnalytics.totalFuelCost?.toLocaleString() || 0}`,
-            `SLE ${transportAnalytics.netRevenue?.toLocaleString() || 0}`
+            analytics.totalPassengers || 0,
+            `SLE ${(analytics.totalRevenue || 0).toLocaleString()}`,
+            `SLE ${(analytics.totalFuelCost || 0).toLocaleString()}`,
+            `SLE ${(analytics.netRevenue || 0).toLocaleString()}`
           ]
         ]
       }
@@ -263,11 +272,16 @@ export function printInventoryReport({ products = [], organisation }) {
 }
 
 export function printProfitLossReport({ profitLoss = {}, salesAnalytics = {}, transportAnalytics = {}, expenseAnalytics = {}, filters = {}, organisation }) {
+  const pl = profitLoss || {};
+  const sales = salesAnalytics || {};
+  const transport = transportAnalytics || {};
+  const expenses = expenseAnalytics || {};
+  
   const summaryCards = [
-    { label: "Total Revenue", value: `SLE ${(profitLoss?.revenue || 0).toLocaleString()}`, subtext: 'All income sources' },
-    { label: "Total Expenses", value: `SLE ${profitLoss.expenses?.toLocaleString() || 0}`, subtext: 'All expenditures', highlight: 'red' },
-    { label: "Net Profit/Loss", value: `SLE ${profitLoss.profit?.toLocaleString() || 0}`, subtext: profitLoss.profit >= 0 ? 'Profitable ✓' : 'Operating at loss', highlight: profitLoss.profit >= 0 ? 'green' : 'red' },
-    { label: "Profit Margin", value: `${profitLoss.margin || 0}%`, subtext: 'Efficiency ratio' }
+    { label: "Total Revenue", value: `SLE ${(pl.revenue || 0).toLocaleString()}`, subtext: 'All income sources' },
+    { label: "Total Expenses", value: `SLE ${(pl.expenses || 0).toLocaleString()}`, subtext: 'All expenditures', highlight: 'red' },
+    { label: "Net Profit/Loss", value: `SLE ${(pl.profit || 0).toLocaleString()}`, subtext: (pl.profit || 0) >= 0 ? 'Profitable ✓' : 'Operating at loss', highlight: (pl.profit || 0) >= 0 ? 'green' : 'red' },
+    { label: "Profit Margin", value: `${pl.margin || 0}%`, subtext: 'Efficiency ratio' }
   ];
 
   const revenueBreakdown = {
@@ -298,25 +312,25 @@ export function printProfitLossReport({ profitLoss = {}, salesAnalytics = {}, tr
       table: {
         columns: ["Category", "Type", "Amount (SLE)"],
         rows: [
-          ["Sales Revenue", "Income", `SLE ${salesAnalytics.totalRevenue?.toLocaleString() || 0}`],
-          ["Transport Revenue", "Income", `SLE ${transportAnalytics.totalRevenue?.toLocaleString() || 0}`],
-          ...expenseAnalytics.byCategory?.map(c => [
-            c.name.replace(/_/g, ' ').split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' '),
+          ["Sales Revenue", "Income", `SLE ${(sales.totalRevenue || 0).toLocaleString()}`],
+          ["Transport Revenue", "Income", `SLE ${(transport.totalRevenue || 0).toLocaleString()}`],
+          ...(expenses.byCategory || []).map(c => [
+            (c?.name || 'Other').replace(/_/g, ' ').split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' '),
             "Expense",
-            `SLE ${c.value.toLocaleString()}`
-          ]) || [],
-          ["Total Revenue", "Subtotal", `SLE ${profitLoss.revenue?.toLocaleString() || 0}`],
-          ["Total Expenses", "Subtotal", `SLE ${profitLoss.expenses?.toLocaleString() || 0}`],
-          ["NET PROFIT/LOSS", "Total", `SLE ${profitLoss.profit?.toLocaleString() || 0}`]
+            `SLE ${(c?.value || 0).toLocaleString()}`
+          ]),
+          ["Total Revenue", "Subtotal", `SLE ${(pl.revenue || 0).toLocaleString()}`],
+          ["Total Expenses", "Subtotal", `SLE ${(pl.expenses || 0).toLocaleString()}`],
+          ["NET PROFIT/LOSS", "Total", `SLE ${(pl.profit || 0).toLocaleString()}`]
         ]
       }
     },
     {
       infoBox: {
-        type: profitLoss.profit >= 0 ? 'success' : 'warning',
-        title: profitLoss.profit >= 0 ? '✅ Profitability Analysis' : '⚠️ Profitability Alert',
-        content: profitLoss.profit >= 0 
-          ? `<p>Business is profitable with a <strong>${profitLoss.margin}%</strong> profit margin. Continue monitoring expenses to maintain healthy margins.</p>`
+        type: (pl.profit || 0) >= 0 ? 'success' : 'warning',
+        title: (pl.profit || 0) >= 0 ? '✅ Profitability Analysis' : '⚠️ Profitability Alert',
+        content: (pl.profit || 0) >= 0 
+          ? `<p>Business is profitable with a <strong>${pl.margin || 0}%</strong> profit margin. Continue monitoring expenses to maintain healthy margins.</p>`
           : `<p>Business is currently operating at a <strong>loss</strong>. Review expense categories and identify areas for cost reduction to improve profitability.</p>`
       }
     }
