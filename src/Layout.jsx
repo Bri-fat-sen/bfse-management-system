@@ -33,7 +33,8 @@ import {
   ChevronUp,
   Calendar,
   Lock,
-  AlertTriangle
+  AlertTriangle,
+  FileText
 } from "lucide-react";
 import PinLockScreen from "@/components/auth/PinLockScreen";
 import SetPinDialog from "@/components/auth/SetPinDialog";
