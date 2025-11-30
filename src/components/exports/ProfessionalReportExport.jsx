@@ -839,17 +839,10 @@ export const downloadProfessionalReportAsPDF = async (html, filename = 'report')
   // Set the document title for the PDF filename
   pdfWindow.document.title = filename;
   
-  // Wait for content and fonts to load, then trigger print
-  pdfWindow.onload = () => {
-    setTimeout(() => {
-      pdfWindow.print();
-    }, 600);
-  };
-  
-  // Fallback if onload doesn't fire
+  // Wait for content and fonts to load, then trigger print once
   setTimeout(() => {
     pdfWindow.print();
-  }, 800);
+  }, 500);
 };
 
 export const downloadProfessionalReport = (html, filename) => {
