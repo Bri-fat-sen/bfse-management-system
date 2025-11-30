@@ -255,40 +255,88 @@ export default function CreateDocumentDialog({
     setSending(false);
   };
 
+  const [employeeSearch, setEmployeeSearch] = useState("");
+  
+  const filteredActiveEmployees = activeEmployees.filter(emp => 
+    emp.full_name?.toLowerCase().includes(employeeSearch.toLowerCase()) ||
+    emp.position?.toLowerCase().includes(employeeSearch.toLowerCase()) ||
+    emp.department?.toLowerCase().includes(employeeSearch.toLowerCase())
+  );
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-4xl h-[85vh] overflow-hidden flex flex-col">
-        <DialogHeader>
-          <div className="flex h-1 w-16 rounded-full overflow-hidden mb-3">
-            <div className="flex-1 bg-[#1EB053]" />
-            <div className="flex-1 bg-white border-y border-gray-200" />
-            <div className="flex-1 bg-[#0072C6]" />
+      <DialogContent className="max-w-5xl h-[90vh] overflow-hidden flex flex-col p-0 gap-0 bg-gradient-to-br from-slate-50 to-white">
+        {/* Premium Header */}
+        <div className="relative overflow-hidden">
+          <div className="absolute inset-0 bg-gradient-to-r from-[#0F1F3C] via-[#1a3a6e] to-[#0F1F3C]" />
+          <div className="absolute inset-0 opacity-10">
+            <div className="absolute top-0 left-0 w-full h-full" style={{
+              backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.4'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`
+            }} />
           </div>
-          <DialogTitle className="flex items-center gap-2">
-            <FileText className="w-5 h-5 text-[#1EB053]" />
-            Create HR Document
-          </DialogTitle>
-        </DialogHeader>
-
-        {/* Steps indicator */}
-        <div className="flex items-center gap-2 py-4 border-b">
-          {[1, 2, 3].map((s) => (
-            <React.Fragment key={s}>
-              <div className={`flex items-center gap-2 ${step >= s ? 'text-[#1EB053]' : 'text-gray-400'}`}>
-                <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
-                  step > s ? 'bg-[#1EB053] text-white' : 
-                  step === s ? 'border-2 border-[#1EB053] text-[#1EB053]' : 
-                  'border-2 border-gray-300'
-                }`}>
-                  {step > s ? <CheckCircle2 className="w-5 h-5" /> : s}
-                </div>
-                <span className="text-sm font-medium hidden sm:inline">
-                  {s === 1 ? 'Select Type' : s === 2 ? 'Choose Recipients' : 'Review & Send'}
-                </span>
+          <div className="relative px-8 py-6">
+            <div className="flex items-center gap-4">
+              <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-[#1EB053] to-[#0072C6] flex items-center justify-center shadow-lg shadow-[#1EB053]/20">
+                <FileSignature className="w-7 h-7 text-white" />
               </div>
-              {s < 3 && <ChevronRight className="w-4 h-4 text-gray-400" />}
-            </React.Fragment>
-          ))}
+              <div>
+                <h2 className="text-2xl font-bold text-white flex items-center gap-2">
+                  Document Creator
+                  <Sparkles className="w-5 h-5 text-amber-400" />
+                </h2>
+                <p className="text-white/70 text-sm">Professional HR documents for your organization</p>
+              </div>
+            </div>
+            
+            {/* Flag stripe accent */}
+            <div className="absolute bottom-0 left-0 right-0 h-1 flex">
+              <div className="flex-1 bg-[#1EB053]" />
+              <div className="flex-1 bg-white" />
+              <div className="flex-1 bg-[#0072C6]" />
+            </div>
+          </div>
+        </div>
+
+        {/* Premium Steps Indicator */}
+        <div className="px-8 py-5 bg-white border-b">
+          <div className="flex items-center justify-between max-w-2xl mx-auto">
+            {[
+              { num: 1, label: 'Document Type', icon: FileText },
+              { num: 2, label: 'Recipients & Details', icon: Users },
+              { num: 3, label: 'Review & Send', icon: Send }
+            ].map((s, idx) => (
+              <React.Fragment key={s.num}>
+                <div className="flex flex-col items-center gap-2">
+                  <div className={`relative w-12 h-12 rounded-xl flex items-center justify-center transition-all duration-300 ${
+                    step > s.num 
+                      ? 'bg-gradient-to-br from-[#1EB053] to-[#15803d] text-white shadow-lg shadow-[#1EB053]/30' 
+                      : step === s.num 
+                        ? 'bg-gradient-to-br from-[#0072C6] to-[#0F1F3C] text-white shadow-lg shadow-[#0072C6]/30 ring-4 ring-[#0072C6]/20' 
+                        : 'bg-gray-100 text-gray-400'
+                  }`}>
+                    {step > s.num ? (
+                      <CheckCircle2 className="w-6 h-6" />
+                    ) : (
+                      <s.icon className="w-5 h-5" />
+                    )}
+                    {step === s.num && (
+                      <span className="absolute -top-1 -right-1 w-3 h-3 bg-amber-400 rounded-full animate-pulse" />
+                    )}
+                  </div>
+                  <span className={`text-xs font-medium transition-colors ${
+                    step >= s.num ? 'text-[#0F1F3C]' : 'text-gray-400'
+                  }`}>
+                    {s.label}
+                  </span>
+                </div>
+                {idx < 2 && (
+                  <div className={`flex-1 h-0.5 mx-4 rounded-full transition-colors ${
+                    step > s.num ? 'bg-gradient-to-r from-[#1EB053] to-[#0072C6]' : 'bg-gray-200'
+                  }`} />
+                )}
+              </React.Fragment>
+            ))}
+          </div>
         </div>
 
         <ScrollArea className="flex-1 min-h-0 pr-4">
