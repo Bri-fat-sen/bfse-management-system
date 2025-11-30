@@ -338,6 +338,9 @@ export default function TemplateManager({ orgId, currentEmployee }) {
                                 <p className="text-xs text-gray-500 truncate">
                                   {DOCUMENT_TYPE_INFO[template.document_type]?.label || template.document_type}
                                 </p>
+                                {template.version > 1 && (
+                                  <Badge variant="outline" className="text-[10px] mt-1">v{template.version}</Badge>
+                                )}
                                 <div className="flex items-center gap-2 mt-2 flex-wrap">
                                   {template.is_system ? (
                                     <Badge variant="outline" className="text-[10px] bg-[#0072C6]/5 text-[#0072C6] border-[#0072C6]/20">

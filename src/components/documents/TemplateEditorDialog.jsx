@@ -27,7 +27,7 @@ import { toast } from "sonner";
 import {
   FileText, Plus, Trash2, Loader2, Save, Eye, Code,
   Variable, Settings, Users, GripVertical, Sparkles, Wand2,
-  ChevronRight, Copy, FileSignature, CheckCircle2
+  ChevronRight, Copy, FileSignature, CheckCircle2, History, Tag, X
 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { DOCUMENT_TYPE_INFO, SL_DOCUMENT_STYLES, DEFAULT_TEMPLATES } from "./DocumentTemplates";
@@ -114,13 +114,16 @@ export default function TemplateEditorDialog({
   
   const [formData, setFormData] = useState({
     name: "",
+    description: "",
     document_type: "custom",
     category: "other",
     content: "",
     requires_signature: true,
     is_active: true,
     allowed_roles: [],
-    variables: []
+    variables: [],
+    tags: [],
+    change_notes: ""
   });
 
   const [previewContent, setPreviewContent] = useState("");
@@ -130,37 +133,46 @@ export default function TemplateEditorDialog({
     if (template) {
       setFormData({
         name: template.name || "",
+        description: template.description || "",
         document_type: template.document_type || "custom",
         category: template.category || "other",
         content: template.content || "",
         requires_signature: template.requires_signature !== false,
         is_active: template.is_active !== false,
         allowed_roles: template.allowed_roles || [],
-        variables: template.variables || []
+        variables: template.variables || [],
+        tags: template.tags || [],
+        change_notes: ""
       });
       setStep(2);
     } else if (duplicateFrom) {
       setFormData({
         name: `${duplicateFrom.name} (Copy)`,
+        description: duplicateFrom.description || "",
         document_type: duplicateFrom.document_type || "custom",
         category: duplicateFrom.category || "other",
         content: duplicateFrom.content || "",
         requires_signature: duplicateFrom.requires_signature !== false,
         is_active: true,
         allowed_roles: duplicateFrom.allowed_roles || [],
-        variables: duplicateFrom.variables || []
+        variables: duplicateFrom.variables || [],
+        tags: duplicateFrom.tags || [],
+        change_notes: ""
       });
       setStep(2);
     } else {
       setFormData({
         name: "",
+        description: "",
         document_type: "custom",
         category: "other",
         content: "",
         requires_signature: true,
         is_active: true,
         allowed_roles: [],
-        variables: []
+        variables: [],
+        tags: [],
+        change_notes: ""
       });
       setStep(1);
     }
@@ -184,7 +196,9 @@ export default function TemplateEditorDialog({
     mutationFn: (data) => base44.entities.DocumentTemplate.create({
       ...data,
       organisation_id: orgId,
-      last_updated_by: currentEmployee?.full_name
+      last_updated_by: currentEmployee?.full_name,
+      version: 1,
+      duplicated_from: duplicateFrom?.id || duplicateFrom?.document_type || null
     }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['documentTemplates'] });
@@ -197,11 +211,26 @@ export default function TemplateEditorDialog({
   });
 
   const updateMutation = useMutation({
-    mutationFn: (data) => base44.entities.DocumentTemplate.update(template.id, {
-      ...data,
-      last_updated_by: currentEmployee?.full_name,
-      version: (template.version || 1) + 1
-    }),
+    mutationFn: (data) => {
+      // Save current version to history before updating
+      const versionEntry = {
+        version: template.version || 1,
+        content: template.content,
+        variables: template.variables,
+        updated_by_id: currentEmployee?.id,
+        updated_by_name: currentEmployee?.full_name,
+        updated_at: new Date().toISOString(),
+        change_notes: formData.change_notes || "Updated template"
+      };
+      const existingHistory = template.version_history || [];
+      
+      return base44.entities.DocumentTemplate.update(template.id, {
+        ...data,
+        last_updated_by: currentEmployee?.full_name,
+        version: (template.version || 1) + 1,
+        version_history: [versionEntry, ...existingHistory].slice(0, 20) // Keep last 20 versions
+      });
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['documentTemplates'] });
       toast.success("Template updated successfully");
@@ -224,13 +253,15 @@ export default function TemplateEditorDialog({
 
     const data = {
       name: formData.name,
+      description: formData.description,
       document_type: formData.document_type,
       category: formData.category,
       content: formData.content,
       requires_signature: formData.requires_signature,
       is_active: formData.is_active,
       allowed_roles: formData.allowed_roles.length > 0 ? formData.allowed_roles : ["all"],
-      variables: formData.variables
+      variables: formData.variables,
+      tags: formData.tags
     };
 
     if (template && !duplicateFrom) {
@@ -493,6 +524,16 @@ export default function TemplateEditorDialog({
                   </div>
                 </div>
 
+                <div className="space-y-2">
+                  <Label>Description</Label>
+                  <Textarea
+                    value={formData.description}
+                    onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
+                    placeholder="Describe when and how this template should be used..."
+                    className="h-20"
+                  />
+                </div>
+
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label>Category</Label>
@@ -510,7 +551,32 @@ export default function TemplateEditorDialog({
                       </SelectContent>
                     </Select>
                   </div>
-                  <div className="space-y-4 pt-6">
+                  <div className="space-y-2">
+                    <Label>Tags</Label>
+                    <div className="flex flex-wrap gap-1 p-2 border rounded-md min-h-[40px] bg-white">
+                      {formData.tags.map((tag, i) => (
+                        <Badge key={i} variant="secondary" className="gap-1">
+                          {tag}
+                          <X className="w-3 h-3 cursor-pointer" onClick={() => setFormData(prev => ({ ...prev, tags: prev.tags.filter((_, idx) => idx !== i) }))} />
+                        </Badge>
+                      ))}
+                      <Input
+                        className="border-0 h-6 p-0 text-sm flex-1 min-w-[100px] focus-visible:ring-0"
+                        placeholder="Add tag..."
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter' && e.target.value.trim()) {
+                            e.preventDefault();
+                            setFormData(prev => ({ ...prev, tags: [...prev.tags, e.target.value.trim()] }));
+                            e.target.value = '';
+                          }
+                        }}
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-4 pt-2">
                     <div className="flex items-center justify-between">
                       <Label>Requires Signature</Label>
                       <Switch
@@ -526,7 +592,55 @@ export default function TemplateEditorDialog({
                       />
                     </div>
                   </div>
+                  {isEditing && (
+                    <div className="space-y-2">
+                      <Label>Change Notes (for version history)</Label>
+                      <Input
+                        value={formData.change_notes}
+                        onChange={(e) => setFormData(prev => ({ ...prev, change_notes: e.target.value }))}
+                        placeholder="What changed in this version?"
+                      />
+                    </div>
+                  )}
                 </div>
+
+                {/* Version Info */}
+                {template && (
+                  <div className="p-4 bg-gray-50 rounded-lg border">
+                    <div className="flex items-center gap-2 mb-2">
+                      <History className="w-4 h-4 text-gray-500" />
+                      <span className="font-medium text-sm">Version Information</span>
+                    </div>
+                    <div className="grid grid-cols-3 gap-4 text-sm">
+                      <div>
+                        <p className="text-gray-500">Current Version</p>
+                        <p className="font-medium">v{template.version || 1}</p>
+                      </div>
+                      <div>
+                        <p className="text-gray-500">Last Updated By</p>
+                        <p className="font-medium">{template.last_updated_by || 'Unknown'}</p>
+                      </div>
+                      <div>
+                        <p className="text-gray-500">History</p>
+                        <p className="font-medium">{(template.version_history || []).length} versions</p>
+                      </div>
+                    </div>
+                    {template.version_history?.length > 0 && (
+                      <div className="mt-3 pt-3 border-t">
+                        <p className="text-xs text-gray-500 mb-2">Recent Changes</p>
+                        <div className="space-y-1">
+                          {template.version_history.slice(0, 3).map((v, i) => (
+                            <div key={i} className="text-xs flex items-center gap-2">
+                              <Badge variant="outline" className="text-[10px]">v{v.version}</Badge>
+                              <span className="text-gray-600">{v.change_notes || 'No notes'}</span>
+                              <span className="text-gray-400 ml-auto">{v.updated_by_name}</span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
               </TabsContent>
 
               <TabsContent value="content" className="m-0">
