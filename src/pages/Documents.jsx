@@ -30,11 +30,11 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { toast } from "sonner";
 import { 
-  FileText, Plus, Search, Filter, MoreVertical, 
-  Eye, Send, Trash2, Clock, CheckCircle2, XCircle,
-  AlertCircle, Download, Mail, Users, FileCheck,
-  FilePlus, Settings, Bell, Loader2, LayoutTemplate
-} from "lucide-react";
+        FileText, Plus, Search, Filter, MoreVertical, 
+        Eye, Send, Trash2, Clock, CheckCircle2, XCircle,
+        AlertCircle, Download, Mail, Users, FileCheck,
+        FilePlus, Settings, Bell, Loader2, LayoutTemplate, Sparkles
+      } from "lucide-react";
 import { format } from "date-fns";
 import PageHeader from "@/components/ui/PageHeader";
 import LoadingSpinner from "@/components/ui/LoadingSpinner";
@@ -43,6 +43,7 @@ import DocumentSignatureDialog from "@/components/documents/DocumentSignatureDia
 import DocumentViewer from "@/components/documents/DocumentViewer";
 import { DOCUMENT_TYPE_INFO, DEFAULT_TEMPLATES } from "@/components/documents/DocumentTemplates";
 import TemplateManager from "@/components/documents/TemplateManager";
+import AIDocumentAssistant from "@/components/documents/AIDocumentAssistant";
 
 
 const STATUS_CONFIG = {
@@ -65,6 +66,7 @@ export default function Documents() {
   const [selectedDocument, setSelectedDocument] = useState(null);
   const [showSignDialog, setShowSignDialog] = useState(false);
   const [showViewer, setShowViewer] = useState(false);
+  const [showAIAssistant, setShowAIAssistant] = useState(false);
 
   // Fetch current user and employee
   const { data: user } = useQuery({
@@ -235,11 +237,20 @@ export default function Documents() {
   return (
     <div className="space-y-6">
       <PageHeader
-        title="HR Documents"
-        subtitle="Manage employment contracts, policies, and other HR documents"
-        action={() => setShowCreateDialog(true)}
-        actionLabel="Create Document"
-      >
+                title="HR Documents"
+                subtitle="Manage employment contracts, policies, and other HR documents"
+                action={() => setShowCreateDialog(true)}
+                actionLabel="Create Document"
+              >
+                {isAdmin && (
+                  <Button 
+                    onClick={() => setShowAIAssistant(true)}
+                    className="bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 mr-2"
+                  >
+                    <Sparkles className="w-4 h-4 mr-2" />
+                    AI Generate
+                  </Button>
+                )}
         {isAdmin && (
           <div className="flex gap-2">
             <Button
@@ -543,6 +554,17 @@ export default function Documents() {
         organisation={organisation}
         currentEmployee={currentEmployee}
         orgId={orgId}
+      />
+
+      <AIDocumentAssistant
+        open={showAIAssistant}
+        onOpenChange={setShowAIAssistant}
+        templates={allTemplates}
+        employees={allEmployees}
+        organisation={organisation}
+        currentEmployee={currentEmployee}
+        orgId={orgId}
+        onDocumentCreated={() => queryClient.invalidateQueries({ queryKey: ['employeeDocuments'] })}
       />
 
 
