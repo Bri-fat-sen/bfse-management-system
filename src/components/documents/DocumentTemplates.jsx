@@ -1322,6 +1322,780 @@ export const DEFAULT_TEMPLATES = {
       { key: "signatory_title", label: "Signatory Title", type: "text", default: "Human Resources" },
       { key: "issue_date", label: "Issue Date", type: "date", auto_fill: "today" }
     ]
+  },
+
+  it_acceptable_use: {
+    name: "IT Acceptable Use Policy",
+    content: `
+<div class="sl-document">
+  <div class="sl-watermark">IT POLICY</div>
+  <div class="sl-header">
+    <div class="sl-flag-bar"></div>
+    <div class="sl-company-logo">💻</div>
+    <h1>IT Acceptable Use Policy</h1>
+    <p class="sl-subtitle">{{company_name}} • Information Technology Guidelines</p>
+  </div>
+
+  <div class="sl-section">
+    <h2>1. Purpose</h2>
+    <p>This policy outlines the acceptable use of {{company_name}}'s information technology resources. All employees are responsible for using company IT resources in a professional, ethical, and lawful manner.</p>
+  </div>
+
+  <div class="sl-section">
+    <h2>2. Scope</h2>
+    <p>This policy applies to:</p>
+    <ul>
+      <li>All company-provided computers, laptops, tablets, and mobile devices</li>
+      <li>Company email systems and accounts</li>
+      <li>Internet access through company networks</li>
+      <li>Company software and applications</li>
+      <li>Company data and information systems</li>
+      <li>Personal devices used for work purposes (BYOD)</li>
+    </ul>
+  </div>
+
+  <div class="sl-section">
+    <h2>3. Acceptable Use</h2>
+    <p>Employees may use IT resources for:</p>
+    <ul>
+      <li>Performing assigned job duties and responsibilities</li>
+      <li>Professional development and training activities</li>
+      <li>Limited personal use that does not interfere with work</li>
+      <li>Authorized communications with clients and stakeholders</li>
+    </ul>
+  </div>
+
+  <div class="sl-section">
+    <h2>4. Prohibited Activities</h2>
+    <p>The following activities are strictly prohibited:</p>
+    <ul>
+      <li>Accessing, downloading, or sharing pornographic, offensive, or illegal content</li>
+      <li>Installing unauthorized software or applications</li>
+      <li>Sharing passwords or login credentials with others</li>
+      <li>Attempting to bypass security controls or access restricted systems</li>
+      <li>Using company resources for personal business or commercial activities</li>
+      <li>Downloading or distributing copyrighted materials illegally</li>
+      <li>Sending spam, chain letters, or malicious content</li>
+      <li>Using company systems to harass, threaten, or defame others</li>
+      <li>Connecting unauthorized devices to company networks</li>
+      <li>Disclosing confidential information through unsecured channels</li>
+    </ul>
+  </div>
+
+  <div class="sl-section">
+    <h2>5. Email & Communications</h2>
+    <ul>
+      <li>Use professional language in all business communications</li>
+      <li>Do not open suspicious emails or attachments</li>
+      <li>Report phishing attempts to IT department immediately</li>
+      <li>Company email is company property and may be monitored</li>
+      <li>Do not auto-forward company emails to personal accounts</li>
+    </ul>
+  </div>
+
+  <div class="sl-section">
+    <h2>6. Password & Security</h2>
+    <ul>
+      <li>Create strong passwords (minimum 8 characters, mix of letters, numbers, symbols)</li>
+      <li>Change passwords every {{password_change_days}} days</li>
+      <li>Never share your password with anyone</li>
+      <li>Lock your computer when away from your desk</li>
+      <li>Report lost or stolen devices immediately</li>
+    </ul>
+  </div>
+
+  <div class="sl-section">
+    <h2>7. Data Protection</h2>
+    <ul>
+      <li>Store sensitive data only on approved company systems</li>
+      <li>Do not save company data on personal devices without authorization</li>
+      <li>Use encryption when transferring sensitive information</li>
+      <li>Follow data backup procedures as directed</li>
+    </ul>
+  </div>
+
+  <div class="sl-section">
+    <h2>8. Social Media</h2>
+    <ul>
+      <li>Do not share confidential company information on social media</li>
+      <li>Clearly state that personal opinions are your own</li>
+      <li>Do not use company branding without authorization</li>
+      <li>Be professional when representing the company online</li>
+    </ul>
+  </div>
+
+  <div class="sl-section">
+    <h2>9. Monitoring</h2>
+    <p>{{company_name}} reserves the right to monitor all use of company IT resources to ensure compliance with this policy. This may include:</p>
+    <ul>
+      <li>Email and internet usage monitoring</li>
+      <li>Access logs and system activity</li>
+      <li>Security scans and audits</li>
+    </ul>
+    <p>Employees should have no expectation of privacy when using company IT resources.</p>
+  </div>
+
+  <div class="sl-section">
+    <h2>10. Consequences of Violations</h2>
+    <p>Violations of this policy may result in:</p>
+    <ul>
+      <li>Verbal or written warnings</li>
+      <li>Suspension or restriction of IT access</li>
+      <li>Disciplinary action up to and including termination</li>
+      <li>Legal action in cases of criminal activity</li>
+    </ul>
+  </div>
+
+  <div class="sl-acknowledgment">
+    <h2>Employee Acknowledgment</h2>
+    <p>I, <strong>{{employee_name}}</strong>, acknowledge that I have read, understood, and agree to comply with this IT Acceptable Use Policy. I understand that violation of this policy may result in disciplinary action.</p>
+  </div>
+
+  <div class="sl-signatures">
+    <div class="sl-signature-block" style="max-width: 350px; margin: 0 auto;">
+      <h4>Employee Signature</h4>
+      <p><strong>{{employee_name}}</strong></p>
+      <p>Date: <span class="sl-signature-date">{{signature_date}}</span></p>
+      <div class="sl-digital-signature">{{digital_signature}}</div>
+    </div>
+  </div>
+
+  <div class="sl-footer">
+    <div class="sl-flag-bar"></div>
+    <div class="sl-footer-logo">🇸🇱</div>
+    <p><strong>{{company_name}}</strong></p>
+    <p>Republic of Sierra Leone</p>
+  </div>
+</div>
+    `,
+    variables: [
+      { key: "company_name", label: "Company Name", type: "text", auto_fill: "organisation.name" },
+      { key: "employee_name", label: "Employee Name", type: "text", auto_fill: "employee.full_name" },
+      { key: "password_change_days", label: "Password Change (Days)", type: "select", options: ["30", "60", "90"], default: "90" }
+    ]
+  },
+
+  disciplinary_policy: {
+    name: "Disciplinary Policy",
+    content: `
+<div class="sl-document">
+  <div class="sl-watermark">POLICY</div>
+  <div class="sl-header">
+    <div class="sl-flag-bar"></div>
+    <div class="sl-company-logo" style="background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);">⚖️</div>
+    <h1>Disciplinary Policy & Procedures</h1>
+    <p class="sl-subtitle">{{company_name}} • In accordance with Employment Act 2023</p>
+  </div>
+
+  <div class="sl-section">
+    <h2>1. Purpose</h2>
+    <p>This policy establishes fair and consistent procedures for addressing employee misconduct and performance issues. It is designed to comply with the Employment Act 2023 of Sierra Leone and ensure all employees are treated fairly.</p>
+  </div>
+
+  <div class="sl-section">
+    <h2>2. Scope</h2>
+    <p>This policy applies to all employees of {{company_name}} regardless of position, tenure, or employment type.</p>
+  </div>
+
+  <div class="sl-section">
+    <h2>3. Types of Misconduct</h2>
+    <div class="sl-highlight-box" style="background: #fef2f2; border-color: #dc2626;">
+      <h3 style="color: #dc2626;">3.1 Minor Misconduct</h3>
+      <ul>
+        <li>Lateness or poor timekeeping</li>
+        <li>Unauthorized absence for short periods</li>
+        <li>Minor breach of company rules</li>
+        <li>Poor work performance</li>
+        <li>Inappropriate dress or behavior</li>
+      </ul>
+    </div>
+    <div class="sl-highlight-box" style="background: #fef2f2; border-color: #b91c1c; margin-top: 15px;">
+      <h3 style="color: #b91c1c;">3.2 Gross Misconduct (Per Section 91, Employment Act 2023)</h3>
+      <ul>
+        <li>Theft, fraud, or dishonesty</li>
+        <li>Physical violence or threats</li>
+        <li>Serious insubordination</li>
+        <li>Harassment or discrimination</li>
+        <li>Deliberate damage to company property</li>
+        <li>Being under the influence of alcohol/drugs at work</li>
+        <li>Serious breach of health and safety rules</li>
+        <li>Breach of confidentiality</li>
+        <li>Criminal conduct affecting employment</li>
+        <li>Falsification of records or documents</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="sl-section">
+    <h2>4. Disciplinary Stages</h2>
+    <div class="sl-info-grid">
+      <div class="sl-info-item" style="border-left-color: #fbbf24;">
+        <label>Stage 1</label>
+        <span>Verbal Warning</span>
+      </div>
+      <div class="sl-info-item" style="border-left-color: #f97316;">
+        <label>Stage 2</label>
+        <span>First Written Warning</span>
+      </div>
+      <div class="sl-info-item" style="border-left-color: #ef4444;">
+        <label>Stage 3</label>
+        <span>Final Written Warning</span>
+      </div>
+      <div class="sl-info-item" style="border-left-color: #b91c1c;">
+        <label>Stage 4</label>
+        <span>Dismissal</span>
+      </div>
+    </div>
+    <p>The stage of disciplinary action depends on the severity of the misconduct. Gross misconduct may result in immediate dismissal without prior warnings, as permitted under Section 91 of the Employment Act 2023.</p>
+  </div>
+
+  <div class="sl-section">
+    <h2>5. Disciplinary Procedure</h2>
+    <ol>
+      <li><strong>Investigation:</strong> All allegations will be investigated thoroughly before any action is taken</li>
+      <li><strong>Notice:</strong> Employee will be informed in writing of the allegations at least 48 hours before any hearing</li>
+      <li><strong>Hearing:</strong> Employee will have the opportunity to present their case and be accompanied by a colleague or union representative</li>
+      <li><strong>Decision:</strong> A decision will be communicated within 5 working days of the hearing</li>
+      <li><strong>Right to Appeal:</strong> Employee has 7 working days to appeal any disciplinary decision</li>
+    </ol>
+  </div>
+
+  <div class="sl-section">
+    <h2>6. Suspension</h2>
+    <p>In cases of alleged gross misconduct, an employee may be suspended with full pay while an investigation is conducted. Suspension is not a disciplinary action and does not prejudice the outcome of the investigation.</p>
+  </div>
+
+  <div class="sl-section">
+    <h2>7. Warning Validity</h2>
+    <ul>
+      <li>Verbal warnings remain on file for 6 months</li>
+      <li>First written warnings remain on file for 12 months</li>
+      <li>Final written warnings remain on file for 24 months</li>
+    </ul>
+    <p>After these periods, warnings are considered spent and will not be taken into account for future disciplinary matters unless there is a pattern of similar behavior.</p>
+  </div>
+
+  <div class="sl-section">
+    <h2>8. Appeal Process</h2>
+    <p>Employees have the right to appeal any disciplinary action by submitting a written appeal to the {{appeal_authority}} within 7 working days of receiving the decision. The appeal will be heard by a manager not previously involved in the case.</p>
+  </div>
+
+  <div class="sl-acknowledgment">
+    <h2>Employee Acknowledgment</h2>
+    <p>I, <strong>{{employee_name}}</strong>, acknowledge that I have read and understood this Disciplinary Policy. I understand the procedures that will be followed if disciplinary action is required and my rights under this policy.</p>
+  </div>
+
+  <div class="sl-signatures">
+    <div class="sl-signature-block" style="max-width: 350px; margin: 0 auto;">
+      <h4>Employee Signature</h4>
+      <p><strong>{{employee_name}}</strong></p>
+      <p>Date: <span class="sl-signature-date">{{signature_date}}</span></p>
+      <div class="sl-digital-signature">{{digital_signature}}</div>
+    </div>
+  </div>
+
+  <div class="sl-footer">
+    <div class="sl-flag-bar"></div>
+    <div class="sl-footer-logo">🇸🇱</div>
+    <p><strong>{{company_name}}</strong></p>
+    <p>Republic of Sierra Leone</p>
+    <p class="sl-legal-note">This policy complies with the Employment Act 2023 of Sierra Leone.</p>
+  </div>
+</div>
+    `,
+    variables: [
+      { key: "company_name", label: "Company Name", type: "text", auto_fill: "organisation.name" },
+      { key: "employee_name", label: "Employee Name", type: "text", auto_fill: "employee.full_name" },
+      { key: "appeal_authority", label: "Appeal Authority", type: "text", default: "Managing Director" }
+    ]
+  },
+
+  remote_work_policy: {
+    name: "Remote Work Policy",
+    content: `
+<div class="sl-document">
+  <div class="sl-watermark">POLICY</div>
+  <div class="sl-header">
+    <div class="sl-flag-bar"></div>
+    <div class="sl-company-logo">🏠</div>
+    <h1>Remote Work Policy</h1>
+    <p class="sl-subtitle">{{company_name}} • Work From Home Guidelines</p>
+  </div>
+
+  <div class="sl-section">
+    <h2>1. Purpose</h2>
+    <p>This policy outlines the terms and conditions for remote work arrangements at {{company_name}}. It aims to provide flexibility while maintaining productivity, communication, and professional standards.</p>
+  </div>
+
+  <div class="sl-section">
+    <h2>2. Eligibility</h2>
+    <p>Remote work may be granted to employees who:</p>
+    <ul>
+      <li>Have completed their probationary period</li>
+      <li>Demonstrate strong self-management and organizational skills</li>
+      <li>Have job duties that can be effectively performed remotely</li>
+      <li>Have a suitable home work environment</li>
+      <li>Have reliable internet connectivity</li>
+      <li>Have received approval from their supervisor and HR</li>
+    </ul>
+  </div>
+
+  <div class="sl-section">
+    <h2>3. Remote Work Arrangements</h2>
+    <div class="sl-info-grid">
+      <div class="sl-info-item">
+        <label>Type</label>
+        <span>{{remote_work_type}}</span>
+      </div>
+      <div class="sl-info-item">
+        <label>Remote Days</label>
+        <span>{{remote_days}} per week</span>
+      </div>
+      <div class="sl-info-item">
+        <label>Core Hours</label>
+        <span>{{core_hours}}</span>
+      </div>
+      <div class="sl-info-item">
+        <label>Effective Date</label>
+        <span>{{effective_date}}</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="sl-section">
+    <h2>4. Employee Responsibilities</h2>
+    <ul>
+      <li>Maintain regular working hours and be available during core business hours</li>
+      <li>Respond to communications promptly (within {{response_time}} during work hours)</li>
+      <li>Attend all required meetings (virtual or in-person as needed)</li>
+      <li>Maintain a professional and distraction-free work environment</li>
+      <li>Keep work and personal activities separate during work hours</li>
+      <li>Submit daily/weekly progress reports as required</li>
+      <li>Report any technical issues immediately to IT support</li>
+    </ul>
+  </div>
+
+  <div class="sl-section">
+    <h2>5. Equipment & Technology</h2>
+    <ul>
+      <li>Company will provide: {{equipment_provided}}</li>
+      <li>Employee is responsible for maintaining a reliable internet connection (minimum {{min_internet_speed}} Mbps)</li>
+      <li>All company equipment must be used in accordance with IT Acceptable Use Policy</li>
+      <li>Equipment must be returned upon termination of remote work arrangement</li>
+    </ul>
+  </div>
+
+  <div class="sl-section">
+    <h2>6. Data Security & Confidentiality</h2>
+    <ul>
+      <li>Use company VPN when accessing company systems</li>
+      <li>Keep all work documents and data secure</li>
+      <li>Do not allow unauthorized persons to access company equipment</li>
+      <li>Use only authorized software and applications</li>
+      <li>Ensure home Wi-Fi is password protected</li>
+      <li>Lock your computer when not in use</li>
+    </ul>
+  </div>
+
+  <div class="sl-section">
+    <h2>7. Communication</h2>
+    <ul>
+      <li>Use approved communication tools (email, Teams, Slack, etc.)</li>
+      <li>Attend daily/weekly team check-ins as scheduled</li>
+      <li>Keep calendar updated with availability</li>
+      <li>Notify supervisor immediately of any issues affecting work</li>
+    </ul>
+  </div>
+
+  <div class="sl-section">
+    <h2>8. Health & Safety</h2>
+    <ul>
+      <li>Maintain an ergonomic workstation to prevent injury</li>
+      <li>Take regular breaks to prevent eye strain and fatigue</li>
+      <li>Report any work-related injuries immediately</li>
+      <li>Ensure home work area is safe and free from hazards</li>
+    </ul>
+  </div>
+
+  <div class="sl-section">
+    <h2>9. Expenses</h2>
+    <p>{{expense_policy}}</p>
+  </div>
+
+  <div class="sl-section">
+    <h2>10. Termination of Remote Work</h2>
+    <p>Remote work arrangements may be modified or terminated:</p>
+    <ul>
+      <li>By mutual agreement between employee and employer</li>
+      <li>If business needs require on-site presence</li>
+      <li>If employee fails to meet performance standards</li>
+      <li>If employee violates this or any related policy</li>
+    </ul>
+    <p>{{company_name}} reserves the right to require return to office work with {{notice_period}} notice.</p>
+  </div>
+
+  <div class="sl-acknowledgment">
+    <h2>Employee Agreement</h2>
+    <p>I, <strong>{{employee_name}}</strong>, have read and agree to comply with this Remote Work Policy. I understand my responsibilities and the conditions under which remote work is permitted.</p>
+  </div>
+
+  <div class="sl-signatures">
+    <div class="sl-signature-block">
+      <h4>Employee</h4>
+      <p><strong>{{employee_name}}</strong></p>
+      <p>{{position}}</p>
+      <p>Date: <span class="sl-signature-date">{{signature_date}}</span></p>
+      <div class="sl-digital-signature">{{digital_signature}}</div>
+    </div>
+    <div class="sl-signature-block">
+      <h4>Supervisor Approval</h4>
+      <p><strong>{{supervisor_name}}</strong></p>
+      <p>Date: {{approval_date}}</p>
+      <div class="sl-signature-line"></div>
+    </div>
+  </div>
+
+  <div class="sl-footer">
+    <div class="sl-flag-bar"></div>
+    <div class="sl-footer-logo">🇸🇱</div>
+    <p><strong>{{company_name}}</strong></p>
+    <p>Republic of Sierra Leone</p>
+  </div>
+</div>
+    `,
+    variables: [
+      { key: "company_name", label: "Company Name", type: "text", auto_fill: "organisation.name" },
+      { key: "employee_name", label: "Employee Name", type: "text", auto_fill: "employee.full_name" },
+      { key: "position", label: "Position", type: "text", auto_fill: "employee.position" },
+      { key: "remote_work_type", label: "Remote Work Type", type: "select", options: ["Fully Remote", "Hybrid", "Occasional"], default: "Hybrid" },
+      { key: "remote_days", label: "Remote Days per Week", type: "select", options: ["1", "2", "3", "4", "5"], default: "2" },
+      { key: "core_hours", label: "Core Hours", type: "text", default: "9:00 AM - 4:00 PM" },
+      { key: "effective_date", label: "Effective Date", type: "date", auto_fill: "today" },
+      { key: "response_time", label: "Response Time", type: "select", options: ["30 minutes", "1 hour", "2 hours"], default: "1 hour" },
+      { key: "equipment_provided", label: "Equipment Provided", type: "text", default: "Laptop, headset" },
+      { key: "min_internet_speed", label: "Min Internet Speed (Mbps)", type: "select", options: ["5", "10", "20", "50"], default: "10" },
+      { key: "expense_policy", label: "Expense Policy", type: "text", default: "Internet and utility costs are the employee's responsibility unless otherwise agreed." },
+      { key: "notice_period", label: "Notice Period", type: "text", default: "2 weeks" },
+      { key: "supervisor_name", label: "Supervisor Name", type: "text", default: "Line Manager" },
+      { key: "approval_date", label: "Approval Date", type: "date", auto_fill: "today" }
+    ]
+  },
+
+  probation_confirmation: {
+    name: "Probation Confirmation Letter",
+    content: `
+<div class="sl-document">
+  <div class="sl-watermark">CONFIRMED</div>
+  <div class="sl-header">
+    <div class="sl-flag-bar"></div>
+    <div class="sl-company-logo" style="background: linear-gradient(135deg, #059669 0%, #047857 100%);">✓</div>
+    <h1>Confirmation of Employment</h1>
+    <p class="sl-subtitle">{{company_name}} • Successful Completion of Probation</p>
+    <p class="sl-ref-number">Ref: CONF-{{document_ref}}</p>
+  </div>
+
+  <div class="sl-section">
+    <p>Dear <strong>{{employee_name}}</strong>,</p>
+    <p>We are pleased to confirm that you have successfully completed your probationary period with {{company_name}}. This letter serves as official confirmation of your permanent employment status.</p>
+  </div>
+
+  <div class="sl-section">
+    <h2>Employment Details</h2>
+    <div class="sl-highlight-box" style="background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%); border-color: #059669;">
+      <h3 style="color: #059669;">🎉 Congratulations on Your Confirmation!</h3>
+      <div class="sl-info-grid">
+        <div class="sl-info-item" style="border-left-color: #059669;">
+          <label>Employee Name</label>
+          <span>{{employee_name}}</span>
+        </div>
+        <div class="sl-info-item" style="border-left-color: #059669;">
+          <label>Employee Code</label>
+          <span>{{employee_code}}</span>
+        </div>
+        <div class="sl-info-item" style="border-left-color: #059669;">
+          <label>Position</label>
+          <span>{{position}}</span>
+        </div>
+        <div class="sl-info-item" style="border-left-color: #059669;">
+          <label>Department</label>
+          <span>{{department}}</span>
+        </div>
+        <div class="sl-info-item" style="border-left-color: #059669;">
+          <label>Date of Joining</label>
+          <span>{{hire_date}}</span>
+        </div>
+        <div class="sl-info-item" style="border-left-color: #059669;">
+          <label>Confirmation Date</label>
+          <span>{{confirmation_date}}</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="sl-section">
+    <h2>Probation Review Summary</h2>
+    <p>During your probationary period, we have observed the following:</p>
+    <ul>
+      <li>Your performance has met the required standards</li>
+      <li>You have demonstrated commitment to your role and responsibilities</li>
+      <li>You have integrated well with the team and company culture</li>
+      <li>{{additional_remarks}}</li>
+    </ul>
+  </div>
+
+  <div class="sl-section">
+    <h2>Confirmation Benefits</h2>
+    <p>As a confirmed employee, you are now entitled to:</p>
+    <ul>
+      <li><strong>Annual Leave:</strong> {{annual_leave_days}} working days per year (as per Employment Act 2023)</li>
+      <li><strong>Sick Leave:</strong> 5 paid days per year with medical certificate</li>
+      <li><strong>NASSIT Contributions:</strong> Employer contributes 10%, Employee contributes 5%</li>
+      <li><strong>Notice Period:</strong> {{notice_period}} (as per Section 85, Employment Act 2023)</li>
+      <li>{{additional_benefits}}</li>
+    </ul>
+  </div>
+
+  <div class="sl-section">
+    <h2>Salary Confirmation</h2>
+    <div class="sl-info-grid">
+      <div class="sl-info-item">
+        <label>Confirmed Salary</label>
+        <span>SLE {{confirmed_salary}}</span>
+      </div>
+      <div class="sl-info-item">
+        <label>Payment Frequency</label>
+        <span>Monthly</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="sl-section">
+    <h2>Terms of Employment</h2>
+    <p>All other terms and conditions of your employment as outlined in your original employment contract remain in effect. This confirmation supersedes any probationary conditions previously applied.</p>
+    <p>We value your contributions and look forward to your continued growth and success at {{company_name}}.</p>
+  </div>
+
+  <div class="sl-acknowledgment">
+    <h2>Acceptance</h2>
+    <p>I, <strong>{{employee_name}}</strong>, acknowledge receipt of this confirmation letter and accept the terms of my permanent employment with {{company_name}}.</p>
+  </div>
+
+  <div class="sl-signatures">
+    <div class="sl-signature-block">
+      <h4>For the Company</h4>
+      <p><strong>{{authorized_signatory}}</strong></p>
+      <p>{{signatory_title}}</p>
+      <p>Date: {{issue_date}}</p>
+      <div class="sl-signature-line"></div>
+    </div>
+    <div class="sl-signature-block">
+      <h4>Employee</h4>
+      <p><strong>{{employee_name}}</strong></p>
+      <p>Date: <span class="sl-signature-date">{{signature_date}}</span></p>
+      <div class="sl-digital-signature">{{digital_signature}}</div>
+    </div>
+  </div>
+
+  <div class="sl-footer">
+    <div class="sl-flag-bar"></div>
+    <div class="sl-footer-logo">🇸🇱</div>
+    <p><strong>{{company_name}}</strong></p>
+    <p>Republic of Sierra Leone</p>
+    <p class="sl-legal-note">This confirmation letter forms part of your employment record.</p>
+  </div>
+</div>
+    `,
+    variables: [
+      { key: "company_name", label: "Company Name", type: "text", auto_fill: "organisation.name" },
+      { key: "document_ref", label: "Document Reference", type: "text", auto_fill: "auto" },
+      { key: "employee_name", label: "Employee Name", type: "text", auto_fill: "employee.full_name" },
+      { key: "employee_code", label: "Employee Code", type: "text", auto_fill: "employee.employee_code" },
+      { key: "position", label: "Position", type: "text", auto_fill: "employee.position" },
+      { key: "department", label: "Department", type: "text", auto_fill: "employee.department" },
+      { key: "hire_date", label: "Date of Joining", type: "date", auto_fill: "employee.hire_date" },
+      { key: "confirmation_date", label: "Confirmation Date", type: "date", auto_fill: "today" },
+      { key: "additional_remarks", label: "Additional Remarks", type: "text", default: "Your attitude and work ethic have been commendable" },
+      { key: "annual_leave_days", label: "Annual Leave Days", type: "select", options: ["21", "25", "30"], default: "21" },
+      { key: "notice_period", label: "Notice Period", type: "select", options: ["1 month", "2 months", "3 months"], default: "1 month" },
+      { key: "additional_benefits", label: "Additional Benefits", type: "text", default: "As per company policy" },
+      { key: "confirmed_salary", label: "Confirmed Salary (SLE)", type: "number", auto_fill: "employee.base_salary" },
+      { key: "authorized_signatory", label: "Authorized Signatory", type: "text", default: "HR Manager" },
+      { key: "signatory_title", label: "Signatory Title", type: "text", default: "Human Resources" },
+      { key: "issue_date", label: "Issue Date", type: "date", auto_fill: "today" }
+    ]
+  },
+
+  termination_letter: {
+    name: "Termination Letter",
+    content: `
+<div class="sl-document">
+  <div class="sl-watermark">CONFIDENTIAL</div>
+  <div class="sl-header">
+    <div class="sl-flag-bar"></div>
+    <div class="sl-company-logo" style="background: linear-gradient(135deg, #6b7280 0%, #4b5563 100%);">📋</div>
+    <h1>Notice of Termination of Employment</h1>
+    <p class="sl-subtitle">{{company_name}} • Official Notice</p>
+    <p class="sl-ref-number">Ref: TERM-{{document_ref}}</p>
+  </div>
+
+  <div class="sl-section">
+    <div class="sl-info-grid">
+      <div class="sl-info-item">
+        <label>Employee Name</label>
+        <span>{{employee_name}}</span>
+      </div>
+      <div class="sl-info-item">
+        <label>Employee Code</label>
+        <span>{{employee_code}}</span>
+      </div>
+      <div class="sl-info-item">
+        <label>Position</label>
+        <span>{{position}}</span>
+      </div>
+      <div class="sl-info-item">
+        <label>Department</label>
+        <span>{{department}}</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="sl-section">
+    <p>Dear <strong>{{employee_name}}</strong>,</p>
+    <p>This letter serves as official notice of the termination of your employment with {{company_name}}. This decision has been made in accordance with the terms of your employment contract and the Employment Act 2023 of Sierra Leone.</p>
+  </div>
+
+  <div class="sl-section">
+    <h2>Termination Details</h2>
+    <div class="sl-highlight-box" style="background: #f1f5f9; border-color: #64748b;">
+      <div class="sl-info-grid">
+        <div class="sl-info-item">
+          <label>Termination Type</label>
+          <span>{{termination_type}}</span>
+        </div>
+        <div class="sl-info-item">
+          <label>Notice Date</label>
+          <span>{{notice_date}}</span>
+        </div>
+        <div class="sl-info-item">
+          <label>Last Working Day</label>
+          <span>{{last_working_day}}</span>
+        </div>
+        <div class="sl-info-item">
+          <label>Notice Period</label>
+          <span>{{notice_period}}</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="sl-section">
+    <h2>Reason for Termination</h2>
+    <p>{{termination_reason}}</p>
+  </div>
+
+  <div class="sl-section">
+    <h2>Final Settlement</h2>
+    <p>You will be entitled to the following in your final settlement:</p>
+    <ul>
+      <li><strong>Outstanding Salary:</strong> Calculated up to and including {{last_working_day}}</li>
+      <li><strong>Accrued Annual Leave:</strong> Payment for any unused annual leave days</li>
+      <li><strong>NASSIT:</strong> All contributions will be processed as per statutory requirements</li>
+      <li>{{additional_entitlements}}</li>
+    </ul>
+    <p>Your final settlement will be processed within {{settlement_days}} working days of your last working day.</p>
+  </div>
+
+  <div class="sl-section">
+    <h2>Company Property</h2>
+    <p>Please ensure the return of all company property on or before your last working day, including:</p>
+    <ul>
+      <li>ID card and access cards</li>
+      <li>Laptop, mobile phone, and other electronic equipment</li>
+      <li>Keys to premises or vehicles</li>
+      <li>Company documents, files, and records</li>
+      <li>Any other company property in your possession</li>
+    </ul>
+  </div>
+
+  <div class="sl-section">
+    <h2>Confidentiality</h2>
+    <p>Please be reminded that your obligations regarding confidentiality and non-disclosure of company information continue beyond the termination of your employment, as per your signed Non-Disclosure Agreement and/or employment contract.</p>
+  </div>
+
+  <div class="sl-section">
+    <h2>Exit Process</h2>
+    <p>Please contact the HR department to schedule your exit interview and complete the clearance process. You will receive a service certificate upon completion of the exit formalities.</p>
+  </div>
+
+  <div class="sl-section">
+    <h2>Rights Under Employment Act 2023</h2>
+    <p>This termination is in accordance with the Employment Act 2023 of Sierra Leone. If you believe this termination is unfair, you have the right to:</p>
+    <ul>
+      <li>Request a written explanation of the reasons for termination</li>
+      <li>File a complaint with the Labour Department</li>
+      <li>Seek legal counsel for advice on your rights</li>
+    </ul>
+  </div>
+
+  <div class="sl-section">
+    <p>We thank you for your service to {{company_name}} and wish you success in your future endeavors.</p>
+  </div>
+
+  <div class="sl-signatures">
+    <div class="sl-signature-block" style="max-width: 350px; margin: 0 auto;">
+      <h4>For {{company_name}}</h4>
+      <p><strong>{{authorized_signatory}}</strong></p>
+      <p>{{signatory_title}}</p>
+      <p>Date: {{issue_date}}</p>
+      <div class="sl-signature-line"></div>
+    </div>
+  </div>
+
+  <div class="sl-section" style="margin-top: 40px;">
+    <h2>Acknowledgment of Receipt</h2>
+    <p>I, <strong>{{employee_name}}</strong>, acknowledge that I have received this Notice of Termination. I understand the terms outlined in this letter.</p>
+    <p style="font-size: 12px; color: #666;"><em>Note: Signing this acknowledgment does not indicate acceptance of the termination decision, only receipt of this notice.</em></p>
+    
+    <div class="sl-info-grid" style="margin-top: 20px;">
+      <div class="sl-info-item">
+        <label>Signature</label>
+        <span>_________________________</span>
+      </div>
+      <div class="sl-info-item">
+        <label>Date</label>
+        <span>_________________________</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="sl-footer">
+    <div class="sl-flag-bar"></div>
+    <div class="sl-footer-logo">🇸🇱</div>
+    <p><strong>{{company_name}}</strong></p>
+    <p>Republic of Sierra Leone</p>
+    <p class="sl-legal-note">This letter is confidential and should be treated as such.</p>
+  </div>
+</div>
+    `,
+    requires_signature: false,
+    variables: [
+      { key: "company_name", label: "Company Name", type: "text", auto_fill: "organisation.name" },
+      { key: "document_ref", label: "Document Reference", type: "text", auto_fill: "auto" },
+      { key: "employee_name", label: "Employee Name", type: "text", auto_fill: "employee.full_name" },
+      { key: "employee_code", label: "Employee Code", type: "text", auto_fill: "employee.employee_code" },
+      { key: "position", label: "Position", type: "text", auto_fill: "employee.position" },
+      { key: "department", label: "Department", type: "text", auto_fill: "employee.department" },
+      { key: "termination_type", label: "Termination Type", type: "select", options: ["Resignation (Voluntary)", "End of Contract", "Redundancy", "Termination (With Notice)", "Dismissal (Gross Misconduct)", "Retirement", "Mutual Agreement"], default: "Termination (With Notice)" },
+      { key: "notice_date", label: "Notice Date", type: "date", auto_fill: "today" },
+      { key: "last_working_day", label: "Last Working Day", type: "date" },
+      { key: "notice_period", label: "Notice Period", type: "select", options: ["7 days", "1 month", "2 months", "3 months", "Immediate"], default: "1 month" },
+      { key: "termination_reason", label: "Reason for Termination", type: "text", default: "As discussed in your meeting with HR and management." },
+      { key: "additional_entitlements", label: "Additional Entitlements", type: "text", default: "Any other statutory entitlements as applicable" },
+      { key: "settlement_days", label: "Settlement Days", type: "select", options: ["7", "14", "21", "30"], default: "14" },
+      { key: "authorized_signatory", label: "Authorized Signatory", type: "text", default: "HR Manager" },
+      { key: "signatory_title", label: "Signatory Title", type: "text", default: "Human Resources" },
+      { key: "issue_date", label: "Issue Date", type: "date", auto_fill: "today" }
+    ]
   }
 };
 
