@@ -24,6 +24,8 @@ import StockAudit from './pages/StockAudit';
 import ResetData from './pages/ResetData';
 import EmployeeSelfService from './pages/EmployeeSelfService';
 import Calendar from './pages/Calendar';
+import HRAnalytics from './pages/HRAnalytics';
+import Reports from './pages/Reports';
 import __Layout from './Layout.jsx';
 
 
@@ -54,6 +56,8 @@ export const PAGES = {
     "ResetData": ResetData,
     "EmployeeSelfService": EmployeeSelfService,
     "Calendar": Calendar,
+    "HRAnalytics": HRAnalytics,
+    "Reports": Reports,
 }
 
 export const pagesConfig = {
