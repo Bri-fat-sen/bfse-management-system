@@ -249,6 +249,58 @@ export const SL_NOTICE_PERIODS = {
 };
 
 // ============================================
+// PAYROLL FREQUENCY CONFIGURATION
+// ============================================
+
+export const PAYROLL_FREQUENCIES = {
+  weekly: {
+    label: "Weekly",
+    periodsPerYear: 52,
+    workingDays: 5,
+    multiplier: 12 / 52, // Convert monthly to weekly
+    description: "Paid every week (52 times per year)"
+  },
+  bi_weekly: {
+    label: "Bi-Weekly",
+    periodsPerYear: 26,
+    workingDays: 10,
+    multiplier: 12 / 26, // Convert monthly to bi-weekly
+    description: "Paid every two weeks (26 times per year)"
+  },
+  monthly: {
+    label: "Monthly",
+    periodsPerYear: 12,
+    workingDays: 22,
+    multiplier: 1,
+    description: "Paid once per month (12 times per year)"
+  }
+};
+
+/**
+ * Calculate prorated salary based on payroll frequency
+ */
+export function calculateProratedSalary(monthlySalary, frequency) {
+  const config = PAYROLL_FREQUENCIES[frequency] || PAYROLL_FREQUENCIES.monthly;
+  return Math.round(monthlySalary * config.multiplier);
+}
+
+/**
+ * Get annual equivalent from periodic salary
+ */
+export function getAnnualEquivalent(periodicSalary, frequency) {
+  const config = PAYROLL_FREQUENCIES[frequency] || PAYROLL_FREQUENCIES.monthly;
+  return Math.round(periodicSalary * config.periodsPerYear);
+}
+
+/**
+ * Get expected working days for a pay period
+ */
+export function getExpectedWorkingDays(frequency) {
+  const config = PAYROLL_FREQUENCIES[frequency] || PAYROLL_FREQUENCIES.monthly;
+  return config.workingDays;
+}
+
+// ============================================
 // CALCULATION FUNCTIONS
 // ============================================
 
