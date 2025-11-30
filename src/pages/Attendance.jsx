@@ -58,6 +58,7 @@ import ProtectedPage from "@/components/permissions/ProtectedPage";
 import QuickClockIn from "@/components/mobile/QuickClockIn";
 import AttendanceReportExport from "@/components/attendance/AttendanceReportExport";
 import LoadingSpinner from "@/components/ui/LoadingSpinner";
+import AIInsightsCard from "@/components/ai/AIInsightsCard";
 
 
 const COLORS = ['#1EB053', '#0072C6', '#D4AF37', '#EF4444', '#9333EA', '#F59E0B'];
@@ -428,6 +429,26 @@ export default function Attendance() {
 
           {/* Overview Tab */}
           <TabsContent value="overview" className="mt-6 space-y-6">
+            {/* AI Attendance Insights */}
+            <AIInsightsCard
+              title="AI Attendance Insights"
+              analysisType="attendance_anomaly"
+              data={{
+                presentToday: analytics.presentToday,
+                lateToday: analytics.lateToday,
+                absentToday: analytics.absentToday,
+                avgHours: analytics.avgHours,
+                byDepartment: analytics.byDepartment.slice(0, 10),
+                recentTrend: analytics.dailyTrend.slice(-7)
+              }}
+              context={{ 
+                totalEmployees: analytics.totalEmployees,
+                period: `${startDate} to ${endDate}`
+              }}
+              icon={Clock}
+              compact={true}
+            />
+
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               {/* Status Distribution */}
               <Card>

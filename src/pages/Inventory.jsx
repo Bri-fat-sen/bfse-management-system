@@ -442,7 +442,14 @@ export default function Inventory() {
           </TabsTrigger>
         </TabsList>
 
-        <TabsContent value="products" className="mt-6">
+        <TabsContent value="products" className="mt-6 space-y-6">
+          {/* AI Recommendations */}
+          <InventoryAIRecommendations
+            products={products}
+            sales={[]}
+            stockLevels={stockLevels}
+          />
+
           {/* Filters */}
           <Card className="mb-6">
             <CardContent className="p-4">

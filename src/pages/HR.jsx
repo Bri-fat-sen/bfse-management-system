@@ -78,6 +78,7 @@ import PayrollAuditLog from "@/components/hr/PayrollAuditLog";
 import TaxCalculatorInfo from "@/components/hr/TaxCalculatorInfo";
 import RemunerationPackageManager from "@/components/hr/RemunerationPackageManager";
 import PayrollReportingModule from "@/components/hr/PayrollReportingModule";
+import AIAssistantButton from "@/components/ai/AIAssistantButton";
 
 const roles = [
   "super_admin", "org_admin", "hr_admin", "payroll_admin", "warehouse_manager",
@@ -307,6 +308,20 @@ export default function HR() {
         action={() => setShowAddEmployeeDialog(true)}
         actionLabel="Add Employee"
       >
+        <AIAssistantButton
+          data={{
+            totalEmployees: employees.length,
+            activeEmployees: activeEmployees.length,
+            departments: [...new Set(employees.map(e => e.department).filter(Boolean))],
+            roles: [...new Set(employees.map(e => e.role).filter(Boolean))],
+            attendanceToday: presentToday.length,
+            payrollsPending: payrolls.filter(p => p.status === 'pending_approval').length
+          }}
+          context={{ period: 'current' }}
+          promptType="hr"
+          buttonLabel="AI Assistant"
+          size="sm"
+        />
         <Button
           variant="outline"
           onClick={() => setShowInviteDialog(true)}

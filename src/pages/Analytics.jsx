@@ -481,7 +481,20 @@ export default function Analytics() {
         title="Analytics & Reports"
         subtitle="Comprehensive business insights, HR analytics, and reports"
         icon={<BarChart3 className="w-6 h-6" />}
-      />
+      >
+        <AIAssistantButton
+          data={{
+            sales: sales.slice(0, 100),
+            expenses: expenses.slice(0, 100),
+            employees: employees.slice(0, 50),
+            products: products.slice(0, 50)
+          }}
+          context={{ organization: organisation?.[0]?.name }}
+          promptType="general"
+          buttonLabel="AI Insights"
+          size="sm"
+        />
+      </PageHeader>
 
       {/* Main Navigation Tabs */}
       <Tabs value={mainTab} onValueChange={setMainTab}>
