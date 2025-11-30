@@ -576,38 +576,102 @@ export default function CreateDocumentDialog({
           )}
 
           {step === 3 && (
-            <div className="space-y-4 py-4">
-              <div className="flex items-center justify-between">
-                <Label>Document Preview</Label>
-                <Badge variant="secondary">
-                  {selectedEmployees.length} recipient(s)
-                </Badge>
-              </div>
-              
-              <div className="border rounded-lg overflow-hidden">
-                <style dangerouslySetInnerHTML={{ __html: SL_DOCUMENT_STYLES }} />
-                <div 
-                  className="bg-white p-4 max-h-96 overflow-y-auto"
-                  dangerouslySetInnerHTML={{ __html: previewContent }}
-                />
+            <div className="space-y-6">
+              {/* Summary Cards */}
+              <div className="grid grid-cols-3 gap-4">
+                <div className="bg-gradient-to-br from-[#1EB053]/10 to-[#1EB053]/5 rounded-xl p-4 border border-[#1EB053]/20">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-lg bg-[#1EB053] text-white flex items-center justify-center">
+                      <FileText className="w-5 h-5" />
+                    </div>
+                    <div>
+                      <p className="text-xs text-gray-500">Document Type</p>
+                      <p className="font-semibold text-[#0F1F3C] text-sm">
+                        {DOCUMENT_TYPE_INFO[documentType]?.label || selectedTemplate?.name || 'Custom'}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+                <div className="bg-gradient-to-br from-[#0072C6]/10 to-[#0072C6]/5 rounded-xl p-4 border border-[#0072C6]/20">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-lg bg-[#0072C6] text-white flex items-center justify-center">
+                      <Users className="w-5 h-5" />
+                    </div>
+                    <div>
+                      <p className="text-xs text-gray-500">Recipients</p>
+                      <p className="font-semibold text-[#0F1F3C] text-sm">{selectedEmployees.length} Employee(s)</p>
+                    </div>
+                  </div>
+                </div>
+                <div className="bg-gradient-to-br from-amber-100 to-amber-50 rounded-xl p-4 border border-amber-200">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-lg bg-amber-500 text-white flex items-center justify-center">
+                      <FileSignature className="w-5 h-5" />
+                    </div>
+                    <div>
+                      <p className="text-xs text-gray-500">Status</p>
+                      <p className="font-semibold text-[#0F1F3C] text-sm">Ready to Send</p>
+                    </div>
+                  </div>
+                </div>
               </div>
 
-              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                <div className="flex items-start gap-3">
-                  <AlertCircle className="w-5 h-5 text-blue-600 mt-0.5" />
+              {/* Document Preview */}
+              <div className="bg-white rounded-xl border shadow-sm overflow-hidden">
+                <div className="px-5 py-3 bg-gradient-to-r from-gray-50 to-white border-b flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Eye className="w-4 h-4 text-gray-500" />
+                    <span className="font-medium text-sm text-[#0F1F3C]">Document Preview</span>
+                  </div>
+                  <Badge variant="outline" className="text-xs">Live Preview</Badge>
+                </div>
+                <div className="relative">
+                  <style dangerouslySetInnerHTML={{ __html: SL_DOCUMENT_STYLES }} />
+                  <div 
+                    className="bg-gray-50 p-6 max-h-[300px] overflow-y-auto"
+                    style={{ transform: 'scale(0.85)', transformOrigin: 'top center' }}
+                  >
+                    <div 
+                      className="bg-white shadow-lg rounded-lg mx-auto"
+                      style={{ maxWidth: '700px' }}
+                      dangerouslySetInnerHTML={{ __html: previewContent }}
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* What's Next Info */}
+              <div className="bg-gradient-to-r from-[#0072C6]/5 to-[#1EB053]/5 border border-[#0072C6]/20 rounded-xl p-5">
+                <div className="flex items-start gap-4">
+                  <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#0072C6] to-[#1EB053] text-white flex items-center justify-center flex-shrink-0">
+                    <Send className="w-5 h-5" />
+                  </div>
                   <div>
-                    <p className="font-medium text-blue-800">What happens next?</p>
-                    <ul className="text-sm text-blue-700 mt-2 space-y-1">
-                      <li>• Documents will be sent to {selectedEmployees.length} employee(s)</li>
-                      <li>• Each employee will receive a notification to sign</li>
-                      <li>• Employees can review and digitally sign with their full name</li>
-                      <li>• Signed copies will be emailed automatically</li>
-                    </ul>
+                    <p className="font-semibold text-[#0F1F3C]">What happens when you send?</p>
+                    <div className="grid grid-cols-2 gap-3 mt-3">
+                      <div className="flex items-center gap-2 text-sm text-gray-600">
+                        <CheckCircle2 className="w-4 h-4 text-[#1EB053]" />
+                        <span>Documents sent to {selectedEmployees.length} employee(s)</span>
+                      </div>
+                      <div className="flex items-center gap-2 text-sm text-gray-600">
+                        <CheckCircle2 className="w-4 h-4 text-[#1EB053]" />
+                        <span>Notification sent for signature</span>
+                      </div>
+                      <div className="flex items-center gap-2 text-sm text-gray-600">
+                        <CheckCircle2 className="w-4 h-4 text-[#1EB053]" />
+                        <span>Digital signature with full name</span>
+                      </div>
+                      <div className="flex items-center gap-2 text-sm text-gray-600">
+                        <CheckCircle2 className="w-4 h-4 text-[#1EB053]" />
+                        <span>Signed copies emailed automatically</span>
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>
             </div>
           )}
+          </div>
         </ScrollArea>
 
         <DialogFooter className="border-t pt-4">
