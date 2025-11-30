@@ -844,128 +844,376 @@ export const DEFAULT_TEMPLATES = {
 // CSS Styles for Sierra Leone themed documents
 export const SL_DOCUMENT_STYLES = `
   .sl-document {
-    font-family: 'Georgia', serif;
+    font-family: 'Segoe UI', 'Roboto', 'Helvetica Neue', Arial, sans-serif;
     max-width: 800px;
     margin: 0 auto;
-    padding: 40px;
+    padding: 50px;
     background: white;
     color: #1a1a1a;
-    line-height: 1.6;
+    line-height: 1.7;
+    position: relative;
+  }
+  
+  .sl-document::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 6px;
+    background: linear-gradient(to right, #1EB053 33.33%, #FFFFFF 33.33%, #FFFFFF 66.66%, #0072C6 66.66%);
   }
   
   .sl-header {
     text-align: center;
     margin-bottom: 40px;
-    padding-bottom: 20px;
-    border-bottom: 2px solid #0F1F3C;
+    padding-bottom: 25px;
+    border-bottom: 3px solid #0F1F3C;
+    position: relative;
   }
   
   .sl-flag-bar {
-    height: 8px;
+    height: 10px;
     background: linear-gradient(to right, #1EB053 33.33%, #FFFFFF 33.33%, #FFFFFF 66.66%, #0072C6 66.66%);
-    margin-bottom: 20px;
-    border-radius: 4px;
+    margin-bottom: 25px;
+    border-radius: 5px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  }
+  
+  .sl-company-logo {
+    width: 80px;
+    height: 80px;
+    margin: 0 auto 15px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #1EB053 0%, #0072C6 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 32px;
+    font-weight: bold;
+    box-shadow: 0 4px 15px rgba(30, 176, 83, 0.3);
   }
   
   .sl-header h1 {
     color: #0F1F3C;
-    font-size: 28px;
-    margin: 0 0 10px 0;
+    font-size: 26px;
+    margin: 0 0 8px 0;
     text-transform: uppercase;
-    letter-spacing: 2px;
+    letter-spacing: 3px;
+    font-weight: 700;
   }
   
   .sl-subtitle {
-    color: #666;
-    font-style: italic;
+    color: #555;
+    font-size: 14px;
     margin: 0;
+    font-weight: 500;
+  }
+  
+  .sl-ref-number {
+    position: absolute;
+    top: 0;
+    right: 0;
+    font-size: 11px;
+    color: #888;
   }
   
   .sl-section {
-    margin-bottom: 30px;
+    margin-bottom: 28px;
   }
   
   .sl-section h2 {
-    color: #0072C6;
-    font-size: 18px;
-    border-bottom: 1px solid #ddd;
-    padding-bottom: 8px;
+    color: #0F1F3C;
+    font-size: 16px;
+    font-weight: 600;
+    border-left: 4px solid #1EB053;
+    padding-left: 12px;
     margin-bottom: 15px;
+    background: linear-gradient(to right, rgba(30, 176, 83, 0.08), transparent);
+    padding-top: 8px;
+    padding-bottom: 8px;
   }
   
-  .sl-section p, .sl-section li {
-    margin-bottom: 10px;
+  .sl-section p {
+    margin-bottom: 12px;
+    text-align: justify;
+  }
+  
+  .sl-section li {
+    margin-bottom: 8px;
   }
   
   .sl-section ul, .sl-section ol {
     padding-left: 25px;
+    margin-top: 10px;
   }
   
-  .sl-acknowledgment {
-    background: #f8f9fa;
-    padding: 20px;
-    border-radius: 8px;
-    margin: 30px 0;
-    border-left: 4px solid #1EB053;
+  .sl-section ul li {
+    position: relative;
+    list-style: none;
+    padding-left: 20px;
   }
   
-  .sl-signatures {
-    display: flex;
-    justify-content: space-between;
-    flex-wrap: wrap;
-    gap: 40px;
-    margin-top: 40px;
-    padding-top: 20px;
-    border-top: 1px solid #ddd;
-  }
-  
-  .sl-signature-block {
-    flex: 1;
-    min-width: 250px;
-  }
-  
-  .sl-signature-line {
-    margin-top: 30px;
-    border-bottom: 1px solid #333;
-    padding-bottom: 5px;
-  }
-  
-  .sl-digital-signature {
-    margin-top: 15px;
-    padding: 15px;
-    background: linear-gradient(135deg, #f0f9f4 0%, #e6f3ff 100%);
-    border: 2px solid #1EB053;
-    border-radius: 8px;
-    text-align: center;
-    font-family: 'Brush Script MT', cursive;
-    font-size: 24px;
-    color: #0F1F3C;
-  }
-  
-  .sl-signature-date {
+  .sl-section ul li::before {
+    content: '✓';
+    position: absolute;
+    left: 0;
+    color: #1EB053;
     font-weight: bold;
   }
   
-  .sl-footer {
-    margin-top: 40px;
-    padding-top: 20px;
-    text-align: center;
-    color: #666;
+  .sl-parties-box {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 30px;
+    padding: 20px;
+    background: #f8fafc;
+    border-radius: 10px;
+    border: 1px solid #e2e8f0;
+    margin: 20px 0;
+  }
+  
+  .sl-party {
+    padding: 15px;
+    background: white;
+    border-radius: 8px;
+    border-left: 3px solid #1EB053;
+  }
+  
+  .sl-party.employer {
+    border-left-color: #0072C6;
+  }
+  
+  .sl-party h3 {
+    color: #0F1F3C;
     font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 10px;
+    font-weight: 600;
+  }
+  
+  .sl-party p {
+    margin: 5px 0;
+    font-size: 14px;
+  }
+  
+  .sl-highlight-box {
+    background: linear-gradient(135deg, #f0fdf4 0%, #ecfeff 100%);
+    border: 1px solid #1EB053;
+    border-radius: 10px;
+    padding: 20px;
+    margin: 20px 0;
+  }
+  
+  .sl-highlight-box h3 {
+    color: #1EB053;
+    margin-bottom: 10px;
+    font-size: 14px;
+  }
+  
+  .sl-info-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 15px;
+    margin: 15px 0;
+  }
+  
+  .sl-info-item {
+    padding: 12px;
+    background: #f8fafc;
+    border-radius: 8px;
+    border-left: 3px solid #0072C6;
+  }
+  
+  .sl-info-item label {
+    display: block;
+    font-size: 11px;
+    color: #64748b;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 4px;
+  }
+  
+  .sl-info-item span {
+    font-weight: 600;
+    color: #0F1F3C;
+  }
+  
+  .sl-acknowledgment {
+    background: linear-gradient(135deg, #fefce8 0%, #fef3c7 100%);
+    padding: 25px;
+    border-radius: 10px;
+    margin: 35px 0;
+    border: 2px solid #f59e0b;
+    position: relative;
+  }
+  
+  .sl-acknowledgment::before {
+    content: '⚠️';
+    position: absolute;
+    top: -12px;
+    left: 20px;
+    background: white;
+    padding: 0 10px;
+    font-size: 18px;
+  }
+  
+  .sl-acknowledgment h2 {
+    color: #b45309;
+    margin-bottom: 15px;
+    border: none;
+    padding: 0;
+    background: none;
+  }
+  
+  .sl-signatures {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 40px;
+    margin-top: 50px;
+    padding-top: 30px;
+    border-top: 2px dashed #e2e8f0;
+  }
+  
+  .sl-signature-block {
+    text-align: center;
+    padding: 20px;
+    background: #fafafa;
+    border-radius: 10px;
+  }
+  
+  .sl-signature-block h4 {
+    color: #64748b;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 15px;
+  }
+  
+  .sl-signature-block p {
+    margin: 5px 0;
+    font-size: 14px;
+  }
+  
+  .sl-signature-line {
+    margin-top: 40px;
+    border-bottom: 2px solid #0F1F3C;
+    padding-bottom: 5px;
+    width: 80%;
+    margin-left: auto;
+    margin-right: auto;
+  }
+  
+  .sl-digital-signature {
+    margin-top: 20px;
+    padding: 20px;
+    background: linear-gradient(135deg, #ecfdf5 0%, #f0f9ff 100%);
+    border: 2px solid #1EB053;
+    border-radius: 12px;
+    text-align: center;
+    font-family: 'Brush Script MT', 'Segoe Script', cursive;
+    font-size: 28px;
+    color: #0F1F3C;
+    box-shadow: inset 0 2px 10px rgba(30, 176, 83, 0.1);
+    position: relative;
+  }
+  
+  .sl-digital-signature::after {
+    content: '✓ Digitally Signed';
+    position: absolute;
+    bottom: -10px;
+    right: 10px;
+    font-size: 10px;
+    font-family: 'Segoe UI', sans-serif;
+    color: #1EB053;
+    background: white;
+    padding: 2px 8px;
+    border-radius: 10px;
+  }
+  
+  .sl-signature-date {
+    font-weight: 700;
+    color: #1EB053;
+  }
+  
+  .sl-footer {
+    margin-top: 50px;
+    padding-top: 25px;
+    text-align: center;
+    color: #64748b;
+    font-size: 11px;
+    border-top: 1px solid #e2e8f0;
   }
   
   .sl-footer .sl-flag-bar {
-    margin-top: 20px;
+    width: 150px;
+    margin: 0 auto 15px;
+    height: 6px;
+  }
+  
+  .sl-footer-logo {
+    font-size: 24px;
     margin-bottom: 10px;
+  }
+  
+  .sl-footer p {
+    margin: 5px 0;
+  }
+  
+  .sl-legal-note {
+    font-size: 10px;
+    color: #94a3b8;
+    margin-top: 15px;
+    padding-top: 15px;
+    border-top: 1px dotted #e2e8f0;
+  }
+  
+  .sl-watermark {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%) rotate(-45deg);
+    font-size: 100px;
+    color: rgba(30, 176, 83, 0.03);
+    font-weight: bold;
+    pointer-events: none;
+    z-index: -1;
   }
   
   @media print {
     .sl-document {
-      padding: 20px;
+      padding: 30px;
+      box-shadow: none;
     }
     
     .sl-section {
       page-break-inside: avoid;
+    }
+    
+    .sl-signatures {
+      page-break-inside: avoid;
+    }
+    
+    .sl-watermark {
+      display: none;
+    }
+  }
+  
+  @media (max-width: 600px) {
+    .sl-document {
+      padding: 25px;
+    }
+    
+    .sl-parties-box,
+    .sl-signatures,
+    .sl-info-grid {
+      grid-template-columns: 1fr;
+    }
+    
+    .sl-header h1 {
+      font-size: 20px;
     }
   }
 `;
