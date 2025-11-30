@@ -101,7 +101,64 @@ export default function CreateDocumentDialog({
       // Auto-fill today's date
       const today = format(new Date(), 'yyyy-MM-dd');
       
+      // Common field mappings for smart auto-fill
+      const fieldMappings = {
+        // Employee fields
+        'employee_name': employee?.full_name,
+        'employee_full_name': employee?.full_name,
+        'full_name': employee?.full_name,
+        'position': employee?.position,
+        'job_title': employee?.position,
+        'new_position': employee?.position,
+        'previous_position': employee?.position,
+        'department': employee?.department,
+        'employee_email': employee?.email || employee?.user_email,
+        'email': employee?.email || employee?.user_email,
+        'employee_address': employee?.address || 'Freetown, Sierra Leone',
+        'address': employee?.address,
+        'phone': employee?.phone,
+        'employee_phone': employee?.phone,
+        'employee_code': employee?.employee_code,
+        'employee_id_number': employee?.employee_code,
+        'hire_date': employee?.hire_date,
+        'start_date': employee?.hire_date,
+        'monthly_salary': employee?.base_salary,
+        'salary': employee?.base_salary,
+        'new_salary': employee?.base_salary,
+        'previous_salary': employee?.base_salary,
+        'base_salary': employee?.base_salary,
+        'work_location': employee?.assigned_location_name || 'Head Office',
+        'location': employee?.assigned_location_name,
+        
+        // Organisation fields
+        'company_name': organisation?.name,
+        'organisation_name': organisation?.name,
+        'company_address': organisation?.address || `${organisation?.city || 'Freetown'}, Sierra Leone`,
+        'company_phone': organisation?.phone,
+        'company_email': organisation?.email,
+        'company_registration': organisation?.business_registration_number || 'N/A',
+        'tin_number': organisation?.tin_number,
+        'nassit_number': organisation?.nassit_number,
+        
+        // Date fields
+        'effective_date': today,
+        'issue_date': today,
+        'warning_date': today,
+        'incident_date': today,
+        
+        // Current employee (issuer) fields
+        'employer_signatory': currentEmployee?.full_name || 'HR Manager',
+        'issuing_manager': currentEmployee?.full_name || 'HR Manager',
+        'authorized_signatory': currentEmployee?.full_name || 'HR Manager',
+        'company_signatory': currentEmployee?.full_name || 'HR Manager',
+        'employer_title': currentEmployee?.position || 'Human Resources',
+        'issuing_manager_title': currentEmployee?.position || 'Human Resources',
+        'signatory_title': currentEmployee?.position || 'Human Resources',
+        'company_signatory_title': currentEmployee?.position || 'Human Resources',
+      };
+      
       (selectedTemplate.variables || []).forEach(v => {
+        // First check explicit auto_fill
         if (v.auto_fill) {
           if (v.auto_fill === 'auto') {
             autoFilled[v.key] = autoFilled['document_ref'];
@@ -120,6 +177,17 @@ export default function CreateDocumentDialog({
             }
           }
         }
+        
+        // Smart auto-fill based on field key matching
+        if (!autoFilled[v.key] && fieldMappings[v.key]) {
+          autoFilled[v.key] = fieldMappings[v.key];
+        }
+        
+        // Handle company_initial specially
+        if (v.key === 'company_initial' && !autoFilled[v.key]) {
+          autoFilled[v.key] = organisation?.name?.charAt(0)?.toUpperCase() || 'C';
+        }
+        
         // Apply defaults for empty values
         if (v.default && !autoFilled[v.key]) {
           autoFilled[v.key] = v.default;
@@ -128,7 +196,7 @@ export default function CreateDocumentDialog({
       
       setVariables(prev => ({ ...autoFilled, ...prev }));
     }
-  }, [selectedTemplate, selectedEmployees, employees, organisation]);
+  }, [selectedTemplate, selectedEmployees, employees, organisation, currentEmployee]);
 
   // Generate preview
   useEffect(() => {
