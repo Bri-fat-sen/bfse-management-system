@@ -137,6 +137,7 @@ export default function SavedReportsManager({ orgId, onLoadReport }) {
                     onLoad={onLoadReport}
                     onToggleFavorite={toggleFavorite}
                     onDelete={() => setShowDeleteConfirm(report)}
+                    onSchedule={() => setShowScheduleDialog(report)}
                   />
                 ))}
               </div>
