@@ -47,7 +47,8 @@ import {
   COMMON_DEDUCTIONS,
   ROLE_BONUS_CONFIG,
   OVERTIME_MULTIPLIERS,
-  SL_TAX_BRACKETS
+  SL_TAX_BRACKETS,
+  applyTemplates
 } from "./PayrollCalculator";
 
 export default function PayrollProcessDialog({ 
@@ -95,6 +96,16 @@ export default function PayrollProcessDialog({
       employee_id: selectedEmployeeId,
     }),
     enabled: !!selectedEmployeeId && !!orgId,
+  });
+
+  // Fetch benefit/deduction templates
+  const { data: templates = [] } = useQuery({
+    queryKey: ['benefitDeductionTemplates', orgId],
+    queryFn: () => base44.entities.BenefitDeductionTemplate.filter({ 
+      organisation_id: orgId, 
+      is_active: true 
+    }),
+    enabled: !!orgId,
   });
 
   // Calculate attendance data from records
@@ -145,6 +156,20 @@ export default function PayrollProcessDialog({
     }
   }, [attendanceData.overtimeHours]);
 
+  // Get applicable templates for selected employee
+  const applicableTemplates = useMemo(() => {
+    if (!selectedEmployee || !templates.length) return [];
+    return templates.filter(t => {
+      if (t.applies_to_employees?.length > 0) {
+        return t.applies_to_employees.includes(selectedEmployee.id);
+      }
+      if (t.applies_to_roles?.length > 0) {
+        return t.applies_to_roles.includes(selectedEmployee.role);
+      }
+      return true;
+    });
+  }, [selectedEmployee, templates]);
+
   // Calculate full payroll
   const payrollData = useMemo(() => {
     if (!selectedEmployee) return null;
@@ -166,6 +191,7 @@ export default function PayrollProcessDialog({
       customAllowances,
       customDeductions,
       customBonuses,
+      templates: applicableTemplates,
       applyNASSIT,
       applyPAYE
     });
@@ -174,7 +200,7 @@ export default function PayrollProcessDialog({
     overtimeHours, weekendHours, holidayHours,
     totalSales, commissionRate,
     customAllowances, customDeductions, customBonuses,
-    applyNASSIT, applyPAYE
+    applicableTemplates, applyNASSIT, applyPAYE
   ]);
 
   const createPayrollMutation = useMutation({
@@ -438,6 +464,31 @@ export default function PayrollProcessDialog({
                       <div key={i} className="flex justify-between text-sm">
                         <span className="text-green-700">{a.name}</span>
                         <span className="font-medium">{formatSLE(a.amount)}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Template-based Benefits/Deductions */}
+              {applicableTemplates.length > 0 && (
+                <div className="p-4 bg-blue-50 rounded-lg border border-blue-200">
+                  <div className="flex items-center gap-2 mb-2">
+                    <DollarSign className="w-4 h-4 text-blue-600" />
+                    <span className="font-medium text-blue-800">Benefits & Deductions Templates</span>
+                    <Badge variant="secondary" className="text-xs">{applicableTemplates.length} applied</Badge>
+                  </div>
+                  <div className="space-y-1">
+                    {payrollData.allowances.filter(a => a.template_id).map((a, i) => (
+                      <div key={`b-${i}`} className="flex justify-between text-sm">
+                        <span className="text-green-600">+ {a.name}</span>
+                        <span className="font-medium text-green-600">{formatSLE(a.amount)}</span>
+                      </div>
+                    ))}
+                    {payrollData.deductions.filter(d => d.template_id).map((d, i) => (
+                      <div key={`d-${i}`} className="flex justify-between text-sm">
+                        <span className="text-red-600">- {d.name}</span>
+                        <span className="font-medium text-red-600">{formatSLE(d.amount)}</span>
                       </div>
                     ))}
                   </div>
