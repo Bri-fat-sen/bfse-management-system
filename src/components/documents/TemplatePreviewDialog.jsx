@@ -12,8 +12,9 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   FileText, Edit, Copy, Eye, Code, Variable, Shield,
-  Sparkles, FileSignature, Users, CheckCircle2
+  Sparkles, FileSignature, Users, CheckCircle2, History, Tag, Clock
 } from "lucide-react";
+import { format } from "date-fns";
 import { DOCUMENT_TYPE_INFO, SL_DOCUMENT_STYLES } from "./DocumentTemplates";
 
 const ROLE_LABELS = {
@@ -100,6 +101,13 @@ export default function TemplatePreviewDialog({
                 <FileText className="w-4 h-4" />
                 Details
               </TabsTrigger>
+              {!template.is_system && template.version_history?.length > 0 && (
+                <TabsTrigger value="history" className="gap-2">
+                  <History className="w-4 h-4" />
+                  History
+                  <Badge className="ml-1 h-5 px-1.5 bg-gray-200 text-gray-700">{template.version_history.length}</Badge>
+                </TabsTrigger>
+              )}
             </TabsList>
           </div>
 
@@ -187,6 +195,17 @@ export default function TemplatePreviewDialog({
                     <label className="text-xs font-medium text-gray-500 uppercase tracking-wide">Category</label>
                     <p className="font-medium mt-1 capitalize">{template.category || "Other"}</p>
                   </div>
+                  {!template.is_system && (
+                    <div>
+                      <label className="text-xs font-medium text-gray-500 uppercase tracking-wide">Version</label>
+                      <p className="font-medium mt-1 flex items-center gap-2">
+                        <Badge className="bg-blue-100 text-blue-700 border-0">v{template.version || 1}</Badge>
+                        {template.last_updated_by && (
+                          <span className="text-xs text-gray-500">by {template.last_updated_by}</span>
+                        )}
+                      </p>
+                    </div>
+                  )}
                 </div>
                 <div className="space-y-4">
                   <div>
@@ -219,9 +238,86 @@ export default function TemplatePreviewDialog({
                       )}
                     </div>
                   </div>
+                  {template.tags?.length > 0 && (
+                    <div>
+                      <label className="text-xs font-medium text-gray-500 uppercase tracking-wide flex items-center gap-1">
+                        <Tag className="w-3 h-3" /> Tags
+                      </label>
+                      <div className="flex flex-wrap gap-1 mt-1">
+                        {template.tags.map(tag => (
+                          <Badge key={tag} variant="secondary">{tag}</Badge>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
+              
+              {/* Description */}
+              {template.description && (
+                <div className="mt-6 pt-6 border-t">
+                  <label className="text-xs font-medium text-gray-500 uppercase tracking-wide">Description</label>
+                  <div 
+                    className="mt-2 prose prose-sm max-w-none text-gray-600 [&_p]:my-1 [&_ul]:my-1 [&_ol]:my-1"
+                    dangerouslySetInnerHTML={{ __html: template.description }}
+                  />
+                </div>
+              )}
+
+              {/* Duplicated from info */}
+              {template.duplicated_from && (
+                <div className="mt-4 p-3 bg-amber-50 border border-amber-200 rounded-lg">
+                  <p className="text-sm text-amber-800 flex items-center gap-2">
+                    <Copy className="w-4 h-4" />
+                    Duplicated from: <code className="bg-amber-100 px-1 rounded">{template.duplicated_from}</code>
+                  </p>
+                </div>
+              )}
             </TabsContent>
+
+            {/* Version History Tab */}
+            {!template.is_system && template.version_history?.length > 0 && (
+              <TabsContent value="history" className="m-0 p-6">
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <h3 className="font-medium flex items-center gap-2">
+                      <History className="w-4 h-4 text-blue-600" />
+                      Version History
+                    </h3>
+                    <Badge className="bg-blue-100 text-blue-700 border-0">
+                      Current: v{template.version || 1}
+                    </Badge>
+                  </div>
+                  
+                  <div className="space-y-3">
+                    {template.version_history.map((version, index) => (
+                      <div key={index} className="p-4 bg-gray-50 border rounded-lg">
+                        <div className="flex items-start justify-between">
+                          <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center">
+                              <span className="text-blue-700 font-bold text-sm">v{version.version}</span>
+                            </div>
+                            <div>
+                              <p className="font-medium text-sm">Version {version.version}</p>
+                              <p className="text-xs text-gray-500">
+                                by {version.updated_by_name || 'Unknown'} • {version.updated_at ? format(new Date(version.updated_at), 'MMM d, yyyy h:mm a') : 'Unknown date'}
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+                        {version.change_notes && (
+                          <div className="mt-3 pl-13">
+                            <p className="text-sm text-gray-600 bg-white p-2 rounded border">
+                              {version.change_notes}
+                            </p>
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </TabsContent>
+            )}
           </ScrollArea>
         </Tabs>
 
