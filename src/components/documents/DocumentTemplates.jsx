@@ -214,36 +214,94 @@ export const DEFAULT_TEMPLATES = {
 
   <div class="sl-section">
     <h2>4. Leave Entitlements</h2>
-    <p>Per the Employment Act 2023 of Sierra Leone:</p>
+    <p>In accordance with the Employment Act 2023 of Sierra Leone, you shall be entitled to the following leave benefits:</p>
     <ul>
-      <li><strong>Annual Leave:</strong> 21 working days after 12 months of continuous service</li>
-      <li><strong>Sick Leave:</strong> 5 days paid sick leave per year (medical certificate required)</li>
-      <li><strong>Maternity Leave:</strong> 14 weeks (applicable to female employees)</li>
-      <li><strong>Paternity Leave:</strong> 5 days (applicable to male employees)</li>
-      <li><strong>Compassionate Leave:</strong> 5 days for immediate family bereavement</li>
+      <li><strong>Annual Leave:</strong> 21 working days with full pay after completing 12 months of continuous service. Leave shall accrue at the rate of 1.75 days per month and must be utilized within the leave year unless carry-forward is approved by management (maximum 10 days)</li>
+      <li><strong>Sick Leave:</strong> 5 days paid sick leave per calendar year. Absences exceeding 2 consecutive days require a medical certificate from a registered medical practitioner. Extended illness beyond 5 days may be considered for unpaid leave or medical board review</li>
+      <li><strong>Maternity Leave:</strong> Female employees are entitled to 14 weeks (98 days) of maternity leave per Section 47 of the Employment Act, with at least 6 weeks taken after delivery. The first 6 weeks shall be at full pay, with subsequent weeks at 50% pay or as per company policy if more favorable</li>
+      <li><strong>Paternity Leave:</strong> Male employees are entitled to 5 working days of paternity leave to be taken within 2 weeks of the birth of their child, upon presentation of birth certificate</li>
+      <li><strong>Compassionate Leave:</strong> 5 working days for death of immediate family members (spouse, children, parents, siblings) and 3 days for extended family members</li>
+      <li><strong>Public Holidays:</strong> All gazetted public holidays in Sierra Leone shall be observed as paid leave. Work performed on public holidays shall be compensated at 2.5 times the normal rate</li>
     </ul>
   </div>
 
   <div class="sl-section">
-    <h2>5. Termination Provisions</h2>
-    <p>Either party may terminate this contract by giving written notice as follows:</p>
+    <h2>5. Working Conditions</h2>
     <ul>
-      <li>During probation: 7 days written notice</li>
-      <li>Less than 3 years service: 1 month notice</li>
-      <li>3-5 years service: 2 months notice</li>
-      <li>Over 5 years service: 3 months notice</li>
+      <li><strong>Hours of Work:</strong> The standard working week shall be {{working_hours}} hours, typically Monday to Friday. Any work beyond standard hours shall be considered overtime and compensated accordingly</li>
+      <li><strong>Overtime:</strong> Overtime work must be pre-approved by your supervisor. Overtime shall be compensated at 1.5 times the normal hourly rate for weekdays and 2 times for weekends</li>
+      <li><strong>Rest Periods:</strong> You are entitled to a minimum 1-hour lunch break and a weekly rest period of at least 24 consecutive hours</li>
+      <li><strong>Health & Safety:</strong> The Employer shall provide a safe working environment in compliance with the Factories Act and relevant health and safety regulations. The Employee shall comply with all safety procedures and report any hazards</li>
     </ul>
-    <p>Summary dismissal may occur for gross misconduct as defined in Section 91 of the Employment Act 2023. Upon termination, the Employee shall be entitled to all outstanding remuneration and benefits accrued.</p>
   </div>
 
   <div class="sl-section">
-    <h2>6. Confidentiality & Conduct</h2>
-    <p>The Employee agrees to maintain strict confidentiality of all proprietary information during and after employment. The Employee shall conduct themselves professionally and in accordance with the Company's Code of Conduct.</p>
+    <h2>6. Statutory Contributions & Deductions</h2>
+    <p>The following statutory deductions shall be made from your salary:</p>
+    <ul>
+      <li><strong>NASSIT (Employee):</strong> 5% of gross salary contributed to the National Social Security and Insurance Trust for your pension and social security benefits</li>
+      <li><strong>NASSIT (Employer):</strong> The Company shall contribute an additional 10% of your gross salary to NASSIT on your behalf</li>
+      <li><strong>PAYE Tax:</strong> Pay As You Earn income tax shall be deducted according to the National Revenue Authority (NRA) tax brackets applicable at the time</li>
+    </ul>
+    <p>You will receive a payslip each month detailing all earnings and deductions.</p>
   </div>
 
   <div class="sl-section">
-    <h2>7. Governing Law</h2>
-    <p>This contract shall be governed by the laws of the Republic of Sierra Leone, including the Employment Act 2023, and any disputes shall be subject to the jurisdiction of Sierra Leone courts.</p>
+    <h2>7. Termination Provisions</h2>
+    <p>This employment may be terminated by either party subject to the following notice periods as prescribed by Section 85 of the Employment Act 2023:</p>
+    <ul>
+      <li><strong>During Probation:</strong> 7 days written notice by either party, or payment in lieu of notice</li>
+      <li><strong>Less than 3 years service:</strong> 1 month written notice or payment in lieu</li>
+      <li><strong>3 to 5 years service:</strong> 2 months written notice or payment in lieu</li>
+      <li><strong>Over 5 years service:</strong> 3 months written notice or payment in lieu</li>
+    </ul>
+    <p><strong>Summary Dismissal:</strong> The Employer reserves the right to terminate employment immediately without notice for gross misconduct as defined in Section 91 of the Employment Act 2023, including but not limited to theft, fraud, violence, serious insubordination, or being under the influence of alcohol or drugs at work.</p>
+    <p><strong>Redundancy:</strong> In the event of redundancy, you shall be entitled to severance pay calculated as one month's basic salary for each completed year of service, in addition to any outstanding leave pay and other entitlements.</p>
+    <p><strong>Final Settlement:</strong> Upon termination for any reason, you shall receive all outstanding wages, accrued leave pay, and any other entitlements within 14 days of your last working day.</p>
+  </div>
+
+  <div class="sl-section">
+    <h2>8. Confidentiality & Intellectual Property</h2>
+    <p>The Employee acknowledges and agrees that:</p>
+    <ul>
+      <li>All confidential information, trade secrets, customer data, business strategies, and proprietary information of the Company shall remain strictly confidential during and after employment</li>
+      <li>Any inventions, discoveries, designs, or improvements made during the course of employment and relating to the Company's business shall be the exclusive property of the Company</li>
+      <li>Upon termination, all company property, documents, files, and materials (physical or electronic) must be returned immediately</li>
+      <li>Breach of confidentiality may result in disciplinary action and/or legal proceedings</li>
+    </ul>
+  </div>
+
+  <div class="sl-section">
+    <h2>9. Code of Conduct & Disciplinary Procedures</h2>
+    <p>The Employee shall:</p>
+    <ul>
+      <li>Comply with all company policies, procedures, and rules as communicated from time to time</li>
+      <li>Perform duties diligently, honestly, and to the best of their ability</li>
+      <li>Maintain professional conduct and treat colleagues, customers, and stakeholders with respect</li>
+      <li>Not engage in any activity that conflicts with the interests of the Company</li>
+      <li>Report any concerns, grievances, or violations through the appropriate channels</li>
+    </ul>
+    <p>The Company's disciplinary procedures comply with natural justice principles and the Employment Act 2023. Disciplinary action shall follow a progressive approach (verbal warning, written warning, final warning, dismissal) except in cases of gross misconduct.</p>
+  </div>
+
+  <div class="sl-section">
+    <h2>10. Dispute Resolution</h2>
+    <p>Any disputes arising from this contract shall be resolved through the following process:</p>
+    <ol>
+      <li><strong>Internal Resolution:</strong> First, attempt to resolve the matter through the Company's internal grievance procedure</li>
+      <li><strong>Mediation:</strong> If unresolved, the matter may be referred to the Ministry of Labour for mediation</li>
+      <li><strong>Labour Court:</strong> Disputes that cannot be resolved through mediation may be referred to the Labour Court of Sierra Leone</li>
+    </ol>
+  </div>
+
+  <div class="sl-section">
+    <h2>11. General Provisions</h2>
+    <ul>
+      <li><strong>Entire Agreement:</strong> This contract constitutes the entire agreement between the parties and supersedes all prior negotiations, representations, and agreements</li>
+      <li><strong>Amendments:</strong> Any amendments to this contract must be made in writing and signed by both parties</li>
+      <li><strong>Severability:</strong> If any provision of this contract is found to be invalid or unenforceable, the remaining provisions shall continue in full force and effect</li>
+      <li><strong>Governing Law:</strong> This contract shall be governed by and construed in accordance with the laws of the Republic of Sierra Leone, including the Employment Act 2023</li>
+    </ul>
   </div>
 
   <div class="sl-acknowledgment">
@@ -323,80 +381,122 @@ export const DEFAULT_TEMPLATES = {
 
   <div class="sl-section">
     <h2>Introduction</h2>
-    <p>This Code of Conduct establishes the standards of behavior and ethical principles expected of all employees of <strong>{{company_name}}</strong>. These guidelines ensure a professional, respectful, and productive work environment for everyone.</p>
+    <p>This Code of Conduct establishes the standards of behavior, ethical principles, and professional expectations for all employees of <strong>{{company_name}}</strong>. Our commitment to excellence depends on each team member upholding these standards, which are designed to foster a respectful, inclusive, safe, and productive work environment where everyone can thrive.</p>
+    <p>This Code applies to all employees, contractors, interns, and representatives of the Company during work hours and at any company-related activities, events, or functions. Violations may result in disciplinary action up to and including termination of employment.</p>
   </div>
 
   <div class="sl-section">
-    <h2>1. Professional Standards</h2>
+    <h2>1. Professional Standards & Integrity</h2>
+    <p>All employees are expected to:</p>
     <ul>
-      <li>Perform all duties with diligence, integrity, and professionalism</li>
-      <li>Treat all colleagues, clients, and stakeholders with respect and dignity</li>
-      <li>Maintain punctuality and adhere to scheduled work hours</li>
-      <li>Dress appropriately according to company dress code guidelines</li>
-      <li>Communicate openly, honestly, and professionally with all team members</li>
+      <li><strong>Excellence:</strong> Perform all duties with diligence, competence, and commitment to quality. Continuously seek to improve your skills and knowledge</li>
+      <li><strong>Integrity:</strong> Act honestly and ethically in all business dealings. Never misrepresent facts, falsify records, or engage in deceptive practices</li>
+      <li><strong>Respect:</strong> Treat all colleagues, clients, suppliers, and stakeholders with dignity, courtesy, and professionalism regardless of their position, background, or beliefs</li>
+      <li><strong>Punctuality:</strong> Arrive on time for work and meetings. Notify your supervisor promptly if you will be late or absent</li>
+      <li><strong>Professionalism:</strong> Maintain a professional demeanor in all interactions. Use appropriate language and conduct yourself in a manner that reflects positively on the Company</li>
+      <li><strong>Dress Code:</strong> Adhere to the company dress code appropriate for your role. Maintain good personal hygiene and present yourself professionally</li>
+      <li><strong>Communication:</strong> Communicate clearly, respectfully, and professionally in all forms—verbal, written, and electronic. Respond to inquiries in a timely manner</li>
     </ul>
   </div>
 
   <div class="sl-section">
-    <h2>2. Workplace Behavior</h2>
+    <h2>2. Workplace Behavior & Conduct</h2>
+    <p>To maintain a safe, harmonious, and productive workplace, the following behaviors are expected and/or prohibited:</p>
     <ul>
-      <li>Harassment, discrimination, or bullying of any kind is strictly prohibited</li>
-      <li>Violence, threats, or intimidation will result in immediate disciplinary action</li>
-      <li>Alcohol consumption and drug use during work hours is forbidden</li>
-      <li>Gambling on company premises is prohibited</li>
-      <li>Personal relationships must not interfere with professional duties</li>
+      <li><strong>Zero Tolerance for Harassment:</strong> Any form of harassment—sexual, verbal, physical, or psychological—is strictly prohibited and will result in immediate disciplinary action. This includes unwelcome advances, offensive jokes, intimidation, bullying, and discrimination</li>
+      <li><strong>Non-Discrimination:</strong> {{company_name}} is committed to equal opportunity. Discrimination based on race, gender, religion, ethnicity, disability, age, political opinion, sexual orientation, or any other protected characteristic is prohibited per the Employment Act 2023</li>
+      <li><strong>Violence & Threats:</strong> Physical violence, threats, intimidation, or any behavior that creates fear or an unsafe environment is grounds for immediate termination and may result in legal action</li>
+      <li><strong>Substance Abuse:</strong> Being under the influence of alcohol or illegal drugs during work hours or on company premises is strictly prohibited. Employees must not consume alcohol during work hours except at authorized company events</li>
+      <li><strong>Gambling:</strong> Gambling of any form on company premises or during work hours is prohibited</li>
+      <li><strong>Personal Relationships:</strong> While personal relationships are not prohibited, they must not interfere with work performance, create conflicts of interest, or result in favoritism. Romantic relationships between supervisors and direct reports must be disclosed to HR</li>
+      <li><strong>Respectful Disagreement:</strong> Differences of opinion should be expressed professionally and constructively. Personal attacks or disrespectful behavior during disagreements is not acceptable</li>
     </ul>
   </div>
 
   <div class="sl-section">
     <h2>3. Confidentiality & Data Protection</h2>
+    <p>Protecting company and client information is essential to our business integrity:</p>
     <ul>
-      <li>Protect all confidential company and client information at all times</li>
-      <li>Never disclose sensitive business information to unauthorized persons</li>
-      <li>Handle customer/client data in accordance with privacy policies</li>
-      <li>Return all company materials upon termination of employment</li>
+      <li><strong>Confidential Information:</strong> All business information including financial data, customer lists, pricing strategies, business plans, technical data, and employee information must be treated as strictly confidential unless specifically authorized for disclosure</li>
+      <li><strong>Data Security:</strong> Follow all data protection policies. Use strong passwords, lock computers when away, and never share login credentials. Report any data breaches or suspected security incidents immediately</li>
+      <li><strong>Client/Customer Data:</strong> Handle all client and customer data with the utmost care and in accordance with privacy regulations. Never access, share, or use personal data beyond what is necessary for your job duties</li>
+      <li><strong>Social Media:</strong> Do not share confidential company information on social media. When representing the Company online, maintain professionalism and avoid controversial statements</li>
+      <li><strong>Post-Employment:</strong> Confidentiality obligations continue after employment ends. All company materials, documents, and data must be returned upon termination</li>
     </ul>
   </div>
 
   <div class="sl-section">
     <h2>4. Use of Company Resources</h2>
+    <p>Company resources are provided to enable you to perform your job effectively:</p>
     <ul>
-      <li>Use company property and equipment responsibly for business purposes</li>
-      <li>Report any equipment damage or malfunction immediately</li>
-      <li>Personal use of company resources should be minimal and reasonable</li>
-      <li>Never use company resources for illegal or unauthorized activities</li>
+      <li><strong>Responsible Use:</strong> Use company property—including computers, phones, vehicles, equipment, and supplies—responsibly and primarily for business purposes</li>
+      <li><strong>Personal Use:</strong> Limited personal use of company resources (e.g., occasional personal emails or calls) is permitted provided it does not interfere with work, incur significant costs, or violate any policies</li>
+      <li><strong>Care & Maintenance:</strong> Take proper care of company equipment. Report any damage, malfunction, or loss immediately to your supervisor or IT department</li>
+      <li><strong>Prohibited Uses:</strong> Never use company resources for illegal activities, personal commercial ventures, accessing inappropriate content, or any activity that could harm the Company's reputation or operations</li>
+      <li><strong>Software & Licenses:</strong> Only use authorized software and respect intellectual property rights. Do not install unauthorized programs or copy licensed software</li>
     </ul>
   </div>
 
   <div class="sl-section">
     <h2>5. Conflict of Interest</h2>
+    <p>Employees must avoid situations where personal interests could conflict with the Company's interests:</p>
     <ul>
-      <li>Avoid situations where personal interests conflict with company interests</li>
-      <li>Disclose any potential conflicts of interest to management promptly</li>
-      <li>Do not accept gifts or favors that could influence business decisions</li>
-      <li>Outside employment must not interfere with your duties at {{company_name}}</li>
+      <li><strong>Definition:</strong> A conflict of interest occurs when personal relationships, financial interests, or outside activities could influence or appear to influence your professional judgment or actions</li>
+      <li><strong>Disclosure:</strong> Immediately disclose any actual or potential conflicts of interest to your supervisor or HR department. When in doubt, ask</li>
+      <li><strong>Gifts & Entertainment:</strong> Do not accept gifts, hospitality, or favors that could influence business decisions or create an obligation. Modest gifts of nominal value (under SLE 500,000) may be accepted if refusing would cause offense, but must be reported</li>
+      <li><strong>Outside Employment:</strong> Secondary employment or business activities must not interfere with your job performance, conflict with Company interests, or compete with Company business. Obtain written approval before engaging in outside employment</li>
+      <li><strong>Family & Relationships:</strong> Disclose any business dealings involving family members or close personal relationships. Avoid involvement in hiring, supervision, or business decisions affecting relatives</li>
     </ul>
   </div>
 
   <div class="sl-section">
-    <h2>6. Legal Compliance</h2>
+    <h2>6. Legal & Regulatory Compliance</h2>
+    <p>All employees must comply with applicable laws and regulations:</p>
     <ul>
-      <li>Comply with all applicable laws of the Republic of Sierra Leone</li>
-      <li>Follow the Employment Act 2023 and related labor regulations</li>
-      <li>Report any illegal activities or policy violations to management</li>
+      <li><strong>Sierra Leone Laws:</strong> Comply with all laws of the Republic of Sierra Leone including employment law, tax law, health and safety regulations, and anti-corruption laws</li>
+      <li><strong>Employment Act 2023:</strong> Understand and follow the requirements of the Employment Act 2023 and related labor regulations</li>
+      <li><strong>Anti-Bribery & Corruption:</strong> Never offer, give, solicit, or accept bribes or improper payments. This includes payments to government officials, customers, suppliers, or any other parties</li>
+      <li><strong>Reporting Violations:</strong> Report any known or suspected violations of law, regulation, or company policy to management or HR. Whistleblowers are protected from retaliation</li>
+      <li><strong>Cooperation:</strong> Cooperate fully with any internal or external investigations</li>
     </ul>
   </div>
 
   <div class="sl-section">
-    <h2>7. Consequences of Violations</h2>
-    <p>Violations of this Code of Conduct may result in disciplinary action, including:</p>
+    <h2>7. Health, Safety & Environment</h2>
     <ul>
-      <li>Verbal or written warning</li>
-      <li>Suspension from duties</li>
-      <li>Demotion or reduction in responsibilities</li>
-      <li>Termination of employment</li>
+      <li>Follow all health and safety rules, procedures, and instructions</li>
+      <li>Report unsafe conditions, accidents, or near-misses immediately</li>
+      <li>Use personal protective equipment (PPE) as required</li>
+      <li>Keep your work area clean, organized, and safe</li>
+      <li>Support environmental sustainability initiatives</li>
     </ul>
-    <p>The severity of action will depend on the nature of the violation, as outlined in the company's Disciplinary Policy and the Employment Act 2023.</p>
+  </div>
+
+  <div class="sl-section">
+    <h2>8. Reporting Concerns & Grievances</h2>
+    <p>{{company_name}} encourages open communication and provides channels for reporting concerns:</p>
+    <ul>
+      <li>Speak directly with your supervisor or manager</li>
+      <li>Contact the Human Resources department</li>
+      <li>Use the company's grievance procedure for formal complaints</li>
+      <li>All reports will be treated confidentially and investigated promptly</li>
+      <li>Retaliation against anyone who reports concerns in good faith is strictly prohibited</li>
+    </ul>
+  </div>
+
+  <div class="sl-section">
+    <h2>9. Consequences of Violations</h2>
+    <p>Violations of this Code of Conduct will be taken seriously and may result in disciplinary action proportionate to the severity of the violation:</p>
+    <ul>
+      <li><strong>Verbal Warning:</strong> For minor first-time offenses, with counseling and guidance</li>
+      <li><strong>Written Warning:</strong> For repeated minor offenses or more serious violations</li>
+      <li><strong>Final Warning:</strong> For continued violations or serious misconduct, with clear consequences stated</li>
+      <li><strong>Suspension:</strong> Temporary removal from duties, with or without pay, pending investigation or as a disciplinary measure</li>
+      <li><strong>Demotion:</strong> Reduction in position, responsibilities, or compensation</li>
+      <li><strong>Termination:</strong> Dismissal from employment for serious or repeated violations</li>
+      <li><strong>Legal Action:</strong> For violations involving criminal conduct, fraud, or significant harm</li>
+    </ul>
+    <p>All disciplinary actions will follow the company's Disciplinary Policy and comply with the Employment Act 2023 of Sierra Leone, ensuring fair process and the right to appeal.</p>
   </div>
 
   <div class="sl-acknowledgment">
@@ -664,40 +764,53 @@ export const DEFAULT_TEMPLATES = {
 
   <div class="sl-section">
     <h2>1. Definition of Confidential Information</h2>
-    <p>For purposes of this Agreement, "Confidential Information" includes all non-public information disclosed to or known by the Employee, including but not limited to:</p>
+    <p>For purposes of this Agreement, "Confidential Information" means any and all non-public information, in any form or medium, that is disclosed to, accessed by, or comes to the knowledge of the Employee through their employment, including but not limited to:</p>
     <ul>
-      <li>Business strategies, plans, and operational methods</li>
-      <li>Financial information, projections, and pricing</li>
-      <li>Customer and supplier lists, contacts, and data</li>
-      <li>Product designs, formulas, specifications, and trade secrets</li>
-      <li>Marketing strategies and competitive intelligence</li>
-      <li>Software, source code, and technical data</li>
-      <li>Employee and personnel information</li>
-      <li>Any information marked or identified as confidential</li>
+      <li><strong>Business Information:</strong> Business plans, strategies, objectives, market research, competitive analysis, expansion plans, mergers and acquisitions information, and organizational restructuring plans</li>
+      <li><strong>Financial Information:</strong> Revenue figures, profit margins, pricing structures, cost data, budgets, financial projections, investment strategies, and unpublished financial statements</li>
+      <li><strong>Customer & Supplier Data:</strong> Customer lists, contact information, purchase history, preferences, contracts, supplier agreements, pricing negotiations, and relationship details</li>
+      <li><strong>Technical Information:</strong> Product designs, formulas, specifications, manufacturing processes, research and development data, prototypes, inventions, patents (pending or granted), and trade secrets</li>
+      <li><strong>Technology & Software:</strong> Source code, algorithms, software architecture, system designs, databases, security protocols, and IT infrastructure details</li>
+      <li><strong>Marketing & Sales:</strong> Marketing strategies, advertising campaigns, sales forecasts, customer acquisition strategies, and promotional materials in development</li>
+      <li><strong>Human Resources:</strong> Employee information, compensation data, performance reviews, disciplinary records, and organizational charts</li>
+      <li><strong>Legal Matters:</strong> Pending or threatened litigation, legal strategies, regulatory filings, and compliance matters</li>
+      <li><strong>Any Marked Information:</strong> Any information designated as "Confidential," "Proprietary," "Secret," or with similar marking</li>
     </ul>
   </div>
 
   <div class="sl-section">
     <h2>2. Employee Obligations</h2>
-    <p>The Employee agrees to:</p>
+    <p>The Employee hereby agrees to the following obligations, which shall survive the termination of employment:</p>
     <ul>
-      <li>Maintain strict confidentiality of all Confidential Information</li>
-      <li>Not disclose Confidential Information to any third party without prior written consent</li>
-      <li>Use Confidential Information solely for performing assigned job duties</li>
-      <li>Take all reasonable measures to protect the confidentiality of information</li>
-      <li>Return all materials containing Confidential Information upon termination</li>
-      <li>Immediately notify management of any suspected breaches</li>
+      <li><strong>Non-Disclosure:</strong> Maintain strict confidentiality of all Confidential Information. Never disclose, publish, or communicate Confidential Information to any unauthorized person, entity, or organization, whether during or after employment</li>
+      <li><strong>Limited Use:</strong> Use Confidential Information solely and exclusively for the purpose of performing authorized job duties for the benefit of the Company. Never use Confidential Information for personal gain or to benefit any third party</li>
+      <li><strong>Security Measures:</strong> Take all reasonable and necessary precautions to protect Confidential Information from unauthorized access, disclosure, copying, or use. This includes securing documents, using password protection, and following company security protocols</li>
+      <li><strong>No Copying:</strong> Not copy, reproduce, or duplicate Confidential Information except as necessary for authorized work purposes. All copies remain the property of the Company</li>
+      <li><strong>Return of Materials:</strong> Upon termination of employment, or upon request by the Company, immediately return all documents, files, records, devices, and materials (in any format) containing or relating to Confidential Information. This includes electronic files, which must be permanently deleted from personal devices</li>
+      <li><strong>Notification of Breach:</strong> Immediately notify the Company's management or legal department of any actual or suspected unauthorized disclosure, theft, or breach of Confidential Information</li>
+      <li><strong>Cooperation:</strong> Cooperate fully with the Company in any investigation of security breaches or unauthorized disclosures</li>
     </ul>
   </div>
 
   <div class="sl-section">
-    <h2>3. Exclusions</h2>
-    <p>This Agreement does not apply to information that:</p>
+    <h2>3. Exclusions from Confidential Information</h2>
+    <p>The obligations under this Agreement shall not apply to information that the Employee can demonstrate:</p>
     <ul>
-      <li>Is or becomes publicly available through no fault of the Employee</li>
-      <li>Was lawfully known to the Employee prior to disclosure</li>
-      <li>Is independently developed by the Employee without use of Confidential Information</li>
-      <li>Is required to be disclosed by law, regulation, or court order</li>
+      <li><strong>Public Knowledge:</strong> Is or becomes generally available to the public through no wrongful act, omission, or breach of this Agreement by the Employee</li>
+      <li><strong>Prior Knowledge:</strong> Was lawfully in the Employee's possession prior to disclosure by the Company, as evidenced by written records</li>
+      <li><strong>Third Party Disclosure:</strong> Is received from a third party who is not under a confidentiality obligation to the Company and who has the right to disclose it</li>
+      <li><strong>Independent Development:</strong> Is independently developed by the Employee without reference to or use of any Confidential Information</li>
+      <li><strong>Legal Requirement:</strong> Is required to be disclosed by law, regulation, court order, or governmental authority, provided that the Employee gives the Company prompt written notice to enable the Company to seek a protective order</li>
+    </ul>
+  </div>
+
+  <div class="sl-section">
+    <h2>4. Non-Solicitation</h2>
+    <p>During employment and for a period of {{duration_years}} year(s) after termination, the Employee agrees not to:</p>
+    <ul>
+      <li>Directly or indirectly solicit, recruit, or hire any employee of the Company</li>
+      <li>Encourage any employee to leave their employment with the Company</li>
+      <li>Solicit business from any customer or client of the Company with whom the Employee had contact during employment</li>
     </ul>
   </div>
 
@@ -1322,814 +1435,6 @@ export const DEFAULT_TEMPLATES = {
       { key: "signatory_title", label: "Signatory Title", type: "text", default: "Human Resources" },
       { key: "issue_date", label: "Issue Date", type: "date", auto_fill: "today" }
     ]
-  },
-
-  it_acceptable_use: {
-    name: "IT Acceptable Use Policy",
-    content: `
-<div class="sl-document">
-  <div class="sl-watermark">POLICY</div>
-  <div class="sl-header">
-    <div class="sl-flag-bar"></div>
-    <div class="sl-company-logo">💻</div>
-    <h1>IT Acceptable Use Policy</h1>
-    <p class="sl-subtitle">{{company_name}} • Technology & Systems Usage Guidelines</p>
-  </div>
-
-  <div class="sl-section">
-    <h2>1. Purpose</h2>
-    <p>This policy defines the acceptable use of information technology resources at {{company_name}}. It applies to all employees, contractors, and third parties who access company IT systems, networks, and data.</p>
-  </div>
-
-  <div class="sl-section">
-    <h2>2. Scope</h2>
-    <p>This policy covers all IT resources including but not limited to:</p>
-    <ul>
-      <li>Computers, laptops, tablets, and mobile devices</li>
-      <li>Company email and communication systems</li>
-      <li>Internet access and network infrastructure</li>
-      <li>Software applications and cloud services</li>
-      <li>Data storage and backup systems</li>
-      <li>Printers, scanners, and other peripherals</li>
-    </ul>
-  </div>
-
-  <div class="sl-section">
-    <h2>3. Acceptable Use</h2>
-    <p>IT resources should be used primarily for business purposes. Employees must:</p>
-    <ul>
-      <li>Use IT resources responsibly and professionally</li>
-      <li>Protect login credentials and never share passwords</li>
-      <li>Report security incidents or suspicious activities immediately</li>
-      <li>Keep software and systems updated as required</li>
-      <li>Follow data backup and protection procedures</li>
-      <li>Respect intellectual property rights and software licenses</li>
-    </ul>
-  </div>
-
-  <div class="sl-section">
-    <h2>4. Prohibited Activities</h2>
-    <p>The following activities are strictly prohibited:</p>
-    <ul>
-      <li>Accessing, downloading, or distributing illegal, offensive, or inappropriate content</li>
-      <li>Installing unauthorized software or applications</li>
-      <li>Attempting to bypass security controls or access restricted systems</li>
-      <li>Using company resources for personal commercial activities</li>
-      <li>Sending spam, chain letters, or malicious emails</li>
-      <li>Copying or distributing copyrighted materials without authorization</li>
-      <li>Connecting unauthorized devices to the company network</li>
-      <li>Sharing confidential data through unsecured channels</li>
-    </ul>
-  </div>
-
-  <div class="sl-section">
-    <h2>5. Email & Communication</h2>
-    <ul>
-      <li>Company email is for business communication</li>
-      <li>Limited personal use is permitted but should not interfere with work</li>
-      <li>Be professional in all electronic communications</li>
-      <li>Do not open suspicious attachments or click unknown links</li>
-      <li>All email communications may be monitored for security purposes</li>
-    </ul>
-  </div>
-
-  <div class="sl-section">
-    <h2>6. Internet Usage</h2>
-    <ul>
-      <li>Internet access is provided for business purposes</li>
-      <li>Reasonable personal use during breaks is permitted</li>
-      <li>Access to inappropriate or illegal websites is prohibited</li>
-      <li>Downloading large files should be done during off-peak hours</li>
-      <li>Use of VPNs or proxy services to bypass filters is prohibited</li>
-    </ul>
-  </div>
-
-  <div class="sl-section">
-    <h2>7. Security Requirements</h2>
-    <div class="sl-highlight-box">
-      <h3>🔒 Password Requirements</h3>
-      <ul>
-        <li>Minimum 8 characters with letters, numbers, and symbols</li>
-        <li>Change passwords every 90 days</li>
-        <li>Never share passwords or write them down</li>
-        <li>Use different passwords for different systems</li>
-        <li>Lock your computer when leaving your desk</li>
-      </ul>
-    </div>
-  </div>
-
-  <div class="sl-section">
-    <h2>8. Personal Devices (BYOD)</h2>
-    <p>Personal devices used for work must:</p>
-    <ul>
-      <li>Have up-to-date security software installed</li>
-      <li>Be password/PIN protected</li>
-      <li>Have remote wipe capability enabled</li>
-      <li>Be reported immediately if lost or stolen</li>
-    </ul>
-  </div>
-
-  <div class="sl-section">
-    <h2>9. Monitoring</h2>
-    <p>{{company_name}} reserves the right to monitor and audit all IT resources usage. This includes email, internet activity, and file access. Users should have no expectation of privacy when using company IT resources.</p>
-  </div>
-
-  <div class="sl-section">
-    <h2>10. Consequences of Violation</h2>
-    <p>Violations of this policy may result in:</p>
-    <ul>
-      <li>Revocation of IT access privileges</li>
-      <li>Disciplinary action up to and including termination</li>
-      <li>Legal action for serious violations</li>
-    </ul>
-  </div>
-
-  <div class="sl-acknowledgment">
-    <h2>Employee Acknowledgment</h2>
-    <p>I, <strong>{{employee_name}}</strong>, have read, understood, and agree to comply with this IT Acceptable Use Policy. I understand that violation of this policy may result in disciplinary action.</p>
-  </div>
-
-  <div class="sl-signatures">
-    <div class="sl-signature-block" style="max-width: 350px; margin: 0 auto;">
-      <h4>Employee Signature</h4>
-      <p><strong>{{employee_name}}</strong></p>
-      <p>{{position}}</p>
-      <p>Date: <span class="sl-signature-date">{{signature_date}}</span></p>
-      <div class="sl-digital-signature">{{digital_signature}}</div>
-    </div>
-  </div>
-
-  <div class="sl-footer">
-    <div class="sl-flag-bar"></div>
-    <div class="sl-footer-logo">🇸🇱</div>
-    <p><strong>{{company_name}}</strong></p>
-    <p>Republic of Sierra Leone</p>
-    <p class="sl-legal-note">IT policy document - digitally signed and legally binding.</p>
-  </div>
-</div>
-    `,
-    variables: [
-      { key: "company_name", label: "Company Name", type: "text", auto_fill: "organisation.name" },
-      { key: "employee_name", label: "Employee Name", type: "text", auto_fill: "employee.full_name" },
-      { key: "position", label: "Position", type: "text", auto_fill: "employee.position" }
-    ]
-  },
-
-  disciplinary_policy: {
-    name: "Disciplinary Policy",
-    content: `
-<div class="sl-document">
-  <div class="sl-watermark">POLICY</div>
-  <div class="sl-header">
-    <div class="sl-flag-bar"></div>
-    <div class="sl-company-logo" style="background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);">⚖️</div>
-    <h1>Disciplinary Policy & Procedures</h1>
-    <p class="sl-subtitle">{{company_name}} • In Accordance with Employment Act 2023</p>
-  </div>
-
-  <div class="sl-section">
-    <h2>1. Purpose</h2>
-    <p>This policy establishes fair and consistent procedures for addressing employee conduct and performance issues. It ensures compliance with the Employment Act 2023 of Sierra Leone and protects the rights of both employers and employees.</p>
-  </div>
-
-  <div class="sl-section">
-    <h2>2. Scope</h2>
-    <p>This policy applies to all employees of {{company_name}} regardless of position, tenure, or employment type. It covers issues related to:</p>
-    <ul>
-      <li>Misconduct and behavioral issues</li>
-      <li>Poor performance or failure to meet standards</li>
-      <li>Violation of company policies</li>
-      <li>Breach of employment contract</li>
-    </ul>
-  </div>
-
-  <div class="sl-section">
-    <h2>3. Disciplinary Stages</h2>
-    <div class="sl-highlight-box" style="background: linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%); border-color: #dc2626;">
-      <h3 style="color: #dc2626;">Progressive Discipline Approach</h3>
-      <div class="sl-info-grid">
-        <div class="sl-info-item" style="border-left-color: #fbbf24;">
-          <label>Stage 1</label>
-          <span>Verbal Warning</span>
-        </div>
-        <div class="sl-info-item" style="border-left-color: #f97316;">
-          <label>Stage 2</label>
-          <span>First Written Warning</span>
-        </div>
-        <div class="sl-info-item" style="border-left-color: #ef4444;">
-          <label>Stage 3</label>
-          <span>Final Written Warning</span>
-        </div>
-        <div class="sl-info-item" style="border-left-color: #b91c1c;">
-          <label>Stage 4</label>
-          <span>Dismissal</span>
-        </div>
-      </div>
-    </div>
-    <p><em>Note: Serious misconduct may result in immediate progression to later stages or summary dismissal.</em></p>
-  </div>
-
-  <div class="sl-section">
-    <h2>4. Minor Misconduct Examples</h2>
-    <ul>
-      <li>Occasional lateness or unauthorized absence</li>
-      <li>Minor breach of company procedures</li>
-      <li>Unsatisfactory work quality or performance</li>
-      <li>Failure to follow reasonable instructions</li>
-      <li>Minor health and safety breaches</li>
-      <li>Inappropriate dress or personal presentation</li>
-    </ul>
-  </div>
-
-  <div class="sl-section">
-    <h2>5. Gross Misconduct (Section 91, Employment Act 2023)</h2>
-    <p>The following offenses may result in summary dismissal without notice:</p>
-    <ul>
-      <li>Theft, fraud, or dishonesty</li>
-      <li>Violence, physical assault, or threats</li>
-      <li>Serious insubordination or refusal to follow lawful orders</li>
-      <li>Being under the influence of alcohol or drugs at work</li>
-      <li>Serious breach of health and safety rules</li>
-      <li>Harassment, discrimination, or bullying</li>
-      <li>Deliberate damage to company property</li>
-      <li>Breach of confidentiality or data protection</li>
-      <li>Criminal conduct affecting employment</li>
-      <li>Falsification of records or documents</li>
-    </ul>
-  </div>
-
-  <div class="sl-section">
-    <h2>6. Investigation Process</h2>
-    <ol>
-      <li><strong>Report:</strong> Alleged misconduct is reported to HR/Management</li>
-      <li><strong>Investigation:</strong> Impartial investigation is conducted</li>
-      <li><strong>Suspension:</strong> Employee may be suspended on full pay during investigation</li>
-      <li><strong>Evidence:</strong> All relevant evidence is gathered and documented</li>
-      <li><strong>Interview:</strong> Employee is interviewed and given opportunity to respond</li>
-    </ol>
-  </div>
-
-  <div class="sl-section">
-    <h2>7. Disciplinary Hearing</h2>
-    <p>Before any formal disciplinary action:</p>
-    <ul>
-      <li>Employee will receive written notice of allegations</li>
-      <li>Employee may be accompanied by a colleague or union representative</li>
-      <li>Employee will have opportunity to present their case</li>
-      <li>Decision will be communicated in writing</li>
-      <li>Right of appeal will be explained</li>
-    </ul>
-  </div>
-
-  <div class="sl-section">
-    <h2>8. Right of Appeal</h2>
-    <p>Employees have the right to appeal any disciplinary decision within <strong>5 working days</strong> of receiving the written outcome. Appeals should be submitted in writing to {{appeal_authority}}.</p>
-  </div>
-
-  <div class="sl-section">
-    <h2>9. Record Keeping</h2>
-    <p>All disciplinary records will be maintained in the employee's personnel file. Warnings will typically remain active for:</p>
-    <ul>
-      <li>Verbal Warning: 6 months</li>
-      <li>First Written Warning: 12 months</li>
-      <li>Final Written Warning: 18 months</li>
-    </ul>
-  </div>
-
-  <div class="sl-acknowledgment">
-    <h2>Employee Acknowledgment</h2>
-    <p>I, <strong>{{employee_name}}</strong>, acknowledge that I have read and understood this Disciplinary Policy. I understand the standards of conduct expected and the consequences of failing to meet these standards.</p>
-  </div>
-
-  <div class="sl-signatures">
-    <div class="sl-signature-block" style="max-width: 350px; margin: 0 auto;">
-      <h4>Employee Signature</h4>
-      <p><strong>{{employee_name}}</strong></p>
-      <p>{{position}}</p>
-      <p>Date: <span class="sl-signature-date">{{signature_date}}</span></p>
-      <div class="sl-digital-signature">{{digital_signature}}</div>
-    </div>
-  </div>
-
-  <div class="sl-footer">
-    <div class="sl-flag-bar"></div>
-    <div class="sl-footer-logo">🇸🇱</div>
-    <p><strong>{{company_name}}</strong></p>
-    <p>Republic of Sierra Leone</p>
-    <p class="sl-legal-note">This policy complies with the Employment Act 2023 of Sierra Leone.</p>
-  </div>
-</div>
-    `,
-    variables: [
-      { key: "company_name", label: "Company Name", type: "text", auto_fill: "organisation.name" },
-      { key: "employee_name", label: "Employee Name", type: "text", auto_fill: "employee.full_name" },
-      { key: "position", label: "Position", type: "text", auto_fill: "employee.position" },
-      { key: "appeal_authority", label: "Appeal Authority", type: "text", default: "Managing Director or HR Director" }
-    ]
-  },
-
-  remote_work_policy: {
-    name: "Remote Work Policy",
-    content: `
-<div class="sl-document">
-  <div class="sl-watermark">POLICY</div>
-  <div class="sl-header">
-    <div class="sl-flag-bar"></div>
-    <div class="sl-company-logo">🏠</div>
-    <h1>Remote Work Policy</h1>
-    <p class="sl-subtitle">{{company_name}} • Work From Home Guidelines</p>
-  </div>
-
-  <div class="sl-section">
-    <h2>1. Purpose</h2>
-    <p>This policy establishes guidelines for remote work arrangements at {{company_name}}. It ensures productivity, accountability, and work-life balance while maintaining company standards and data security.</p>
-  </div>
-
-  <div class="sl-section">
-    <h2>2. Eligibility</h2>
-    <p>Remote work may be available to employees who:</p>
-    <ul>
-      <li>Have completed their probationary period</li>
-      <li>Have a role suitable for remote work</li>
-      <li>Have demonstrated consistent performance</li>
-      <li>Have a suitable home workspace</li>
-      <li>Have reliable internet connectivity</li>
-      <li>Have received manager approval</li>
-    </ul>
-  </div>
-
-  <div class="sl-section">
-    <h2>3. Types of Remote Work</h2>
-    <div class="sl-info-grid">
-      <div class="sl-info-item">
-        <label>Full Remote</label>
-        <span>Work entirely from home</span>
-      </div>
-      <div class="sl-info-item">
-        <label>Hybrid</label>
-        <span>Split between office and home</span>
-      </div>
-      <div class="sl-info-item">
-        <label>Occasional</label>
-        <span>As needed basis</span>
-      </div>
-      <div class="sl-info-item">
-        <label>Temporary</label>
-        <span>For specific period/project</span>
-      </div>
-    </div>
-  </div>
-
-  <div class="sl-section">
-    <h2>4. Work Hours & Availability</h2>
-    <ul>
-      <li>Standard work hours remain {{work_hours}}</li>
-      <li>Employees must be reachable during core hours ({{core_hours}})</li>
-      <li>Respond to communications within reasonable time</li>
-      <li>Attend all scheduled meetings (virtual or in-person)</li>
-      <li>Update calendar with work schedule and availability</li>
-      <li>Take regular breaks as per normal work policy</li>
-    </ul>
-  </div>
-
-  <div class="sl-section">
-    <h2>5. Workspace Requirements</h2>
-    <div class="sl-highlight-box">
-      <h3>🏡 Home Office Essentials</h3>
-      <ul>
-        <li>Dedicated, quiet workspace free from distractions</li>
-        <li>Reliable internet connection (minimum 10 Mbps)</li>
-        <li>Ergonomic seating and proper desk setup</li>
-        <li>Adequate lighting for video calls</li>
-        <li>Secure and private area for confidential work</li>
-        <li>Backup power solution (generator/UPS) recommended</li>
-      </ul>
-    </div>
-  </div>
-
-  <div class="sl-section">
-    <h2>6. Equipment & Technology</h2>
-    <ul>
-      <li>Company may provide necessary equipment (laptop, headset, etc.)</li>
-      <li>Equipment remains company property and must be returned upon request</li>
-      <li>Report any equipment issues or damage immediately</li>
-      <li>Use only approved software and applications</li>
-      <li>Keep all systems updated and secure</li>
-    </ul>
-  </div>
-
-  <div class="sl-section">
-    <h2>7. Data Security & Confidentiality</h2>
-    <ul>
-      <li>Use company VPN when accessing work systems</li>
-      <li>Never use public Wi-Fi for work without VPN</li>
-      <li>Lock computer when stepping away</li>
-      <li>Keep confidential documents secure</li>
-      <li>Do not allow family members to access work devices</li>
-      <li>Shred or securely dispose of printed documents</li>
-      <li>Report any security incidents immediately</li>
-    </ul>
-  </div>
-
-  <div class="sl-section">
-    <h2>8. Communication & Collaboration</h2>
-    <ul>
-      <li>Use company-approved communication tools</li>
-      <li>Check emails and messages regularly</li>
-      <li>Keep video on during team meetings when possible</li>
-      <li>Maintain professional background for video calls</li>
-      <li>Proactively communicate work progress and blockers</li>
-    </ul>
-  </div>
-
-  <div class="sl-section">
-    <h2>9. Performance & Accountability</h2>
-    <ul>
-      <li>Performance standards remain the same as in-office work</li>
-      <li>Complete assigned tasks within agreed timelines</li>
-      <li>Participate in regular check-ins with manager</li>
-      <li>Track time and tasks as required</li>
-      <li>Maintain productivity and quality standards</li>
-    </ul>
-  </div>
-
-  <div class="sl-section">
-    <h2>10. Health & Safety</h2>
-    <ul>
-      <li>Maintain an ergonomic workspace to prevent injury</li>
-      <li>Take regular breaks from the screen</li>
-      <li>Report any work-related injuries</li>
-      <li>Maintain work-life boundaries</li>
-      <li>Disconnect after work hours when possible</li>
-    </ul>
-  </div>
-
-  <div class="sl-section">
-    <h2>11. Expenses</h2>
-    <p>{{expense_policy}}</p>
-  </div>
-
-  <div class="sl-section">
-    <h2>12. Termination of Remote Work</h2>
-    <p>Remote work arrangements may be terminated at any time by management if:</p>
-    <ul>
-      <li>Performance standards are not maintained</li>
-      <li>Communication or availability issues arise</li>
-      <li>Business needs require on-site presence</li>
-      <li>Security or policy violations occur</li>
-    </ul>
-  </div>
-
-  <div class="sl-acknowledgment">
-    <h2>Employee Acknowledgment</h2>
-    <p>I, <strong>{{employee_name}}</strong>, have read and understood this Remote Work Policy. I agree to comply with all requirements and understand that remote work is a privilege that may be modified or revoked.</p>
-  </div>
-
-  <div class="sl-signatures">
-    <div class="sl-signature-block" style="max-width: 350px; margin: 0 auto;">
-      <h4>Employee Signature</h4>
-      <p><strong>{{employee_name}}</strong></p>
-      <p>{{position}}</p>
-      <p>Date: <span class="sl-signature-date">{{signature_date}}</span></p>
-      <div class="sl-digital-signature">{{digital_signature}}</div>
-    </div>
-  </div>
-
-  <div class="sl-footer">
-    <div class="sl-flag-bar"></div>
-    <div class="sl-footer-logo">🇸🇱</div>
-    <p><strong>{{company_name}}</strong></p>
-    <p>Republic of Sierra Leone</p>
-    <p class="sl-legal-note">This policy document is digitally signed and legally binding.</p>
-  </div>
-</div>
-    `,
-    variables: [
-      { key: "company_name", label: "Company Name", type: "text", auto_fill: "organisation.name" },
-      { key: "employee_name", label: "Employee Name", type: "text", auto_fill: "employee.full_name" },
-      { key: "position", label: "Position", type: "text", auto_fill: "employee.position" },
-      { key: "work_hours", label: "Standard Work Hours", type: "text", default: "8:00 AM - 5:00 PM" },
-      { key: "core_hours", label: "Core Hours", type: "text", default: "10:00 AM - 3:00 PM" },
-      { key: "expense_policy", label: "Expense Policy", type: "text", default: "The company may contribute towards internet costs. Other expenses must be pre-approved by management." }
-    ]
-  },
-
-  probation_confirmation: {
-    name: "Probation Confirmation Letter",
-    content: `
-<div class="sl-document">
-  <div class="sl-watermark">CONFIRMED</div>
-  <div class="sl-header">
-    <div class="sl-flag-bar"></div>
-    <div class="sl-company-logo" style="background: linear-gradient(135deg, #059669 0%, #047857 100%);">✓</div>
-    <h1>Confirmation of Employment</h1>
-    <p class="sl-subtitle">{{company_name}} • Successful Completion of Probation</p>
-    <p class="sl-ref-number">Ref: CONF-{{document_ref}}</p>
-  </div>
-
-  <div class="sl-section">
-    <p>Dear <strong>{{employee_name}}</strong>,</p>
-    <p>We are pleased to inform you that you have successfully completed your probationary period with {{company_name}}. This letter confirms your permanent employment with the organization.</p>
-  </div>
-
-  <div class="sl-section">
-    <h2>Employment Confirmation Details</h2>
-    <div class="sl-highlight-box" style="background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%); border-color: #059669;">
-      <h3 style="color: #059669;">🎉 Congratulations!</h3>
-      <div class="sl-info-grid">
-        <div class="sl-info-item" style="border-left-color: #059669;">
-          <label>Employee Name</label>
-          <span>{{employee_name}}</span>
-        </div>
-        <div class="sl-info-item" style="border-left-color: #059669;">
-          <label>Position</label>
-          <span>{{position}}</span>
-        </div>
-        <div class="sl-info-item" style="border-left-color: #059669;">
-          <label>Department</label>
-          <span>{{department}}</span>
-        </div>
-        <div class="sl-info-item" style="border-left-color: #059669;">
-          <label>Confirmation Date</label>
-          <span>{{confirmation_date}}</span>
-        </div>
-        <div class="sl-info-item" style="border-left-color: #059669;">
-          <label>Start Date</label>
-          <span>{{start_date}}</span>
-        </div>
-        <div class="sl-info-item" style="border-left-color: #059669;">
-          <label>Probation Period</label>
-          <span>{{probation_months}} months</span>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <div class="sl-section">
-    <h2>Performance Summary</h2>
-    <p>During your probationary period, you have demonstrated:</p>
-    <p>{{performance_summary}}</p>
-    <p>Your dedication, hard work, and commitment to excellence have been recognized by your supervisors and colleagues.</p>
-  </div>
-
-  <div class="sl-section">
-    <h2>Terms of Permanent Employment</h2>
-    <div class="sl-info-grid">
-      <div class="sl-info-item">
-        <label>Employment Status</label>
-        <span>Permanent</span>
-      </div>
-      <div class="sl-info-item">
-        <label>Monthly Salary</label>
-        <span>SLE {{confirmed_salary}}</span>
-      </div>
-    </div>
-    <p>All other terms and conditions as stated in your original employment contract remain unchanged, unless otherwise specified.</p>
-  </div>
-
-  <div class="sl-section">
-    <h2>Benefits Upon Confirmation</h2>
-    <p>As a confirmed employee, you are now entitled to:</p>
-    <ul>
-      <li>Full annual leave entitlement (21 working days per Employment Act 2023)</li>
-      <li>Company medical insurance coverage</li>
-      <li>Performance bonus eligibility</li>
-      <li>Training and development opportunities</li>
-      <li>All other benefits as per company policy</li>
-    </ul>
-  </div>
-
-  <div class="sl-section">
-    <h2>Notice Period</h2>
-    <p>As a permanent employee, the notice period for termination by either party is now:</p>
-    <ul>
-      <li>Less than 3 years service: 1 month written notice</li>
-      <li>3-5 years service: 2 months written notice</li>
-      <li>Over 5 years service: 3 months written notice</li>
-    </ul>
-  </div>
-
-  <div class="sl-section">
-    <p>We value your contributions and look forward to your continued success and growth with {{company_name}}. Please continue to uphold the high standards you have demonstrated during your probation.</p>
-    <p>Once again, congratulations on this achievement!</p>
-  </div>
-
-  <div class="sl-acknowledgment">
-    <h2>Employee Acknowledgment</h2>
-    <p>I, <strong>{{employee_name}}</strong>, acknowledge receipt of this confirmation letter and accept the terms of my permanent employment with {{company_name}}.</p>
-  </div>
-
-  <div class="sl-signatures">
-    <div class="sl-signature-block">
-      <h4>For the Company</h4>
-      <p><strong>{{authorized_signatory}}</strong></p>
-      <p>{{signatory_title}}</p>
-      <p>Date: {{issue_date}}</p>
-      <div class="sl-signature-line"></div>
-    </div>
-    <div class="sl-signature-block">
-      <h4>Employee</h4>
-      <p><strong>{{employee_name}}</strong></p>
-      <p>Date: <span class="sl-signature-date">{{signature_date}}</span></p>
-      <div class="sl-digital-signature">{{digital_signature}}</div>
-    </div>
-  </div>
-
-  <div class="sl-footer">
-    <div class="sl-flag-bar"></div>
-    <div class="sl-footer-logo">🇸🇱</div>
-    <p><strong>{{company_name}}</strong></p>
-    <p>Republic of Sierra Leone</p>
-    <p class="sl-legal-note">This document forms part of your employment record and is legally binding.</p>
-  </div>
-</div>
-    `,
-    variables: [
-      { key: "company_name", label: "Company Name", type: "text", auto_fill: "organisation.name" },
-      { key: "document_ref", label: "Reference Number", type: "text", auto_fill: "auto" },
-      { key: "employee_name", label: "Employee Name", type: "text", auto_fill: "employee.full_name" },
-      { key: "position", label: "Position", type: "text", auto_fill: "employee.position" },
-      { key: "department", label: "Department", type: "text", auto_fill: "employee.department" },
-      { key: "start_date", label: "Start Date", type: "date", auto_fill: "employee.hire_date" },
-      { key: "confirmation_date", label: "Confirmation Date", type: "date", auto_fill: "today" },
-      { key: "probation_months", label: "Probation Period (months)", type: "select", options: ["3", "6"], default: "3" },
-      { key: "confirmed_salary", label: "Confirmed Salary (SLE)", type: "number", auto_fill: "employee.base_salary" },
-      { key: "performance_summary", label: "Performance Summary", type: "text", default: "Excellent performance, meeting all expectations and demonstrating strong commitment to job responsibilities." },
-      { key: "authorized_signatory", label: "Authorized Signatory", type: "text", default: "HR Manager" },
-      { key: "signatory_title", label: "Signatory Title", type: "text", default: "Human Resources" },
-      { key: "issue_date", label: "Issue Date", type: "date", auto_fill: "today" }
-    ]
-  },
-
-  termination_letter: {
-    name: "Termination Letter",
-    content: `
-<div class="sl-document">
-  <div class="sl-watermark">TERMINATION</div>
-  <div class="sl-header">
-    <div class="sl-flag-bar"></div>
-    <div class="sl-company-logo" style="background: linear-gradient(135deg, #6b7280 0%, #4b5563 100%);">📋</div>
-    <h1>Notice of Termination of Employment</h1>
-    <p class="sl-subtitle">{{company_name}} • Employment Termination Notice</p>
-    <p class="sl-ref-number">Ref: TERM-{{document_ref}}</p>
-  </div>
-
-  <div class="sl-section">
-    <div class="sl-info-grid">
-      <div class="sl-info-item">
-        <label>Employee Name</label>
-        <span>{{employee_name}}</span>
-      </div>
-      <div class="sl-info-item">
-        <label>Position</label>
-        <span>{{position}}</span>
-      </div>
-      <div class="sl-info-item">
-        <label>Department</label>
-        <span>{{department}}</span>
-      </div>
-      <div class="sl-info-item">
-        <label>Date of Notice</label>
-        <span>{{notice_date}}</span>
-      </div>
-    </div>
-  </div>
-
-  <div class="sl-section">
-    <p>Dear <strong>{{employee_name}}</strong>,</p>
-    <p>This letter serves as formal notice that your employment with {{company_name}} will be terminated effective <strong>{{termination_date}}</strong>.</p>
-  </div>
-
-  <div class="sl-section">
-    <h2>Termination Details</h2>
-    <div class="sl-info-grid">
-      <div class="sl-info-item">
-        <label>Reason for Termination</label>
-        <span>{{termination_reason}}</span>
-      </div>
-      <div class="sl-info-item">
-        <label>Last Working Day</label>
-        <span>{{last_working_day}}</span>
-      </div>
-      <div class="sl-info-item">
-        <label>Notice Period</label>
-        <span>{{notice_period}}</span>
-      </div>
-      <div class="sl-info-item">
-        <label>Termination Type</label>
-        <span>{{termination_type}}</span>
-      </div>
-    </div>
-  </div>
-
-  <div class="sl-section">
-    <h2>Reason for Termination</h2>
-    <p>{{detailed_reason}}</p>
-  </div>
-
-  <div class="sl-section">
-    <h2>Final Entitlements</h2>
-    <p>In accordance with the Employment Act 2023 of Sierra Leone, you are entitled to receive:</p>
-    <ul>
-      <li><strong>Outstanding Salary:</strong> Payment for work performed up to and including your last working day</li>
-      <li><strong>Accrued Leave:</strong> Payment for any unused annual leave entitlement</li>
-      <li><strong>Notice Pay:</strong> {{notice_pay_details}}</li>
-      <li><strong>Severance Pay:</strong> {{severance_details}}</li>
-      <li><strong>NASSIT:</strong> Contributions up to termination date</li>
-    </ul>
-    <p>Your final payment will be processed within {{payment_timeline}} of your last working day.</p>
-  </div>
-
-  <div class="sl-section">
-    <h2>Return of Company Property</h2>
-    <p>You are required to return all company property before your last working day, including but not limited to:</p>
-    <ul>
-      <li>ID card and access cards/keys</li>
-      <li>Laptop, phone, and other electronic devices</li>
-      <li>Company documents and files</li>
-      <li>Uniform and equipment</li>
-      <li>Any other company-owned items</li>
-    </ul>
-  </div>
-
-  <div class="sl-section">
-    <h2>Exit Requirements</h2>
-    <ul>
-      <li>Complete handover of duties and responsibilities</li>
-      <li>Attend exit interview with HR (if required)</li>
-      <li>Return all company property</li>
-      <li>Settle any outstanding advances or loans</li>
-      <li>Update contact information for final documentation</li>
-    </ul>
-  </div>
-
-  <div class="sl-section">
-    <h2>Confidentiality Obligations</h2>
-    <p>Please be reminded that your confidentiality obligations as outlined in your employment contract and any Non-Disclosure Agreement continue after your employment ends. You must not disclose any confidential information about {{company_name}}.</p>
-  </div>
-
-  <div class="sl-section">
-    <h2>Reference</h2>
-    <p>{{reference_statement}}</p>
-  </div>
-
-  <div class="sl-section">
-    <h2>Right of Appeal</h2>
-    <p>If you believe this termination is unjust, you have the right to appeal within 14 days per the Employment Act 2023. Appeals should be submitted in writing to {{appeal_authority}}.</p>
-  </div>
-
-  <div class="sl-section">
-    <p>We thank you for your service to {{company_name}} and wish you well in your future endeavors.</p>
-  </div>
-
-  <div class="sl-signatures">
-    <div class="sl-signature-block">
-      <h4>For the Company</h4>
-      <p><strong>{{authorized_signatory}}</strong></p>
-      <p>{{signatory_title}}</p>
-      <p>Date: {{notice_date}}</p>
-      <div class="sl-signature-line"></div>
-    </div>
-    <div class="sl-signature-block">
-      <h4>Employee Acknowledgment</h4>
-      <p><strong>{{employee_name}}</strong></p>
-      <p>Date Received: _______________</p>
-      <div class="sl-signature-line"></div>
-      <p style="font-size: 10px; color: #888; margin-top: 5px;">Employee Signature (acknowledging receipt)</p>
-    </div>
-  </div>
-
-  <div class="sl-footer">
-    <div class="sl-flag-bar"></div>
-    <div class="sl-footer-logo">🇸🇱</div>
-    <p><strong>{{company_name}}</strong></p>
-    <p>Republic of Sierra Leone</p>
-    <p class="sl-legal-note">This notice is issued in accordance with the Employment Act 2023 of Sierra Leone. A copy will be retained in the employee's personnel file.</p>
-  </div>
-</div>
-    `,
-    variables: [
-      { key: "company_name", label: "Company Name", type: "text", auto_fill: "organisation.name" },
-      { key: "document_ref", label: "Reference Number", type: "text", auto_fill: "auto" },
-      { key: "employee_name", label: "Employee Name", type: "text", auto_fill: "employee.full_name" },
-      { key: "position", label: "Position", type: "text", auto_fill: "employee.position" },
-      { key: "department", label: "Department", type: "text", auto_fill: "employee.department" },
-      { key: "notice_date", label: "Notice Date", type: "date", auto_fill: "today" },
-      { key: "termination_date", label: "Termination Date", type: "date" },
-      { key: "last_working_day", label: "Last Working Day", type: "date" },
-      { key: "notice_period", label: "Notice Period", type: "select", options: ["7 days", "1 month", "2 months", "3 months", "Immediate"], default: "1 month" },
-      { key: "termination_type", label: "Termination Type", type: "select", options: ["Resignation", "Redundancy", "End of Contract", "Dismissal", "Mutual Agreement", "Retirement"], default: "End of Contract" },
-      { key: "termination_reason", label: "Reason Category", type: "select", options: ["Voluntary Resignation", "Redundancy/Restructuring", "Contract Expiry", "Performance Issues", "Misconduct", "Mutual Agreement", "Retirement", "Other"], default: "Contract Expiry" },
-      { key: "detailed_reason", label: "Detailed Reason", type: "text", default: "As discussed in our meeting, your employment is being terminated as per the terms stated above." },
-      { key: "notice_pay_details", label: "Notice Pay Details", type: "text", default: "As per contract terms" },
-      { key: "severance_details", label: "Severance Details", type: "text", default: "As per Employment Act 2023 and company policy" },
-      { key: "payment_timeline", label: "Payment Timeline", type: "text", default: "14 days" },
-      { key: "reference_statement", label: "Reference Statement", type: "text", default: "A reference letter will be provided upon request for future employment purposes." },
-      { key: "appeal_authority", label: "Appeal Authority", type: "text", default: "Managing Director" },
-      { key: "authorized_signatory", label: "Authorized Signatory", type: "text", default: "HR Manager" },
-      { key: "signatory_title", label: "Signatory Title", type: "text", default: "Human Resources" }
-    ],
-    requires_signature: false
   }
 };
 
