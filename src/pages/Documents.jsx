@@ -253,62 +253,54 @@ export default function Documents() {
 
   return (
     <div className="space-y-6">
-      {/* Mobile-friendly Header */}
-      <div className="space-y-4">
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-          <div>
-            <h1 className="text-xl sm:text-2xl font-bold text-[#0F1F3C]">HR Documents</h1>
-            <p className="text-sm text-gray-500 hidden sm:block">Manage employment contracts, policies, and other HR documents</p>
-          </div>
-          <div className="flex flex-wrap gap-2">
-            {isAdmin && (
-              <Button 
-                onClick={() => setShowAIAssistant(true)}
+      <PageHeader
+        title="HR Documents"
+        subtitle="Manage employment contracts, policies, and other HR documents"
+        action={() => setShowCreateDialog(true)}
+        actionLabel="Create Document"
+      >
+        <div className="flex flex-wrap items-center gap-2">
+          {isAdmin && (
+            <Button 
+              onClick={() => setShowAIAssistant(true)}
+              size="sm"
+              className="bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600"
+            >
+              <Sparkles className="w-4 h-4 sm:mr-2" />
+              <span className="hidden sm:inline">AI Generate</span>
+            </Button>
+          )}
+          {isAdmin && (
+            <div className="flex gap-1 sm:gap-2">
+              <Button
+                variant={mainView === "documents" ? "default" : "outline"}
                 size="sm"
-                className="bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600"
+                onClick={() => setMainView("documents")}
+                className={mainView === "documents" ? "bg-[#0F1F3C]" : ""}
               >
-                <Sparkles className="w-4 h-4 sm:mr-2" />
-                <span className="hidden sm:inline">AI Generate</span>
+                <FileText className="w-4 h-4 sm:mr-2" />
+                <span className="hidden sm:inline">Documents</span>
               </Button>
-            )}
-            <Button onClick={() => setShowCreateDialog(true)} size="sm" className="bg-[#1EB053] hover:bg-[#178f43]">
-              <Plus className="w-4 h-4 sm:mr-2" />
-              <span className="hidden sm:inline">Create Document</span>
-            </Button>
-          </div>
+              <Button
+                variant={mainView === "templates" ? "default" : "outline"}
+                size="sm"
+                onClick={() => setMainView("templates")}
+                className={mainView === "templates" ? "bg-[#0F1F3C]" : ""}
+              >
+                <LayoutTemplate className="w-4 h-4 sm:mr-2" />
+                <span className="hidden sm:inline">Templates</span>
+              </Button>
+            </div>
+          )}
         </div>
-        
-        {/* View Toggle for Admin */}
-        {isAdmin && (
-          <div className="flex gap-2">
-            <Button
-              variant={mainView === "documents" ? "default" : "outline"}
-              size="sm"
-              onClick={() => setMainView("documents")}
-              className={mainView === "documents" ? "bg-[#0F1F3C]" : ""}
-            >
-              <FileText className="w-4 h-4 sm:mr-2" />
-              <span className="hidden xs:inline">Documents</span>
-            </Button>
-            <Button
-              variant={mainView === "templates" ? "default" : "outline"}
-              size="sm"
-              onClick={() => setMainView("templates")}
-              className={mainView === "templates" ? "bg-[#0F1F3C]" : ""}
-            >
-              <LayoutTemplate className="w-4 h-4 sm:mr-2" />
-              <span className="hidden xs:inline">Templates</span>
-            </Button>
-          </div>
-        )}
-      </div>
+      </PageHeader>
 
       {mainView === "templates" && isAdmin ? (
         <TemplateManager orgId={orgId} currentEmployee={currentEmployee} />
       ) : (
         <>
 
-      {/* Pending documents alert - Mobile friendly */}
+      {/* Pending documents alert */}
       {myPendingDocs.length > 0 && (
         <Card className="border-amber-200 bg-amber-50">
           <CardContent className="p-3 sm:p-4">
@@ -319,10 +311,10 @@ export default function Documents() {
                 </div>
                 <div>
                   <p className="font-medium text-amber-800 text-sm sm:text-base">
-                    {myPendingDocs.length} document(s) awaiting signature
+                    You have {myPendingDocs.length} document(s) awaiting your signature
                   </p>
                   <p className="text-xs sm:text-sm text-amber-700">
-                    Please review and sign
+                    Please review and sign these documents
                   </p>
                 </div>
               </div>
@@ -339,7 +331,7 @@ export default function Documents() {
         </Card>
       )}
 
-      {/* Stats - Mobile optimized */}
+      {/* Stats */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-4">
         <Card>
           <CardContent className="p-3 sm:p-4">
@@ -347,9 +339,9 @@ export default function Documents() {
               <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg bg-blue-100 flex items-center justify-center flex-shrink-0">
                 <FileText className="w-4 h-4 sm:w-5 sm:h-5 text-blue-600" />
               </div>
-              <div>
-                <p className="text-lg sm:text-2xl font-bold">{stats.total}</p>
-                <p className="text-[10px] sm:text-xs text-gray-500">Total</p>
+              <div className="min-w-0">
+                <p className="text-xl sm:text-2xl font-bold">{stats.total}</p>
+                <p className="text-[10px] sm:text-xs text-gray-500 truncate">Total Docs</p>
               </div>
             </div>
           </CardContent>
@@ -360,9 +352,9 @@ export default function Documents() {
               <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg bg-amber-100 flex items-center justify-center flex-shrink-0">
                 <Clock className="w-4 h-4 sm:w-5 sm:h-5 text-amber-600" />
               </div>
-              <div>
-                <p className="text-lg sm:text-2xl font-bold">{stats.pending}</p>
-                <p className="text-[10px] sm:text-xs text-gray-500">Pending</p>
+              <div className="min-w-0">
+                <p className="text-xl sm:text-2xl font-bold">{stats.pending}</p>
+                <p className="text-[10px] sm:text-xs text-gray-500 truncate">Pending</p>
               </div>
             </div>
           </CardContent>
@@ -373,9 +365,9 @@ export default function Documents() {
               <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg bg-green-100 flex items-center justify-center flex-shrink-0">
                 <CheckCircle2 className="w-4 h-4 sm:w-5 sm:h-5 text-green-600" />
               </div>
-              <div>
-                <p className="text-lg sm:text-2xl font-bold">{stats.signed}</p>
-                <p className="text-[10px] sm:text-xs text-gray-500">Signed</p>
+              <div className="min-w-0">
+                <p className="text-xl sm:text-2xl font-bold">{stats.signed}</p>
+                <p className="text-[10px] sm:text-xs text-gray-500 truncate">Signed</p>
               </div>
             </div>
           </CardContent>
@@ -386,9 +378,9 @@ export default function Documents() {
               <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg bg-red-100 flex items-center justify-center flex-shrink-0">
                 <XCircle className="w-4 h-4 sm:w-5 sm:h-5 text-red-600" />
               </div>
-              <div>
-                <p className="text-lg sm:text-2xl font-bold">{stats.rejected}</p>
-                <p className="text-[10px] sm:text-xs text-gray-500">Rejected</p>
+              <div className="min-w-0">
+                <p className="text-xl sm:text-2xl font-bold">{stats.rejected}</p>
+                <p className="text-[10px] sm:text-xs text-gray-500 truncate">Rejected</p>
               </div>
             </div>
           </CardContent>
@@ -399,28 +391,35 @@ export default function Documents() {
       <Card>
         <CardHeader className="pb-3 px-3 sm:px-6">
           <Tabs value={activeTab} onValueChange={setActiveTab}>
-            <TabsList className="w-full sm:w-auto overflow-x-auto flex-nowrap">
-              <TabsTrigger value="all" className="text-xs sm:text-sm">All</TabsTrigger>
-              <TabsTrigger value="pending" className="relative text-xs sm:text-sm">
-                Pending
+            <TabsList className="w-full sm:w-auto flex flex-wrap h-auto gap-1 p-1">
+              <TabsTrigger value="all" className="flex-1 sm:flex-none text-xs sm:text-sm">
+                <span className="hidden sm:inline">All Documents</span>
+                <span className="sm:hidden">All</span>
+              </TabsTrigger>
+              <TabsTrigger value="pending" className="flex-1 sm:flex-none relative text-xs sm:text-sm">
+                <span className="hidden sm:inline">My Pending</span>
+                <span className="sm:hidden">Pending</span>
                 {myPendingDocs.length > 0 && (
                   <span className="ml-1 sm:ml-2 px-1.5 sm:px-2 py-0.5 text-[10px] sm:text-xs bg-amber-500 text-white rounded-full">
                     {myPendingDocs.length}
                   </span>
                 )}
               </TabsTrigger>
-              <TabsTrigger value="signed" className="text-xs sm:text-sm">Signed</TabsTrigger>
-              {isAdmin && <TabsTrigger value="sent" className="text-xs sm:text-sm">Sent</TabsTrigger>}
+              <TabsTrigger value="signed" className="flex-1 sm:flex-none text-xs sm:text-sm">Signed</TabsTrigger>
+              {isAdmin && <TabsTrigger value="sent" className="flex-1 sm:flex-none text-xs sm:text-sm">
+                <span className="hidden sm:inline">Sent by Me</span>
+                <span className="sm:hidden">Sent</span>
+              </TabsTrigger>}
             </TabsList>
           </Tabs>
         </CardHeader>
         <CardContent className="px-3 sm:px-6">
-          {/* Filters - Mobile optimized */}
+          {/* Filters */}
           <div className="flex flex-col gap-2 sm:gap-3 mb-4">
             <div className="relative">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
               <Input
-                placeholder="Search..."
+                placeholder="Search documents..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="pl-9"
@@ -428,7 +427,7 @@ export default function Documents() {
             </div>
             <div className="flex gap-2">
               <Select value={statusFilter} onValueChange={setStatusFilter}>
-                <SelectTrigger className="flex-1 sm:w-40">
+                <SelectTrigger className="flex-1 sm:w-40 sm:flex-none">
                   <SelectValue placeholder="Status" />
                 </SelectTrigger>
                 <SelectContent>
@@ -439,7 +438,7 @@ export default function Documents() {
                 </SelectContent>
               </Select>
               <Select value={typeFilter} onValueChange={setTypeFilter}>
-                <SelectTrigger className="flex-1 sm:w-48">
+                <SelectTrigger className="flex-1 sm:w-48 sm:flex-none">
                   <SelectValue placeholder="Type" />
                 </SelectTrigger>
                 <SelectContent>
@@ -452,7 +451,7 @@ export default function Documents() {
             </div>
           </div>
 
-          {/* Documents - Mobile Card View / Desktop Table */}
+          {/* Documents - Mobile Cards / Desktop Table */}
           {filteredDocuments.length === 0 ? (
             <div className="text-center py-12">
               <FileText className="w-12 h-12 mx-auto text-gray-300 mb-4" />
@@ -474,7 +473,7 @@ export default function Documents() {
                       className={`p-3 border rounded-lg ${isPendingForMe ? 'bg-amber-50 border-amber-200' : 'bg-white'}`}
                     >
                       <div className="flex items-start justify-between gap-2">
-                        <div className="flex items-start gap-3 flex-1 min-w-0">
+                        <div className="flex items-start gap-3 min-w-0 flex-1">
                           <div className={`w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0 ${
                             isPendingForMe ? 'bg-amber-100' : 'bg-gray-100'
                           }`}>
@@ -483,7 +482,7 @@ export default function Documents() {
                           <div className="min-w-0 flex-1">
                             <p className="font-medium text-sm truncate">{doc.title}</p>
                             <p className="text-xs text-gray-500">{typeInfo.label || doc.document_type}</p>
-                            <p className="text-xs text-gray-500 mt-1">For: {doc.employee_name}</p>
+                            <p className="text-xs text-gray-600 mt-1">{doc.employee_name}</p>
                           </div>
                         </div>
                         <DropdownMenu>
@@ -498,24 +497,37 @@ export default function Documents() {
                               setShowViewer(true);
                             }}>
                               <Eye className="w-4 h-4 mr-2" />
-                              View
+                              View Document
                             </DropdownMenuItem>
+                            
                             {isPendingForMe && (
                               <DropdownMenuItem onClick={() => {
                                 setSelectedDocument(doc);
                                 setShowSignDialog(true);
                               }}>
                                 <FileCheck className="w-4 h-4 mr-2" />
-                                Sign
+                                Sign Document
                               </DropdownMenuItem>
                             )}
+                            
                             {isAdmin && doc.status === 'pending_signature' && (
                               <DropdownMenuItem onClick={() => sendReminderMutation.mutate(doc)}>
                                 <Bell className="w-4 h-4 mr-2" />
-                                Remind
+                                Send Reminder
                               </DropdownMenuItem>
                             )}
-                            {isAdmin && (doc.status === 'draft' || (currentEmployee?.role === 'super_admin' && doc.status === 'rejected')) && (
+                            
+                            {isAdmin && doc.status === 'draft' && (
+                              <DropdownMenuItem 
+                                onClick={() => deleteDocumentMutation.mutate(doc.id)}
+                                className="text-red-600"
+                              >
+                                <Trash2 className="w-4 h-4 mr-2" />
+                                Delete
+                              </DropdownMenuItem>
+                            )}
+                            
+                            {currentEmployee?.role === 'super_admin' && doc.status === 'rejected' && (
                               <DropdownMenuItem 
                                 onClick={() => deleteDocumentMutation.mutate(doc.id)}
                                 className="text-red-600"
@@ -532,14 +544,14 @@ export default function Documents() {
                           <StatusIcon className="w-3 h-3 mr-1" />
                           {statusConfig?.label}
                         </Badge>
-                        <span className="text-xs text-gray-500">
+                        <p className="text-xs text-gray-500">
                           {format(new Date(doc.created_date), 'MMM d, yyyy')}
-                        </span>
+                        </p>
                       </div>
                       {isPendingForMe && (
                         <Button 
                           size="sm" 
-                          className="w-full mt-3 bg-amber-500 hover:bg-amber-600"
+                          className="w-full mt-3 bg-[#1EB053] hover:bg-[#178f43]"
                           onClick={() => {
                             setSelectedDocument(doc);
                             setShowSignDialog(true);
@@ -712,9 +724,7 @@ export default function Documents() {
             <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-2 sm:p-4">
               <div className="bg-white rounded-lg w-full max-w-4xl h-[95vh] sm:h-[90vh] flex flex-col overflow-hidden">
                 <div className="flex items-center justify-between p-3 sm:p-4 border-b">
-                  <h2 className="font-semibold text-sm sm:text-base truncate flex-1 mr-2">
-                    {selectedDocument?.title || 'Document Viewer'}
-                  </h2>
+                  <h2 className="font-semibold text-sm sm:text-base truncate pr-2">Document Viewer</h2>
                   <Button variant="ghost" size="sm" onClick={() => {
                     setShowViewer(false);
                     setSelectedDocument(null);
