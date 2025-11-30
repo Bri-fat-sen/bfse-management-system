@@ -1212,19 +1212,19 @@ export const DEFAULT_TEMPLATES = {
     `,
     variables: [
       { key: "company_name", label: "Company Name", type: "text", auto_fill: "organisation.name" },
-      { key: "document_ref", label: "Reference Number", type: "text", default: "2024-001" },
+      { key: "document_ref", label: "Reference Number", type: "text", auto_fill: "auto" },
       { key: "employee_name", label: "Employee Name", type: "text", auto_fill: "employee.full_name" },
       { key: "previous_position", label: "Previous Position", type: "text", auto_fill: "employee.position" },
       { key: "new_position", label: "New Position", type: "text" },
       { key: "department", label: "Department", type: "text", auto_fill: "employee.department" },
-      { key: "effective_date", label: "Effective Date", type: "date" },
-      { key: "new_salary", label: "New Monthly Salary (SLE)", type: "number" },
-      { key: "reports_to", label: "Reports To", type: "text" },
-      { key: "additional_benefits", label: "Additional Benefits", type: "text" },
-      { key: "new_responsibilities", label: "New Responsibilities", type: "text" },
-      { key: "authorized_signatory", label: "Authorized Signatory", type: "text" },
-      { key: "signatory_title", label: "Signatory Title", type: "text" },
-      { key: "issue_date", label: "Issue Date", type: "date" }
+      { key: "effective_date", label: "Effective Date", type: "date", auto_fill: "today" },
+      { key: "new_salary", label: "New Salary (SLE)", type: "number" },
+      { key: "reports_to", label: "Reports To", type: "text", default: "Line Manager" },
+      { key: "additional_benefits", label: "Additional Benefits", type: "text", default: "As per company policy" },
+      { key: "new_responsibilities", label: "New Responsibilities", type: "text", default: "As per new role requirements" },
+      { key: "authorized_signatory", label: "Authorized Signatory", type: "text", default: "HR Manager" },
+      { key: "signatory_title", label: "Signatory Title", type: "text", default: "Human Resources" },
+      { key: "issue_date", label: "Issue Date", type: "date", auto_fill: "today" }
     ]
   },
 
