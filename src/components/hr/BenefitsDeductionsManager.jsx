@@ -57,6 +57,35 @@ const ROLES = [
   { value: 'support_staff', label: 'Support Staff' }
 ];
 
+// Calculate template amount based on employee salary
+export function calculateTemplateAmount(template, baseSalary, grossPay = null) {
+  if (template.calculation_type === 'percentage') {
+    const base = template.percentage_of === 'gross_pay' && grossPay ? grossPay : baseSalary;
+    return Math.round(base * (template.amount / 100));
+  }
+  return template.amount || 0;
+}
+
+// Get applicable templates for an employee
+export function getApplicableTemplates(templates, employee) {
+  return templates.filter(t => {
+    if (!t.is_active) return false;
+    
+    // Check if applies to specific employees
+    if (t.applies_to_employees?.length > 0) {
+      return t.applies_to_employees.includes(employee.id);
+    }
+    
+    // Check if applies to specific roles
+    if (t.applies_to_roles?.length > 0) {
+      return t.applies_to_roles.includes(employee.role);
+    }
+    
+    // If no restrictions, applies to all
+    return true;
+  });
+}
+
 export default function BenefitsDeductionsManager({ orgId, employees = [] }) {
   const queryClient = useQueryClient();
   const [showDialog, setShowDialog] = useState(false);
@@ -70,9 +99,11 @@ export default function BenefitsDeductionsManager({ orgId, employees = [] }) {
     percentage_of: 'base_salary',
     is_taxable: true,
     applies_to_roles: [],
+    applies_to_employees: [],
     description: '',
     is_active: true
   });
+  const [assignmentMode, setAssignmentMode] = useState('roles'); // 'roles' or 'employees'
 
   const { data: templates = [], isLoading } = useQuery({
     queryKey: ['benefitDeductionTemplates', orgId],
@@ -116,9 +147,11 @@ export default function BenefitsDeductionsManager({ orgId, employees = [] }) {
       percentage_of: 'base_salary',
       is_taxable: true,
       applies_to_roles: [],
+      applies_to_employees: [],
       description: '',
       is_active: true
     });
+    setAssignmentMode('roles');
     setEditingTemplate(null);
     setShowDialog(false);
   };
@@ -134,10 +167,36 @@ export default function BenefitsDeductionsManager({ orgId, employees = [] }) {
       percentage_of: template.percentage_of || 'base_salary',
       is_taxable: template.is_taxable ?? true,
       applies_to_roles: template.applies_to_roles || [],
+      applies_to_employees: template.applies_to_employees || [],
       description: template.description || '',
       is_active: template.is_active ?? true
     });
+    setAssignmentMode(template.applies_to_employees?.length > 0 ? 'employees' : 'roles');
     setShowDialog(true);
+  };
+
+  const toggleEmployee = (empId) => {
+    setFormData(prev => ({
+      ...prev,
+      applies_to_employees: prev.applies_to_employees.includes(empId)
+        ? prev.applies_to_employees.filter(id => id !== empId)
+        : [...prev.applies_to_employees, empId]
+    }));
+  };
+
+  const getAppliesTo = (template) => {
+    if (template.applies_to_employees?.length > 0) {
+      const empNames = template.applies_to_employees
+        .map(id => employees.find(e => e.id === id)?.full_name)
+        .filter(Boolean);
+      return empNames.length > 2 
+        ? `${empNames.slice(0, 2).join(', ')} +${empNames.length - 2}`
+        : empNames.join(', ');
+    }
+    if (template.applies_to_roles?.length > 0) {
+      return template.applies_to_roles.map(r => r.replace(/_/g, ' ')).join(', ');
+    }
+    return 'All employees';
   };
 
   const handleSubmit = (e) => {
@@ -218,9 +277,12 @@ export default function BenefitsDeductionsManager({ orgId, employees = [] }) {
                       )}
                     </TableCell>
                     <TableCell>
-                      <Badge variant={template.is_active ? 'default' : 'secondary'}>
-                        {template.is_active ? 'Active' : 'Inactive'}
-                      </Badge>
+                      <div className="space-y-1">
+                        <Badge variant={template.is_active ? 'default' : 'secondary'}>
+                          {template.is_active ? 'Active' : 'Inactive'}
+                        </Badge>
+                        <p className="text-xs text-gray-500">{getAppliesTo(template)}</p>
+                      </div>
                     </TableCell>
                     <TableCell>
                       <div className="flex gap-1">
@@ -284,9 +346,12 @@ export default function BenefitsDeductionsManager({ orgId, employees = [] }) {
                       )}
                     </TableCell>
                     <TableCell>
-                      <Badge variant={template.is_active ? 'default' : 'secondary'}>
-                        {template.is_active ? 'Active' : 'Inactive'}
-                      </Badge>
+                      <div className="space-y-1">
+                        <Badge variant={template.is_active ? 'default' : 'secondary'}>
+                          {template.is_active ? 'Active' : 'Inactive'}
+                        </Badge>
+                        <p className="text-xs text-gray-500">{getAppliesTo(template)}</p>
+                      </div>
                     </TableCell>
                     <TableCell>
                       <div className="flex gap-1">
@@ -399,21 +464,77 @@ export default function BenefitsDeductionsManager({ orgId, employees = [] }) {
               </div>
             )}
 
-            <div>
-              <Label className="mb-2 block">Applies to Roles (leave empty for all)</Label>
-              <div className="flex flex-wrap gap-2">
-                {ROLES.map(role => (
-                  <Badge
-                    key={role.value}
-                    variant={formData.applies_to_roles.includes(role.value) ? 'default' : 'outline'}
-                    className="cursor-pointer"
-                    onClick={() => toggleRole(role.value)}
-                  >
-                    {role.label}
-                  </Badge>
-                ))}
+            {/* Assignment Mode Toggle */}
+            <div className="space-y-3">
+              <Label>Apply To</Label>
+              <div className="flex gap-2">
+                <Button 
+                  type="button" 
+                  variant={assignmentMode === 'roles' ? 'default' : 'outline'}
+                  size="sm"
+                  onClick={() => {
+                    setAssignmentMode('roles');
+                    setFormData(prev => ({ ...prev, applies_to_employees: [] }));
+                  }}
+                  className={assignmentMode === 'roles' ? 'bg-[#1EB053]' : ''}
+                >
+                  By Role
+                </Button>
+                <Button 
+                  type="button" 
+                  variant={assignmentMode === 'employees' ? 'default' : 'outline'}
+                  size="sm"
+                  onClick={() => {
+                    setAssignmentMode('employees');
+                    setFormData(prev => ({ ...prev, applies_to_roles: [] }));
+                  }}
+                  className={assignmentMode === 'employees' ? 'bg-[#1EB053]' : ''}
+                >
+                  Specific Employees
+                </Button>
               </div>
             </div>
+
+            {assignmentMode === 'roles' ? (
+              <div>
+                <Label className="mb-2 block">Applies to Roles (leave empty for all)</Label>
+                <div className="flex flex-wrap gap-2">
+                  {ROLES.map(role => (
+                    <Badge
+                      key={role.value}
+                      variant={formData.applies_to_roles.includes(role.value) ? 'default' : 'outline'}
+                      className="cursor-pointer"
+                      onClick={() => toggleRole(role.value)}
+                    >
+                      {role.label}
+                    </Badge>
+                  ))}
+                </div>
+              </div>
+            ) : (
+              <div>
+                <Label className="mb-2 block">Select Employees</Label>
+                <div className="max-h-40 overflow-y-auto border rounded-lg p-2 space-y-1">
+                  {employees.filter(e => e.status === 'active').map(emp => (
+                    <div 
+                      key={emp.id}
+                      className={`flex items-center justify-between p-2 rounded cursor-pointer ${
+                        formData.applies_to_employees.includes(emp.id) ? 'bg-[#1EB053]/10' : 'hover:bg-gray-50'
+                      }`}
+                      onClick={() => toggleEmployee(emp.id)}
+                    >
+                      <span className="text-sm">{emp.full_name}</span>
+                      <Badge variant="outline" className="text-xs">{emp.role?.replace(/_/g, ' ')}</Badge>
+                    </div>
+                  ))}
+                </div>
+                {formData.applies_to_employees.length > 0 && (
+                  <p className="text-xs text-gray-500 mt-1">
+                    {formData.applies_to_employees.length} employee(s) selected
+                  </p>
+                )}
+              </div>
+            )}
 
             <div className="flex items-center justify-between">
               <Label>Is Taxable</Label>
