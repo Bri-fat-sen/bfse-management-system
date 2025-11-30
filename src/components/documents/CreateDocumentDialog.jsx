@@ -75,6 +75,15 @@ export default function CreateDocumentDialog({
       const employee = employees.find(e => e.id === selectedEmployees[0]);
       if (employee) {
         const autoFilled = {};
+        
+        // Auto-fill company initial from organisation name
+        if (organisation?.name) {
+          autoFilled['company_initial'] = organisation.name.charAt(0).toUpperCase();
+        }
+        
+        // Auto-fill document reference
+        autoFilled['document_ref'] = `${new Date().getFullYear()}-${String(Math.floor(Math.random() * 1000)).padStart(3, '0')}`;
+        
         (selectedTemplate.variables || []).forEach(v => {
           if (v.auto_fill) {
             const [entity, field] = v.auto_fill.split('.');
