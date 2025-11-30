@@ -8,12 +8,6 @@ import {
   DialogTitle,
   DialogFooter,
 } from "@/components/ui/dialog";
-import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from "@/components/ui/accordion";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { 
   History, 
@@ -22,7 +16,6 @@ import {
   Clock, 
   User, 
   FileText,
-  ChevronRight,
   AlertTriangle,
   CheckCircle2
 } from "lucide-react";
@@ -41,7 +34,6 @@ export default function DocumentVersionHistory({
   const versions = document?.version_history || [];
   const currentVersion = document?.version || 1;
 
-  // Add current version to the list for display
   const allVersions = [
     {
       version: currentVersion,
@@ -55,10 +47,6 @@ export default function DocumentVersionHistory({
     },
     ...versions.sort((a, b) => b.version - a.version)
   ];
-
-  const handleRevert = (version) => {
-    setConfirmRevert(version);
-  };
 
   const confirmRevertAction = () => {
     if (confirmRevert && onRevert) {
@@ -97,7 +85,7 @@ export default function DocumentVersionHistory({
             <FileText className="w-6 h-6 text-gray-400" />
           </div>
           <p className="text-gray-500 text-sm">No previous versions</p>
-          <p className="text-gray-400 text-xs mt-1">This is the original document</p>
+          <p className="text-gray-400 text-xs mt-1">This is the original document (v1)</p>
         </div>
       </div>
     );
@@ -123,7 +111,7 @@ export default function DocumentVersionHistory({
 
         <ScrollArea className="max-h-[400px]">
           <div className="divide-y">
-            {allVersions.map((ver, idx) => (
+            {allVersions.map((ver) => (
               <div 
                 key={ver.version} 
                 className={`p-4 transition-colors ${ver.isCurrent ? 'bg-[#1EB053]/5' : 'hover:bg-gray-50'}`}
@@ -179,7 +167,7 @@ export default function DocumentVersionHistory({
                       <Button
                         variant="ghost"
                         size="sm"
-                        onClick={() => handleRevert(ver)}
+                        onClick={() => setConfirmRevert(ver)}
                         disabled={isReverting}
                         className="text-amber-600 hover:text-amber-700 hover:bg-amber-50"
                       >
@@ -232,7 +220,7 @@ export default function DocumentVersionHistory({
             {!previewVersion?.isCurrent && canRevert && (
               <Button 
                 onClick={() => {
-                  handleRevert(previewVersion);
+                  setConfirmRevert(previewVersion);
                   setPreviewVersion(null);
                 }}
                 className="bg-amber-500 hover:bg-amber-600"
