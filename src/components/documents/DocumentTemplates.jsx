@@ -1311,16 +1311,16 @@ export const DEFAULT_TEMPLATES = {
     `,
     variables: [
       { key: "company_name", label: "Company Name", type: "text", auto_fill: "organisation.name" },
-      { key: "document_ref", label: "Reference Number", type: "text", default: "2024-001" },
+      { key: "document_ref", label: "Reference Number", type: "text", auto_fill: "auto" },
       { key: "employee_name", label: "Employee Name", type: "text", auto_fill: "employee.full_name" },
-      { key: "previous_salary", label: "Previous Monthly Salary (SLE)", type: "number", auto_fill: "employee.base_salary" },
-      { key: "new_salary", label: "New Monthly Salary (SLE)", type: "number" },
-      { key: "adjustment_percentage", label: "Adjustment Percentage", type: "number" },
-      { key: "effective_date", label: "Effective Date", type: "date" },
-      { key: "adjustment_reason", label: "Reason for Adjustment", type: "select", options: ["Annual Review", "Performance Based", "Market Adjustment", "Promotion", "Cost of Living Adjustment", "Other"], default: "Annual Review" },
-      { key: "authorized_signatory", label: "Authorized Signatory", type: "text" },
-      { key: "signatory_title", label: "Signatory Title", type: "text" },
-      { key: "issue_date", label: "Issue Date", type: "date" }
+      { key: "previous_salary", label: "Previous Salary (SLE)", type: "number", auto_fill: "employee.base_salary" },
+      { key: "new_salary", label: "New Salary (SLE)", type: "number" },
+      { key: "adjustment_percentage", label: "Adjustment %", type: "number", default: "10" },
+      { key: "effective_date", label: "Effective Date", type: "date", auto_fill: "today" },
+      { key: "adjustment_reason", label: "Reason", type: "select", options: ["Annual Review", "Performance Based", "Market Adjustment", "Promotion", "Cost of Living Adjustment", "Other"], default: "Annual Review" },
+      { key: "authorized_signatory", label: "Authorized Signatory", type: "text", default: "HR Manager" },
+      { key: "signatory_title", label: "Signatory Title", type: "text", default: "Human Resources" },
+      { key: "issue_date", label: "Issue Date", type: "date", auto_fill: "today" }
     ]
   }
 };
