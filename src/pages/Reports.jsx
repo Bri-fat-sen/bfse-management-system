@@ -23,7 +23,9 @@ import {
   Eye,
   EyeOff,
   FileSpreadsheet,
-  Loader2
+  Loader2,
+  Plus,
+  Clock
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -66,6 +68,9 @@ import {
   printProfitLossReport,
   exportReportCSV 
 } from "@/components/reports/ReportPrintExport";
+import CustomReportBuilder from "@/components/reports/CustomReportBuilder";
+import ReportViewer from "@/components/reports/ReportViewer";
+import ScheduledReportsManager from "@/components/reports/ScheduledReportsManager";
 
 const COLORS = SL_COLORS.chart;
 
@@ -85,6 +90,8 @@ export default function Reports() {
   });
   const [showCharts, setShowCharts] = useState(true);
   const [showSaveDialog, setShowSaveDialog] = useState(false);
+  const [showReportBuilder, setShowReportBuilder] = useState(false);
+  const [activeCustomReport, setActiveCustomReport] = useState(null);
 
   const { data: user } = useQuery({
     queryKey: ['currentUser'],
@@ -143,6 +150,12 @@ export default function Reports() {
   const { data: attendance = [], isLoading: attendanceLoading } = useQuery({
     queryKey: ['attendance', orgId],
     queryFn: () => base44.entities.Attendance.filter({ organisation_id: orgId }, '-date', 500),
+    enabled: !!orgId,
+  });
+
+  const { data: payrolls = [] } = useQuery({
+    queryKey: ['payrolls', orgId],
+    queryFn: () => base44.entities.Payroll.filter({ organisation_id: orgId }, '-created_date', 500),
     enabled: !!orgId,
   });
 
@@ -364,6 +377,23 @@ export default function Reports() {
     setActiveTab(report.report_type === 'custom' ? 'sales' : report.report_type);
   };
 
+  const handleCustomReportGenerated = (reportConfig) => {
+    setActiveCustomReport(reportConfig);
+    setActiveTab("custom");
+  };
+
+  const getCustomReportData = () => {
+    if (!activeCustomReport) return [];
+    switch (activeCustomReport.report_type) {
+      case 'sales': return filteredSales;
+      case 'expenses': return filteredExpenses;
+      case 'transport': return filteredTrips;
+      case 'inventory': return products;
+      case 'payroll': return payrolls;
+      default: return [];
+    }
+  };
+
   if (isLoading) {
     return <LoadingSpinner message="Loading Reports..." subtitle="Fetching your business data" fullScreen={true} />;
   }
@@ -376,6 +406,14 @@ export default function Reports() {
         subtitle="Comprehensive business insights with predictive analytics"
       >
         <div className="flex flex-wrap items-center gap-1 sm:gap-2">
+          <Button 
+            onClick={() => setShowReportBuilder(true)}
+            className="bg-gradient-to-r from-[#1EB053] to-[#0072C6] text-xs sm:text-sm"
+            size="sm"
+          >
+            <Plus className="w-3 h-3 sm:w-4 sm:h-4 sm:mr-2" />
+            <span className="hidden sm:inline">Custom Report</span>
+          </Button>
           <Button 
             variant="outline" 
             size="sm"
@@ -469,6 +507,16 @@ export default function Reports() {
             <Save className="w-3 h-3 sm:w-4 sm:h-4 sm:mr-1" />
             <span className="hidden sm:inline">Saved</span>
           </TabsTrigger>
+          <TabsTrigger value="scheduled" className="text-xs sm:text-sm px-2 sm:px-3 data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#1EB053] data-[state=active]:to-[#0072C6] data-[state=active]:text-white">
+            <Clock className="w-3 h-3 sm:w-4 sm:h-4 sm:mr-1" />
+            <span className="hidden sm:inline">Scheduled</span>
+          </TabsTrigger>
+          {activeCustomReport && (
+            <TabsTrigger value="custom" className="text-xs sm:text-sm px-2 sm:px-3 data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#1EB053] data-[state=active]:to-[#0072C6] data-[state=active]:text-white">
+              <FileText className="w-3 h-3 sm:w-4 sm:h-4 sm:mr-1" />
+              <span className="hidden sm:inline">Custom</span>
+            </TabsTrigger>
+          )}
         </TabsList>
 
         {/* Sales Tab */}
@@ -633,6 +681,47 @@ export default function Reports() {
             onLoadReport={handleLoadSavedReport}
           />
         </TabsContent>
+
+        {/* Scheduled Reports Tab */}
+        <TabsContent value="scheduled" className="mt-6">
+          <ScheduledReportsManager 
+            orgId={orgId}
+            currentEmployee={currentEmployee}
+            onEditReport={(report) => {
+              setActiveCustomReport(report);
+              setShowReportBuilder(true);
+            }}
+            onRunReport={(report) => {
+              setActiveCustomReport(report);
+              setActiveTab("custom");
+            }}
+          />
+        </TabsContent>
+
+        {/* Custom Report Tab */}
+        {activeCustomReport && (
+          <TabsContent value="custom" className="mt-6">
+            <ReportViewer
+              reportConfig={activeCustomReport}
+              data={getCustomReportData()}
+              isLoading={isLoading}
+              organisation={organisation?.[0]}
+              onRefresh={() => {
+                // Refresh data
+              }}
+              onSendEmail={async () => {
+                try {
+                  await base44.functions.invoke('sendScheduledReport', {
+                    reportId: activeCustomReport.id,
+                    forceRun: true
+                  });
+                } catch (error) {
+                  console.error('Failed to send report:', error);
+                }
+              }}
+            />
+          </TabsContent>
+        )}
       </Tabs>
 
       {/* Save Report Dialog */}
@@ -644,6 +733,16 @@ export default function Reports() {
         currentEmployeeName={currentEmployee?.full_name}
         filters={filters}
         reportType={activeTab}
+      />
+
+      {/* Custom Report Builder */}
+      <CustomReportBuilder
+        open={showReportBuilder}
+        onOpenChange={setShowReportBuilder}
+        orgId={orgId}
+        currentEmployee={currentEmployee}
+        employees={employees}
+        onReportGenerated={handleCustomReportGenerated}
       />
     </div>
     </ProtectedPage>
