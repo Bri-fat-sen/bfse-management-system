@@ -96,10 +96,8 @@ const menuSections = [
   {
     title: "Insights",
     items: [
-      { name: "Analytics", icon: BarChart3, page: "Analytics", module: "dashboard" },
-      { name: "HR Analytics", icon: Users, page: "HRAnalytics", module: "hr" },
+      { name: "Analytics & Reports", icon: BarChart3, page: "Reports", module: "dashboard" },
       { name: "Finance", icon: DollarSign, page: "Finance", module: "finance" },
-      { name: "Reports", icon: BarChart3, page: "Reports", module: "finance" },
       { name: "Activity Log", icon: Activity, page: "ActivityLog", module: "activity_log" },
     ]
   },
