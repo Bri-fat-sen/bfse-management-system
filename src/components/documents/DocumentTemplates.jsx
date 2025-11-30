@@ -859,83 +859,121 @@ export const DEFAULT_TEMPLATES = {
     name: "Leave Policy",
     content: `
 <div class="sl-document">
+  <div class="sl-watermark">POLICY</div>
   <div class="sl-header">
     <div class="sl-flag-bar"></div>
-    <h1>LEAVE POLICY</h1>
-    <p class="sl-subtitle">{{company_name}} • Per Employment Act 2023</p>
+    <div class="sl-company-logo">📅</div>
+    <h1>Leave Policy</h1>
+    <p class="sl-subtitle">{{company_name}} • Per Employment Act 2023 of Sierra Leone</p>
   </div>
 
   <div class="sl-section">
-    <h2>1. ANNUAL LEAVE</h2>
-    <p>Per Section 44 of the Employment Act 2023:</p>
+    <h2>1. Annual Leave</h2>
+    <div class="sl-highlight-box">
+      <h3>🏖️ Annual Leave Entitlement</h3>
+      <p>Per Section 44 of the Employment Act 2023, employees are entitled to:</p>
+      <div class="sl-info-grid">
+        <div class="sl-info-item">
+          <label>Annual Entitlement</label>
+          <span>21 working days</span>
+        </div>
+        <div class="sl-info-item">
+          <label>Monthly Accrual</label>
+          <span>1.75 days/month</span>
+        </div>
+      </div>
+    </div>
     <ul>
-      <li>Employees are entitled to <strong>21 working days</strong> of paid annual leave after 12 months of continuous service</li>
-      <li>Leave accrues at 1.75 days per month of service</li>
+      <li>Leave accrues after 12 months of continuous service</li>
       <li>Leave must be taken within 12 months of accrual unless otherwise agreed</li>
-      <li>Unused leave may be carried forward with management approval (maximum 10 days)</li>
-      <li>Leave requests should be submitted at least 2 weeks in advance</li>
+      <li>Maximum 10 days carry-forward with management approval</li>
+      <li>Submit leave requests at least 2 weeks in advance</li>
     </ul>
   </div>
 
   <div class="sl-section">
-    <h2>2. SICK LEAVE</h2>
+    <h2>2. Sick Leave</h2>
+    <div class="sl-info-grid">
+      <div class="sl-info-item">
+        <label>Paid Sick Days</label>
+        <span>5 days per year</span>
+      </div>
+      <div class="sl-info-item">
+        <label>Medical Certificate</label>
+        <span>Required for 2+ days</span>
+      </div>
+    </div>
     <ul>
-      <li><strong>5 days</strong> paid sick leave per year</li>
-      <li>Medical certificate required for absences of 2 or more consecutive days</li>
-      <li>Extended sick leave may be granted at management discretion</li>
       <li>Notify supervisor as early as possible on the first day of illness</li>
+      <li>Extended sick leave may be granted at management discretion</li>
     </ul>
   </div>
 
   <div class="sl-section">
-    <h2>3. MATERNITY LEAVE</h2>
-    <p>Per Section 47 of the Employment Act 2023:</p>
+    <h2>3. Maternity Leave</h2>
+    <div class="sl-highlight-box">
+      <h3>👶 Maternity Leave (Section 47, Employment Act 2023)</h3>
+      <div class="sl-info-grid">
+        <div class="sl-info-item">
+          <label>Total Entitlement</label>
+          <span>14 weeks (98 days)</span>
+        </div>
+        <div class="sl-info-item">
+          <label>Post-Delivery Minimum</label>
+          <span>6 weeks</span>
+        </div>
+      </div>
+    </div>
     <ul>
-      <li>Female employees are entitled to <strong>14 weeks</strong> (98 days) of maternity leave</li>
-      <li>At least 6 weeks must be taken after delivery</li>
       <li>Full pay for the first 6 weeks; subsequent weeks at 50% pay</li>
       <li>Medical certificate confirming pregnancy required</li>
-      <li>Job protection during maternity leave</li>
+      <li>Job protection during maternity leave is guaranteed by law</li>
     </ul>
   </div>
 
   <div class="sl-section">
-    <h2>4. PATERNITY LEAVE</h2>
-    <ul>
-      <li>Male employees are entitled to <strong>5 working days</strong> of paid paternity leave</li>
-      <li>Must be taken within 2 weeks of child's birth</li>
-      <li>Birth certificate required</li>
-    </ul>
+    <h2>4. Paternity Leave</h2>
+    <div class="sl-info-grid">
+      <div class="sl-info-item">
+        <label>Entitlement</label>
+        <span>5 working days</span>
+      </div>
+      <div class="sl-info-item">
+        <label>Timeframe</label>
+        <span>Within 2 weeks of birth</span>
+      </div>
+    </div>
+    <p>Birth certificate required for paternity leave application.</p>
   </div>
 
   <div class="sl-section">
-    <h2>5. COMPASSIONATE LEAVE</h2>
+    <h2>5. Compassionate Leave</h2>
     <ul>
-      <li><strong>5 working days</strong> for death of immediate family member (spouse, child, parent, sibling)</li>
+      <li><strong>5 working days</strong> for death of immediate family (spouse, child, parent, sibling)</li>
       <li><strong>3 working days</strong> for extended family members</li>
-      <li>Additional unpaid leave may be requested</li>
+      <li>Additional unpaid leave may be requested for exceptional circumstances</li>
     </ul>
   </div>
 
   <div class="sl-section">
-    <h2>6. PUBLIC HOLIDAYS</h2>
-    <p>All employees are entitled to paid leave on Sierra Leone public holidays. If required to work on a public holiday, compensation shall be at 2.5x the regular rate.</p>
+    <h2>6. Public Holidays</h2>
+    <p>All employees are entitled to paid leave on Sierra Leone public holidays. If required to work on a public holiday, compensation shall be at <strong>2.5x the regular rate</strong>.</p>
   </div>
 
   <div class="sl-section">
-    <h2>7. UNPAID LEAVE</h2>
+    <h2>7. Unpaid Leave</h2>
     <p>Unpaid leave may be granted at management discretion for personal reasons. Requests must be submitted in writing with at least 2 weeks notice.</p>
   </div>
 
   <div class="sl-acknowledgment">
-    <h2>ACKNOWLEDGMENT</h2>
+    <h2>Employee Acknowledgment</h2>
     <p>I, <strong>{{employee_name}}</strong>, acknowledge that I have read and understood this Leave Policy. I agree to follow the procedures outlined for requesting and taking leave.</p>
   </div>
 
   <div class="sl-signatures">
-    <div class="sl-signature-block">
-      <p><strong>EMPLOYEE:</strong></p>
-      <p>Name: {{employee_name}}</p>
+    <div class="sl-signature-block" style="max-width: 350px; margin: 0 auto;">
+      <h4>Employee Signature</h4>
+      <p><strong>{{employee_name}}</strong></p>
       <p>Date: <span class="sl-signature-date">{{signature_date}}</span></p>
       <div class="sl-digital-signature">{{digital_signature}}</div>
     </div>
@@ -943,13 +981,346 @@ export const DEFAULT_TEMPLATES = {
 
   <div class="sl-footer">
     <div class="sl-flag-bar"></div>
-    <p>{{company_name}} • 🇸🇱 Sierra Leone</p>
+    <div class="sl-footer-logo">🇸🇱</div>
+    <p><strong>{{company_name}}</strong></p>
+    <p>Republic of Sierra Leone</p>
+    <p class="sl-legal-note">This policy is compliant with the Employment Act 2023 of Sierra Leone.</p>
   </div>
 </div>
     `,
     variables: [
       { key: "company_name", label: "Company Name", type: "text", auto_fill: "organisation.name" },
       { key: "employee_name", label: "Employee Name", type: "text", auto_fill: "employee.full_name" }
+    ]
+  },
+
+  warning_letter: {
+    name: "Warning Letter",
+    content: `
+<div class="sl-document">
+  <div class="sl-watermark">WARNING</div>
+  <div class="sl-header">
+    <div class="sl-flag-bar"></div>
+    <div class="sl-company-logo" style="background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);">⚠️</div>
+    <h1>Official Warning Letter</h1>
+    <p class="sl-subtitle">{{company_name}} • Disciplinary Notice</p>
+    <p class="sl-ref-number">Ref: WL-{{document_ref}}</p>
+  </div>
+
+  <div class="sl-section">
+    <div class="sl-info-grid">
+      <div class="sl-info-item">
+        <label>Employee Name</label>
+        <span>{{employee_name}}</span>
+      </div>
+      <div class="sl-info-item">
+        <label>Position</label>
+        <span>{{position}}</span>
+      </div>
+      <div class="sl-info-item">
+        <label>Department</label>
+        <span>{{department}}</span>
+      </div>
+      <div class="sl-info-item">
+        <label>Warning Date</label>
+        <span>{{warning_date}}</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="sl-section">
+    <h2>Warning Type</h2>
+    <div class="sl-highlight-box" style="background: linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%); border-color: #dc2626;">
+      <h3 style="color: #dc2626;">{{warning_type}}</h3>
+      <p>This is a formal {{warning_level}} warning issued in accordance with the company's Disciplinary Policy and the Employment Act 2023 of Sierra Leone.</p>
+    </div>
+  </div>
+
+  <div class="sl-section">
+    <h2>Details of Violation</h2>
+    <p><strong>Date of Incident:</strong> {{incident_date}}</p>
+    <p><strong>Description:</strong></p>
+    <p>{{incident_description}}</p>
+  </div>
+
+  <div class="sl-section">
+    <h2>Policy Violated</h2>
+    <p>{{policy_violated}}</p>
+  </div>
+
+  <div class="sl-section">
+    <h2>Required Corrective Action</h2>
+    <p>{{corrective_action}}</p>
+  </div>
+
+  <div class="sl-section">
+    <h2>Consequences of Further Violations</h2>
+    <p>Please be advised that any further violations of company policies may result in additional disciplinary action, including but not limited to:</p>
+    <ul>
+      <li>Additional written warnings</li>
+      <li>Suspension from duties</li>
+      <li>Termination of employment</li>
+    </ul>
+  </div>
+
+  <div class="sl-acknowledgment">
+    <h2>Employee Acknowledgment</h2>
+    <p>I, <strong>{{employee_name}}</strong>, acknowledge that I have received this warning letter. I understand the nature of the violation and the corrective actions required. I acknowledge that further violations may result in additional disciplinary action.</p>
+    <p><em>Note: Signing this letter does not necessarily indicate agreement with the content, but confirms receipt of this notice.</em></p>
+  </div>
+
+  <div class="sl-signatures">
+    <div class="sl-signature-block">
+      <h4>Issuing Manager</h4>
+      <p><strong>{{issuing_manager}}</strong></p>
+      <p>{{issuing_manager_title}}</p>
+      <p>Date: {{warning_date}}</p>
+      <div class="sl-signature-line"></div>
+    </div>
+    <div class="sl-signature-block">
+      <h4>Employee</h4>
+      <p><strong>{{employee_name}}</strong></p>
+      <p>Date: <span class="sl-signature-date">{{signature_date}}</span></p>
+      <div class="sl-digital-signature">{{digital_signature}}</div>
+    </div>
+  </div>
+
+  <div class="sl-footer">
+    <div class="sl-flag-bar"></div>
+    <div class="sl-footer-logo">🇸🇱</div>
+    <p><strong>{{company_name}}</strong></p>
+    <p>Republic of Sierra Leone</p>
+    <p class="sl-legal-note">This document will be retained in the employee's personnel file.</p>
+  </div>
+</div>
+    `,
+    variables: [
+      { key: "company_name", label: "Company Name", type: "text", auto_fill: "organisation.name" },
+      { key: "document_ref", label: "Reference Number", type: "text", default: "2024-001" },
+      { key: "employee_name", label: "Employee Name", type: "text", auto_fill: "employee.full_name" },
+      { key: "position", label: "Position", type: "text", auto_fill: "employee.position" },
+      { key: "department", label: "Department", type: "text", auto_fill: "employee.department" },
+      { key: "warning_date", label: "Warning Date", type: "date" },
+      { key: "warning_type", label: "Warning Type", type: "select", options: ["Attendance", "Performance", "Conduct", "Policy Violation", "Other"], default: "Conduct" },
+      { key: "warning_level", label: "Warning Level", type: "select", options: ["First", "Second", "Final"], default: "First" },
+      { key: "incident_date", label: "Incident Date", type: "date" },
+      { key: "incident_description", label: "Incident Description", type: "text" },
+      { key: "policy_violated", label: "Policy Violated", type: "text" },
+      { key: "corrective_action", label: "Required Corrective Action", type: "text" },
+      { key: "issuing_manager", label: "Issuing Manager Name", type: "text" },
+      { key: "issuing_manager_title", label: "Issuing Manager Title", type: "text" }
+    ]
+  },
+
+  promotion_letter: {
+    name: "Promotion Letter",
+    content: `
+<div class="sl-document">
+  <div class="sl-watermark">PROMOTION</div>
+  <div class="sl-header">
+    <div class="sl-flag-bar"></div>
+    <div class="sl-company-logo" style="background: linear-gradient(135deg, #059669 0%, #047857 100%);">🎉</div>
+    <h1>Letter of Promotion</h1>
+    <p class="sl-subtitle">{{company_name}} • Career Advancement Notification</p>
+    <p class="sl-ref-number">Ref: PROMO-{{document_ref}}</p>
+  </div>
+
+  <div class="sl-section">
+    <p>Dear <strong>{{employee_name}}</strong>,</p>
+    <p>We are pleased to inform you of your promotion within {{company_name}}. This recognition reflects your outstanding contributions, dedication, and commitment to excellence.</p>
+  </div>
+
+  <div class="sl-section">
+    <h2>Promotion Details</h2>
+    <div class="sl-highlight-box" style="background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%); border-color: #059669;">
+      <div class="sl-info-grid">
+        <div class="sl-info-item" style="border-left-color: #059669;">
+          <label>Previous Position</label>
+          <span>{{previous_position}}</span>
+        </div>
+        <div class="sl-info-item" style="border-left-color: #059669;">
+          <label>New Position</label>
+          <span>{{new_position}}</span>
+        </div>
+        <div class="sl-info-item" style="border-left-color: #059669;">
+          <label>Department</label>
+          <span>{{department}}</span>
+        </div>
+        <div class="sl-info-item" style="border-left-color: #059669;">
+          <label>Effective Date</label>
+          <span>{{effective_date}}</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="sl-section">
+    <h2>Revised Compensation</h2>
+    <div class="sl-info-grid">
+      <div class="sl-info-item">
+        <label>New Monthly Salary</label>
+        <span>SLE {{new_salary}}</span>
+      </div>
+      <div class="sl-info-item">
+        <label>Reports To</label>
+        <span>{{reports_to}}</span>
+      </div>
+    </div>
+    <p>{{additional_benefits}}</p>
+  </div>
+
+  <div class="sl-section">
+    <h2>New Responsibilities</h2>
+    <p>{{new_responsibilities}}</p>
+  </div>
+
+  <div class="sl-section">
+    <p>We have full confidence in your ability to excel in this new role. Your hard work and dedication have been instrumental in your growth, and we look forward to your continued success.</p>
+    <p>Please sign below to acknowledge receipt of this promotion letter and acceptance of your new role.</p>
+    <p>Congratulations on this well-deserved achievement!</p>
+  </div>
+
+  <div class="sl-acknowledgment">
+    <h2>Acceptance</h2>
+    <p>I, <strong>{{employee_name}}</strong>, accept this promotion and acknowledge the new terms and responsibilities outlined in this letter.</p>
+  </div>
+
+  <div class="sl-signatures">
+    <div class="sl-signature-block">
+      <h4>For the Company</h4>
+      <p><strong>{{authorized_signatory}}</strong></p>
+      <p>{{signatory_title}}</p>
+      <p>Date: {{issue_date}}</p>
+      <div class="sl-signature-line"></div>
+    </div>
+    <div class="sl-signature-block">
+      <h4>Employee</h4>
+      <p><strong>{{employee_name}}</strong></p>
+      <p>Date: <span class="sl-signature-date">{{signature_date}}</span></p>
+      <div class="sl-digital-signature">{{digital_signature}}</div>
+    </div>
+  </div>
+
+  <div class="sl-footer">
+    <div class="sl-flag-bar"></div>
+    <div class="sl-footer-logo">🇸🇱</div>
+    <p><strong>{{company_name}}</strong></p>
+    <p>Republic of Sierra Leone</p>
+    <p class="sl-legal-note">This letter forms part of your employment record.</p>
+  </div>
+</div>
+    `,
+    variables: [
+      { key: "company_name", label: "Company Name", type: "text", auto_fill: "organisation.name" },
+      { key: "document_ref", label: "Reference Number", type: "text", default: "2024-001" },
+      { key: "employee_name", label: "Employee Name", type: "text", auto_fill: "employee.full_name" },
+      { key: "previous_position", label: "Previous Position", type: "text", auto_fill: "employee.position" },
+      { key: "new_position", label: "New Position", type: "text" },
+      { key: "department", label: "Department", type: "text", auto_fill: "employee.department" },
+      { key: "effective_date", label: "Effective Date", type: "date" },
+      { key: "new_salary", label: "New Monthly Salary (SLE)", type: "number" },
+      { key: "reports_to", label: "Reports To", type: "text" },
+      { key: "additional_benefits", label: "Additional Benefits", type: "text" },
+      { key: "new_responsibilities", label: "New Responsibilities", type: "text" },
+      { key: "authorized_signatory", label: "Authorized Signatory", type: "text" },
+      { key: "signatory_title", label: "Signatory Title", type: "text" },
+      { key: "issue_date", label: "Issue Date", type: "date" }
+    ]
+  },
+
+  salary_revision: {
+    name: "Salary Revision Letter",
+    content: `
+<div class="sl-document">
+  <div class="sl-header">
+    <div class="sl-flag-bar"></div>
+    <div class="sl-company-logo">💰</div>
+    <h1>Salary Revision Letter</h1>
+    <p class="sl-subtitle">{{company_name}} • Compensation Adjustment</p>
+    <p class="sl-ref-number">Ref: SAL-{{document_ref}}</p>
+  </div>
+
+  <div class="sl-section">
+    <p>Dear <strong>{{employee_name}}</strong>,</p>
+    <p>We are pleased to inform you of an adjustment to your compensation package, effective <strong>{{effective_date}}</strong>.</p>
+  </div>
+
+  <div class="sl-section">
+    <h2>Salary Adjustment Details</h2>
+    <div class="sl-highlight-box">
+      <div class="sl-info-grid">
+        <div class="sl-info-item">
+          <label>Previous Salary</label>
+          <span>SLE {{previous_salary}}</span>
+        </div>
+        <div class="sl-info-item">
+          <label>New Salary</label>
+          <span>SLE {{new_salary}}</span>
+        </div>
+        <div class="sl-info-item">
+          <label>Adjustment</label>
+          <span>{{adjustment_percentage}}%</span>
+        </div>
+        <div class="sl-info-item">
+          <label>Effective Date</label>
+          <span>{{effective_date}}</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="sl-section">
+    <h2>Reason for Adjustment</h2>
+    <p>{{adjustment_reason}}</p>
+  </div>
+
+  <div class="sl-section">
+    <p>This adjustment reflects our appreciation for your contributions to {{company_name}}. We value your continued dedication and look forward to your ongoing success with the organization.</p>
+    <p>All other terms and conditions of your employment remain unchanged. Statutory deductions (NASSIT and PAYE) will be adjusted accordingly per Sierra Leone law.</p>
+  </div>
+
+  <div class="sl-acknowledgment">
+    <h2>Acknowledgment</h2>
+    <p>I, <strong>{{employee_name}}</strong>, acknowledge receipt of this salary revision letter and accept the new compensation terms effective {{effective_date}}.</p>
+  </div>
+
+  <div class="sl-signatures">
+    <div class="sl-signature-block">
+      <h4>For the Company</h4>
+      <p><strong>{{authorized_signatory}}</strong></p>
+      <p>{{signatory_title}}</p>
+      <p>Date: {{issue_date}}</p>
+      <div class="sl-signature-line"></div>
+    </div>
+    <div class="sl-signature-block">
+      <h4>Employee</h4>
+      <p><strong>{{employee_name}}</strong></p>
+      <p>Date: <span class="sl-signature-date">{{signature_date}}</span></p>
+      <div class="sl-digital-signature">{{digital_signature}}</div>
+    </div>
+  </div>
+
+  <div class="sl-footer">
+    <div class="sl-flag-bar"></div>
+    <div class="sl-footer-logo">🇸🇱</div>
+    <p><strong>{{company_name}}</strong></p>
+    <p>Republic of Sierra Leone</p>
+    <p class="sl-legal-note">This letter is confidential and forms part of your employment record.</p>
+  </div>
+</div>
+    `,
+    variables: [
+      { key: "company_name", label: "Company Name", type: "text", auto_fill: "organisation.name" },
+      { key: "document_ref", label: "Reference Number", type: "text", default: "2024-001" },
+      { key: "employee_name", label: "Employee Name", type: "text", auto_fill: "employee.full_name" },
+      { key: "previous_salary", label: "Previous Monthly Salary (SLE)", type: "number", auto_fill: "employee.base_salary" },
+      { key: "new_salary", label: "New Monthly Salary (SLE)", type: "number" },
+      { key: "adjustment_percentage", label: "Adjustment Percentage", type: "number" },
+      { key: "effective_date", label: "Effective Date", type: "date" },
+      { key: "adjustment_reason", label: "Reason for Adjustment", type: "select", options: ["Annual Review", "Performance Based", "Market Adjustment", "Promotion", "Cost of Living Adjustment", "Other"], default: "Annual Review" },
+      { key: "authorized_signatory", label: "Authorized Signatory", type: "text" },
+      { key: "signatory_title", label: "Signatory Title", type: "text" },
+      { key: "issue_date", label: "Issue Date", type: "date" }
     ]
   }
 };
