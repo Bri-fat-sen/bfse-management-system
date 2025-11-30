@@ -35,7 +35,7 @@ import FinanceSummary from "@/components/dashboard/FinanceSummary";
 import DriverDashboard from "@/components/dashboard/DriverDashboard";
 import SalesDashboard from "@/components/dashboard/SalesDashboard";
 import ManagerDashboard from "@/components/dashboard/ManagerDashboard";
-import AIInsightsCard from "@/components/ai/AIInsightsCard";
+import AIInsightsPanel from "@/components/ai/AIInsightsPanel";
 
 export default function Dashboard() {
   const { data: user } = useQuery({
@@ -338,6 +338,19 @@ export default function Dashboard() {
         </Card>
       </div>
 
+      {/* AI Insights */}
+      <AIInsightsPanel 
+        data={{
+          sales: todaySales,
+          attendance: attendance,
+          products: products.slice(0, 20),
+          trips: todayTrips
+        }}
+        type="sales"
+        title="AI Business Insights"
+        orgId={orgId}
+      />
+
       {/* Main Content Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Recent Sales */}
@@ -476,23 +489,6 @@ export default function Dashboard() {
         <div className="absolute -top-4 left-0 right-0 h-8 bg-gradient-to-b from-transparent to-gray-50/50 pointer-events-none" />
         <QuickActions />
       </div>
-
-      {/* AI Insights */}
-      <AIInsightsCard
-        title="AI Business Insights"
-        analysisType="sales_anomaly"
-        data={{
-          todaySales: todaySales.slice(0, 20),
-          totalRevenue,
-          avgSale: todaySales.length > 0 ? totalRevenue / todaySales.length : 0,
-          salesCount: todaySales.length
-        }}
-        context={{
-          period: 'today',
-          previousAverage: sales.slice(0, 100).reduce((sum, s) => sum + (s.total_amount || 0), 0) / (sales.length || 1)
-        }}
-        compact={true}
-      />
 
       {/* Additional Dashboard Widgets */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">

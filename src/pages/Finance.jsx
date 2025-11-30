@@ -60,8 +60,8 @@ import StatCard from "@/components/ui/StatCard";
 import LoadingSpinner from "@/components/ui/LoadingSpinner";
 import PrintableFormsDownload from "@/components/finance/PrintableFormsDownload";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart as RePieChart, Pie, Cell, LineChart, Line, Area, AreaChart, Legend } from 'recharts';
-import AIInsightsCard from "@/components/ai/AIInsightsCard";
-import AIAssistantButton from "@/components/ai/AIAssistantButton";
+import AIInsightsPanel from "@/components/ai/AIInsightsPanel";
+import AIReportSummary from "@/components/ai/AIReportSummary";
 
 const expenseCategories = [
   "fuel", "maintenance", "utilities", "supplies", "rent", 
@@ -345,24 +345,6 @@ export default function Finance() {
           action={() => setShowExpenseDialog(true)}
           actionLabel="Record Expense"
         >
-          <AIAssistantButton
-            data={{
-              revenue: financials.totalRevenue,
-              expenses: financials.totalExpenses,
-              profit: financials.netProfit,
-              profitMargin: financials.profitMargin,
-              revenueBreakdown: {
-                retail: financials.retailSales,
-                wholesale: financials.wholesaleSales,
-                transport: financials.transportRevenue
-              },
-              expensesByCategory: financials.expensesByCategory
-            }}
-            context={{ period: dateRange }}
-            promptType="financial"
-            buttonLabel="AI Assistant"
-            size="sm"
-          />
           <Button 
             variant="outline" 
             onClick={() => setShowFormsDialog(true)}
@@ -478,31 +460,29 @@ export default function Finance() {
           {/* Dashboard Tab */}
           <TabsContent value="dashboard" className="mt-6">
             <div className="space-y-6">
-              {/* AI Insights Row */}
+              {/* AI Insights */}
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                <AIInsightsCard
-                  title="Sales Anomaly Detection"
-                  analysisType="sales_anomaly"
-                  data={{
-                    sales: filteredSales.slice(0, 50),
-                    totalRevenue: financials.salesRevenue,
-                    avgTransaction: financials.salesRevenue / (filteredSales.length || 1)
-                  }}
-                  context={{ period: dateRange }}
-                  icon={TrendingUp}
-                  compact={true}
+                <AIInsightsPanel 
+                  data={filteredExpenses.slice(0, 30)}
+                  type="expenses"
+                  title="AI Expense Insights"
+                  orgId={orgId}
                 />
-                <AIInsightsCard
-                  title="Expense Analysis"
-                  analysisType="expense_anomaly"
-                  data={{
-                    expenses: filteredExpenses.slice(0, 50),
-                    totalExpenses: financials.totalExpenses,
-                    byCategory: financials.expensesByCategory
+                <AIReportSummary
+                  reportData={{
+                    revenue: financials.totalRevenue,
+                    expenses: financials.totalExpenses,
+                    profit: financials.netProfit,
+                    margin: financials.profitMargin,
+                    period: dateRange,
+                    breakdown: {
+                      sales_revenue: financials.salesRevenue,
+                      transport_revenue: financials.transportRevenue,
+                      contract_revenue: financials.contractRevenue
+                    }
                   }}
-                  context={{ period: dateRange }}
-                  icon={TrendingDown}
-                  compact={true}
+                  reportType="financial"
+                  title="AI P&L Summary"
                 />
               </div>
             </div>

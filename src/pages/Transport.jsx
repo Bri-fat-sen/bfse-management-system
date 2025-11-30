@@ -52,7 +52,7 @@ import TruckContractDialog from "@/components/transport/TruckContractDialog";
 import MaintenanceDialog from "@/components/transport/MaintenanceDialog";
 import { MaintenanceCard, UpcomingMaintenanceCard, MaintenanceStats } from "@/components/transport/MaintenanceList";
 import { isPast, differenceInDays } from "date-fns";
-import TransportOptimizationAI from "@/components/ai/TransportOptimizationAI";
+import AIRouteOptimizer from "@/components/ai/AIRouteOptimizer";
 
 export default function Transport() {
   const { toast } = useToast();
@@ -249,6 +249,14 @@ export default function Transport() {
         actionLabel="Record Trip"
       />
 
+      {/* AI Route Optimization */}
+      <AIRouteOptimizer 
+        trips={trips}
+        routes={routes}
+        vehicles={vehicles}
+        orgId={orgId}
+      />
+
       {/* Stats */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <StatCard
@@ -304,14 +312,7 @@ export default function Transport() {
           </TabsTrigger>
         </TabsList>
 
-        <TabsContent value="trips" className="mt-6 space-y-6">
-          {/* AI Route Optimization */}
-          <TransportOptimizationAI
-            trips={trips}
-            routes={routes}
-            vehicles={vehicles}
-          />
-
+        <TabsContent value="trips" className="mt-6">
           <Card>
             <CardHeader className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
               <CardTitle>Trip Records</CardTitle>

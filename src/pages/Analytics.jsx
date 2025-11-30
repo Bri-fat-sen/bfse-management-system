@@ -64,6 +64,8 @@ import {
   exportReportCSV 
 } from "@/components/reports/ReportPrintExport";
 import SaveReportDialog from "@/components/reports/SaveReportDialog";
+import AIInsightsPanel from "@/components/ai/AIInsightsPanel";
+import AIReportSummary from "@/components/ai/AIReportSummary";
 
 const COLORS = SL_COLORS.chart;
 
@@ -481,20 +483,7 @@ export default function Analytics() {
         title="Analytics & Reports"
         subtitle="Comprehensive business insights, HR analytics, and reports"
         icon={<BarChart3 className="w-6 h-6" />}
-      >
-        <AIAssistantButton
-          data={{
-            sales: sales.slice(0, 100),
-            expenses: expenses.slice(0, 100),
-            employees: employees.slice(0, 50),
-            products: products.slice(0, 50)
-          }}
-          context={{ organization: organisation?.[0]?.name }}
-          promptType="general"
-          buttonLabel="AI Insights"
-          size="sm"
-        />
-      </PageHeader>
+      />
 
       {/* Main Navigation Tabs */}
       <Tabs value={mainTab} onValueChange={setMainTab}>
@@ -912,6 +901,12 @@ export default function Analytics() {
                 <StatCard title="Total Sales" value={salesMetrics.count} icon={ShoppingCart} color="blue" />
                 <StatCard title="Avg Sale" value={`SLE ${salesMetrics.avgSale.toLocaleString()}`} icon={TrendingUp} color="gold" />
               </div>
+              <AIInsightsPanel 
+                data={filteredSales.slice(0, 50)}
+                type="sales"
+                title="AI Sales Insights"
+                orgId={orgId}
+              />
               {showCharts && <SalesCharts sales={filteredSales} />}
             </TabsContent>
 
@@ -920,6 +915,12 @@ export default function Analytics() {
                 <StatCard title="Total Expenses" value={`SLE ${expenseMetrics.totalExpenses.toLocaleString()}`} icon={DollarSign} color="red" />
                 <StatCard title="Expense Count" value={expenseMetrics.count} icon={FileText} color="blue" />
               </div>
+              <AIInsightsPanel 
+                data={filteredExpenses.slice(0, 50)}
+                type="expenses"
+                title="AI Expense Insights"
+                orgId={orgId}
+              />
               {showCharts && <ExpenseCharts expenses={filteredExpenses} />}
             </TabsContent>
 

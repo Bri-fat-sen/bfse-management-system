@@ -78,7 +78,7 @@ import PayrollAuditLog from "@/components/hr/PayrollAuditLog";
 import TaxCalculatorInfo from "@/components/hr/TaxCalculatorInfo";
 import RemunerationPackageManager from "@/components/hr/RemunerationPackageManager";
 import PayrollReportingModule from "@/components/hr/PayrollReportingModule";
-import AIAssistantButton from "@/components/ai/AIAssistantButton";
+import AIReportSummary from "@/components/ai/AIReportSummary";
 
 const roles = [
   "super_admin", "org_admin", "hr_admin", "payroll_admin", "warehouse_manager",
@@ -308,20 +308,6 @@ export default function HR() {
         action={() => setShowAddEmployeeDialog(true)}
         actionLabel="Add Employee"
       >
-        <AIAssistantButton
-          data={{
-            totalEmployees: employees.length,
-            activeEmployees: activeEmployees.length,
-            departments: [...new Set(employees.map(e => e.department).filter(Boolean))],
-            roles: [...new Set(employees.map(e => e.role).filter(Boolean))],
-            attendanceToday: presentToday.length,
-            payrollsPending: payrolls.filter(p => p.status === 'pending_approval').length
-          }}
-          context={{ period: 'current' }}
-          promptType="hr"
-          buttonLabel="AI Assistant"
-          size="sm"
-        />
         <Button
           variant="outline"
           onClick={() => setShowInviteDialog(true)}
@@ -749,7 +735,16 @@ export default function HR() {
         </TabsContent>
 
         {/* Performance Tab */}
-        <TabsContent value="performance" className="mt-6">
+        <TabsContent value="performance" className="mt-6 space-y-6">
+          <AIReportSummary
+            reportData={{
+              employees: employees.filter(e => e.status === 'active').slice(0, 30),
+              payrolls: payrolls.slice(0, 20),
+              attendance: attendance.slice(0, 50)
+            }}
+            reportType="performance"
+            title="AI Employee Performance Summary"
+          />
           <PerformanceOverview 
             orgId={orgId} 
             onViewReview={(review) => {
