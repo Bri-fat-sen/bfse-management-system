@@ -38,6 +38,8 @@ export default function DocumentSignatureDialog({
 
   const signDocumentMutation = useMutation({
     mutationFn: async () => {
+      const signedAt = new Date().toISOString();
+      
       // Update document with signature
       const signedContent = document.content
         .replace(/{{signature_date}}/g, format(new Date(), 'MMMM d, yyyy'))
@@ -46,21 +48,28 @@ export default function DocumentSignatureDialog({
 
       await base44.entities.EmployeeDocument.update(document.id, {
         status: 'signed',
-        signed_at: new Date().toISOString(),
+        signed_at: signedAt,
         signature_name: signatureName,
         content: signedContent
       });
 
-      // Send email with signed document
-      const emailHtml = generateEmailHtml(signedContent, organisation);
-      
-      await base44.integrations.Core.SendEmail({
-        to: document.employee_email || employee?.email || employee?.user_email,
-        subject: `Signed Document: ${document.title} - ${organisation?.name || 'Your Employer'}`,
-        body: emailHtml
-      });
+      // Send emails with PDF to employee and all admins via backend function
+      try {
+        await base44.functions.invoke('sendSignedDocumentEmail', {
+          documentTitle: document.title,
+          documentContent: signedContent,
+          employeeName: employee?.full_name || document.employee_name,
+          employeeEmail: document.employee_email || employee?.email || employee?.user_email,
+          organisationName: organisation?.name,
+          organisationId: document.organisation_id,
+          signedAt: signedAt
+        });
+      } catch (emailErr) {
+        console.error('Email sending failed:', emailErr);
+        // Don't fail the whole operation if email fails
+      }
 
-      // Create notification
+      // Create notification for issuer
       await base44.entities.Notification.create({
         organisation_id: document.organisation_id,
         employee_id: document.issued_by_id,
@@ -75,7 +84,7 @@ export default function DocumentSignatureDialog({
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['employeeDocuments'] });
-      toast.success("Document signed successfully! A copy has been emailed to you.");
+      toast.success("Document signed! Copies emailed to you and admins.");
       onSigned?.();
       onOpenChange(false);
     },
