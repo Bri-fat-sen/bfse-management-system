@@ -1582,35 +1582,67 @@ export const DEFAULT_TEMPLATES = {
   <div class="sl-section">
     <h2>Salary Adjustment Details</h2>
     <div class="sl-highlight-box">
+      <h3 style="color: #1EB053;">💰 Your Revised Compensation</h3>
       <div class="sl-info-grid">
         <div class="sl-info-item">
-          <label>Previous Salary</label>
+          <label>Previous Monthly Salary</label>
           <span>SLE {{previous_salary}}</span>
         </div>
         <div class="sl-info-item">
-          <label>New Salary</label>
+          <label>New Monthly Salary</label>
           <span>SLE {{new_salary}}</span>
         </div>
         <div class="sl-info-item">
-          <label>Adjustment</label>
+          <label>Adjustment Percentage</label>
           <span>{{adjustment_percentage}}%</span>
+        </div>
+        <div class="sl-info-item">
+          <label>Monthly Increase</label>
+          <span>SLE {{monthly_increase}}</span>
         </div>
         <div class="sl-info-item">
           <label>Effective Date</label>
           <span>{{effective_date}}</span>
+        </div>
+        <div class="sl-info-item">
+          <label>Payment Cycle</label>
+          <span>{{payment_cycle}}</span>
         </div>
       </div>
     </div>
   </div>
 
   <div class="sl-section">
-    <h2>Reason for Adjustment</h2>
-    <p>{{adjustment_reason}}</p>
+    <h2>Reason for Salary Revision</h2>
+    <p>This salary adjustment has been approved based on:</p>
+    <p><strong>{{adjustment_reason}}</strong></p>
+    <p>{{adjustment_details}}</p>
   </div>
 
   <div class="sl-section">
-    <p>This adjustment reflects our appreciation for your contributions to {{company_name}}. We value your continued dedication and look forward to your ongoing success with the organization.</p>
-    <p>All other terms and conditions of your employment remain unchanged. Statutory deductions (NASSIT and PAYE) will be adjusted accordingly per Sierra Leone law.</p>
+    <h2>Statutory Deductions</h2>
+    <p>Please note that your statutory deductions will be adjusted according to your new salary:</p>
+    <ul>
+      <li><strong>NASSIT Employee Contribution:</strong> 5% of new gross salary</li>
+      <li><strong>NASSIT Employer Contribution:</strong> 10% of new gross salary (paid by company)</li>
+      <li><strong>PAYE Income Tax:</strong> As per applicable NRA tax brackets</li>
+    </ul>
+    <p>You will receive an updated payslip reflecting your new salary from the effective date.</p>
+  </div>
+
+  <div class="sl-section">
+    <h2>Terms & Conditions</h2>
+    <ul>
+      <li>All other terms and conditions of your employment remain unchanged</li>
+      <li>This revision does not affect your job title, responsibilities, or reporting structure unless separately communicated</li>
+      <li>Annual leave entitlement and other benefits remain as per your employment contract and company policy</li>
+      <li>This salary is subject to the Company's periodic review process</li>
+    </ul>
+  </div>
+
+  <div class="sl-section">
+    <p>This adjustment reflects {{company_name}}'s appreciation for your valuable contributions and commitment. We recognize your hard work and dedication, and this revision is a testament to the value you bring to our organization.</p>
+    <p>We look forward to your continued success and growth with {{company_name}}. Should you have any questions regarding this adjustment, please contact the Human Resources department.</p>
   </div>
 
   <div class="sl-acknowledgment">
@@ -1650,8 +1682,11 @@ export const DEFAULT_TEMPLATES = {
       { key: "previous_salary", label: "Previous Salary (SLE)", type: "number", auto_fill: "employee.base_salary" },
       { key: "new_salary", label: "New Salary (SLE)", type: "number" },
       { key: "adjustment_percentage", label: "Adjustment %", type: "number", default: "10" },
+      { key: "monthly_increase", label: "Monthly Increase (SLE)", type: "number" },
       { key: "effective_date", label: "Effective Date", type: "date", auto_fill: "today" },
-      { key: "adjustment_reason", label: "Reason", type: "select", options: ["Annual Review", "Performance Based", "Market Adjustment", "Promotion", "Cost of Living Adjustment", "Other"], default: "Annual Review" },
+      { key: "payment_cycle", label: "Payment Cycle", type: "text", default: "Monthly, on the 25th" },
+      { key: "adjustment_reason", label: "Reason", type: "select", options: ["Annual Performance Review", "Performance Based Increase", "Market Rate Adjustment", "Promotion", "Cost of Living Adjustment", "Skills/Certification Acquired", "Retention Adjustment", "Other"], default: "Annual Performance Review" },
+      { key: "adjustment_details", label: "Additional Details", type: "text", default: "Your performance over the review period has consistently exceeded expectations, demonstrating strong commitment to your role and positive contribution to team objectives." },
       { key: "authorized_signatory", label: "Authorized Signatory", type: "text", default: "HR Manager" },
       { key: "signatory_title", label: "Signatory Title", type: "text", default: "Human Resources" },
       { key: "issue_date", label: "Issue Date", type: "date", auto_fill: "today" }
