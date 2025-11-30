@@ -77,6 +77,7 @@ import BenefitsDeductionsManager from "@/components/hr/BenefitsDeductionsManager
 import PayrollAuditLog from "@/components/hr/PayrollAuditLog";
 import TaxCalculatorInfo from "@/components/hr/TaxCalculatorInfo";
 import RemunerationPackageManager from "@/components/hr/RemunerationPackageManager";
+import PayrollReportingModule from "@/components/hr/PayrollReportingModule";
 
 const roles = [
   "super_admin", "org_admin", "hr_admin", "payroll_admin", "warehouse_manager",
@@ -573,6 +574,7 @@ export default function HR() {
               { id: 'records', label: 'Payroll Records', icon: FileText },
               { id: 'packages', label: 'Packages', icon: Users },
               { id: 'benefits', label: 'Benefits & Deductions', icon: DollarSign },
+              { id: 'reports', label: 'Reports', icon: FileText },
               { id: 'audit', label: 'Audit Trail', icon: Clock },
               { id: 'tax', label: 'Tax Info', icon: Building2 }
             ].map(tab => (
@@ -698,6 +700,10 @@ export default function HR() {
 
           {payrollSubTab === 'benefits' && (
             <BenefitsDeductionsManager orgId={orgId} employees={employees} />
+          )}
+
+          {payrollSubTab === 'reports' && (
+            <PayrollReportingModule orgId={orgId} employees={employees} organisation={organisation?.[0]} />
           )}
 
           {payrollSubTab === 'audit' && (
