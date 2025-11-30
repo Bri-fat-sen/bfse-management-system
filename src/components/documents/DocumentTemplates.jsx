@@ -313,30 +313,32 @@ export const DEFAULT_TEMPLATES = {
     name: "Employee Code of Conduct",
     content: `
 <div class="sl-document">
+  <div class="sl-watermark">POLICY</div>
   <div class="sl-header">
     <div class="sl-flag-bar"></div>
-    <h1>EMPLOYEE CODE OF CONDUCT</h1>
-    <p class="sl-subtitle">{{company_name}}</p>
+    <div class="sl-company-logo">{{company_initial}}</div>
+    <h1>Employee Code of Conduct</h1>
+    <p class="sl-subtitle">{{company_name}} • Standards of Professional Behavior</p>
   </div>
 
   <div class="sl-section">
-    <h2>INTRODUCTION</h2>
-    <p>This Code of Conduct outlines the standards of behavior expected of all employees of {{company_name}}. By signing this document, you agree to uphold these standards throughout your employment.</p>
+    <h2>Introduction</h2>
+    <p>This Code of Conduct establishes the standards of behavior and ethical principles expected of all employees of <strong>{{company_name}}</strong>. These guidelines ensure a professional, respectful, and productive work environment for everyone.</p>
   </div>
 
   <div class="sl-section">
-    <h2>1. PROFESSIONAL CONDUCT</h2>
+    <h2>1. Professional Standards</h2>
     <ul>
-      <li>Perform duties with diligence, integrity, and professionalism</li>
+      <li>Perform all duties with diligence, integrity, and professionalism</li>
       <li>Treat all colleagues, clients, and stakeholders with respect and dignity</li>
-      <li>Maintain punctuality and adhere to work schedules</li>
-      <li>Dress appropriately according to company dress code</li>
-      <li>Communicate openly and honestly with supervisors and team members</li>
+      <li>Maintain punctuality and adhere to scheduled work hours</li>
+      <li>Dress appropriately according to company dress code guidelines</li>
+      <li>Communicate openly, honestly, and professionally with all team members</li>
     </ul>
   </div>
 
   <div class="sl-section">
-    <h2>2. WORKPLACE BEHAVIOR</h2>
+    <h2>2. Workplace Behavior</h2>
     <ul>
       <li>Harassment, discrimination, or bullying of any kind is strictly prohibited</li>
       <li>Violence, threats, or intimidation will result in immediate disciplinary action</li>
@@ -347,66 +349,66 @@ export const DEFAULT_TEMPLATES = {
   </div>
 
   <div class="sl-section">
-    <h2>3. CONFIDENTIALITY</h2>
+    <h2>3. Confidentiality & Data Protection</h2>
     <ul>
-      <li>Protect company confidential information at all times</li>
-      <li>Do not disclose sensitive business information to unauthorized persons</li>
+      <li>Protect all confidential company and client information at all times</li>
+      <li>Never disclose sensitive business information to unauthorized persons</li>
       <li>Handle customer/client data in accordance with privacy policies</li>
       <li>Return all company materials upon termination of employment</li>
     </ul>
   </div>
 
   <div class="sl-section">
-    <h2>4. USE OF COMPANY RESOURCES</h2>
+    <h2>4. Use of Company Resources</h2>
     <ul>
-      <li>Use company property and equipment responsibly and for business purposes</li>
-      <li>Report any damage or malfunction immediately</li>
+      <li>Use company property and equipment responsibly for business purposes</li>
+      <li>Report any equipment damage or malfunction immediately</li>
       <li>Personal use of company resources should be minimal and reasonable</li>
-      <li>Do not use company resources for illegal activities</li>
+      <li>Never use company resources for illegal or unauthorized activities</li>
     </ul>
   </div>
 
   <div class="sl-section">
-    <h2>5. CONFLICT OF INTEREST</h2>
+    <h2>5. Conflict of Interest</h2>
     <ul>
       <li>Avoid situations where personal interests conflict with company interests</li>
-      <li>Disclose any potential conflicts to management</li>
+      <li>Disclose any potential conflicts of interest to management promptly</li>
       <li>Do not accept gifts or favors that could influence business decisions</li>
-      <li>Outside employment must not interfere with your role at {{company_name}}</li>
+      <li>Outside employment must not interfere with your duties at {{company_name}}</li>
     </ul>
   </div>
 
   <div class="sl-section">
-    <h2>6. COMPLIANCE WITH LAWS</h2>
+    <h2>6. Legal Compliance</h2>
     <ul>
-      <li>Comply with all applicable laws of Sierra Leone</li>
+      <li>Comply with all applicable laws of the Republic of Sierra Leone</li>
       <li>Follow the Employment Act 2023 and related labor regulations</li>
-      <li>Report any illegal activities or violations to management</li>
+      <li>Report any illegal activities or policy violations to management</li>
     </ul>
   </div>
 
   <div class="sl-section">
-    <h2>7. DISCIPLINARY ACTION</h2>
+    <h2>7. Consequences of Violations</h2>
     <p>Violations of this Code of Conduct may result in disciplinary action, including:</p>
     <ul>
       <li>Verbal or written warning</li>
-      <li>Suspension</li>
-      <li>Demotion</li>
+      <li>Suspension from duties</li>
+      <li>Demotion or reduction in responsibilities</li>
       <li>Termination of employment</li>
     </ul>
-    <p>The severity of action will depend on the nature of the violation, as outlined in the company's Disciplinary Policy and the Code of Practice on Discipline in the Employment Act 2023.</p>
+    <p>The severity of action will depend on the nature of the violation, as outlined in the company's Disciplinary Policy and the Employment Act 2023.</p>
   </div>
 
   <div class="sl-acknowledgment">
-    <h2>ACKNOWLEDGMENT</h2>
+    <h2>Employee Acknowledgment</h2>
     <p>I, <strong>{{employee_name}}</strong>, acknowledge that I have read, understood, and agree to comply with this Code of Conduct. I understand that violation of these standards may result in disciplinary action up to and including termination of my employment.</p>
   </div>
 
   <div class="sl-signatures">
-    <div class="sl-signature-block">
-      <p><strong>EMPLOYEE:</strong></p>
-      <p>Name: {{employee_name}}</p>
-      <p>Position: {{position}}</p>
+    <div class="sl-signature-block" style="max-width: 350px; margin: 0 auto;">
+      <h4>Employee Signature</h4>
+      <p><strong>{{employee_name}}</strong></p>
+      <p>{{position}}</p>
       <p>Date: <span class="sl-signature-date">{{signature_date}}</span></p>
       <div class="sl-digital-signature">{{digital_signature}}</div>
     </div>
@@ -414,12 +416,16 @@ export const DEFAULT_TEMPLATES = {
 
   <div class="sl-footer">
     <div class="sl-flag-bar"></div>
-    <p>{{company_name}} • 🇸🇱 Sierra Leone</p>
+    <div class="sl-footer-logo">🇸🇱</div>
+    <p><strong>{{company_name}}</strong></p>
+    <p>Republic of Sierra Leone</p>
+    <p class="sl-legal-note">This policy document was digitally signed and is legally binding.</p>
   </div>
 </div>
     `,
     variables: [
       { key: "company_name", label: "Company Name", type: "text", auto_fill: "organisation.name" },
+      { key: "company_initial", label: "Company Initial", type: "text", default: "C" },
       { key: "employee_name", label: "Employee Name", type: "text", auto_fill: "employee.full_name" },
       { key: "position", label: "Position", type: "text", auto_fill: "employee.position" }
     ]
