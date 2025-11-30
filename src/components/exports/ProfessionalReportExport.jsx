@@ -16,7 +16,18 @@ export const generateProfessionalReport = ({
 }) => {
   const generatedDate = format(new Date(), 'MMMM d, yyyy • h:mm a');
   const reportId = `RPT-${Date.now().toString(36).toUpperCase()}`;
-  const orgInitials = (organisation?.name || 'ORG').split(' ').map(w => w[0]).join('').slice(0, 3);
+  
+  // Ensure organisation has proper defaults
+  const org = organisation || {};
+  const orgName = org.name || 'Business Report';
+  const orgInitials = orgName.split(' ').map(w => w[0]).join('').slice(0, 3);
+  const orgAddress = org.address || '';
+  const orgCity = org.city || '';
+  const orgCountry = org.country || 'Sierra Leone';
+  const orgPhone = org.phone || '';
+  const orgEmail = org.email || '';
+  const orgTIN = org.tin_number || '';
+  const orgLogo = org.logo_url || '';
 
   return `
     <!DOCTYPE html>
@@ -147,14 +158,9 @@ export const generateProfessionalReport = ({
             display: flex;
             align-items: center;
             gap: 6px;
-            background: rgba(255,255,255,0.15);
-            padding: 5px 12px;
-            border-radius: 6px;
-            font-weight: 500;
-          }
-          
-          .org-contact {
-            flex-wrap: wrap;
+            background: rgba(255,255,255,0.1);
+            padding: 4px 10px;
+            border-radius: 4px;
           }
           
           .header-flag {
@@ -516,15 +522,14 @@ export const generateProfessionalReport = ({
           }
           
           .footer-text h4 {
-            font-size: 18px;
+            font-size: 16px;
             font-weight: 700;
-            margin-bottom: 6px;
+            margin-bottom: 4px;
           }
           
           .footer-text p {
-            font-size: 12px;
-            opacity: 0.9;
-            line-height: 1.4;
+            font-size: 13px;
+            opacity: 0.85;
           }
           
           .footer-meta {
@@ -644,13 +649,12 @@ export const generateProfessionalReport = ({
                     }
                   </div>
                   <div class="org-details">
-                    <h1>${organisation?.name || 'Business Report'}</h1>
-                    <div class="tagline">${organisation?.country || 'Sierra Leone'} • Business Management</div>
+                    <h1>${organisation?.name || 'Organisation'}</h1>
+                    <div class="tagline">Business Management System</div>
                     <div class="org-contact">
-                      ${organisation?.address || organisation?.city ? `<span>📍 ${organisation?.address || ''}${organisation?.address && organisation?.city ? ', ' : ''}${organisation?.city || ''}</span>` : '<span>📍 Sierra Leone</span>'}
+                      ${organisation?.address ? `<span>📍 ${organisation.address}${organisation?.city ? `, ${organisation.city}` : ''}</span>` : ''}
                       ${organisation?.phone ? `<span>📞 ${organisation.phone}</span>` : ''}
                       ${organisation?.email ? `<span>✉️ ${organisation.email}</span>` : ''}
-                      ${organisation?.tin_number ? `<span>🏛️ TIN: ${organisation.tin_number}</span>` : ''}
                     </div>
                   </div>
                 </div>
@@ -781,26 +785,20 @@ export const generateProfessionalReport = ({
                 <div class="footer-left">
                   <div class="footer-flag">🇸🇱</div>
                   <div class="footer-text">
-                    <h4>${organisation?.name || 'Business Report'}</h4>
-                    <p>${organisation?.address ? organisation.address + (organisation?.city ? ', ' + organisation.city : '') : 'Sierra Leone'}</p>
-                    <p style="font-size: 11px; opacity: 0.8; margin-top: 4px;">
-                      ${organisation?.phone ? '📞 ' + organisation.phone : ''} 
-                      ${organisation?.phone && organisation?.email ? ' • ' : ''}
-                      ${organisation?.email ? '✉️ ' + organisation.email : ''}
-                    </p>
+                    <h4>Thank you for using ${organisation?.name || 'Our'} Management System</h4>
+                    <p>Proudly serving businesses across Sierra Leone</p>
                   </div>
                 </div>
                 <div class="footer-meta">
                   <div>Generated: ${generatedDate}</div>
                   <div class="report-id">${reportId}</div>
-                  ${organisation?.tin_number ? `<div style="margin-top: 4px;">TIN: ${organisation.tin_number}</div>` : ''}
                 </div>
               </div>
             </div>
           ` : ''}
         </div>
         
-        ${watermark ? `<div class="watermark">🇸🇱 ${organisation?.name || 'Management System'}</div>` : ''}
+        ${watermark ? `<div class="watermark">🇸🇱 ${orgName}</div>` : ''}
       </body>
     </html>
   `;

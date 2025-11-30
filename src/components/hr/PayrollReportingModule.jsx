@@ -32,7 +32,7 @@ import {
   Building2, Calendar, Printer, Mail, BarChart3
 } from "lucide-react";
 import { formatSLE } from "./PayrollCalculator";
-import { generateProfessionalReport, printProfessionalReport } from "@/components/exports/ProfessionalReportExport";
+import { generateProfessionalReport, downloadProfessionalReportAsPDF } from "@/components/exports/ProfessionalReportExport";
 
 const COLORS = ['#1EB053', '#0072C6', '#D4AF37', '#0F1F3C', '#ef4444', '#8b5cf6'];
 
@@ -318,7 +318,7 @@ export default function PayrollReportingModule({ orgId, employees = [], organisa
       reportType: 'financial'
     });
     
-    printProfessionalReport(html);
+    downloadProfessionalReportAsPDF(html);
   };
 
   const handleExportCSV = () => {
