@@ -2,7 +2,7 @@ import React, { useState, useMemo } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import ProtectedPage from "@/components/permissions/ProtectedPage";
-import { format, startOfMonth, endOfMonth, subDays, startOfWeek, endOfWeek, startOfQuarter, endOfQuarter, startOfYear, endOfYear } from "date-fns";
+import { format, startOfMonth, endOfMonth, subDays, startOfWeek, endOfWeek, startOfQuarter, endOfQuarter, startOfYear, subMonths } from "date-fns";
 import {
   DollarSign,
   TrendingUp,
@@ -21,16 +21,23 @@ import {
   Printer,
   ShoppingCart,
   Package,
-  Save,
   Eye,
-  EyeOff,
-  FileSpreadsheet
+  CreditCard,
+  Wallet,
+  ArrowUpRight,
+  ArrowDownRight,
+  Building2,
+  Users,
+  AlertCircle,
+  CheckCircle,
+  Clock
 } from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Progress } from "@/components/ui/progress";
 import {
   Dialog,
   DialogContent,
@@ -47,54 +54,32 @@ import {
 } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { useToast } from "@/components/ui/use-toast";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import PageHeader from "@/components/ui/PageHeader";
-import EmptyState from "@/components/ui/EmptyState";
 import StatCard from "@/components/ui/StatCard";
 import LoadingSpinner from "@/components/ui/LoadingSpinner";
-
-import ReportGenerator from "@/components/finance/ReportGenerator";
 import PrintableFormsDownload from "@/components/finance/PrintableFormsDownload";
-import AnalyticsDashboard from "@/components/analytics/AnalyticsDashboard";
-import { SalesCharts, ExpenseCharts, TransportCharts } from "@/components/reports/ReportCharts";
-
-import { 
-  printSalesReport, 
-  printExpenseReport, 
-  printTransportReport, 
-  printInventoryReport,
-  exportReportCSV 
-} from "@/components/reports/ReportPrintExport";
-import SaveReportDialog from "@/components/reports/SaveReportDialog";
-import SavedReportsManager from "@/components/analytics/SavedReportsManager";
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart as RePieChart, Pie, Cell } from 'recharts';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart as RePieChart, Pie, Cell, LineChart, Line, Area, AreaChart, Legend } from 'recharts';
 
 const expenseCategories = [
   "fuel", "maintenance", "utilities", "supplies", "rent", 
   "salaries", "transport", "marketing", "insurance", "petty_cash", "other"
 ];
 
-const COLORS = ['#1EB053', '#1D5FC3', '#D4AF37', '#0F1F3C', '#9333ea', '#f59e0b', '#ef4444', '#10b981'];
+const COLORS = ['#1EB053', '#0072C6', '#D4AF37', '#0F1F3C', '#9333ea', '#f59e0b', '#ef4444', '#10b981', '#6366f1', '#ec4899'];
 
 export default function Finance() {
-  const { toast } = useToast();
   const queryClient = useQueryClient();
-  const [activeTab, setActiveTab] = useState("overview");
+  const [activeTab, setActiveTab] = useState("dashboard");
   const [showExpenseDialog, setShowExpenseDialog] = useState(false);
   const [categoryFilter, setCategoryFilter] = useState("all");
   const [showFormsDialog, setShowFormsDialog] = useState(false);
-  
-  // Analytics & Reports state
-  const [reportTab, setReportTab] = useState("sales");
-  const [reportDateRange, setReportDateRange] = useState("this_month");
-  const [showCharts, setShowCharts] = useState(true);
-  const [showSaveDialog, setShowSaveDialog] = useState(false);
+  const [dateRange, setDateRange] = useState("this_month");
 
   const { data: user } = useQuery({
     queryKey: ['currentUser'],
     queryFn: () => base44.auth.me(),
     staleTime: 5 * 60 * 1000,
-    refetchOnWindowFocus: false,
   });
 
   const { data: employee } = useQuery({
@@ -102,7 +87,6 @@ export default function Finance() {
     queryFn: () => base44.entities.Employee.filter({ user_email: user?.email }),
     enabled: !!user?.email,
     staleTime: 5 * 60 * 1000,
-    refetchOnWindowFocus: false,
   });
 
   const currentEmployee = employee?.[0];
@@ -110,19 +94,19 @@ export default function Finance() {
 
   const { data: expenses = [], isLoading: loadingExpenses } = useQuery({
     queryKey: ['expenses', orgId],
-    queryFn: () => base44.entities.Expense.filter({ organisation_id: orgId }, '-date', 100),
+    queryFn: () => base44.entities.Expense.filter({ organisation_id: orgId }, '-date', 200),
     enabled: !!orgId,
   });
 
   const { data: sales = [] } = useQuery({
     queryKey: ['sales', orgId],
-    queryFn: () => base44.entities.Sale.filter({ organisation_id: orgId }, '-created_date', 100),
+    queryFn: () => base44.entities.Sale.filter({ organisation_id: orgId }, '-created_date', 200),
     enabled: !!orgId,
   });
 
   const { data: trips = [] } = useQuery({
     queryKey: ['trips', orgId],
-    queryFn: () => base44.entities.Trip.filter({ organisation_id: orgId }, '-date', 100),
+    queryFn: () => base44.entities.Trip.filter({ organisation_id: orgId }, '-date', 200),
     enabled: !!orgId,
   });
 
@@ -144,24 +128,6 @@ export default function Finance() {
     enabled: !!orgId,
   });
 
-  const { data: employees = [] } = useQuery({
-    queryKey: ['employees', orgId],
-    queryFn: () => base44.entities.Employee.filter({ organisation_id: orgId }),
-    enabled: !!orgId,
-  });
-
-  const { data: products = [] } = useQuery({
-    queryKey: ['products', orgId],
-    queryFn: () => base44.entities.Product.filter({ organisation_id: orgId }),
-    enabled: !!orgId,
-  });
-
-  const { data: stockLevels = [] } = useQuery({
-    queryKey: ['stockLevels', orgId],
-    queryFn: () => base44.entities.StockLevel.filter({ organisation_id: orgId }),
-    enabled: !!orgId,
-  });
-
   const { data: organisation } = useQuery({
     queryKey: ['organisation', orgId],
     queryFn: () => base44.entities.Organisation.filter({ id: orgId }),
@@ -173,163 +139,173 @@ export default function Finance() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['expenses'] });
       setShowExpenseDialog(false);
-      toast({ title: "Expense recorded successfully" });
     },
   });
 
-  // Calculate totals - separate all revenue streams
-  const retailSales = sales.filter(s => s.sale_type === 'retail');
-  const warehouseSales = sales.filter(s => s.sale_type === 'warehouse');
-  const vehicleSales = sales.filter(s => s.sale_type === 'vehicle');
-  
-  const totalRetailRevenue = retailSales.reduce((sum, s) => sum + (s.total_amount || 0), 0);
-  const totalWarehouseRevenue = warehouseSales.reduce((sum, s) => sum + (s.total_amount || 0), 0);
-  const totalVehicleSalesRevenue = vehicleSales.reduce((sum, s) => sum + (s.total_amount || 0), 0);
-  const totalTransportRevenue = trips.reduce((sum, t) => sum + (t.total_revenue || 0), 0);
-  const completedContracts = truckContracts.filter(c => c.status === 'completed');
-  const totalTruckContractRevenue = completedContracts.reduce((sum, c) => sum + (c.contract_amount || 0), 0);
-  const totalRevenue = totalRetailRevenue + totalWarehouseRevenue + totalVehicleSalesRevenue + totalTransportRevenue + totalTruckContractRevenue;
-  
-  // Calculate ALL expenses from all sources
-  const recordedExpenses = expenses.reduce((sum, e) => sum + (e.amount || 0), 0);
-  const tripFuelExpenses = trips.reduce((sum, t) => sum + (t.fuel_cost || 0), 0);
-  const tripOtherExpenses = trips.reduce((sum, t) => sum + (t.other_expenses || 0), 0);
-  const truckContractExpenses = truckContracts.reduce((sum, c) => sum + (c.total_expenses || 0), 0);
-  const maintenanceExpenses = maintenanceRecords.reduce((sum, m) => sum + (m.cost || 0), 0);
-  
-  const totalExpenses = recordedExpenses + tripFuelExpenses + tripOtherExpenses + truckContractExpenses + maintenanceExpenses;
-  const netProfit = totalRevenue - totalExpenses;
-
-  // Expense breakdown by category (including all sources)
-  const expensesByCategory = [
-    ...expenseCategories.map(cat => ({
-      name: cat.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase()),
-      value: expenses.filter(e => e.category === cat).reduce((sum, e) => sum + (e.amount || 0), 0)
-    })),
-    { name: 'Trip Fuel', value: tripFuelExpenses },
-    { name: 'Trip Other', value: tripOtherExpenses },
-    { name: 'Truck Contract Expenses', value: truckContractExpenses },
-    { name: 'Vehicle Maintenance', value: maintenanceExpenses }
-  ].filter(item => item.value > 0);
-
-  // Monthly revenue data (includes ALL revenue sources)
-  const monthlyData = [];
-  for (let i = 5; i >= 0; i--) {
-    const date = new Date();
-    date.setMonth(date.getMonth() - i);
-    const monthStart = startOfMonth(date);
-    const monthEnd = endOfMonth(date);
-    
-    // Sales revenue
-    const monthSales = sales.filter(s => {
-      const saleDate = new Date(s.created_date);
-      return saleDate >= monthStart && saleDate <= monthEnd;
-    }).reduce((sum, s) => sum + (s.total_amount || 0), 0);
-    
-    // Transport trip revenue
-    const monthTrips = trips.filter(t => {
-      const tripDate = new Date(t.date);
-      return tripDate >= monthStart && tripDate <= monthEnd;
-    }).reduce((sum, t) => sum + (t.total_revenue || 0), 0);
-    
-    // Truck contract revenue (completed contracts)
-    const monthContracts = truckContracts.filter(c => {
-      const contractDate = new Date(c.contract_date);
-      return contractDate >= monthStart && contractDate <= monthEnd && c.status === 'completed';
-    }).reduce((sum, c) => sum + (c.contract_amount || 0), 0);
-    
-    monthlyData.push({
-      month: format(date, 'MMM'),
-      revenue: monthSales + monthTrips + monthContracts
-    });
-  }
-
-  const filteredExpenses = categoryFilter === "all" 
-    ? expenses 
-    : expenses.filter(e => e.category === categoryFilter);
-
-  // Reports date filtering
-  const getReportDateRange = useMemo(() => {
+  // Date range calculation
+  const getDateRange = useMemo(() => {
     const today = new Date();
-    switch (reportDateRange) {
+    switch (dateRange) {
       case "today": return { start: today, end: today };
-      case "yesterday": return { start: subDays(today, 1), end: subDays(today, 1) };
-      case "this_week": return { start: startOfWeek(today), end: endOfWeek(today) };
-      case "last_week": const lw = subDays(today, 7); return { start: startOfWeek(lw), end: endOfWeek(lw) };
-      case "this_month": return { start: startOfMonth(today), end: endOfMonth(today) };
-      case "last_month": const lm = subDays(startOfMonth(today), 1); return { start: startOfMonth(lm), end: endOfMonth(lm) };
-      case "this_quarter": return { start: startOfQuarter(today), end: endOfQuarter(today) };
-      case "this_year": return { start: startOfYear(today), end: endOfYear(today) };
+      case "this_week": return { start: startOfWeek(today), end: today };
+      case "this_month": return { start: startOfMonth(today), end: today };
+      case "last_month": 
+        const lm = subMonths(today, 1);
+        return { start: startOfMonth(lm), end: endOfMonth(lm) };
+      case "this_quarter": return { start: startOfQuarter(today), end: today };
+      case "this_year": return { start: startOfYear(today), end: today };
       default: return { start: startOfMonth(today), end: today };
     }
-  }, [reportDateRange]);
+  }, [dateRange]);
 
-  const reportFilteredSales = useMemo(() => {
+  // Filter data by date range
+  const filteredSales = useMemo(() => {
     return sales.filter(s => {
-      const saleDate = new Date(s.created_date);
-      return saleDate >= getReportDateRange.start && saleDate <= getReportDateRange.end;
+      const d = new Date(s.created_date);
+      return d >= getDateRange.start && d <= getDateRange.end;
     });
-  }, [sales, getReportDateRange]);
+  }, [sales, getDateRange]);
 
-  const reportFilteredExpenses = useMemo(() => {
+  const filteredExpenses = useMemo(() => {
     return expenses.filter(e => {
-      const expDate = new Date(e.date || e.created_date);
-      return expDate >= getReportDateRange.start && expDate <= getReportDateRange.end;
+      const d = new Date(e.date || e.created_date);
+      return d >= getDateRange.start && d <= getDateRange.end;
     });
-  }, [expenses, getReportDateRange]);
+  }, [expenses, getDateRange]);
 
-  const reportFilteredTrips = useMemo(() => {
+  const filteredTrips = useMemo(() => {
     return trips.filter(t => {
-      const tripDate = new Date(t.date || t.created_date);
-      return tripDate >= getReportDateRange.start && tripDate <= getReportDateRange.end;
+      const d = new Date(t.date || t.created_date);
+      return d >= getDateRange.start && d <= getDateRange.end;
     });
-  }, [trips, getReportDateRange]);
+  }, [trips, getDateRange]);
 
-  // Report metrics
-  const salesMetrics = useMemo(() => {
-    const totalRevenue = reportFilteredSales.reduce((sum, s) => sum + (s.total_amount || 0), 0);
-    const avgSale = reportFilteredSales.length > 0 ? totalRevenue / reportFilteredSales.length : 0;
-    return { totalRevenue, count: reportFilteredSales.length, avgSale };
-  }, [reportFilteredSales]);
+  const filteredContracts = useMemo(() => {
+    return truckContracts.filter(c => {
+      const d = new Date(c.contract_date || c.created_date);
+      return d >= getDateRange.start && d <= getDateRange.end;
+    });
+  }, [truckContracts, getDateRange]);
 
-  const expenseMetrics = useMemo(() => {
-    const totalExpenses = reportFilteredExpenses.reduce((sum, e) => sum + (e.amount || 0), 0);
-    return { totalExpenses, count: reportFilteredExpenses.length };
-  }, [reportFilteredExpenses]);
+  // Calculate comprehensive financials
+  const financials = useMemo(() => {
+    // Revenue streams
+    const salesRevenue = filteredSales.reduce((sum, s) => sum + (s.total_amount || 0), 0);
+    const transportRevenue = filteredTrips.reduce((sum, t) => sum + (t.total_revenue || 0), 0);
+    const contractRevenue = filteredContracts.filter(c => c.status === 'completed').reduce((sum, c) => sum + (c.contract_amount || 0), 0);
+    const totalRevenue = salesRevenue + transportRevenue + contractRevenue;
 
-  const transportMetrics = useMemo(() => {
-    const totalRevenue = reportFilteredTrips.reduce((sum, t) => sum + (t.ticket_revenue || 0), 0);
-    const totalFuel = reportFilteredTrips.reduce((sum, t) => sum + (t.fuel_cost || 0), 0);
-    return { totalRevenue, totalFuel, count: reportFilteredTrips.length };
-  }, [reportFilteredTrips]);
+    // Revenue by type
+    const retailSales = filteredSales.filter(s => s.sale_type === 'retail').reduce((sum, s) => sum + (s.total_amount || 0), 0);
+    const wholesaleSales = filteredSales.filter(s => s.sale_type === 'warehouse').reduce((sum, s) => sum + (s.total_amount || 0), 0);
+    const vehicleSales = filteredSales.filter(s => s.sale_type === 'vehicle').reduce((sum, s) => sum + (s.total_amount || 0), 0);
 
-  const inventoryMetrics = useMemo(() => {
-    const totalStock = stockLevels.reduce((sum, s) => sum + (s.quantity || 0), 0);
-    const lowStock = products.filter(p => {
-      const stock = stockLevels.find(s => s.product_id === p.id);
-      return (stock?.quantity || 0) < (p.low_stock_threshold || 10);
-    }).length;
-    return { totalStock, totalProducts: products.length, lowStock };
-  }, [products, stockLevels]);
+    // Expenses
+    const recordedExpenses = filteredExpenses.reduce((sum, e) => sum + (e.amount || 0), 0);
+    const tripFuelCosts = filteredTrips.reduce((sum, t) => sum + (t.fuel_cost || 0), 0);
+    const tripOtherCosts = filteredTrips.reduce((sum, t) => sum + (t.other_expenses || 0), 0);
+    const contractExpenses = filteredContracts.reduce((sum, c) => sum + (c.total_expenses || 0), 0);
+    const maintenanceCosts = maintenanceRecords.filter(m => {
+      const d = new Date(m.date_performed);
+      return d >= getDateRange.start && d <= getDateRange.end;
+    }).reduce((sum, m) => sum + (m.cost || 0), 0);
+    const totalExpenses = recordedExpenses + tripFuelCosts + tripOtherCosts + contractExpenses + maintenanceCosts;
 
-  const handlePrint = () => {
-    const org = organisation?.[0];
-    switch (reportTab) {
-      case 'sales': printSalesReport(reportFilteredSales, org, getReportDateRange); break;
-      case 'expenses': printExpenseReport(reportFilteredExpenses, org, getReportDateRange); break;
-      case 'transport': printTransportReport(reportFilteredTrips, org, getReportDateRange); break;
-      case 'inventory': printInventoryReport(products, stockLevels, org); break;
+    // Profit
+    const netProfit = totalRevenue - totalExpenses;
+    const profitMargin = totalRevenue > 0 ? ((netProfit / totalRevenue) * 100).toFixed(1) : 0;
+
+    // Payment method breakdown
+    const paymentMethods = {};
+    filteredSales.forEach(s => {
+      const method = s.payment_method || 'cash';
+      paymentMethods[method] = (paymentMethods[method] || 0) + (s.total_amount || 0);
+    });
+
+    // Expense by category
+    const expensesByCategory = {};
+    filteredExpenses.forEach(e => {
+      const cat = e.category || 'other';
+      expensesByCategory[cat] = (expensesByCategory[cat] || 0) + (e.amount || 0);
+    });
+
+    return {
+      totalRevenue,
+      salesRevenue,
+      transportRevenue,
+      contractRevenue,
+      retailSales,
+      wholesaleSales,
+      vehicleSales,
+      totalExpenses,
+      recordedExpenses,
+      tripFuelCosts,
+      tripOtherCosts,
+      contractExpenses,
+      maintenanceCosts,
+      netProfit,
+      profitMargin,
+      paymentMethods,
+      expensesByCategory,
+      transactionCount: filteredSales.length,
+      tripCount: filteredTrips.length,
+      contractCount: filteredContracts.length
+    };
+  }, [filteredSales, filteredExpenses, filteredTrips, filteredContracts, maintenanceRecords, getDateRange]);
+
+  // Monthly trend data
+  const monthlyTrend = useMemo(() => {
+    const data = [];
+    for (let i = 5; i >= 0; i--) {
+      const date = subMonths(new Date(), i);
+      const monthStart = startOfMonth(date);
+      const monthEnd = endOfMonth(date);
+
+      const monthSales = sales.filter(s => {
+        const d = new Date(s.created_date);
+        return d >= monthStart && d <= monthEnd;
+      }).reduce((sum, s) => sum + (s.total_amount || 0), 0);
+
+      const monthTransport = trips.filter(t => {
+        const d = new Date(t.date || t.created_date);
+        return d >= monthStart && d <= monthEnd;
+      }).reduce((sum, t) => sum + (t.total_revenue || 0), 0);
+
+      const monthExpenses = expenses.filter(e => {
+        const d = new Date(e.date || e.created_date);
+        return d >= monthStart && d <= monthEnd;
+      }).reduce((sum, e) => sum + (e.amount || 0), 0);
+
+      data.push({
+        month: format(date, 'MMM'),
+        revenue: monthSales + monthTransport,
+        expenses: monthExpenses,
+        profit: (monthSales + monthTransport) - monthExpenses
+      });
     }
-  };
+    return data;
+  }, [sales, trips, expenses]);
 
-  const handleExportCSV = () => {
-    switch (reportTab) {
-      case 'sales': exportReportCSV(reportFilteredSales, 'sales'); break;
-      case 'expenses': exportReportCSV(reportFilteredExpenses, 'expenses'); break;
-      case 'transport': exportReportCSV(reportFilteredTrips, 'transport'); break;
-      case 'inventory': exportReportCSV(products, 'inventory'); break;
-    }
-  };
+  // Expense pie chart data
+  const expensePieData = useMemo(() => {
+    return Object.entries(financials.expensesByCategory)
+      .filter(([_, value]) => value > 0)
+      .map(([name, value]) => ({
+        name: name.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase()),
+        value
+      }));
+  }, [financials.expensesByCategory]);
+
+  // Revenue breakdown for pie
+  const revenuePieData = useMemo(() => {
+    const data = [];
+    if (financials.retailSales > 0) data.push({ name: 'Retail Sales', value: financials.retailSales });
+    if (financials.wholesaleSales > 0) data.push({ name: 'Wholesale', value: financials.wholesaleSales });
+    if (financials.vehicleSales > 0) data.push({ name: 'Vehicle Sales', value: financials.vehicleSales });
+    if (financials.transportRevenue > 0) data.push({ name: 'Transport', value: financials.transportRevenue });
+    if (financials.contractRevenue > 0) data.push({ name: 'Contracts', value: financials.contractRevenue });
+    return data;
+  }, [financials]);
 
   const handleExpenseSubmit = (e) => {
     e.preventDefault();
@@ -347,9 +323,12 @@ export default function Finance() {
       status: 'pending',
       notes: formData.get('notes'),
     };
-
     createExpenseMutation.mutate(data);
   };
+
+  const categoryFilteredExpenses = categoryFilter === "all" 
+    ? expenses 
+    : expenses.filter(e => e.category === categoryFilter);
 
   if (!user || !currentEmployee || !orgId || loadingExpenses) {
     return <LoadingSpinner message="Loading Finance..." subtitle="Fetching financial data" fullScreen={true} />;
@@ -357,302 +336,423 @@ export default function Finance() {
 
   return (
     <ProtectedPage module="finance">
-    <div className="space-y-6">
-      <PageHeader
-        title="Finance"
-        subtitle="Track revenue, expenses, and profitability"
-        action={() => setShowExpenseDialog(true)}
-        actionLabel="Add Expense"
-      >
-        <Button 
-          variant="outline" 
-          onClick={() => setShowFormsDialog(true)}
-          className="border-[#0072C6]/30 hover:border-[#0072C6] hover:bg-[#0072C6]/10 hover:text-[#0072C6]"
+      <div className="space-y-6">
+        <PageHeader
+          title="Finance"
+          subtitle="Complete financial overview and management"
+          action={() => setShowExpenseDialog(true)}
+          actionLabel="Record Expense"
         >
-          <Printer className="w-4 h-4 mr-2" />
-          Print Forms
-        </Button>
-      </PageHeader>
+          <Button 
+            variant="outline" 
+            onClick={() => setShowFormsDialog(true)}
+            className="border-[#0072C6]/30 hover:border-[#0072C6] hover:bg-[#0072C6]/10"
+          >
+            <Printer className="w-4 h-4 mr-2" />
+            Print Forms
+          </Button>
+        </PageHeader>
 
-      {/* Stats */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <StatCard
-          title="Total Revenue"
-          value={`Le ${totalRevenue.toLocaleString()}`}
-          icon={TrendingUp}
-          color="green"
-          trend="up"
-          trendValue="+15%"
-        />
-        <StatCard
-          title="Total Expenses"
-          value={`Le ${totalExpenses.toLocaleString()}`}
-          icon={TrendingDown}
-          color="red"
-        />
-        <StatCard
-          title="Net Profit"
-          value={`Le ${netProfit.toLocaleString()}`}
-          icon={DollarSign}
-          color={netProfit >= 0 ? "green" : "red"}
-        />
-        <StatCard
-          title="Pending Expenses"
-          value={expenses.filter(e => e.status === 'pending').length}
-          icon={Receipt}
-          color="gold"
-        />
-      </div>
-
-      <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="bg-gray-100 p-1 flex flex-wrap h-auto gap-1">
-          <TabsTrigger value="overview" className="text-xs sm:text-sm px-2 sm:px-3 data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#1EB053] data-[state=active]:to-[#0072C6] data-[state=active]:text-white">
-            Overview
-          </TabsTrigger>
-          <TabsTrigger value="analytics" className="text-xs sm:text-sm px-2 sm:px-3 data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#1EB053] data-[state=active]:to-[#0072C6] data-[state=active]:text-white">
-            Analytics
-          </TabsTrigger>
-          <TabsTrigger value="expenses" className="text-xs sm:text-sm px-2 sm:px-3 data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#1EB053] data-[state=active]:to-[#0072C6] data-[state=active]:text-white">
-            Expenses
-          </TabsTrigger>
-          <TabsTrigger value="reports" className="text-xs sm:text-sm px-2 sm:px-3 data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#1EB053] data-[state=active]:to-[#0072C6] data-[state=active]:text-white">
-            Reports
-          </TabsTrigger>
-          <TabsTrigger value="saved" className="text-xs sm:text-sm px-2 sm:px-3 data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#1EB053] data-[state=active]:to-[#0072C6] data-[state=active]:text-white">
-            Saved
-          </TabsTrigger>
-        </TabsList>
-
-        <TabsContent value="overview" className="mt-6">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {/* Revenue Chart */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <BarChart3 className="w-5 h-5" />
-                  Revenue Trend (6 Months)
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <ResponsiveContainer width="100%" height={300}>
-                  <BarChart data={monthlyData}>
-                    <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis dataKey="month" />
-                    <YAxis />
-                    <Tooltip 
-                      formatter={(value) => [`Le ${value.toLocaleString()}`, 'Revenue']}
-                    />
-                    <Bar dataKey="revenue" fill="url(#colorGradient)" radius={[4, 4, 0, 0]} />
-                    <defs>
-                      <linearGradient id="colorGradient" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="0%" stopColor="#1EB053" />
-                        <stop offset="100%" stopColor="#1D5FC3" />
-                      </linearGradient>
-                    </defs>
-                  </BarChart>
-                </ResponsiveContainer>
-              </CardContent>
-            </Card>
-
-            {/* Expense Breakdown */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <PieChart className="w-5 h-5" />
-                  Expense Breakdown
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                {expensesByCategory.length === 0 ? (
-                  <div className="h-[300px] flex items-center justify-center text-gray-500">
-                    No expenses recorded
-                  </div>
-                ) : (
-                  <ResponsiveContainer width="100%" height={300}>
-                    <RePieChart>
-                      <Pie
-                        data={expensesByCategory}
-                        cx="50%"
-                        cy="50%"
-                        labelLine={false}
-                        outerRadius={100}
-                        fill="#8884d8"
-                        dataKey="value"
-                        label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
-                      >
-                        {expensesByCategory.map((entry, index) => (
-                          <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                        ))}
-                      </Pie>
-                      <Tooltip formatter={(value) => `Le ${value.toLocaleString()}`} />
-                    </RePieChart>
-                  </ResponsiveContainer>
-                )}
-              </CardContent>
-            </Card>
-
-            {/* Revenue Sources */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Revenue Sources</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-3">
-                  <div className="flex items-center justify-between p-4 bg-green-50 rounded-lg">
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-full bg-green-100 flex items-center justify-center">
-                        <Receipt className="w-5 h-5 text-green-600" />
-                      </div>
-                      <div>
-                        <p className="font-medium">Retail Sales</p>
-                        <p className="text-sm text-gray-500">{retailSales.length} transactions</p>
-                      </div>
-                    </div>
-                    <p className="font-bold text-green-600">Le {totalRetailRevenue.toLocaleString()}</p>
-                  </div>
-                  <div className="flex items-center justify-between p-4 bg-amber-50 rounded-lg">
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-full bg-amber-100 flex items-center justify-center">
-                        <Receipt className="w-5 h-5 text-amber-600" />
-                      </div>
-                      <div>
-                        <p className="font-medium">Warehouse Sales</p>
-                        <p className="text-sm text-gray-500">{warehouseSales.length} transactions</p>
-                      </div>
-                    </div>
-                    <p className="font-bold text-amber-600">Le {totalWarehouseRevenue.toLocaleString()}</p>
-                  </div>
-                  <div className="flex items-center justify-between p-4 bg-purple-50 rounded-lg">
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-full bg-purple-100 flex items-center justify-center">
-                        <DollarSign className="w-5 h-5 text-purple-600" />
-                      </div>
-                      <div>
-                        <p className="font-medium">Vehicle Sales</p>
-                        <p className="text-sm text-gray-500">{vehicleSales.length} sales</p>
-                      </div>
-                    </div>
-                    <p className="font-bold text-purple-600">Le {totalVehicleSalesRevenue.toLocaleString()}</p>
-                  </div>
-                  <div className="flex items-center justify-between p-4 bg-blue-50 rounded-lg">
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center">
-                        <TrendingUp className="w-5 h-5 text-blue-600" />
-                      </div>
-                      <div>
-                        <p className="font-medium">Transport Revenue</p>
-                        <p className="text-sm text-gray-500">{trips.length} trips</p>
-                      </div>
-                    </div>
-                    <p className="font-bold text-blue-600">Le {totalTransportRevenue.toLocaleString()}</p>
-                  </div>
-                  <div className="flex items-center justify-between p-4 bg-teal-50 rounded-lg">
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-full bg-teal-100 flex items-center justify-center">
-                        <Truck className="w-5 h-5 text-teal-600" />
-                      </div>
-                      <div>
-                        <p className="font-medium">Truck Contract Revenue</p>
-                        <p className="text-sm text-gray-500">{completedContracts.length} contracts completed</p>
-                      </div>
-                    </div>
-                    <p className="font-bold text-teal-600">Le {totalTruckContractRevenue.toLocaleString()}</p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Expense Sources */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Expense Sources</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-3">
-                  <div className="flex items-center justify-between p-4 bg-red-50 rounded-lg">
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-full bg-red-100 flex items-center justify-center">
-                        <Receipt className="w-5 h-5 text-red-600" />
-                      </div>
-                      <div>
-                        <p className="font-medium">Recorded Expenses</p>
-                        <p className="text-sm text-gray-500">{expenses.length} entries</p>
-                      </div>
-                    </div>
-                    <p className="font-bold text-red-600">Le {recordedExpenses.toLocaleString()}</p>
-                  </div>
-                  <div className="flex items-center justify-between p-4 bg-orange-50 rounded-lg">
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-full bg-orange-100 flex items-center justify-center">
-                        <Fuel className="w-5 h-5 text-orange-600" />
-                      </div>
-                      <div>
-                        <p className="font-medium">Trip Expenses</p>
-                        <p className="text-sm text-gray-500">Fuel & other trip costs</p>
-                      </div>
-                    </div>
-                    <p className="font-bold text-orange-600">Le {(tripFuelExpenses + tripOtherExpenses).toLocaleString()}</p>
-                  </div>
-                  <div className="flex items-center justify-between p-4 bg-violet-50 rounded-lg">
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-full bg-violet-100 flex items-center justify-center">
-                        <Truck className="w-5 h-5 text-violet-600" />
-                      </div>
-                      <div>
-                        <p className="font-medium">Contract Expenses</p>
-                        <p className="text-sm text-gray-500">Truck contract costs</p>
-                      </div>
-                    </div>
-                    <p className="font-bold text-violet-600">Le {truckContractExpenses.toLocaleString()}</p>
-                  </div>
-                  <div className="flex items-center justify-between p-4 bg-cyan-50 rounded-lg">
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-full bg-cyan-100 flex items-center justify-center">
-                        <Wrench className="w-5 h-5 text-cyan-600" />
-                      </div>
-                      <div>
-                        <p className="font-medium">Vehicle Maintenance</p>
-                        <p className="text-sm text-gray-500">{maintenanceRecords.length} service records</p>
-                      </div>
-                    </div>
-                    <p className="font-bold text-cyan-600">Le {maintenanceExpenses.toLocaleString()}</p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Recent Expenses */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Recent Expenses</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-3">
-                  {expenses.slice(0, 5).map((expense) => (
-                    <div key={expense.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                      <div>
-                        <p className="font-medium">{expense.description || expense.category}</p>
-                        <p className="text-sm text-gray-500">{format(new Date(expense.date), 'MMM d, yyyy')}</p>
-                      </div>
-                      <div className="text-right">
-                        <p className="font-bold text-red-500">-Le {expense.amount?.toLocaleString()}</p>
-                        <Badge variant={expense.status === 'approved' ? 'secondary' : 'outline'}>
-                          {expense.status}
-                        </Badge>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
+        {/* Date Filter */}
+        <div className="flex items-center gap-4 flex-wrap">
+          <div className="flex items-center gap-2">
+            <Calendar className="w-4 h-4 text-gray-500" />
+            <span className="text-sm font-medium">Period:</span>
           </div>
-        </TabsContent>
+          <Select value={dateRange} onValueChange={setDateRange}>
+            <SelectTrigger className="w-40">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="today">Today</SelectItem>
+              <SelectItem value="this_week">This Week</SelectItem>
+              <SelectItem value="this_month">This Month</SelectItem>
+              <SelectItem value="last_month">Last Month</SelectItem>
+              <SelectItem value="this_quarter">This Quarter</SelectItem>
+              <SelectItem value="this_year">This Year</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
 
-        <TabsContent value="expenses" className="mt-6">
-          <Card>
-            <CardHeader>
-              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-                <CardTitle>All Expenses</CardTitle>
+        {/* Key Metrics */}
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+          <Card className="border-l-4 border-l-[#1EB053]">
+            <CardContent className="p-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-xs text-gray-500 uppercase tracking-wide">Total Revenue</p>
+                  <p className="text-2xl font-bold text-[#1EB053]">Le {financials.totalRevenue.toLocaleString()}</p>
+                  <p className="text-xs text-gray-500 mt-1">{financials.transactionCount + financials.tripCount} transactions</p>
+                </div>
+                <div className="w-12 h-12 rounded-full bg-green-100 flex items-center justify-center">
+                  <TrendingUp className="w-6 h-6 text-[#1EB053]" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="border-l-4 border-l-red-500">
+            <CardContent className="p-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-xs text-gray-500 uppercase tracking-wide">Total Expenses</p>
+                  <p className="text-2xl font-bold text-red-500">Le {financials.totalExpenses.toLocaleString()}</p>
+                  <p className="text-xs text-gray-500 mt-1">{filteredExpenses.length} records</p>
+                </div>
+                <div className="w-12 h-12 rounded-full bg-red-100 flex items-center justify-center">
+                  <TrendingDown className="w-6 h-6 text-red-500" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className={`border-l-4 ${financials.netProfit >= 0 ? 'border-l-[#0072C6]' : 'border-l-orange-500'}`}>
+            <CardContent className="p-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-xs text-gray-500 uppercase tracking-wide">Net Profit</p>
+                  <p className={`text-2xl font-bold ${financials.netProfit >= 0 ? 'text-[#0072C6]' : 'text-orange-500'}`}>
+                    Le {financials.netProfit.toLocaleString()}
+                  </p>
+                  <p className="text-xs text-gray-500 mt-1">{financials.profitMargin}% margin</p>
+                </div>
+                <div className={`w-12 h-12 rounded-full flex items-center justify-center ${financials.netProfit >= 0 ? 'bg-blue-100' : 'bg-orange-100'}`}>
+                  <DollarSign className={`w-6 h-6 ${financials.netProfit >= 0 ? 'text-[#0072C6]' : 'text-orange-500'}`} />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="border-l-4 border-l-[#D4AF37]">
+            <CardContent className="p-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-xs text-gray-500 uppercase tracking-wide">Pending Approval</p>
+                  <p className="text-2xl font-bold text-[#D4AF37]">{expenses.filter(e => e.status === 'pending').length}</p>
+                  <p className="text-xs text-gray-500 mt-1">expense records</p>
+                </div>
+                <div className="w-12 h-12 rounded-full bg-amber-100 flex items-center justify-center">
+                  <Clock className="w-6 h-6 text-[#D4AF37]" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        <Tabs value={activeTab} onValueChange={setActiveTab}>
+          <TabsList className="bg-gray-100 p-1 flex flex-wrap h-auto gap-1">
+            <TabsTrigger value="dashboard" className="text-xs sm:text-sm data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#1EB053] data-[state=active]:to-[#0072C6] data-[state=active]:text-white">
+              Dashboard
+            </TabsTrigger>
+            <TabsTrigger value="revenue" className="text-xs sm:text-sm data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#1EB053] data-[state=active]:to-[#0072C6] data-[state=active]:text-white">
+              Revenue
+            </TabsTrigger>
+            <TabsTrigger value="expenses" className="text-xs sm:text-sm data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#1EB053] data-[state=active]:to-[#0072C6] data-[state=active]:text-white">
+              Expenses
+            </TabsTrigger>
+            <TabsTrigger value="cashflow" className="text-xs sm:text-sm data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#1EB053] data-[state=active]:to-[#0072C6] data-[state=active]:text-white">
+              Cash Flow
+            </TabsTrigger>
+          </TabsList>
+
+          {/* Dashboard Tab */}
+          <TabsContent value="dashboard" className="mt-6">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              {/* Revenue Trend */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <BarChart3 className="w-5 h-5 text-[#1EB053]" />
+                    Financial Trend (6 Months)
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <ResponsiveContainer width="100%" height={300}>
+                    <AreaChart data={monthlyTrend}>
+                      <CartesianGrid strokeDasharray="3 3" />
+                      <XAxis dataKey="month" />
+                      <YAxis />
+                      <Tooltip formatter={(value) => `Le ${value.toLocaleString()}`} />
+                      <Legend />
+                      <Area type="monotone" dataKey="revenue" stackId="1" stroke="#1EB053" fill="#1EB053" fillOpacity={0.6} name="Revenue" />
+                      <Area type="monotone" dataKey="expenses" stackId="2" stroke="#ef4444" fill="#ef4444" fillOpacity={0.6} name="Expenses" />
+                    </AreaChart>
+                  </ResponsiveContainer>
+                </CardContent>
+              </Card>
+
+              {/* Profit Trend */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <TrendingUp className="w-5 h-5 text-[#0072C6]" />
+                    Profit Trend
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <ResponsiveContainer width="100%" height={300}>
+                    <LineChart data={monthlyTrend}>
+                      <CartesianGrid strokeDasharray="3 3" />
+                      <XAxis dataKey="month" />
+                      <YAxis />
+                      <Tooltip formatter={(value) => `Le ${value.toLocaleString()}`} />
+                      <Line type="monotone" dataKey="profit" stroke="#0072C6" strokeWidth={3} dot={{ fill: '#0072C6', strokeWidth: 2 }} name="Net Profit" />
+                    </LineChart>
+                  </ResponsiveContainer>
+                </CardContent>
+              </Card>
+
+              {/* Revenue Sources */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <PieChart className="w-5 h-5 text-[#1EB053]" />
+                    Revenue Breakdown
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  {revenuePieData.length === 0 ? (
+                    <div className="h-[280px] flex items-center justify-center text-gray-500">
+                      No revenue data for this period
+                    </div>
+                  ) : (
+                    <ResponsiveContainer width="100%" height={280}>
+                      <RePieChart>
+                        <Pie
+                          data={revenuePieData}
+                          cx="50%"
+                          cy="50%"
+                          innerRadius={60}
+                          outerRadius={100}
+                          fill="#8884d8"
+                          dataKey="value"
+                          label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                        >
+                          {revenuePieData.map((entry, index) => (
+                            <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                          ))}
+                        </Pie>
+                        <Tooltip formatter={(value) => `Le ${value.toLocaleString()}`} />
+                      </RePieChart>
+                    </ResponsiveContainer>
+                  )}
+                </CardContent>
+              </Card>
+
+              {/* Expense Breakdown */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <PieChart className="w-5 h-5 text-red-500" />
+                    Expense Breakdown
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  {expensePieData.length === 0 ? (
+                    <div className="h-[280px] flex items-center justify-center text-gray-500">
+                      No expense data for this period
+                    </div>
+                  ) : (
+                    <ResponsiveContainer width="100%" height={280}>
+                      <RePieChart>
+                        <Pie
+                          data={expensePieData}
+                          cx="50%"
+                          cy="50%"
+                          innerRadius={60}
+                          outerRadius={100}
+                          fill="#8884d8"
+                          dataKey="value"
+                          label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                        >
+                          {expensePieData.map((entry, index) => (
+                            <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                          ))}
+                        </Pie>
+                        <Tooltip formatter={(value) => `Le ${value.toLocaleString()}`} />
+                      </RePieChart>
+                    </ResponsiveContainer>
+                  )}
+                </CardContent>
+              </Card>
+            </div>
+          </TabsContent>
+
+          {/* Revenue Tab */}
+          <TabsContent value="revenue" className="mt-6 space-y-6">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <Card className="bg-gradient-to-br from-green-50 to-white">
+                <CardContent className="p-5">
+                  <div className="flex items-center gap-4">
+                    <div className="w-14 h-14 rounded-xl bg-green-100 flex items-center justify-center">
+                      <ShoppingCart className="w-7 h-7 text-green-600" />
+                    </div>
+                    <div>
+                      <p className="text-sm text-gray-500">Retail Sales</p>
+                      <p className="text-2xl font-bold text-green-600">Le {financials.retailSales.toLocaleString()}</p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card className="bg-gradient-to-br from-blue-50 to-white">
+                <CardContent className="p-5">
+                  <div className="flex items-center gap-4">
+                    <div className="w-14 h-14 rounded-xl bg-blue-100 flex items-center justify-center">
+                      <Package className="w-7 h-7 text-blue-600" />
+                    </div>
+                    <div>
+                      <p className="text-sm text-gray-500">Wholesale Sales</p>
+                      <p className="text-2xl font-bold text-blue-600">Le {financials.wholesaleSales.toLocaleString()}</p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card className="bg-gradient-to-br from-purple-50 to-white">
+                <CardContent className="p-5">
+                  <div className="flex items-center gap-4">
+                    <div className="w-14 h-14 rounded-xl bg-purple-100 flex items-center justify-center">
+                      <Truck className="w-7 h-7 text-purple-600" />
+                    </div>
+                    <div>
+                      <p className="text-sm text-gray-500">Vehicle Sales</p>
+                      <p className="text-2xl font-bold text-purple-600">Le {financials.vehicleSales.toLocaleString()}</p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <Card className="bg-gradient-to-br from-teal-50 to-white">
+                <CardContent className="p-5">
+                  <div className="flex items-center gap-4">
+                    <div className="w-14 h-14 rounded-xl bg-teal-100 flex items-center justify-center">
+                      <TrendingUp className="w-7 h-7 text-teal-600" />
+                    </div>
+                    <div>
+                      <p className="text-sm text-gray-500">Transport Revenue</p>
+                      <p className="text-2xl font-bold text-teal-600">Le {financials.transportRevenue.toLocaleString()}</p>
+                      <p className="text-xs text-gray-400">{financials.tripCount} trips</p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card className="bg-gradient-to-br from-amber-50 to-white">
+                <CardContent className="p-5">
+                  <div className="flex items-center gap-4">
+                    <div className="w-14 h-14 rounded-xl bg-amber-100 flex items-center justify-center">
+                      <FileText className="w-7 h-7 text-amber-600" />
+                    </div>
+                    <div>
+                      <p className="text-sm text-gray-500">Contract Revenue</p>
+                      <p className="text-2xl font-bold text-amber-600">Le {financials.contractRevenue.toLocaleString()}</p>
+                      <p className="text-xs text-gray-400">{financials.contractCount} contracts</p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* Payment Methods */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Payment Methods</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  {Object.entries(financials.paymentMethods).map(([method, amount]) => {
+                    const percentage = financials.salesRevenue > 0 ? (amount / financials.salesRevenue) * 100 : 0;
+                    const icons = {
+                      cash: Wallet,
+                      card: CreditCard,
+                      mobile_money: DollarSign,
+                      credit: Receipt
+                    };
+                    const Icon = icons[method] || DollarSign;
+                    return (
+                      <div key={method} className="space-y-2">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-2">
+                            <Icon className="w-4 h-4 text-gray-500" />
+                            <span className="font-medium capitalize">{method.replace(/_/g, ' ')}</span>
+                          </div>
+                          <span className="font-bold">Le {amount.toLocaleString()}</span>
+                        </div>
+                        <Progress value={percentage} className="h-2" />
+                      </div>
+                    );
+                  })}
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* Expenses Tab */}
+          <TabsContent value="expenses" className="mt-6 space-y-6">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              <Card className="bg-gradient-to-br from-red-50 to-white">
+                <CardContent className="p-4">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-lg bg-red-100 flex items-center justify-center">
+                      <Receipt className="w-5 h-5 text-red-600" />
+                    </div>
+                    <div>
+                      <p className="text-xs text-gray-500">Recorded</p>
+                      <p className="text-lg font-bold">Le {financials.recordedExpenses.toLocaleString()}</p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card className="bg-gradient-to-br from-orange-50 to-white">
+                <CardContent className="p-4">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-lg bg-orange-100 flex items-center justify-center">
+                      <Fuel className="w-5 h-5 text-orange-600" />
+                    </div>
+                    <div>
+                      <p className="text-xs text-gray-500">Fuel Costs</p>
+                      <p className="text-lg font-bold">Le {financials.tripFuelCosts.toLocaleString()}</p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card className="bg-gradient-to-br from-cyan-50 to-white">
+                <CardContent className="p-4">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-lg bg-cyan-100 flex items-center justify-center">
+                      <Wrench className="w-5 h-5 text-cyan-600" />
+                    </div>
+                    <div>
+                      <p className="text-xs text-gray-500">Maintenance</p>
+                      <p className="text-lg font-bold">Le {financials.maintenanceCosts.toLocaleString()}</p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card className="bg-gradient-to-br from-violet-50 to-white">
+                <CardContent className="p-4">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-lg bg-violet-100 flex items-center justify-center">
+                      <Truck className="w-5 h-5 text-violet-600" />
+                    </div>
+                    <div>
+                      <p className="text-xs text-gray-500">Contract Exp.</p>
+                      <p className="text-lg font-bold">Le {financials.contractExpenses.toLocaleString()}</p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between">
+                <CardTitle>Expense Records</CardTitle>
                 <div className="flex items-center gap-2">
                   <Select value={categoryFilter} onValueChange={setCategoryFilter}>
                     <SelectTrigger className="w-40">
@@ -668,288 +768,225 @@ export default function Finance() {
                       ))}
                     </SelectContent>
                   </Select>
-                  <Button onClick={() => setShowExpenseDialog(true)} className="sl-gradient">
+                  <Button onClick={() => setShowExpenseDialog(true)} className="bg-gradient-to-r from-[#1EB053] to-[#0072C6]">
                     <Plus className="w-4 h-4 mr-2" />
-                    Add Expense
+                    Add
                   </Button>
                 </div>
-              </div>
-            </CardHeader>
-            <CardContent>
-              {loadingExpenses ? (
-                <div className="space-y-3">
-                  {[...Array(5)].map((_, i) => (
-                    <div key={i} className="h-16 bg-gray-100 rounded-lg animate-pulse" />
-                  ))}
-                </div>
-              ) : filteredExpenses.length === 0 ? (
-                <EmptyState
-                  icon={Receipt}
-                  title="No Expenses Found"
-                  description="Record your first expense to start tracking"
-                  action={() => setShowExpenseDialog(true)}
-                  actionLabel="Add Expense"
-                />
-              ) : (
-                <div className="space-y-3">
-                  {filteredExpenses.map((expense) => (
-                    <div key={expense.id} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
-                      <div className="flex items-center gap-4">
-                        <div className="w-10 h-10 rounded-full bg-red-100 flex items-center justify-center">
-                          <TrendingDown className="w-5 h-5 text-red-600" />
-                        </div>
-                        <div>
-                          <p className="font-medium">{expense.description || expense.vendor || 'Expense'}</p>
-                          <div className="flex items-center gap-2 text-sm text-gray-500">
-                            <Badge variant="outline" className="text-xs">
-                              {expense.category?.replace(/_/g, ' ')}
+              </CardHeader>
+              <CardContent>
+                <ScrollArea className="h-[400px]">
+                  <div className="space-y-3">
+                    {categoryFilteredExpenses.length === 0 ? (
+                      <div className="text-center py-12 text-gray-500">
+                        <Receipt className="w-12 h-12 mx-auto mb-3 text-gray-300" />
+                        <p>No expenses found</p>
+                      </div>
+                    ) : (
+                      categoryFilteredExpenses.slice(0, 50).map((expense) => (
+                        <div key={expense.id} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
+                          <div className="flex items-center gap-4">
+                            <div className="w-10 h-10 rounded-full bg-red-100 flex items-center justify-center">
+                              <ArrowDownRight className="w-5 h-5 text-red-600" />
+                            </div>
+                            <div>
+                              <p className="font-medium">{expense.description || expense.vendor || 'Expense'}</p>
+                              <div className="flex items-center gap-2 text-sm text-gray-500">
+                                <Badge variant="outline" className="text-xs">
+                                  {expense.category?.replace(/_/g, ' ')}
+                                </Badge>
+                                <span>•</span>
+                                <span>{expense.date ? format(new Date(expense.date), 'MMM d, yyyy') : '-'}</span>
+                              </div>
+                            </div>
+                          </div>
+                          <div className="text-right">
+                            <p className="font-bold text-red-500">-Le {expense.amount?.toLocaleString()}</p>
+                            <Badge variant={
+                              expense.status === 'approved' ? 'secondary' :
+                              expense.status === 'rejected' ? 'destructive' : 'outline'
+                            }>
+                              {expense.status}
                             </Badge>
-                            <span>•</span>
-                            <span>{format(new Date(expense.date), 'MMM d, yyyy')}</span>
                           </div>
                         </div>
-                      </div>
-                      <div className="text-right">
-                        <p className="font-bold text-red-500">-Le {expense.amount?.toLocaleString()}</p>
-                        <Badge variant={
-                          expense.status === 'approved' ? 'secondary' :
-                          expense.status === 'rejected' ? 'destructive' : 'outline'
-                        }>
-                          {expense.status}
-                        </Badge>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="analytics" className="mt-6">
-          <AnalyticsDashboard
-            sales={sales}
-            expenses={expenses}
-            products={products}
-            employees={employees}
-            trips={trips}
-            truckContracts={truckContracts}
-            maintenanceRecords={maintenanceRecords}
-          />
-        </TabsContent>
-
-        <TabsContent value="reports" className="mt-6 space-y-6">
-          {/* Report Controls */}
-          <Card>
-            <CardContent className="p-4">
-              <div className="flex flex-wrap items-center justify-between gap-4">
-                <div className="flex flex-wrap items-center gap-4">
-                  <div className="flex items-center gap-2">
-                    <Calendar className="w-4 h-4 text-gray-500" />
-                    <span className="text-sm font-medium">Period:</span>
+                      ))
+                    )}
                   </div>
-                  <Select value={reportDateRange} onValueChange={setReportDateRange}>
-                    <SelectTrigger className="w-40">
-                      <SelectValue />
+                </ScrollArea>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* Cash Flow Tab */}
+          <TabsContent value="cashflow" className="mt-6 space-y-6">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <Card className="border-t-4 border-t-[#1EB053]">
+                <CardContent className="p-5">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm text-gray-500">Cash Inflow</p>
+                      <p className="text-3xl font-bold text-[#1EB053]">Le {financials.totalRevenue.toLocaleString()}</p>
+                    </div>
+                    <ArrowUpRight className="w-8 h-8 text-[#1EB053]" />
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card className="border-t-4 border-t-red-500">
+                <CardContent className="p-5">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm text-gray-500">Cash Outflow</p>
+                      <p className="text-3xl font-bold text-red-500">Le {financials.totalExpenses.toLocaleString()}</p>
+                    </div>
+                    <ArrowDownRight className="w-8 h-8 text-red-500" />
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card className={`border-t-4 ${financials.netProfit >= 0 ? 'border-t-[#0072C6]' : 'border-t-orange-500'}`}>
+                <CardContent className="p-5">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm text-gray-500">Net Cash Flow</p>
+                      <p className={`text-3xl font-bold ${financials.netProfit >= 0 ? 'text-[#0072C6]' : 'text-orange-500'}`}>
+                        Le {financials.netProfit.toLocaleString()}
+                      </p>
+                    </div>
+                    <DollarSign className={`w-8 h-8 ${financials.netProfit >= 0 ? 'text-[#0072C6]' : 'text-orange-500'}`} />
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+
+            <Card>
+              <CardHeader>
+                <CardTitle>Monthly Cash Flow</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <ResponsiveContainer width="100%" height={350}>
+                  <BarChart data={monthlyTrend}>
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis dataKey="month" />
+                    <YAxis />
+                    <Tooltip formatter={(value) => `Le ${value.toLocaleString()}`} />
+                    <Legend />
+                    <Bar dataKey="revenue" fill="#1EB053" name="Inflow" radius={[4, 4, 0, 0]} />
+                    <Bar dataKey="expenses" fill="#ef4444" name="Outflow" radius={[4, 4, 0, 0]} />
+                  </BarChart>
+                </ResponsiveContainer>
+              </CardContent>
+            </Card>
+
+            {/* Profit Summary */}
+            <Card className={financials.netProfit >= 0 ? 'bg-gradient-to-r from-green-50 to-blue-50 border-green-200' : 'bg-gradient-to-r from-orange-50 to-red-50 border-orange-200'}>
+              <CardContent className="p-6">
+                <div className="flex items-center gap-4">
+                  {financials.netProfit >= 0 ? (
+                    <CheckCircle className="w-12 h-12 text-green-600" />
+                  ) : (
+                    <AlertCircle className="w-12 h-12 text-orange-600" />
+                  )}
+                  <div>
+                    <h3 className={`text-xl font-bold ${financials.netProfit >= 0 ? 'text-green-800' : 'text-orange-800'}`}>
+                      {financials.netProfit >= 0 ? 'Profitable Period' : 'Operating at Loss'}
+                    </h3>
+                    <p className="text-gray-600">
+                      {financials.netProfit >= 0 
+                        ? `Your business achieved a ${financials.profitMargin}% profit margin this period.`
+                        : `Review expenses to improve profitability. Current margin: ${financials.profitMargin}%`
+                      }
+                    </p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+        </Tabs>
+
+        {/* Add Expense Dialog */}
+        <Dialog open={showExpenseDialog} onOpenChange={setShowExpenseDialog}>
+          <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto w-[95vw] sm:w-full">
+            <DialogHeader>
+              <div className="flex h-1 w-16 rounded-full overflow-hidden mb-3">
+                <div className="flex-1 bg-[#1EB053]" />
+                <div className="flex-1 bg-white border-y border-gray-200" />
+                <div className="flex-1 bg-[#0072C6]" />
+              </div>
+              <DialogTitle>Record New Expense</DialogTitle>
+            </DialogHeader>
+            <form onSubmit={handleExpenseSubmit} className="space-y-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="col-span-2">
+                  <Label>Category</Label>
+                  <Select name="category" required>
+                    <SelectTrigger className="mt-1">
+                      <SelectValue placeholder="Select category" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="today">Today</SelectItem>
-                      <SelectItem value="yesterday">Yesterday</SelectItem>
-                      <SelectItem value="this_week">This Week</SelectItem>
-                      <SelectItem value="last_week">Last Week</SelectItem>
-                      <SelectItem value="this_month">This Month</SelectItem>
-                      <SelectItem value="last_month">Last Month</SelectItem>
-                      <SelectItem value="this_quarter">This Quarter</SelectItem>
-                      <SelectItem value="this_year">This Year</SelectItem>
+                      {expenseCategories.map(cat => (
+                        <SelectItem key={cat} value={cat}>
+                          {cat.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                        </SelectItem>
+                      ))}
                     </SelectContent>
                   </Select>
                 </div>
-                <div className="flex flex-wrap items-center gap-2">
-                  <Button variant="outline" size="sm" onClick={() => setShowCharts(!showCharts)}>
-                    {showCharts ? <EyeOff className="w-4 h-4 mr-1" /> : <Eye className="w-4 h-4 mr-1" />}
-                    {showCharts ? 'Hide Charts' : 'Show Charts'}
-                  </Button>
-                  <Button variant="outline" size="sm" onClick={() => setShowSaveDialog(true)}>
-                    <Save className="w-4 h-4 mr-1" />
-                    Save
-                  </Button>
-                  <Button variant="outline" size="sm" onClick={handleExportCSV}>
-                    <FileSpreadsheet className="w-4 h-4 mr-1" />
-                    CSV
-                  </Button>
-                  <Button size="sm" onClick={handlePrint} className="bg-[#1EB053]">
-                    <Printer className="w-4 h-4 mr-1" />
-                    Print
-                  </Button>
+                <div className="col-span-2">
+                  <Label>Description</Label>
+                  <Input name="description" required className="mt-1" placeholder="What was this expense for?" />
+                </div>
+                <div>
+                  <Label>Amount (Le)</Label>
+                  <Input name="amount" type="number" step="0.01" required className="mt-1" />
+                </div>
+                <div>
+                  <Label>Date</Label>
+                  <Input name="date" type="date" defaultValue={format(new Date(), 'yyyy-MM-dd')} required className="mt-1" />
+                </div>
+                <div>
+                  <Label>Vendor</Label>
+                  <Input name="vendor" className="mt-1" placeholder="Optional" />
+                </div>
+                <div>
+                  <Label>Payment Method</Label>
+                  <Select name="payment_method" defaultValue="cash">
+                    <SelectTrigger className="mt-1">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="cash">Cash</SelectItem>
+                      <SelectItem value="card">Card</SelectItem>
+                      <SelectItem value="bank_transfer">Bank Transfer</SelectItem>
+                      <SelectItem value="mobile_money">Mobile Money</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="col-span-2">
+                  <Label>Notes</Label>
+                  <Textarea name="notes" className="mt-1" placeholder="Additional details..." />
                 </div>
               </div>
-            </CardContent>
-          </Card>
+              <DialogFooter className="flex-col sm:flex-row gap-2">
+                <Button type="button" variant="outline" onClick={() => setShowExpenseDialog(false)} className="w-full sm:w-auto">
+                  Cancel
+                </Button>
+                <Button type="submit" className="bg-gradient-to-r from-[#1EB053] to-[#0072C6] w-full sm:w-auto">
+                  Record Expense
+                </Button>
+              </DialogFooter>
+            </form>
+          </DialogContent>
+        </Dialog>
 
-          {/* Report Type Tabs */}
-          <Tabs value={reportTab} onValueChange={setReportTab}>
-            <TabsList className="bg-gray-100 p-1">
-              <TabsTrigger value="sales" className="gap-1 data-[state=active]:bg-white">
-                <ShoppingCart className="w-4 h-4" />
-                Sales
-              </TabsTrigger>
-              <TabsTrigger value="expenses" className="gap-1 data-[state=active]:bg-white">
-                <DollarSign className="w-4 h-4" />
-                Expenses
-              </TabsTrigger>
-              <TabsTrigger value="transport" className="gap-1 data-[state=active]:bg-white">
-                <Truck className="w-4 h-4" />
-                Transport
-              </TabsTrigger>
-              <TabsTrigger value="inventory" className="gap-1 data-[state=active]:bg-white">
-                <Package className="w-4 h-4" />
-                Inventory
-              </TabsTrigger>
-            </TabsList>
-
-            <TabsContent value="sales" className="mt-4 space-y-4">
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                <StatCard title="Total Revenue" value={`SLE ${salesMetrics.totalRevenue.toLocaleString()}`} icon={DollarSign} color="green" />
-                <StatCard title="Total Sales" value={salesMetrics.count} icon={ShoppingCart} color="blue" />
-                <StatCard title="Avg Sale" value={`SLE ${Math.round(salesMetrics.avgSale).toLocaleString()}`} icon={TrendingUp} color="gold" />
-              </div>
-              {showCharts && <SalesCharts sales={reportFilteredSales} />}
-            </TabsContent>
-
-            <TabsContent value="expenses" className="mt-4 space-y-4">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <StatCard title="Total Expenses" value={`SLE ${expenseMetrics.totalExpenses.toLocaleString()}`} icon={DollarSign} color="red" />
-                <StatCard title="Expense Count" value={expenseMetrics.count} icon={FileText} color="blue" />
-              </div>
-              {showCharts && <ExpenseCharts expenses={reportFilteredExpenses} />}
-            </TabsContent>
-
-            <TabsContent value="transport" className="mt-4 space-y-4">
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                <StatCard title="Trip Revenue" value={`SLE ${transportMetrics.totalRevenue.toLocaleString()}`} icon={DollarSign} color="green" />
-                <StatCard title="Total Trips" value={transportMetrics.count} icon={Truck} color="blue" />
-                <StatCard title="Fuel Costs" value={`SLE ${transportMetrics.totalFuel.toLocaleString()}`} icon={TrendingDown} color="red" />
-              </div>
-              {showCharts && <TransportCharts trips={reportFilteredTrips} />}
-            </TabsContent>
-
-            <TabsContent value="inventory" className="mt-4 space-y-4">
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                <StatCard title="Total Products" value={inventoryMetrics.totalProducts} icon={Package} color="blue" />
-                <StatCard title="Total Stock" value={inventoryMetrics.totalStock.toLocaleString()} icon={Package} color="green" />
-                <StatCard title="Low Stock Items" value={inventoryMetrics.lowStock} icon={TrendingDown} color="red" />
-              </div>
-            </TabsContent>
-          </Tabs>
-        </TabsContent>
-
-        <TabsContent value="saved" className="mt-6">
-          <SavedReportsManager 
-            orgId={orgId} 
-            onLoadReport={(report) => {
-              if (report.report_type) {
-                setReportTab(report.report_type);
-                setActiveTab("reports");
-              }
-            }}
-          />
-        </TabsContent>
-      </Tabs>
-
-      {/* Save Report Dialog */}
-      <SaveReportDialog
-        open={showSaveDialog}
-        onOpenChange={setShowSaveDialog}
-        orgId={orgId}
-        currentEmployeeId={currentEmployee?.id}
-        currentEmployeeName={currentEmployee?.full_name}
-        filters={{ dateRange: reportDateRange }}
-        reportType={reportTab}
-      />
-
-      {/* Expense Dialog */}
-      <Dialog open={showExpenseDialog} onOpenChange={setShowExpenseDialog}>
-        <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto w-[95vw] sm:w-full">
-          <DialogHeader>
-            <div className="flex h-1 w-16 rounded-full overflow-hidden mb-3">
-              <div className="flex-1 bg-[#1EB053]" />
-              <div className="flex-1 bg-white border-y border-gray-200" />
-              <div className="flex-1 bg-[#0072C6]" />
-            </div>
-            <DialogTitle>Record New Expense</DialogTitle>
-          </DialogHeader>
-          <form onSubmit={handleExpenseSubmit} className="space-y-4">
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div className="col-span-2">
-                <Label>Category</Label>
-                <Select name="category" required>
-                  <SelectTrigger className="mt-1">
-                    <SelectValue placeholder="Select category" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {expenseCategories.map(cat => (
-                      <SelectItem key={cat} value={cat}>
-                        {cat.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="col-span-2">
-                <Label>Description</Label>
-                <Input name="description" required className="mt-1" placeholder="What was this expense for?" />
-              </div>
-              <div>
-                <Label>Amount (Le)</Label>
-                <Input name="amount" type="number" step="0.01" required className="mt-1" />
-              </div>
-              <div>
-                <Label>Date</Label>
-                <Input name="date" type="date" defaultValue={format(new Date(), 'yyyy-MM-dd')} required className="mt-1" />
-              </div>
-              <div>
-                <Label>Vendor</Label>
-                <Input name="vendor" className="mt-1" placeholder="Optional" />
-              </div>
-              <div>
-                <Label>Payment Method</Label>
-                <Select name="payment_method" defaultValue="cash">
-                  <SelectTrigger className="mt-1">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="cash">Cash</SelectItem>
-                    <SelectItem value="card">Card</SelectItem>
-                    <SelectItem value="bank_transfer">Bank Transfer</SelectItem>
-                    <SelectItem value="mobile_money">Mobile Money</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="col-span-2">
-                <Label>Notes</Label>
-                <Textarea name="notes" className="mt-1" placeholder="Additional details..." />
-              </div>
-            </div>
-            <DialogFooter className="flex-col sm:flex-row gap-2">
-              <Button type="button" variant="outline" onClick={() => setShowExpenseDialog(false)} className="w-full sm:w-auto">
-                Cancel
-              </Button>
-              <Button type="submit" className="bg-gradient-to-r from-[#1EB053] to-[#0072C6] hover:from-[#178f43] hover:to-[#005a9e] w-full sm:w-auto">
-                Record Expense
-              </Button>
-            </DialogFooter>
-          </form>
-        </DialogContent>
-      </Dialog>
-
-      {/* Printable Forms Dialog */}
-      <PrintableFormsDownload
-        open={showFormsDialog}
-        onOpenChange={setShowFormsDialog}
-        organisation={organisation?.[0]}
-      />
-
-    </div>
+        {/* Printable Forms Dialog */}
+        <PrintableFormsDownload
+          open={showFormsDialog}
+          onOpenChange={setShowFormsDialog}
+          organisation={organisation?.[0]}
+        />
+      </div>
     </ProtectedPage>
   );
 }
