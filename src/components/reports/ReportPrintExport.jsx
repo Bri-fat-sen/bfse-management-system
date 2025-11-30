@@ -3,9 +3,9 @@ import { format } from "date-fns";
 import { generateExportHTML, printDocument, exportToCSV } from "@/components/exports/SierraLeoneExportStyles";
 import { generateProfessionalReport, printProfessionalReport } from "@/components/exports/ProfessionalReportExport";
 
-export function printSalesReport({ salesAnalytics, filters, organisation, filteredSales = [] }) {
+export function printSalesReport({ salesAnalytics = {}, filters = {}, organisation, filteredSales = [] }) {
   const summaryCards = [
-    { label: "Total Revenue", value: `SLE ${salesAnalytics.totalRevenue?.toLocaleString() || 0}`, subtext: 'Gross sales revenue' },
+    { label: "Total Revenue", value: `SLE ${(salesAnalytics?.totalRevenue || 0).toLocaleString()}`, subtext: 'Gross sales revenue' },
     { label: "Transactions", value: salesAnalytics.totalTransactions || 0, subtext: 'Total orders' },
     { label: "Avg Transaction", value: `SLE ${Math.round(salesAnalytics.avgTransaction || 0).toLocaleString()}`, subtext: 'Per order' },
     { label: "Top Channel", value: salesAnalytics.byChannel?.[0]?.name || 'N/A', subtext: 'Best performer' }
@@ -67,9 +67,9 @@ export function printSalesReport({ salesAnalytics, filters, organisation, filter
   printProfessionalReport(html);
 }
 
-export function printExpenseReport({ expenseAnalytics, filters, organisation, filteredExpenses = [] }) {
+export function printExpenseReport({ expenseAnalytics = {}, filters = {}, organisation, filteredExpenses = [] }) {
   const summaryCards = [
-    { label: "Total Expenses", value: `SLE ${expenseAnalytics.totalExpenses?.toLocaleString() || 0}`, subtext: 'All categories', highlight: 'red' },
+    { label: "Total Expenses", value: `SLE ${(expenseAnalytics?.totalExpenses || 0).toLocaleString()}`, subtext: 'All categories', highlight: 'red' },
     { label: "Categories", value: expenseAnalytics.byCategory?.length || 0, subtext: 'Expense types' },
     { label: "Records", value: filteredExpenses.length, subtext: 'Total entries' },
     { label: "Highest Category", value: expenseAnalytics.byCategory?.[0]?.name || 'N/A', subtext: 'Top expense' }
@@ -122,9 +122,9 @@ export function printExpenseReport({ expenseAnalytics, filters, organisation, fi
   printProfessionalReport(html);
 }
 
-export function printTransportReport({ transportAnalytics, filters, organisation, filteredTrips = [] }) {
+export function printTransportReport({ transportAnalytics = {}, filters = {}, organisation, filteredTrips = [] }) {
   const summaryCards = [
-    { label: "Total Revenue", value: `SLE ${transportAnalytics.totalRevenue?.toLocaleString() || 0}`, subtext: 'Gross revenue' },
+    { label: "Total Revenue", value: `SLE ${(transportAnalytics?.totalRevenue || 0).toLocaleString()}`, subtext: 'Gross revenue' },
     { label: "Total Trips", value: transportAnalytics.totalTrips || 0, subtext: 'Completed trips' },
     { label: "Passengers", value: transportAnalytics.totalPassengers || 0, subtext: 'Total carried' },
     { label: "Net Revenue", value: `SLE ${transportAnalytics.netRevenue?.toLocaleString() || 0}`, subtext: 'After fuel costs', highlight: transportAnalytics.netRevenue >= 0 ? 'green' : 'red' }
@@ -262,9 +262,9 @@ export function printInventoryReport({ products = [], organisation }) {
   printProfessionalReport(html);
 }
 
-export function printProfitLossReport({ profitLoss, salesAnalytics, transportAnalytics, expenseAnalytics, filters, organisation }) {
+export function printProfitLossReport({ profitLoss = {}, salesAnalytics = {}, transportAnalytics = {}, expenseAnalytics = {}, filters = {}, organisation }) {
   const summaryCards = [
-    { label: "Total Revenue", value: `SLE ${profitLoss.revenue?.toLocaleString() || 0}`, subtext: 'All income sources' },
+    { label: "Total Revenue", value: `SLE ${(profitLoss?.revenue || 0).toLocaleString()}`, subtext: 'All income sources' },
     { label: "Total Expenses", value: `SLE ${profitLoss.expenses?.toLocaleString() || 0}`, subtext: 'All expenditures', highlight: 'red' },
     { label: "Net Profit/Loss", value: `SLE ${profitLoss.profit?.toLocaleString() || 0}`, subtext: profitLoss.profit >= 0 ? 'Profitable ✓' : 'Operating at loss', highlight: profitLoss.profit >= 0 ? 'green' : 'red' },
     { label: "Profit Margin", value: `${profitLoss.margin || 0}%`, subtext: 'Efficiency ratio' }
