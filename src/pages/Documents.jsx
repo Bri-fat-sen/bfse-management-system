@@ -37,7 +37,7 @@ import {
 } from "lucide-react";
 import { format } from "date-fns";
 import PageHeader from "@/components/ui/PageHeader";
-import { LoadingSpinner } from "@/components/ui/LoadingSpinner";
+import LoadingSpinner from "@/components/ui/LoadingSpinner";
 import CreateDocumentDialog from "@/components/documents/CreateDocumentDialog";
 import DocumentSignatureDialog from "@/components/documents/DocumentSignatureDialog";
 import DocumentViewer from "@/components/documents/DocumentViewer";
