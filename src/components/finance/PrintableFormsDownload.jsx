@@ -864,32 +864,25 @@ export default function PrintableFormsDownload({ open, onOpenChange, organisatio
   const handleDownload = (formId) => {
     const html = generateFormHTML(formId, organisation);
     
-    // Create an iframe for printing instead of opening a new window
-    const iframe = document.createElement('iframe');
-    iframe.style.position = 'absolute';
-    iframe.style.width = '0';
-    iframe.style.height = '0';
-    iframe.style.border = 'none';
-    iframe.style.left = '-9999px';
-    document.body.appendChild(iframe);
+    // Create a blob and open in new tab
+    const blob = new Blob([html], { type: 'text/html' });
+    const url = URL.createObjectURL(blob);
+    const newWindow = window.open(url, '_blank');
     
-    const iframeDoc = iframe.contentWindow || iframe.contentDocument;
-    const doc = iframeDoc.document || iframeDoc;
-    
-    doc.open();
-    doc.write(html);
-    doc.close();
-    
-    // Wait for content to load then print
-    setTimeout(() => {
-      iframe.contentWindow.focus();
-      iframe.contentWindow.print();
-      
-      // Clean up iframe after printing
-      setTimeout(() => {
-        document.body.removeChild(iframe);
-      }, 1000);
-    }, 300);
+    if (newWindow) {
+      newWindow.onload = () => {
+        URL.revokeObjectURL(url);
+      };
+    } else {
+      // Fallback: download as file
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `${formId}_form.html`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+    }
   };
 
   const handleDownloadAll = (category) => {
