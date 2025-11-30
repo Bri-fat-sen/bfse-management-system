@@ -251,6 +251,7 @@ export default function PayrollProcessDialog({
     setWeekendHours(0);
     setHolidayHours(0);
     setSalesAmount(0);
+    setPayrollFrequency("monthly");
   };
 
   const handleSubmit = (e) => {
@@ -334,9 +335,9 @@ export default function PayrollProcessDialog({
                 <SelectContent>
                   {Object.entries(PAYROLL_FREQUENCIES).map(([key, config]) => (
                     <SelectItem key={key} value={key}>
-                      <div className="flex items-center gap-2">
+                      <div className="flex flex-col">
                         <span>{config.label}</span>
-                        <span className="text-xs text-gray-400">({config.periodsPerYear}x/yr)</span>
+                        <span className="text-xs text-gray-500">{config.description}</span>
                       </div>
                     </SelectItem>
                   ))}
@@ -387,12 +388,8 @@ export default function PayrollProcessDialog({
                     <div className="text-right">
                       <p className="text-sm text-gray-500">Base Salary ({selectedEmployee.salary_type || 'monthly'})</p>
                       <p className="text-2xl font-bold text-[#1EB053]">{formatSLE(selectedEmployee.base_salary)}</p>
-                      {payrollFrequency !== 'monthly' && (
-                        <p className="text-sm text-[#0072C6]">
-                          {PAYROLL_FREQUENCIES[payrollFrequency].label}: {formatSLE(payrollData.prorated_salary)}
-                        </p>
-                      )}
                       <p className="text-xs text-gray-400">
+                        {payrollFrequency !== 'monthly' && `Prorated: ${formatSLE(payrollData.prorated_salary)} | `}
                         Hourly: {formatSLE(payrollData.calculation_details.hourly_rate)}
                       </p>
                     </div>
