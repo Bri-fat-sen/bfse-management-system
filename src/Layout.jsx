@@ -147,14 +147,6 @@ export default function Layout({ children, currentPageName }) {
     refetchOnWindowFocus: false,
   });
 
-  const { data: notifications = [] } = useQuery({
-    queryKey: ['notifications', currentEmployee?.id],
-    queryFn: () => base44.entities.Notification.filter({ is_read: false }, '-created_date', 10),
-    staleTime: 60 * 1000, // 1 minute
-    refetchOnWindowFocus: false,
-    enabled: !!currentEmployee?.id, // Only fetch if employee exists
-  });
-
   const { data: employee } = useQuery({
     queryKey: ['currentEmployee', user?.email],
     queryFn: () => base44.entities.Employee.filter({ user_email: user?.email }),
@@ -164,6 +156,14 @@ export default function Layout({ children, currentPageName }) {
   });
 
   const currentEmployee = employee?.[0];
+
+  const { data: notifications = [] } = useQuery({
+    queryKey: ['notifications', currentEmployee?.id],
+    queryFn: () => base44.entities.Notification.filter({ is_read: false }, '-created_date', 10),
+    staleTime: 60 * 1000, // 1 minute
+    refetchOnWindowFocus: false,
+    enabled: !!currentEmployee?.id, // Only fetch if employee exists
+  });
   // For super_admin users who might not have an employee record yet, check the base44 user role
   const actualRole = currentEmployee?.role || user?.role || 'read_only';
   // Use preview role if super_admin has one set, otherwise use actual role
