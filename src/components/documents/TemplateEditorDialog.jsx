@@ -31,6 +31,7 @@ import {
 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { DOCUMENT_TYPE_INFO, SL_DOCUMENT_STYLES, DEFAULT_TEMPLATES } from "./DocumentTemplates";
+import TemplateRichEditor from "./TemplateRichEditor";
 
 const TEMPLATE_CATEGORIES = [
   { value: "employment", label: "Employment" },
@@ -529,54 +530,12 @@ export default function TemplateEditorDialog({
               </TabsContent>
 
               <TabsContent value="content" className="m-0">
-                <div className="grid grid-cols-2 gap-4 h-[450px]">
-                  {/* Editor Panel */}
-                  <div className="flex flex-col h-full border rounded-lg overflow-hidden">
-                    <div className="bg-gray-100 px-3 py-2 border-b flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <Code className="w-4 h-4 text-gray-500" />
-                        <span className="text-sm font-medium">HTML Editor</span>
-                      </div>
-                      <div className="flex items-center gap-1">
-                        <Button variant="ghost" size="sm" className="h-7 text-xs"
-                          onClick={() => setFormData(prev => ({ ...prev, content: prev.content + `\n<div class="sl-section">\n  <h2>Section</h2>\n  <p>Content...</p>\n</div>` }))}>
-                          <Plus className="w-3 h-3 mr-1" />Section
-                        </Button>
-                      </div>
-                    </div>
-                    <Textarea
-                      value={formData.content}
-                      onChange={(e) => setFormData(prev => ({ ...prev, content: e.target.value }))}
-                      placeholder="Enter HTML content..."
-                      className="flex-1 font-mono text-sm border-0 rounded-none resize-none focus-visible:ring-0"
-                    />
-                    <div className="bg-gray-50 px-3 py-2 border-t">
-                      <div className="flex items-center gap-2 overflow-x-auto">
-                        <span className="text-[10px] text-gray-500 flex-shrink-0">Insert:</span>
-                        {formData.variables.map((v, i) => (
-                          <Badge key={i} variant="outline" className="text-[10px] cursor-pointer hover:bg-[#1EB053]/10 flex-shrink-0"
-                            onClick={() => { navigator.clipboard.writeText(`{{${v.key}}}`); toast.success(`Copied`); }}>
-                            {v.label}
-                          </Badge>
-                        ))}
-                      </div>
-                    </div>
-                  </div>
-                  
-                  {/* Live Preview Panel */}
-                  <div className="flex flex-col h-full border rounded-lg overflow-hidden">
-                    <div className="bg-gray-100 px-3 py-2 border-b flex items-center gap-2">
-                      <Eye className="w-4 h-4 text-gray-500" />
-                      <span className="text-sm font-medium">Live Preview</span>
-                    </div>
-                    <ScrollArea className="flex-1 bg-gray-50">
-                      <div className="p-4">
-                        <style dangerouslySetInnerHTML={{ __html: SL_DOCUMENT_STYLES }} />
-                        <div className="bg-white shadow rounded-lg mx-auto" style={{ maxWidth: '100%', transform: 'scale(0.65)', transformOrigin: 'top center' }}
-                          dangerouslySetInnerHTML={{ __html: previewContent }} />
-                      </div>
-                    </ScrollArea>
-                  </div>
+                <div className="h-[500px]">
+                  <TemplateRichEditor
+                    content={formData.content}
+                    onChange={(html) => setFormData(prev => ({ ...prev, content: html }))}
+                    variables={formData.variables}
+                  />
                 </div>
               </TabsContent>
 
