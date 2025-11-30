@@ -21,14 +21,34 @@ import {
 } from "@/components/ui/select";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import { 
-  FileText, Users, Send, Save, Eye, Loader2, 
-  ChevronRight, CheckCircle2, AlertCircle
+  FileText, Users, Send, Loader2, Sparkles,
+  ChevronRight, CheckCircle2, AlertCircle, Search,
+  FileSignature, Shield, Lock, Heart, Eye, Monitor,
+  AlertTriangle, Calendar, Home, TrendingUp, XCircle, DollarSign
 } from "lucide-react";
 import { DOCUMENT_TYPE_INFO, DEFAULT_TEMPLATES, SL_DOCUMENT_STYLES } from "./DocumentTemplates";
 import { format } from "date-fns";
+
+const DOCUMENT_ICONS = {
+  employment_contract: FileSignature,
+  nda: Lock,
+  code_of_conduct: Shield,
+  privacy_policy: Eye,
+  health_safety_policy: Heart,
+  anti_harassment_policy: Shield,
+  it_acceptable_use: Monitor,
+  disciplinary_policy: AlertTriangle,
+  leave_policy: Calendar,
+  remote_work_policy: Home,
+  probation_confirmation: CheckCircle2,
+  promotion_letter: TrendingUp,
+  termination_letter: XCircle,
+  warning_letter: AlertTriangle,
+  salary_revision: DollarSign,
+  custom: FileText
+};
 
 export default function CreateDocumentDialog({
   open,
