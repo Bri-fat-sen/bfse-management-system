@@ -198,33 +198,61 @@ export default function WorkSchedules() {
 
       {/* Summary Stats */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <StatCard
-          title="Schedule Compliance"
-          value={`${complianceMetrics.overallCompliance}%`}
-          subtitle="This week"
-          icon={TrendingUp}
-          color={complianceMetrics.overallCompliance >= 90 ? "green" : complianceMetrics.overallCompliance >= 70 ? "gold" : "red"}
-        />
-        <StatCard
-          title="On Track"
-          value={complianceMetrics.onTrackCount}
-          subtitle={`of ${activeEmployees.length} employees`}
-          icon={CheckCircle}
-          color="green"
-        />
-        <StatCard
-          title="Behind Schedule"
-          value={complianceMetrics.behindCount}
-          icon={AlertTriangle}
-          color="gold"
-        />
-        <StatCard
-          title="No Schedule"
-          value={complianceMetrics.noScheduleCount}
-          subtitle="Need assignment"
-          icon={Calendar}
-          color="navy"
-        />
+        <Card className={`border-l-4 ${complianceMetrics.overallCompliance >= 90 ? 'border-l-[#1EB053]' : complianceMetrics.overallCompliance >= 70 ? 'border-l-[#f59e0b]' : 'border-l-red-500'}`}>
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-xs text-gray-500 uppercase tracking-wide">Schedule Compliance</p>
+                <p className={`text-2xl font-bold ${complianceMetrics.overallCompliance >= 90 ? 'text-[#1EB053]' : complianceMetrics.overallCompliance >= 70 ? 'text-[#f59e0b]' : 'text-red-500'}`}>{complianceMetrics.overallCompliance}%</p>
+                <p className="text-xs text-gray-500 mt-1">This week</p>
+              </div>
+              <div className={`w-12 h-12 rounded-full flex items-center justify-center ${complianceMetrics.overallCompliance >= 90 ? 'bg-green-100' : complianceMetrics.overallCompliance >= 70 ? 'bg-orange-100' : 'bg-red-100'}`}>
+                <TrendingUp className={`w-6 h-6 ${complianceMetrics.overallCompliance >= 90 ? 'text-[#1EB053]' : complianceMetrics.overallCompliance >= 70 ? 'text-[#f59e0b]' : 'text-red-500'}`} />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+        <Card className="border-l-4 border-l-[#1EB053]">
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-xs text-gray-500 uppercase tracking-wide">On Track</p>
+                <p className="text-2xl font-bold text-[#1EB053]">{complianceMetrics.onTrackCount}</p>
+                <p className="text-xs text-gray-500 mt-1">of {activeEmployees.length} employees</p>
+              </div>
+              <div className="w-12 h-12 rounded-full bg-green-100 flex items-center justify-center">
+                <CheckCircle className="w-6 h-6 text-[#1EB053]" />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+        <Card className="border-l-4 border-l-[#f59e0b]">
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-xs text-gray-500 uppercase tracking-wide">Behind Schedule</p>
+                <p className="text-2xl font-bold text-[#f59e0b]">{complianceMetrics.behindCount}</p>
+              </div>
+              <div className="w-12 h-12 rounded-full bg-orange-100 flex items-center justify-center">
+                <AlertTriangle className="w-6 h-6 text-[#f59e0b]" />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+        <Card className="border-l-4 border-l-[#0F1F3C]">
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-xs text-gray-500 uppercase tracking-wide">No Schedule</p>
+                <p className="text-2xl font-bold text-[#0F1F3C]">{complianceMetrics.noScheduleCount}</p>
+                <p className="text-xs text-gray-500 mt-1">Need assignment</p>
+              </div>
+              <div className="w-12 h-12 rounded-full bg-gray-100 flex items-center justify-center">
+                <Calendar className="w-6 h-6 text-[#0F1F3C]" />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
       </div>
 
       {/* Filter */}

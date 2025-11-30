@@ -209,30 +209,58 @@ export default function Suppliers() {
 
         {/* Stats */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          <StatCard
-            title="Active Suppliers"
-            value={activeSuppliers}
-            icon={Truck}
-            color="green"
-          />
-          <StatCard
-            title="Pending Orders"
-            value={pendingOrders}
-            icon={ShoppingCart}
-            color="gold"
-          />
-          <StatCard
-            title="Total Spent"
-            value={`Le ${totalSpent.toLocaleString()}`}
-            icon={DollarSign}
-            color="blue"
-          />
-          <StatCard
-            title="Avg Lead Time"
-            value={`${Math.round(avgLeadTime)} days`}
-            icon={Clock}
-            color="navy"
-          />
+          <Card className="border-l-4 border-l-[#1EB053]">
+            <CardContent className="p-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-xs text-gray-500 uppercase tracking-wide">Active Suppliers</p>
+                  <p className="text-2xl font-bold text-[#1EB053]">{activeSuppliers}</p>
+                </div>
+                <div className="w-12 h-12 rounded-full bg-green-100 flex items-center justify-center">
+                  <Truck className="w-6 h-6 text-[#1EB053]" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+          <Card className="border-l-4 border-l-[#f59e0b]">
+            <CardContent className="p-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-xs text-gray-500 uppercase tracking-wide">Pending Orders</p>
+                  <p className="text-2xl font-bold text-[#f59e0b]">{pendingOrders}</p>
+                </div>
+                <div className="w-12 h-12 rounded-full bg-orange-100 flex items-center justify-center">
+                  <ShoppingCart className="w-6 h-6 text-[#f59e0b]" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+          <Card className="border-l-4 border-l-[#0072C6]">
+            <CardContent className="p-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-xs text-gray-500 uppercase tracking-wide">Total Spent</p>
+                  <p className="text-2xl font-bold text-[#0072C6]">Le {totalSpent.toLocaleString()}</p>
+                </div>
+                <div className="w-12 h-12 rounded-full bg-blue-100 flex items-center justify-center">
+                  <DollarSign className="w-6 h-6 text-[#0072C6]" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+          <Card className="border-l-4 border-l-[#8b5cf6]">
+            <CardContent className="p-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-xs text-gray-500 uppercase tracking-wide">Avg Lead Time</p>
+                  <p className="text-2xl font-bold text-[#8b5cf6]">{Math.round(avgLeadTime)} days</p>
+                </div>
+                <div className="w-12 h-12 rounded-full bg-purple-100 flex items-center justify-center">
+                  <Clock className="w-6 h-6 text-[#8b5cf6]" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
         </div>
 
         <Tabs value={activeTab} onValueChange={setActiveTab}>

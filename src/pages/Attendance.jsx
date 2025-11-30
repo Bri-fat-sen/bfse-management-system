@@ -275,31 +275,59 @@ export default function Attendance() {
 
         {/* Today's Summary */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          <StatCard
-            title="Present Today"
-            value={analytics.presentToday}
-            subtitle={`of ${analytics.totalEmployees} employees`}
-            icon={CheckCircle}
-            color="green"
-          />
-          <StatCard
-            title="Late Today"
-            value={analytics.lateToday}
-            icon={AlertCircle}
-            color="gold"
-          />
-          <StatCard
-            title="Absent Today"
-            value={analytics.absentToday}
-            icon={XCircle}
-            color="red"
-          />
-          <StatCard
-            title="Avg. Hours/Day"
-            value={`${analytics.avgHours} hrs`}
-            icon={Clock}
-            color="blue"
-          />
+          <Card className="border-l-4 border-l-[#1EB053]">
+            <CardContent className="p-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-xs text-gray-500 uppercase tracking-wide">Present Today</p>
+                  <p className="text-2xl font-bold text-[#1EB053]">{analytics.presentToday}</p>
+                  <p className="text-xs text-gray-500 mt-1">of {analytics.totalEmployees} employees</p>
+                </div>
+                <div className="w-12 h-12 rounded-full bg-green-100 flex items-center justify-center">
+                  <CheckCircle className="w-6 h-6 text-[#1EB053]" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+          <Card className="border-l-4 border-l-[#f59e0b]">
+            <CardContent className="p-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-xs text-gray-500 uppercase tracking-wide">Late Today</p>
+                  <p className="text-2xl font-bold text-[#f59e0b]">{analytics.lateToday}</p>
+                </div>
+                <div className="w-12 h-12 rounded-full bg-orange-100 flex items-center justify-center">
+                  <AlertCircle className="w-6 h-6 text-[#f59e0b]" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+          <Card className="border-l-4 border-l-red-500">
+            <CardContent className="p-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-xs text-gray-500 uppercase tracking-wide">Absent Today</p>
+                  <p className="text-2xl font-bold text-red-500">{analytics.absentToday}</p>
+                </div>
+                <div className="w-12 h-12 rounded-full bg-red-100 flex items-center justify-center">
+                  <XCircle className="w-6 h-6 text-red-500" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+          <Card className="border-l-4 border-l-[#0072C6]">
+            <CardContent className="p-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-xs text-gray-500 uppercase tracking-wide">Avg. Hours/Day</p>
+                  <p className="text-2xl font-bold text-[#0072C6]">{analytics.avgHours} hrs</p>
+                </div>
+                <div className="w-12 h-12 rounded-full bg-blue-100 flex items-center justify-center">
+                  <Clock className="w-6 h-6 text-[#0072C6]" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
         </div>
 
         {/* Filters */}

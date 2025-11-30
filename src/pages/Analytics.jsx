@@ -569,12 +569,72 @@ export default function Analytics() {
           </Card>
 
           {/* HR Key Metrics */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
-            <StatCard title="Total Employees" value={hrMetrics.total} icon={Users} color="blue" />
-            <StatCard title="Turnover Rate" value={`${hrMetrics.turnoverRate}%`} icon={UserMinus} color="red" trend={parseFloat(hrMetrics.turnoverRate) < 10 ? "down" : "up"} />
-            <StatCard title="Avg Performance" value={`${hrMetrics.avgRating}/5`} icon={Award} color="gold" />
-            <StatCard title="Training Rate" value={`${hrMetrics.trainingRate}%`} icon={BookOpen} color="green" />
-            <StatCard title="Certifications" value={hrMetrics.totalCerts} icon={Award} color="purple" />
+          <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
+            <Card className="border-l-4 border-l-[#0072C6]">
+              <CardContent className="p-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-xs text-gray-500 uppercase tracking-wide">Total Employees</p>
+                    <p className="text-2xl font-bold text-[#0072C6]">{hrMetrics.total}</p>
+                  </div>
+                  <div className="w-12 h-12 rounded-full bg-blue-100 flex items-center justify-center">
+                    <Users className="w-6 h-6 text-[#0072C6]" />
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+            <Card className="border-l-4 border-l-red-500">
+              <CardContent className="p-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-xs text-gray-500 uppercase tracking-wide">Turnover Rate</p>
+                    <p className="text-2xl font-bold text-red-500">{hrMetrics.turnoverRate}%</p>
+                  </div>
+                  <div className="w-12 h-12 rounded-full bg-red-100 flex items-center justify-center">
+                    <UserMinus className="w-6 h-6 text-red-500" />
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+            <Card className="border-l-4 border-l-[#f59e0b]">
+              <CardContent className="p-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-xs text-gray-500 uppercase tracking-wide">Avg Performance</p>
+                    <p className="text-2xl font-bold text-[#f59e0b]">{hrMetrics.avgRating}/5</p>
+                  </div>
+                  <div className="w-12 h-12 rounded-full bg-orange-100 flex items-center justify-center">
+                    <Award className="w-6 h-6 text-[#f59e0b]" />
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+            <Card className="border-l-4 border-l-[#1EB053]">
+              <CardContent className="p-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-xs text-gray-500 uppercase tracking-wide">Training Rate</p>
+                    <p className="text-2xl font-bold text-[#1EB053]">{hrMetrics.trainingRate}%</p>
+                  </div>
+                  <div className="w-12 h-12 rounded-full bg-green-100 flex items-center justify-center">
+                    <BookOpen className="w-6 h-6 text-[#1EB053]" />
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+            <Card className="border-l-4 border-l-[#8b5cf6]">
+              <CardContent className="p-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-xs text-gray-500 uppercase tracking-wide">Certifications</p>
+                    <p className="text-2xl font-bold text-[#8b5cf6]">{hrMetrics.totalCerts}</p>
+                  </div>
+                  <div className="w-12 h-12 rounded-full bg-purple-100 flex items-center justify-center">
+                    <Award className="w-6 h-6 text-[#8b5cf6]" />
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
           </div>
 
           {/* HR Sub-tabs */}

@@ -137,59 +137,55 @@ export default function CRM() {
       />
 
       {/* Stats */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
-        <Card className="border-0 shadow-lg overflow-hidden">
-          <div className="h-1 bg-gradient-to-r from-[#1EB053] to-[#0072C6]" />
-          <CardContent className="p-3 sm:p-4">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        <Card className="border-l-4 border-l-[#1EB053]">
+          <CardContent className="p-4">
             <div className="flex items-center justify-between">
-              <div className="min-w-0 flex-1">
-                <p className="text-xs sm:text-sm text-gray-500">Total Customers</p>
-                <p className="text-lg sm:text-2xl font-bold">{totalCustomers}</p>
+              <div>
+                <p className="text-xs text-gray-500 uppercase tracking-wide">Total Customers</p>
+                <p className="text-2xl font-bold text-[#1EB053]">{totalCustomers}</p>
               </div>
-              <div className="p-2 sm:p-3 rounded-lg sm:rounded-xl bg-gradient-to-br from-[#1EB053] to-[#0072C6] flex-shrink-0">
-                <Users className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
+              <div className="w-12 h-12 rounded-full bg-green-100 flex items-center justify-center">
+                <Users className="w-6 h-6 text-[#1EB053]" />
               </div>
             </div>
           </CardContent>
         </Card>
-        <Card className="border-0 shadow-lg overflow-hidden">
-          <div className="h-1 bg-gradient-to-r from-amber-500 to-orange-500" />
-          <CardContent className="p-3 sm:p-4">
+        <Card className="border-l-4 border-l-[#f59e0b]">
+          <CardContent className="p-4">
             <div className="flex items-center justify-between">
-              <div className="min-w-0 flex-1">
-                <p className="text-xs sm:text-sm text-gray-500">VIP Customers</p>
-                <p className="text-lg sm:text-2xl font-bold">{vipCustomers}</p>
+              <div>
+                <p className="text-xs text-gray-500 uppercase tracking-wide">VIP Customers</p>
+                <p className="text-2xl font-bold text-[#f59e0b]">{vipCustomers}</p>
               </div>
-              <div className="p-2 sm:p-3 rounded-lg sm:rounded-xl bg-gradient-to-br from-amber-500 to-orange-500 flex-shrink-0">
-                <Star className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
+              <div className="w-12 h-12 rounded-full bg-orange-100 flex items-center justify-center">
+                <Star className="w-6 h-6 text-[#f59e0b]" />
               </div>
             </div>
           </CardContent>
         </Card>
-        <Card className="border-0 shadow-lg overflow-hidden">
-          <div className="h-1 bg-gradient-to-r from-[#0072C6] to-purple-500" />
-          <CardContent className="p-3 sm:p-4">
+        <Card className="border-l-4 border-l-[#0072C6]">
+          <CardContent className="p-4">
             <div className="flex items-center justify-between">
-              <div className="min-w-0 flex-1">
-                <p className="text-xs sm:text-sm text-gray-500">Total Revenue</p>
-                <p className="text-lg sm:text-2xl font-bold truncate">Le {totalRevenue.toLocaleString()}</p>
+              <div>
+                <p className="text-xs text-gray-500 uppercase tracking-wide">Total Revenue</p>
+                <p className="text-2xl font-bold text-[#0072C6]">Le {totalRevenue.toLocaleString()}</p>
               </div>
-              <div className="p-2 sm:p-3 rounded-lg sm:rounded-xl bg-gradient-to-br from-[#0072C6] to-purple-500 flex-shrink-0">
-                <DollarSign className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
+              <div className="w-12 h-12 rounded-full bg-blue-100 flex items-center justify-center">
+                <DollarSign className="w-6 h-6 text-[#0072C6]" />
               </div>
             </div>
           </CardContent>
         </Card>
-        <Card className="border-0 shadow-lg overflow-hidden">
-          <div className="h-1 bg-gradient-to-r from-green-500 to-teal-500" />
-          <CardContent className="p-3 sm:p-4">
+        <Card className="border-l-4 border-l-[#10b981]">
+          <CardContent className="p-4">
             <div className="flex items-center justify-between">
-              <div className="min-w-0 flex-1">
-                <p className="text-xs sm:text-sm text-gray-500">Avg Value</p>
-                <p className="text-lg sm:text-2xl font-bold truncate">Le {avgOrderValue.toLocaleString()}</p>
+              <div>
+                <p className="text-xs text-gray-500 uppercase tracking-wide">Avg Value</p>
+                <p className="text-2xl font-bold text-[#10b981]">Le {avgOrderValue.toLocaleString()}</p>
               </div>
-              <div className="p-2 sm:p-3 rounded-lg sm:rounded-xl bg-gradient-to-br from-green-500 to-teal-500 flex-shrink-0">
-                <TrendingUp className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
+              <div className="w-12 h-12 rounded-full bg-green-100 flex items-center justify-center">
+                <TrendingUp className="w-6 h-6 text-[#10b981]" />
               </div>
             </div>
           </CardContent>
@@ -197,7 +193,7 @@ export default function CRM() {
       </div>
 
       {/* Filters */}
-      <Card className="border-0 shadow-sm">
+      <Card>
         <CardContent className="p-4">
           <div className="flex flex-col md:flex-row gap-4">
             <div className="relative flex-1">
@@ -239,12 +235,7 @@ export default function CRM() {
       </Card>
 
       {/* Customer List */}
-      <Card className="border-0 shadow-lg overflow-hidden">
-        <div className="h-1 flex">
-          <div className="flex-1 bg-[#1EB053]" />
-          <div className="flex-1 bg-white" />
-          <div className="flex-1 bg-[#0072C6]" />
-        </div>
+      <Card>
         <CardHeader>
           <CardTitle className="text-lg flex items-center gap-2">
             <UserCheck className="w-5 h-5 text-[#1EB053]" />
