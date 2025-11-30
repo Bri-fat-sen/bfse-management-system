@@ -1,9 +1,12 @@
 import React, { useState, useEffect } from "react";
+import { base44 } from "@/api/base44Client";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
+import { Textarea } from "@/components/ui/textarea";
 import {
   Dialog,
   DialogContent,
@@ -19,25 +22,20 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Card, CardContent } from "@/components/ui/card";
-import { Separator } from "@/components/ui/separator";
-import { base44 } from "@/api/base44Client";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { 
   Calendar, 
   Clock, 
   Mail, 
+  FileText, 
+  Send, 
   Plus, 
   X, 
-  FileText, 
-  Table2,
-  Send,
-  Loader2,
-  CheckCircle,
-  AlertCircle
+  CheckCircle, 
+  AlertCircle,
+  Loader2
 } from "lucide-react";
-import { format } from "date-fns";
 import { toast } from "sonner";
+import { format } from "date-fns";
 
 const DAYS_OF_WEEK = [
   { value: 0, label: 'Sunday' },
@@ -49,8 +47,13 @@ const DAYS_OF_WEEK = [
   { value: 6, label: 'Saturday' },
 ];
 
-export default function ReportScheduleDialog({ open, onOpenChange, report, onSave }) {
+const DAYS_OF_MONTH = Array.from({ length: 28 }, (_, i) => ({ value: i + 1, label: `${i + 1}` }));
+
+export default function ReportScheduleDialog({ open, onOpenChange, report, onUpdate }) {
   const queryClient = useQueryClient();
+  const [isSending, setIsSending] = useState(false);
+  const [newRecipient, setNewRecipient] = useState("");
+  
   const [schedule, setSchedule] = useState({
     enabled: false,
     frequency: 'weekly',
@@ -58,66 +61,41 @@ export default function ReportScheduleDialog({ open, onOpenChange, report, onSav
     day_of_month: 1,
     time: '08:00',
     format: 'pdf',
-    recipients: []
+    recipients: [],
+    subject: '',
+    message: '',
+    ...report?.schedule
   });
-  const [newRecipient, setNewRecipient] = useState('');
-  const [isSending, setIsSending] = useState(false);
 
   useEffect(() => {
     if (report?.schedule) {
       setSchedule({
-        enabled: report.schedule.enabled || false,
-        frequency: report.schedule.frequency || 'weekly',
-        day_of_week: report.schedule.day_of_week ?? 1,
-        day_of_month: report.schedule.day_of_month ?? 1,
-        time: report.schedule.time || '08:00',
-        format: report.schedule.format || 'pdf',
-        recipients: report.schedule.recipients || []
+        enabled: false,
+        frequency: 'weekly',
+        day_of_week: 1,
+        day_of_month: 1,
+        time: '08:00',
+        format: 'pdf',
+        recipients: [],
+        subject: '',
+        message: '',
+        ...report.schedule
       });
     }
   }, [report]);
 
   const updateMutation = useMutation({
-    mutationFn: (data) => base44.entities.SavedReport.update(report.id, data),
+    mutationFn: ({ id, data }) => base44.entities.SavedReport.update(id, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['savedReports'] });
-      toast.success('Schedule saved successfully');
-      onSave?.();
+      toast.success('Schedule updated successfully');
       onOpenChange(false);
+      if (onUpdate) onUpdate();
     },
     onError: (error) => {
-      toast.error('Failed to save schedule: ' + error.message);
+      toast.error('Failed to update schedule: ' + error.message);
     }
   });
-
-  const handleAddRecipient = () => {
-    const email = newRecipient.trim().toLowerCase();
-    if (!email) return;
-    
-    // Basic email validation
-    if (!email.match(/^[^\s@]+@[^\s@]+\.[^\s@]+$/)) {
-      toast.error('Please enter a valid email address');
-      return;
-    }
-    
-    if (schedule.recipients.includes(email)) {
-      toast.error('Email already added');
-      return;
-    }
-
-    setSchedule(prev => ({
-      ...prev,
-      recipients: [...prev.recipients, email]
-    }));
-    setNewRecipient('');
-  };
-
-  const handleRemoveRecipient = (email) => {
-    setSchedule(prev => ({
-      ...prev,
-      recipients: prev.recipients.filter(r => r !== email)
-    }));
-  };
 
   const handleSave = () => {
     if (schedule.enabled && schedule.recipients.length === 0) {
@@ -129,41 +107,14 @@ export default function ReportScheduleDialog({ open, onOpenChange, report, onSav
     const nextRun = calculateNextRun(schedule);
 
     updateMutation.mutate({
-      schedule: {
-        ...schedule,
-        next_run: nextRun.toISOString()
+      id: report.id,
+      data: {
+        schedule: {
+          ...schedule,
+          next_run: nextRun
+        }
       }
     });
-  };
-
-  const calculateNextRun = (sched) => {
-    const now = new Date();
-    const next = new Date();
-    const [hours, minutes] = (sched.time || '08:00').split(':');
-    
-    next.setHours(parseInt(hours), parseInt(minutes), 0, 0);
-
-    if (sched.frequency === 'daily') {
-      if (next <= now) {
-        next.setDate(next.getDate() + 1);
-      }
-    } else if (sched.frequency === 'weekly') {
-      const targetDay = sched.day_of_week ?? 1;
-      const currentDay = next.getDay();
-      let daysUntil = targetDay - currentDay;
-      if (daysUntil <= 0 || (daysUntil === 0 && next <= now)) {
-        daysUntil += 7;
-      }
-      next.setDate(next.getDate() + daysUntil);
-    } else if (sched.frequency === 'monthly') {
-      const targetDate = sched.day_of_month ?? 1;
-      next.setDate(targetDate);
-      if (next <= now) {
-        next.setMonth(next.getMonth() + 1);
-      }
-    }
-
-    return next;
   };
 
   const handleSendNow = async () => {
@@ -174,19 +125,20 @@ export default function ReportScheduleDialog({ open, onOpenChange, report, onSav
 
     setIsSending(true);
     try {
-      // First save the schedule
+      // First save the current schedule
       await base44.entities.SavedReport.update(report.id, { schedule });
       
-      // Then send the report
+      // Then trigger the send
       const response = await base44.functions.invoke('sendScheduledReport', {
-        report_id: report.id,
-        test_mode: true
+        reportId: report.id,
+        manual: true
       });
 
       if (response.data?.success) {
-        toast.success(`Report sent to ${response.data.recipients_count} recipient(s)`);
+        toast.success('Report sent successfully!');
+        queryClient.invalidateQueries({ queryKey: ['savedReports'] });
       } else {
-        toast.error(response.data?.error || 'Failed to send report');
+        toast.error('Failed to send report: ' + (response.data?.error || 'Unknown error'));
       }
     } catch (error) {
       toast.error('Failed to send report: ' + error.message);
@@ -195,7 +147,60 @@ export default function ReportScheduleDialog({ open, onOpenChange, report, onSav
     }
   };
 
-  const nextRun = schedule.enabled ? calculateNextRun(schedule) : null;
+  const addRecipient = () => {
+    const email = newRecipient.trim().toLowerCase();
+    if (!email) return;
+    
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      toast.error('Please enter a valid email address');
+      return;
+    }
+
+    if (schedule.recipients.includes(email)) {
+      toast.error('Email already added');
+      return;
+    }
+
+    setSchedule(prev => ({
+      ...prev,
+      recipients: [...prev.recipients, email]
+    }));
+    setNewRecipient("");
+  };
+
+  const removeRecipient = (email) => {
+    setSchedule(prev => ({
+      ...prev,
+      recipients: prev.recipients.filter(r => r !== email)
+    }));
+  };
+
+  const calculateNextRun = (sched) => {
+    const now = new Date();
+    const [hours, minutes] = (sched.time || '08:00').split(':').map(Number);
+    let next = new Date(now);
+    next.setHours(hours, minutes, 0, 0);
+
+    switch (sched.frequency) {
+      case 'daily':
+        if (next <= now) next.setDate(next.getDate() + 1);
+        break;
+      case 'weekly':
+        const targetDay = sched.day_of_week || 1;
+        let daysUntil = targetDay - now.getDay();
+        if (daysUntil <= 0 || (daysUntil === 0 && next <= now)) daysUntil += 7;
+        next.setDate(next.getDate() + daysUntil);
+        break;
+      case 'monthly':
+        next.setDate(sched.day_of_month || 1);
+        if (next <= now) next.setMonth(next.getMonth() + 1);
+        break;
+    }
+    return next.toISOString();
+  };
+
+  if (!report) return null;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -211,7 +216,7 @@ export default function ReportScheduleDialog({ open, onOpenChange, report, onSav
             Schedule Report
           </DialogTitle>
           <DialogDescription>
-            Configure automatic report generation and email delivery for "{report?.name}"
+            Configure automatic delivery for "{report.name}"
           </DialogDescription>
         </DialogHeader>
 
@@ -219,10 +224,10 @@ export default function ReportScheduleDialog({ open, onOpenChange, report, onSav
           {/* Enable/Disable Toggle */}
           <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
             <div className="flex items-center gap-3">
-              <Clock className="w-5 h-5 text-[#0072C6]" />
+              <Clock className="w-5 h-5 text-gray-500" />
               <div>
-                <p className="font-medium">Enable Scheduled Reports</p>
-                <p className="text-sm text-gray-500">Automatically send reports to recipients</p>
+                <p className="font-medium">Automated Delivery</p>
+                <p className="text-sm text-gray-500">Send report automatically</p>
               </div>
             </div>
             <Switch
@@ -231,218 +236,198 @@ export default function ReportScheduleDialog({ open, onOpenChange, report, onSav
             />
           </div>
 
-          {schedule.enabled && (
-            <>
-              <Separator />
-
-              {/* Frequency Settings */}
-              <div className="space-y-4">
-                <Label className="text-sm font-medium">Frequency</Label>
-                <Select 
-                  value={schedule.frequency} 
-                  onValueChange={(v) => setSchedule(prev => ({ ...prev, frequency: v }))}
-                >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="daily">Daily</SelectItem>
-                    <SelectItem value="weekly">Weekly</SelectItem>
-                    <SelectItem value="monthly">Monthly</SelectItem>
-                  </SelectContent>
-                </Select>
-
-                {schedule.frequency === 'weekly' && (
-                  <div>
-                    <Label className="text-sm font-medium">Day of Week</Label>
-                    <Select 
-                      value={String(schedule.day_of_week)} 
-                      onValueChange={(v) => setSchedule(prev => ({ ...prev, day_of_week: parseInt(v) }))}
-                    >
-                      <SelectTrigger className="mt-1">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {DAYS_OF_WEEK.map(day => (
-                          <SelectItem key={day.value} value={String(day.value)}>
-                            {day.label}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                )}
-
-                {schedule.frequency === 'monthly' && (
-                  <div>
-                    <Label className="text-sm font-medium">Day of Month</Label>
-                    <Select 
-                      value={String(schedule.day_of_month)} 
-                      onValueChange={(v) => setSchedule(prev => ({ ...prev, day_of_month: parseInt(v) }))}
-                    >
-                      <SelectTrigger className="mt-1">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {[...Array(28)].map((_, i) => (
-                          <SelectItem key={i + 1} value={String(i + 1)}>
-                            {i + 1}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                )}
-
-                <div>
-                  <Label className="text-sm font-medium">Time</Label>
-                  <Input 
-                    type="time" 
-                    value={schedule.time}
-                    onChange={(e) => setSchedule(prev => ({ ...prev, time: e.target.value }))}
-                    className="mt-1"
-                  />
-                </div>
-              </div>
-
-              <Separator />
-
-              {/* Report Format */}
-              <div className="space-y-3">
-                <Label className="text-sm font-medium">Report Format</Label>
-                <div className="grid grid-cols-3 gap-2">
-                  <Card 
-                    className={`cursor-pointer transition-all ${schedule.format === 'pdf' ? 'ring-2 ring-[#1EB053] bg-green-50' : 'hover:bg-gray-50'}`}
-                    onClick={() => setSchedule(prev => ({ ...prev, format: 'pdf' }))}
-                  >
-                    <CardContent className="p-3 flex flex-col items-center gap-2">
-                      <FileText className={`w-5 h-5 ${schedule.format === 'pdf' ? 'text-[#1EB053]' : 'text-gray-400'}`} />
-                      <span className="text-xs font-medium">PDF</span>
-                    </CardContent>
-                  </Card>
-                  <Card 
-                    className={`cursor-pointer transition-all ${schedule.format === 'csv' ? 'ring-2 ring-[#1EB053] bg-green-50' : 'hover:bg-gray-50'}`}
-                    onClick={() => setSchedule(prev => ({ ...prev, format: 'csv' }))}
-                  >
-                    <CardContent className="p-3 flex flex-col items-center gap-2">
-                      <Table2 className={`w-5 h-5 ${schedule.format === 'csv' ? 'text-[#1EB053]' : 'text-gray-400'}`} />
-                      <span className="text-xs font-medium">CSV</span>
-                    </CardContent>
-                  </Card>
-                  <Card 
-                    className={`cursor-pointer transition-all ${schedule.format === 'both' ? 'ring-2 ring-[#1EB053] bg-green-50' : 'hover:bg-gray-50'}`}
-                    onClick={() => setSchedule(prev => ({ ...prev, format: 'both' }))}
-                  >
-                    <CardContent className="p-3 flex flex-col items-center gap-2">
-                      <div className="flex">
-                        <FileText className={`w-4 h-4 ${schedule.format === 'both' ? 'text-[#1EB053]' : 'text-gray-400'}`} />
-                        <Table2 className={`w-4 h-4 -ml-1 ${schedule.format === 'both' ? 'text-[#0072C6]' : 'text-gray-400'}`} />
-                      </div>
-                      <span className="text-xs font-medium">Both</span>
-                    </CardContent>
-                  </Card>
-                </div>
-              </div>
-
-              <Separator />
-
-              {/* Recipients */}
-              <div className="space-y-3">
-                <Label className="text-sm font-medium flex items-center gap-2">
-                  <Mail className="w-4 h-4" />
-                  Recipients
-                </Label>
-                
-                <div className="flex gap-2">
-                  <Input 
-                    type="email"
-                    placeholder="Enter email address"
-                    value={newRecipient}
-                    onChange={(e) => setNewRecipient(e.target.value)}
-                    onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), handleAddRecipient())}
-                  />
-                  <Button type="button" onClick={handleAddRecipient} size="icon" variant="outline">
-                    <Plus className="w-4 h-4" />
-                  </Button>
-                </div>
-
-                {schedule.recipients.length > 0 ? (
-                  <div className="flex flex-wrap gap-2">
-                    {schedule.recipients.map((email) => (
-                      <Badge key={email} variant="secondary" className="pl-3 pr-1 py-1 gap-1">
-                        {email}
-                        <Button 
-                          type="button"
-                          variant="ghost" 
-                          size="icon" 
-                          className="h-5 w-5 hover:bg-red-100"
-                          onClick={() => handleRemoveRecipient(email)}
-                        >
-                          <X className="w-3 h-3" />
-                        </Button>
-                      </Badge>
-                    ))}
-                  </div>
-                ) : (
-                  <p className="text-sm text-gray-500 italic">No recipients added yet</p>
-                )}
-              </div>
-
-              {/* Next Run Info */}
-              {nextRun && (
-                <Card className="bg-blue-50 border-blue-200">
-                  <CardContent className="p-3 flex items-center gap-3">
-                    <CheckCircle className="w-5 h-5 text-[#0072C6]" />
-                    <div>
-                      <p className="text-sm font-medium text-[#0072C6]">Next scheduled run</p>
-                      <p className="text-xs text-blue-700">
-                        {format(nextRun, 'EEEE, MMMM d, yyyy')} at {format(nextRun, 'h:mm a')}
-                      </p>
-                    </div>
-                  </CardContent>
-                </Card>
+          {/* Last Status */}
+          {schedule.last_sent && (
+            <div className={`flex items-center gap-3 p-3 rounded-lg ${schedule.last_status === 'success' ? 'bg-green-50' : 'bg-red-50'}`}>
+              {schedule.last_status === 'success' ? (
+                <CheckCircle className="w-5 h-5 text-green-600" />
+              ) : (
+                <AlertCircle className="w-5 h-5 text-red-600" />
               )}
+              <div>
+                <p className="text-sm font-medium">Last sent: {format(new Date(schedule.last_sent), 'MMM d, yyyy h:mm a')}</p>
+                {schedule.last_error && <p className="text-xs text-red-600">{schedule.last_error}</p>}
+              </div>
+            </div>
+          )}
 
-              {report?.schedule?.last_sent && (
-                <p className="text-xs text-gray-500">
-                  Last sent: {format(new Date(report.schedule.last_sent), 'MMM d, yyyy h:mm a')}
-                </p>
-              )}
-            </>
+          {/* Frequency */}
+          <div className="space-y-2">
+            <Label>Frequency</Label>
+            <Select
+              value={schedule.frequency}
+              onValueChange={(value) => setSchedule(prev => ({ ...prev, frequency: value }))}
+            >
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="daily">Daily</SelectItem>
+                <SelectItem value="weekly">Weekly</SelectItem>
+                <SelectItem value="monthly">Monthly</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          {/* Day Selection */}
+          {schedule.frequency === 'weekly' && (
+            <div className="space-y-2">
+              <Label>Day of Week</Label>
+              <Select
+                value={String(schedule.day_of_week)}
+                onValueChange={(value) => setSchedule(prev => ({ ...prev, day_of_week: Number(value) }))}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {DAYS_OF_WEEK.map(day => (
+                    <SelectItem key={day.value} value={String(day.value)}>{day.label}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
+
+          {schedule.frequency === 'monthly' && (
+            <div className="space-y-2">
+              <Label>Day of Month</Label>
+              <Select
+                value={String(schedule.day_of_month)}
+                onValueChange={(value) => setSchedule(prev => ({ ...prev, day_of_month: Number(value) }))}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {DAYS_OF_MONTH.map(day => (
+                    <SelectItem key={day.value} value={String(day.value)}>{day.label}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
+
+          {/* Time */}
+          <div className="space-y-2">
+            <Label>Time (24-hour format)</Label>
+            <Input
+              type="time"
+              value={schedule.time}
+              onChange={(e) => setSchedule(prev => ({ ...prev, time: e.target.value }))}
+            />
+          </div>
+
+          {/* Format */}
+          <div className="space-y-2">
+            <Label>Report Format</Label>
+            <Select
+              value={schedule.format}
+              onValueChange={(value) => setSchedule(prev => ({ ...prev, format: value }))}
+            >
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="pdf">PDF Document</SelectItem>
+                <SelectItem value="csv">CSV Spreadsheet</SelectItem>
+                <SelectItem value="both">Both PDF & CSV</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          {/* Recipients */}
+          <div className="space-y-2">
+            <Label>Recipients</Label>
+            <div className="flex gap-2">
+              <Input
+                type="email"
+                placeholder="Enter email address"
+                value={newRecipient}
+                onChange={(e) => setNewRecipient(e.target.value)}
+                onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), addRecipient())}
+              />
+              <Button type="button" variant="outline" onClick={addRecipient}>
+                <Plus className="w-4 h-4" />
+              </Button>
+            </div>
+            {schedule.recipients.length > 0 && (
+              <div className="flex flex-wrap gap-2 mt-2">
+                {schedule.recipients.map((email) => (
+                  <Badge key={email} variant="secondary" className="flex items-center gap-1 py-1">
+                    <Mail className="w-3 h-3" />
+                    {email}
+                    <button onClick={() => removeRecipient(email)} className="ml-1 hover:text-red-500">
+                      <X className="w-3 h-3" />
+                    </button>
+                  </Badge>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Custom Subject */}
+          <div className="space-y-2">
+            <Label>Email Subject (Optional)</Label>
+            <Input
+              placeholder={`${report.name} - Scheduled Report`}
+              value={schedule.subject}
+              onChange={(e) => setSchedule(prev => ({ ...prev, subject: e.target.value }))}
+            />
+          </div>
+
+          {/* Custom Message */}
+          <div className="space-y-2">
+            <Label>Email Message (Optional)</Label>
+            <Textarea
+              placeholder="Please find attached your scheduled report..."
+              value={schedule.message}
+              onChange={(e) => setSchedule(prev => ({ ...prev, message: e.target.value }))}
+              rows={3}
+            />
+          </div>
+
+          {/* Next Run Preview */}
+          {schedule.enabled && schedule.recipients.length > 0 && (
+            <div className="p-4 bg-blue-50 rounded-lg border border-blue-200">
+              <p className="text-sm font-medium text-blue-800">Next Scheduled Run</p>
+              <p className="text-sm text-blue-600">
+                {format(new Date(calculateNextRun(schedule)), 'EEEE, MMMM d, yyyy \'at\' h:mm a')}
+              </p>
+            </div>
           )}
         </div>
 
         <DialogFooter className="flex-col sm:flex-row gap-2">
-          <Button 
-            type="button" 
-            variant="outline" 
-            onClick={() => onOpenChange(false)}
+          <Button
+            variant="outline"
+            onClick={handleSendNow}
+            disabled={isSending || schedule.recipients.length === 0}
             className="w-full sm:w-auto"
           >
-            Cancel
+            {isSending ? (
+              <>
+                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                Sending...
+              </>
+            ) : (
+              <>
+                <Send className="w-4 h-4 mr-2" />
+                Send Now
+              </>
+            )}
           </Button>
-          {schedule.enabled && schedule.recipients.length > 0 && (
-            <Button 
-              type="button"
-              variant="outline"
-              onClick={handleSendNow}
-              disabled={isSending}
-              className="w-full sm:w-auto gap-2 border-[#0072C6] text-[#0072C6] hover:bg-[#0072C6]/10"
-            >
-              {isSending ? (
-                <Loader2 className="w-4 h-4 animate-spin" />
-              ) : (
-                <Send className="w-4 h-4" />
-              )}
-              Send Now
-            </Button>
-          )}
-          <Button 
+          <Button
             onClick={handleSave}
             disabled={updateMutation.isPending}
             className="w-full sm:w-auto bg-gradient-to-r from-[#1EB053] to-[#0072C6]"
           >
-            {updateMutation.isPending ? 'Saving...' : 'Save Schedule'}
+            {updateMutation.isPending ? (
+              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+            ) : (
+              <CheckCircle className="w-4 h-4 mr-2" />
+            )}
+            Save Schedule
           </Button>
         </DialogFooter>
       </DialogContent>
