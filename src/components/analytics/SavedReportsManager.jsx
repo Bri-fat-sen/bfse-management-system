@@ -157,6 +157,7 @@ export default function SavedReportsManager({ orgId, onLoadReport }) {
                     onLoad={onLoadReport}
                     onToggleFavorite={toggleFavorite}
                     onDelete={() => setShowDeleteConfirm(report)}
+                    onSchedule={() => setShowScheduleDialog(report)}
                   />
                 ))}
               </div>
@@ -164,6 +165,14 @@ export default function SavedReportsManager({ orgId, onLoadReport }) {
           )}
         </div>
       )}
+
+      {/* Schedule Dialog */}
+      <ReportScheduleDialog
+        open={!!showScheduleDialog}
+        onOpenChange={() => setShowScheduleDialog(null)}
+        report={showScheduleDialog}
+        onSave={() => queryClient.invalidateQueries({ queryKey: ['savedReports'] })}
+      />
 
       {/* Delete Confirmation Dialog */}
       <Dialog open={!!showDeleteConfirm} onOpenChange={() => setShowDeleteConfirm(null)}>
