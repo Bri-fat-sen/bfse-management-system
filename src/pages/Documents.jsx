@@ -446,6 +446,16 @@ export default function Documents() {
                                   Delete
                                 </DropdownMenuItem>
                               )}
+                              
+                              {currentEmployee?.role === 'super_admin' && doc.status === 'rejected' && (
+                                <DropdownMenuItem 
+                                  onClick={() => deleteDocumentMutation.mutate(doc.id)}
+                                  className="text-red-600"
+                                >
+                                  <Trash2 className="w-4 h-4 mr-2" />
+                                  Delete
+                                </DropdownMenuItem>
+                              )}
                             </DropdownMenuContent>
                           </DropdownMenu>
                         </TableCell>
