@@ -425,7 +425,7 @@ export const DEFAULT_TEMPLATES = {
     `,
     variables: [
       { key: "company_name", label: "Company Name", type: "text", auto_fill: "organisation.name" },
-      { key: "company_initial", label: "Company Initial", type: "text", default: "C" },
+      { key: "company_initial", label: "Company Initial", type: "text", auto_fill: "organisation.name" },
       { key: "employee_name", label: "Employee Name", type: "text", auto_fill: "employee.full_name" },
       { key: "position", label: "Position", type: "text", auto_fill: "employee.position" }
     ]
