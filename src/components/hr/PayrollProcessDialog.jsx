@@ -48,6 +48,7 @@ import {
   ROLE_BONUS_CONFIG,
   OVERTIME_MULTIPLIERS,
   SL_TAX_BRACKETS,
+  PAYROLL_FREQUENCIES,
   applyTemplates
 } from "./PayrollCalculator";
 
@@ -71,6 +72,7 @@ export default function PayrollProcessDialog({
   const [showAdvanced, setShowAdvanced] = useState(false);
   const [salesAmount, setSalesAmount] = useState(0);
   const [commissionRate, setCommissionRate] = useState(2);
+  const [payrollFrequency, setPayrollFrequency] = useState("monthly");
 
   const lastMonth = subMonths(new Date(), 1);
   const [periodStart, setPeriodStart] = useState(format(startOfMonth(lastMonth), 'yyyy-MM-dd'));
@@ -193,14 +195,15 @@ export default function PayrollProcessDialog({
       customBonuses,
       templates: applicableTemplates,
       applyNASSIT,
-      applyPAYE
+      applyPAYE,
+      payrollFrequency
     });
   }, [
     selectedEmployee, periodStart, periodEnd, attendanceData,
     overtimeHours, weekendHours, holidayHours,
     totalSales, commissionRate,
     customAllowances, customDeductions, customBonuses,
-    applicableTemplates, applyNASSIT, applyPAYE
+    applicableTemplates, applyNASSIT, applyPAYE, payrollFrequency
   ]);
 
   const createPayrollMutation = useMutation({
@@ -303,7 +306,7 @@ export default function PayrollProcessDialog({
 
         <form onSubmit={handleSubmit} className="space-y-6">
           {/* Employee & Period Selection */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <Label>Employee</Label>
               <Select value={selectedEmployeeId} onValueChange={setSelectedEmployeeId} required>
@@ -322,6 +325,27 @@ export default function PayrollProcessDialog({
                 </SelectContent>
               </Select>
             </div>
+            <div>
+              <Label>Payroll Frequency</Label>
+              <Select value={payrollFrequency} onValueChange={setPayrollFrequency}>
+                <SelectTrigger className="mt-1">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {Object.entries(PAYROLL_FREQUENCIES).map(([key, config]) => (
+                    <SelectItem key={key} value={key}>
+                      <div className="flex items-center gap-2">
+                        <span>{config.label}</span>
+                        <span className="text-xs text-gray-400">({config.periodsPerYear}x/yr)</span>
+                      </div>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <Label>Period Start</Label>
               <Input 
@@ -363,6 +387,11 @@ export default function PayrollProcessDialog({
                     <div className="text-right">
                       <p className="text-sm text-gray-500">Base Salary ({selectedEmployee.salary_type || 'monthly'})</p>
                       <p className="text-2xl font-bold text-[#1EB053]">{formatSLE(selectedEmployee.base_salary)}</p>
+                      {payrollFrequency !== 'monthly' && (
+                        <p className="text-sm text-[#0072C6]">
+                          {PAYROLL_FREQUENCIES[payrollFrequency].label}: {formatSLE(payrollData.prorated_salary)}
+                        </p>
+                      )}
                       <p className="text-xs text-gray-400">
                         Hourly: {formatSLE(payrollData.calculation_details.hourly_rate)}
                       </p>
