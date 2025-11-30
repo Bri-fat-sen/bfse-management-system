@@ -148,10 +148,11 @@ export default function Layout({ children, currentPageName }) {
   });
 
   const { data: notifications = [] } = useQuery({
-    queryKey: ['notifications'],
+    queryKey: ['notifications', currentEmployee?.id],
     queryFn: () => base44.entities.Notification.filter({ is_read: false }, '-created_date', 10),
     staleTime: 60 * 1000, // 1 minute
     refetchOnWindowFocus: false,
+    enabled: !!currentEmployee?.id, // Only fetch if employee exists
   });
 
   const { data: employee } = useQuery({
@@ -163,7 +164,8 @@ export default function Layout({ children, currentPageName }) {
   });
 
   const currentEmployee = employee?.[0];
-  const actualRole = currentEmployee?.role || 'read_only';
+  // For super_admin users who might not have an employee record yet, check the base44 user role
+  const actualRole = currentEmployee?.role || user?.role || 'read_only';
   // Use preview role if super_admin has one set, otherwise use actual role
   const userRole = (actualRole === 'super_admin' && previewRole) ? previewRole : actualRole;
   const orgId = currentEmployee?.organisation_id;
@@ -179,9 +181,9 @@ export default function Layout({ children, currentPageName }) {
   const currentOrg = organisation?.[0];
 
   const { data: chatRooms = [] } = useQuery({
-    queryKey: ['chatRooms', orgId],
+    queryKey: ['chatRooms', orgId, currentEmployee?.id],
     queryFn: () => base44.entities.ChatRoom.filter({ organisation_id: orgId }),
-    enabled: !!orgId,
+    enabled: !!orgId && !!currentEmployee?.id, // Only fetch if both exist
     staleTime: 30 * 1000,
     refetchInterval: 30000,
     refetchOnWindowFocus: false,
@@ -202,6 +204,11 @@ export default function Layout({ children, currentPageName }) {
     // When in preview mode, filter based on preview role permissions
     const effectiveRole = (actualRole === 'super_admin' && previewRole) ? previewRole : userRole;
     const effectivePermissions = previewRole ? (DEFAULT_ROLE_PERMISSIONS[previewRole] || DEFAULT_ROLE_PERMISSIONS.read_only) : permissions;
+    
+    // Super admin always gets full access regardless of employee record
+    if (effectiveRole === 'super_admin' && !previewRole) {
+      return menuSections;
+    }
     
     return menuSections.map(section => ({
       ...section,
