@@ -1,26 +1,28 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.4';
 
+// This function can be called by a cron job or webhook to send scheduled reports
 Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
     
-    // Get report ID from request body
-    const { reportId, forceRun } = await req.json();
-    
-    if (!reportId) {
-      return Response.json({ error: 'Report ID is required' }, { status: 400 });
+    // Verify the request is authenticated
+    const user = await base44.auth.me();
+    if (!user) {
+      return Response.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    // Get report details using service role
-    const reports = await base44.asServiceRole.entities.SavedReport.filter({ id: reportId });
+    const { report_id, test_mode } = await req.json();
+
+    // Get the report
+    const reports = await base44.entities.SavedReport.filter({ id: report_id });
     const report = reports[0];
-    
+
     if (!report) {
       return Response.json({ error: 'Report not found' }, { status: 404 });
     }
 
-    if (!report.schedule?.enabled && !forceRun) {
-      return Response.json({ error: 'Report scheduling is disabled' }, { status: 400 });
+    if (!report.schedule?.enabled && !test_mode) {
+      return Response.json({ error: 'Report is not scheduled' }, { status: 400 });
     }
 
     const recipients = report.schedule?.recipients || [];
@@ -28,161 +30,137 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'No recipients configured' }, { status: 400 });
     }
 
-    const orgId = report.organisation_id;
-
     // Fetch report data based on type
-    let reportData = [];
-    let totalValue = 0;
-    let recordCount = 0;
+    const orgId = report.organisation_id;
+    let data = [];
 
     switch (report.report_type) {
       case 'sales':
-        reportData = await base44.asServiceRole.entities.Sale.filter({ 
-          organisation_id: orgId 
-        }, '-created_date', 100);
-        totalValue = reportData.reduce((sum, s) => sum + (s.total_amount || 0), 0);
-        recordCount = reportData.length;
-        break;
-      case 'expenses':
-        reportData = await base44.asServiceRole.entities.Expense.filter({ 
-          organisation_id: orgId 
-        }, '-date', 100);
-        totalValue = reportData.reduce((sum, e) => sum + (e.amount || 0), 0);
-        recordCount = reportData.length;
-        break;
-      case 'payroll':
-        reportData = await base44.asServiceRole.entities.Payroll.filter({ 
-          organisation_id: orgId 
-        }, '-created_date', 100);
-        totalValue = reportData.reduce((sum, p) => sum + (p.net_pay || 0), 0);
-        recordCount = reportData.length;
-        break;
-      case 'transport':
-        reportData = await base44.asServiceRole.entities.Trip.filter({ 
-          organisation_id: orgId 
-        }, '-date', 100);
-        totalValue = reportData.reduce((sum, t) => sum + (t.net_revenue || 0), 0);
-        recordCount = reportData.length;
+        data = await base44.entities.Sale.filter({ organisation_id: orgId });
         break;
       case 'inventory':
-        reportData = await base44.asServiceRole.entities.Product.filter({ 
-          organisation_id: orgId 
-        });
-        totalValue = reportData.reduce((sum, p) => sum + ((p.stock_quantity || 0) * (p.unit_price || 0)), 0);
-        recordCount = reportData.length;
+        data = await base44.entities.Product.filter({ organisation_id: orgId });
+        break;
+      case 'payroll':
+        data = await base44.entities.Payroll.filter({ organisation_id: orgId });
+        break;
+      case 'transport':
+        data = await base44.entities.Trip.filter({ organisation_id: orgId });
         break;
     }
 
-    // Get organisation details
-    const orgs = await base44.asServiceRole.entities.Organisation.filter({ id: orgId });
-    const org = orgs[0];
-
-    // Generate email HTML
+    // Apply date filter based on schedule frequency
     const now = new Date();
+    let startDate;
+    
+    switch (report.schedule?.frequency) {
+      case 'daily':
+        startDate = new Date(now.setDate(now.getDate() - 1));
+        break;
+      case 'weekly':
+        startDate = new Date(now.setDate(now.getDate() - 7));
+        break;
+      case 'monthly':
+        startDate = new Date(now.setMonth(now.getMonth() - 1));
+        break;
+      default:
+        startDate = new Date(now.setDate(now.getDate() - 7));
+    }
+
+    data = data.filter(item => {
+      const itemDate = new Date(item.created_date || item.date || item.period_start);
+      return itemDate >= startDate;
+    });
+
+    // Generate report content
+    const visibleColumns = report.columns?.filter(c => c.visible) || [];
+    const headers = visibleColumns.map(c => c.label).join(' | ');
+    const rows = data.slice(0, 100).map(row => 
+      visibleColumns.map(c => {
+        const val = row[c.field];
+        if (val === null || val === undefined) return '-';
+        if (typeof val === 'number') return val.toLocaleString();
+        return String(val);
+      }).join(' | ')
+    ).join('\n');
+
+    // Calculate totals for numeric columns with sum aggregate
+    const totals = {};
+    visibleColumns.filter(c => c.aggregate === 'sum').forEach(col => {
+      totals[col.label] = data.reduce((sum, item) => sum + (Number(item[col.field]) || 0), 0);
+    });
+
+    const totalsHtml = Object.entries(totals).length > 0 
+      ? `<h3>Summary Totals</h3><ul>${Object.entries(totals).map(([label, value]) => 
+          `<li><strong>${label}:</strong> ${value.toLocaleString()}</li>`
+        ).join('')}</ul>`
+      : '';
+
     const emailBody = `
-      <!DOCTYPE html>
-      <html>
-      <head>
-        <style>
-          body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
-          .header { background: linear-gradient(135deg, #1EB053, #0072C6); color: white; padding: 20px; text-align: center; }
-          .content { padding: 20px; }
-          .stats { display: flex; gap: 20px; margin: 20px 0; }
-          .stat-card { background: #f5f5f5; padding: 15px; border-radius: 8px; flex: 1; text-align: center; }
-          .stat-value { font-size: 24px; font-weight: bold; color: #1EB053; }
-          .stat-label { font-size: 12px; color: #666; }
-          .footer { background: #f5f5f5; padding: 15px; text-align: center; font-size: 12px; color: #666; }
-          table { width: 100%; border-collapse: collapse; margin: 20px 0; }
-          th { background: #1EB053; color: white; padding: 10px; text-align: left; }
-          td { border: 1px solid #ddd; padding: 8px; }
-          tr:nth-child(even) { background: #f9f9f9; }
-        </style>
-      </head>
-      <body>
-        <div class="header">
-          <h1>${org?.name || 'Business'}</h1>
-          <h2>${report.name}</h2>
+      <div style="font-family: Arial, sans-serif; max-width: 800px; margin: 0 auto;">
+        <div style="background: linear-gradient(135deg, #1EB053 0%, #0072C6 100%); padding: 20px; color: white;">
+          <h1 style="margin: 0;">${report.name}</h1>
+          <p style="margin: 5px 0 0 0; opacity: 0.9;">${report.description || 'Scheduled Report'}</p>
         </div>
-        <div class="content">
-          <p>Hello,</p>
-          <p>Here is your scheduled ${report.report_type} report for <strong>${report.filters?.start_date || 'N/A'}</strong> to <strong>${report.filters?.end_date || 'N/A'}</strong>.</p>
+        
+        <div style="padding: 20px; background: #f9fafb;">
+          <p><strong>Report Type:</strong> ${report.report_type}</p>
+          <p><strong>Generated:</strong> ${new Date().toLocaleString()}</p>
+          <p><strong>Records:</strong> ${data.length}</p>
           
-          <div class="stats">
-            <div class="stat-card">
-              <div class="stat-value">${recordCount}</div>
-              <div class="stat-label">Total Records</div>
-            </div>
-            <div class="stat-card">
-              <div class="stat-value">Le ${totalValue.toLocaleString()}</div>
-              <div class="stat-label">Total Value</div>
-            </div>
+          ${totalsHtml}
+          
+          <h3>Data Preview</h3>
+          <div style="overflow-x: auto;">
+            <pre style="background: white; padding: 15px; border-radius: 8px; font-size: 12px; border: 1px solid #e5e7eb;">
+${headers}
+${'─'.repeat(80)}
+${rows}
+            </pre>
           </div>
           
-          ${report.description ? `<p><em>${report.description}</em></p>` : ''}
-          
-          <p>Log in to your dashboard to view the complete report with detailed breakdowns and charts.</p>
+          ${data.length > 100 ? '<p style="color: #6b7280; font-style: italic;">Showing first 100 records...</p>' : ''}
         </div>
-        <div class="footer">
-          <p>This is an automated report generated on ${now.toLocaleDateString()} at ${now.toLocaleTimeString()}</p>
-          <p>Schedule: ${report.schedule?.frequency === 'daily' ? 'Daily' : report.schedule?.frequency === 'weekly' ? 'Weekly' : 'Monthly'} at ${report.schedule?.time || '09:00'}</p>
+        
+        <div style="padding: 15px 20px; background: #f3f4f6; border-top: 1px solid #e5e7eb; font-size: 12px; color: #6b7280;">
+          <p>This is an automated report from your business management system.</p>
         </div>
-      </body>
-      </html>
+      </div>
     `;
 
-    // Send email to all recipients
-    const emailPromises = recipients.map(email => 
-      base44.asServiceRole.integrations.Core.SendEmail({
-        to: email,
-        subject: `[${org?.name || 'Business'}] Scheduled Report: ${report.name}`,
-        body: emailBody
-      })
-    );
-
-    await Promise.all(emailPromises);
-
-    // Calculate next run time
-    const calculateNextRun = (schedule) => {
-      const nextRun = new Date();
-      const [hours, minutes] = (schedule.time || '09:00').split(':').map(Number);
-      nextRun.setHours(hours, minutes, 0, 0);
-
-      switch (schedule.frequency) {
-        case 'daily':
-          if (nextRun <= new Date()) nextRun.setDate(nextRun.getDate() + 1);
-          break;
-        case 'weekly':
-          while (nextRun.getDay() !== schedule.day_of_week || nextRun <= new Date()) {
-            nextRun.setDate(nextRun.getDate() + 1);
-          }
-          break;
-        case 'monthly':
-          nextRun.setDate(schedule.day_of_month || 1);
-          if (nextRun <= new Date()) {
-            nextRun.setMonth(nextRun.getMonth() + 1);
-          }
-          break;
+    // Send emails to all recipients
+    const results = [];
+    for (const recipient of recipients) {
+      try {
+        await base44.integrations.Core.SendEmail({
+          to: recipient,
+          subject: `${report.schedule?.frequency === 'daily' ? 'Daily' : report.schedule?.frequency === 'weekly' ? 'Weekly' : 'Monthly'} Report: ${report.name}`,
+          body: emailBody
+        });
+        results.push({ email: recipient, status: 'sent' });
+      } catch (error) {
+        results.push({ email: recipient, status: 'failed', error: error.message });
       }
-      return nextRun;
-    };
+    }
 
-    const nextRun = calculateNextRun(report.schedule);
-
-    // Update report with last_sent and next_run
-    await base44.asServiceRole.entities.SavedReport.update(reportId, {
+    // Update last_sent timestamp
+    await base44.entities.SavedReport.update(report.id, {
       schedule: {
         ...report.schedule,
-        last_sent: now.toISOString(),
-        next_run: nextRun.toISOString()
+        last_sent: new Date().toISOString()
       }
     });
 
     return Response.json({ 
       success: true, 
-      message: `Report sent to ${recipients.length} recipient(s)`,
-      next_run: nextRun.toISOString()
+      report: report.name,
+      recipients_count: recipients.length,
+      records_count: data.length,
+      results 
     });
+
   } catch (error) {
+    console.error('Error sending scheduled report:', error);
     return Response.json({ error: error.message }, { status: 500 });
   }
 });

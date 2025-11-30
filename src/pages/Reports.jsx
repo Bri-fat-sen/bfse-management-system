@@ -1,750 +1,539 @@
 import React, { useState, useMemo } from "react";
 import { base44 } from "@/api/base44Client";
-import { useQuery } from "@tanstack/react-query";
-import ProtectedPage from "@/components/permissions/ProtectedPage";
-import { format, startOfMonth, endOfMonth, subMonths, subDays, parseISO, differenceInDays } from "date-fns";
-import {
-  FileText,
-  Download,
-  BarChart3,
-  PieChart,
-  TrendingUp,
-  TrendingDown,
-  DollarSign,
-  Users,
-  Package,
-  Truck,
-  Calendar,
-  Filter,
-  Printer,
-  Brain,
-  Save,
-  LayoutGrid,
-  Eye,
-  EyeOff,
-  FileSpreadsheet,
-  Loader2,
-  Plus,
-  Clock
-} from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import PageHeader from "@/components/ui/PageHeader";
-import StatCard from "@/components/ui/StatCard";
-import LoadingSpinner from "@/components/ui/LoadingSpinner";
-
-import AdvancedFilters from "@/components/analytics/AdvancedFilters";
-import PredictiveAnalytics from "@/components/analytics/PredictiveAnalytics";
-import SavedReportsManager from "@/components/analytics/SavedReportsManager";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Card, CardContent } from "@/components/ui/card";
 import {
-  GradientAreaChart,
-  MultiAreaChart,
-  GradientBarChart,
-  ColorfulBarChart,
-  DonutChart,
-  GlowLineChart,
-  StackedBarChart,
-  ProgressRing,
-  SL_COLORS
-} from "@/components/charts/AdvancedCharts";
-import SaveReportDialog from "@/components/reports/SaveReportDialog";
-import { SalesCharts, ExpenseCharts, TransportCharts, ProfitLossChart } from "@/components/reports/ReportCharts";
-import { 
-  printSalesReport, 
-  printExpenseReport, 
-  printTransportReport, 
-  printInventoryReport,
-  printProfitLossReport,
-  exportReportCSV 
-} from "@/components/reports/ReportPrintExport";
-import CustomReportBuilder from "@/components/reports/CustomReportBuilder";
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import {
+  Plus,
+  Search,
+  FileText,
+  Star,
+  Clock,
+  Share2,
+  BarChart3,
+  ArrowLeft
+} from "lucide-react";
+import { toast } from "sonner";
+import { format, subDays, startOfWeek, endOfWeek, startOfMonth, endOfMonth, startOfQuarter, endOfQuarter, startOfYear, endOfYear } from "date-fns";
+
+import PageHeader from "@/components/ui/PageHeader";
+import { LoadingSpinner } from "@/components/ui/LoadingSpinner";
+import ReportBuilder from "@/components/reports/ReportBuilder";
 import ReportViewer from "@/components/reports/ReportViewer";
-import ScheduledReportsManager from "@/components/reports/ScheduledReportsManager";
+import ReportsList from "@/components/reports/ReportsList";
+import SendReportEmailDialog from "@/components/reports/SendReportEmailDialog";
 
-const COLORS = SL_COLORS.chart;
+function getDateRange(dateRange, startDate, endDate) {
+  const today = new Date();
+  switch (dateRange) {
+    case "today":
+      return { start: today, end: today };
+    case "yesterday":
+      const yesterday = subDays(today, 1);
+      return { start: yesterday, end: yesterday };
+    case "this_week":
+      return { start: startOfWeek(today), end: endOfWeek(today) };
+    case "last_week":
+      const lastWeek = subDays(today, 7);
+      return { start: startOfWeek(lastWeek), end: endOfWeek(lastWeek) };
+    case "this_month":
+      return { start: startOfMonth(today), end: endOfMonth(today) };
+    case "last_month":
+      const lastMonth = subDays(startOfMonth(today), 1);
+      return { start: startOfMonth(lastMonth), end: endOfMonth(lastMonth) };
+    case "this_quarter":
+      return { start: startOfQuarter(today), end: endOfQuarter(today) };
+    case "last_quarter":
+      const lastQuarter = subDays(startOfQuarter(today), 1);
+      return { start: startOfQuarter(lastQuarter), end: endOfQuarter(lastQuarter) };
+    case "this_year":
+      return { start: startOfYear(today), end: endOfYear(today) };
+    case "custom":
+      return { start: new Date(startDate), end: new Date(endDate) };
+    default:
+      return { start: startOfMonth(today), end: today };
+  }
+}
 
-export default function Reports() {
-  const [activeTab, setActiveTab] = useState("sales");
-  const [filters, setFilters] = useState({
-    date_range: 'month',
-    start_date: format(subDays(new Date(), 30), 'yyyy-MM-dd'),
-    end_date: format(new Date(), 'yyyy-MM-dd'),
-    employee_ids: [],
-    categories: [],
-    payment_methods: [],
-    sale_types: [],
-    statuses: [],
-    customer_types: [],
-    customer_segments: []
-  });
-  const [showCharts, setShowCharts] = useState(true);
-  const [showSaveDialog, setShowSaveDialog] = useState(false);
-  const [showReportBuilder, setShowReportBuilder] = useState(false);
-  const [activeCustomReport, setActiveCustomReport] = useState(null);
+export default function ReportsPage() {
+  const queryClient = useQueryClient();
+  const [activeTab, setActiveTab] = useState("all");
+  const [searchQuery, setSearchQuery] = useState("");
+  const [showBuilder, setShowBuilder] = useState(false);
+  const [editingReport, setEditingReport] = useState(null);
+  const [viewingReport, setViewingReport] = useState(null);
+  const [reportData, setReportData] = useState([]);
+  const [loadingData, setLoadingData] = useState(false);
+  const [deleteReport, setDeleteReport] = useState(null);
+  const [emailDialogOpen, setEmailDialogOpen] = useState(false);
 
+  // Fetch current user and employee
   const { data: user } = useQuery({
-    queryKey: ['currentUser'],
+    queryKey: ["currentUser"],
     queryFn: () => base44.auth.me(),
-    staleTime: 5 * 60 * 1000,
-    refetchOnWindowFocus: false,
-  });
-
-  const { data: employee } = useQuery({
-    queryKey: ['employee', user?.email],
-    queryFn: () => base44.entities.Employee.filter({ user_email: user?.email }),
-    enabled: !!user?.email,
-    staleTime: 5 * 60 * 1000,
-    refetchOnWindowFocus: false,
-  });
-
-  const currentEmployee = employee?.[0];
-  const orgId = currentEmployee?.organisation_id;
-
-  const { data: organisation } = useQuery({
-    queryKey: ['organisation', orgId],
-    queryFn: () => base44.entities.Organisation.filter({ id: orgId }),
-    enabled: !!orgId,
-  });
-
-  const { data: sales = [], isLoading: mainSalesLoading } = useQuery({
-    queryKey: ['sales', orgId],
-    queryFn: () => base44.entities.Sale.filter({ organisation_id: orgId }, '-created_date', 500),
-    enabled: !!orgId,
-  });
-
-  const { data: expenses = [], isLoading: expensesLoading } = useQuery({
-    queryKey: ['expenses', orgId],
-    queryFn: () => base44.entities.Expense.filter({ organisation_id: orgId }, '-date', 500),
-    enabled: !!orgId,
-  });
-
-  const { data: products = [], isLoading: productsLoading } = useQuery({
-    queryKey: ['products', orgId],
-    queryFn: () => base44.entities.Product.filter({ organisation_id: orgId }),
-    enabled: !!orgId,
-  });
-
-  const { data: trips = [], isLoading: tripsLoading } = useQuery({
-    queryKey: ['trips', orgId],
-    queryFn: () => base44.entities.Trip.filter({ organisation_id: orgId }, '-date', 500),
-    enabled: !!orgId,
   });
 
   const { data: employees = [] } = useQuery({
-    queryKey: ['employees', orgId],
+    queryKey: ["employees"],
+    queryFn: () => base44.entities.Employee.filter({ user_email: user?.email }),
+    enabled: !!user?.email,
+  });
+
+  const currentEmployee = employees[0];
+  const orgId = currentEmployee?.organisation_id;
+
+  // Fetch saved reports
+  const { data: reports = [], isLoading } = useQuery({
+    queryKey: ["savedReports", orgId],
+    queryFn: () => base44.entities.SavedReport.filter({ organisation_id: orgId }),
+    enabled: !!orgId,
+  });
+
+  // Fetch reference data
+  const { data: allEmployees = [] } = useQuery({
+    queryKey: ["allEmployees", orgId],
     queryFn: () => base44.entities.Employee.filter({ organisation_id: orgId }),
     enabled: !!orgId,
   });
 
-  const { data: attendance = [], isLoading: attendanceLoading } = useQuery({
-    queryKey: ['attendance', orgId],
-    queryFn: () => base44.entities.Attendance.filter({ organisation_id: orgId }, '-date', 500),
+  const { data: warehouses = [] } = useQuery({
+    queryKey: ["warehouses", orgId],
+    queryFn: () => base44.entities.Warehouse.filter({ organisation_id: orgId }),
     enabled: !!orgId,
   });
 
-  const { data: payrolls = [] } = useQuery({
-    queryKey: ['payrolls', orgId],
-    queryFn: () => base44.entities.Payroll.filter({ organisation_id: orgId }, '-created_date', 500),
+  const { data: vehicles = [] } = useQuery({
+    queryKey: ["vehicles", orgId],
+    queryFn: () => base44.entities.Vehicle.filter({ organisation_id: orgId }),
     enabled: !!orgId,
   });
 
-  // Check if main data is loading
-  const isLoading = !orgId || mainSalesLoading || expensesLoading || productsLoading || tripsLoading;
+  // Mutations
+  const createMutation = useMutation({
+    mutationFn: (data) => base44.entities.SavedReport.create({
+      ...data,
+      organisation_id: orgId,
+      created_by_id: currentEmployee?.id,
+      created_by_name: currentEmployee?.full_name
+    }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["savedReports"] });
+      toast.success("Report created successfully");
+      setShowBuilder(false);
+    },
+  });
 
-  // Advanced filtering
-  const filteredSales = useMemo(() => {
-    return sales.filter(s => {
-      const date = s.created_date?.split('T')[0];
-      if (date < filters.start_date || date > filters.end_date) return false;
-      if (filters.employee_ids?.length > 0 && !filters.employee_ids.includes(s.employee_id)) return false;
-      if (filters.payment_methods?.length > 0 && !filters.payment_methods.includes(s.payment_method)) return false;
-      if (filters.sale_types?.length > 0 && !filters.sale_types.includes(s.sale_type)) return false;
-      if (filters.statuses?.length > 0 && !filters.statuses.includes(s.payment_status)) return false;
-      return true;
-    });
-  }, [sales, filters]);
+  const updateMutation = useMutation({
+    mutationFn: ({ id, data }) => base44.entities.SavedReport.update(id, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["savedReports"] });
+      toast.success("Report updated successfully");
+      setShowBuilder(false);
+      setEditingReport(null);
+    },
+  });
 
-  const filteredExpenses = useMemo(() => {
-    return expenses.filter(e => {
-      if (e.date < filters.start_date || e.date > filters.end_date) return false;
-      if (filters.employee_ids?.length > 0 && !filters.employee_ids.includes(e.recorded_by)) return false;
-      if (filters.categories?.length > 0 && !filters.categories.includes(e.category)) return false;
-      if (filters.statuses?.length > 0 && !filters.statuses.includes(e.status)) return false;
-      return true;
-    });
-  }, [expenses, filters]);
+  const deleteMutation = useMutation({
+    mutationFn: (id) => base44.entities.SavedReport.delete(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["savedReports"] });
+      toast.success("Report deleted");
+      setDeleteReport(null);
+    },
+  });
 
-  const filteredTrips = useMemo(() => {
-    return trips.filter(t => {
-      if (t.date < filters.start_date || t.date > filters.end_date) return false;
-      if (filters.employee_ids?.length > 0 && !filters.employee_ids.includes(t.driver_id)) return false;
-      if (filters.statuses?.length > 0 && !filters.statuses.includes(t.status)) return false;
-      return true;
-    });
-  }, [trips, filters]);
+  // Filter reports
+  const filteredReports = useMemo(() => {
+    let result = reports;
 
-  // Sales analytics
-  const salesAnalytics = useMemo(() => {
-    const totalRevenue = filteredSales.reduce((sum, s) => sum + (s.total_amount || 0), 0);
-    const totalTransactions = filteredSales.length;
-    const avgTransaction = totalTransactions > 0 ? totalRevenue / totalTransactions : 0;
-    
-    // By payment method
-    const byPayment = {};
-    filteredSales.forEach(s => {
-      const method = s.payment_method || 'cash';
-      byPayment[method] = (byPayment[method] || 0) + (s.total_amount || 0);
-    });
+    if (searchQuery) {
+      const query = searchQuery.toLowerCase();
+      result = result.filter(r => 
+        r.name?.toLowerCase().includes(query) ||
+        r.description?.toLowerCase().includes(query)
+      );
+    }
 
-    // By sale type
-    const bySaleType = {};
-    filteredSales.forEach(s => {
-      const type = s.sale_type || 'retail';
-      bySaleType[type] = (bySaleType[type] || 0) + (s.total_amount || 0);
-    });
-
-    // Top products
-    const productSales = {};
-    filteredSales.forEach(s => {
-      s.items?.forEach(item => {
-        productSales[item.product_name] = (productSales[item.product_name] || 0) + (item.total || 0);
-      });
-    });
-    const topProducts = Object.entries(productSales)
-      .sort((a, b) => b[1] - a[1])
-      .slice(0, 10)
-      .map(([name, value]) => ({ name, value }));
-
-    // Daily trend
-    const dailyTrend = {};
-    filteredSales.forEach(s => {
-      const date = s.created_date?.split('T')[0];
-      dailyTrend[date] = (dailyTrend[date] || 0) + (s.total_amount || 0);
-    });
-    const trendData = Object.entries(dailyTrend)
-      .sort((a, b) => a[0].localeCompare(b[0]))
-      .map(([date, revenue]) => ({
-        date: format(parseISO(date), 'MMM d'),
-        revenue
-      }));
-
-    return {
-      totalRevenue,
-      totalTransactions,
-      avgTransaction,
-      byPayment: Object.entries(byPayment).map(([name, value]) => ({ name: name.replace(/_/g, ' '), value })),
-      bySaleType: Object.entries(bySaleType).map(([name, value]) => ({ name, value })),
-      topProducts,
-      trendData
-    };
-  }, [filteredSales]);
-
-  // Expense analytics
-  const expenseAnalytics = useMemo(() => {
-    const totalExpenses = filteredExpenses.reduce((sum, e) => sum + (e.amount || 0), 0);
-    
-    // By category
-    const byCategory = {};
-    filteredExpenses.forEach(e => {
-      const cat = e.category || 'other';
-      byCategory[cat] = (byCategory[cat] || 0) + (e.amount || 0);
-    });
-
-    return {
-      totalExpenses,
-      byCategory: Object.entries(byCategory)
-        .map(([name, value]) => ({ name: name.replace(/_/g, ' '), value }))
-        .sort((a, b) => b.value - a.value)
-    };
-  }, [filteredExpenses]);
-
-  // Transport analytics
-  const transportAnalytics = useMemo(() => {
-    const totalRevenue = filteredTrips.reduce((sum, t) => sum + (t.total_revenue || 0), 0);
-    const totalPassengers = filteredTrips.reduce((sum, t) => sum + (t.passengers_count || 0), 0);
-    const totalFuelCost = filteredTrips.reduce((sum, t) => sum + (t.fuel_cost || 0), 0);
-    const netRevenue = filteredTrips.reduce((sum, t) => sum + (t.net_revenue || 0), 0);
-
-    // By route
-    const byRoute = {};
-    filteredTrips.forEach(t => {
-      const route = t.route_name || 'Unknown';
-      byRoute[route] = (byRoute[route] || 0) + (t.total_revenue || 0);
-    });
-
-    return {
-      totalRevenue,
-      totalPassengers,
-      totalFuelCost,
-      netRevenue,
-      totalTrips: filteredTrips.length,
-      byRoute: Object.entries(byRoute).map(([name, value]) => ({ name, value }))
-    };
-  }, [filteredTrips]);
-
-  // Profit/Loss
-  const profitLoss = useMemo(() => {
-    const totalRevenue = salesAnalytics.totalRevenue + transportAnalytics.totalRevenue;
-    const totalExpenses = expenseAnalytics.totalExpenses + transportAnalytics.totalFuelCost;
-    return {
-      revenue: totalRevenue,
-      expenses: totalExpenses,
-      profit: totalRevenue - totalExpenses,
-      margin: totalRevenue > 0 ? ((totalRevenue - totalExpenses) / totalRevenue * 100).toFixed(1) : 0
-    };
-  }, [salesAnalytics, transportAnalytics, expenseAnalytics]);
-
-  const handlePrint = () => {
-    const org = organisation?.[0];
-    
-    switch(activeTab) {
-      case 'sales':
-        printSalesReport({ 
-          salesAnalytics, 
-          filters, 
-          organisation: org,
-          filteredSales 
-        });
+    switch (activeTab) {
+      case "favorites":
+        result = result.filter(r => r.is_favorite);
         break;
-      case 'expenses':
-        printExpenseReport({ 
-          expenseAnalytics, 
-          filters, 
-          organisation: org,
-          filteredExpenses 
-        });
+      case "scheduled":
+        result = result.filter(r => r.schedule?.enabled);
         break;
-      case 'transport':
-        printTransportReport({ 
-          transportAnalytics, 
-          filters, 
-          organisation: org,
-          filteredTrips 
-        });
+      case "shared":
+        result = result.filter(r => r.is_shared);
         break;
-      case 'inventory':
-        printInventoryReport({ 
-          products, 
-          organisation: org 
+    }
+
+    return result;
+  }, [reports, searchQuery, activeTab]);
+
+  // Run report
+  const runReport = async (report) => {
+    setViewingReport(report);
+    setLoadingData(true);
+
+    try {
+      const { start, end } = getDateRange(
+        report.filters?.date_range,
+        report.filters?.start_date,
+        report.filters?.end_date
+      );
+
+      let data = [];
+      const filter = { organisation_id: orgId };
+
+      switch (report.report_type) {
+        case "sales":
+          data = await base44.entities.Sale.filter(filter);
+          break;
+        case "inventory":
+          const [products, stockLevels] = await Promise.all([
+            base44.entities.Product.filter(filter),
+            base44.entities.StockLevel.filter(filter)
+          ]);
+          data = products.map(p => {
+            const stock = stockLevels.find(s => s.product_id === p.id);
+            return { ...p, quantity: stock?.quantity || 0, warehouse_name: stock?.warehouse_name };
+          });
+          break;
+        case "payroll":
+          data = await base44.entities.Payroll.filter(filter);
+          break;
+        case "transport":
+          data = await base44.entities.Trip.filter(filter);
+          break;
+      }
+
+      // Apply date filter
+      if (start && end) {
+        data = data.filter(item => {
+          const itemDate = new Date(item.created_date || item.date || item.period_start);
+          return itemDate >= start && itemDate <= end;
         });
-        break;
-      default:
-        printProfitLossReport({
-          profitLoss,
-          salesAnalytics,
-          transportAnalytics,
-          expenseAnalytics,
-          filters,
-          organisation: org
-        });
+      }
+
+      // Apply additional filters
+      if (report.filters?.employee_ids?.length) {
+        data = data.filter(item => 
+          report.filters.employee_ids.includes(item.employee_id)
+        );
+      }
+
+      if (report.filters?.warehouse_ids?.length) {
+        data = data.filter(item => 
+          report.filters.warehouse_ids.includes(item.warehouse_id)
+        );
+      }
+
+      if (report.filters?.sale_types?.length) {
+        data = data.filter(item => 
+          report.filters.sale_types.includes(item.sale_type)
+        );
+      }
+
+      setReportData(data);
+    } catch (error) {
+      toast.error("Failed to load report data");
+      console.error(error);
+    } finally {
+      setLoadingData(false);
     }
   };
 
-  const handleExportCSV = () => {
-    const org = organisation?.[0];
-    
-    switch(activeTab) {
-      case 'sales':
-        exportReportCSV({ type: 'sales', data: filteredSales, organisation: org });
-        break;
-      case 'expenses':
-        exportReportCSV({ type: 'expenses', data: filteredExpenses, organisation: org });
-        break;
-      case 'transport':
-        exportReportCSV({ type: 'transport', data: filteredTrips, organisation: org });
-        break;
-      case 'inventory':
-        exportReportCSV({ type: 'inventory', data: products, organisation: org });
-        break;
+  // Export report
+  const exportReport = async (format) => {
+    if (!viewingReport || !reportData.length) return;
+
+    if (format === "csv") {
+      const visibleColumns = viewingReport.columns?.filter(c => c.visible) || [];
+      const headers = visibleColumns.map(c => c.label).join(",");
+      const rows = reportData.map(row => 
+        visibleColumns.map(c => `"${row[c.field] || ""}"`).join(",")
+      ).join("\n");
+      
+      const csv = `${headers}\n${rows}`;
+      const blob = new Blob([csv], { type: "text/csv" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `${viewingReport.name}_${format(new Date(), "yyyy-MM-dd")}.csv`;
+      a.click();
+      URL.revokeObjectURL(url);
+      toast.success("CSV exported successfully");
+    } else {
+      toast.info("PDF export coming soon");
     }
   };
 
-  const handleLoadSavedReport = (report) => {
-    if (report.filters) {
-      setFilters(report.filters);
+  // Send email
+  const sendReportEmail = async ({ recipients, subject, message }) => {
+    try {
+      const visibleColumns = viewingReport.columns?.filter(c => c.visible) || [];
+      const headers = visibleColumns.map(c => c.label).join(" | ");
+      const rows = reportData.slice(0, 50).map(row => 
+        visibleColumns.map(c => row[c.field] || "-").join(" | ")
+      ).join("\n");
+
+      const emailBody = `
+        <h2>${viewingReport.name}</h2>
+        ${message ? `<p>${message}</p>` : ""}
+        <p>Report generated on ${format(new Date(), "MMMM d, yyyy 'at' h:mm a")}</p>
+        <p>Total records: ${reportData.length}</p>
+        <hr/>
+        <pre style="font-family: monospace; font-size: 12px; overflow-x: auto;">
+${headers}
+${"-".repeat(80)}
+${rows}
+        </pre>
+        ${reportData.length > 50 ? "<p><em>Showing first 50 records...</em></p>" : ""}
+      `;
+
+      for (const recipient of recipients) {
+        await base44.integrations.Core.SendEmail({
+          to: recipient,
+          subject,
+          body: emailBody
+        });
+      }
+
+      toast.success(`Report sent to ${recipients.length} recipient(s)`);
+    } catch (error) {
+      toast.error("Failed to send report");
+      console.error(error);
     }
-    setActiveTab(report.report_type === 'custom' ? 'sales' : report.report_type);
   };
 
-  const handleCustomReportGenerated = (reportConfig) => {
-    setActiveCustomReport(reportConfig);
-    setActiveTab("custom");
+  // Handlers
+  const handleSave = (data) => {
+    if (editingReport) {
+      updateMutation.mutate({ id: editingReport.id, data });
+    } else {
+      createMutation.mutate(data);
+    }
   };
 
-  const getCustomReportData = () => {
-    if (!activeCustomReport) return [];
-    switch (activeCustomReport.report_type) {
-      case 'sales': return filteredSales;
-      case 'expenses': return filteredExpenses;
-      case 'transport': return filteredTrips;
-      case 'inventory': return products;
-      case 'payroll': return payrolls;
-      default: return [];
-    }
+  const handleEdit = (report) => {
+    setEditingReport(report);
+    setShowBuilder(true);
+  };
+
+  const handleDuplicate = (report) => {
+    const { id, created_date, updated_date, ...rest } = report;
+    createMutation.mutate({ ...rest, name: `${report.name} (Copy)` });
+  };
+
+  const handleToggleFavorite = (report) => {
+    updateMutation.mutate({ 
+      id: report.id, 
+      data: { is_favorite: !report.is_favorite } 
+    });
   };
 
   if (isLoading) {
-    return <LoadingSpinner message="Loading Reports..." subtitle="Fetching your business data" fullScreen={true} />;
+    return <LoadingSpinner message="Loading reports..." />;
+  }
+
+  // Show report viewer
+  if (viewingReport) {
+    return (
+      <div className="space-y-6">
+        <Button 
+          variant="ghost" 
+          onClick={() => { setViewingReport(null); setReportData([]); }}
+          className="gap-2"
+        >
+          <ArrowLeft className="w-4 h-4" />
+          Back to Reports
+        </Button>
+
+        <ReportViewer
+          report={viewingReport}
+          data={reportData}
+          isLoading={loadingData}
+          onRefresh={() => runReport(viewingReport)}
+          onExport={exportReport}
+          onSendEmail={() => setEmailDialogOpen(true)}
+        />
+
+        <SendReportEmailDialog
+          open={emailDialogOpen}
+          onOpenChange={setEmailDialogOpen}
+          report={viewingReport}
+          onSend={sendReportEmail}
+          defaultRecipients={viewingReport.schedule?.recipients || []}
+        />
+      </div>
+    );
+  }
+
+  // Show builder
+  if (showBuilder) {
+    return (
+      <div className="space-y-6">
+        <Button 
+          variant="ghost" 
+          onClick={() => { setShowBuilder(false); setEditingReport(null); }}
+          className="gap-2"
+        >
+          <ArrowLeft className="w-4 h-4" />
+          Back to Reports
+        </Button>
+
+        <Card>
+          <CardContent className="pt-6">
+            <h2 className="text-xl font-bold mb-6">
+              {editingReport ? "Edit Report" : "Create New Report"}
+            </h2>
+            <ReportBuilder
+              report={editingReport}
+              onSave={handleSave}
+              onCancel={() => { setShowBuilder(false); setEditingReport(null); }}
+              employees={allEmployees}
+              warehouses={warehouses}
+              vehicles={vehicles}
+            />
+          </CardContent>
+        </Card>
+      </div>
+    );
   }
 
   return (
-    <ProtectedPage module="finance">
     <div className="space-y-6">
       <PageHeader
-        title="Reports & Analytics"
-        subtitle="Comprehensive business insights with predictive analytics"
-      >
-        <div className="flex flex-wrap items-center gap-1 sm:gap-2">
-          <Button 
-            onClick={() => setShowReportBuilder(true)}
-            className="bg-gradient-to-r from-[#1EB053] to-[#0072C6] text-xs sm:text-sm"
-            size="sm"
-          >
-            <Plus className="w-3 h-3 sm:w-4 sm:h-4 sm:mr-2" />
-            <span className="hidden sm:inline">Custom Report</span>
+        title="Reports"
+        description="Create and manage custom reports"
+        icon={<BarChart3 className="w-6 h-6" />}
+        actions={
+          <Button onClick={() => setShowBuilder(true)} className="bg-gradient-to-r from-[#1EB053] to-[#0072C6]">
+            <Plus className="w-4 h-4 mr-2" />
+            New Report
           </Button>
-          <Button 
-            variant="outline" 
-            size="sm"
-            onClick={() => setShowCharts(!showCharts)}
-            className="text-xs sm:text-sm"
-          >
-            {showCharts ? <EyeOff className="w-3 h-3 sm:w-4 sm:h-4 sm:mr-2" /> : <Eye className="w-3 h-3 sm:w-4 sm:h-4 sm:mr-2" />}
-            <span className="hidden sm:inline">{showCharts ? 'Hide' : 'Show'}</span>
-          </Button>
-          <Button 
-            variant="outline" 
-            size="sm"
-            onClick={() => setShowSaveDialog(true)}
-            className="text-xs sm:text-sm"
-          >
-            <Save className="w-3 h-3 sm:w-4 sm:h-4 sm:mr-2" />
-            <span className="hidden sm:inline">Save</span>
-          </Button>
-          <Button variant="outline" size="sm" onClick={handleExportCSV} className="text-xs sm:text-sm">
-            <FileSpreadsheet className="w-3 h-3 sm:w-4 sm:h-4 sm:mr-2" />
-            <span className="hidden sm:inline">CSV</span>
-          </Button>
-          <Button onClick={handlePrint} className="bg-[#1EB053] hover:bg-[#178f43] text-xs sm:text-sm" size="sm">
-            <Printer className="w-3 h-3 sm:w-4 sm:h-4 sm:mr-2" />
-            <span className="hidden sm:inline">Print</span>
-          </Button>
-        </div>
-      </PageHeader>
-
-      {/* Advanced Filters */}
-      <AdvancedFilters
-        filters={filters}
-        onFiltersChange={setFilters}
-        employees={employees}
-        showEmployeeFilter={true}
-        showCategoryFilter={activeTab === 'expenses'}
-        showPaymentFilter={activeTab === 'sales'}
-        showSaleTypeFilter={activeTab === 'sales'}
-        showStatusFilter={true}
-        showCustomerTypeFilter={activeTab === 'sales'}
-        showCustomerSegmentFilter={activeTab === 'sales'}
+        }
       />
 
-      {/* Summary Stats */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <StatCard
-          title="Total Revenue"
-          value={`Le ${profitLoss.revenue.toLocaleString()}`}
-          icon={TrendingUp}
-          color="green"
-        />
-        <StatCard
-          title="Total Expenses"
-          value={`Le ${profitLoss.expenses.toLocaleString()}`}
-          icon={TrendingDown}
-          color="red"
-        />
-        <StatCard
-          title="Net Profit"
-          value={`Le ${profitLoss.profit.toLocaleString()}`}
-          icon={DollarSign}
-          color={profitLoss.profit >= 0 ? "green" : "red"}
-        />
-        <StatCard
-          title="Profit Margin"
-          value={`${profitLoss.margin}%`}
-          icon={BarChart3}
-          color="blue"
-        />
+      {/* Quick Stats */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+        <Card className="sl-card-green">
+          <CardContent className="pt-4">
+            <div className="flex items-center gap-3">
+              <FileText className="w-8 h-8 text-[#1EB053]" />
+              <div>
+                <p className="text-2xl font-bold">{reports.length}</p>
+                <p className="text-sm text-gray-500">Total Reports</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="pt-4">
+            <div className="flex items-center gap-3">
+              <Star className="w-8 h-8 text-yellow-500" />
+              <div>
+                <p className="text-2xl font-bold">{reports.filter(r => r.is_favorite).length}</p>
+                <p className="text-sm text-gray-500">Favorites</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="pt-4">
+            <div className="flex items-center gap-3">
+              <Clock className="w-8 h-8 text-blue-500" />
+              <div>
+                <p className="text-2xl font-bold">{reports.filter(r => r.schedule?.enabled).length}</p>
+                <p className="text-sm text-gray-500">Scheduled</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="pt-4">
+            <div className="flex items-center gap-3">
+              <Share2 className="w-8 h-8 text-purple-500" />
+              <div>
+                <p className="text-2xl font-bold">{reports.filter(r => r.is_shared).length}</p>
+                <p className="text-sm text-gray-500">Shared</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
       </div>
 
+      {/* Search and Filter */}
+      <div className="flex flex-col sm:flex-row gap-4">
+        <div className="relative flex-1">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+          <Input
+            placeholder="Search reports..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="pl-10"
+          />
+        </div>
+      </div>
+
+      {/* Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="bg-gray-100 p-1 flex flex-wrap h-auto gap-1">
-          <TabsTrigger value="sales" className="text-xs sm:text-sm px-2 sm:px-3 data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#1EB053] data-[state=active]:to-[#0072C6] data-[state=active]:text-white">
-            Sales
-          </TabsTrigger>
-          <TabsTrigger value="expenses" className="text-xs sm:text-sm px-2 sm:px-3 data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#1EB053] data-[state=active]:to-[#0072C6] data-[state=active]:text-white">
-            Expenses
-          </TabsTrigger>
-          <TabsTrigger value="transport" className="text-xs sm:text-sm px-2 sm:px-3 data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#1EB053] data-[state=active]:to-[#0072C6] data-[state=active]:text-white">
-            Transport
-          </TabsTrigger>
-          <TabsTrigger value="inventory" className="text-xs sm:text-sm px-2 sm:px-3 data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#1EB053] data-[state=active]:to-[#0072C6] data-[state=active]:text-white">
-            Inventory
-          </TabsTrigger>
-          <TabsTrigger value="predictions" className="text-xs sm:text-sm px-2 sm:px-3 data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#1EB053] data-[state=active]:to-[#0072C6] data-[state=active]:text-white">
-            <Brain className="w-3 h-3 sm:w-4 sm:h-4 sm:mr-1" />
-            <span className="hidden sm:inline">Predictions</span>
-          </TabsTrigger>
-          <TabsTrigger value="saved" className="text-xs sm:text-sm px-2 sm:px-3 data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#1EB053] data-[state=active]:to-[#0072C6] data-[state=active]:text-white">
-            <Save className="w-3 h-3 sm:w-4 sm:h-4 sm:mr-1" />
-            <span className="hidden sm:inline">Saved</span>
-          </TabsTrigger>
-          <TabsTrigger value="scheduled" className="text-xs sm:text-sm px-2 sm:px-3 data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#1EB053] data-[state=active]:to-[#0072C6] data-[state=active]:text-white">
-            <Clock className="w-3 h-3 sm:w-4 sm:h-4 sm:mr-1" />
-            <span className="hidden sm:inline">Scheduled</span>
-          </TabsTrigger>
-          {activeCustomReport && (
-            <TabsTrigger value="custom" className="text-xs sm:text-sm px-2 sm:px-3 data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#1EB053] data-[state=active]:to-[#0072C6] data-[state=active]:text-white">
-              <FileText className="w-3 h-3 sm:w-4 sm:h-4 sm:mr-1" />
-              <span className="hidden sm:inline">Custom</span>
-            </TabsTrigger>
-          )}
+        <TabsList>
+          <TabsTrigger value="all">All Reports</TabsTrigger>
+          <TabsTrigger value="favorites">Favorites</TabsTrigger>
+          <TabsTrigger value="scheduled">Scheduled</TabsTrigger>
+          <TabsTrigger value="shared">Shared</TabsTrigger>
         </TabsList>
 
-        {/* Sales Tab */}
-        <TabsContent value="sales" className="mt-6 space-y-6">
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            <Card className="border-t-4 border-t-[#1EB053]">
-              <CardContent className="p-4 text-center">
-                <p className="text-sm text-gray-500">Total Sales</p>
-                <p className="text-2xl font-bold text-[#1EB053]">Le {salesAnalytics.totalRevenue.toLocaleString()}</p>
-              </CardContent>
-            </Card>
-            <Card className="border-t-4 border-t-[#0072C6]">
-              <CardContent className="p-4 text-center">
-                <p className="text-sm text-gray-500">Transactions</p>
-                <p className="text-2xl font-bold text-[#0072C6]">{salesAnalytics.totalTransactions}</p>
-              </CardContent>
-            </Card>
-            <Card className="border-t-4 border-t-[#D4AF37]">
-              <CardContent className="p-4 text-center">
-                <p className="text-sm text-gray-500">Avg. Transaction</p>
-                <p className="text-2xl font-bold text-[#D4AF37]">Le {Math.round(salesAnalytics.avgTransaction).toLocaleString()}</p>
-              </CardContent>
-            </Card>
-          </div>
-
-          {showCharts && <SalesCharts salesAnalytics={salesAnalytics} />}
-        </TabsContent>
-
-        {/* Expenses Tab */}
-        <TabsContent value="expenses" className="mt-6 space-y-6">
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            <Card className="border-t-4 border-t-red-500">
-              <CardContent className="p-4 text-center">
-                <p className="text-sm text-gray-500">Total Expenses</p>
-                <p className="text-2xl font-bold text-red-500">Le {expenseAnalytics.totalExpenses.toLocaleString()}</p>
-              </CardContent>
-            </Card>
-            <Card className="border-t-4 border-t-orange-500">
-              <CardContent className="p-4 text-center">
-                <p className="text-sm text-gray-500">Categories</p>
-                <p className="text-2xl font-bold text-orange-500">{expenseAnalytics.byCategory?.length || 0}</p>
-              </CardContent>
-            </Card>
-            <Card className="border-t-4 border-t-amber-500">
-              <CardContent className="p-4 text-center">
-                <p className="text-sm text-gray-500">Records</p>
-                <p className="text-2xl font-bold text-amber-500">{filteredExpenses.length}</p>
-              </CardContent>
-            </Card>
-          </div>
-
-          {showCharts && <ExpenseCharts expenseAnalytics={expenseAnalytics} />}
-        </TabsContent>
-
-        {/* Transport Tab */}
-        <TabsContent value="transport" className="mt-6 space-y-6">
-          {showCharts && <TransportCharts transportAnalytics={transportAnalytics} />}
-        </TabsContent>
-
-        {/* Inventory Tab */}
-        <TabsContent value="inventory" className="mt-6 space-y-6">
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            {[
-              { label: "Total Products", value: products.length, color: "#1EB053", icon: Package },
-              { label: "Low Stock", value: products.filter(p => p.stock_quantity <= (p.low_stock_threshold || 10) && p.stock_quantity > 0).length, color: "#F59E0B", icon: TrendingDown },
-              { label: "Out of Stock", value: products.filter(p => p.stock_quantity === 0).length, color: "#EF4444", icon: Package }
-            ].map((stat, i) => (
-              <Card key={i} className="overflow-hidden group hover:shadow-lg transition-all duration-300">
-                <CardContent className="p-6">
-                  <div className="flex items-center gap-4">
-                    <div className="p-3 rounded-xl bg-gradient-to-br transition-transform group-hover:scale-110" style={{ background: `linear-gradient(135deg, ${stat.color}20, ${stat.color}10)` }}>
-                      <stat.icon className="w-6 h-6" style={{ color: stat.color }} />
-                    </div>
-                    <div>
-                      <p className="text-sm text-gray-500">{stat.label}</p>
-                      <p className="text-3xl font-bold" style={{ color: stat.color }}>{stat.value}</p>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <Card className="overflow-hidden">
-              <CardHeader className="bg-gradient-to-r from-[#1EB053]/5 to-[#10B981]/5 border-b">
-                <CardTitle className="flex items-center gap-2">
-                  <div className="p-2 rounded-lg bg-gradient-to-br from-[#1EB053] to-[#10B981]">
-                    <Package className="w-4 h-4 text-white" />
-                  </div>
-                  Stock by Category
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="pt-6">
-                {(() => {
-                  const byCategory = {};
-                  products.forEach(p => {
-                    const cat = p.category || 'Uncategorized';
-                    if (!byCategory[cat]) byCategory[cat] = { count: 0, value: 0 };
-                    byCategory[cat].count += p.stock_quantity || 0;
-                    byCategory[cat].value += (p.stock_quantity || 0) * (p.unit_price || 0);
-                  });
-                  const data = Object.entries(byCategory).map(([name, { count, value }]) => ({ name, count, value }));
-                  return (
-                    <ColorfulBarChart 
-                      data={data}
-                      dataKey="count"
-                      xKey="name"
-                      height={300}
-                      formatter={(v) => `${v.toLocaleString()} units`}
-                    />
-                  );
-                })()}
-              </CardContent>
-            </Card>
-
-            <Card className="overflow-hidden">
-              <CardHeader className="bg-gradient-to-r from-[#0072C6]/5 to-[#6366F1]/5 border-b">
-                <CardTitle className="flex items-center gap-2">
-                  <div className="p-2 rounded-lg bg-gradient-to-br from-[#0072C6] to-[#6366F1]">
-                    <DollarSign className="w-4 h-4 text-white" />
-                  </div>
-                  Stock Value Distribution
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="pt-6">
-                {(() => {
-                  const byCategory = {};
-                  products.forEach(p => {
-                    const cat = p.category || 'Uncategorized';
-                    if (!byCategory[cat]) byCategory[cat] = 0;
-                    byCategory[cat] += (p.stock_quantity || 0) * (p.unit_price || 0);
-                  });
-                  const data = Object.entries(byCategory).map(([name, value]) => ({ name, value }));
-                  return (
-                    <DonutChart 
-                      data={data}
-                      height={300}
-                      formatter={(v) => `Le ${v.toLocaleString()}`}
-                      showLabels={false}
-                    />
-                  );
-                })()}
-              </CardContent>
-            </Card>
-          </div>
-        </TabsContent>
-
-        {/* Predictions Tab */}
-        <TabsContent value="predictions" className="mt-6">
-          <PredictiveAnalytics 
-            sales={sales} 
-            products={products} 
-            expenses={expenses} 
+        <TabsContent value={activeTab} className="mt-6">
+          <ReportsList
+            reports={filteredReports}
+            onRun={runReport}
+            onEdit={handleEdit}
+            onDelete={setDeleteReport}
+            onDuplicate={handleDuplicate}
+            onToggleFavorite={handleToggleFavorite}
           />
         </TabsContent>
-
-        {/* Saved Reports Tab */}
-        <TabsContent value="saved" className="mt-6">
-          <SavedReportsManager 
-            orgId={orgId} 
-            onLoadReport={handleLoadSavedReport}
-          />
-        </TabsContent>
-
-        {/* Scheduled Reports Tab */}
-        <TabsContent value="scheduled" className="mt-6">
-          <ScheduledReportsManager 
-            orgId={orgId}
-            currentEmployee={currentEmployee}
-            onEditReport={(report) => {
-              setActiveCustomReport(report);
-              setShowReportBuilder(true);
-            }}
-            onRunReport={(report) => {
-              setActiveCustomReport(report);
-              setActiveTab("custom");
-            }}
-          />
-        </TabsContent>
-
-        {/* Custom Report Tab */}
-        {activeCustomReport && (
-          <TabsContent value="custom" className="mt-6">
-            <ReportViewer
-              reportConfig={activeCustomReport}
-              data={getCustomReportData()}
-              isLoading={isLoading}
-              organisation={organisation?.[0]}
-              onRefresh={() => {
-                // Refresh data
-              }}
-              onSendEmail={async () => {
-                try {
-                  await base44.functions.invoke('sendScheduledReport', {
-                    reportId: activeCustomReport.id,
-                    forceRun: true
-                  });
-                } catch (error) {
-                  console.error('Failed to send report:', error);
-                }
-              }}
-            />
-          </TabsContent>
-        )}
       </Tabs>
 
-      {/* Save Report Dialog */}
-      <SaveReportDialog
-        open={showSaveDialog}
-        onOpenChange={setShowSaveDialog}
-        orgId={orgId}
-        currentEmployeeId={currentEmployee?.id}
-        currentEmployeeName={currentEmployee?.full_name}
-        filters={filters}
-        reportType={activeTab}
-      />
-
-      {/* Custom Report Builder */}
-      <CustomReportBuilder
-        open={showReportBuilder}
-        onOpenChange={setShowReportBuilder}
-        orgId={orgId}
-        currentEmployee={currentEmployee}
-        employees={employees}
-        onReportGenerated={handleCustomReportGenerated}
-      />
+      {/* Delete Confirmation */}
+      <AlertDialog open={!!deleteReport} onOpenChange={() => setDeleteReport(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Report</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete "{deleteReport?.name}"? This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => deleteMutation.mutate(deleteReport.id)}
+              className="bg-red-600 hover:bg-red-700"
+            >
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
-    </ProtectedPage>
   );
 }
