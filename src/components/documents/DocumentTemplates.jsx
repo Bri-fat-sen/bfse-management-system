@@ -1716,174 +1716,186 @@ export const DEFAULT_TEMPLATES = {
   <div class="sl-header">
     <div class="sl-flag-bar"></div>
     <div class="sl-company-logo" style="background: linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%);">📅</div>
-    <h1>Leave & Time Off Policy</h1>
-    <p class="sl-subtitle">{{company_name}} • In accordance with Employment Act 2023 of Sierra Leone</p>
+    <h1>Leave & Time-Off Policy</h1>
+    <p class="sl-subtitle">{{company_name}} • Comprehensive Leave Entitlements & Procedures</p>
     <p class="sl-ref-number">Ref: LP-{{document_ref}}</p>
   </div>
 
   <div class="sl-section">
-    <h2>1. Purpose & Scope</h2>
-    <p>This Leave Policy establishes the guidelines and procedures for all types of leave at <strong>{{company_name}}</strong>. It is designed to ensure fair and consistent administration of leave entitlements while meeting the statutory requirements of the Employment Act 2023 of Sierra Leone.</p>
-    <p>This policy applies to all employees, including permanent, contract, and temporary staff, unless otherwise specified. Leave entitlements may vary based on employment type and length of service.</p>
+    <h2>1. Introduction & Purpose</h2>
+    <p>This Leave Policy establishes the framework for managing all types of leave at <strong>{{company_name}}</strong>. It outlines the various leave entitlements available to employees, the procedures for requesting leave, and the responsibilities of both employees and managers in the leave management process.</p>
+    <p>This policy is developed in full compliance with the Employment Act 2023 of Sierra Leone and reflects our commitment to supporting employees' work-life balance while maintaining operational effectiveness.</p>
+    <p><strong>Scope:</strong> This policy applies to all permanent and fixed-term employees of {{company_name}}. Temporary and casual workers may have different entitlements as specified in their contracts.</p>
   </div>
 
   <div class="sl-section">
-    <h2>2. Annual Leave (Vacation Leave)</h2>
-    <div class="sl-highlight-box" style="background: linear-gradient(135deg, #ecfeff 0%, #cffafe 100%); border-color: #0ea5e9;">
+    <h2>2. Annual Leave (Vacation)</h2>
+    <div class="sl-highlight-box" style="background: linear-gradient(135deg, #dbeafe 0%, #e0f2fe 100%); border-color: #0284c7;">
       <h3 style="color: #0284c7;">🏖️ Annual Leave Entitlement</h3>
-      <p>Per Section 44 of the Employment Act 2023, all employees are entitled to paid annual leave:</p>
+      <p>Per Section 44 of the Employment Act 2023, employees are entitled to:</p>
       <div class="sl-info-grid">
-        <div class="sl-info-item" style="border-left-color: #0ea5e9;">
+        <div class="sl-info-item" style="border-left-color: #0284c7;">
           <label>Annual Entitlement</label>
           <span>{{annual_leave_days}} working days</span>
         </div>
-        <div class="sl-info-item" style="border-left-color: #0ea5e9;">
-          <label>Monthly Accrual Rate</label>
-          <span>{{monthly_accrual}} days/month</span>
+        <div class="sl-info-item" style="border-left-color: #0284c7;">
+          <label>Monthly Accrual</label>
+          <span>1.75 days/month</span>
         </div>
-        <div class="sl-info-item" style="border-left-color: #0ea5e9;">
+        <div class="sl-info-item" style="border-left-color: #0284c7;">
           <label>Eligibility</label>
-          <span>After 12 months of continuous service</span>
+          <span>After 12 months service</span>
         </div>
-        <div class="sl-info-item" style="border-left-color: #0ea5e9;">
-          <label>Leave Year</label>
-          <span>{{leave_year}}</span>
+        <div class="sl-info-item" style="border-left-color: #0284c7;">
+          <label>Pro-rata in First Year</label>
+          <span>Yes, for employees with 6+ months</span>
         </div>
       </div>
     </div>
     
     <p><strong>2.1 Accrual & Eligibility:</strong></p>
     <ul>
-      <li>Annual leave accrues from the first day of employment but becomes available after completing 12 months of continuous service</li>
-      <li>Pro-rata entitlement applies for employees who have not completed a full year</li>
-      <li>Leave is calculated based on working days (excludes weekends and public holidays)</li>
+      <li>Full annual leave entitlement accrues after completing 12 months of continuous service</li>
+      <li>Employees with 6-12 months of service may be eligible for pro-rated leave at management discretion</li>
+      <li>Leave accrues monthly at a rate of approximately 1.75 days per month worked</li>
+      <li>Probationary employees accrue leave but may only take it after confirmation</li>
     </ul>
 
-    <p><strong>2.2 Requesting Annual Leave:</strong></p>
+    <p><strong>2.2 Taking Annual Leave:</strong></p>
     <ul>
-      <li>Submit leave requests at least {{annual_leave_notice}} in advance through the HR system or to your supervisor</li>
-      <li>Requests for peak periods (December holidays, Easter) should be submitted at least 1 month in advance</li>
-      <li>Leave approval is subject to operational requirements and management discretion</li>
-      <li>Employees may request up to {{max_consecutive_days}} consecutive days at one time; longer periods require senior management approval</li>
+      <li>Leave must be taken within 12 months of the anniversary date unless prior approval is obtained for carry-forward</li>
+      <li>Submit leave requests at least {{annual_leave_notice}} in advance</li>
+      <li>Approval is subject to business needs and operational requirements</li>
+      <li>Managers should respond to leave requests within 5 working days</li>
+      <li>During peak periods, leave may be restricted—these periods will be communicated in advance</li>
     </ul>
 
-    <p><strong>2.3 Carry-Forward & Expiry:</strong></p>
+    <p><strong>2.3 Carry-Forward & Payment:</strong></p>
     <ul>
-      <li>Annual leave should be taken within 12 months of becoming available</li>
-      <li>Maximum of {{carry_forward_days}} days may be carried forward to the following year with written management approval</li>
-      <li>Carried-forward leave must be used within the first 3 months of the new leave year</li>
-      <li>Unused leave beyond the carry-forward limit will be forfeited</li>
-      <li>Annual leave cannot normally be converted to cash payment except upon termination of employment</li>
+      <li>Maximum of {{carry_forward_days}} days may be carried forward to the next leave year with written management approval</li>
+      <li>Carried-forward leave must be used within the first 6 months of the new leave year</li>
+      <li>Unused leave cannot be exchanged for cash payment except upon termination of employment</li>
+      <li>Upon termination, employees will be paid for accrued but unused annual leave</li>
     </ul>
 
     <p><strong>2.4 Leave During Notice Period:</strong></p>
     <ul>
-      <li>Annual leave may be taken during the notice period with management approval</li>
-      <li>Outstanding leave may be paid out upon termination at the employer's discretion</li>
+      <li>Annual leave may be taken during the notice period only with prior management approval</li>
+      <li>The company may require employees to use remaining leave during the notice period</li>
     </ul>
   </div>
 
   <div class="sl-section">
     <h2>3. Sick Leave</h2>
-    <div class="sl-highlight-box" style="background: linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%); border-color: #ef4444;">
+    <div class="sl-highlight-box" style="background: linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%); border-color: #dc2626;">
       <h3 style="color: #dc2626;">🏥 Sick Leave Entitlement</h3>
       <div class="sl-info-grid">
-        <div class="sl-info-item" style="border-left-color: #ef4444;">
+        <div class="sl-info-item" style="border-left-color: #dc2626;">
           <label>Paid Sick Days</label>
           <span>{{sick_leave_days}} days per year</span>
         </div>
-        <div class="sl-info-item" style="border-left-color: #ef4444;">
-          <label>Medical Certificate</label>
-          <span>Required for {{medical_cert_days}}+ consecutive days</span>
+        <div class="sl-info-item" style="border-left-color: #dc2626;">
+          <label>Medical Certificate Required</label>
+          <span>After {{sick_cert_days}} consecutive days</span>
         </div>
       </div>
     </div>
 
-    <p><strong>3.1 Notification Procedure:</strong></p>
+    <p><strong>3.1 Notification Requirements:</strong></p>
     <ul>
-      <li>Notify your supervisor as early as possible on the first day of illness—preferably before your scheduled start time</li>
-      <li>If unable to call personally, have a family member or colleague notify on your behalf</li>
-      <li>Provide an estimated date of return if possible</li>
-      <li>Keep your supervisor updated if your absence extends beyond expected return date</li>
+      <li>Notify your supervisor as early as possible on the first day of illness, ideally before your normal start time</li>
+      <li>Provide the expected duration of absence if known</li>
+      <li>Keep your supervisor updated if the absence extends beyond initial expectations</li>
+      <li>Provide contact details where you can be reached if needed</li>
     </ul>
 
     <p><strong>3.2 Documentation:</strong></p>
     <ul>
-      <li>A medical certificate from a registered medical practitioner is required for absences of {{medical_cert_days}} or more consecutive working days</li>
-      <li>Medical certificates must state the nature of illness (if appropriate), dates of incapacity, and expected return date</li>
-      <li>The company reserves the right to request medical documentation for any absence</li>
+      <li>A medical certificate from a registered medical practitioner is required for absences of {{sick_cert_days}} or more consecutive working days</li>
+      <li>The certificate must specify the nature of illness (unless confidential) and expected return date</li>
+      <li>Self-certification is acceptable for shorter absences</li>
+      <li>Certificates must be submitted within 48 hours of return to work</li>
     </ul>
 
     <p><strong>3.3 Extended Sick Leave:</strong></p>
     <ul>
-      <li>After exhausting paid sick leave, extended sick leave may be granted at management discretion</li>
-      <li>Extended sick leave may be unpaid or partially paid depending on circumstances</li>
-      <li>For serious or chronic illness, the company may require an independent medical examination</li>
-      <li>Return-to-work clearance may be required for extended illness or certain conditions</li>
+      <li>If sick leave exceeds the annual entitlement, additional leave may be granted as unpaid leave</li>
+      <li>Long-term illness exceeding {{long_term_sick_weeks}} weeks may trigger a review process</li>
+      <li>The company may request an independent medical examination</li>
+      <li>Return-to-work meetings will be conducted after extended absences</li>
     </ul>
 
-    <p><strong>3.4 Abuse of Sick Leave:</strong></p>
+    <p><strong>3.4 Sick Leave Abuse:</strong></p>
     <ul>
-      <li>Patterns of sick leave abuse (e.g., frequent Monday/Friday absences) may trigger investigation</li>
-      <li>Falsifying sick leave or medical certificates is grounds for disciplinary action</li>
+      <li>Patterns of absence (e.g., regular Monday/Friday absences) may be investigated</li>
+      <li>Abuse of sick leave may result in disciplinary action</li>
+      <li>Employees may be required to provide medical evidence for frequent short-term absences</li>
     </ul>
   </div>
 
   <div class="sl-section">
     <h2>4. Maternity Leave</h2>
     <div class="sl-highlight-box" style="background: linear-gradient(135deg, #fdf4ff 0%, #fae8ff 100%); border-color: #a855f7;">
-      <h3 style="color: #9333ea;">👶 Maternity Leave (Section 47, Employment Act 2023)</h3>
+      <h3 style="color: #7c3aed;">👶 Maternity Leave (Section 47, Employment Act 2023)</h3>
       <div class="sl-info-grid">
         <div class="sl-info-item" style="border-left-color: #a855f7;">
           <label>Total Entitlement</label>
-          <span>14 weeks (98 calendar days)</span>
+          <span>14 weeks (98 days)</span>
         </div>
         <div class="sl-info-item" style="border-left-color: #a855f7;">
           <label>Pre-Delivery Leave</label>
-          <span>Up to 4 weeks before expected due date</span>
+          <span>Up to 4 weeks before due date</span>
         </div>
         <div class="sl-info-item" style="border-left-color: #a855f7;">
           <label>Post-Delivery Minimum</label>
-          <span>At least 6 weeks after delivery</span>
+          <span>6 weeks mandatory</span>
         </div>
         <div class="sl-info-item" style="border-left-color: #a855f7;">
-          <label>Eligibility</label>
-          <span>All female employees</span>
+          <label>Pay Structure</label>
+          <span>{{maternity_pay_structure}}</span>
         </div>
       </div>
     </div>
 
-    <p><strong>4.1 Entitlement & Pay:</strong></p>
+    <p><strong>4.1 Eligibility:</strong></p>
     <ul>
-      <li>First 6 weeks: Full pay (100% of basic salary)</li>
-      <li>Remaining 8 weeks: Half pay (50% of basic salary)</li>
-      <li>Statutory allowances and benefits continue during maternity leave</li>
+      <li>All female employees are entitled to maternity leave regardless of length of service</li>
+      <li>Full pay entitlements may be subject to minimum service requirements as specified</li>
     </ul>
 
-    <p><strong>4.2 Notification Requirements:</strong></p>
+    <p><strong>4.2 Notification & Application:</strong></p>
     <ul>
-      <li>Notify HR and your supervisor of pregnancy as soon as reasonably practicable, preferably before the end of the first trimester</li>
-      <li>Provide a medical certificate confirming pregnancy and expected due date</li>
-      <li>Submit maternity leave application at least 4 weeks before intended start date</li>
-      <li>Notify HR of the actual delivery date within 7 days of birth</li>
+      <li>Notify HR and your supervisor of pregnancy as soon as reasonably practicable</li>
+      <li>Submit a medical certificate confirming pregnancy and expected due date</li>
+      <li>Submit formal maternity leave application at least {{maternity_notice}} before intended start date</li>
+      <li>Confirm intended return date in writing</li>
     </ul>
 
-    <p><strong>4.3 Job Protection:</strong></p>
+    <p><strong>4.3 Pay During Maternity Leave:</strong></p>
     <ul>
-      <li>Employment is protected during maternity leave as guaranteed by law</li>
-      <li>Employees are entitled to return to the same position or equivalent role</li>
-      <li>Dismissal during pregnancy or maternity leave (except for gross misconduct) is unlawful</li>
+      <li>First 6 weeks: 100% of regular salary</li>
+      <li>Remaining 8 weeks: {{maternity_remaining_pay}}% of regular salary</li>
+      <li>NASSIT contributions continue during paid maternity leave</li>
     </ul>
 
-    <p><strong>4.4 Pregnancy-Related Accommodations:</strong></p>
+    <p><strong>4.4 Job Protection:</strong></p>
     <ul>
-      <li>Reasonable accommodations will be made for pregnant employees (e.g., modified duties, rest breaks)</li>
-      <li>Antenatal appointments are permitted with reasonable notice</li>
+      <li>Your position is protected during maternity leave as guaranteed by law</li>
+      <li>You have the right to return to the same or equivalent position</li>
+      <li>No employee may be dismissed or disadvantaged due to pregnancy or maternity leave</li>
     </ul>
 
     <p><strong>4.5 Nursing Breaks:</strong></p>
     <ul>
-      <li>Nursing mothers are entitled to {{nursing_break_duration}} paid break(s) during the working day for the first {{nursing_period}} months after returning to work</li>
+      <li>Upon return, nursing mothers are entitled to {{nursing_break_hours}} hour(s) per day for nursing during the first 12 months</li>
+      <li>Nursing breaks may be taken as one break or split into shorter periods</li>
+      <li>A private, hygienic space will be provided for nursing or expressing milk</li>
+    </ul>
+
+    <p><strong>4.6 Pregnancy-Related Illness:</strong></p>
+    <ul>
+      <li>If you are ill due to pregnancy before maternity leave begins, this may be treated as sick leave</li>
+      <li>Pregnancy-related sick leave in the 4 weeks before due date may trigger automatic start of maternity leave</li>
     </ul>
   </div>
 
@@ -1894,15 +1906,15 @@ export const DEFAULT_TEMPLATES = {
       <div class="sl-info-grid">
         <div class="sl-info-item" style="border-left-color: #3b82f6;">
           <label>Entitlement</label>
-          <span>{{paternity_leave_days}} working days</span>
+          <span>{{paternity_days}} working days</span>
         </div>
         <div class="sl-info-item" style="border-left-color: #3b82f6;">
           <label>Pay</label>
-          <span>Full pay (100%)</span>
+          <span>Full pay</span>
         </div>
         <div class="sl-info-item" style="border-left-color: #3b82f6;">
           <label>Timeframe</label>
-          <span>Within {{paternity_timeframe}} of birth</span>
+          <span>Within 2 weeks of birth</span>
         </div>
         <div class="sl-info-item" style="border-left-color: #3b82f6;">
           <label>Documentation</label>
@@ -1913,134 +1925,148 @@ export const DEFAULT_TEMPLATES = {
 
     <p><strong>5.1 Eligibility & Application:</strong></p>
     <ul>
-      <li>Available to all male employees whose spouse or partner gives birth</li>
-      <li>Also applies to employees whose child is born via surrogacy or adoption</li>
-      <li>Apply through HR with anticipated due date; submit birth certificate upon return</li>
-      <li>Leave must be taken within {{paternity_timeframe}} of the child's birth and cannot be split</li>
+      <li>Available to male employees upon the birth of their child</li>
+      <li>Notify HR and your supervisor of expected birth date in advance</li>
+      <li>Submit formal application with birth certificate upon return</li>
+      <li>Leave must be taken in one continuous period</li>
+    </ul>
+
+    <p><strong>5.2 Adoption:</strong></p>
+    <ul>
+      <li>Similar leave provisions apply for fathers in cases of legal adoption</li>
+      <li>Documentation of adoption proceedings required</li>
     </ul>
   </div>
 
   <div class="sl-section">
     <h2>6. Compassionate & Bereavement Leave</h2>
-    <div class="sl-highlight-box" style="background: linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%); border-color: #64748b;">
-      <h3 style="color: #475569;">💐 Compassionate Leave Entitlements</h3>
+    <div class="sl-highlight-box" style="background: linear-gradient(135deg, #f5f5f4 0%, #e7e5e4 100%); border-color: #78716c;">
+      <h3 style="color: #57534e;">🕊️ Bereavement Leave</h3>
       <div class="sl-info-grid">
-        <div class="sl-info-item" style="border-left-color: #64748b;">
-          <label>Immediate Family Death</label>
-          <span>{{compassionate_immediate}} working days</span>
+        <div class="sl-info-item" style="border-left-color: #78716c;">
+          <label>Immediate Family</label>
+          <span>{{bereavement_immediate}} working days</span>
         </div>
-        <div class="sl-info-item" style="border-left-color: #64748b;">
-          <label>Extended Family Death</label>
-          <span>{{compassionate_extended}} working days</span>
+        <div class="sl-info-item" style="border-left-color: #78716c;">
+          <label>Extended Family</label>
+          <span>{{bereavement_extended}} working days</span>
         </div>
       </div>
     </div>
 
-    <p><strong>6.1 Definitions:</strong></p>
+    <p><strong>6.1 Immediate Family Bereavement:</strong></p>
     <ul>
-      <li><strong>Immediate Family:</strong> Spouse, child, parent, sibling, grandparent, grandchild</li>
-      <li><strong>Extended Family:</strong> In-laws, aunts, uncles, cousins, nieces, nephews</li>
+      <li><strong>{{bereavement_immediate}} working days</strong> paid leave for death of: spouse/partner, child, parent, sibling</li>
+      <li>Leave begins immediately upon notification</li>
+      <li>Additional unpaid leave may be granted for travel or cultural obligations</li>
     </ul>
 
-    <p><strong>6.2 Other Compassionate Circumstances:</strong></p>
+    <p><strong>6.2 Extended Family Bereavement:</strong></p>
     <ul>
-      <li>Serious illness of immediate family member: Up to 3 days</li>
-      <li>Hospitalization of dependent child: Up to 3 days</li>
-      <li>Other exceptional circumstances: At management discretion</li>
+      <li><strong>{{bereavement_extended}} working days</strong> paid leave for: grandparents, grandchildren, parents-in-law, aunts, uncles, nieces, nephews</li>
     </ul>
 
-    <p><strong>6.3 Procedure:</strong></p>
+    <p><strong>6.3 Compassionate Leave (Non-Bereavement):</strong></p>
     <ul>
-      <li>Notify your supervisor or HR as soon as possible</li>
-      <li>Documentary evidence (death certificate, hospital records) may be required</li>
-      <li>Additional unpaid leave may be granted for exceptional circumstances</li>
+      <li>Up to 3 days paid leave may be granted for serious illness of immediate family members</li>
+      <li>Emergency situations requiring employee's presence</li>
+      <li>Approval at management discretion based on circumstances</li>
+    </ul>
+
+    <p><strong>6.4 Documentation:</strong></p>
+    <ul>
+      <li>Death certificate or equivalent documentation may be requested</li>
+      <li>Relationship to deceased may need to be verified</li>
     </ul>
   </div>
 
   <div class="sl-section">
     <h2>7. Public Holidays</h2>
-    <p>All employees are entitled to paid leave on official Sierra Leone public holidays as declared by the Government. The standard public holidays include:</p>
+    <p>All employees are entitled to paid leave on the following Sierra Leone public holidays:</p>
     <ul>
       <li>New Year's Day (January 1)</li>
       <li>Independence Day (April 27)</li>
-      <li>Good Friday and Easter Monday</li>
-      <li>Eid-ul-Fitr and Eid-ul-Adha</li>
+      <li>Eid ul-Fitr (dates vary)</li>
+      <li>Eid ul-Adha (dates vary)</li>
       <li>Christmas Day (December 25)</li>
       <li>Boxing Day (December 26)</li>
       <li>Other holidays as declared by the Government</li>
     </ul>
-
-    <p><strong>7.1 Working on Public Holidays:</strong></p>
+    <p><strong>Working on Public Holidays:</strong></p>
     <ul>
-      <li>Employees required to work on public holidays shall be compensated at <strong>2.5 times</strong> the regular hourly rate</li>
-      <li>Alternatively, a compensatory day off may be granted in lieu of overtime pay</li>
-      <li>Management will provide reasonable advance notice when holiday work is required</li>
+      <li>If you are required to work on a public holiday, compensation shall be at <strong>{{holiday_pay_rate}}x the regular rate</strong></li>
+      <li>Alternatively, a day off in lieu may be granted with management approval</li>
     </ul>
   </div>
 
   <div class="sl-section">
-    <h2>8. Study Leave & Examination Leave</h2>
+    <h2>8. Study & Examination Leave</h2>
     <ul>
-      <li><strong>Approved Studies:</strong> Up to {{study_leave_days}} days per year for job-related education approved by the company</li>
-      <li><strong>Examination Leave:</strong> Up to {{exam_leave_days}} days for sitting approved professional examinations</li>
-      <li>Prior approval and evidence of enrollment/exam registration required</li>
-      <li>May be paid or unpaid depending on relevance to role and company policy</li>
+      <li>Employees pursuing approved work-related qualifications may be granted study leave</li>
+      <li>Up to {{study_leave_days}} days per year for examinations and preparation</li>
+      <li>Prior approval required with course documentation</li>
+      <li>Leave for examinations will be paid; additional study time may be unpaid</li>
     </ul>
   </div>
 
   <div class="sl-section">
-    <h2>9. Marriage Leave</h2>
+    <h2>9. Jury Duty & Court Attendance</h2>
     <ul>
-      <li>Employees are entitled to <strong>{{marriage_leave_days}} working days</strong> of paid leave for their own marriage</li>
-      <li>Marriage certificate must be submitted within 30 days of return</li>
-      <li>This leave may only be taken once during employment</li>
+      <li>Employees called for jury duty will receive full pay for the duration</li>
+      <li>Proof of jury service must be provided</li>
+      <li>Attendance as a witness (subpoenaed) is treated similarly</li>
     </ul>
   </div>
 
   <div class="sl-section">
-    <h2>10. Unpaid Leave (Leave of Absence)</h2>
+    <h2>10. Unpaid Leave</h2>
+    <p>Unpaid leave may be granted at management discretion for:</p>
     <ul>
-      <li>Unpaid leave may be granted at management discretion for personal reasons not covered by other leave types</li>
-      <li>Submit requests in writing at least {{unpaid_leave_notice}} in advance</li>
-      <li>Maximum duration: {{max_unpaid_leave}} unless special circumstances apply</li>
-      <li>Benefits may be suspended or prorated during extended unpaid leave</li>
-      <li>NASSIT contributions will not be made during unpaid leave periods</li>
+      <li>Personal matters not covered by other leave types</li>
+      <li>Extended travel for personal reasons</li>
+      <li>Career breaks (subject to separate agreement)</li>
+    </ul>
+    <p><strong>Requirements:</strong></p>
+    <ul>
+      <li>Submit written request at least {{unpaid_leave_notice}} in advance</li>
+      <li>Maximum duration of {{unpaid_leave_max}} months in any 12-month period</li>
+      <li>Approval subject to business needs</li>
+      <li>NASSIT contributions will not be made during unpaid leave</li>
     </ul>
   </div>
 
   <div class="sl-section">
-    <h2>11. Jury Duty & Civic Leave</h2>
-    <p>Employees summoned for jury duty or to serve as witnesses in court proceedings shall be granted leave:</p>
-    <ul>
-      <li>Full pay for the duration of civic duty</li>
-      <li>Provide official summons or court documentation</li>
-      <li>Return to work promptly when not required at court</li>
-    </ul>
+    <h2>11. Leave Request Procedure</h2>
+    <ol>
+      <li><strong>Submit Request:</strong> Complete leave request form (paper or electronic) with dates and type of leave</li>
+      <li><strong>Manager Review:</strong> Manager reviews request considering business needs and team coverage</li>
+      <li><strong>Approval/Rejection:</strong> Manager approves or rejects with reason within 5 working days</li>
+      <li><strong>Confirmation:</strong> Employee receives written confirmation of approved leave</li>
+      <li><strong>Handover:</strong> Arrange proper handover of duties before leave commences</li>
+      <li><strong>Emergency Contact:</strong> Provide contact details for emergencies</li>
+    </ol>
   </div>
 
   <div class="sl-section">
-    <h2>12. Leave Records & Administration</h2>
+    <h2>12. Manager Responsibilities</h2>
     <ul>
-      <li>All leave requests and approvals must be documented</li>
-      <li>Employees can check their leave balance through the HR system or by contacting HR</li>
-      <li>Leave taken without prior approval (except emergencies) may be treated as unauthorized absence</li>
-      <li>Unauthorized absence is subject to disciplinary action and salary deduction</li>
+      <li>Process leave requests promptly and fairly</li>
+      <li>Maintain adequate team coverage while allowing employees to take entitled leave</li>
+      <li>Monitor leave patterns and address any concerns</li>
+      <li>Ensure employees take their leave entitlements</li>
+      <li>Maintain accurate leave records</li>
     </ul>
-  </div>
-
-  <div class="sl-section">
-    <h2>13. Policy Review</h2>
-    <p>This Leave Policy will be reviewed annually and updated as necessary to comply with changes in legislation or company requirements. Employees will be notified of any significant changes.</p>
   </div>
 
   <div class="sl-acknowledgment">
     <h2>Employee Acknowledgment</h2>
     <p>I, <strong>{{employee_name}}</strong>, hereby acknowledge that:</p>
     <ul>
-      <li>I have received, read, and fully understand this Leave Policy</li>
+      <li>I have received, read, and fully understood this Leave Policy</li>
       <li>I understand my leave entitlements and the procedures for requesting leave</li>
-      <li>I agree to comply with all aspects of this policy</li>
-      <li>I understand that failure to follow proper leave procedures may result in disciplinary action</li>
+      <li>I agree to follow the proper procedures outlined in this policy</li>
+      <li>I understand that abuse of leave provisions may result in disciplinary action</li>
+      <li>I will provide timely notification and proper documentation as required</li>
     </ul>
   </div>
 
@@ -2059,7 +2085,7 @@ export const DEFAULT_TEMPLATES = {
     <div class="sl-footer-logo">🇸🇱</div>
     <p><strong>{{company_name}}</strong></p>
     <p>Republic of Sierra Leone</p>
-    <p class="sl-legal-note">This policy complies with the Employment Act 2023 of Sierra Leone. All leave entitlements meet or exceed statutory minimums.</p>
+    <p class="sl-legal-note">This policy complies with the Employment Act 2023 of Sierra Leone. Work-life balance is valued at {{company_name}}.</p>
   </div>
 </div>
     `,
@@ -2070,24 +2096,22 @@ export const DEFAULT_TEMPLATES = {
       { key: "position", label: "Position", type: "text", auto_fill: "employee.position" },
       { key: "department", label: "Department", type: "text", auto_fill: "employee.department" },
       { key: "annual_leave_days", label: "Annual Leave Days", type: "select", options: ["21", "25", "30"], default: "21" },
-      { key: "monthly_accrual", label: "Monthly Accrual Rate", type: "text", default: "1.75" },
-      { key: "leave_year", label: "Leave Year", type: "select", options: ["January - December", "April - March", "July - June"], default: "January - December" },
-      { key: "annual_leave_notice", label: "Annual Leave Notice Period", type: "select", options: ["1 week", "2 weeks", "1 month"], default: "2 weeks" },
-      { key: "max_consecutive_days", label: "Max Consecutive Days", type: "select", options: ["10", "14", "21"], default: "14" },
-      { key: "carry_forward_days", label: "Carry Forward Days", type: "select", options: ["5", "10", "15"], default: "10" },
-      { key: "sick_leave_days", label: "Sick Leave Days", type: "select", options: ["5", "10", "12"], default: "5" },
-      { key: "medical_cert_days", label: "Days Before Medical Cert Required", type: "select", options: ["2", "3"], default: "2" },
-      { key: "nursing_break_duration", label: "Nursing Break Duration", type: "text", default: "two 30-minute" },
-      { key: "nursing_period", label: "Nursing Break Period (months)", type: "select", options: ["6", "9", "12"], default: "6" },
-      { key: "paternity_leave_days", label: "Paternity Leave Days", type: "select", options: ["5", "7", "10"], default: "5" },
-      { key: "paternity_timeframe", label: "Paternity Leave Timeframe", type: "select", options: ["2 weeks", "1 month", "6 weeks"], default: "2 weeks" },
-      { key: "compassionate_immediate", label: "Compassionate Leave (Immediate)", type: "select", options: ["3", "5", "7"], default: "5" },
-      { key: "compassionate_extended", label: "Compassionate Leave (Extended)", type: "select", options: ["2", "3"], default: "3" },
-      { key: "study_leave_days", label: "Study Leave Days", type: "select", options: ["5", "10", "15"], default: "10" },
-      { key: "exam_leave_days", label: "Exam Leave Days", type: "select", options: ["3", "5"], default: "3" },
-      { key: "marriage_leave_days", label: "Marriage Leave Days", type: "select", options: ["3", "5"], default: "3" },
-      { key: "unpaid_leave_notice", label: "Unpaid Leave Notice", type: "select", options: ["1 week", "2 weeks", "1 month"], default: "2 weeks" },
-      { key: "max_unpaid_leave", label: "Max Unpaid Leave", type: "select", options: ["1 month", "3 months", "6 months"], default: "3 months" }
+      { key: "annual_leave_notice", label: "Annual Leave Notice Period", type: "select", options: ["1 week", "2 weeks", "3 weeks"], default: "2 weeks" },
+      { key: "carry_forward_days", label: "Max Carry-Forward Days", type: "select", options: ["5", "10", "15"], default: "10" },
+      { key: "sick_leave_days", label: "Sick Leave Days Per Year", type: "select", options: ["5", "7", "10"], default: "5" },
+      { key: "sick_cert_days", label: "Days Before Medical Certificate Required", type: "select", options: ["2", "3"], default: "2" },
+      { key: "long_term_sick_weeks", label: "Long-Term Sick Review Threshold (Weeks)", type: "select", options: ["4", "6", "8"], default: "4" },
+      { key: "maternity_pay_structure", label: "Maternity Pay Structure", type: "text", default: "6 weeks full pay + 8 weeks half pay" },
+      { key: "maternity_notice", label: "Maternity Leave Notice Period", type: "select", options: ["4 weeks", "6 weeks", "8 weeks"], default: "6 weeks" },
+      { key: "maternity_remaining_pay", label: "Remaining Maternity Pay %", type: "select", options: ["50", "75", "100"], default: "50" },
+      { key: "nursing_break_hours", label: "Nursing Break Hours Per Day", type: "select", options: ["1", "1.5", "2"], default: "1" },
+      { key: "paternity_days", label: "Paternity Leave Days", type: "select", options: ["3", "5", "7", "10"], default: "5" },
+      { key: "bereavement_immediate", label: "Bereavement Leave - Immediate Family (Days)", type: "select", options: ["3", "5", "7"], default: "5" },
+      { key: "bereavement_extended", label: "Bereavement Leave - Extended Family (Days)", type: "select", options: ["2", "3", "5"], default: "3" },
+      { key: "holiday_pay_rate", label: "Holiday Pay Rate Multiplier", type: "select", options: ["1.5", "2", "2.5"], default: "2.5" },
+      { key: "study_leave_days", label: "Study Leave Days Per Year", type: "select", options: ["3", "5", "7"], default: "5" },
+      { key: "unpaid_leave_notice", label: "Unpaid Leave Notice Period", type: "select", options: ["1 week", "2 weeks", "4 weeks"], default: "2 weeks" },
+      { key: "unpaid_leave_max", label: "Max Unpaid Leave (Months)", type: "select", options: ["1", "2", "3", "6"], default: "3" }
     ]
   },
 
@@ -2430,191 +2454,170 @@ export const DEFAULT_TEMPLATES = {
     <div class="sl-flag-bar"></div>
     <div class="sl-company-logo" style="background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);">💻</div>
     <h1>Information Technology Acceptable Use Policy</h1>
-    <p class="sl-subtitle">{{company_name}} • IT Security & Usage Guidelines</p>
-    <p class="sl-ref-number">Ref: ITAUP-{{document_ref}}</p>
+    <p class="sl-subtitle">{{company_name}} • Technology Resources Guidelines & Security Requirements</p>
+    <p class="sl-ref-number">Ref: IT-AUP-{{document_ref}}</p>
   </div>
 
   <div class="sl-section">
-    <h2>1. Introduction & Purpose</h2>
-    <p><strong>{{company_name}}</strong> provides employees with access to various information technology resources to enable them to perform their job duties effectively. These resources represent a significant investment and are critical to our business operations.</p>
-    <p>This IT Acceptable Use Policy ("Policy") establishes guidelines and rules for the appropriate use of {{company_name}}'s technology resources. The purpose of this Policy is to:</p>
+    <h2>1. Purpose & Objectives</h2>
+    <p>This Information Technology Acceptable Use Policy ("IT Policy") establishes the rules and guidelines for the appropriate use of <strong>{{company_name}}</strong>'s information technology resources. The objectives of this policy are to:</p>
     <ul>
-      <li>Protect the company's IT infrastructure, data, and systems from misuse, damage, or security threats</li>
-      <li>Ensure compliance with applicable laws and regulations</li>
-      <li>Maintain a productive and professional work environment</li>
-      <li>Protect the company's reputation and intellectual property</li>
-      <li>Safeguard employee and customer data privacy</li>
+      <li>Protect company data, systems, and infrastructure from security threats</li>
+      <li>Ensure efficient and productive use of IT resources</li>
+      <li>Maintain compliance with applicable laws and regulations</li>
+      <li>Preserve the integrity and availability of company information systems</li>
+      <li>Protect the company's reputation and business interests</li>
+      <li>Establish clear expectations for employee behavior when using IT resources</li>
     </ul>
-    <p>All users of company IT resources are expected to exercise good judgment, act responsibly, and comply with this Policy at all times.</p>
+    <p>All employees are responsible for using company IT resources in a professional, ethical, secure, and lawful manner. Violations of this policy may result in disciplinary action, including termination of employment.</p>
   </div>
 
   <div class="sl-section">
-    <h2>2. Scope & Applicability</h2>
-    <p>This Policy applies to:</p>
-    <ul>
-      <li>All employees, contractors, consultants, temporary staff, and interns</li>
-      <li>Any person who has been granted access to {{company_name}}'s IT systems</li>
-      <li>All company-owned, leased, or managed IT equipment and services</li>
-    </ul>
-
-    <p><strong>Covered Resources Include:</strong></p>
-    <div class="sl-info-grid">
-      <div class="sl-info-item" style="border-left-color: #6366f1;">
-        <label>Hardware</label>
-        <span>Computers, laptops, tablets, mobile devices, printers, servers</span>
-      </div>
-      <div class="sl-info-item" style="border-left-color: #6366f1;">
-        <label>Software</label>
-        <span>Operating systems, applications, licensed programs</span>
-      </div>
-      <div class="sl-info-item" style="border-left-color: #6366f1;">
-        <label>Networks</label>
-        <span>LAN, WAN, Wi-Fi, VPN, internet access</span>
-      </div>
-      <div class="sl-info-item" style="border-left-color: #6366f1;">
-        <label>Communications</label>
-        <span>Email, instant messaging, video conferencing, phone systems</span>
-      </div>
-      <div class="sl-info-item" style="border-left-color: #6366f1;">
-        <label>Data & Storage</label>
-        <span>Files, databases, cloud storage, backup systems</span>
-      </div>
-      <div class="sl-info-item" style="border-left-color: #6366f1;">
-        <label>BYOD</label>
-        <span>Personal devices used for work purposes</span>
-      </div>
+    <h2>2. Scope & Application</h2>
+    <p>This policy applies to all {{company_name}} employees, contractors, temporary workers, consultants, and any other individuals granted access to company IT resources. It covers:</p>
+    
+    <div class="sl-highlight-box" style="background: linear-gradient(135deg, #eef2ff 0%, #e0e7ff 100%); border-color: #6366f1;">
+      <h3 style="color: #4f46e5;">🖥️ Covered IT Resources</h3>
+      <ul>
+        <li><strong>Hardware:</strong> Company-provided computers (desktops, laptops), tablets, smartphones, printers, scanners, servers, and networking equipment</li>
+        <li><strong>Software:</strong> Operating systems, applications, databases, cloud services, and any licensed software</li>
+        <li><strong>Communications:</strong> Email systems, instant messaging, video conferencing, VoIP, and collaboration platforms</li>
+        <li><strong>Network:</strong> Company networks (wired and wireless), VPN connections, and internet access</li>
+        <li><strong>Data:</strong> Company data in any form—electronic files, databases, documents, emails, and records</li>
+        <li><strong>Personal Devices (BYOD):</strong> Personal devices used to access company systems, data, or networks</li>
+      </ul>
     </div>
   </div>
 
   <div class="sl-section">
-    <h2>3. Acceptable Use</h2>
+    <h2>3. Ownership & Expectations</h2>
+    <p><strong>3.1 Company Property:</strong></p>
+    <ul>
+      <li>All IT resources provided by {{company_name}} are company property</li>
+      <li>All data created, stored, or transmitted using company resources is company property</li>
+      <li>The company retains the right to access, inspect, and retrieve any information on company systems</li>
+    </ul>
+
+    <p><strong>3.2 No Expectation of Privacy:</strong></p>
+    <ul>
+      <li>Employees should have no expectation of privacy when using company IT resources</li>
+      <li>All communications and activities may be monitored, logged, and reviewed</li>
+      <li>Personal files or information stored on company systems are not private</li>
+    </ul>
+  </div>
+
+  <div class="sl-section">
+    <h2>4. Acceptable Use</h2>
     <p>Company IT resources are provided primarily for business purposes. Acceptable use includes:</p>
     <ul>
-      <li><strong>Job-Related Activities:</strong> Performing assigned duties, accessing work systems, communicating with colleagues and clients</li>
-      <li><strong>Professional Development:</strong> Training, research, and learning activities relevant to your role</li>
-      <li><strong>Limited Personal Use:</strong> Brief personal activities (email, internet browsing) during breaks, provided they do not:
+      <li><strong>Business Activities:</strong> Performing assigned job duties, communicating with colleagues, clients, and stakeholders, accessing business information and applications</li>
+      <li><strong>Professional Development:</strong> Training, research, and educational activities related to your role</li>
+      <li><strong>Limited Personal Use:</strong> Reasonable personal use is permitted provided it:
         <ul>
-          <li>Interfere with work duties or productivity</li>
-          <li>Consume excessive bandwidth or system resources</li>
-          <li>Violate any company policies or laws</li>
-          <li>Create additional costs for the company</li>
+          <li>Does not interfere with job responsibilities or productivity</li>
+          <li>Does not violate any provision of this policy</li>
+          <li>Does not consume excessive system resources or bandwidth</li>
+          <li>Does not expose company systems to security risks</li>
+          <li>Is kept to a minimum (e.g., during breaks)</li>
         </ul>
       </li>
     </ul>
+    <p>Management reserves the right to restrict or revoke personal use privileges at any time.</p>
   </div>
 
   <div class="sl-section">
-    <h2>4. Prohibited Activities</h2>
-    <div class="sl-highlight-box" style="background: #fef2f2; border-color: #dc2626;">
-      <h3 style="color: #dc2626;">🚫 Strictly Prohibited Activities</h3>
-      <p>The following activities are expressly forbidden and may result in immediate disciplinary action:</p>
+    <h2>5. Prohibited Activities</h2>
+    <div class="sl-highlight-box" style="background: linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%); border-color: #dc2626;">
+      <h3 style="color: #dc2626;">⛔ Strictly Prohibited</h3>
+      <p>The following activities are strictly prohibited and may result in immediate disciplinary action:</p>
     </div>
 
-    <p><strong>4.1 Security Violations:</strong></p>
+    <p><strong>5.1 Illegal Activities:</strong></p>
     <ul>
-      <li>Attempting to bypass, disable, or circumvent security controls, firewalls, or access restrictions</li>
-      <li>Accessing or attempting to access systems, files, or data you are not authorized to use</li>
-      <li>Sharing your login credentials, passwords, or security tokens with anyone</li>
-      <li>Using another person's account or credentials without explicit authorization</li>
-      <li>Introducing malware, viruses, or malicious code into company systems</li>
-      <li>Connecting unauthorized devices, networks, or storage media to company systems</li>
-      <li>Installing unauthorized software, applications, or browser extensions</li>
+      <li>Any activity that violates Sierra Leone or international law</li>
+      <li>Downloading, possessing, or distributing pirated software, music, movies, or other copyrighted materials</li>
+      <li>Hacking, unauthorized access to systems, or attempting to circumvent security controls</li>
+      <li>Engaging in fraud, identity theft, or financial crimes</li>
+      <li>Distributing malware, viruses, or other malicious code</li>
     </ul>
 
-    <p><strong>4.2 Illegal & Unethical Activities:</strong></p>
+    <p><strong>5.2 Inappropriate Content:</strong></p>
     <ul>
       <li>Accessing, downloading, storing, or distributing pornographic, sexually explicit, or obscene material</li>
-      <li>Accessing or distributing content that promotes violence, hatred, or discrimination</li>
-      <li>Engaging in any activity that violates local, national, or international laws</li>
-      <li>Downloading, copying, or distributing copyrighted materials (music, movies, software) without authorization</li>
-      <li>Engaging in software piracy or using unlicensed software</li>
-      <li>Gambling or accessing gambling websites</li>
-      <li>Engaging in cryptocurrency mining using company resources</li>
+      <li>Viewing, sending, or storing offensive, discriminatory, hateful, or harassing content</li>
+      <li>Accessing gambling, illegal drug, or other inappropriate websites</li>
+      <li>Using IT resources for purposes contrary to company values or professional standards</li>
     </ul>
 
-    <p><strong>4.3 Harassment & Abuse:</strong></p>
+    <p><strong>5.3 Security Violations:</strong></p>
     <ul>
-      <li>Using IT systems to harass, threaten, intimidate, or bully any person</li>
-      <li>Sending offensive, defamatory, or discriminatory messages</li>
-      <li>Stalking or cyberstalking individuals</li>
-      <li>Creating a hostile work environment through electronic communications</li>
+      <li>Sharing passwords or login credentials with anyone (including IT staff)</li>
+      <li>Using another person's account or allowing others to use your account</li>
+      <li>Attempting to bypass, disable, or circumvent security controls or monitoring</li>
+      <li>Installing unauthorized software, applications, browser extensions, or plugins</li>
+      <li>Connecting unauthorized devices to company networks (including personal routers, hubs, or storage devices)</li>
+      <li>Disabling or tampering with antivirus, firewall, or other security software</li>
+      <li>Probing, scanning, or testing network or system security without authorization</li>
     </ul>
 
-    <p><strong>4.4 Commercial & Personal Gain:</strong></p>
+    <p><strong>5.4 Unauthorized Activities:</strong></p>
     <ul>
-      <li>Using company resources for personal business ventures or commercial activities</li>
-      <li>Selling products or services using company systems</li>
-      <li>Engaging in any activity for personal financial gain</li>
-      <li>Using company resources for political activities or campaigning</li>
+      <li>Using company IT resources for personal business, commercial ventures, or profit-making activities</li>
+      <li>Operating a personal business using company email, website, or systems</li>
+      <li>Cryptocurrency mining or other resource-intensive non-work activities</li>
+      <li>Political campaigning or solicitation using company resources</li>
+      <li>Mass distribution of emails (spam, chain letters, or unsolicited messages)</li>
     </ul>
 
-    <p><strong>4.5 Data & Confidentiality Violations:</strong></p>
+    <p><strong>5.5 Data & Information:</strong></p>
     <ul>
-      <li>Disclosing confidential, proprietary, or sensitive information through unsecured channels</li>
-      <li>Transferring company data to unauthorized personal accounts or devices</li>
-      <li>Accessing customer, employee, or financial data without legitimate business need</li>
-      <li>Failing to properly protect sensitive information</li>
+      <li>Unauthorized access to or disclosure of confidential, proprietary, or sensitive information</li>
+      <li>Transferring company data to personal accounts or unauthorized storage</li>
+      <li>Sending sensitive information via unsecured channels (unencrypted email, public file sharing)</li>
+      <li>Deleting, modifying, or destroying records in violation of retention policies</li>
     </ul>
 
-    <p><strong>4.6 System Misuse:</strong></p>
+    <p><strong>5.6 Misuse of Communications:</strong></p>
     <ul>
-      <li>Sending spam, chain letters, or bulk unsolicited messages</li>
-      <li>Forwarding hoaxes, phishing attempts, or misleading information</li>
-      <li>Deliberately wasting system resources or bandwidth</li>
-      <li>Interfering with or disrupting other users' access to systems</li>
-      <li>Modifying or tampering with system configurations without authorization</li>
-    </ul>
-  </div>
-
-  <div class="sl-section">
-    <h2>5. Email & Electronic Communications</h2>
-    <p><strong>5.1 Professional Standards:</strong></p>
-    <ul>
-      <li>Use clear, professional language in all business communications</li>
-      <li>Include appropriate greetings, signatures, and contact information</li>
-      <li>Use descriptive subject lines that accurately reflect message content</li>
-      <li>Be mindful that emails may be forwarded and could be read by unintended recipients</li>
-      <li>Do not use ALL CAPS (considered shouting) or excessive punctuation</li>
-    </ul>
-
-    <p><strong>5.2 Security Practices:</strong></p>
-    <ul>
-      <li>Do not open attachments or click links from unknown or suspicious senders</li>
-      <li>Report phishing attempts and suspicious emails to {{it_contact}} immediately</li>
-      <li>Verify sender identity before responding to requests for sensitive information or money transfers</li>
-      <li>Use encrypted email when sending confidential information</li>
-      <li>Do not auto-forward company emails to personal accounts</li>
-    </ul>
-
-    <p><strong>5.3 Retention & Ownership:</strong></p>
-    <ul>
-      <li>Company email is the property of {{company_name}}</li>
-      <li>Email may be retained, archived, and accessed by the company for business purposes</li>
-      <li>Employees should not have an expectation of privacy in company email</li>
+      <li>Sending harassing, threatening, abusive, or defamatory messages</li>
+      <li>Impersonating another person or organization</li>
+      <li>Creating false or misleading communications</li>
+      <li>Forging email headers or other message identifiers</li>
     </ul>
   </div>
 
   <div class="sl-section">
-    <h2>6. Internet Usage</h2>
-    <p><strong>6.1 Appropriate Use:</strong></p>
+    <h2>6. Email & Electronic Communications</h2>
+    <p><strong>6.1 Professional Standards:</strong></p>
     <ul>
-      <li>Internet access is provided for work-related activities</li>
-      <li>Brief personal browsing during breaks is permitted within the bounds of this Policy</li>
-      <li>Streaming video or music for personal entertainment is discouraged as it consumes bandwidth</li>
+      <li>Use professional, respectful language in all business communications</li>
+      <li>Include appropriate signature blocks with contact information</li>
+      <li>Use clear, descriptive subject lines</li>
+      <li>Proofread messages before sending</li>
+      <li>Reply to emails promptly within {{email_response_time}}</li>
     </ul>
 
-    <p><strong>6.2 Restricted Sites:</strong></p>
+    <p><strong>6.2 Email Security:</strong></p>
     <ul>
-      <li>The company may block access to certain website categories deemed inappropriate or high-risk</li>
-      <li>Attempts to bypass website filters using proxies or VPNs are prohibited</li>
-      <li>Categories typically blocked include: adult content, gambling, malware sites, illegal downloads</li>
+      <li>Do not open suspicious emails, attachments, or links from unknown senders</li>
+      <li>Report suspected phishing attempts to IT immediately</li>
+      <li>Verify unexpected requests for sensitive information or payments, even if they appear to come from executives</li>
+      <li>Use encryption when sending sensitive or confidential information</li>
+      <li>Do not auto-forward company emails to personal email accounts</li>
     </ul>
 
-    <p><strong>6.3 Downloads:</strong></p>
+    <p><strong>6.3 Email Retention:</strong></p>
     <ul>
-      <li>Download files only from trusted, legitimate sources</li>
-      <li>Do not download executable files (.exe, .bat, .msi) without IT approval</li>
-      <li>All downloads are subject to antivirus scanning</li>
+      <li>Important business emails should be retained according to company records retention policy</li>
+      <li>Delete unnecessary emails to manage mailbox size</li>
+      <li>Do not delete emails subject to legal holds or investigations</li>
+    </ul>
+
+    <p><strong>6.4 Instant Messaging & Collaboration Tools:</strong></p>
+    <ul>
+      <li>Use approved platforms only ({{approved_messaging_tools}})</li>
+      <li>Apply the same professional standards as email</li>
+      <li>Be mindful that messages may be logged and retained</li>
     </ul>
   </div>
 
@@ -2625,18 +2628,18 @@ export const DEFAULT_TEMPLATES = {
       <div class="sl-info-grid">
         <div class="sl-info-item" style="border-left-color: #059669;">
           <label>Minimum Length</label>
-          <span>{{password_min_length}} characters</span>
+          <span>{{min_password_length}} characters</span>
         </div>
         <div class="sl-info-item" style="border-left-color: #059669;">
           <label>Complexity</label>
-          <span>Letters, numbers, and symbols required</span>
+          <span>Upper, lower, number, symbol</span>
         </div>
         <div class="sl-info-item" style="border-left-color: #059669;">
           <label>Change Frequency</label>
           <span>Every {{password_change_days}} days</span>
         </div>
         <div class="sl-info-item" style="border-left-color: #059669;">
-          <label>History</label>
+          <label>Password History</label>
           <span>Cannot reuse last {{password_history}} passwords</span>
         </div>
       </div>
@@ -2644,164 +2647,207 @@ export const DEFAULT_TEMPLATES = {
 
     <p><strong>7.1 Password Best Practices:</strong></p>
     <ul>
-      <li>Create unique passwords for each system—do not reuse passwords</li>
-      <li>Use passphrases (combination of words) for easier memorization with high security</li>
-      <li>Never write passwords down or store them in plain text files</li>
-      <li>Use a company-approved password manager if available</li>
-      <li>Never share your password with anyone, including IT staff (they will never ask for it)</li>
+      <li>Create strong, unique passwords for each system/account</li>
+      <li>Never use easily guessable passwords (names, birthdates, dictionary words, "password123")</li>
+      <li>Use a passphrase or password manager to generate and store complex passwords</li>
+      <li>Never share your password with anyone—including IT staff, managers, or colleagues</li>
+      <li>IT will never ask for your password; treat such requests as suspicious</li>
+      <li>Change your password immediately if you suspect it has been compromised</li>
     </ul>
 
-    <p><strong>7.2 Account Security:</strong></p>
+    <p><strong>7.2 Multi-Factor Authentication (MFA):</strong></p>
     <ul>
-      <li>Lock your computer (Windows+L or Cmd+Ctrl+Q) whenever you step away from your desk</li>
-      <li>Enable auto-lock after {{auto_lock_minutes}} minutes of inactivity</li>
-      <li>Log out of systems when work is complete</li>
-      <li>Use multi-factor authentication (MFA) where available</li>
-      <li>Report suspicious account activity immediately</li>
+      <li>MFA is required for {{mfa_required_systems}}</li>
+      <li>Keep your MFA device secure and report any loss immediately</li>
+      <li>Never share MFA codes with anyone</li>
+    </ul>
+
+    <p><strong>7.3 Session Security:</strong></p>
+    <ul>
+      <li>Lock your computer (Windows: Win+L / Mac: Ctrl+Cmd+Q) whenever you leave your desk, even briefly</li>
+      <li>Log out of systems when not in use, especially shared computers</li>
+      <li>Do not leave logged-in sessions unattended</li>
+      <li>Enable automatic screen lock (maximum {{screen_lock_mins}} minutes)</li>
     </ul>
   </div>
 
   <div class="sl-section">
-    <h2>8. Data Protection & Handling</h2>
+    <h2>8. Data Protection & Information Security</h2>
     <p><strong>8.1 Data Classification:</strong></p>
     <ul>
-      <li><strong>Public:</strong> Information that can be freely shared</li>
-      <li><strong>Internal:</strong> For internal use only, not to be shared externally</li>
-      <li><strong>Confidential:</strong> Sensitive business information requiring protection</li>
-      <li><strong>Restricted:</strong> Highly sensitive data (personal data, financial records) with strict access controls</li>
+      <li><strong>Confidential:</strong> Highly sensitive data (financial records, personal data, trade secrets) — Strictest controls, encryption required, limited access</li>
+      <li><strong>Internal:</strong> Business information not for public release — Access on need-to-know basis</li>
+      <li><strong>Public:</strong> Information approved for external release</li>
     </ul>
 
-    <p><strong>8.2 Data Handling Rules:</strong></p>
+    <p><strong>8.2 Data Handling Requirements:</strong></p>
     <ul>
-      <li>Store company data only on approved company systems (not personal devices unless authorized)</li>
-      <li>Use encryption when storing or transmitting sensitive data</li>
-      <li>Do not send confidential data via unencrypted email</li>
-      <li>Follow data backup procedures to prevent data loss</li>
-      <li>Properly dispose of sensitive documents (shredding) and securely delete digital files</li>
+      <li>Store company data only on approved systems (company servers, approved cloud services)</li>
+      <li>Do not save company data on personal devices, USB drives, or personal cloud accounts without authorization</li>
+      <li>Use encryption for sensitive data in transit and at rest</li>
+      <li>Do not email or message highly confidential data; use secure file transfer methods</li>
+      <li>Dispose of data securely according to retention policies</li>
     </ul>
 
-    <p><strong>8.3 External Transfers:</strong></p>
+    <p><strong>8.3 Backup & Recovery:</strong></p>
     <ul>
-      <li>Only share data with external parties when there is a legitimate business need</li>
-      <li>Use secure file transfer methods for sensitive data</li>
-      <li>Ensure appropriate agreements (NDAs, data processing agreements) are in place</li>
-    </ul>
-  </div>
-
-  <div class="sl-section">
-    <h2>9. Mobile Devices & BYOD</h2>
-    <p><strong>9.1 Company-Issued Devices:</strong></p>
-    <ul>
-      <li>Use company devices primarily for business purposes</li>
-      <li>Install security updates promptly when notified</li>
-      <li>Report lost or stolen devices immediately to {{it_contact}}</li>
-      <li>Do not modify device configurations or "jailbreak/root" devices</li>
-      <li>Return devices upon termination of employment</li>
+      <li>Save important work to network drives or approved cloud storage that are backed up</li>
+      <li>Data stored only on local devices may not be backed up and could be lost</li>
+      <li>Report any data loss or corruption to IT immediately</li>
     </ul>
 
-    <p><strong>9.2 Personal Devices (BYOD):</strong></p>
+    <p><strong>8.4 Clean Desk Policy:</strong></p>
     <ul>
-      <li>Personal devices may only access company systems with prior IT approval</li>
-      <li>Security requirements (passcode, encryption, MDM software) must be met</li>
-      <li>The company may remotely wipe company data from personal devices if lost or upon termination</li>
-      <li>Personal device use is at the employee's own risk</li>
+      <li>Do not leave sensitive documents or information visible on screen when unattended</li>
+      <li>Store physical documents containing sensitive information in locked cabinets</li>
+      <li>Shred confidential documents before disposal</li>
     </ul>
   </div>
 
   <div class="sl-section">
-    <h2>10. Social Media Guidelines</h2>
+    <h2>9. Internet & Web Usage</h2>
+    <p><strong>9.1 Acceptable Browsing:</strong></p>
     <ul>
-      <li>Do not disclose confidential company information on social media platforms</li>
-      <li>When discussing work or industry topics, clearly state opinions are your own</li>
-      <li>Do not use company logos, branding, or trademarks without marketing approval</li>
-      <li>Be professional and respectful—your online presence reflects on the company</li>
-      <li>Do not engage in arguments or negative discussions about the company or competitors</li>
-      <li>Report any brand impersonation or defamation you discover</li>
+      <li>Use internet access for work-related activities</li>
+      <li>Limited personal browsing is permitted during breaks, provided it complies with this policy</li>
+      <li>Do not stream non-work video or audio that consumes excessive bandwidth</li>
+    </ul>
+
+    <p><strong>9.2 Website Categories Blocked/Restricted:</strong></p>
+    <ul>
+      <li>Adult/pornographic content</li>
+      <li>Gambling and betting sites</li>
+      <li>Malware and phishing sites</li>
+      <li>Hacking and proxy/anonymizer sites</li>
+      <li>Illegal content and activities</li>
+      <li>Certain social media during work hours (as configured)</li>
+    </ul>
+
+    <p><strong>9.3 Downloads:</strong></p>
+    <ul>
+      <li>Download software only from official, trusted sources</li>
+      <li>Do not download unauthorized software, browser extensions, or plugins</li>
+      <li>Report any accidental malware downloads to IT immediately</li>
     </ul>
   </div>
 
   <div class="sl-section">
-    <h2>11. Software & Licensing</h2>
+    <h2>10. Social Media & Public Communications</h2>
+    <p><strong>10.1 Personal Social Media:</strong></p>
     <ul>
-      <li>Only use software that is properly licensed and approved by the company</li>
-      <li>Do not install unauthorized software, including freeware and shareware, without IT approval</li>
-      <li>Do not copy or distribute licensed software</li>
-      <li>Report any suspected software licensing violations</li>
-      <li>Use cloud services only if approved by IT</li>
+      <li>Never disclose confidential company information on social media</li>
+      <li>Clearly distinguish personal opinions from company positions</li>
+      <li>Do not use company logos, trademarks, or branding without authorization</li>
+      <li>Be aware that your social media activity may reflect on the company</li>
+      <li>Do not engage in discussions that could harm the company's reputation</li>
+    </ul>
+
+    <p><strong>10.2 Official Company Social Media:</strong></p>
+    <ul>
+      <li>Only authorized personnel may post on behalf of the company</li>
+      <li>Follow brand guidelines and approval processes for official communications</li>
     </ul>
   </div>
 
   <div class="sl-section">
-    <h2>12. Remote Work Security</h2>
-    <p>When working remotely:</p>
+    <h2>11. Mobile Devices & Remote Access</h2>
+    <p><strong>11.1 Company Mobile Devices:</strong></p>
     <ul>
-      <li>Use only approved VPN connections to access company systems</li>
-      <li>Ensure your home Wi-Fi network is secured with WPA2/WPA3 encryption and a strong password</li>
-      <li>Do not use public Wi-Fi for accessing company systems unless using VPN</li>
-      <li>Maintain physical security of devices—do not leave them unattended in public</li>
-      <li>Ensure work area is private when handling confidential information</li>
+      <li>Keep devices physically secure at all times</li>
+      <li>Enable screen lock with PIN, password, or biometric authentication</li>
+      <li>Keep operating systems and apps updated</li>
+      <li>Report lost or stolen devices immediately to IT</li>
+      <li>Do not jailbreak, root, or modify device security</li>
+    </ul>
+
+    <p><strong>11.2 Bring Your Own Device (BYOD):</strong></p>
+    <ul>
+      <li>Personal devices must comply with company security requirements to access company resources</li>
+      <li>The company may require installation of security software or MDM (Mobile Device Management)</li>
+      <li>The company may remotely wipe company data from personal devices if lost, stolen, or upon termination</li>
+      <li>Separate personal and work data where possible</li>
+    </ul>
+
+    <p><strong>11.3 Remote Access & VPN:</strong></p>
+    <ul>
+      <li>Use company VPN when accessing company resources from outside the office</li>
+      <li>Do not use public Wi-Fi for sensitive work without VPN protection</li>
+      <li>Ensure home networks are secured with strong passwords</li>
+    </ul>
+  </div>
+
+  <div class="sl-section">
+    <h2>12. Software & Licensing</h2>
+    <ul>
+      <li>Only use properly licensed software provided or approved by IT</li>
+      <li>Do not install personal software on company devices without authorization</li>
+      <li>Do not make unauthorized copies of licensed software</li>
+      <li>Report any software licensing concerns or compliance issues to IT</li>
     </ul>
   </div>
 
   <div class="sl-section">
     <h2>13. Incident Reporting</h2>
-    <p>Report the following incidents immediately to {{it_contact}}:</p>
+    <p>Report the following to IT immediately:</p>
     <ul>
-      <li>Lost or stolen devices containing company data</li>
+      <li>Lost or stolen devices</li>
       <li>Suspected security breaches or unauthorized access</li>
-      <li>Suspicious emails, phishing attempts, or scam calls</li>
-      <li>Malware infections or unusual system behavior</li>
-      <li>Data breaches or accidental disclosure of confidential information</li>
-      <li>Any violations of this Policy that you observe</li>
+      <li>Malware infections or suspicious system behavior</li>
+      <li>Phishing emails or social engineering attempts</li>
+      <li>Suspicious activities by others</li>
+      <li>Accidental disclosure of confidential information</li>
     </ul>
-    <p>Prompt reporting helps minimize damage and is not punitive—employees are encouraged to report without fear of reprisal when acting in good faith.</p>
+    <p><strong>IT Security Contact:</strong> {{it_contact}}</p>
+    <p>Prompt reporting enables faster response and minimizes damage. Employees will not be penalized for reporting incidents in good faith.</p>
   </div>
 
   <div class="sl-section">
     <h2>14. Monitoring & Auditing</h2>
-    <p>{{company_name}} reserves the right to monitor all use of company IT resources without prior notice. Monitoring may include:</p>
+    <p>{{company_name}} reserves the right to monitor all use of company IT resources to ensure compliance, maintain security, and protect business interests. Monitoring may include:</p>
     <ul>
       <li>Email content and metadata</li>
-      <li>Internet browsing history and patterns</li>
-      <li>File access and transfers</li>
-      <li>System login and activity logs</li>
-      <li>Network traffic analysis</li>
-      <li>Security scans and vulnerability assessments</li>
+      <li>Internet browsing activity and history</li>
+      <li>File access, transfers, and modifications</li>
+      <li>Instant messaging and collaboration platform activity</li>
+      <li>Application and system usage</li>
+      <li>Login/logout times and access patterns</li>
+      <li>Phone and call records on company devices</li>
     </ul>
-    <p><strong>Employees should have no expectation of privacy when using company IT systems.</strong> Monitoring is conducted to protect company assets, ensure compliance, and investigate suspected violations.</p>
+    <p>By using company IT resources, you consent to such monitoring. Information obtained may be used for disciplinary or legal proceedings.</p>
   </div>
 
   <div class="sl-section">
-    <h2>15. Consequences of Violations</h2>
-    <p>Violations of this IT Acceptable Use Policy are serious matters and may result in:</p>
+    <h2>15. Consequences of Policy Violations</h2>
+    <p>Violations of this IT Acceptable Use Policy are taken seriously and may result in:</p>
     <ul>
-      <li><strong>Verbal or Written Warning:</strong> For minor or first-time violations</li>
-      <li><strong>Suspension of IT Access:</strong> Temporary restriction of system privileges</li>
-      <li><strong>Disciplinary Action:</strong> Formal proceedings as per company Disciplinary Policy</li>
-      <li><strong>Termination of Employment:</strong> For serious or repeated violations</li>
-      <li><strong>Civil or Criminal Action:</strong> Where violations involve illegal activity, the company may report to authorities and pursue legal remedies</li>
-      <li><strong>Financial Liability:</strong> Employees may be held liable for damages caused by intentional violations</li>
+      <li><strong>Verbal or Written Warning:</strong> For minor, first-time violations</li>
+      <li><strong>Restriction or Suspension of IT Access:</strong> Temporary or permanent limitation of privileges</li>
+      <li><strong>Disciplinary Action:</strong> Up to and including termination of employment</li>
+      <li><strong>Legal Action:</strong> For violations involving criminal activity, the company may involve law enforcement</li>
+      <li><strong>Financial Liability:</strong> Employees may be held financially responsible for damages resulting from policy violations</li>
     </ul>
+    <p>The severity of action will depend on the nature, frequency, and impact of the violation.</p>
   </div>
 
   <div class="sl-section">
-    <h2>16. Policy Updates</h2>
-    <p>This Policy will be reviewed {{review_frequency}} and updated as necessary to address new technologies, threats, and regulatory requirements. Employees will be notified of significant changes and may be required to re-acknowledge the updated Policy.</p>
+    <h2>16. Policy Review & Updates</h2>
+    <p>This policy is reviewed {{policy_review_frequency}} and updated as needed to address new technologies, threats, and business requirements. Employees will be notified of significant changes and may be required to re-acknowledge the updated policy.</p>
     <p><strong>Policy Version:</strong> {{policy_version}}<br/>
     <strong>Effective Date:</strong> {{effective_date}}</p>
   </div>
 
   <div class="sl-acknowledgment">
-    <h2>Employee Acknowledgment</h2>
-    <p>I, <strong>{{employee_name}}</strong>, hereby acknowledge that:</p>
+    <h2>Employee Acknowledgment & Agreement</h2>
+    <p>I, <strong>{{employee_name}}</strong>, hereby acknowledge and agree that:</p>
     <ul>
-      <li>I have received, read, and fully understand this IT Acceptable Use Policy</li>
-      <li>I agree to comply with all provisions of this Policy</li>
-      <li>I understand that company IT resources are provided for business purposes and are the property of the company</li>
-      <li>I understand that my use of company IT resources may be monitored</li>
-      <li>I understand the security requirements including password policies and data protection</li>
-      <li>I will report security incidents and violations promptly</li>
-      <li>I understand that violation of this Policy may result in disciplinary action, up to and including termination of employment</li>
+      <li>I have received, read, and fully understood this IT Acceptable Use Policy</li>
+      <li>I agree to comply with all provisions of this policy when using company IT resources</li>
+      <li>I understand that company IT resources are provided for business purposes and that personal use is a privilege that may be revoked</li>
+      <li>I understand that I have no expectation of privacy when using company IT resources</li>
+      <li>I understand that my activities may be monitored, logged, and reviewed</li>
+      <li>I will report any suspected security incidents or policy violations promptly</li>
+      <li>I understand that violations of this policy may result in disciplinary action, including termination</li>
+      <li>I understand that violations involving illegal activity may be reported to law enforcement</li>
     </ul>
   </div>
 
@@ -2820,7 +2866,7 @@ export const DEFAULT_TEMPLATES = {
     <div class="sl-footer-logo">🇸🇱</div>
     <p><strong>{{company_name}}</strong></p>
     <p>Republic of Sierra Leone</p>
-    <p class="sl-legal-note">This policy protects company assets and ensures safe, responsible use of technology. For IT support, contact {{it_contact}}.</p>
+    <p class="sl-legal-note">This policy protects both the company and employees. Use IT resources responsibly and securely.</p>
   </div>
 </div>
     `,
@@ -2830,12 +2876,15 @@ export const DEFAULT_TEMPLATES = {
       { key: "employee_name", label: "Employee Name", type: "text", auto_fill: "employee.full_name" },
       { key: "position", label: "Position", type: "text", auto_fill: "employee.position" },
       { key: "department", label: "Department", type: "text", auto_fill: "employee.department" },
-      { key: "it_contact", label: "IT Contact", type: "text", default: "IT Support / IT Department" },
-      { key: "password_min_length", label: "Minimum Password Length", type: "select", options: ["8", "10", "12"], default: "8" },
+      { key: "email_response_time", label: "Email Response Expectation", type: "select", options: ["4 hours", "8 hours", "24 hours", "48 hours"], default: "24 hours" },
+      { key: "approved_messaging_tools", label: "Approved Messaging Tools", type: "text", default: "Microsoft Teams, Slack, Company Email" },
+      { key: "min_password_length", label: "Minimum Password Length", type: "select", options: ["8", "10", "12", "14"], default: "10" },
       { key: "password_change_days", label: "Password Change Frequency (Days)", type: "select", options: ["30", "60", "90", "180"], default: "90" },
-      { key: "password_history", label: "Password History Count", type: "select", options: ["3", "5", "10"], default: "5" },
-      { key: "auto_lock_minutes", label: "Auto-Lock (Minutes)", type: "select", options: ["3", "5", "10", "15"], default: "5" },
-      { key: "review_frequency", label: "Review Frequency", type: "select", options: ["annually", "every 6 months"], default: "annually" },
+      { key: "password_history", label: "Password History Count", type: "select", options: ["5", "10", "12"], default: "10" },
+      { key: "mfa_required_systems", label: "MFA Required Systems", type: "text", default: "email, VPN, cloud applications, and sensitive systems" },
+      { key: "screen_lock_mins", label: "Auto Screen Lock (Minutes)", type: "select", options: ["5", "10", "15"], default: "10" },
+      { key: "it_contact", label: "IT Security Contact", type: "text", default: "IT Department / it.support@company.com" },
+      { key: "policy_review_frequency", label: "Policy Review Frequency", type: "select", options: ["annually", "every 2 years"], default: "annually" },
       { key: "policy_version", label: "Policy Version", type: "text", default: "1.0" },
       { key: "effective_date", label: "Effective Date", type: "date", auto_fill: "today" }
     ]
