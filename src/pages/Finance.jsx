@@ -57,7 +57,7 @@ import ReportGenerator from "@/components/finance/ReportGenerator";
 import PrintableFormsDownload from "@/components/finance/PrintableFormsDownload";
 import AnalyticsDashboard from "@/components/analytics/AnalyticsDashboard";
 import { SalesCharts, ExpenseCharts, TransportCharts } from "@/components/reports/ReportCharts";
-import CreateDocumentDialog from "@/components/documents/CreateDocumentDialog";
+
 import { 
   printSalesReport, 
   printExpenseReport, 
@@ -89,7 +89,6 @@ export default function Finance() {
   const [reportDateRange, setReportDateRange] = useState("this_month");
   const [showCharts, setShowCharts] = useState(true);
   const [showSaveDialog, setShowSaveDialog] = useState(false);
-  const [showCreateDocDialog, setShowCreateDocDialog] = useState(false);
 
   const { data: user } = useQuery({
     queryKey: ['currentUser'],
@@ -365,14 +364,6 @@ export default function Finance() {
         action={() => setShowExpenseDialog(true)}
         actionLabel="Add Expense"
       >
-        <Button 
-          variant="outline" 
-          onClick={() => setShowCreateDocDialog(true)}
-          className="border-[#1EB053]/30 hover:border-[#1EB053] hover:bg-[#1EB053]/10 hover:text-[#1EB053]"
-        >
-          <FileText className="w-4 h-4 mr-2" />
-          Create Document
-        </Button>
         <Button 
           variant="outline" 
           onClick={() => setShowFormsDialog(true)}
@@ -958,14 +949,6 @@ export default function Finance() {
         organisation={organisation?.[0]}
       />
 
-      {/* Create Document Dialog */}
-      <CreateDocumentDialog
-        open={showCreateDocDialog}
-        onOpenChange={setShowCreateDocDialog}
-        orgId={orgId}
-        employees={employees}
-        currentEmployee={currentEmployee}
-      />
     </div>
     </ProtectedPage>
   );
