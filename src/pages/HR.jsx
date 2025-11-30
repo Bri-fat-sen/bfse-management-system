@@ -79,7 +79,7 @@ import TaxCalculatorInfo from "@/components/hr/TaxCalculatorInfo";
 import RemunerationPackageManager from "@/components/hr/RemunerationPackageManager";
 
 const roles = [
-  "org_admin", "hr_admin", "payroll_admin", "warehouse_manager",
+  "super_admin", "org_admin", "hr_admin", "payroll_admin", "warehouse_manager",
   "retail_cashier", "vehicle_sales", "driver", "accountant",
   "support_staff", "read_only"
 ];
