@@ -1716,174 +1716,186 @@ export const DEFAULT_TEMPLATES = {
   <div class="sl-header">
     <div class="sl-flag-bar"></div>
     <div class="sl-company-logo" style="background: linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%);">📅</div>
-    <h1>Leave & Time Off Policy</h1>
-    <p class="sl-subtitle">{{company_name}} • In accordance with Employment Act 2023 of Sierra Leone</p>
+    <h1>Leave & Time-Off Policy</h1>
+    <p class="sl-subtitle">{{company_name}} • Comprehensive Leave Entitlements & Procedures</p>
     <p class="sl-ref-number">Ref: LP-{{document_ref}}</p>
   </div>
 
   <div class="sl-section">
-    <h2>1. Purpose & Scope</h2>
-    <p>This Leave Policy establishes the guidelines and procedures for all types of leave at <strong>{{company_name}}</strong>. It is designed to ensure fair and consistent administration of leave entitlements while meeting the statutory requirements of the Employment Act 2023 of Sierra Leone.</p>
-    <p>This policy applies to all employees, including permanent, contract, and temporary staff, unless otherwise specified. Leave entitlements may vary based on employment type and length of service.</p>
+    <h2>1. Introduction & Purpose</h2>
+    <p>This Leave Policy establishes the framework for managing all types of leave at <strong>{{company_name}}</strong>. It outlines the various leave entitlements available to employees, the procedures for requesting leave, and the responsibilities of both employees and managers in the leave management process.</p>
+    <p>This policy is developed in full compliance with the Employment Act 2023 of Sierra Leone and reflects our commitment to supporting employees' work-life balance while maintaining operational effectiveness.</p>
+    <p><strong>Scope:</strong> This policy applies to all permanent and fixed-term employees of {{company_name}}. Temporary and casual workers may have different entitlements as specified in their contracts.</p>
   </div>
 
   <div class="sl-section">
-    <h2>2. Annual Leave (Vacation Leave)</h2>
-    <div class="sl-highlight-box" style="background: linear-gradient(135deg, #ecfeff 0%, #cffafe 100%); border-color: #0ea5e9;">
+    <h2>2. Annual Leave (Vacation)</h2>
+    <div class="sl-highlight-box" style="background: linear-gradient(135deg, #dbeafe 0%, #e0f2fe 100%); border-color: #0284c7;">
       <h3 style="color: #0284c7;">🏖️ Annual Leave Entitlement</h3>
-      <p>Per Section 44 of the Employment Act 2023, all employees are entitled to paid annual leave:</p>
+      <p>Per Section 44 of the Employment Act 2023, employees are entitled to:</p>
       <div class="sl-info-grid">
-        <div class="sl-info-item" style="border-left-color: #0ea5e9;">
+        <div class="sl-info-item" style="border-left-color: #0284c7;">
           <label>Annual Entitlement</label>
           <span>{{annual_leave_days}} working days</span>
         </div>
-        <div class="sl-info-item" style="border-left-color: #0ea5e9;">
-          <label>Monthly Accrual Rate</label>
-          <span>{{monthly_accrual}} days/month</span>
+        <div class="sl-info-item" style="border-left-color: #0284c7;">
+          <label>Monthly Accrual</label>
+          <span>1.75 days/month</span>
         </div>
-        <div class="sl-info-item" style="border-left-color: #0ea5e9;">
+        <div class="sl-info-item" style="border-left-color: #0284c7;">
           <label>Eligibility</label>
-          <span>After 12 months of continuous service</span>
+          <span>After 12 months service</span>
         </div>
-        <div class="sl-info-item" style="border-left-color: #0ea5e9;">
-          <label>Leave Year</label>
-          <span>{{leave_year}}</span>
+        <div class="sl-info-item" style="border-left-color: #0284c7;">
+          <label>Pro-rata in First Year</label>
+          <span>Yes, for employees with 6+ months</span>
         </div>
       </div>
     </div>
     
     <p><strong>2.1 Accrual & Eligibility:</strong></p>
     <ul>
-      <li>Annual leave accrues from the first day of employment but becomes available after completing 12 months of continuous service</li>
-      <li>Pro-rata entitlement applies for employees who have not completed a full year</li>
-      <li>Leave is calculated based on working days (excludes weekends and public holidays)</li>
+      <li>Full annual leave entitlement accrues after completing 12 months of continuous service</li>
+      <li>Employees with 6-12 months of service may be eligible for pro-rated leave at management discretion</li>
+      <li>Leave accrues monthly at a rate of approximately 1.75 days per month worked</li>
+      <li>Probationary employees accrue leave but may only take it after confirmation</li>
     </ul>
 
-    <p><strong>2.2 Requesting Annual Leave:</strong></p>
+    <p><strong>2.2 Taking Annual Leave:</strong></p>
     <ul>
-      <li>Submit leave requests at least {{annual_leave_notice}} in advance through the HR system or to your supervisor</li>
-      <li>Requests for peak periods (December holidays, Easter) should be submitted at least 1 month in advance</li>
-      <li>Leave approval is subject to operational requirements and management discretion</li>
-      <li>Employees may request up to {{max_consecutive_days}} consecutive days at one time; longer periods require senior management approval</li>
+      <li>Leave must be taken within 12 months of the anniversary date unless prior approval is obtained for carry-forward</li>
+      <li>Submit leave requests at least {{annual_leave_notice}} in advance</li>
+      <li>Approval is subject to business needs and operational requirements</li>
+      <li>Managers should respond to leave requests within 5 working days</li>
+      <li>During peak periods, leave may be restricted—these periods will be communicated in advance</li>
     </ul>
 
-    <p><strong>2.3 Carry-Forward & Expiry:</strong></p>
+    <p><strong>2.3 Carry-Forward & Payment:</strong></p>
     <ul>
-      <li>Annual leave should be taken within 12 months of becoming available</li>
-      <li>Maximum of {{carry_forward_days}} days may be carried forward to the following year with written management approval</li>
-      <li>Carried-forward leave must be used within the first 3 months of the new leave year</li>
-      <li>Unused leave beyond the carry-forward limit will be forfeited</li>
-      <li>Annual leave cannot normally be converted to cash payment except upon termination of employment</li>
+      <li>Maximum of {{carry_forward_days}} days may be carried forward to the next leave year with written management approval</li>
+      <li>Carried-forward leave must be used within the first 6 months of the new leave year</li>
+      <li>Unused leave cannot be exchanged for cash payment except upon termination of employment</li>
+      <li>Upon termination, employees will be paid for accrued but unused annual leave</li>
     </ul>
 
     <p><strong>2.4 Leave During Notice Period:</strong></p>
     <ul>
-      <li>Annual leave may be taken during the notice period with management approval</li>
-      <li>Outstanding leave may be paid out upon termination at the employer's discretion</li>
+      <li>Annual leave may be taken during the notice period only with prior management approval</li>
+      <li>The company may require employees to use remaining leave during the notice period</li>
     </ul>
   </div>
 
   <div class="sl-section">
     <h2>3. Sick Leave</h2>
-    <div class="sl-highlight-box" style="background: linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%); border-color: #ef4444;">
+    <div class="sl-highlight-box" style="background: linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%); border-color: #dc2626;">
       <h3 style="color: #dc2626;">🏥 Sick Leave Entitlement</h3>
       <div class="sl-info-grid">
-        <div class="sl-info-item" style="border-left-color: #ef4444;">
+        <div class="sl-info-item" style="border-left-color: #dc2626;">
           <label>Paid Sick Days</label>
           <span>{{sick_leave_days}} days per year</span>
         </div>
-        <div class="sl-info-item" style="border-left-color: #ef4444;">
-          <label>Medical Certificate</label>
-          <span>Required for {{medical_cert_days}}+ consecutive days</span>
+        <div class="sl-info-item" style="border-left-color: #dc2626;">
+          <label>Medical Certificate Required</label>
+          <span>After {{sick_cert_days}} consecutive days</span>
         </div>
       </div>
     </div>
 
-    <p><strong>3.1 Notification Procedure:</strong></p>
+    <p><strong>3.1 Notification Requirements:</strong></p>
     <ul>
-      <li>Notify your supervisor as early as possible on the first day of illness—preferably before your scheduled start time</li>
-      <li>If unable to call personally, have a family member or colleague notify on your behalf</li>
-      <li>Provide an estimated date of return if possible</li>
-      <li>Keep your supervisor updated if your absence extends beyond expected return date</li>
+      <li>Notify your supervisor as early as possible on the first day of illness, ideally before your normal start time</li>
+      <li>Provide the expected duration of absence if known</li>
+      <li>Keep your supervisor updated if the absence extends beyond initial expectations</li>
+      <li>Provide contact details where you can be reached if needed</li>
     </ul>
 
     <p><strong>3.2 Documentation:</strong></p>
     <ul>
-      <li>A medical certificate from a registered medical practitioner is required for absences of {{medical_cert_days}} or more consecutive working days</li>
-      <li>Medical certificates must state the nature of illness (if appropriate), dates of incapacity, and expected return date</li>
-      <li>The company reserves the right to request medical documentation for any absence</li>
+      <li>A medical certificate from a registered medical practitioner is required for absences of {{sick_cert_days}} or more consecutive working days</li>
+      <li>The certificate must specify the nature of illness (unless confidential) and expected return date</li>
+      <li>Self-certification is acceptable for shorter absences</li>
+      <li>Certificates must be submitted within 48 hours of return to work</li>
     </ul>
 
     <p><strong>3.3 Extended Sick Leave:</strong></p>
     <ul>
-      <li>After exhausting paid sick leave, extended sick leave may be granted at management discretion</li>
-      <li>Extended sick leave may be unpaid or partially paid depending on circumstances</li>
-      <li>For serious or chronic illness, the company may require an independent medical examination</li>
-      <li>Return-to-work clearance may be required for extended illness or certain conditions</li>
+      <li>If sick leave exceeds the annual entitlement, additional leave may be granted as unpaid leave</li>
+      <li>Long-term illness exceeding {{long_term_sick_weeks}} weeks may trigger a review process</li>
+      <li>The company may request an independent medical examination</li>
+      <li>Return-to-work meetings will be conducted after extended absences</li>
     </ul>
 
-    <p><strong>3.4 Abuse of Sick Leave:</strong></p>
+    <p><strong>3.4 Sick Leave Abuse:</strong></p>
     <ul>
-      <li>Patterns of sick leave abuse (e.g., frequent Monday/Friday absences) may trigger investigation</li>
-      <li>Falsifying sick leave or medical certificates is grounds for disciplinary action</li>
+      <li>Patterns of absence (e.g., regular Monday/Friday absences) may be investigated</li>
+      <li>Abuse of sick leave may result in disciplinary action</li>
+      <li>Employees may be required to provide medical evidence for frequent short-term absences</li>
     </ul>
   </div>
 
   <div class="sl-section">
     <h2>4. Maternity Leave</h2>
     <div class="sl-highlight-box" style="background: linear-gradient(135deg, #fdf4ff 0%, #fae8ff 100%); border-color: #a855f7;">
-      <h3 style="color: #9333ea;">👶 Maternity Leave (Section 47, Employment Act 2023)</h3>
+      <h3 style="color: #7c3aed;">👶 Maternity Leave (Section 47, Employment Act 2023)</h3>
       <div class="sl-info-grid">
         <div class="sl-info-item" style="border-left-color: #a855f7;">
           <label>Total Entitlement</label>
-          <span>14 weeks (98 calendar days)</span>
+          <span>14 weeks (98 days)</span>
         </div>
         <div class="sl-info-item" style="border-left-color: #a855f7;">
           <label>Pre-Delivery Leave</label>
-          <span>Up to 4 weeks before expected due date</span>
+          <span>Up to 4 weeks before due date</span>
         </div>
         <div class="sl-info-item" style="border-left-color: #a855f7;">
           <label>Post-Delivery Minimum</label>
-          <span>At least 6 weeks after delivery</span>
+          <span>6 weeks mandatory</span>
         </div>
         <div class="sl-info-item" style="border-left-color: #a855f7;">
-          <label>Eligibility</label>
-          <span>All female employees</span>
+          <label>Pay Structure</label>
+          <span>{{maternity_pay_structure}}</span>
         </div>
       </div>
     </div>
 
-    <p><strong>4.1 Entitlement & Pay:</strong></p>
+    <p><strong>4.1 Eligibility:</strong></p>
     <ul>
-      <li>First 6 weeks: Full pay (100% of basic salary)</li>
-      <li>Remaining 8 weeks: Half pay (50% of basic salary)</li>
-      <li>Statutory allowances and benefits continue during maternity leave</li>
+      <li>All female employees are entitled to maternity leave regardless of length of service</li>
+      <li>Full pay entitlements may be subject to minimum service requirements as specified</li>
     </ul>
 
-    <p><strong>4.2 Notification Requirements:</strong></p>
+    <p><strong>4.2 Notification & Application:</strong></p>
     <ul>
-      <li>Notify HR and your supervisor of pregnancy as soon as reasonably practicable, preferably before the end of the first trimester</li>
-      <li>Provide a medical certificate confirming pregnancy and expected due date</li>
-      <li>Submit maternity leave application at least 4 weeks before intended start date</li>
-      <li>Notify HR of the actual delivery date within 7 days of birth</li>
+      <li>Notify HR and your supervisor of pregnancy as soon as reasonably practicable</li>
+      <li>Submit a medical certificate confirming pregnancy and expected due date</li>
+      <li>Submit formal maternity leave application at least {{maternity_notice}} before intended start date</li>
+      <li>Confirm intended return date in writing</li>
     </ul>
 
-    <p><strong>4.3 Job Protection:</strong></p>
+    <p><strong>4.3 Pay During Maternity Leave:</strong></p>
     <ul>
-      <li>Employment is protected during maternity leave as guaranteed by law</li>
-      <li>Employees are entitled to return to the same position or equivalent role</li>
-      <li>Dismissal during pregnancy or maternity leave (except for gross misconduct) is unlawful</li>
+      <li>First 6 weeks: 100% of regular salary</li>
+      <li>Remaining 8 weeks: {{maternity_remaining_pay}}% of regular salary</li>
+      <li>NASSIT contributions continue during paid maternity leave</li>
     </ul>
 
-    <p><strong>4.4 Pregnancy-Related Accommodations:</strong></p>
+    <p><strong>4.4 Job Protection:</strong></p>
     <ul>
-      <li>Reasonable accommodations will be made for pregnant employees (e.g., modified duties, rest breaks)</li>
-      <li>Antenatal appointments are permitted with reasonable notice</li>
+      <li>Your position is protected during maternity leave as guaranteed by law</li>
+      <li>You have the right to return to the same or equivalent position</li>
+      <li>No employee may be dismissed or disadvantaged due to pregnancy or maternity leave</li>
     </ul>
 
     <p><strong>4.5 Nursing Breaks:</strong></p>
     <ul>
-      <li>Nursing mothers are entitled to {{nursing_break_duration}} paid break(s) during the working day for the first {{nursing_period}} months after returning to work</li>
+      <li>Upon return, nursing mothers are entitled to {{nursing_break_hours}} hour(s) per day for nursing during the first 12 months</li>
+      <li>Nursing breaks may be taken as one break or split into shorter periods</li>
+      <li>A private, hygienic space will be provided for nursing or expressing milk</li>
+    </ul>
+
+    <p><strong>4.6 Pregnancy-Related Illness:</strong></p>
+    <ul>
+      <li>If you are ill due to pregnancy before maternity leave begins, this may be treated as sick leave</li>
+      <li>Pregnancy-related sick leave in the 4 weeks before due date may trigger automatic start of maternity leave</li>
     </ul>
   </div>
 
@@ -1894,15 +1906,15 @@ export const DEFAULT_TEMPLATES = {
       <div class="sl-info-grid">
         <div class="sl-info-item" style="border-left-color: #3b82f6;">
           <label>Entitlement</label>
-          <span>{{paternity_leave_days}} working days</span>
+          <span>{{paternity_days}} working days</span>
         </div>
         <div class="sl-info-item" style="border-left-color: #3b82f6;">
           <label>Pay</label>
-          <span>Full pay (100%)</span>
+          <span>Full pay</span>
         </div>
         <div class="sl-info-item" style="border-left-color: #3b82f6;">
           <label>Timeframe</label>
-          <span>Within {{paternity_timeframe}} of birth</span>
+          <span>Within 2 weeks of birth</span>
         </div>
         <div class="sl-info-item" style="border-left-color: #3b82f6;">
           <label>Documentation</label>
@@ -1913,134 +1925,148 @@ export const DEFAULT_TEMPLATES = {
 
     <p><strong>5.1 Eligibility & Application:</strong></p>
     <ul>
-      <li>Available to all male employees whose spouse or partner gives birth</li>
-      <li>Also applies to employees whose child is born via surrogacy or adoption</li>
-      <li>Apply through HR with anticipated due date; submit birth certificate upon return</li>
-      <li>Leave must be taken within {{paternity_timeframe}} of the child's birth and cannot be split</li>
+      <li>Available to male employees upon the birth of their child</li>
+      <li>Notify HR and your supervisor of expected birth date in advance</li>
+      <li>Submit formal application with birth certificate upon return</li>
+      <li>Leave must be taken in one continuous period</li>
+    </ul>
+
+    <p><strong>5.2 Adoption:</strong></p>
+    <ul>
+      <li>Similar leave provisions apply for fathers in cases of legal adoption</li>
+      <li>Documentation of adoption proceedings required</li>
     </ul>
   </div>
 
   <div class="sl-section">
     <h2>6. Compassionate & Bereavement Leave</h2>
-    <div class="sl-highlight-box" style="background: linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%); border-color: #64748b;">
-      <h3 style="color: #475569;">💐 Compassionate Leave Entitlements</h3>
+    <div class="sl-highlight-box" style="background: linear-gradient(135deg, #f5f5f4 0%, #e7e5e4 100%); border-color: #78716c;">
+      <h3 style="color: #57534e;">🕊️ Bereavement Leave</h3>
       <div class="sl-info-grid">
-        <div class="sl-info-item" style="border-left-color: #64748b;">
-          <label>Immediate Family Death</label>
-          <span>{{compassionate_immediate}} working days</span>
+        <div class="sl-info-item" style="border-left-color: #78716c;">
+          <label>Immediate Family</label>
+          <span>{{bereavement_immediate}} working days</span>
         </div>
-        <div class="sl-info-item" style="border-left-color: #64748b;">
-          <label>Extended Family Death</label>
-          <span>{{compassionate_extended}} working days</span>
+        <div class="sl-info-item" style="border-left-color: #78716c;">
+          <label>Extended Family</label>
+          <span>{{bereavement_extended}} working days</span>
         </div>
       </div>
     </div>
 
-    <p><strong>6.1 Definitions:</strong></p>
+    <p><strong>6.1 Immediate Family Bereavement:</strong></p>
     <ul>
-      <li><strong>Immediate Family:</strong> Spouse, child, parent, sibling, grandparent, grandchild</li>
-      <li><strong>Extended Family:</strong> In-laws, aunts, uncles, cousins, nieces, nephews</li>
+      <li><strong>{{bereavement_immediate}} working days</strong> paid leave for death of: spouse/partner, child, parent, sibling</li>
+      <li>Leave begins immediately upon notification</li>
+      <li>Additional unpaid leave may be granted for travel or cultural obligations</li>
     </ul>
 
-    <p><strong>6.2 Other Compassionate Circumstances:</strong></p>
+    <p><strong>6.2 Extended Family Bereavement:</strong></p>
     <ul>
-      <li>Serious illness of immediate family member: Up to 3 days</li>
-      <li>Hospitalization of dependent child: Up to 3 days</li>
-      <li>Other exceptional circumstances: At management discretion</li>
+      <li><strong>{{bereavement_extended}} working days</strong> paid leave for: grandparents, grandchildren, parents-in-law, aunts, uncles, nieces, nephews</li>
     </ul>
 
-    <p><strong>6.3 Procedure:</strong></p>
+    <p><strong>6.3 Compassionate Leave (Non-Bereavement):</strong></p>
     <ul>
-      <li>Notify your supervisor or HR as soon as possible</li>
-      <li>Documentary evidence (death certificate, hospital records) may be required</li>
-      <li>Additional unpaid leave may be granted for exceptional circumstances</li>
+      <li>Up to 3 days paid leave may be granted for serious illness of immediate family members</li>
+      <li>Emergency situations requiring employee's presence</li>
+      <li>Approval at management discretion based on circumstances</li>
+    </ul>
+
+    <p><strong>6.4 Documentation:</strong></p>
+    <ul>
+      <li>Death certificate or equivalent documentation may be requested</li>
+      <li>Relationship to deceased may need to be verified</li>
     </ul>
   </div>
 
   <div class="sl-section">
     <h2>7. Public Holidays</h2>
-    <p>All employees are entitled to paid leave on official Sierra Leone public holidays as declared by the Government. The standard public holidays include:</p>
+    <p>All employees are entitled to paid leave on the following Sierra Leone public holidays:</p>
     <ul>
       <li>New Year's Day (January 1)</li>
       <li>Independence Day (April 27)</li>
-      <li>Good Friday and Easter Monday</li>
-      <li>Eid-ul-Fitr and Eid-ul-Adha</li>
+      <li>Eid ul-Fitr (dates vary)</li>
+      <li>Eid ul-Adha (dates vary)</li>
       <li>Christmas Day (December 25)</li>
       <li>Boxing Day (December 26)</li>
       <li>Other holidays as declared by the Government</li>
     </ul>
-
-    <p><strong>7.1 Working on Public Holidays:</strong></p>
+    <p><strong>Working on Public Holidays:</strong></p>
     <ul>
-      <li>Employees required to work on public holidays shall be compensated at <strong>2.5 times</strong> the regular hourly rate</li>
-      <li>Alternatively, a compensatory day off may be granted in lieu of overtime pay</li>
-      <li>Management will provide reasonable advance notice when holiday work is required</li>
+      <li>If you are required to work on a public holiday, compensation shall be at <strong>{{holiday_pay_rate}}x the regular rate</strong></li>
+      <li>Alternatively, a day off in lieu may be granted with management approval</li>
     </ul>
   </div>
 
   <div class="sl-section">
-    <h2>8. Study Leave & Examination Leave</h2>
+    <h2>8. Study & Examination Leave</h2>
     <ul>
-      <li><strong>Approved Studies:</strong> Up to {{study_leave_days}} days per year for job-related education approved by the company</li>
-      <li><strong>Examination Leave:</strong> Up to {{exam_leave_days}} days for sitting approved professional examinations</li>
-      <li>Prior approval and evidence of enrollment/exam registration required</li>
-      <li>May be paid or unpaid depending on relevance to role and company policy</li>
+      <li>Employees pursuing approved work-related qualifications may be granted study leave</li>
+      <li>Up to {{study_leave_days}} days per year for examinations and preparation</li>
+      <li>Prior approval required with course documentation</li>
+      <li>Leave for examinations will be paid; additional study time may be unpaid</li>
     </ul>
   </div>
 
   <div class="sl-section">
-    <h2>9. Marriage Leave</h2>
+    <h2>9. Jury Duty & Court Attendance</h2>
     <ul>
-      <li>Employees are entitled to <strong>{{marriage_leave_days}} working days</strong> of paid leave for their own marriage</li>
-      <li>Marriage certificate must be submitted within 30 days of return</li>
-      <li>This leave may only be taken once during employment</li>
+      <li>Employees called for jury duty will receive full pay for the duration</li>
+      <li>Proof of jury service must be provided</li>
+      <li>Attendance as a witness (subpoenaed) is treated similarly</li>
     </ul>
   </div>
 
   <div class="sl-section">
-    <h2>10. Unpaid Leave (Leave of Absence)</h2>
+    <h2>10. Unpaid Leave</h2>
+    <p>Unpaid leave may be granted at management discretion for:</p>
     <ul>
-      <li>Unpaid leave may be granted at management discretion for personal reasons not covered by other leave types</li>
-      <li>Submit requests in writing at least {{unpaid_leave_notice}} in advance</li>
-      <li>Maximum duration: {{max_unpaid_leave}} unless special circumstances apply</li>
-      <li>Benefits may be suspended or prorated during extended unpaid leave</li>
-      <li>NASSIT contributions will not be made during unpaid leave periods</li>
+      <li>Personal matters not covered by other leave types</li>
+      <li>Extended travel for personal reasons</li>
+      <li>Career breaks (subject to separate agreement)</li>
+    </ul>
+    <p><strong>Requirements:</strong></p>
+    <ul>
+      <li>Submit written request at least {{unpaid_leave_notice}} in advance</li>
+      <li>Maximum duration of {{unpaid_leave_max}} months in any 12-month period</li>
+      <li>Approval subject to business needs</li>
+      <li>NASSIT contributions will not be made during unpaid leave</li>
     </ul>
   </div>
 
   <div class="sl-section">
-    <h2>11. Jury Duty & Civic Leave</h2>
-    <p>Employees summoned for jury duty or to serve as witnesses in court proceedings shall be granted leave:</p>
-    <ul>
-      <li>Full pay for the duration of civic duty</li>
-      <li>Provide official summons or court documentation</li>
-      <li>Return to work promptly when not required at court</li>
-    </ul>
+    <h2>11. Leave Request Procedure</h2>
+    <ol>
+      <li><strong>Submit Request:</strong> Complete leave request form (paper or electronic) with dates and type of leave</li>
+      <li><strong>Manager Review:</strong> Manager reviews request considering business needs and team coverage</li>
+      <li><strong>Approval/Rejection:</strong> Manager approves or rejects with reason within 5 working days</li>
+      <li><strong>Confirmation:</strong> Employee receives written confirmation of approved leave</li>
+      <li><strong>Handover:</strong> Arrange proper handover of duties before leave commences</li>
+      <li><strong>Emergency Contact:</strong> Provide contact details for emergencies</li>
+    </ol>
   </div>
 
   <div class="sl-section">
-    <h2>12. Leave Records & Administration</h2>
+    <h2>12. Manager Responsibilities</h2>
     <ul>
-      <li>All leave requests and approvals must be documented</li>
-      <li>Employees can check their leave balance through the HR system or by contacting HR</li>
-      <li>Leave taken without prior approval (except emergencies) may be treated as unauthorized absence</li>
-      <li>Unauthorized absence is subject to disciplinary action and salary deduction</li>
+      <li>Process leave requests promptly and fairly</li>
+      <li>Maintain adequate team coverage while allowing employees to take entitled leave</li>
+      <li>Monitor leave patterns and address any concerns</li>
+      <li>Ensure employees take their leave entitlements</li>
+      <li>Maintain accurate leave records</li>
     </ul>
-  </div>
-
-  <div class="sl-section">
-    <h2>13. Policy Review</h2>
-    <p>This Leave Policy will be reviewed annually and updated as necessary to comply with changes in legislation or company requirements. Employees will be notified of any significant changes.</p>
   </div>
 
   <div class="sl-acknowledgment">
     <h2>Employee Acknowledgment</h2>
     <p>I, <strong>{{employee_name}}</strong>, hereby acknowledge that:</p>
     <ul>
-      <li>I have received, read, and fully understand this Leave Policy</li>
+      <li>I have received, read, and fully understood this Leave Policy</li>
       <li>I understand my leave entitlements and the procedures for requesting leave</li>
-      <li>I agree to comply with all aspects of this policy</li>
-      <li>I understand that failure to follow proper leave procedures may result in disciplinary action</li>
+      <li>I agree to follow the proper procedures outlined in this policy</li>
+      <li>I understand that abuse of leave provisions may result in disciplinary action</li>
+      <li>I will provide timely notification and proper documentation as required</li>
     </ul>
   </div>
 
@@ -2059,7 +2085,7 @@ export const DEFAULT_TEMPLATES = {
     <div class="sl-footer-logo">🇸🇱</div>
     <p><strong>{{company_name}}</strong></p>
     <p>Republic of Sierra Leone</p>
-    <p class="sl-legal-note">This policy complies with the Employment Act 2023 of Sierra Leone. All leave entitlements meet or exceed statutory minimums.</p>
+    <p class="sl-legal-note">This policy complies with the Employment Act 2023 of Sierra Leone. Work-life balance is valued at {{company_name}}.</p>
   </div>
 </div>
     `,
@@ -2070,24 +2096,22 @@ export const DEFAULT_TEMPLATES = {
       { key: "position", label: "Position", type: "text", auto_fill: "employee.position" },
       { key: "department", label: "Department", type: "text", auto_fill: "employee.department" },
       { key: "annual_leave_days", label: "Annual Leave Days", type: "select", options: ["21", "25", "30"], default: "21" },
-      { key: "monthly_accrual", label: "Monthly Accrual Rate", type: "text", default: "1.75" },
-      { key: "leave_year", label: "Leave Year", type: "select", options: ["January - December", "April - March", "July - June"], default: "January - December" },
-      { key: "annual_leave_notice", label: "Annual Leave Notice Period", type: "select", options: ["1 week", "2 weeks", "1 month"], default: "2 weeks" },
-      { key: "max_consecutive_days", label: "Max Consecutive Days", type: "select", options: ["10", "14", "21"], default: "14" },
-      { key: "carry_forward_days", label: "Carry Forward Days", type: "select", options: ["5", "10", "15"], default: "10" },
-      { key: "sick_leave_days", label: "Sick Leave Days", type: "select", options: ["5", "10", "12"], default: "5" },
-      { key: "medical_cert_days", label: "Days Before Medical Cert Required", type: "select", options: ["2", "3"], default: "2" },
-      { key: "nursing_break_duration", label: "Nursing Break Duration", type: "text", default: "two 30-minute" },
-      { key: "nursing_period", label: "Nursing Break Period (months)", type: "select", options: ["6", "9", "12"], default: "6" },
-      { key: "paternity_leave_days", label: "Paternity Leave Days", type: "select", options: ["5", "7", "10"], default: "5" },
-      { key: "paternity_timeframe", label: "Paternity Leave Timeframe", type: "select", options: ["2 weeks", "1 month", "6 weeks"], default: "2 weeks" },
-      { key: "compassionate_immediate", label: "Compassionate Leave (Immediate)", type: "select", options: ["3", "5", "7"], default: "5" },
-      { key: "compassionate_extended", label: "Compassionate Leave (Extended)", type: "select", options: ["2", "3"], default: "3" },
-      { key: "study_leave_days", label: "Study Leave Days", type: "select", options: ["5", "10", "15"], default: "10" },
-      { key: "exam_leave_days", label: "Exam Leave Days", type: "select", options: ["3", "5"], default: "3" },
-      { key: "marriage_leave_days", label: "Marriage Leave Days", type: "select", options: ["3", "5"], default: "3" },
-      { key: "unpaid_leave_notice", label: "Unpaid Leave Notice", type: "select", options: ["1 week", "2 weeks", "1 month"], default: "2 weeks" },
-      { key: "max_unpaid_leave", label: "Max Unpaid Leave", type: "select", options: ["1 month", "3 months", "6 months"], default: "3 months" }
+      { key: "annual_leave_notice", label: "Annual Leave Notice Period", type: "select", options: ["1 week", "2 weeks", "3 weeks"], default: "2 weeks" },
+      { key: "carry_forward_days", label: "Max Carry-Forward Days", type: "select", options: ["5", "10", "15"], default: "10" },
+      { key: "sick_leave_days", label: "Sick Leave Days Per Year", type: "select", options: ["5", "7", "10"], default: "5" },
+      { key: "sick_cert_days", label: "Days Before Medical Certificate Required", type: "select", options: ["2", "3"], default: "2" },
+      { key: "long_term_sick_weeks", label: "Long-Term Sick Review Threshold (Weeks)", type: "select", options: ["4", "6", "8"], default: "4" },
+      { key: "maternity_pay_structure", label: "Maternity Pay Structure", type: "text", default: "6 weeks full pay + 8 weeks half pay" },
+      { key: "maternity_notice", label: "Maternity Leave Notice Period", type: "select", options: ["4 weeks", "6 weeks", "8 weeks"], default: "6 weeks" },
+      { key: "maternity_remaining_pay", label: "Remaining Maternity Pay %", type: "select", options: ["50", "75", "100"], default: "50" },
+      { key: "nursing_break_hours", label: "Nursing Break Hours Per Day", type: "select", options: ["1", "1.5", "2"], default: "1" },
+      { key: "paternity_days", label: "Paternity Leave Days", type: "select", options: ["3", "5", "7", "10"], default: "5" },
+      { key: "bereavement_immediate", label: "Bereavement Leave - Immediate Family (Days)", type: "select", options: ["3", "5", "7"], default: "5" },
+      { key: "bereavement_extended", label: "Bereavement Leave - Extended Family (Days)", type: "select", options: ["2", "3", "5"], default: "3" },
+      { key: "holiday_pay_rate", label: "Holiday Pay Rate Multiplier", type: "select", options: ["1.5", "2", "2.5"], default: "2.5" },
+      { key: "study_leave_days", label: "Study Leave Days Per Year", type: "select", options: ["3", "5", "7"], default: "5" },
+      { key: "unpaid_leave_notice", label: "Unpaid Leave Notice Period", type: "select", options: ["1 week", "2 weeks", "4 weeks"], default: "2 weeks" },
+      { key: "unpaid_leave_max", label: "Max Unpaid Leave (Months)", type: "select", options: ["1", "2", "3", "6"], default: "3" }
     ]
   },
 
