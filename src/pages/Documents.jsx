@@ -42,7 +42,7 @@ import CreateDocumentDialog from "@/components/documents/CreateDocumentDialog";
 import DocumentSignatureDialog from "@/components/documents/DocumentSignatureDialog";
 import DocumentViewer from "@/components/documents/DocumentViewer";
 import { DOCUMENT_TYPE_INFO, DEFAULT_TEMPLATES } from "@/components/documents/DocumentTemplates";
-import GenerateRequiredDocsDialog from "@/components/documents/GenerateRequiredDocsDialog";
+import GenerateRequiredDocsDialog from "@/components/documents/GenerateRequiredDocsDialog.jsx";
 
 const STATUS_CONFIG = {
   draft: { label: "Draft", icon: Clock, color: "bg-gray-100 text-gray-800", dotColor: "bg-gray-400" },
