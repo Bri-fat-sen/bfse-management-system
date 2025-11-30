@@ -35,7 +35,7 @@ export const generateProfessionalReport = ({
       <head>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>${title} - ${organisation?.name || 'Report'}</title>
+        <title>${title} - ${orgName}</title>
         <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
         <style>
           :root {
@@ -643,18 +643,19 @@ export const generateProfessionalReport = ({
               <div class="header-top">
                 <div class="org-branding">
                   <div class="org-logo">
-                    ${organisation?.logo_url 
-                      ? `<img src="${organisation.logo_url}" alt="Logo" style="max-width:100%;max-height:100%;object-fit:contain;">` 
+                    ${orgLogo 
+                      ? `<img src="${orgLogo}" alt="Logo" style="max-width:100%;max-height:100%;object-fit:contain;">` 
                       : `<span>${orgInitials}</span>`
                     }
                   </div>
                   <div class="org-details">
-                    <h1>${organisation?.name || 'Organisation'}</h1>
-                    <div class="tagline">Business Management System</div>
+                    <h1>${orgName}</h1>
+                    <div class="tagline">${orgCountry} • Business Management</div>
                     <div class="org-contact">
-                      ${organisation?.address ? `<span>📍 ${organisation.address}${organisation?.city ? `, ${organisation.city}` : ''}</span>` : ''}
-                      ${organisation?.phone ? `<span>📞 ${organisation.phone}</span>` : ''}
-                      ${organisation?.email ? `<span>✉️ ${organisation.email}</span>` : ''}
+                      ${orgAddress || orgCity ? `<span>📍 ${orgAddress}${orgAddress && orgCity ? ', ' : ''}${orgCity}</span>` : `<span>📍 ${orgCountry}</span>`}
+                      ${orgPhone ? `<span>📞 ${orgPhone}</span>` : ''}
+                      ${orgEmail ? `<span>✉️ ${orgEmail}</span>` : ''}
+                      ${orgTIN ? `<span>🏛️ TIN: ${orgTIN}</span>` : ''}
                     </div>
                   </div>
                 </div>
@@ -785,13 +786,19 @@ export const generateProfessionalReport = ({
                 <div class="footer-left">
                   <div class="footer-flag">🇸🇱</div>
                   <div class="footer-text">
-                    <h4>Thank you for using ${organisation?.name || 'Our'} Management System</h4>
-                    <p>Proudly serving businesses across Sierra Leone</p>
+                    <h4>${orgName}</h4>
+                    <p>${orgAddress ? orgAddress + (orgCity ? ', ' + orgCity : '') : orgCountry}</p>
+                    <p style="font-size: 11px; opacity: 0.8; margin-top: 4px;">
+                      ${orgPhone ? '📞 ' + orgPhone : ''} 
+                      ${orgPhone && orgEmail ? ' • ' : ''}
+                      ${orgEmail ? '✉️ ' + orgEmail : ''}
+                    </p>
                   </div>
                 </div>
                 <div class="footer-meta">
                   <div>Generated: ${generatedDate}</div>
                   <div class="report-id">${reportId}</div>
+                  ${orgTIN ? `<div style="margin-top: 4px;">TIN: ${orgTIN}</div>` : ''}
                 </div>
               </div>
             </div>
