@@ -28,8 +28,9 @@ import {
   Settings, CheckCircle2, Sparkles
 } from "lucide-react";
 import { format } from "date-fns";
-import { DOCUMENT_TYPE_INFO, DEFAULT_TEMPLATES } from "./DocumentTemplates";
+import { DOCUMENT_TYPE_INFO, DEFAULT_TEMPLATES, SL_DOCUMENT_STYLES } from "./DocumentTemplates";
 import TemplateEditorDialog from "./TemplateEditorDialog";
+import TemplatePreviewDialog from "./TemplatePreviewDialog";
 
 const TEMPLATE_CATEGORIES = [
   { value: "employment", label: "Employment", icon: FileSignature },
@@ -94,6 +95,7 @@ export default function TemplateManager({ orgId, currentEmployee }) {
   const [showEditor, setShowEditor] = useState(false);
   const [editingTemplate, setEditingTemplate] = useState(null);
   const [duplicatingTemplate, setDuplicatingTemplate] = useState(null);
+  const [previewTemplate, setPreviewTemplate] = useState(null);
 
   // Fetch custom templates
   const { data: customTemplates = [], isLoading } = useQuery({
@@ -172,19 +174,26 @@ export default function TemplateManager({ orgId, currentEmployee }) {
     }
     setEditingTemplate(template);
     setDuplicatingTemplate(null);
+    setPreviewTemplate(null);
     setShowEditor(true);
   };
 
   const handleDuplicate = (template) => {
     setDuplicatingTemplate(template);
     setEditingTemplate(null);
+    setPreviewTemplate(null);
     setShowEditor(true);
   };
 
   const handleCreateNew = () => {
     setEditingTemplate(null);
     setDuplicatingTemplate(null);
+    setPreviewTemplate(null);
     setShowEditor(true);
+  };
+
+  const handlePreview = (template) => {
+    setPreviewTemplate(template);
   };
 
   const handleDelete = (template) => {
@@ -357,6 +366,10 @@ export default function TemplateManager({ orgId, currentEmployee }) {
                                 </Button>
                               </DropdownMenuTrigger>
                               <DropdownMenuContent align="end">
+                                <DropdownMenuItem onClick={() => handlePreview(template)}>
+                                  <Eye className="w-4 h-4 mr-2" />
+                                  Preview
+                                </DropdownMenuItem>
                                 <DropdownMenuItem onClick={() => handleDuplicate(template)}>
                                   <Copy className="w-4 h-4 mr-2" />
                                   Duplicate
@@ -435,6 +448,21 @@ export default function TemplateManager({ orgId, currentEmployee }) {
         duplicateFrom={duplicatingTemplate}
         orgId={orgId}
         currentEmployee={currentEmployee}
+      />
+
+      {/* Template Preview Dialog */}
+      <TemplatePreviewDialog
+        open={!!previewTemplate}
+        onOpenChange={(open) => !open && setPreviewTemplate(null)}
+        template={previewTemplate}
+        onEdit={() => {
+          if (previewTemplate?.is_system) {
+            toast.error("System templates cannot be edited. You can duplicate them instead.");
+          } else {
+            handleEdit(previewTemplate);
+          }
+        }}
+        onDuplicate={() => handleDuplicate(previewTemplate)}
       />
     </div>
   );
