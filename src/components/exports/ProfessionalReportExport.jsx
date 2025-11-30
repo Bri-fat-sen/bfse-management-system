@@ -147,9 +147,14 @@ export const generateProfessionalReport = ({
             display: flex;
             align-items: center;
             gap: 6px;
-            background: rgba(255,255,255,0.1);
-            padding: 4px 10px;
-            border-radius: 4px;
+            background: rgba(255,255,255,0.15);
+            padding: 5px 12px;
+            border-radius: 6px;
+            font-weight: 500;
+          }
+          
+          .org-contact {
+            flex-wrap: wrap;
           }
           
           .header-flag {
@@ -511,14 +516,15 @@ export const generateProfessionalReport = ({
           }
           
           .footer-text h4 {
-            font-size: 16px;
+            font-size: 18px;
             font-weight: 700;
-            margin-bottom: 4px;
+            margin-bottom: 6px;
           }
           
           .footer-text p {
-            font-size: 13px;
-            opacity: 0.85;
+            font-size: 12px;
+            opacity: 0.9;
+            line-height: 1.4;
           }
           
           .footer-meta {
@@ -638,12 +644,13 @@ export const generateProfessionalReport = ({
                     }
                   </div>
                   <div class="org-details">
-                    <h1>${organisation?.name || 'Organisation'}</h1>
-                    <div class="tagline">Business Management System</div>
+                    <h1>${organisation?.name || 'Business Report'}</h1>
+                    <div class="tagline">${organisation?.country || 'Sierra Leone'} • Business Management</div>
                     <div class="org-contact">
-                      ${organisation?.address ? `<span>📍 ${organisation.address}${organisation?.city ? `, ${organisation.city}` : ''}</span>` : ''}
+                      ${organisation?.address || organisation?.city ? `<span>📍 ${organisation?.address || ''}${organisation?.address && organisation?.city ? ', ' : ''}${organisation?.city || ''}</span>` : '<span>📍 Sierra Leone</span>'}
                       ${organisation?.phone ? `<span>📞 ${organisation.phone}</span>` : ''}
                       ${organisation?.email ? `<span>✉️ ${organisation.email}</span>` : ''}
+                      ${organisation?.tin_number ? `<span>🏛️ TIN: ${organisation.tin_number}</span>` : ''}
                     </div>
                   </div>
                 </div>
@@ -774,13 +781,19 @@ export const generateProfessionalReport = ({
                 <div class="footer-left">
                   <div class="footer-flag">🇸🇱</div>
                   <div class="footer-text">
-                    <h4>Thank you for using ${organisation?.name || 'Our'} Management System</h4>
-                    <p>Proudly serving businesses across Sierra Leone</p>
+                    <h4>${organisation?.name || 'Business Report'}</h4>
+                    <p>${organisation?.address ? organisation.address + (organisation?.city ? ', ' + organisation.city : '') : 'Sierra Leone'}</p>
+                    <p style="font-size: 11px; opacity: 0.8; margin-top: 4px;">
+                      ${organisation?.phone ? '📞 ' + organisation.phone : ''} 
+                      ${organisation?.phone && organisation?.email ? ' • ' : ''}
+                      ${organisation?.email ? '✉️ ' + organisation.email : ''}
+                    </p>
                   </div>
                 </div>
                 <div class="footer-meta">
                   <div>Generated: ${generatedDate}</div>
                   <div class="report-id">${reportId}</div>
+                  ${organisation?.tin_number ? `<div style="margin-top: 4px;">TIN: ${organisation.tin_number}</div>` : ''}
                 </div>
               </div>
             </div>
