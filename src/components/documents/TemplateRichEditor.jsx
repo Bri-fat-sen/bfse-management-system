@@ -1,6 +1,5 @@
 import React, { useState, useRef, useCallback } from "react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import {
@@ -8,7 +7,6 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-  DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
 import {
   Popover,
@@ -19,17 +17,9 @@ import { toast } from "sonner";
 import {
   Bold, Italic, Underline, AlignLeft, AlignCenter, AlignRight,
   List, ListOrdered, Heading1, Heading2, Heading3, Type,
-  ChevronDown, Variable, Plus, Table, Minus, Image,
-  Undo, Redo, Link, FileSignature, Flag, Highlighter
+  ChevronDown, Variable, Table, Minus,
+  Undo, Redo, FileSignature, Flag, Highlighter, Info
 } from "lucide-react";
-
-const FONT_SIZES = [
-  { label: "Small", value: "12px" },
-  { label: "Normal", value: "14px" },
-  { label: "Medium", value: "16px" },
-  { label: "Large", value: "18px" },
-  { label: "X-Large", value: "24px" },
-];
 
 const COLORS = [
   { label: "Black", value: "#000000" },
@@ -182,22 +172,6 @@ export default function TemplateRichEditor({ content, onChange, variables = [] }
           </DropdownMenuContent>
         </DropdownMenu>
 
-        {/* Font Size */}
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="sm" className="h-8 text-xs gap-1">
-              Size <ChevronDown className="w-3 h-3" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent>
-            {FONT_SIZES.map(size => (
-              <DropdownMenuItem key={size.value} onClick={() => execCommand('fontSize', '3')}>
-                <span style={{ fontSize: size.value }}>{size.label}</span>
-              </DropdownMenuItem>
-            ))}
-          </DropdownMenuContent>
-        </DropdownMenu>
-
         <div className="w-px h-6 bg-gray-300 mx-1" />
 
         {/* Text Formatting */}
@@ -299,7 +273,7 @@ export default function TemplateRichEditor({ content, onChange, variables = [] }
         </DropdownMenu>
 
         <Button variant="ghost" size="icon" className="h-8 w-8" onClick={insertInfoBox} title="Info Box">
-          <Flag className="w-4 h-4" />
+          <Info className="w-4 h-4" />
         </Button>
 
         <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => execCommand('insertHorizontalRule')} title="Divider">
@@ -364,25 +338,33 @@ export default function TemplateRichEditor({ content, onChange, variables = [] }
         </Popover>
       </div>
 
-      {/* Editor Area */}
-      <ScrollArea className="flex-1">
-        <div
-          ref={editorRef}
-          className="min-h-[500px] p-8 outline-none prose prose-sm max-w-none"
-          contentEditable
-          onInput={handleContentChange}
-          onBlur={handleContentChange}
-          dangerouslySetInnerHTML={{ __html: content }}
-          style={{
-            fontFamily: 'system-ui, -apple-system, sans-serif',
-            lineHeight: 1.6,
-          }}
-        />
+      {/* Editor Area - Google Docs style */}
+      <ScrollArea className="flex-1 bg-[#f8f9fa]">
+        <div className="py-8 px-4 flex justify-center">
+          <div 
+            className="bg-white shadow-md rounded-sm min-h-[700px] w-full max-w-[816px]"
+            style={{ padding: '72px 72px' }}
+          >
+            <div
+              ref={editorRef}
+              className="min-h-[600px] outline-none"
+              contentEditable
+              onInput={handleContentChange}
+              onBlur={handleContentChange}
+              dangerouslySetInnerHTML={{ __html: content }}
+              style={{
+                fontFamily: 'Arial, sans-serif',
+                fontSize: '11pt',
+                lineHeight: 1.5,
+              }}
+            />
+          </div>
+        </div>
       </ScrollArea>
 
       {/* Status Bar */}
       <div className="bg-gray-50 border-t px-3 py-1.5 flex items-center justify-between text-xs text-gray-500">
-        <span>Rich Text Editor</span>
+        <span>Document Editor</span>
         <span>{variables.length} variable(s) available</span>
       </div>
     </div>
