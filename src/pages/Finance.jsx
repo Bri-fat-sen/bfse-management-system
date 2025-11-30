@@ -82,6 +82,8 @@ export default function Finance() {
   const [showExpenseDialog, setShowExpenseDialog] = useState(false);
   const [categoryFilter, setCategoryFilter] = useState("all");
   const [showFormsDialog, setShowFormsDialog] = useState(false);
+  
+  // Analytics & Reports state
   const [reportTab, setReportTab] = useState("sales");
   const [reportDateRange, setReportDateRange] = useState("this_month");
   const [showCharts, setShowCharts] = useState(true);
@@ -147,12 +149,6 @@ export default function Finance() {
     enabled: !!orgId,
   });
 
-  const { data: organisation } = useQuery({
-    queryKey: ['organisation', orgId],
-    queryFn: () => base44.entities.Organisation.filter({ id: orgId }),
-    enabled: !!orgId,
-  });
-
   const { data: products = [] } = useQuery({
     queryKey: ['products', orgId],
     queryFn: () => base44.entities.Product.filter({ organisation_id: orgId }),
@@ -162,6 +158,12 @@ export default function Finance() {
   const { data: stockLevels = [] } = useQuery({
     queryKey: ['stockLevels', orgId],
     queryFn: () => base44.entities.StockLevel.filter({ organisation_id: orgId }),
+    enabled: !!orgId,
+  });
+
+  const { data: organisation } = useQuery({
+    queryKey: ['organisation', orgId],
+    queryFn: () => base44.entities.Organisation.filter({ id: orgId }),
     enabled: !!orgId,
   });
 
@@ -282,13 +284,14 @@ export default function Finance() {
     });
   }, [trips, getReportDateRange]);
 
+  // Report metrics
   const salesMetrics = useMemo(() => {
     const totalRevenue = reportFilteredSales.reduce((sum, s) => sum + (s.total_amount || 0), 0);
     const avgSale = reportFilteredSales.length > 0 ? totalRevenue / reportFilteredSales.length : 0;
     return { totalRevenue, count: reportFilteredSales.length, avgSale };
   }, [reportFilteredSales]);
 
-  const expenseReportMetrics = useMemo(() => {
+  const expenseMetrics = useMemo(() => {
     const totalExpenses = reportFilteredExpenses.reduce((sum, e) => sum + (e.amount || 0), 0);
     return { totalExpenses, count: reportFilteredExpenses.length };
   }, [reportFilteredExpenses]);
@@ -308,7 +311,7 @@ export default function Finance() {
     return { totalStock, totalProducts: products.length, lowStock };
   }, [products, stockLevels]);
 
-  const handlePrintReport = () => {
+  const handlePrint = () => {
     const org = organisation?.[0];
     switch (reportTab) {
       case 'sales': printSalesReport(reportFilteredSales, org, getReportDateRange); break;
@@ -773,7 +776,7 @@ export default function Finance() {
                     <FileSpreadsheet className="w-4 h-4 mr-1" />
                     CSV
                   </Button>
-                  <Button size="sm" onClick={handlePrintReport} className="bg-[#1EB053]">
+                  <Button size="sm" onClick={handlePrint} className="bg-[#1EB053]">
                     <Printer className="w-4 h-4 mr-1" />
                     Print
                   </Button>
@@ -814,8 +817,8 @@ export default function Finance() {
 
             <TabsContent value="expenses" className="mt-4 space-y-4">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <StatCard title="Total Expenses" value={`SLE ${expenseReportMetrics.totalExpenses.toLocaleString()}`} icon={DollarSign} color="red" />
-                <StatCard title="Expense Count" value={expenseReportMetrics.count} icon={FileText} color="blue" />
+                <StatCard title="Total Expenses" value={`SLE ${expenseMetrics.totalExpenses.toLocaleString()}`} icon={DollarSign} color="red" />
+                <StatCard title="Expense Count" value={expenseMetrics.count} icon={FileText} color="blue" />
               </div>
               {showCharts && <ExpenseCharts expenses={reportFilteredExpenses} />}
             </TabsContent>
