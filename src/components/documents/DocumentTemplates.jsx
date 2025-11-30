@@ -619,7 +619,7 @@ export const DEFAULT_TEMPLATES = {
     variables: [
       { key: "company_name", label: "Company Name", type: "text", auto_fill: "organisation.name" },
       { key: "employee_name", label: "Employee Name", type: "text", auto_fill: "employee.full_name" },
-      { key: "first_aid_locations", label: "First Aid Kit Locations", type: "text", default: "Reception, Kitchen, and each floor" }
+      { key: "first_aid_locations", label: "First Aid Locations", type: "text", default: "Reception, Kitchen, and each floor" }
     ]
   },
 
