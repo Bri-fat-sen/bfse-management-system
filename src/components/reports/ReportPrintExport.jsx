@@ -1,6 +1,5 @@
-import React from "react";
 import { format } from "date-fns";
-import { generateExportHTML, printDocument, exportToCSV } from "@/components/exports/SierraLeoneExportStyles";
+import { exportToCSV } from "@/components/exports/SierraLeoneExportStyles";
 import { generateProfessionalReport, downloadProfessionalReportAsPDF } from "@/components/exports/ProfessionalReportExport";
 
 export function printSalesReport({ salesAnalytics = {}, filters = {}, organisation, filteredSales = [] }) {
