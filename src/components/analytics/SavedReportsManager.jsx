@@ -16,11 +16,8 @@ import {
   Plus,
   Calendar,
   Mail,
-  Send,
-  CheckCircle,
-  AlertCircle
+  Send
 } from "lucide-react";
-import ReportScheduleDialog from "@/components/reports/ReportScheduleDialog";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -41,6 +38,7 @@ import {
 } from "@/components/ui/dialog";
 import { useToast } from "@/components/ui/use-toast";
 import EmptyState from "@/components/ui/EmptyState";
+import ReportScheduleDialog from "@/components/reports/ReportScheduleDialog";
 
 const REPORT_TYPE_COLORS = {
   sales: '#1EB053',
@@ -56,7 +54,7 @@ export default function SavedReportsManager({ orgId, onLoadReport }) {
   const queryClient = useQueryClient();
   const [searchTerm, setSearchTerm] = useState('');
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(null);
-  const [scheduleReport, setScheduleReport] = useState(null);
+  const [showScheduleDialog, setShowScheduleDialog] = useState(null);
 
   const { data: savedReports = [], isLoading } = useQuery({
     queryKey: ['savedReports', orgId],
@@ -139,7 +137,7 @@ export default function SavedReportsManager({ orgId, onLoadReport }) {
                     onLoad={onLoadReport}
                     onToggleFavorite={toggleFavorite}
                     onDelete={() => setShowDeleteConfirm(report)}
-                    onSchedule={() => setScheduleReport(report)}
+                    onSchedule={() => setShowScheduleDialog(report)}
                   />
                 ))}
               </div>
@@ -160,7 +158,7 @@ export default function SavedReportsManager({ orgId, onLoadReport }) {
                     onLoad={onLoadReport}
                     onToggleFavorite={toggleFavorite}
                     onDelete={() => setShowDeleteConfirm(report)}
-                    onSchedule={() => setScheduleReport(report)}
+                    onSchedule={() => setShowScheduleDialog(report)}
                   />
                 ))}
               </div>
@@ -168,6 +166,14 @@ export default function SavedReportsManager({ orgId, onLoadReport }) {
           )}
         </div>
       )}
+
+      {/* Schedule Dialog */}
+      <ReportScheduleDialog
+        open={!!showScheduleDialog}
+        onOpenChange={() => setShowScheduleDialog(null)}
+        report={showScheduleDialog}
+        onSave={() => queryClient.invalidateQueries({ queryKey: ['savedReports'] })}
+      />
 
       {/* Delete Confirmation Dialog */}
       <Dialog open={!!showDeleteConfirm} onOpenChange={() => setShowDeleteConfirm(null)}>
@@ -192,22 +198,13 @@ export default function SavedReportsManager({ orgId, onLoadReport }) {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-
-      {/* Schedule Report Dialog */}
-      <ReportScheduleDialog
-        open={!!scheduleReport}
-        onOpenChange={() => setScheduleReport(null)}
-        report={scheduleReport}
-        onUpdate={() => queryClient.invalidateQueries({ queryKey: ['savedReports'] })}
-      />
     </div>
   );
 }
 
 function ReportCard({ report, onLoad, onToggleFavorite, onDelete, onSchedule }) {
   const typeColor = REPORT_TYPE_COLORS[report.report_type] || REPORT_TYPE_COLORS.custom;
-  const schedule = report.schedule || {};
-  const isScheduled = schedule.enabled && schedule.recipients?.length > 0;
+  const isScheduled = report.schedule?.enabled;
   
   return (
     <Card className="hover:shadow-lg transition-all cursor-pointer group" style={{ borderTop: `4px solid ${typeColor}` }}>
@@ -219,7 +216,10 @@ function ReportCard({ report, onLoad, onToggleFavorite, onDelete, onSchedule }) 
                 {report.name}
               </h3>
               {isScheduled && (
-                <div className={`w-2 h-2 rounded-full ${schedule.last_status === 'failed' ? 'bg-red-500' : 'bg-green-500'}`} title="Scheduled" />
+                <Badge variant="secondary" className="text-[10px] bg-blue-100 text-blue-700 gap-1">
+                  <Calendar className="w-3 h-3" />
+                  {report.schedule?.frequency}
+                </Badge>
               )}
             </div>
             {report.description && (
@@ -237,6 +237,10 @@ function ReportCard({ report, onLoad, onToggleFavorite, onDelete, onSchedule }) 
                 <FolderOpen className="w-4 h-4 mr-2" />
                 Load Report
               </DropdownMenuItem>
+              <DropdownMenuItem onClick={onSchedule}>
+                <Calendar className="w-4 h-4 mr-2" />
+                {isScheduled ? 'Edit Schedule' : 'Schedule Report'}
+              </DropdownMenuItem>
               <DropdownMenuItem onClick={() => onToggleFavorite(report)}>
                 {report.is_favorite ? (
                   <>
@@ -250,10 +254,6 @@ function ReportCard({ report, onLoad, onToggleFavorite, onDelete, onSchedule }) 
                   </>
                 )}
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => onSchedule(report)}>
-                <Calendar className="w-4 h-4 mr-2" />
-                Schedule Report
-              </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem onClick={onDelete} className="text-red-600">
                 <Trash2 className="w-4 h-4 mr-2" />
@@ -263,29 +263,29 @@ function ReportCard({ report, onLoad, onToggleFavorite, onDelete, onSchedule }) 
           </DropdownMenu>
         </div>
         
-        <div className="flex items-center gap-2 flex-wrap text-xs text-gray-500">
+        <div className="flex items-center gap-3 text-xs text-gray-500 flex-wrap">
           <Badge 
             variant="outline" 
             style={{ borderColor: typeColor, color: typeColor }}
           >
             {report.report_type}
           </Badge>
-          {isScheduled && (
-            <Badge variant="outline" className="text-green-600 border-green-200 bg-green-50">
-              <Mail className="w-3 h-3 mr-1" />
-              {schedule.frequency}
-            </Badge>
-          )}
           <span className="flex items-center gap-1">
             <Clock className="w-3 h-3" />
             {format(new Date(report.created_date), 'MMM d, yyyy')}
           </span>
+          {isScheduled && report.schedule?.recipients?.length > 0 && (
+            <span className="flex items-center gap-1 text-blue-600">
+              <Mail className="w-3 h-3" />
+              {report.schedule.recipients.length} recipient{report.schedule.recipients.length !== 1 ? 's' : ''}
+            </span>
+          )}
         </div>
-
-        {isScheduled && schedule.next_run && (
-          <p className="text-xs text-gray-400 mt-2 flex items-center gap-1">
+        
+        {isScheduled && report.schedule?.next_run && (
+          <p className="text-xs text-blue-600 mt-2 flex items-center gap-1">
             <Send className="w-3 h-3" />
-            Next: {format(new Date(schedule.next_run), 'MMM d, h:mm a')}
+            Next: {format(new Date(report.schedule.next_run), 'MMM d, h:mm a')}
           </p>
         )}
         
@@ -302,9 +302,9 @@ function ReportCard({ report, onLoad, onToggleFavorite, onDelete, onSchedule }) 
             variant="ghost" 
             size="sm" 
             className="flex-1 text-[#0072C6] hover:text-[#005a9e] hover:bg-blue-50"
-            onClick={() => onSchedule(report)}
+            onClick={onSchedule}
           >
-            <Calendar className="w-3 h-3 mr-1" />
+            <Calendar className="w-4 h-4 mr-1" />
             Schedule
           </Button>
         </div>
