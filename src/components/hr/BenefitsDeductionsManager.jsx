@@ -46,6 +46,7 @@ const CATEGORIES = [
 ];
 
 const ROLES = [
+  { value: 'super_admin', label: 'Super Admin' },
   { value: 'org_admin', label: 'Organisation Admin' },
   { value: 'hr_admin', label: 'HR Admin' },
   { value: 'payroll_admin', label: 'Payroll Admin' },
