@@ -504,7 +504,7 @@ export default function Documents() {
                     Close
                   </Button>
                 </div>
-                <DocumentViewer document={selectedDocument} />
+                <DocumentViewer document={selectedDocument} currentEmployee={currentEmployee} />
               </div>
             </div>
           )}
