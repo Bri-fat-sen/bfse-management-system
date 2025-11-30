@@ -192,6 +192,40 @@ export default function Documents() {
     }
   });
 
+  const revertDocumentMutation = useMutation({
+    mutationFn: async ({ document, targetVersion }) => {
+      // Save current version to history before reverting
+      const currentVersionEntry = {
+        version: document.version || 1,
+        content: document.content,
+        variables: document.variables,
+        status: document.status,
+        updated_by_id: currentEmployee?.id,
+        updated_by_name: currentEmployee?.full_name,
+        updated_at: new Date().toISOString(),
+        change_reason: `Reverted to version ${targetVersion.version}`
+      };
+
+      const existingHistory = document.version_history || [];
+      
+      return base44.entities.EmployeeDocument.update(document.id, {
+        content: targetVersion.content,
+        variables: targetVersion.variables,
+        version: (document.version || 1) + 1,
+        version_history: [currentVersionEntry, ...existingHistory]
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['employeeDocuments'] });
+      toast.success("Document reverted successfully");
+      setShowViewer(false);
+      setSelectedDocument(null);
+    },
+    onError: (error) => {
+      toast.error("Failed to revert document", { description: error.message });
+    }
+  });
+
   if (isLoading) {
     return <LoadingSpinner message="Loading documents..." />;
   }
@@ -504,7 +538,15 @@ export default function Documents() {
                     Close
                   </Button>
                 </div>
-                <DocumentViewer document={selectedDocument} currentEmployee={currentEmployee} />
+                <DocumentViewer 
+                  document={selectedDocument}
+                  onRevert={(targetVersion) => revertDocumentMutation.mutate({ 
+                    document: selectedDocument, 
+                    targetVersion 
+                  })}
+                  isReverting={revertDocumentMutation.isPending}
+                  canRevert={isAdmin && selectedDocument?.status !== 'signed'}
+                />
               </div>
             </div>
           )}
