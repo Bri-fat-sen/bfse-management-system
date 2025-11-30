@@ -106,63 +106,118 @@ export const DEFAULT_TEMPLATES = {
     name: "Standard Employment Contract",
     content: `
 <div class="sl-document">
+  <div class="sl-watermark">OFFICIAL</div>
   <div class="sl-header">
     <div class="sl-flag-bar"></div>
-    <h1>EMPLOYMENT CONTRACT</h1>
+    <div class="sl-company-logo">{{company_initial}}</div>
+    <h1>Employment Contract</h1>
     <p class="sl-subtitle">In accordance with the Employment Act 2023 of Sierra Leone</p>
+    <p class="sl-ref-number">Ref: EC-{{document_ref}}</p>
   </div>
 
   <div class="sl-section">
-    <h2>PARTIES TO THIS AGREEMENT</h2>
-    <p><strong>EMPLOYER:</strong> {{company_name}}</p>
-    <p>Address: {{company_address}}</p>
-    <p>Registration No: {{company_registration}}</p>
-    <br/>
-    <p><strong>EMPLOYEE:</strong> {{employee_name}}</p>
-    <p>Address: {{employee_address}}</p>
-    <p>National ID/Passport: {{employee_id_number}}</p>
+    <h2>Parties to This Agreement</h2>
+    <div class="sl-parties-box">
+      <div class="sl-party employer">
+        <h3>🏢 Employer</h3>
+        <p><strong>{{company_name}}</strong></p>
+        <p>📍 {{company_address}}</p>
+        <p>📋 Reg. No: {{company_registration}}</p>
+        <p>📞 {{company_phone}}</p>
+      </div>
+      <div class="sl-party">
+        <h3>👤 Employee</h3>
+        <p><strong>{{employee_name}}</strong></p>
+        <p>📍 {{employee_address}}</p>
+        <p>🆔 ID: {{employee_id_number}}</p>
+        <p>📧 {{employee_email}}</p>
+      </div>
+    </div>
   </div>
 
   <div class="sl-section">
-    <h2>1. COMMENCEMENT AND DURATION</h2>
-    <p>1.1 This contract shall commence on <strong>{{start_date}}</strong>.</p>
-    <p>1.2 The Employee shall serve a probationary period of <strong>{{probation_period}}</strong> months, as permitted under Section 21 of the Employment Act 2023 (maximum 6 months).</p>
-    <p>1.3 This is a <strong>{{contract_type}}</strong> contract.</p>
+    <h2>1. Commencement & Duration</h2>
+    <div class="sl-info-grid">
+      <div class="sl-info-item">
+        <label>Start Date</label>
+        <span>{{start_date}}</span>
+      </div>
+      <div class="sl-info-item">
+        <label>Contract Type</label>
+        <span>{{contract_type}}</span>
+      </div>
+      <div class="sl-info-item">
+        <label>Probation Period</label>
+        <span>{{probation_period}} months</span>
+      </div>
+      <div class="sl-info-item">
+        <label>Work Location</label>
+        <span>{{work_location}}</span>
+      </div>
+    </div>
+    <p>The probationary period is as permitted under Section 21 of the Employment Act 2023 (maximum 6 months).</p>
   </div>
 
   <div class="sl-section">
-    <h2>2. POSITION AND DUTIES</h2>
-    <p>2.1 The Employee is employed in the position of <strong>{{position}}</strong> in the <strong>{{department}}</strong> department.</p>
-    <p>2.2 The Employee shall report to <strong>{{reports_to}}</strong>.</p>
-    <p>2.3 The Employee's primary duties shall include:</p>
+    <h2>2. Position & Responsibilities</h2>
+    <div class="sl-info-grid">
+      <div class="sl-info-item">
+        <label>Position</label>
+        <span>{{position}}</span>
+      </div>
+      <div class="sl-info-item">
+        <label>Department</label>
+        <span>{{department}}</span>
+      </div>
+      <div class="sl-info-item">
+        <label>Reports To</label>
+        <span>{{reports_to}}</span>
+      </div>
+      <div class="sl-info-item">
+        <label>Work Schedule</label>
+        <span>{{work_schedule}}</span>
+      </div>
+    </div>
+    <p><strong>Key Responsibilities:</strong></p>
     <p>{{job_duties}}</p>
-    <p>2.4 The Employee's principal place of work shall be <strong>{{work_location}}</strong>.</p>
   </div>
 
   <div class="sl-section">
-    <h2>3. REMUNERATION</h2>
-    <p>3.1 The Employee shall receive a gross monthly salary of <strong>SLE {{monthly_salary}}</strong>.</p>
-    <p>3.2 Payment shall be made on or before the <strong>{{pay_day}}</strong> of each month by {{payment_method}}.</p>
-    <p>3.3 The following allowances shall apply:</p>
+    <h2>3. Remuneration Package</h2>
+    <div class="sl-highlight-box">
+      <h3>💰 Monthly Compensation</h3>
+      <div class="sl-info-grid">
+        <div class="sl-info-item">
+          <label>Gross Salary</label>
+          <span>SLE {{monthly_salary}}</span>
+        </div>
+        <div class="sl-info-item">
+          <label>Payment Date</label>
+          <span>{{pay_day}} of each month</span>
+        </div>
+        <div class="sl-info-item">
+          <label>Payment Method</label>
+          <span>{{payment_method}}</span>
+        </div>
+        <div class="sl-info-item">
+          <label>Working Hours</label>
+          <span>{{working_hours}} hours/week</span>
+        </div>
+      </div>
+    </div>
+    <p><strong>Allowances:</strong></p>
     <ul>
       {{allowances_list}}
     </ul>
-    <p>3.4 Statutory deductions (NASSIT 5%, PAYE as applicable) shall be deducted as required by law.</p>
+    <p><strong>Statutory Deductions:</strong> NASSIT (5% employee contribution), PAYE (as applicable per NRA tax brackets)</p>
   </div>
 
   <div class="sl-section">
-    <h2>4. WORKING HOURS</h2>
-    <p>4.1 Normal working hours shall be <strong>{{working_hours}}</strong> per week, as per Section 41 of the Employment Act 2023.</p>
-    <p>4.2 The standard work schedule is {{work_schedule}}.</p>
-    <p>4.3 Overtime work shall be compensated at 1.5x the regular hourly rate, or 2x for weekends and public holidays.</p>
-  </div>
-
-  <div class="sl-section">
-    <h2>5. LEAVE ENTITLEMENTS</h2>
-    <p>Per the Employment Act 2023:</p>
+    <h2>4. Leave Entitlements</h2>
+    <p>Per the Employment Act 2023 of Sierra Leone:</p>
     <ul>
       <li><strong>Annual Leave:</strong> 21 working days after 12 months of continuous service</li>
-      <li><strong>Sick Leave:</strong> 5 days paid sick leave per year with medical certificate</li>
+      <li><strong>Sick Leave:</strong> 5 days paid sick leave per year (medical certificate required)</li>
       <li><strong>Maternity Leave:</strong> 14 weeks (applicable to female employees)</li>
       <li><strong>Paternity Leave:</strong> 5 days (applicable to male employees)</li>
       <li><strong>Compassionate Leave:</strong> 5 days for immediate family bereavement</li>
@@ -170,39 +225,45 @@ export const DEFAULT_TEMPLATES = {
   </div>
 
   <div class="sl-section">
-    <h2>6. TERMINATION</h2>
-    <p>6.1 Either party may terminate this contract by giving notice as follows:</p>
+    <h2>5. Termination Provisions</h2>
+    <p>Either party may terminate this contract by giving written notice as follows:</p>
     <ul>
       <li>During probation: 7 days written notice</li>
       <li>Less than 3 years service: 1 month notice</li>
       <li>3-5 years service: 2 months notice</li>
       <li>Over 5 years service: 3 months notice</li>
     </ul>
-    <p>6.2 Summary dismissal may occur for gross misconduct as defined in Section 91 of the Employment Act 2023.</p>
-    <p>6.3 Upon termination, the Employee shall be entitled to all outstanding remuneration and benefits accrued.</p>
+    <p>Summary dismissal may occur for gross misconduct as defined in Section 91 of the Employment Act 2023. Upon termination, the Employee shall be entitled to all outstanding remuneration and benefits accrued.</p>
   </div>
 
   <div class="sl-section">
-    <h2>7. CONFIDENTIALITY</h2>
-    <p>The Employee agrees to maintain confidentiality of all proprietary information during and after employment.</p>
+    <h2>6. Confidentiality & Conduct</h2>
+    <p>The Employee agrees to maintain strict confidentiality of all proprietary information during and after employment. The Employee shall conduct themselves professionally and in accordance with the Company's Code of Conduct.</p>
   </div>
 
   <div class="sl-section">
-    <h2>8. GOVERNING LAW</h2>
-    <p>This contract shall be governed by the laws of Sierra Leone, including the Employment Act 2023, and any disputes shall be subject to the jurisdiction of Sierra Leone courts.</p>
+    <h2>7. Governing Law</h2>
+    <p>This contract shall be governed by the laws of the Republic of Sierra Leone, including the Employment Act 2023, and any disputes shall be subject to the jurisdiction of Sierra Leone courts.</p>
+  </div>
+
+  <div class="sl-acknowledgment">
+    <h2>Declaration</h2>
+    <p>Both parties hereby acknowledge that they have read, understood, and agree to all terms and conditions set forth in this Employment Contract. This agreement supersedes all prior discussions and agreements.</p>
   </div>
 
   <div class="sl-signatures">
     <div class="sl-signature-block">
-      <p><strong>FOR THE EMPLOYER:</strong></p>
-      <p>Name: {{employer_signatory}}</p>
-      <p>Title: {{employer_title}}</p>
+      <h4>For the Employer</h4>
+      <p><strong>{{employer_signatory}}</strong></p>
+      <p>{{employer_title}}</p>
       <p>Date: {{issue_date}}</p>
-      <div class="sl-signature-line">____________________________</div>
+      <div class="sl-signature-line"></div>
+      <p style="font-size: 10px; color: #888; margin-top: 5px;">Authorized Signature</p>
     </div>
     <div class="sl-signature-block">
-      <p><strong>EMPLOYEE:</strong></p>
-      <p>Name: {{employee_name}}</p>
+      <h4>Employee</h4>
+      <p><strong>{{employee_name}}</strong></p>
+      <p>{{position}}</p>
       <p>Date: <span class="sl-signature-date">{{signature_date}}</span></p>
       <div class="sl-digital-signature">{{digital_signature}}</div>
     </div>
@@ -210,18 +271,24 @@ export const DEFAULT_TEMPLATES = {
 
   <div class="sl-footer">
     <div class="sl-flag-bar"></div>
-    <p>This document was generated and digitally signed using {{company_name}}'s HR Management System</p>
-    <p>🇸🇱 Republic of Sierra Leone</p>
+    <div class="sl-footer-logo">🇸🇱</div>
+    <p><strong>{{company_name}}</strong></p>
+    <p>Republic of Sierra Leone</p>
+    <p class="sl-legal-note">This document was generated and digitally signed using {{company_name}}'s HR Management System. Digital signatures are legally binding under Sierra Leone law.</p>
   </div>
 </div>
     `,
     variables: [
       { key: "company_name", label: "Company Name", type: "text", auto_fill: "organisation.name" },
+      { key: "company_initial", label: "Company Initial", type: "text", default: "C" },
       { key: "company_address", label: "Company Address", type: "text", auto_fill: "organisation.address" },
       { key: "company_registration", label: "Registration Number", type: "text", auto_fill: "organisation.business_registration_number" },
+      { key: "company_phone", label: "Company Phone", type: "text", auto_fill: "organisation.phone" },
+      { key: "document_ref", label: "Document Reference", type: "text", default: "2024-001" },
       { key: "employee_name", label: "Employee Full Name", type: "text", auto_fill: "employee.full_name" },
       { key: "employee_address", label: "Employee Address", type: "text", auto_fill: "employee.address" },
       { key: "employee_id_number", label: "Employee ID/Passport", type: "text" },
+      { key: "employee_email", label: "Employee Email", type: "text", auto_fill: "employee.email" },
       { key: "start_date", label: "Start Date", type: "date", auto_fill: "employee.hire_date" },
       { key: "probation_period", label: "Probation Period (months)", type: "select", options: ["3", "6"], default: "3" },
       { key: "contract_type", label: "Contract Type", type: "select", options: ["Permanent", "Fixed-Term", "Temporary"], default: "Permanent" },
@@ -235,7 +302,7 @@ export const DEFAULT_TEMPLATES = {
       { key: "payment_method", label: "Payment Method", type: "select", options: ["Bank Transfer", "Mobile Money", "Cheque", "Cash"], default: "Bank Transfer" },
       { key: "allowances_list", label: "Allowances", type: "text", default: "<li>Transport Allowance</li><li>Medical Allowance</li>" },
       { key: "working_hours", label: "Weekly Working Hours", type: "number", default: "40" },
-      { key: "work_schedule", label: "Work Schedule", type: "text", default: "Monday to Friday, 8:00 AM to 5:00 PM" },
+      { key: "work_schedule", label: "Work Schedule", type: "text", default: "Monday to Friday, 8:00 AM - 5:00 PM" },
       { key: "employer_signatory", label: "Employer Signatory Name", type: "text" },
       { key: "employer_title", label: "Employer Signatory Title", type: "text" },
       { key: "issue_date", label: "Issue Date", type: "date" }
