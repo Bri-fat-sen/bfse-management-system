@@ -99,16 +99,16 @@ export default function Documents() {
     enabled: !!orgId,
   });
 
-  // Check employee role OR base44 admin role (for users without employee record yet)
-  // Moved AFTER all hooks to avoid conditional hook issues
-  const isAdmin = ['super_admin', 'org_admin', 'hr_admin'].includes(currentEmployee?.role) || user?.role === 'admin';
-
   // Fetch custom templates
   const { data: customTemplates = [] } = useQuery({
     queryKey: ['documentTemplates', orgId],
     queryFn: () => base44.entities.DocumentTemplate.filter({ organisation_id: orgId, is_active: true }),
     enabled: !!orgId,
   });
+
+  // Check employee role OR base44 admin role (for users without employee record yet)
+  // Moved AFTER all hooks to avoid conditional hook issues
+  const isAdmin = ['super_admin', 'org_admin', 'hr_admin'].includes(currentEmployee?.role) || user?.role === 'admin';
 
   // Combine all templates for AI assistant
   const allTemplates = useMemo(() => [
