@@ -3754,107 +3754,209 @@ export const DEFAULT_TEMPLATES = {
     <div class="sl-flag-bar"></div>
     <div class="sl-company-logo" style="background: linear-gradient(135deg, #059669 0%, #047857 100%);">✓</div>
     <h1>Confirmation of Employment</h1>
-    <p class="sl-subtitle">{{company_name}} • Successful Completion of Probation</p>
+    <p class="sl-subtitle">{{company_name}} • Successful Completion of Probationary Period</p>
     <p class="sl-ref-number">Ref: CONF-{{document_ref}}</p>
   </div>
 
   <div class="sl-section">
     <p>Dear <strong>{{employee_name}}</strong>,</p>
-    <p>We are pleased to confirm that you have successfully completed your probationary period with {{company_name}}. This letter serves as official confirmation of your permanent employment status.</p>
+    <div class="sl-highlight-box" style="background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%); border-color: #059669;">
+      <h3 style="color: #047857; text-align: center; font-size: 18px;">🎉 Congratulations!</h3>
+      <p style="text-align: center; font-size: 15px; margin-bottom: 0;">We are delighted to confirm that you have successfully completed your probationary period with <strong>{{company_name}}</strong> and are now a permanent member of our team.</p>
+    </div>
+    <p>This letter serves as official confirmation of your permanent employment status with {{company_name}}, effective from <strong>{{confirmation_date}}</strong>.</p>
   </div>
 
   <div class="sl-section">
     <h2>Employment Details</h2>
-    <div class="sl-highlight-box" style="background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%); border-color: #059669;">
-      <h3 style="color: #059669;">🎉 Congratulations on Your Confirmation!</h3>
-      <div class="sl-info-grid">
-        <div class="sl-info-item" style="border-left-color: #059669;">
-          <label>Employee Name</label>
-          <span>{{employee_name}}</span>
-        </div>
-        <div class="sl-info-item" style="border-left-color: #059669;">
-          <label>Employee Code</label>
-          <span>{{employee_code}}</span>
-        </div>
-        <div class="sl-info-item" style="border-left-color: #059669;">
-          <label>Position</label>
-          <span>{{position}}</span>
-        </div>
-        <div class="sl-info-item" style="border-left-color: #059669;">
-          <label>Department</label>
-          <span>{{department}}</span>
-        </div>
-        <div class="sl-info-item" style="border-left-color: #059669;">
-          <label>Date of Joining</label>
-          <span>{{hire_date}}</span>
-        </div>
-        <div class="sl-info-item" style="border-left-color: #059669;">
-          <label>Confirmation Date</label>
-          <span>{{confirmation_date}}</span>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <div class="sl-section">
-    <h2>Probation Review Summary</h2>
-    <p>During your probationary period, we have observed the following:</p>
-    <ul>
-      <li>Your performance has met the required standards</li>
-      <li>You have demonstrated commitment to your role and responsibilities</li>
-      <li>You have integrated well with the team and company culture</li>
-      <li>{{additional_remarks}}</li>
-    </ul>
-  </div>
-
-  <div class="sl-section">
-    <h2>Confirmation Benefits</h2>
-    <p>As a confirmed employee, you are now entitled to:</p>
-    <ul>
-      <li><strong>Annual Leave:</strong> {{annual_leave_days}} working days per year (as per Employment Act 2023)</li>
-      <li><strong>Sick Leave:</strong> 5 paid days per year with medical certificate</li>
-      <li><strong>NASSIT Contributions:</strong> Employer contributes 10%, Employee contributes 5%</li>
-      <li><strong>Notice Period:</strong> {{notice_period}} (as per Section 85, Employment Act 2023)</li>
-      <li>{{additional_benefits}}</li>
-    </ul>
-  </div>
-
-  <div class="sl-section">
-    <h2>Salary Confirmation</h2>
     <div class="sl-info-grid">
-      <div class="sl-info-item">
-        <label>Confirmed Salary</label>
-        <span>SLE {{confirmed_salary}}</span>
+      <div class="sl-info-item" style="border-left-color: #059669;">
+        <label>Full Name</label>
+        <span>{{employee_name}}</span>
       </div>
-      <div class="sl-info-item">
-        <label>Payment Frequency</label>
-        <span>Monthly</span>
+      <div class="sl-info-item" style="border-left-color: #059669;">
+        <label>Employee Code</label>
+        <span>{{employee_code}}</span>
+      </div>
+      <div class="sl-info-item" style="border-left-color: #059669;">
+        <label>Job Title</label>
+        <span>{{position}}</span>
+      </div>
+      <div class="sl-info-item" style="border-left-color: #059669;">
+        <label>Department</label>
+        <span>{{department}}</span>
+      </div>
+      <div class="sl-info-item" style="border-left-color: #059669;">
+        <label>Start Date</label>
+        <span>{{hire_date}}</span>
+      </div>
+      <div class="sl-info-item" style="border-left-color: #059669;">
+        <label>Probation Completion</label>
+        <span>{{probation_end_date}}</span>
+      </div>
+      <div class="sl-info-item" style="border-left-color: #059669;">
+        <label>Confirmation Date</label>
+        <span>{{confirmation_date}}</span>
+      </div>
+      <div class="sl-info-item" style="border-left-color: #059669;">
+        <label>Reports To</label>
+        <span>{{reports_to}}</span>
       </div>
     </div>
   </div>
 
   <div class="sl-section">
-    <h2>Terms of Employment</h2>
-    <p>All other terms and conditions of your employment as outlined in your original employment contract remain in effect. This confirmation supersedes any probationary conditions previously applied.</p>
-    <p>We value your contributions and look forward to your continued growth and success at {{company_name}}.</p>
+    <h2>Probationary Period Review Summary</h2>
+    <p>During your {{probation_duration}} probationary period, your performance has been assessed across several key areas. We are pleased to report:</p>
+    
+    <p><strong>Performance Highlights:</strong></p>
+    <ul>
+      <li><strong>Job Performance:</strong> You have consistently met or exceeded the performance standards required for your role</li>
+      <li><strong>Quality of Work:</strong> Your work quality demonstrates attention to detail and adherence to company standards</li>
+      <li><strong>Reliability:</strong> You have shown excellent attendance and punctuality</li>
+      <li><strong>Teamwork & Collaboration:</strong> You have integrated well with your team and demonstrated strong collaborative skills</li>
+      <li><strong>Communication:</strong> You communicate effectively with colleagues and management</li>
+      <li><strong>Company Values:</strong> You embody {{company_name}}'s values and contribute positively to our culture</li>
+      <li><strong>Initiative & Learning:</strong> You have shown willingness to learn, take initiative, and contribute ideas</li>
+    </ul>
+
+    <p><strong>Supervisor's Comments:</strong></p>
+    <p>{{supervisor_comments}}</p>
+
+    <p><strong>Additional Remarks:</strong></p>
+    <p>{{additional_remarks}}</p>
+  </div>
+
+  <div class="sl-section">
+    <h2>Confirmed Compensation & Benefits</h2>
+    <div class="sl-highlight-box" style="background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%); border-color: #f59e0b;">
+      <h3 style="color: #d97706;">💰 Remuneration Package</h3>
+      <div class="sl-info-grid">
+        <div class="sl-info-item" style="border-left-color: #f59e0b;">
+          <label>Monthly Gross Salary</label>
+          <span>SLE {{confirmed_salary}}</span>
+        </div>
+        <div class="sl-info-item" style="border-left-color: #f59e0b;">
+          <label>Payment Date</label>
+          <span>{{payment_date}} of each month</span>
+        </div>
+        <div class="sl-info-item" style="border-left-color: #f59e0b;">
+          <label>Payment Method</label>
+          <span>{{payment_method}}</span>
+        </div>
+        <div class="sl-info-item" style="border-left-color: #f59e0b;">
+          <label>Salary Increase (if applicable)</label>
+          <span>{{salary_increase}}</span>
+        </div>
+      </div>
+    </div>
+
+    <p><strong>Statutory Deductions:</strong></p>
+    <ul>
+      <li><strong>NASSIT:</strong> Employee contribution 5%, Employer contribution 10%</li>
+      <li><strong>PAYE:</strong> Calculated per National Revenue Authority (NRA) tax brackets</li>
+    </ul>
+  </div>
+
+  <div class="sl-section">
+    <h2>Benefits & Entitlements</h2>
+    <p>As a confirmed permanent employee, you are now entitled to the following benefits:</p>
+
+    <p><strong>Leave Entitlements (per Employment Act 2023):</strong></p>
+    <ul>
+      <li><strong>Annual Leave:</strong> {{annual_leave_days}} working days per year</li>
+      <li><strong>Sick Leave:</strong> Up to 5 days paid sick leave per year (medical certificate required for 2+ consecutive days)</li>
+      <li><strong>Maternity Leave:</strong> 14 weeks (if applicable) as per Section 47 of Employment Act 2023</li>
+      <li><strong>Paternity Leave:</strong> 5 working days (if applicable)</li>
+      <li><strong>Compassionate Leave:</strong> 5 days for immediate family bereavement</li>
+      <li><strong>Public Holidays:</strong> All Sierra Leone public holidays as declared</li>
+    </ul>
+
+    <p><strong>Additional Benefits:</strong></p>
+    <p>{{additional_benefits}}</p>
+
+    <p><strong>Professional Development:</strong></p>
+    <ul>
+      <li>Eligibility for training and development programs</li>
+      <li>Performance reviews conducted {{performance_review_frequency}}</li>
+      <li>Career progression opportunities based on merit</li>
+    </ul>
+  </div>
+
+  <div class="sl-section">
+    <h2>Notice Period & Termination</h2>
+    <p>As a confirmed employee:</p>
+    <ul>
+      <li><strong>Notice Period:</strong> {{notice_period}} notice required from either party for termination (as per Section 85, Employment Act 2023)</li>
+      <li>During probation, notice period was 7 days; this now increases to the confirmed notice period</li>
+      <li>Summary dismissal without notice may occur only in cases of gross misconduct as defined in Section 91 of Employment Act 2023</li>
+      <li>All statutory entitlements (leave pay, final salary) will be settled upon termination</li>
+    </ul>
+  </div>
+
+  <div class="sl-section">
+    <h2>Continued Expectations</h2>
+    <p>While we celebrate this milestone, we also remind you of our continued expectations:</p>
+    <ul>
+      <li>Maintain the high performance standards you demonstrated during probation</li>
+      <li>Continue to uphold company policies, values, and code of conduct</li>
+      <li>Seek opportunities for growth and skill development</li>
+      <li>Collaborate effectively with colleagues and contribute to team success</li>
+      <li>Communicate proactively with your supervisor about workload, challenges, or support needs</li>
+    </ul>
+  </div>
+
+  <div class="sl-section">
+    <h2>Ongoing Terms of Employment</h2>
+    <ul>
+      <li>All other terms and conditions of your employment as outlined in your original employment contract dated {{contract_date}} remain in full force and effect</li>
+      <li>This confirmation letter does not create a new contract but confirms the transition from probationary to permanent status</li>
+      <li>You remain bound by confidentiality, non-disclosure, and other agreements signed at commencement</li>
+    </ul>
+  </div>
+
+  <div class="sl-section">
+    <h2>Next Steps</h2>
+    <ul>
+      <li>Please sign and return this letter within 7 days as acknowledgment and acceptance</li>
+      <li>Your personnel file will be updated to reflect your permanent status</li>
+      <li>{{next_steps}}</li>
+    </ul>
+  </div>
+
+  <div class="sl-section" style="background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%); padding: 20px; border-radius: 10px; border-left: 4px solid #0ea5e9;">
+    <h2 style="color: #0369a1; border: none; padding: 0; background: none;">Welcome to the Team!</h2>
+    <p>On behalf of everyone at <strong>{{company_name}}</strong>, we want to express our appreciation for your hard work and dedication during the probationary period. Your contributions have already made a positive impact, and we are excited to have you as a permanent member of our team.</p>
+    <p>We look forward to your continued success, professional growth, and valuable contributions to {{company_name}}. Welcome aboard permanently!</p>
+    <p style="margin-bottom: 0;"><em>— {{signatory_name}}, {{signatory_title}}</em></p>
   </div>
 
   <div class="sl-acknowledgment">
-    <h2>Acceptance</h2>
-    <p>I, <strong>{{employee_name}}</strong>, acknowledge receipt of this confirmation letter and accept the terms of my permanent employment with {{company_name}}.</p>
+    <h2>Employee Acceptance</h2>
+    <p>I, <strong>{{employee_name}}</strong>, hereby acknowledge and accept that:</p>
+    <ul>
+      <li>I have received and read this Confirmation of Employment letter</li>
+      <li>I understand and accept the terms of my permanent employment</li>
+      <li>I accept the confirmed salary and benefits as outlined</li>
+      <li>I understand the notice period requirements</li>
+      <li>I commit to upholding the standards and expectations of {{company_name}}</li>
+      <li>All terms of my original employment contract remain in effect</li>
+    </ul>
   </div>
 
   <div class="sl-signatures">
     <div class="sl-signature-block">
-      <h4>For the Company</h4>
+      <h4>For {{company_name}}</h4>
       <p><strong>{{authorized_signatory}}</strong></p>
       <p>{{signatory_title}}</p>
       <p>Date: {{issue_date}}</p>
       <div class="sl-signature-line"></div>
+      <p style="font-size: 10px; color: #888; margin-top: 5px;">Authorized Signature & Company Stamp</p>
     </div>
     <div class="sl-signature-block">
-      <h4>Employee</h4>
+      <h4>Employee Acceptance</h4>
       <p><strong>{{employee_name}}</strong></p>
+      <p>{{position}}</p>
       <p>Date: <span class="sl-signature-date">{{signature_date}}</span></p>
       <div class="sl-digital-signature">{{digital_signature}}</div>
     </div>
@@ -3865,7 +3967,7 @@ export const DEFAULT_TEMPLATES = {
     <div class="sl-footer-logo">🇸🇱</div>
     <p><strong>{{company_name}}</strong></p>
     <p>Republic of Sierra Leone</p>
-    <p class="sl-legal-note">This confirmation letter forms part of your employment record.</p>
+    <p class="sl-legal-note">This confirmation letter forms part of your permanent employment record. Retain a copy for your personal records.</p>
   </div>
 </div>
     `,
@@ -3877,12 +3979,23 @@ export const DEFAULT_TEMPLATES = {
       { key: "position", label: "Position", type: "text", auto_fill: "employee.position" },
       { key: "department", label: "Department", type: "text", auto_fill: "employee.department" },
       { key: "hire_date", label: "Date of Joining", type: "date", auto_fill: "employee.hire_date" },
-      { key: "confirmation_date", label: "Confirmation Date", type: "date", auto_fill: "today" },
-      { key: "additional_remarks", label: "Additional Remarks", type: "text", default: "Your attitude and work ethic have been commendable" },
+      { key: "probation_end_date", label: "Probation End Date", type: "date" },
+      { key: "confirmation_date", label: "Confirmation Effective Date", type: "date", auto_fill: "today" },
+      { key: "probation_duration", label: "Probation Duration", type: "select", options: ["3-month", "6-month"], default: "3-month" },
+      { key: "reports_to", label: "Reports To", type: "text", default: "Department Head" },
+      { key: "supervisor_comments", label: "Supervisor's Comments", type: "text", default: "{{employee_name}} has been a valuable addition to the team, demonstrating professionalism, reliability, and a strong work ethic. Their technical skills and willingness to learn have been impressive." },
+      { key: "additional_remarks", label: "Additional Remarks", type: "text", default: "Your positive attitude, collaborative spirit, and commitment to excellence have not gone unnoticed. You have quickly become a valued member of our team." },
+      { key: "confirmed_salary", label: "Confirmed Monthly Salary (SLE)", type: "number", auto_fill: "employee.base_salary" },
+      { key: "payment_date", label: "Payment Date", type: "select", options: ["25th", "Last working day", "1st of following month"], default: "25th" },
+      { key: "payment_method", label: "Payment Method", type: "select", options: ["Bank Transfer", "Mobile Money", "Cheque"], default: "Bank Transfer" },
+      { key: "salary_increase", label: "Salary Increase", type: "text", default: "No change from probationary salary" },
       { key: "annual_leave_days", label: "Annual Leave Days", type: "select", options: ["21", "25", "30"], default: "21" },
       { key: "notice_period", label: "Notice Period", type: "select", options: ["1 month", "2 months", "3 months"], default: "1 month" },
-      { key: "additional_benefits", label: "Additional Benefits", type: "text", default: "As per company policy" },
-      { key: "confirmed_salary", label: "Confirmed Salary (SLE)", type: "number", auto_fill: "employee.base_salary" },
+      { key: "additional_benefits", label: "Additional Benefits", type: "text", default: "Medical insurance enrollment, staff discount scheme, eligibility for performance bonuses, access to training and development programs" },
+      { key: "performance_review_frequency", label: "Performance Review Frequency", type: "select", options: ["annually", "bi-annually", "quarterly"], default: "annually" },
+      { key: "contract_date", label: "Original Contract Date", type: "date", auto_fill: "employee.hire_date" },
+      { key: "next_steps", label: "Next Steps", type: "text", default: "HR will contact you to complete benefits enrollment and provide additional onboarding materials" },
+      { key: "signatory_name", label: "Signatory Name", type: "text", default: "HR Director" },
       { key: "authorized_signatory", label: "Authorized Signatory", type: "text", default: "HR Manager" },
       { key: "signatory_title", label: "Signatory Title", type: "text", default: "Human Resources" },
       { key: "issue_date", label: "Issue Date", type: "date", auto_fill: "today" }
