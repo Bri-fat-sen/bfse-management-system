@@ -863,10 +863,29 @@ export default function PrintableFormsDownload({ open, onOpenChange, organisatio
 
   const handleDownload = (formId) => {
     const html = generateFormHTML(formId, organisation);
-    const printWindow = window.open('', '_blank');
+    const printWindow = window.open('', '_blank', 'width=900,height=700');
+    
+    if (!printWindow) {
+      alert('Please allow popups for this site to print forms');
+      return;
+    }
+    
     printWindow.document.write(html);
     printWindow.document.close();
-    printWindow.print();
+    
+    // Wait for content to load before printing
+    printWindow.onload = () => {
+      setTimeout(() => {
+        printWindow.focus();
+        printWindow.print();
+      }, 250);
+    };
+    
+    // Fallback for browsers that don't trigger onload
+    setTimeout(() => {
+      printWindow.focus();
+      printWindow.print();
+    }, 500);
   };
 
   const handleDownloadAll = (category) => {

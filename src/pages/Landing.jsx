@@ -65,8 +65,23 @@ const benefits = [
 ];
 
 export default function Landing() {
+  // Check if user is already authenticated and redirect to Dashboard
+  React.useEffect(() => {
+    const checkAuth = async () => {
+      try {
+        const isAuth = await base44.auth.isAuthenticated();
+        if (isAuth) {
+          window.location.href = createPageUrl("Dashboard");
+        }
+      } catch (e) {
+        // Not authenticated, stay on landing
+      }
+    };
+    checkAuth();
+  }, []);
+
   const handleLogin = () => {
-    base44.auth.redirectToLogin();
+    base44.auth.redirectToLogin(createPageUrl("Dashboard"));
   };
 
   return (
