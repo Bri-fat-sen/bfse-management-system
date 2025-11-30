@@ -5,7 +5,7 @@ import { Printer, Download } from "lucide-react";
 
 export default function PayslipGenerator({ payroll, employee, organisation }) {
   const generatePayslipHTML = () => {
-    const orgInitials = (organisation?.name || 'ORG').split(' ').map(w => w[0]).join('').slice(0, 3);
+    const orgInitials = (organisation?.name || 'ORG').split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase();
     
     return `
       <!DOCTYPE html>
@@ -14,63 +14,70 @@ export default function PayslipGenerator({ payroll, employee, organisation }) {
           <meta charset="UTF-8">
           <meta name="viewport" content="width=device-width, initial-scale=1.0">
           <title>Payslip - ${employee?.full_name} - ${format(new Date(payroll?.period_start), 'MMMM yyyy')}</title>
-          <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+          <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
           <style>
             :root {
-              --sl-green: #1EB053;
-              --sl-white: #FFFFFF;
-              --sl-blue: #0072C6;
-              --sl-navy: #0F1F3C;
-              --sl-gold: #D4AF37;
+              --primary: #0f172a;
+              --primary-light: #1e293b;
+              --accent: #3b82f6;
+              --success: #10b981;
+              --danger: #ef4444;
+              --gray-50: #f8fafc;
+              --gray-100: #f1f5f9;
+              --gray-200: #e2e8f0;
+              --gray-400: #94a3b8;
+              --gray-500: #64748b;
+              --gray-600: #475569;
+              --gray-700: #334155;
+              --gray-800: #1e293b;
+              --gray-900: #0f172a;
             }
             
             * { margin: 0; padding: 0; box-sizing: border-box; }
             
             body { 
-              font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-              background: #f0f4f8;
+              font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+              background: var(--gray-50);
               padding: 24px;
-              color: #1e293b;
-              line-height: 1.5;
+              color: var(--gray-800);
+              line-height: 1.6;
+              -webkit-font-smoothing: antialiased;
             }
             
             .payslip-container {
               max-width: 800px;
               margin: 0 auto;
               background: white;
-              border-radius: 0;
+              border-radius: 16px;
               overflow: hidden;
-              box-shadow: 0 10px 40px rgba(0,0,0,0.15);
+              box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.15);
             }
             
-            /* Flag Bar */
-            .flag-bar {
-              height: 10px;
-              display: flex;
+            /* Header Accent */
+            .header-accent {
+              height: 4px;
+              background: linear-gradient(90deg, var(--success), var(--accent));
             }
-            .flag-bar > div { flex: 1; }
-            .flag-bar .green { background: var(--sl-green); }
-            .flag-bar .white { background: var(--sl-white); }
-            .flag-bar .blue { background: var(--sl-blue); }
             
             /* Header */
             .payslip-header {
-              background: linear-gradient(135deg, var(--sl-navy) 0%, #1a3a6e 40%, var(--sl-navy) 100%);
+              background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
               color: white;
-              padding: 32px 36px;
+              padding: 32px 40px;
               position: relative;
               overflow: hidden;
             }
             
-            .payslip-header::before {
-              content: '';
+            .header-bg {
               position: absolute;
-              top: -50%;
-              right: -10%;
-              width: 400px;
-              height: 400px;
-              background: radial-gradient(circle, rgba(30,176,83,0.15) 0%, transparent 70%);
-              border-radius: 50%;
+              top: 0;
+              left: 0;
+              right: 0;
+              bottom: 0;
+              opacity: 0.05;
+              background-image: 
+                radial-gradient(circle at 20% 80%, rgba(59, 130, 246, 0.4) 0%, transparent 50%),
+                radial-gradient(circle at 80% 20%, rgba(16, 185, 129, 0.4) 0%, transparent 50%);
             }
             
             .header-content {
@@ -88,35 +95,34 @@ export default function PayslipGenerator({ payroll, employee, organisation }) {
             }
             
             .company-logo {
-              width: 70px;
-              height: 70px;
+              width: 56px;
+              height: 56px;
               background: white;
               border-radius: 14px;
               display: flex;
               align-items: center;
               justify-content: center;
-              font-size: 22px;
+              font-size: 20px;
               font-weight: 800;
-              box-shadow: 0 6px 20px rgba(0,0,0,0.25);
+              box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
             }
             
             .company-logo span {
-              background: linear-gradient(135deg, var(--sl-green) 0%, var(--sl-blue) 100%);
+              background: linear-gradient(135deg, var(--success), var(--accent));
               -webkit-background-clip: text;
               -webkit-text-fill-color: transparent;
             }
             
             .company-details h1 {
-              font-size: 26px;
-              font-weight: 800;
+              font-size: 22px;
+              font-weight: 700;
               letter-spacing: -0.5px;
               margin-bottom: 4px;
             }
             
             .company-details .address {
               font-size: 12px;
-              opacity: 0.9;
-              margin-top: 6px;
+              opacity: 0.8;
             }
             
             .payslip-badge {
@@ -124,68 +130,49 @@ export default function PayslipGenerator({ payroll, employee, organisation }) {
             }
             
             .payslip-badge h2 {
-              font-size: 14px;
+              font-size: 11px;
               text-transform: uppercase;
-              letter-spacing: 3px;
-              opacity: 0.9;
+              letter-spacing: 2px;
+              opacity: 0.7;
               margin-bottom: 4px;
             }
             
             .payslip-badge .period {
-              font-size: 20px;
+              font-size: 18px;
               font-weight: 700;
-            }
-            
-            .payslip-badge .flag {
-              font-size: 32px;
-              margin-top: 8px;
-              opacity: 0.4;
             }
             
             /* Employee Info */
             .employee-info {
               display: grid;
               grid-template-columns: 1fr 1fr;
-              gap: 0;
-              border-bottom: 4px solid;
-              border-image: linear-gradient(90deg, var(--sl-green) 0%, var(--sl-blue) 100%) 1;
+              border-bottom: 1px solid var(--gray-200);
             }
             
             .info-section {
-              padding: 24px 36px;
-              background: linear-gradient(180deg, #f8fafc 0%, #ffffff 100%);
+              padding: 24px 40px;
+              background: var(--gray-50);
             }
             
             .info-section:first-child {
-              border-right: 1px solid #e2e8f0;
+              border-right: 1px solid var(--gray-200);
             }
             
             .info-section h3 {
-              font-size: 10px;
+              font-size: 11px;
               text-transform: uppercase;
-              letter-spacing: 1.5px;
-              color: var(--sl-blue);
-              margin-bottom: 14px;
-              font-weight: 700;
-              display: flex;
-              align-items: center;
-              gap: 6px;
-            }
-            
-            .info-section h3::before {
-              content: '';
-              width: 4px;
-              height: 16px;
-              background: linear-gradient(180deg, var(--sl-green) 0%, var(--sl-blue) 100%);
-              border-radius: 2px;
+              letter-spacing: 1px;
+              color: var(--gray-400);
+              margin-bottom: 16px;
+              font-weight: 600;
             }
             
             .info-row {
               display: flex;
               justify-content: space-between;
-              padding: 6px 0;
+              padding: 8px 0;
               font-size: 13px;
-              border-bottom: 1px dashed #e2e8f0;
+              border-bottom: 1px dashed var(--gray-200);
             }
             
             .info-row:last-child {
@@ -193,53 +180,47 @@ export default function PayslipGenerator({ payroll, employee, organisation }) {
             }
             
             .info-row .label {
-              color: #64748b;
-              font-weight: 500;
+              color: var(--gray-500);
             }
             
             .info-row .value {
               font-weight: 600;
-              color: var(--sl-navy);
+              color: var(--gray-800);
             }
             
-            /* Earnings & Deductions */
+            /* Pay Breakdown */
             .pay-breakdown {
               display: grid;
               grid-template-columns: 1fr 1fr;
-              gap: 0;
             }
             
             .breakdown-section {
-              padding: 28px 36px;
+              padding: 28px 40px;
             }
             
             .breakdown-section.earnings {
-              background: linear-gradient(135deg, rgba(30,176,83,0.03) 0%, white 100%);
-              border-right: 1px solid #e2e8f0;
-            }
-            
-            .breakdown-section.deductions {
-              background: linear-gradient(135deg, rgba(239,68,68,0.03) 0%, white 100%);
+              border-right: 1px solid var(--gray-200);
             }
             
             .breakdown-section h3 {
-              font-size: 12px;
-              text-transform: uppercase;
-              letter-spacing: 1px;
+              font-size: 13px;
               font-weight: 700;
               padding-bottom: 12px;
               margin-bottom: 16px;
-              border-bottom: 3px solid;
+              border-bottom: 2px solid;
+              display: flex;
+              align-items: center;
+              gap: 8px;
             }
             
             .breakdown-section.earnings h3 {
-              color: var(--sl-green);
-              border-color: var(--sl-green);
+              color: var(--success);
+              border-color: var(--success);
             }
             
             .breakdown-section.deductions h3 {
-              color: #dc2626;
-              border-color: #dc2626;
+              color: var(--danger);
+              border-color: var(--danger);
             }
             
             .pay-item {
@@ -248,7 +229,7 @@ export default function PayslipGenerator({ payroll, employee, organisation }) {
               align-items: center;
               padding: 10px 0;
               font-size: 13px;
-              border-bottom: 1px dashed #e2e8f0;
+              border-bottom: 1px dashed var(--gray-200);
             }
             
             .pay-item:last-of-type {
@@ -256,60 +237,45 @@ export default function PayslipGenerator({ payroll, employee, organisation }) {
             }
             
             .pay-item .label {
-              color: #475569;
+              color: var(--gray-600);
             }
             
             .pay-item .amount {
               font-weight: 600;
-              font-family: 'Monaco', 'Consolas', monospace;
+              font-family: 'SF Mono', 'Monaco', 'Consolas', monospace;
               font-size: 13px;
             }
             
             .pay-item.subtotal {
               margin-top: 16px;
-              padding-top: 14px;
-              border-top: 2px solid;
+              padding-top: 16px;
+              border-top: 2px solid var(--gray-200);
               font-weight: 700;
               font-size: 14px;
             }
             
-            .breakdown-section.earnings .pay-item.subtotal {
-              border-top-color: var(--sl-green);
-            }
-            
             .breakdown-section.earnings .pay-item.subtotal .amount {
-              color: var(--sl-green);
-            }
-            
-            .breakdown-section.deductions .pay-item.subtotal {
-              border-top-color: #dc2626;
+              color: var(--success);
             }
             
             .breakdown-section.deductions .pay-item.subtotal .amount {
-              color: #dc2626;
+              color: var(--danger);
             }
             
             /* Statutory Note */
             .statutory-note {
-              background: linear-gradient(90deg, rgba(0,114,198,0.08) 0%, rgba(30,176,83,0.05) 100%);
-              padding: 14px 36px;
+              background: var(--gray-50);
+              padding: 12px 40px;
               font-size: 11px;
-              color: var(--sl-blue);
+              color: var(--gray-500);
               text-align: center;
-              border-top: 1px solid #e2e8f0;
-              border-bottom: 1px solid #e2e8f0;
+              border-top: 1px solid var(--gray-200);
+              border-bottom: 1px solid var(--gray-200);
             }
             
             /* Net Pay Section */
             .net-pay-section {
-              background: linear-gradient(135deg, #f8fafc 0%, #ffffff 100%);
-              padding: 28px 36px;
-            }
-            
-            .net-summary {
-              display: flex;
-              flex-direction: column;
-              gap: 12px;
+              padding: 28px 40px;
             }
             
             .summary-row {
@@ -320,14 +286,14 @@ export default function PayslipGenerator({ payroll, employee, organisation }) {
             }
             
             .summary-row.net-pay {
-              margin-top: 16px;
-              padding: 20px 24px;
-              background: linear-gradient(135deg, var(--sl-green) 0%, #059669 100%);
-              border-radius: 12px;
+              margin-top: 20px;
+              padding: 24px;
+              background: linear-gradient(135deg, var(--success) 0%, #059669 100%);
+              border-radius: 16px;
               color: white;
               font-size: 24px;
               font-weight: 800;
-              box-shadow: 0 6px 20px rgba(30,176,83,0.3);
+              box-shadow: 0 8px 24px rgba(16, 185, 129, 0.3);
             }
             
             .summary-row.net-pay .label {
@@ -337,47 +303,31 @@ export default function PayslipGenerator({ payroll, employee, organisation }) {
             }
             
             .summary-row.net-pay .amount {
-              font-family: 'Monaco', 'Consolas', monospace;
-              letter-spacing: -0.5px;
+              font-family: 'SF Mono', 'Monaco', 'Consolas', monospace;
             }
             
             /* Footer */
-            .payslip-footer {
-              background: linear-gradient(135deg, var(--sl-navy) 0%, #1a3a6e 50%, var(--sl-navy) 100%);
-              color: white;
-              padding: 28px 36px;
-              text-align: center;
-              position: relative;
-            }
-            
-            .payslip-footer::before {
-              content: '';
-              position: absolute;
-              top: 0;
-              left: 0;
-              right: 0;
+            .footer-accent {
               height: 4px;
-              background: linear-gradient(90deg, var(--sl-green) 33.33%, var(--sl-white) 33.33%, var(--sl-white) 66.66%, var(--sl-blue) 66.66%);
+              background: linear-gradient(90deg, var(--success), var(--accent));
             }
             
-            .footer-flag {
-              font-size: 36px;
-              margin-bottom: 12px;
-              filter: drop-shadow(0 3px 6px rgba(0,0,0,0.3));
+            .payslip-footer {
+              background: var(--gray-900);
+              color: white;
+              padding: 24px 40px;
+              text-align: center;
             }
             
             .footer-text {
               font-size: 12px;
-              opacity: 0.9;
-            }
-            
-            .footer-text .disclaimer {
-              margin-bottom: 8px;
-            }
-            
-            .footer-text .brand {
-              font-size: 11px;
               opacity: 0.7;
+            }
+            
+            .footer-brand {
+              margin-top: 8px;
+              font-size: 11px;
+              opacity: 0.5;
             }
             
             /* Print Styles */
@@ -396,18 +346,7 @@ export default function PayslipGenerator({ payroll, employee, organisation }) {
               .payslip-container {
                 box-shadow: none;
                 max-width: 100%;
-              }
-              
-              .payslip-header {
-                -webkit-print-color-adjust: exact !important;
-              }
-              
-              .net-pay-section .summary-row.net-pay {
-                -webkit-print-color-adjust: exact !important;
-              }
-              
-              .payslip-footer {
-                -webkit-print-color-adjust: exact !important;
+                border-radius: 0;
               }
             }
             
@@ -419,13 +358,10 @@ export default function PayslipGenerator({ payroll, employee, organisation }) {
         </head>
         <body>
           <div class="payslip-container">
-            <div class="flag-bar">
-              <div class="green"></div>
-              <div class="white"></div>
-              <div class="blue"></div>
-            </div>
+            <div class="header-accent"></div>
             
             <div class="payslip-header">
+              <div class="header-bg"></div>
               <div class="header-content">
                 <div class="company-brand">
                   <div class="company-logo">
@@ -434,15 +370,13 @@ export default function PayslipGenerator({ payroll, employee, organisation }) {
                   <div class="company-details">
                     <h1>${organisation?.name || 'Organisation'}</h1>
                     <div class="address">
-                      ${organisation?.address ? `📍 ${organisation.address}${organisation?.city ? `, ${organisation.city}` : ''}` : '📍 Freetown, Sierra Leone'}
-                      ${organisation?.phone ? `<br>📞 ${organisation.phone}` : ''}
+                      ${organisation?.address ? `${organisation.address}${organisation?.city ? `, ${organisation.city}` : ''}` : 'Sierra Leone'}
                     </div>
                   </div>
                 </div>
                 <div class="payslip-badge">
                   <h2>Payslip</h2>
                   <div class="period">${format(new Date(payroll?.period_start), 'MMMM yyyy')}</div>
-                  <div class="flag">🇸🇱</div>
                 </div>
               </div>
             </div>
@@ -547,32 +481,28 @@ export default function PayslipGenerator({ payroll, employee, organisation }) {
             </div>
             
             <div class="statutory-note">
-              * Statutory deductions include NASSIT (5% employee contribution) and PAYE Tax as per Sierra Leone Finance Act regulations
+              * Statutory deductions include NASSIT (5% employee contribution) and PAYE Tax as per Sierra Leone regulations
             </div>
             
             <div class="net-pay-section">
-              <div class="net-summary">
-                <div class="summary-row">
-                  <span class="label">Gross Pay</span>
-                  <span class="value">SLE ${payroll?.gross_pay?.toLocaleString()}</span>
-                </div>
-                <div class="summary-row">
-                  <span class="label">Total Deductions</span>
-                  <span class="value" style="color: #dc2626;">- SLE ${payroll?.total_deductions?.toLocaleString()}</span>
-                </div>
-                <div class="summary-row net-pay">
-                  <span class="label">💵 NET PAY</span>
-                  <span class="amount">SLE ${payroll?.net_pay?.toLocaleString()}</span>
-                </div>
+              <div class="summary-row">
+                <span class="label">Gross Pay</span>
+                <span class="value">SLE ${payroll?.gross_pay?.toLocaleString()}</span>
+              </div>
+              <div class="summary-row">
+                <span class="label">Total Deductions</span>
+                <span class="value" style="color: var(--danger);">- SLE ${payroll?.total_deductions?.toLocaleString()}</span>
+              </div>
+              <div class="summary-row net-pay">
+                <span class="label">💵 NET PAY</span>
+                <span class="amount">SLE ${payroll?.net_pay?.toLocaleString()}</span>
               </div>
             </div>
             
+            <div class="footer-accent"></div>
             <div class="payslip-footer">
-              <div class="footer-flag">🇸🇱</div>
-              <div class="footer-text">
-                <div class="disclaimer">This is a computer-generated payslip and does not require a signature.</div>
-                <div class="brand">${organisation?.name || 'Organisation'} Management System • Proudly Sierra Leonean</div>
-              </div>
+              <div class="footer-text">This is a computer-generated payslip and does not require a signature.</div>
+              <div class="footer-brand">${organisation?.name || 'Organisation'} • Sierra Leone</div>
             </div>
           </div>
         </body>
