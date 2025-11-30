@@ -147,13 +147,53 @@ export default function Layout({ children, currentPageName }) {
     refetchOnWindowFocus: false,
   });
 
-  const { data: employee } = useQuery({
+  const { data: employee, refetch: refetchEmployee } = useQuery({
     queryKey: ['currentEmployee', user?.email],
     queryFn: () => base44.entities.Employee.filter({ user_email: user?.email }),
     enabled: !!user?.email,
     staleTime: 10 * 60 * 1000,
     refetchOnWindowFocus: false,
   });
+
+  // Auto-create employee record for admin users who don't have one
+  const { data: orgs } = useQuery({
+    queryKey: ['allOrganisations'],
+    queryFn: () => base44.entities.Organisation.list(),
+    enabled: !!user?.email && user?.role === 'admin' && employee && employee.length === 0,
+    staleTime: 10 * 60 * 1000,
+  });
+
+  useEffect(() => {
+    const createAdminEmployee = async () => {
+      if (user?.role === 'admin' && employee && employee.length === 0 && orgs && orgs.length > 0) {
+        try {
+          const org = orgs[0];
+          const existingEmployees = await base44.entities.Employee.filter({ organisation_id: org.id });
+          const employeeCode = `EMP${String(existingEmployees.length + 1).padStart(4, '0')}`;
+          
+          await base44.entities.Employee.create({
+            organisation_id: org.id,
+            employee_code: employeeCode,
+            user_email: user.email,
+            first_name: user.full_name?.split(' ')[0] || 'Admin',
+            last_name: user.full_name?.split(' ').slice(1).join(' ') || 'User',
+            full_name: user.full_name || 'Admin User',
+            role: 'super_admin',
+            department: 'Management',
+            position: 'System Administrator',
+            status: 'active',
+            hire_date: new Date().toISOString().split('T')[0],
+          });
+          
+          refetchEmployee();
+        } catch (err) {
+          console.error('Failed to auto-create employee record:', err);
+        }
+      }
+    };
+    
+    createAdminEmployee();
+  }, [user, employee, orgs, refetchEmployee]);
 
   const currentEmployee = employee?.[0];
 
