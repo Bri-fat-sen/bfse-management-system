@@ -627,84 +627,120 @@ export const DEFAULT_TEMPLATES = {
     name: "Non-Disclosure Agreement",
     content: `
 <div class="sl-document">
+  <div class="sl-watermark">CONFIDENTIAL</div>
   <div class="sl-header">
     <div class="sl-flag-bar"></div>
-    <h1>NON-DISCLOSURE AGREEMENT</h1>
-    <p class="sl-subtitle">Confidentiality Agreement</p>
+    <div class="sl-company-logo">🔒</div>
+    <h1>Non-Disclosure Agreement</h1>
+    <p class="sl-subtitle">Confidentiality & Non-Disclosure Agreement (NDA)</p>
+    <p class="sl-ref-number">Ref: NDA-{{document_ref}}</p>
   </div>
 
   <div class="sl-section">
-    <h2>PARTIES</h2>
-    <p><strong>DISCLOSING PARTY:</strong> {{company_name}} ("Company")</p>
-    <p><strong>RECEIVING PARTY:</strong> {{employee_name}} ("Employee")</p>
-    <p><strong>EFFECTIVE DATE:</strong> {{effective_date}}</p>
+    <h2>Agreement Parties</h2>
+    <div class="sl-parties-box">
+      <div class="sl-party employer">
+        <h3>🏢 Disclosing Party</h3>
+        <p><strong>{{company_name}}</strong></p>
+        <p>("the Company")</p>
+      </div>
+      <div class="sl-party">
+        <h3>👤 Receiving Party</h3>
+        <p><strong>{{employee_name}}</strong></p>
+        <p>("the Employee")</p>
+      </div>
+    </div>
+    <div class="sl-info-grid">
+      <div class="sl-info-item">
+        <label>Effective Date</label>
+        <span>{{effective_date}}</span>
+      </div>
+      <div class="sl-info-item">
+        <label>Duration After Termination</label>
+        <span>{{duration_years}} years</span>
+      </div>
+    </div>
   </div>
 
   <div class="sl-section">
-    <h2>1. CONFIDENTIAL INFORMATION</h2>
-    <p>For purposes of this Agreement, "Confidential Information" includes all information or data disclosed to or known by the Employee relating to:</p>
+    <h2>1. Definition of Confidential Information</h2>
+    <p>For purposes of this Agreement, "Confidential Information" includes all non-public information disclosed to or known by the Employee, including but not limited to:</p>
     <ul>
-      <li>Business strategies, plans, and operations</li>
-      <li>Financial information and projections</li>
-      <li>Customer and supplier lists and data</li>
-      <li>Product designs, formulas, and specifications</li>
-      <li>Trade secrets and proprietary processes</li>
-      <li>Marketing and pricing strategies</li>
-      <li>Software and technical data</li>
+      <li>Business strategies, plans, and operational methods</li>
+      <li>Financial information, projections, and pricing</li>
+      <li>Customer and supplier lists, contacts, and data</li>
+      <li>Product designs, formulas, specifications, and trade secrets</li>
+      <li>Marketing strategies and competitive intelligence</li>
+      <li>Software, source code, and technical data</li>
       <li>Employee and personnel information</li>
-      <li>Any other information marked as confidential</li>
+      <li>Any information marked or identified as confidential</li>
     </ul>
   </div>
 
   <div class="sl-section">
-    <h2>2. OBLIGATIONS</h2>
+    <h2>2. Employee Obligations</h2>
     <p>The Employee agrees to:</p>
     <ul>
-      <li>Keep all Confidential Information strictly confidential</li>
-      <li>Not disclose Confidential Information to any third party without written consent</li>
-      <li>Use Confidential Information only for performing job duties</li>
-      <li>Take reasonable measures to protect confidentiality</li>
+      <li>Maintain strict confidentiality of all Confidential Information</li>
+      <li>Not disclose Confidential Information to any third party without prior written consent</li>
+      <li>Use Confidential Information solely for performing assigned job duties</li>
+      <li>Take all reasonable measures to protect the confidentiality of information</li>
       <li>Return all materials containing Confidential Information upon termination</li>
+      <li>Immediately notify management of any suspected breaches</li>
     </ul>
   </div>
 
   <div class="sl-section">
-    <h2>3. EXCLUSIONS</h2>
+    <h2>3. Exclusions</h2>
     <p>This Agreement does not apply to information that:</p>
     <ul>
-      <li>Is publicly available through no fault of the Employee</li>
-      <li>Was known to the Employee prior to disclosure</li>
-      <li>Is independently developed by the Employee</li>
-      <li>Is required to be disclosed by law or court order</li>
+      <li>Is or becomes publicly available through no fault of the Employee</li>
+      <li>Was lawfully known to the Employee prior to disclosure</li>
+      <li>Is independently developed by the Employee without use of Confidential Information</li>
+      <li>Is required to be disclosed by law, regulation, or court order</li>
     </ul>
   </div>
 
   <div class="sl-section">
-    <h2>4. DURATION</h2>
-    <p>This Agreement shall remain in effect during employment and for a period of <strong>{{duration_years}}</strong> years after termination of employment.</p>
+    <h2>4. Duration & Survival</h2>
+    <div class="sl-highlight-box">
+      <h3>⏱️ Agreement Duration</h3>
+      <p>This Agreement shall remain in full force and effect during the Employee's employment with the Company and for a period of <strong>{{duration_years}} years</strong> following the termination of employment for any reason.</p>
+    </div>
   </div>
 
   <div class="sl-section">
-    <h2>5. REMEDIES</h2>
-    <p>The Employee acknowledges that breach of this Agreement may cause irreparable harm to the Company. The Company shall be entitled to seek injunctive relief and damages for any breach.</p>
+    <h2>5. Remedies for Breach</h2>
+    <p>The Employee acknowledges that any breach of this Agreement may cause irreparable harm to the Company for which monetary damages would be inadequate. The Company shall be entitled to seek:</p>
+    <ul>
+      <li>Injunctive relief to prevent further breaches</li>
+      <li>Monetary damages including lost profits</li>
+      <li>Legal costs and attorney fees</li>
+    </ul>
   </div>
 
   <div class="sl-section">
-    <h2>6. GOVERNING LAW</h2>
-    <p>This Agreement shall be governed by the laws of Sierra Leone.</p>
+    <h2>6. Governing Law</h2>
+    <p>This Agreement shall be governed by and construed in accordance with the laws of the Republic of Sierra Leone. Any disputes arising from this Agreement shall be subject to the exclusive jurisdiction of the courts of Sierra Leone.</p>
+  </div>
+
+  <div class="sl-acknowledgment">
+    <h2>Acknowledgment</h2>
+    <p>Both parties acknowledge that they have read, understood, and agree to be bound by all terms and conditions of this Non-Disclosure Agreement.</p>
   </div>
 
   <div class="sl-signatures">
     <div class="sl-signature-block">
-      <p><strong>FOR THE COMPANY:</strong></p>
-      <p>Name: {{company_signatory}}</p>
-      <p>Title: {{company_signatory_title}}</p>
+      <h4>For the Company</h4>
+      <p><strong>{{company_signatory}}</strong></p>
+      <p>{{company_signatory_title}}</p>
       <p>Date: {{issue_date}}</p>
-      <div class="sl-signature-line">____________________________</div>
+      <div class="sl-signature-line"></div>
+      <p style="font-size: 10px; color: #888; margin-top: 5px;">Authorized Signature</p>
     </div>
     <div class="sl-signature-block">
-      <p><strong>EMPLOYEE:</strong></p>
-      <p>Name: {{employee_name}}</p>
+      <h4>Employee</h4>
+      <p><strong>{{employee_name}}</strong></p>
       <p>Date: <span class="sl-signature-date">{{signature_date}}</span></p>
       <div class="sl-digital-signature">{{digital_signature}}</div>
     </div>
@@ -712,12 +748,16 @@ export const DEFAULT_TEMPLATES = {
 
   <div class="sl-footer">
     <div class="sl-flag-bar"></div>
-    <p>{{company_name}} • 🇸🇱 Sierra Leone</p>
+    <div class="sl-footer-logo">🇸🇱</div>
+    <p><strong>{{company_name}}</strong></p>
+    <p>Republic of Sierra Leone</p>
+    <p class="sl-legal-note">This Non-Disclosure Agreement is legally binding under Sierra Leone law. Digital signatures are enforceable.</p>
   </div>
 </div>
     `,
     variables: [
       { key: "company_name", label: "Company Name", type: "text", auto_fill: "organisation.name" },
+      { key: "document_ref", label: "Document Reference", type: "text", default: "2024-001" },
       { key: "employee_name", label: "Employee Name", type: "text", auto_fill: "employee.full_name" },
       { key: "effective_date", label: "Effective Date", type: "date" },
       { key: "duration_years", label: "Duration (years after termination)", type: "select", options: ["1", "2", "3", "5"], default: "2" },
