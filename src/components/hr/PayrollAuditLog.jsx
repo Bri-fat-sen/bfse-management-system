@@ -1,13 +1,22 @@
-import React from "react";
+import React, { useState } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery } from "@tanstack/react-query";
 import { format } from "date-fns";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { 
   History, Plus, Pencil, CheckCircle, XCircle, 
-  DollarSign, RefreshCw, User
+  DollarSign, RefreshCw, User, Search, Filter, Download
 } from "lucide-react";
 import { formatSLE } from "./PayrollCalculator";
 
@@ -21,7 +30,10 @@ const ACTION_CONFIG = {
   recalculated: { icon: RefreshCw, color: 'bg-purple-100 text-purple-600', label: 'Recalculated' }
 };
 
-export default function PayrollAuditLog({ orgId, payrollId = null, limit = 50 }) {
+export default function PayrollAuditLog({ orgId, payrollId = null, limit = 100 }) {
+  const [searchTerm, setSearchTerm] = useState("");
+  const [actionFilter, setActionFilter] = useState("all");
+
   const { data: auditLogs = [], isLoading } = useQuery({
     queryKey: ['payrollAudit', orgId, payrollId],
     queryFn: async () => {
@@ -31,6 +43,36 @@ export default function PayrollAuditLog({ orgId, payrollId = null, limit = 50 })
     },
     enabled: !!orgId,
   });
+
+  const filteredLogs = auditLogs.filter(log => {
+    const matchesSearch = !searchTerm || 
+      log.employee_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      log.changed_by_name?.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesAction = actionFilter === 'all' || log.action === actionFilter;
+    return matchesSearch && matchesAction;
+  });
+
+  const exportAuditLog = () => {
+    const csv = [
+      ['Date', 'Employee', 'Action', 'Changed By', 'Details', 'Reason'].join(','),
+      ...filteredLogs.map(log => [
+        format(new Date(log.created_date), 'yyyy-MM-dd HH:mm'),
+        log.employee_name,
+        log.action,
+        log.changed_by_name,
+        log.new_values?.net_pay ? `Net Pay: ${log.new_values.net_pay}` : '',
+        log.reason || ''
+      ].map(v => `"${v}"`).join(','))
+    ].join('\n');
+    
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `payroll-audit-${format(new Date(), 'yyyy-MM-dd')}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
 
   if (isLoading) {
     return (
@@ -45,20 +87,55 @@ export default function PayrollAuditLog({ orgId, payrollId = null, limit = 50 })
   return (
     <Card>
       <CardHeader className="pb-3">
-        <CardTitle className="flex items-center gap-2">
-          <History className="w-5 h-5 text-[#0072C6]" />
-          Payroll Audit Trail
-        </CardTitle>
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <CardTitle className="flex items-center gap-2">
+            <History className="w-5 h-5 text-[#0072C6]" />
+            Payroll Audit Trail
+          </CardTitle>
+          <Button variant="outline" size="sm" onClick={exportAuditLog}>
+            <Download className="w-4 h-4 mr-2" />
+            Export CSV
+          </Button>
+        </div>
       </CardHeader>
       <CardContent>
+        {/* Filters */}
+        <div className="flex flex-col sm:flex-row gap-3 mb-4">
+          <div className="relative flex-1">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+            <Input
+              placeholder="Search by employee or admin..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="pl-10"
+            />
+          </div>
+          <Select value={actionFilter} onValueChange={setActionFilter}>
+            <SelectTrigger className="w-40">
+              <Filter className="w-4 h-4 mr-2" />
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Actions</SelectItem>
+              <SelectItem value="created">Created</SelectItem>
+              <SelectItem value="updated">Updated</SelectItem>
+              <SelectItem value="approved">Approved</SelectItem>
+              <SelectItem value="rejected">Rejected</SelectItem>
+              <SelectItem value="paid">Paid</SelectItem>
+              <SelectItem value="cancelled">Cancelled</SelectItem>
+              <SelectItem value="recalculated">Recalculated</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+
         <ScrollArea className="h-96">
-          {auditLogs.length === 0 ? (
+          {filteredLogs.length === 0 ? (
             <div className="text-center text-gray-500 py-8">
               No audit records found
             </div>
           ) : (
             <div className="space-y-3">
-              {auditLogs.map((log) => {
+              {filteredLogs.map((log) => {
                 const config = ACTION_CONFIG[log.action] || ACTION_CONFIG.updated;
                 const Icon = config.icon;
                 
