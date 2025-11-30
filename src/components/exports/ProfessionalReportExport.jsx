@@ -1,7 +1,7 @@
 import React from "react";
 import { format } from "date-fns";
 
-// Professional Sierra Leone themed report generator
+// Modern Professional Report Generator
 export const generateProfessionalReport = ({
   title,
   subtitle,
@@ -12,15 +12,14 @@ export const generateProfessionalReport = ({
   charts = [],
   footer = true,
   watermark = true,
-  reportType = 'standard' // standard, financial, compliance, hr
+  reportType = 'standard'
 }) => {
   const generatedDate = format(new Date(), 'MMMM d, yyyy • h:mm a');
   const reportId = `RPT-${Date.now().toString(36).toUpperCase()}`;
   
-  // Ensure organisation has proper defaults
   const org = organisation || {};
   const orgName = org.name || 'Business Report';
-  const orgInitials = orgName.split(' ').map(w => w[0]).join('').slice(0, 3);
+  const orgInitials = orgName.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase();
   const orgAddress = org.address || '';
   const orgCity = org.city || '';
   const orgCountry = org.country || 'Sierra Leone';
@@ -36,24 +35,39 @@ export const generateProfessionalReport = ({
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <title>${title} - ${orgName}</title>
-        <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+        <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
         <style>
           :root {
-            --sl-green: #1EB053;
-            --sl-white: #FFFFFF;
-            --sl-blue: #0072C6;
-            --sl-navy: #0F1F3C;
-            --sl-gold: #D4AF37;
+            --primary: #0f172a;
+            --primary-light: #1e293b;
+            --accent: #3b82f6;
+            --accent-light: #60a5fa;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --gray-50: #f8fafc;
+            --gray-100: #f1f5f9;
+            --gray-200: #e2e8f0;
+            --gray-300: #cbd5e1;
+            --gray-400: #94a3b8;
+            --gray-500: #64748b;
+            --gray-600: #475569;
+            --gray-700: #334155;
+            --gray-800: #1e293b;
+            --gray-900: #0f172a;
+            --sl-green: #10b981;
+            --sl-blue: #3b82f6;
           }
           
           * { margin: 0; padding: 0; box-sizing: border-box; }
           
           body { 
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-            background: #f8fafc;
-            color: #1e293b;
-            line-height: 1.6;
-            font-size: 13px;
+            font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: var(--gray-50);
+            color: var(--gray-800);
+            line-height: 1.7;
+            font-size: 14px;
+            -webkit-font-smoothing: antialiased;
           }
           
           .report-container {
@@ -62,191 +76,186 @@ export const generateProfessionalReport = ({
             background: white;
             min-height: 297mm;
             position: relative;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.1);
           }
           
-          /* Premium Header */
+          /* Modern Header */
           .report-header {
-            background: linear-gradient(135deg, var(--sl-navy) 0%, #1a3a6e 40%, var(--sl-navy) 100%);
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
             color: white;
-            padding: 0;
             position: relative;
             overflow: hidden;
           }
           
-          .header-pattern {
+          .header-accent {
+            height: 4px;
+            background: linear-gradient(90deg, var(--sl-green), var(--sl-blue));
+          }
+          
+          .header-bg-pattern {
             position: absolute;
             top: 0;
             left: 0;
             right: 0;
             bottom: 0;
-            background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.03'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
-            opacity: 0.6;
+            opacity: 0.05;
+            background-image: 
+              radial-gradient(circle at 20% 80%, rgba(59, 130, 246, 0.3) 0%, transparent 50%),
+              radial-gradient(circle at 80% 20%, rgba(16, 185, 129, 0.3) 0%, transparent 50%);
           }
-          
-          .flag-bar {
-            height: 8px;
-            display: flex;
-          }
-          .flag-bar > div { flex: 1; }
-          .flag-bar .green { background: var(--sl-green); }
-          .flag-bar .white { background: var(--sl-white); }
-          .flag-bar .blue { background: var(--sl-blue); }
           
           .header-content {
-            padding: 32px 40px;
+            padding: 40px 48px;
             position: relative;
             z-index: 1;
           }
           
-          .header-top {
+          .header-row {
             display: flex;
             justify-content: space-between;
-            align-items: flex-start;
-            margin-bottom: 24px;
+            align-items: center;
           }
           
-          .org-branding {
+          .org-brand {
             display: flex;
             align-items: center;
-            gap: 16px;
+            gap: 20px;
           }
           
-          .org-logo {
-            width: 72px;
-            height: 72px;
+          .org-logo-wrapper {
+            width: 64px;
+            height: 64px;
             background: white;
-            border-radius: 14px;
+            border-radius: 16px;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 24px;
-            font-weight: 800;
-            box-shadow: 0 8px 24px rgba(0,0,0,0.3);
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
             overflow: hidden;
           }
           
-          .org-logo span {
-            background: linear-gradient(135deg, var(--sl-green) 0%, var(--sl-blue) 100%);
+          .org-logo-wrapper img {
+            max-width: 90%;
+            max-height: 90%;
+            object-fit: contain;
+          }
+          
+          .org-logo-wrapper .initials {
+            font-size: 22px;
+            font-weight: 800;
+            background: linear-gradient(135deg, var(--sl-green), var(--sl-blue));
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
           }
           
-          .org-details h1 {
-            font-size: 28px;
-            font-weight: 800;
+          .org-info h1 {
+            font-size: 26px;
+            font-weight: 700;
             letter-spacing: -0.5px;
             margin-bottom: 4px;
           }
           
-          .org-details .tagline {
+          .org-info .location {
+            font-size: 13px;
+            opacity: 0.8;
+            font-weight: 500;
+          }
+          
+          .header-meta {
+            text-align: right;
+          }
+          
+          .header-meta .date {
+            font-size: 13px;
+            opacity: 0.8;
+            margin-bottom: 4px;
+          }
+          
+          .header-meta .report-id {
             font-size: 11px;
-            text-transform: uppercase;
-            letter-spacing: 2px;
-            opacity: 0.85;
-            font-weight: 600;
-          }
-          
-          .org-contact {
-            display: flex;
-            gap: 16px;
-            margin-top: 10px;
-            font-size: 12px;
-            opacity: 0.9;
-          }
-          
-          .org-contact span {
-            display: flex;
-            align-items: center;
-            gap: 6px;
+            font-family: 'SF Mono', 'Monaco', 'Consolas', monospace;
+            opacity: 0.6;
             background: rgba(255,255,255,0.1);
-            padding: 4px 10px;
-            border-radius: 4px;
+            padding: 4px 12px;
+            border-radius: 6px;
           }
           
-          .header-flag {
-            font-size: 48px;
-            opacity: 0.3;
-            filter: drop-shadow(0 4px 8px rgba(0,0,0,0.3));
+          /* Title Section */
+          .title-section {
+            padding: 32px 48px;
+            background: linear-gradient(180deg, var(--gray-50) 0%, white 100%);
+            border-bottom: 1px solid var(--gray-200);
           }
           
-          /* Report Title Section */
-          .report-title-section {
-            background: linear-gradient(90deg, rgba(30,176,83,0.06) 0%, rgba(0,114,198,0.04) 100%);
-            padding: 24px 40px;
-            border-bottom: 4px solid;
-            border-image: linear-gradient(90deg, var(--sl-green) 0%, var(--sl-blue) 100%) 1;
-          }
-          
-          .report-title-inner {
+          .title-row {
             display: flex;
             justify-content: space-between;
-            align-items: center;
+            align-items: flex-end;
           }
           
-          .report-title h2 {
-            font-size: 22px;
-            font-weight: 700;
-            color: var(--sl-navy);
+          .report-title {
             display: flex;
             align-items: center;
-            gap: 12px;
-          }
-          
-          .report-title h2::before {
-            content: '📊';
-            font-size: 24px;
-          }
-          
-          .report-title .subtitle {
-            font-size: 13px;
-            color: #64748b;
-            margin-top: 4px;
-          }
-          
-          .report-meta {
-            text-align: right;
-            font-size: 12px;
-            color: #64748b;
-          }
-          
-          .report-meta .date-range {
-            font-weight: 600;
-            color: var(--sl-navy);
-            background: white;
-            padding: 6px 14px;
-            border-radius: 20px;
-            border: 2px solid #e2e8f0;
-            display: inline-block;
-          }
-          
-          .report-meta .report-id {
-            font-family: 'Monaco', 'Consolas', monospace;
-            font-size: 10px;
-            color: #94a3b8;
-            margin-top: 6px;
-          }
-          
-          /* Content Area */
-          .report-content {
-            padding: 40px;
-          }
-          
-          /* Summary Cards */
-          .summary-cards {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
             gap: 16px;
-            margin-bottom: 36px;
+          }
+          
+          .title-icon {
+            width: 48px;
+            height: 48px;
+            background: linear-gradient(135deg, var(--sl-green), var(--sl-blue));
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+          }
+          
+          .title-text h2 {
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--gray-900);
+            letter-spacing: -0.5px;
+          }
+          
+          .title-text .subtitle {
+            font-size: 14px;
+            color: var(--gray-500);
+            margin-top: 2px;
+          }
+          
+          .date-badge {
+            background: white;
+            border: 1px solid var(--gray-200);
+            padding: 10px 20px;
+            border-radius: 100px;
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--gray-700);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+          }
+          
+          /* Content */
+          .report-content {
+            padding: 40px 48px;
+          }
+          
+          /* Summary Cards - Modern Glass Style */
+          .summary-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 20px;
+            margin-bottom: 40px;
           }
           
           .summary-card {
-            background: linear-gradient(135deg, #fafbfc 0%, #ffffff 100%);
-            border: 2px solid #e2e8f0;
-            border-top: 6px solid var(--sl-green);
-            border-radius: 12px;
-            padding: 20px 16px;
-            text-align: center;
+            background: white;
+            border-radius: 16px;
+            padding: 24px;
             position: relative;
+            border: 1px solid var(--gray-100);
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.03);
+            overflow: hidden;
           }
           
           .summary-card::before {
@@ -255,96 +264,112 @@ export const generateProfessionalReport = ({
             top: 0;
             left: 0;
             right: 0;
-            height: 100%;
-            background: linear-gradient(180deg, rgba(30,176,83,0.04) 0%, transparent 60%);
-            border-radius: 0 0 10px 10px;
-            pointer-events: none;
+            height: 4px;
+            background: linear-gradient(90deg, var(--sl-green), var(--sl-blue));
           }
           
-          .summary-card:nth-child(2) { border-top-color: var(--sl-blue); }
-          .summary-card:nth-child(2)::before { background: linear-gradient(180deg, rgba(0,114,198,0.04) 0%, transparent 60%); }
-          .summary-card:nth-child(3) { border-top-color: var(--sl-gold); }
-          .summary-card:nth-child(3)::before { background: linear-gradient(180deg, rgba(212,175,55,0.04) 0%, transparent 60%); }
-          .summary-card:nth-child(4) { border-top-color: var(--sl-navy); }
-          .summary-card:nth-child(4)::before { background: linear-gradient(180deg, rgba(15,31,60,0.04) 0%, transparent 60%); }
+          .summary-card:nth-child(2)::before {
+            background: linear-gradient(90deg, var(--sl-blue), #8b5cf6);
+          }
           
-          .summary-card.highlight-green { background: linear-gradient(135deg, #ecfdf5 0%, #ffffff 100%); border-color: #d1fae5; }
-          .summary-card.highlight-red { background: linear-gradient(135deg, #fef2f2 0%, #ffffff 100%); border-color: #fecaca; border-top-color: #ef4444; }
-          .summary-card.highlight-blue { background: linear-gradient(135deg, #eff6ff 0%, #ffffff 100%); border-color: #dbeafe; }
+          .summary-card:nth-child(3)::before {
+            background: linear-gradient(90deg, #f59e0b, #ef4444);
+          }
+          
+          .summary-card:nth-child(4)::before {
+            background: linear-gradient(90deg, #8b5cf6, #ec4899);
+          }
+          
+          .summary-card.highlight-green::before { background: var(--success); }
+          .summary-card.highlight-red::before { background: var(--danger); }
+          .summary-card.highlight-blue::before { background: var(--accent); }
           
           .summary-card .label {
-            font-size: 10px;
+            font-size: 12px;
+            font-weight: 600;
             text-transform: uppercase;
-            letter-spacing: 1.2px;
-            color: #64748b;
-            font-weight: 700;
-            margin-bottom: 10px;
-            position: relative;
-            z-index: 1;
+            letter-spacing: 0.8px;
+            color: var(--gray-400);
+            margin-bottom: 12px;
           }
           
           .summary-card .value {
-            font-size: 26px;
+            font-size: 32px;
             font-weight: 800;
-            color: #1e293b;
+            color: var(--gray-900);
             letter-spacing: -1px;
-            position: relative;
-            z-index: 1;
+            line-height: 1;
           }
           
           .summary-card:first-child .value { color: var(--sl-green); }
           .summary-card:nth-child(2) .value { color: var(--sl-blue); }
-          .summary-card:nth-child(3) .value { color: var(--sl-gold); }
-          .summary-card:nth-child(4) .value { color: var(--sl-navy); }
-          .summary-card.highlight-red .value { color: #dc2626; }
+          .summary-card:nth-child(3) .value { color: #f59e0b; }
+          .summary-card:nth-child(4) .value { color: #8b5cf6; }
+          .summary-card.highlight-green .value { color: var(--success); }
+          .summary-card.highlight-red .value { color: var(--danger); }
           
           .summary-card .subtext {
-            font-size: 10px;
-            color: #94a3b8;
-            margin-top: 6px;
-            position: relative;
-            z-index: 1;
+            font-size: 12px;
+            color: var(--gray-400);
+            margin-top: 8px;
           }
           
-          /* Section Titles */
-          .section-title {
-            font-size: 16px;
-            font-weight: 700;
-            color: var(--sl-navy);
-            margin: 32px 0 16px 0;
-            padding: 14px 18px;
-            background: linear-gradient(90deg, rgba(30,176,83,0.08) 0%, rgba(0,114,198,0.04) 100%);
-            border-left: 6px solid;
-            border-image: linear-gradient(180deg, var(--sl-green) 0%, var(--sl-blue) 100%) 1;
-            border-radius: 0 8px 8px 0;
+          /* Section Headers */
+          .section-header {
             display: flex;
             align-items: center;
-            gap: 10px;
+            gap: 12px;
+            margin: 40px 0 20px 0;
+            padding-bottom: 16px;
+            border-bottom: 2px solid var(--gray-100);
           }
           
-          /* Tables */
+          .section-icon {
+            width: 36px;
+            height: 36px;
+            background: linear-gradient(135deg, var(--gray-100), var(--gray-50));
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+          }
+          
+          .section-header h3 {
+            font-size: 16px;
+            font-weight: 700;
+            color: var(--gray-800);
+          }
+          
+          /* Modern Tables */
+          .table-wrapper {
+            background: white;
+            border-radius: 16px;
+            overflow: hidden;
+            border: 1px solid var(--gray-200);
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.03);
+            margin: 16px 0;
+          }
+          
           table {
             width: 100%;
             border-collapse: collapse;
-            margin: 16px 0;
-            font-size: 12px;
-            box-shadow: 0 4px 16px rgba(0,0,0,0.06);
-            border: 2px solid #e2e8f0;
+            font-size: 13px;
           }
           
           thead {
-            background: linear-gradient(135deg, var(--sl-navy) 0%, #1a3a6e 100%);
+            background: var(--gray-50);
           }
           
           th {
-            color: white;
-            padding: 14px 12px;
+            padding: 16px 20px;
             text-align: left;
-            font-weight: 700;
+            font-weight: 600;
+            font-size: 11px;
             text-transform: uppercase;
-            font-size: 10px;
-            letter-spacing: 1px;
-            border-bottom: 3px solid var(--sl-green);
+            letter-spacing: 0.8px;
+            color: var(--gray-500);
+            border-bottom: 1px solid var(--gray-200);
           }
           
           th:last-child {
@@ -352,52 +377,56 @@ export const generateProfessionalReport = ({
           }
           
           td {
-            padding: 14px 12px;
-            border-bottom: 1px solid #e2e8f0;
-            background: white;
-          }
-          
-          tr:nth-child(even) td {
-            background: #f8fafc;
+            padding: 16px 20px;
+            border-bottom: 1px solid var(--gray-100);
+            color: var(--gray-700);
           }
           
           tr:last-child td {
             border-bottom: none;
           }
           
-          .amount-cell {
-            text-align: right;
-            font-family: 'Monaco', 'Consolas', monospace;
-            font-weight: 600;
+          tr:hover td {
+            background: var(--gray-50);
           }
           
-          .positive { color: var(--sl-green); }
-          .negative { color: #dc2626; }
+          .amount-cell {
+            text-align: right;
+            font-family: 'SF Mono', 'Monaco', 'Consolas', monospace;
+            font-weight: 600;
+            font-size: 13px;
+          }
+          
+          .positive { color: var(--success); }
+          .negative { color: var(--danger); }
           
           .total-row {
-            background: linear-gradient(135deg, var(--sl-navy) 0%, #1a3a6e 100%) !important;
+            background: var(--gray-900) !important;
           }
           
           .total-row td {
-            color: white;
+            color: white !important;
             font-weight: 700;
-            font-size: 13px;
+            font-size: 14px;
             border: none;
             background: transparent !important;
-            border-top: 3px solid var(--sl-green);
+          }
+          
+          .total-row:hover td {
+            background: transparent !important;
           }
           
           /* Status Badges */
           .status-badge {
             display: inline-flex;
             align-items: center;
-            gap: 4px;
-            padding: 4px 10px;
-            border-radius: 16px;
-            font-size: 10px;
+            gap: 6px;
+            padding: 6px 12px;
+            border-radius: 100px;
+            font-size: 11px;
             font-weight: 600;
             text-transform: uppercase;
-            letter-spacing: 0.5px;
+            letter-spacing: 0.3px;
           }
           
           .status-badge::before {
@@ -411,97 +440,102 @@ export const generateProfessionalReport = ({
           .status-success { background: #ecfdf5; color: #059669; }
           .status-warning { background: #fffbeb; color: #d97706; }
           .status-danger { background: #fef2f2; color: #dc2626; }
-          .status-info { background: #eff6ff; color: var(--sl-blue); }
+          .status-info { background: #eff6ff; color: #3b82f6; }
           
           /* Info Boxes */
           .info-box {
-            padding: 16px 20px;
-            border-radius: 10px;
-            margin: 16px 0;
+            padding: 20px 24px;
+            border-radius: 12px;
+            margin: 20px 0;
+            display: flex;
+            gap: 16px;
           }
           
           .info-box.success {
-            background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%);
-            border-left: 5px solid var(--sl-green);
+            background: linear-gradient(135deg, #ecfdf5, #d1fae5);
+            border: 1px solid #a7f3d0;
           }
           
           .info-box.warning {
-            background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%);
-            border-left: 5px solid var(--sl-gold);
+            background: linear-gradient(135deg, #fffbeb, #fef3c7);
+            border: 1px solid #fde68a;
           }
           
           .info-box.info {
-            background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
-            border-left: 5px solid var(--sl-blue);
+            background: linear-gradient(135deg, #eff6ff, #dbeafe);
+            border: 1px solid #bfdbfe;
           }
           
-          .info-box h4 {
+          .info-box-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            flex-shrink: 0;
+          }
+          
+          .info-box.success .info-box-icon { background: #d1fae5; }
+          .info-box.warning .info-box-icon { background: #fef3c7; }
+          .info-box.info .info-box-icon { background: #dbeafe; }
+          
+          .info-box-content h4 {
             font-weight: 700;
-            font-size: 13px;
-            margin-bottom: 6px;
+            font-size: 14px;
+            margin-bottom: 4px;
+            color: var(--gray-800);
           }
           
-          .info-box p, .info-box li {
-            font-size: 12px;
-            color: #475569;
+          .info-box-content p, .info-box-content li {
+            font-size: 13px;
+            color: var(--gray-600);
+            line-height: 1.6;
           }
           
           /* Breakdown Grid */
           .breakdown-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
-            gap: 10px;
-            margin: 16px 0;
-            padding: 20px;
-            background: linear-gradient(135deg, #f8fafc 0%, #ffffff 100%);
-            border: 2px solid #e2e8f0;
-            border-radius: 10px;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 12px;
+            margin: 20px 0;
           }
           
           .breakdown-item {
-            background: white;
-            padding: 12px 16px;
-            border-radius: 8px;
-            border-left: 4px solid var(--sl-green);
+            background: var(--gray-50);
+            padding: 16px 20px;
+            border-radius: 12px;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            box-shadow: 0 2px 6px rgba(0,0,0,0.04);
+            border: 1px solid var(--gray-100);
           }
           
-          .breakdown-item:nth-child(2n) { border-left-color: var(--sl-blue); }
-          .breakdown-item:nth-child(3n) { border-left-color: var(--sl-gold); }
-          .breakdown-item:nth-child(4n) { border-left-color: var(--sl-navy); }
-          
           .breakdown-item .label {
-            font-size: 11px;
-            color: #64748b;
-            font-weight: 600;
+            font-size: 13px;
+            color: var(--gray-600);
+            font-weight: 500;
           }
           
           .breakdown-item .value {
-            font-size: 13px;
+            font-size: 15px;
             font-weight: 700;
-            color: var(--sl-navy);
+            color: var(--gray-800);
           }
           
           /* Footer */
           .report-footer {
-            background: linear-gradient(135deg, var(--sl-navy) 0%, #1a3a6e 50%, var(--sl-navy) 100%);
+            background: var(--gray-900);
             color: white;
-            padding: 32px 40px;
-            margin-top: 40px;
-            position: relative;
+            padding: 40px 48px;
+            margin-top: 48px;
           }
           
-          .report-footer::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            height: 6px;
-            background: linear-gradient(90deg, var(--sl-green) 33.33%, var(--sl-white) 33.33%, var(--sl-white) 66.66%, var(--sl-blue) 66.66%);
+          .footer-accent {
+            height: 4px;
+            background: linear-gradient(90deg, var(--sl-green), var(--sl-blue));
+            margin-bottom: 0;
           }
           
           .footer-content {
@@ -510,60 +544,64 @@ export const generateProfessionalReport = ({
             align-items: center;
           }
           
-          .footer-left {
+          .footer-brand {
             display: flex;
             align-items: center;
             gap: 16px;
           }
           
-          .footer-flag {
-            font-size: 48px;
-            filter: drop-shadow(0 4px 8px rgba(0,0,0,0.3));
+          .footer-logo {
+            width: 48px;
+            height: 48px;
+            background: white;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 800;
+            font-size: 16px;
+            color: var(--gray-900);
           }
           
-          .footer-text h4 {
+          .footer-info h4 {
             font-size: 16px;
             font-weight: 700;
             margin-bottom: 4px;
           }
           
-          .footer-text p {
+          .footer-info p {
             font-size: 13px;
-            opacity: 0.85;
+            opacity: 0.7;
           }
           
           .footer-meta {
             text-align: right;
-            font-size: 11px;
-            opacity: 0.7;
+            font-size: 12px;
+            opacity: 0.6;
+          }
+          
+          .footer-meta .gen-date {
+            margin-bottom: 4px;
           }
           
           .footer-meta .report-id {
-            font-family: 'Monaco', 'Consolas', monospace;
+            font-family: 'SF Mono', 'Monaco', 'Consolas', monospace;
             background: rgba(255,255,255,0.1);
-            padding: 4px 10px;
-            border-radius: 4px;
+            padding: 4px 12px;
+            border-radius: 6px;
             display: inline-block;
-            margin-top: 6px;
           }
           
           /* Watermark */
           .watermark {
             position: fixed;
-            bottom: 20px;
-            right: 20px;
-            font-size: 10px;
-            color: #cbd5e1;
+            bottom: 16px;
+            right: 24px;
+            font-size: 11px;
+            color: var(--gray-300);
             display: flex;
             align-items: center;
             gap: 6px;
-            opacity: 0.5;
-          }
-          
-          /* Page Break */
-          .page-break {
-            page-break-before: always;
-            margin-top: 40px;
           }
           
           /* Print Styles */
@@ -589,13 +627,8 @@ export const generateProfessionalReport = ({
               -webkit-print-color-adjust: exact !important;
             }
             
-            .header-pattern {
-              display: none;
-            }
-            
             thead {
               display: table-header-group;
-              -webkit-print-color-adjust: exact !important;
             }
             
             tbody tr {
@@ -606,11 +639,11 @@ export const generateProfessionalReport = ({
               page-break-inside: avoid;
             }
             
-            .section-title {
+            .section-header {
               page-break-after: avoid;
             }
             
-            table {
+            .table-wrapper {
               page-break-inside: auto;
             }
             
@@ -624,7 +657,7 @@ export const generateProfessionalReport = ({
           }
           
           @page {
-            margin: 12mm;
+            margin: 10mm;
             size: A4 portrait;
           }
         </style>
@@ -633,55 +666,48 @@ export const generateProfessionalReport = ({
         <div class="report-container">
           <!-- Header -->
           <div class="report-header">
-            <div class="header-pattern"></div>
-            <div class="flag-bar">
-              <div class="green"></div>
-              <div class="white"></div>
-              <div class="blue"></div>
-            </div>
+            <div class="header-accent"></div>
+            <div class="header-bg-pattern"></div>
             <div class="header-content">
-              <div class="header-top">
-                <div class="org-branding">
-                  <div class="org-logo">
+              <div class="header-row">
+                <div class="org-brand">
+                  <div class="org-logo-wrapper">
                     ${orgLogo 
-                      ? `<img src="${orgLogo}" alt="Logo" style="max-width:100%;max-height:100%;object-fit:contain;">` 
-                      : `<span>${orgInitials}</span>`
+                      ? `<img src="${orgLogo}" alt="${orgName}">` 
+                      : `<span class="initials">${orgInitials}</span>`
                     }
                   </div>
-                  <div class="org-details">
+                  <div class="org-info">
                     <h1>${orgName}</h1>
-                    <div class="tagline">${orgCountry} • Business Management</div>
-                    <div class="org-contact">
-                      ${orgAddress || orgCity ? `<span>📍 ${orgAddress}${orgAddress && orgCity ? ', ' : ''}${orgCity}</span>` : `<span>📍 ${orgCountry}</span>`}
-                      ${orgPhone ? `<span>📞 ${orgPhone}</span>` : ''}
-                      ${orgEmail ? `<span>✉️ ${orgEmail}</span>` : ''}
-                      ${orgTIN ? `<span>🏛️ TIN: ${orgTIN}</span>` : ''}
-                    </div>
+                    <div class="location">${orgAddress ? orgAddress + (orgCity ? ', ' + orgCity : '') : orgCountry}</div>
                   </div>
                 </div>
-                <div class="header-flag">🇸🇱</div>
+                <div class="header-meta">
+                  <div class="date">${generatedDate}</div>
+                  <div class="report-id">${reportId}</div>
+                </div>
               </div>
             </div>
           </div>
           
-          <!-- Report Title -->
-          <div class="report-title-section">
-            <div class="report-title-inner">
+          <!-- Title Section -->
+          <div class="title-section">
+            <div class="title-row">
               <div class="report-title">
-                <h2>${title}</h2>
-                ${subtitle ? `<div class="subtitle">${subtitle}</div>` : ''}
+                <div class="title-icon">📊</div>
+                <div class="title-text">
+                  <h2>${title}</h2>
+                  ${subtitle ? `<div class="subtitle">${subtitle}</div>` : ''}
+                </div>
               </div>
-              <div class="report-meta">
-                ${dateRange ? `<div class="date-range">📅 ${dateRange}</div>` : ''}
-                <div class="report-id">Report ID: ${reportId}</div>
-              </div>
+              ${dateRange ? `<div class="date-badge">📅 ${dateRange}</div>` : ''}
             </div>
           </div>
           
           <!-- Content -->
           <div class="report-content">
             ${summaryCards.length > 0 ? `
-              <div class="summary-cards">
+              <div class="summary-grid">
                 ${summaryCards.map((card, idx) => `
                   <div class="summary-card ${card.highlight ? `highlight-${card.highlight}` : ''}">
                     <div class="label">${card.label}</div>
@@ -696,7 +722,12 @@ export const generateProfessionalReport = ({
               let sectionHTML = '';
               
               if (section.title) {
-                sectionHTML += `<div class="section-title">${section.icon || '📋'} ${section.title}</div>`;
+                sectionHTML += `
+                  <div class="section-header">
+                    <div class="section-icon">${section.icon || '📋'}</div>
+                    <h3>${section.title}</h3>
+                  </div>
+                `;
               }
               
               if (section.breakdown) {
@@ -713,61 +744,69 @@ export const generateProfessionalReport = ({
               }
               
               if (section.infoBox) {
+                const infoIcon = section.infoBox.type === 'success' ? '✅' : section.infoBox.type === 'warning' ? '⚠️' : 'ℹ️';
                 sectionHTML += `
                   <div class="info-box ${section.infoBox.type || 'info'}">
-                    <h4>${section.infoBox.title}</h4>
-                    ${section.infoBox.content}
+                    <div class="info-box-icon">${infoIcon}</div>
+                    <div class="info-box-content">
+                      <h4>${section.infoBox.title}</h4>
+                      <div>${section.infoBox.content}</div>
+                    </div>
                   </div>
                 `;
               }
               
               if (section.table) {
                 sectionHTML += `
-                  <table>
-                    <thead>
-                      <tr>
-                        ${section.table.columns.map(col => `<th>${col}</th>`).join('')}
-                      </tr>
-                    </thead>
-                    <tbody>
-                      ${section.table.rows.map((row, rowIdx) => {
-                        const isTotal = row[0]?.toString().toLowerCase().includes('total') || 
-                                       row[0]?.toString().toLowerCase().includes('grand');
-                        return `
-                          <tr class="${isTotal ? 'total-row' : ''}">
-                            ${row.map((cell, cellIdx) => {
-                              const isAmount = section.table.columns[cellIdx]?.toLowerCase().includes('amount') ||
-                                             section.table.columns[cellIdx]?.toLowerCase().includes('pay') ||
-                                             section.table.columns[cellIdx]?.toLowerCase().includes('revenue') ||
-                                             section.table.columns[cellIdx]?.toLowerCase().includes('tax') ||
-                                             section.table.columns[cellIdx]?.toLowerCase().includes('cost') ||
-                                             section.table.columns[cellIdx]?.toLowerCase().includes('total') ||
-                                             section.table.columns[cellIdx]?.toLowerCase().includes('sle');
-                              const isStatus = section.table.columns[cellIdx]?.toLowerCase().includes('status');
-                              
-                              let cellClass = isAmount ? 'amount-cell' : '';
-                              let cellContent = cell ?? '-';
-                              
-                              if (isStatus && cell) {
-                                const statusLower = cell.toString().toLowerCase();
-                                let statusClass = 'status-info';
-                                if (['paid', 'approved', 'completed', 'active', 'success', 'present'].some(s => statusLower.includes(s))) {
-                                  statusClass = 'status-success';
-                                } else if (['pending', 'draft', 'warning', 'late'].some(s => statusLower.includes(s))) {
-                                  statusClass = 'status-warning';
-                                } else if (['rejected', 'cancelled', 'failed', 'absent', 'overdue'].some(s => statusLower.includes(s))) {
-                                  statusClass = 'status-danger';
+                  <div class="table-wrapper">
+                    <table>
+                      <thead>
+                        <tr>
+                          ${section.table.columns.map(col => `<th>${col}</th>`).join('')}
+                        </tr>
+                      </thead>
+                      <tbody>
+                        ${section.table.rows.map((row, rowIdx) => {
+                          const isTotal = row[0]?.toString().toLowerCase().includes('total') || 
+                                         row[0]?.toString().toLowerCase().includes('grand');
+                          return `
+                            <tr class="${isTotal ? 'total-row' : ''}">
+                              ${row.map((cell, cellIdx) => {
+                                const colName = section.table.columns[cellIdx]?.toLowerCase() || '';
+                                const isAmount = colName.includes('amount') ||
+                                               colName.includes('pay') ||
+                                               colName.includes('revenue') ||
+                                               colName.includes('tax') ||
+                                               colName.includes('cost') ||
+                                               colName.includes('total') ||
+                                               colName.includes('sle') ||
+                                               colName.includes('net');
+                                const isStatus = colName.includes('status');
+                                
+                                let cellClass = isAmount ? 'amount-cell' : '';
+                                let cellContent = cell ?? '-';
+                                
+                                if (isStatus && cell) {
+                                  const statusLower = cell.toString().toLowerCase();
+                                  let statusClass = 'status-info';
+                                  if (['paid', 'approved', 'completed', 'active', 'success', 'present'].some(s => statusLower.includes(s))) {
+                                    statusClass = 'status-success';
+                                  } else if (['pending', 'draft', 'warning', 'late'].some(s => statusLower.includes(s))) {
+                                    statusClass = 'status-warning';
+                                  } else if (['rejected', 'cancelled', 'failed', 'absent', 'overdue'].some(s => statusLower.includes(s))) {
+                                    statusClass = 'status-danger';
+                                  }
+                                  cellContent = `<span class="status-badge ${statusClass}">${cell}</span>`;
                                 }
-                                cellContent = `<span class="status-badge ${statusClass}">${cell}</span>`;
-                              }
-                              
-                              return `<td class="${cellClass}">${cellContent}</td>`;
-                            }).join('')}
-                          </tr>
-                        `;
-                      }).join('')}
-                    </tbody>
-                  </table>
+                                
+                                return `<td class="${cellClass}">${cellContent}</td>`;
+                              }).join('')}
+                            </tr>
+                          `;
+                        }).join('')}
+                      </tbody>
+                    </table>
+                  </div>
                 `;
               }
               
@@ -781,50 +820,42 @@ export const generateProfessionalReport = ({
           
           ${footer ? `
             <!-- Footer -->
+            <div class="footer-accent"></div>
             <div class="report-footer">
               <div class="footer-content">
-                <div class="footer-left">
-                  <div class="footer-flag">🇸🇱</div>
-                  <div class="footer-text">
+                <div class="footer-brand">
+                  <div class="footer-logo">${orgInitials}</div>
+                  <div class="footer-info">
                     <h4>${orgName}</h4>
-                    <p>${orgAddress ? orgAddress + (orgCity ? ', ' + orgCity : '') : orgCountry}</p>
-                    <p style="font-size: 11px; opacity: 0.8; margin-top: 4px;">
-                      ${orgPhone ? '📞 ' + orgPhone : ''} 
-                      ${orgPhone && orgEmail ? ' • ' : ''}
-                      ${orgEmail ? '✉️ ' + orgEmail : ''}
-                    </p>
+                    <p>${orgPhone ? orgPhone : ''} ${orgPhone && orgEmail ? '•' : ''} ${orgEmail ? orgEmail : ''}</p>
                   </div>
                 </div>
                 <div class="footer-meta">
-                  <div>Generated: ${generatedDate}</div>
+                  <div class="gen-date">Generated: ${generatedDate}</div>
                   <div class="report-id">${reportId}</div>
-                  ${orgTIN ? `<div style="margin-top: 4px;">TIN: ${orgTIN}</div>` : ''}
                 </div>
               </div>
             </div>
           ` : ''}
         </div>
         
-        ${watermark ? `<div class="watermark">🇸🇱 ${orgName}</div>` : ''}
+        ${watermark ? `<div class="watermark">📄 ${orgName}</div>` : ''}
       </body>
     </html>
   `;
 };
 
 export const printProfessionalReport = (html, filename = 'report') => {
-  // Open in new window and trigger print-to-PDF
   const printWindow = window.open('', '_blank', 'width=900,height=800');
   printWindow.document.write(html);
   printWindow.document.close();
   
-  // Auto-trigger print dialog (user can save as PDF)
   setTimeout(() => {
     printWindow.print();
   }, 400);
 };
 
 export const downloadProfessionalReportAsPDF = async (html, filename = 'report') => {
-  // Open the report in a new window for proper PDF generation
   const pdfWindow = window.open('', '_blank', 'width=900,height=800');
   
   if (!pdfWindow) {
@@ -832,14 +863,10 @@ export const downloadProfessionalReportAsPDF = async (html, filename = 'report')
     return;
   }
   
-  // Write HTML content
   pdfWindow.document.write(html);
   pdfWindow.document.close();
-  
-  // Set the document title for the PDF filename
   pdfWindow.document.title = filename;
   
-  // Wait for content and fonts to load, then trigger print once
   setTimeout(() => {
     pdfWindow.print();
   }, 500);
