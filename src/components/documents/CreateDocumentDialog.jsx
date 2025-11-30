@@ -320,7 +320,7 @@ export default function CreateDocumentDialog({
                 </Button>
               </div>
               
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-2 max-h-64 overflow-y-auto">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-2 max-h-48 overflow-y-auto">
                 {activeEmployees.map(emp => (
                   <div
                     key={emp.id}
@@ -346,11 +346,19 @@ export default function CreateDocumentDialog({
 
               {selectedTemplate?.variables?.length > 0 && (
                 <div className="mt-6 space-y-4">
-                  <Label>Fill Document Variables</Label>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {selectedTemplate.variables.map(v => (
+                  <div className="flex items-center justify-between">
+                    <Label>Document Details</Label>
+                    <span className="text-xs text-gray-500">* Fields are auto-filled where possible</span>
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-h-[35vh] overflow-y-auto p-1">
+                    {selectedTemplate.variables
+                      .filter(v => !v.auto_fill || !variables[v.key]) // Show non-auto-filled OR empty auto-filled
+                      .map(v => (
                       <div key={v.key}>
-                        <Label className="text-xs text-gray-500">{v.label}</Label>
+                        <Label className="text-xs text-gray-500 flex items-center gap-1">
+                          {v.label}
+                          {v.auto_fill && <span className="text-green-600 text-[10px]">(auto)</span>}
+                        </Label>
                         {v.type === 'select' ? (
                           <Select
                             value={variables[v.key] || v.default || ''}
@@ -377,7 +385,7 @@ export default function CreateDocumentDialog({
                             type={v.type === 'number' ? 'number' : 'text'}
                             value={variables[v.key] || ''}
                             onChange={(e) => setVariables(prev => ({ ...prev, [v.key]: e.target.value }))}
-                            placeholder={v.auto_fill ? `Auto-filled from ${v.auto_fill}` : ''}
+                            placeholder={v.default || ''}
                             className="mt-1"
                           />
                         )}
