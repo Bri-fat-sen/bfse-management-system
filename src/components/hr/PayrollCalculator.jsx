@@ -249,58 +249,6 @@ export const SL_NOTICE_PERIODS = {
 };
 
 // ============================================
-// PAYROLL FREQUENCY CONFIGURATION
-// ============================================
-
-export const PAYROLL_FREQUENCIES = {
-  weekly: {
-    label: "Weekly",
-    periodsPerYear: 52,
-    workingDays: 5,
-    multiplier: 12 / 52, // Convert monthly to weekly
-    description: "Paid every week (52 times per year)"
-  },
-  bi_weekly: {
-    label: "Bi-Weekly",
-    periodsPerYear: 26,
-    workingDays: 10,
-    multiplier: 12 / 26, // Convert monthly to bi-weekly
-    description: "Paid every two weeks (26 times per year)"
-  },
-  monthly: {
-    label: "Monthly",
-    periodsPerYear: 12,
-    workingDays: 22,
-    multiplier: 1,
-    description: "Paid once per month (12 times per year)"
-  }
-};
-
-/**
- * Calculate prorated salary based on payroll frequency
- */
-export function calculateProratedSalary(monthlySalary, frequency) {
-  const config = PAYROLL_FREQUENCIES[frequency] || PAYROLL_FREQUENCIES.monthly;
-  return Math.round(monthlySalary * config.multiplier);
-}
-
-/**
- * Get annual equivalent from periodic salary
- */
-export function getAnnualEquivalent(periodicSalary, frequency) {
-  const config = PAYROLL_FREQUENCIES[frequency] || PAYROLL_FREQUENCIES.monthly;
-  return Math.round(periodicSalary * config.periodsPerYear);
-}
-
-/**
- * Get expected working days for a pay period
- */
-export function getExpectedWorkingDays(frequency) {
-  const config = PAYROLL_FREQUENCIES[frequency] || PAYROLL_FREQUENCIES.monthly;
-  return config.workingDays;
-}
-
-// ============================================
 // CALCULATION FUNCTIONS
 // ============================================
 
@@ -495,28 +443,33 @@ export function calculateFullPayroll({
   customBonuses = [],
   templates = [],
   applyNASSIT = true,
-  applyPAYE = true
+  applyPAYE = true,
+  payrollFrequency = "monthly"
 }) {
   const baseSalary = employee.base_salary || 0;
   const salaryType = employee.salary_type || "monthly";
   const role = employee.role || "support_staff";
+  const frequencyConfig = PAYROLL_FREQUENCIES[payrollFrequency] || PAYROLL_FREQUENCIES.monthly;
   
-  // Calculate rates
-  const rates = calculateRates(baseSalary, salaryType);
+  // Calculate prorated salary based on frequency
+  const proratedSalary = calculateProratedSalary(baseSalary, payrollFrequency);
   
-  // Get attendance data
-  const daysWorked = attendanceData.daysWorked || 22;
-  const expectedDays = attendanceData.expectedDays || 22;
+  // Calculate rates based on prorated salary
+  const rates = calculateRates(proratedSalary, salaryType);
+  
+  // Get attendance data - adjust for frequency
+  const expectedDays = attendanceData.expectedDays || frequencyConfig.workingDays;
+  const daysWorked = attendanceData.daysWorked || expectedDays;
   const regularHours = attendanceData.regularHours || (daysWorked * 8);
   const overtimeHours = attendanceData.overtimeHours || 0;
   const weekendHours = attendanceData.weekendHours || 0;
   const holidayHours = attendanceData.holidayHours || 0;
   
-  // Calculate base earnings
-  let baseEarnings = rates.monthlyRate;
+  // Calculate base earnings (using prorated salary)
+  let baseEarnings = proratedSalary;
   
-  // Adjust for attendance if not full month
-  const attendanceAdjustment = calculateAttendanceAdjustment(rates.monthlyRate, daysWorked, expectedDays);
+  // Adjust for attendance if not full period
+  const attendanceAdjustment = calculateAttendanceAdjustment(proratedSalary, daysWorked, expectedDays);
   baseEarnings += attendanceAdjustment.adjustment;
   
   // Calculate overtime pay
@@ -524,11 +477,11 @@ export function calculateFullPayroll({
   const weekendPay = calculateOvertimePay(rates.hourlyRate, weekendHours, OVERTIME_MULTIPLIERS.weekend);
   const holidayPay = calculateOvertimePay(rates.hourlyRate, holidayHours, OVERTIME_MULTIPLIERS.holiday);
   
-  // Get role-based allowances
-  const roleAllowances = getRoleBasedAllowances(role, baseSalary);
+  // Get role-based allowances (prorated for frequency)
+  const roleAllowances = getRoleBasedAllowances(role, proratedSalary);
   
-  // Apply templates if provided
-  const templateItems = templates.length > 0 ? applyTemplates(templates, employee, baseSalary) : { allowances: [], deductions: [] };
+  // Apply templates if provided (prorated for frequency)
+  const templateItems = templates.length > 0 ? applyTemplates(templates, employee, proratedSalary) : { allowances: [], deductions: [] };
   
   const allAllowances = [...roleAllowances, ...templateItems.allowances, ...customAllowances];
   const totalAllowances = allAllowances.reduce((sum, a) => sum + (a.amount || 0), 0);
@@ -536,8 +489,8 @@ export function calculateFullPayroll({
   // Calculate bonuses
   const bonuses = [...customBonuses];
   
-  // Attendance bonus
-  const attendanceBonus = calculateAttendanceBonus(baseSalary, daysWorked, expectedDays);
+  // Attendance bonus (prorated)
+  const attendanceBonus = calculateAttendanceBonus(proratedSalary, daysWorked, expectedDays);
   if (attendanceBonus > 0) {
     bonuses.push({ name: "Perfect Attendance Bonus", amount: attendanceBonus, type: "attendance" });
   }
@@ -556,19 +509,24 @@ export function calculateFullPayroll({
   const grossPay = baseEarnings + overtimePay + weekendPay + holidayPay + totalAllowances + totalBonuses;
   
   // Calculate statutory deductions
+  // NASSIT is calculated on gross pay for the period
   const nassit = applyNASSIT ? calculateNASSIT(grossPay) : { employee: 0, employer: 0 };
-  const paye = applyPAYE ? calculatePAYE(grossPay * 12) : { monthlyTax: 0, taxBracket: "N/A", effectiveRate: 0 };
+  
+  // PAYE is calculated on annual equivalent, then divided by periods per year
+  const annualGrossEquivalent = grossPay * frequencyConfig.periodsPerYear;
+  const payeAnnual = applyPAYE ? calculatePAYE(annualGrossEquivalent) : { annualTax: 0, monthlyTax: 0, taxBracket: "N/A", effectiveRate: 0 };
+  const payePeriodic = applyPAYE ? Math.round(payeAnnual.annualTax / frequencyConfig.periodsPerYear) : 0;
   
   // Build deductions array - include template deductions
   const deductions = [...templateItems.deductions, ...customDeductions];
   if (applyNASSIT && nassit.employee > 0) {
     deductions.push({ name: "NASSIT (5%)", amount: nassit.employee, type: "statutory" });
   }
-  if (applyPAYE && paye.monthlyTax > 0) {
-    deductions.push({ name: "PAYE Tax", amount: paye.monthlyTax, type: "statutory" });
+  if (applyPAYE && payePeriodic > 0) {
+    deductions.push({ name: "PAYE Tax", amount: payePeriodic, type: "statutory" });
   }
   
-  const totalStatutoryDeductions = (applyNASSIT ? nassit.employee : 0) + (applyPAYE ? paye.monthlyTax : 0);
+  const totalStatutoryDeductions = (applyNASSIT ? nassit.employee : 0) + (applyPAYE ? payePeriodic : 0);
   const templateDeductionsTotal = templateItems.deductions.reduce((sum, d) => sum + (d.amount || 0), 0);
   const customDeductionsTotal = customDeductions.reduce((sum, d) => sum + (d.amount || 0), 0);
   const totalDeductions = totalStatutoryDeductions + templateDeductionsTotal + customDeductionsTotal;
@@ -586,8 +544,10 @@ export function calculateFullPayroll({
     employee_location: employee.assigned_location_name || "",
     period_start: periodStart,
     period_end: periodEnd,
+    payroll_frequency: payrollFrequency,
     
     base_salary: baseSalary,
+    prorated_salary: proratedSalary,
     salary_type: salaryType,
     hours_worked: regularHours,
     days_worked: daysWorked,
@@ -611,7 +571,7 @@ export function calculateFullPayroll({
     deductions,
     nassit_employee: Math.round(nassit.employee),
     nassit_employer: Math.round(nassit.employer),
-    paye_tax: Math.round(paye.monthlyTax),
+    paye_tax: Math.round(payePeriodic),
     total_statutory_deductions: Math.round(totalStatutoryDeductions),
     total_deductions: Math.round(totalDeductions),
     
@@ -621,8 +581,10 @@ export function calculateFullPayroll({
     calculation_details: {
       hourly_rate: Math.round(rates.hourlyRate),
       daily_rate: Math.round(rates.dailyRate),
-      tax_bracket: paye.taxBracket,
-      effective_tax_rate: parseFloat(paye.effectiveRate)
+      tax_bracket: payeAnnual.taxBracket,
+      effective_tax_rate: parseFloat(payeAnnual.effectiveRate),
+      annual_gross_equivalent: Math.round(annualGrossEquivalent),
+      frequency_multiplier: frequencyConfig.multiplier
     }
   };
 }
