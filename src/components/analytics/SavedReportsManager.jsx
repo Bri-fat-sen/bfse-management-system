@@ -13,7 +13,10 @@ import {
   User,
   MoreVertical,
   FolderOpen,
-  Plus
+  Plus,
+  Calendar,
+  Mail,
+  Send
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -35,6 +38,7 @@ import {
 } from "@/components/ui/dialog";
 import { useToast } from "@/components/ui/use-toast";
 import EmptyState from "@/components/ui/EmptyState";
+import ReportScheduleDialog from "@/components/reports/ReportScheduleDialog";
 
 const REPORT_TYPE_COLORS = {
   sales: '#1EB053',
