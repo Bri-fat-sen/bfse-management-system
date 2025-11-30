@@ -2,7 +2,8 @@ import React from "react";
 import { format } from "date-fns";
 import { Button } from "@/components/ui/button";
 import { Download, Printer } from "lucide-react";
-import { generateExportHTML, printDocument, exportToCSV } from "@/components/exports/SierraLeoneExportStyles";
+import { exportToCSV } from "@/components/exports/SierraLeoneExportStyles";
+import { generateProfessionalReport, printProfessionalReport } from "@/components/exports/ProfessionalReportGenerator";
 
 export default function AttendanceReportExport({ attendance = [], employee, employees, organisation }) {
   // Calculate summary stats
@@ -10,6 +11,8 @@ export default function AttendanceReportExport({ attendance = [], employee, empl
   const lateDays = attendance.filter(a => a.status === 'late').length;
   const absentDays = attendance.filter(a => a.status === 'absent').length;
   const totalHours = attendance.reduce((sum, a) => sum + (a.total_hours || 0), 0);
+  const avgHours = attendance.length > 0 ? totalHours / attendance.length : 0;
+  const attendanceRate = attendance.length > 0 ? Math.round((presentDays + lateDays) / attendance.length * 100) : 0;
 
   const handleExportCSV = () => {
     const columns = employees ? 
@@ -43,15 +46,15 @@ export default function AttendanceReportExport({ attendance = [], employee, empl
   };
 
   const handlePrint = () => {
-    const summary = [
-      { label: 'Total Records', value: attendance.length.toString() },
-      { label: 'Present', value: presentDays.toString(), highlight: 'green' },
-      { label: 'Late', value: lateDays.toString(), highlight: lateDays > 0 ? 'gold' : undefined },
-      { label: 'Total Hours', value: `${totalHours.toFixed(1)} hrs` }
+    const keyMetrics = [
+      { icon: '📋', label: 'Total Records', value: attendance.length.toString() },
+      { icon: '✅', label: 'Present', value: presentDays.toString(), trend: 'positive' },
+      { icon: '⏰', label: 'Late', value: lateDays.toString(), trend: lateDays > 0 ? 'warning' : '' },
+      { icon: '🕐', label: 'Total Hours', value: `${totalHours.toFixed(1)} hrs` }
     ];
 
     const columns = employees ?
-      ['Employee', 'Department', 'Date', 'Clock In', 'Clock Out', 'Location', 'Hours', 'Status'] :
+      ['Employee', 'Department', 'Date', 'Clock In', 'Clock Out', 'Hours', 'Status'] :
       ['Date', 'Day', 'Clock In', 'Clock Out', 'Hours Worked', 'Status'];
     
     const rows = employees ?
@@ -63,7 +66,6 @@ export default function AttendanceReportExport({ attendance = [], employee, empl
           a.date ? format(new Date(a.date), 'dd MMM yyyy') : '-',
           a.clock_in_time || '-',
           a.clock_out_time || '-',
-          a.clock_in_location?.substring(0, 20) || '-',
           a.total_hours ? `${a.total_hours.toFixed(2)} hrs` : '-',
           a.status
         ];
@@ -77,19 +79,36 @@ export default function AttendanceReportExport({ attendance = [], employee, empl
         a.status
       ]);
 
-    const reportTitle = employees ? 
-      'Staff Attendance Report' : 
-      `Attendance Report - ${employee?.full_name || 'Employee'}`;
+    const reportTitle = employees ? 'Staff Attendance Report' : `Attendance Report - ${employee?.full_name || 'Employee'}`;
 
-    const html = generateExportHTML({
+    const insights = [
+      `${attendanceRate}% attendance rate (${presentDays + lateDays} present out of ${attendance.length} records)`,
+      `Average hours per day: ${avgHours.toFixed(1)} hours`,
+      lateDays > 0 ? `${lateDays} late arrivals recorded` : 'No late arrivals - excellent punctuality!',
+      absentDays > 0 ? `${absentDays} absences recorded` : null
+    ].filter(Boolean);
+
+    const recommendations = [
+      lateDays > attendance.length * 0.1 ? 'Review punctuality policies - late arrivals exceed 10%' : null,
+      absentDays > attendance.length * 0.05 ? 'Monitor absenteeism trends and address root causes' : null,
+      avgHours < 7 ? 'Review work hour expectations with employees' : null,
+      'Continue tracking attendance for workforce planning'
+    ].filter(Boolean);
+
+    const html = generateProfessionalReport({
+      reportType: 'HR & Attendance',
       title: reportTitle,
-      organisation: organisation,
-      summary: summary,
-      columns: columns,
-      rows: rows
+      subtitle: 'Employee attendance tracking and time analysis',
+      organisation,
+      dateRange: `As of ${format(new Date(), 'MMMM d, yyyy')}`,
+      executiveSummary: `This attendance report covers ${attendance.length} records with an attendance rate of ${attendanceRate}%. Total hours worked: ${totalHours.toFixed(1)} hours (average ${avgHours.toFixed(1)} hours/day). ${presentDays} days present, ${lateDays} days late, ${absentDays} days absent.`,
+      keyMetrics,
+      tables: [{ title: 'Attendance Records', icon: '📋', columns, rows }],
+      insights,
+      recommendations
     });
 
-    printDocument(html);
+    printProfessionalReport(html);
   };
 
   return (
