@@ -674,44 +674,60 @@ export default function CreateDocumentDialog({
           </div>
         </ScrollArea>
 
-        <DialogFooter className="border-t pt-4">
-          {step > 1 && (
-            <Button variant="outline" onClick={() => setStep(step - 1)}>
-              Back
-            </Button>
-          )}
-          {step < 3 ? (
-            <Button 
-              onClick={() => setStep(step + 1)}
-              disabled={
-                (step === 1 && !documentType) ||
-                (step === 2 && selectedEmployees.length === 0)
-              }
-              className="bg-[#1EB053] hover:bg-[#178f43]"
-            >
-              Continue
-              <ChevronRight className="w-4 h-4 ml-1" />
-            </Button>
-          ) : (
-            <Button 
-              onClick={handleCreateDocuments}
-              disabled={sending || createDocumentMutation.isPending}
-              className="bg-gradient-to-r from-[#1EB053] to-[#0072C6]"
-            >
-              {(sending || createDocumentMutation.isPending) ? (
-                <>
-                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                  Sending...
-                </>
-              ) : (
-                <>
-                  <Send className="w-4 h-4 mr-2" />
-                  Send for Signature
-                </>
-              )}
-            </Button>
-          )}
-        </DialogFooter>
+        {/* Premium Footer */}
+        <div className="px-8 py-5 bg-white border-t flex items-center justify-between">
+          <div className="flex items-center gap-2 text-sm text-gray-500">
+            <div className="flex h-1.5 w-12 rounded-full overflow-hidden">
+              <div className="flex-1 bg-[#1EB053]" />
+              <div className="flex-1 bg-white border" />
+              <div className="flex-1 bg-[#0072C6]" />
+            </div>
+            <span>Sierra Leone HR Documents</span>
+          </div>
+          
+          <div className="flex items-center gap-3">
+            {step > 1 && (
+              <Button 
+                variant="outline" 
+                onClick={() => setStep(step - 1)}
+                className="px-6"
+              >
+                Back
+              </Button>
+            )}
+            {step < 3 ? (
+              <Button 
+                onClick={() => setStep(step + 1)}
+                disabled={
+                  (step === 1 && !documentType) ||
+                  (step === 2 && selectedEmployees.length === 0)
+                }
+                className="bg-gradient-to-r from-[#0072C6] to-[#0F1F3C] hover:from-[#0062a6] hover:to-[#0a1529] px-8 shadow-lg shadow-[#0072C6]/20"
+              >
+                Continue
+                <ChevronRight className="w-4 h-4 ml-1" />
+              </Button>
+            ) : (
+              <Button 
+                onClick={handleCreateDocuments}
+                disabled={sending || createDocumentMutation.isPending}
+                className="bg-gradient-to-r from-[#1EB053] to-[#0072C6] hover:from-[#178f43] hover:to-[#0062a6] px-8 shadow-lg shadow-[#1EB053]/20"
+              >
+                {(sending || createDocumentMutation.isPending) ? (
+                  <>
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    Sending Documents...
+                  </>
+                ) : (
+                  <>
+                    <Send className="w-4 h-4 mr-2" />
+                    Send for Signature
+                  </>
+                )}
+              </Button>
+            )}
+          </div>
+        </div>
       </DialogContent>
     </Dialog>
   );
