@@ -1,16 +1,12 @@
-import React, { useRef, useState } from "react";
-import { base44 } from "@/api/base44Client";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import React, { useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { 
-  Download, Printer, Mail, Clock, CheckCircle2, 
+  Download, Printer, Clock, CheckCircle2, 
   XCircle, AlertCircle, User, Calendar, History
 } from "lucide-react";
 import { format } from "date-fns";
-import { toast } from "sonner";
 import { SL_DOCUMENT_STYLES, DOCUMENT_TYPE_INFO } from "./DocumentTemplates";
 import DocumentVersionHistory from "./DocumentVersionHistory";
 
@@ -23,51 +19,10 @@ const STATUS_CONFIG = {
   cancelled: { label: "Cancelled", icon: XCircle, color: "bg-gray-100 text-gray-600" }
 };
 
-export default function DocumentViewer({ document, onClose, currentEmployee }) {
+export default function DocumentViewer({ document, onClose, onRevert, isReverting, canRevert = true }) {
   const printRef = useRef();
-  const queryClient = useQueryClient();
-  const [activeTab, setActiveTab] = useState("content");
   const statusConfig = STATUS_CONFIG[document?.status] || STATUS_CONFIG.draft;
   const StatusIcon = statusConfig.icon;
-
-  // Check if user can revert (only for pending/draft documents and admins)
-  const canRevert = document?.status === 'draft' || document?.status === 'pending_signature';
-
-  // Revert to previous version mutation
-  const revertMutation = useMutation({
-    mutationFn: async (versionToRevert) => {
-      // Save current version to history before reverting
-      const currentVersionEntry = {
-        version: document.version || 1,
-        content: document.content,
-        variables: document.variables,
-        status: document.status,
-        updated_by_id: currentEmployee?.id,
-        updated_by_name: currentEmployee?.full_name,
-        updated_at: new Date().toISOString(),
-        change_reason: `Reverted to version ${versionToRevert.version}`
-      };
-
-      const updatedHistory = [
-        currentVersionEntry,
-        ...(document.version_history || [])
-      ];
-
-      return base44.entities.EmployeeDocument.update(document.id, {
-        content: versionToRevert.content,
-        variables: versionToRevert.variables,
-        version: (document.version || 1) + 1,
-        version_history: updatedHistory
-      });
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['employeeDocuments'] });
-      toast.success('Document reverted successfully');
-    },
-    onError: (error) => {
-      toast.error('Failed to revert document', { description: error.message });
-    }
-  });
 
   const handlePrint = () => {
     const printWindow = window.open('', '_blank');
@@ -134,6 +89,10 @@ export default function DocumentViewer({ document, onClose, currentEmployee }) {
               <Badge variant="outline">
                 {DOCUMENT_TYPE_INFO[document.document_type]?.label || document.document_type}
               </Badge>
+              <Badge variant="outline" className="bg-[#0072C6]/5 text-[#0072C6] border-[#0072C6]/20">
+                <History className="w-3 h-3 mr-1" />
+                v{document.version || 1}
+              </Badge>
             </div>
           </div>
           <div className="flex gap-2">
@@ -195,56 +154,24 @@ export default function DocumentViewer({ document, onClose, currentEmployee }) {
         )}
       </div>
 
-      {/* Tabs for Content and Version History */}
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col min-h-0">
-        <div className="px-4 border-b bg-white">
-          <TabsList className="h-10 bg-transparent p-0 gap-4">
-            <TabsTrigger 
-              value="content" 
-              className="data-[state=active]:border-b-2 data-[state=active]:border-[#1EB053] data-[state=active]:text-[#1EB053] rounded-none bg-transparent px-0 pb-2"
-            >
-              Document Content
-            </TabsTrigger>
-            <TabsTrigger 
-              value="history" 
-              className="data-[state=active]:border-b-2 data-[state=active]:border-[#0072C6] data-[state=active]:text-[#0072C6] rounded-none bg-transparent px-0 pb-2 flex items-center gap-1"
-            >
-              <History className="w-4 h-4" />
-              Version History
-              {document?.version_history?.length > 0 && (
-                <Badge variant="secondary" className="ml-1 text-xs h-5">
-                  {document.version_history.length}
-                </Badge>
-              )}
-            </TabsTrigger>
-          </TabsList>
+      {/* Document content */}
+      <ScrollArea className="flex-1">
+        <div className="p-4 space-y-6" ref={printRef}>
+          <style dangerouslySetInnerHTML={{ __html: SL_DOCUMENT_STYLES }} />
+          <div 
+            className="bg-white border rounded-lg shadow-sm"
+            dangerouslySetInnerHTML={{ __html: document.content }}
+          />
+          
+          {/* Version History Section */}
+          <DocumentVersionHistory 
+            document={document}
+            onRevert={onRevert}
+            isReverting={isReverting}
+            canRevert={canRevert}
+          />
         </div>
-
-        <TabsContent value="content" className="flex-1 m-0 overflow-hidden">
-          <ScrollArea className="h-full">
-            <div className="p-4" ref={printRef}>
-              <style dangerouslySetInnerHTML={{ __html: SL_DOCUMENT_STYLES }} />
-              <div 
-                className="bg-white border rounded-lg shadow-sm"
-                dangerouslySetInnerHTML={{ __html: document.content }}
-              />
-            </div>
-          </ScrollArea>
-        </TabsContent>
-
-        <TabsContent value="history" className="flex-1 m-0 overflow-hidden">
-          <ScrollArea className="h-full">
-            <div className="p-4">
-              <DocumentVersionHistory 
-                document={document}
-                onRevert={(version) => revertMutation.mutate(version)}
-                isReverting={revertMutation.isPending}
-                canRevert={canRevert}
-              />
-            </div>
-          </ScrollArea>
-        </TabsContent>
-      </Tabs>
+      </ScrollArea>
     </div>
   );
 }
