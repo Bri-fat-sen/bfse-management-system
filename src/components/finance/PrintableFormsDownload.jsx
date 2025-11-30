@@ -863,35 +863,39 @@ export default function PrintableFormsDownload({ open, onOpenChange, organisatio
 
   const handleDownload = (formId) => {
     const html = generateFormHTML(formId, organisation);
-    const printWindow = window.open('', '_blank', 'width=900,height=700');
     
-    if (!printWindow) {
-      alert('Please allow popups for this site to print forms');
-      return;
-    }
+    // Create an iframe for printing instead of opening a new window
+    const iframe = document.createElement('iframe');
+    iframe.style.position = 'absolute';
+    iframe.style.width = '0';
+    iframe.style.height = '0';
+    iframe.style.border = 'none';
+    iframe.style.left = '-9999px';
+    document.body.appendChild(iframe);
     
-    printWindow.document.write(html);
-    printWindow.document.close();
+    const iframeDoc = iframe.contentWindow || iframe.contentDocument;
+    const doc = iframeDoc.document || iframeDoc;
     
-    // Wait for content to load before printing
-    printWindow.onload = () => {
-      setTimeout(() => {
-        printWindow.focus();
-        printWindow.print();
-      }, 250);
-    };
+    doc.open();
+    doc.write(html);
+    doc.close();
     
-    // Fallback for browsers that don't trigger onload
+    // Wait for content to load then print
     setTimeout(() => {
-      printWindow.focus();
-      printWindow.print();
-    }, 500);
+      iframe.contentWindow.focus();
+      iframe.contentWindow.print();
+      
+      // Clean up iframe after printing
+      setTimeout(() => {
+        document.body.removeChild(iframe);
+      }, 1000);
+    }, 300);
   };
 
   const handleDownloadAll = (category) => {
     const forms = FORM_TEMPLATES.filter(f => category === 'all' || f.category === category);
     forms.forEach((form, index) => {
-      setTimeout(() => handleDownload(form.id), index * 500);
+      setTimeout(() => handleDownload(form.id), index * 1500);
     });
   };
 
