@@ -2,6 +2,13 @@
 // All amounts in SLE (New Sierra Leonean Leone - Redenominated March 2024)
 // Reference: Finance Act 2024, Employment Act 2023, NASSIT Act
 
+// Safe number helper to prevent NaN/undefined errors
+const safeNum = (value, defaultValue = 0) => {
+  if (value === null || value === undefined || value === '') return defaultValue;
+  const parsed = typeof value === 'number' ? value : parseFloat(value);
+  return isNaN(parsed) || !isFinite(parsed) ? defaultValue : parsed;
+};
+
 // ============================================
 // STATUTORY RATES (2025)
 // Based on Sierra Leone Finance Act 2024 & NRA Guidelines
@@ -305,17 +312,6 @@ export function getExpectedWorkingDays(frequency) {
 // ============================================
 
 /**
- * Safely parse a number (prevents NaN)
- */
-function safeNum(value, defaultValue = 0) {
-  if (value === null || value === undefined || value === '') {
-    return defaultValue;
-  }
-  const parsed = typeof value === 'number' ? value : parseFloat(value);
-  return isNaN(parsed) || !isFinite(parsed) ? defaultValue : parsed;
-}
-
-/**
  * Calculate PAYE Tax based on annual income
  * Uses progressive tax brackets
  */
@@ -343,7 +339,7 @@ export function calculatePAYE(annualIncome) {
   return {
     annualTax: Math.round(tax),
     monthlyTax: Math.round(monthlyTax),
-    effectiveRate: effectiveRate.toFixed(2),
+    effectiveRate: safeNum(effectiveRate).toFixed(2),
     taxBracket: currentBracket
   };
 }
@@ -379,14 +375,14 @@ export function calculateRates(baseSalary, salaryType = "monthly") {
       break;
     case "daily":
       dailyRate = salary;
-      hourlyRate = WORKING_HOURS_PER_DAY > 0 ? dailyRate / WORKING_HOURS_PER_DAY : 0;
+      hourlyRate = dailyRate / WORKING_HOURS_PER_DAY;
       monthlyRate = dailyRate * WORKING_DAYS_PER_MONTH;
       break;
     case "monthly":
     default:
       monthlyRate = salary;
-      dailyRate = WORKING_DAYS_PER_MONTH > 0 ? monthlyRate / WORKING_DAYS_PER_MONTH : 0;
-      hourlyRate = WORKING_HOURS_PER_MONTH > 0 ? monthlyRate / WORKING_HOURS_PER_MONTH : 0;
+      dailyRate = salary / WORKING_DAYS_PER_MONTH;
+      hourlyRate = salary / WORKING_HOURS_PER_MONTH;
       break;
   }
   
@@ -412,16 +408,16 @@ export function calculateAttendanceAdjustment(baseSalary, daysWorked, expectedDa
   const worked = safeNum(daysWorked);
   const expected = safeNum(expectedDays, 22);
   
-  if (worked >= expected || expected === 0) {
+  if (worked >= expected) {
     return { adjustment: 0, bonus: 0, missedDays: 0, dailyRate: 0 };
   }
   
-  const dailyRate = salary / expected;
+  const dailyRate = expected > 0 ? salary / expected : 0;
   const missedDays = expected - worked;
-  const deduction = dailyRate * missedDays;
+  const deduction = Math.round(dailyRate * missedDays);
   
   return {
-    adjustment: -Math.round(deduction),
+    adjustment: -deduction,
     missedDays,
     dailyRate: Math.round(dailyRate)
   };
@@ -674,6 +670,5 @@ export function calculateFullPayroll({
  * Format currency for display
  */
 export function formatSLE(amount) {
-  const num = safeNum(amount);
-  return `SLE ${Math.round(num).toLocaleString()}`;
+  return `SLE ${Math.round(safeNum(amount)).toLocaleString()}`;
 }
