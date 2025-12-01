@@ -446,12 +446,13 @@ export function calculateSalesCommission(totalSales, commissionRate = 0.02) {
  */
 export function getRoleBasedAllowances(role, baseSalary) {
   const config = ROLE_BONUS_CONFIG[role] || { allowances: [] };
+  const salary = safeNum(baseSalary);
   
   return config.allowances.map(allowance => ({
     name: allowance.name,
     amount: allowance.percentage 
-      ? Math.round(baseSalary * allowance.percentage) 
-      : (allowance.fixed || 0),
+      ? Math.round(salary * safeNum(allowance.percentage)) 
+      : safeNum(allowance.fixed),
     type: "role_based"
   }));
 }
@@ -462,6 +463,8 @@ export function getRoleBasedAllowances(role, baseSalary) {
 export function applyTemplates(templates, employee, baseSalary, grossPay = null) {
   const allowances = [];
   const deductions = [];
+  const salary = safeNum(baseSalary);
+  const gross = safeNum(grossPay);
 
   templates.forEach(template => {
     if (!template.is_active) return;
@@ -475,18 +478,21 @@ export function applyTemplates(templates, employee, baseSalary, grossPay = null)
     if (!appliesToEmployee) return;
 
     // Calculate amount
-    let amount = template.amount || 0;
+    let amount = safeNum(template.amount);
     if (template.calculation_type === 'percentage') {
-      const base = template.percentage_of === 'gross_pay' && grossPay ? grossPay : baseSalary;
-      amount = Math.round(base * (template.amount / 100));
+      const base = template.percentage_of === 'gross_pay' && gross > 0 ? gross : salary;
+      amount = Math.round(base * (safeNum(template.amount) / 100));
     }
+
+    // Skip if amount is 0 or negative
+    if (amount <= 0) return;
 
     const item = {
       name: template.name,
       amount,
-      type: template.category,
+      type: template.category || 'other',
       template_id: template.id,
-      is_taxable: template.is_taxable
+      is_taxable: template.is_taxable !== false
     };
 
     if (template.type === 'benefit') {
@@ -516,7 +522,7 @@ export function calculateFullPayroll({
   applyPAYE = true,
   payrollFrequency = "monthly"
 }) {
-  const baseSalary = employee.base_salary || 0;
+  const baseSalary = safeNum(employee.base_salary);
   const salaryType = employee.salary_type || "monthly";
   const role = employee.role || "support_staff";
   
@@ -530,19 +536,19 @@ export function calculateFullPayroll({
   const rates = calculateRates(proratedSalary, salaryType);
   
   // Get attendance data - adjust expected days based on frequency
-  const expectedDays = attendanceData.expectedDays || frequencyConfig.workingDays;
-  const daysWorked = attendanceData.daysWorked || expectedDays;
-  const regularHours = attendanceData.regularHours || (daysWorked * 8);
-  const overtimeHours = attendanceData.overtimeHours || 0;
-  const weekendHours = attendanceData.weekendHours || 0;
-  const holidayHours = attendanceData.holidayHours || 0;
+  const expectedDays = safeNum(attendanceData.expectedDays, frequencyConfig.workingDays);
+  const daysWorked = safeNum(attendanceData.daysWorked, expectedDays);
+  const regularHours = safeNum(attendanceData.regularHours, daysWorked * 8);
+  const overtimeHours = safeNum(attendanceData.overtimeHours);
+  const weekendHours = safeNum(attendanceData.weekendHours);
+  const holidayHours = safeNum(attendanceData.holidayHours);
   
   // Calculate base earnings (use prorated salary for non-monthly frequencies)
   let baseEarnings = proratedSalary;
   
   // Adjust for attendance if not full period
   const attendanceAdjustment = calculateAttendanceAdjustment(proratedSalary, daysWorked, expectedDays);
-  baseEarnings += attendanceAdjustment.adjustment;
+  baseEarnings += safeNum(attendanceAdjustment.adjustment);
   
   // Calculate overtime pay
   const overtimePay = calculateOvertimePay(rates.hourlyRate, overtimeHours, OVERTIME_MULTIPLIERS.regular);
@@ -552,36 +558,61 @@ export function calculateFullPayroll({
   // Get role-based allowances (prorated for frequency)
   const roleAllowances = getRoleBasedAllowances(role, baseSalary).map(a => ({
     ...a,
-    amount: Math.round(a.amount * frequencyConfig.multiplier)
+    amount: Math.round(safeNum(a.amount) * safeNum(frequencyConfig.multiplier, 1))
   }));
   
-  // Apply templates if provided
+  // Apply templates if provided - filter out any statutory deductions from templates
+  // (NASSIT and PAYE are handled separately to avoid duplicates)
   const templateItems = templates.length > 0 ? applyTemplates(templates, employee, baseSalary) : { allowances: [], deductions: [] };
   
-  const allAllowances = [...roleAllowances, ...templateItems.allowances, ...customAllowances];
-  const totalAllowances = allAllowances.reduce((sum, a) => sum + (a.amount || 0), 0);
+  // Filter out any NASSIT or PAYE from template deductions to prevent duplicates
+  const filteredTemplateDeductions = templateItems.deductions.filter(d => {
+    const nameLower = (d.name || '').toLowerCase();
+    return !nameLower.includes('nassit') && !nameLower.includes('paye') && !nameLower.includes('tax');
+  });
   
-  // Calculate bonuses
-  const bonuses = [...customBonuses];
+  // Combine allowances - use Map to deduplicate by name
+  const allowanceMap = new Map();
+  [...roleAllowances, ...templateItems.allowances, ...customAllowances].forEach(a => {
+    if (a.name && safeNum(a.amount) > 0) {
+      // If same allowance name exists, keep the higher amount
+      const existing = allowanceMap.get(a.name);
+      if (!existing || safeNum(a.amount) > safeNum(existing.amount)) {
+        allowanceMap.set(a.name, a);
+      }
+    }
+  });
+  const allAllowances = Array.from(allowanceMap.values());
+  const totalAllowances = allAllowances.reduce((sum, a) => sum + safeNum(a.amount), 0);
+  
+  // Calculate bonuses - use Map to deduplicate by name
+  const bonusMap = new Map();
+  customBonuses.forEach(b => {
+    if (b.name && safeNum(b.amount) > 0) {
+      bonusMap.set(b.name, b);
+    }
+  });
   
   // Attendance bonus
   const attendanceBonus = calculateAttendanceBonus(baseSalary, daysWorked, expectedDays);
   if (attendanceBonus > 0) {
-    bonuses.push({ name: "Perfect Attendance Bonus", amount: attendanceBonus, type: "attendance" });
+    bonusMap.set("Perfect Attendance Bonus", { name: "Perfect Attendance Bonus", amount: attendanceBonus, type: "attendance" });
   }
   
   // Sales commission (for applicable roles)
-  if (salesData.totalSales && ROLE_BONUS_CONFIG[role]?.bonusEligible?.includes("sales_commission")) {
-    const commission = calculateSalesCommission(salesData.totalSales, salesData.commissionRate || 0.02);
+  const totalSalesAmount = safeNum(salesData.totalSales);
+  if (totalSalesAmount > 0 && ROLE_BONUS_CONFIG[role]?.bonusEligible?.includes("sales_commission")) {
+    const commission = calculateSalesCommission(totalSalesAmount, safeNum(salesData.commissionRate, 0.02));
     if (commission > 0) {
-      bonuses.push({ name: "Sales Commission", amount: commission, type: "sales_commission" });
+      bonusMap.set("Sales Commission", { name: "Sales Commission", amount: commission, type: "sales_commission" });
     }
   }
   
-  const totalBonuses = bonuses.reduce((sum, b) => sum + (b.amount || 0), 0);
+  const bonuses = Array.from(bonusMap.values());
+  const totalBonuses = bonuses.reduce((sum, b) => sum + safeNum(b.amount), 0);
   
   // Calculate gross pay
-  const grossPay = baseEarnings + overtimePay + weekendPay + holidayPay + totalAllowances + totalBonuses;
+  const grossPay = Math.round(baseEarnings + overtimePay + weekendPay + holidayPay + totalAllowances + totalBonuses);
   
   // Calculate statutory deductions
   // NASSIT is calculated on the period's gross pay
@@ -589,30 +620,52 @@ export function calculateFullPayroll({
   
   // PAYE is calculated based on annual equivalent income
   const annualGrossEquivalent = getAnnualEquivalent(grossPay, payrollFrequency);
-  const paye = applyPAYE ? calculatePAYE(annualGrossEquivalent) : { monthlyTax: 0, taxBracket: "N/A", effectiveRate: 0 };
+  const paye = applyPAYE ? calculatePAYE(annualGrossEquivalent) : { monthlyTax: 0, annualTax: 0, taxBracket: "N/A", effectiveRate: "0" };
   
   // Prorate the PAYE tax for the pay period
-  const periodTax = applyPAYE ? Math.round(paye.annualTax / frequencyConfig.periodsPerYear) : 0;
+  const periodTax = applyPAYE ? Math.round(safeNum(paye.annualTax) / safeNum(frequencyConfig.periodsPerYear, 12)) : 0;
   
-  // Build deductions array - include template deductions
-  const deductions = [...templateItems.deductions, ...customDeductions];
+  // Build deductions array - combine filtered template + custom (deduplicated)
+  const deductionMap = new Map();
+  
+  // Add filtered template deductions first
+  filteredTemplateDeductions.forEach(d => {
+    if (d.name && safeNum(d.amount) > 0) {
+      deductionMap.set(d.name, d);
+    }
+  });
+  
+  // Add custom deductions (excluding any that match statutory names)
+  customDeductions.forEach(d => {
+    const nameLower = (d.name || '').toLowerCase();
+    if (d.name && safeNum(d.amount) > 0 && 
+        !nameLower.includes('nassit') && !nameLower.includes('paye') && !nameLower.includes('tax')) {
+      deductionMap.set(d.name, d);
+    }
+  });
+  
+  // Add statutory deductions last (these are calculated, not from templates)
   if (applyNASSIT && nassit.employee > 0) {
-    deductions.push({ name: "NASSIT (5%)", amount: nassit.employee, type: "statutory" });
+    deductionMap.set("NASSIT (5%)", { name: "NASSIT (5%)", amount: nassit.employee, type: "statutory" });
   }
   if (applyPAYE && periodTax > 0) {
-    deductions.push({ name: "PAYE Tax", amount: periodTax, type: "statutory" });
+    deductionMap.set("PAYE Tax", { name: "PAYE Tax", amount: periodTax, type: "statutory" });
   }
   
-  const totalStatutoryDeductions = (applyNASSIT ? nassit.employee : 0) + (applyPAYE ? periodTax : 0);
-  const templateDeductionsTotal = templateItems.deductions.reduce((sum, d) => sum + (d.amount || 0), 0);
-  const customDeductionsTotal = customDeductions.reduce((sum, d) => sum + (d.amount || 0), 0);
-  const totalDeductions = totalStatutoryDeductions + templateDeductionsTotal + customDeductionsTotal;
+  const deductions = Array.from(deductionMap.values());
+  
+  // Calculate totals from the final deductions array
+  const totalStatutoryDeductions = safeNum(applyNASSIT ? nassit.employee : 0) + safeNum(applyPAYE ? periodTax : 0);
+  const otherDeductionsTotal = deductions
+    .filter(d => d.type !== 'statutory')
+    .reduce((sum, d) => sum + safeNum(d.amount), 0);
+  const totalDeductions = Math.round(totalStatutoryDeductions + otherDeductionsTotal);
   
   // Calculate net pay
-  const netPay = grossPay - totalDeductions;
+  const netPay = Math.round(grossPay - totalDeductions);
   
   // Calculate employer cost
-  const employerCost = grossPay + nassit.employer;
+  const employerCost = Math.round(grossPay + safeNum(nassit.employer));
   
   return {
     employee_id: employee.id,
@@ -623,43 +676,43 @@ export function calculateFullPayroll({
     period_end: periodEnd,
     payroll_frequency: payrollFrequency,
     
-    base_salary: baseSalary,
-    prorated_salary: proratedSalary,
+    base_salary: Math.round(baseSalary),
+    prorated_salary: Math.round(proratedSalary),
     salary_type: salaryType,
-    hours_worked: regularHours,
-    days_worked: daysWorked,
+    hours_worked: Math.round(regularHours),
+    days_worked: Math.round(daysWorked),
     
     overtime_hours: overtimeHours,
     overtime_rate_multiplier: OVERTIME_MULTIPLIERS.regular,
-    overtime_pay: overtimePay,
+    overtime_pay: Math.round(overtimePay),
     weekend_hours: weekendHours,
-    weekend_pay: weekendPay,
+    weekend_pay: Math.round(weekendPay),
     holiday_hours: holidayHours,
-    holiday_pay: holidayPay,
+    holiday_pay: Math.round(holidayPay),
     
     bonuses,
-    total_bonuses: totalBonuses,
+    total_bonuses: Math.round(totalBonuses),
     
     allowances: allAllowances,
-    total_allowances: totalAllowances,
+    total_allowances: Math.round(totalAllowances),
     
-    gross_pay: Math.round(grossPay),
+    gross_pay: grossPay,
     
     deductions,
     nassit_employee: Math.round(nassit.employee),
     nassit_employer: Math.round(nassit.employer),
     paye_tax: Math.round(periodTax),
     total_statutory_deductions: Math.round(totalStatutoryDeductions),
-    total_deductions: Math.round(totalDeductions),
+    total_deductions: totalDeductions,
     
-    net_pay: Math.round(netPay),
-    employer_cost: Math.round(employerCost),
+    net_pay: netPay,
+    employer_cost: employerCost,
     
     calculation_details: {
       hourly_rate: Math.round(rates.hourlyRate),
       daily_rate: Math.round(rates.dailyRate),
       tax_bracket: paye.taxBracket,
-      effective_tax_rate: parseFloat(paye.effectiveRate),
+      effective_tax_rate: parseFloat(paye.effectiveRate) || 0,
       annual_gross_equivalent: annualGrossEquivalent,
       frequency_multiplier: frequencyConfig.multiplier
     }
