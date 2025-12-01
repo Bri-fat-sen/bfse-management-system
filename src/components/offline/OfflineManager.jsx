@@ -196,6 +196,12 @@ export function OfflineProvider({ children }) {
               await base44.entities.StockLevel.update(action.stockLevelId, action.stockData);
             }
             break;
+          case 'create_customer':
+            await base44.entities.Customer.create(action.data);
+            break;
+          case 'create_expense':
+            await base44.entities.Expense.create(action.data);
+            break;
           case 'clock_in':
           case 'clock_out':
             if (action.type === 'clock_in') {
