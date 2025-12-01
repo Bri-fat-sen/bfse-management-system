@@ -107,7 +107,7 @@ export default function StockLocations({
       queryClient.invalidateQueries({ queryKey: ['stockMovements'] });
       setShowTransfer(false);
       setTransferData({ product_id: "", from_warehouse: "", to_warehouse: "", quantity: 0 });
-      toast({ title: "Stock transferred successfully" });
+      toast.success("Stock transferred successfully");
     },
   });
 
