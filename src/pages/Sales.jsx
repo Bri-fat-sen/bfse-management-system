@@ -486,8 +486,36 @@ export default function Sales() {
           notes: `${saleType} sale to ${customerName || 'Walk-in Customer'} from ${selectedLocationData?.name}`
         });
 
-        // Check and create low stock alert if needed
-        const threshold = product.low_stock_threshold || 10;
+        // Real-time stock alert generation
+        const threshold = product.reorder_point || product.low_stock_threshold || 10;
+        const reorderPoint = product.reorder_point || 10;
+        
+        // Create reorder suggestion if stock falls below reorder point
+        if (newTotalStock <= reorderPoint && newTotalStock >= 0) {
+          const existingSuggestions = await base44.entities.ReorderSuggestion.filter({
+            organisation_id: orgId,
+            product_id: item.product_id,
+            status: 'pending'
+          });
+          
+          if (existingSuggestions.length === 0) {
+            await base44.entities.ReorderSuggestion.create({
+              organisation_id: orgId,
+              product_id: item.product_id,
+              product_name: item.product_name,
+              current_stock: newTotalStock,
+              reorder_point: reorderPoint,
+              suggested_quantity: product.reorder_quantity || 50,
+              priority: newTotalStock === 0 ? 'critical' : newTotalStock <= 5 ? 'high' : 'medium',
+              status: 'pending',
+              supplier_id: product.preferred_supplier_id,
+              supplier_name: product.preferred_supplier_name,
+              estimated_cost: (product.reorder_quantity || 50) * (product.cost_price || 0),
+            });
+          }
+        }
+
+        // Create stock alert
         if (newLocationStock <= threshold && newLocationStock > 0) {
           const existingAlerts = await base44.entities.StockAlert.filter({
             organisation_id: orgId,
@@ -507,6 +535,11 @@ export default function Sales() {
               current_quantity: newLocationStock,
               threshold_quantity: threshold,
               status: 'active'
+            });
+            
+            // Show notification
+            toast.warning("Low Stock Alert", { 
+              description: `${item.product_name} is running low (${newLocationStock} left)` 
             });
           }
         } else if (newLocationStock === 0) {
@@ -528,13 +561,19 @@ export default function Sales() {
               threshold_quantity: threshold,
               status: 'active'
             });
+            
+            // Show critical notification
+            toast.error("Out of Stock", { 
+              description: `${item.product_name} is now out of stock!` 
+            });
           }
         }
       }
     }
     
-    // Invalidate stock levels query
+    // Invalidate queries
     queryClient.invalidateQueries({ queryKey: ['stockLevels'] });
+    queryClient.invalidateQueries({ queryKey: ['reorderSuggestions'] });
 
     // Log activity
     await base44.entities.ActivityLog.create({
