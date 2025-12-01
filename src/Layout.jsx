@@ -194,8 +194,9 @@ export default function Layout({ children, currentPageName }) {
     refetchOnWindowFocus: false,
     enabled: !!currentEmployee?.id, // Only fetch if employee exists
   });
-  // For super_admin users who might not have an employee record yet, check the base44 user role
-  const actualRole = currentEmployee?.role || user?.role || 'read_only';
+  // For platform admin users who might not have an employee record yet, check the base44 user role
+  // Platform admins (user.role === 'admin') get super_admin privileges
+  const actualRole = currentEmployee?.role || (user?.role === 'admin' ? 'super_admin' : 'read_only');
   // Use preview role if super_admin has one set, otherwise use actual role
   const userRole = (actualRole === 'super_admin' && previewRole) ? previewRole : actualRole;
   const orgId = currentEmployee?.organisation_id;
