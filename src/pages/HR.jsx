@@ -265,7 +265,15 @@ export default function HR() {
     e.preventDefault();
     const formData = new FormData(e.target);
     const packageId = formData.get('remuneration_package_id');
-    const selectedPackage = packageId ? remunerationPackages.find(p => p.id === packageId) : null;
+    const selectedPackage = packageId && packageId !== 'null' ? remunerationPackages.find(p => p.id === packageId) : null;
+    
+    // If a package is selected, use its base salary; otherwise use the manual input
+    const baseSalary = selectedPackage 
+      ? selectedPackage.base_salary 
+      : (parseFloat(formData.get('base_salary')) || 0);
+    
+    // If a package is selected, also use its salary type if available
+    const salaryType = selectedPackage?.salary_type || formData.get('salary_type');
     
     const data = {
       first_name: formData.get('first_name'),
@@ -276,10 +284,10 @@ export default function HR() {
       position: formData.get('position'),
       email: formData.get('email'),
       phone: formData.get('phone'),
-      salary_type: formData.get('salary_type'),
-      base_salary: parseFloat(formData.get('base_salary')) || 0,
+      salary_type: salaryType,
+      base_salary: baseSalary,
       status: formData.get('status'),
-      remuneration_package_id: packageId || null,
+      remuneration_package_id: selectedPackage ? packageId : null,
       remuneration_package_name: selectedPackage?.name || null,
     };
 
@@ -989,13 +997,13 @@ export default function HR() {
                     <SelectValue placeholder="Select a package (optional)" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value={null}>No package</SelectItem>
+                    <SelectItem value="null">No package</SelectItem>
                     {remunerationPackages.map(pkg => (
                       <SelectItem key={pkg.id} value={pkg.id}>
                         <div className="flex items-center gap-2">
                           <span>{pkg.name}</span>
                           <Badge variant="secondary" className="text-xs">
-                            SLE {pkg.base_salary?.toLocaleString()}
+                            Le {pkg.base_salary?.toLocaleString()}
                           </Badge>
                         </div>
                       </SelectItem>
