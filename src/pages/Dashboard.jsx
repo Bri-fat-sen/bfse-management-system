@@ -407,7 +407,7 @@ export default function Dashboard() {
                       </div>
                     </div>
                     <div className="text-right">
-                      <p className="font-semibold text-[#1EB053]">SLE {sale.total_amount?.toLocaleString()}</p>
+                      <p className="font-semibold text-[#1EB053]">Le {sale.total_amount?.toLocaleString()}</p>
                       <Badge variant="secondary" className="text-xs">
                         {sale.payment_method}
                       </Badge>

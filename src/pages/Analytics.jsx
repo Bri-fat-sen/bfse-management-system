@@ -913,9 +913,9 @@ export default function Analytics() {
 
             <TabsContent value="sales" className="mt-4 space-y-4">
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                <StatCard title="Total Revenue" value={`SLE ${salesMetrics.totalRevenue.toLocaleString()}`} icon={DollarSign} color="green" />
+                <StatCard title="Total Revenue" value={`Le ${salesMetrics.totalRevenue.toLocaleString()}`} icon={DollarSign} color="green" />
                 <StatCard title="Total Sales" value={salesMetrics.count} icon={ShoppingCart} color="blue" />
-                <StatCard title="Avg Sale" value={`SLE ${salesMetrics.avgSale.toLocaleString()}`} icon={TrendingUp} color="gold" />
+                <StatCard title="Avg Sale" value={`Le ${salesMetrics.avgSale.toLocaleString()}`} icon={TrendingUp} color="gold" />
               </div>
               <AIInsightsPanel 
                 data={filteredSales.slice(0, 50)}
@@ -928,7 +928,7 @@ export default function Analytics() {
 
             <TabsContent value="expenses" className="mt-4 space-y-4">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <StatCard title="Total Expenses" value={`SLE ${expenseMetrics.totalExpenses.toLocaleString()}`} icon={DollarSign} color="red" />
+                <StatCard title="Total Expenses" value={`Le ${expenseMetrics.totalExpenses.toLocaleString()}`} icon={DollarSign} color="red" />
                 <StatCard title="Expense Count" value={expenseMetrics.count} icon={FileText} color="blue" />
               </div>
               <AIInsightsPanel 
@@ -942,9 +942,9 @@ export default function Analytics() {
 
             <TabsContent value="transport" className="mt-4 space-y-4">
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                <StatCard title="Trip Revenue" value={`SLE ${transportMetrics.totalRevenue.toLocaleString()}`} icon={DollarSign} color="green" />
+                <StatCard title="Trip Revenue" value={`Le ${transportMetrics.totalRevenue.toLocaleString()}`} icon={DollarSign} color="green" />
                 <StatCard title="Total Trips" value={transportMetrics.count} icon={Truck} color="blue" />
-                <StatCard title="Fuel Costs" value={`SLE ${transportMetrics.totalFuel.toLocaleString()}`} icon={TrendingDown} color="red" />
+                <StatCard title="Fuel Costs" value={`Le ${transportMetrics.totalFuel.toLocaleString()}`} icon={TrendingDown} color="red" />
               </div>
               {showCharts && <TransportCharts trips={filteredTrips} />}
             </TabsContent>
