@@ -489,12 +489,12 @@ export default function PayslipGenerator({ payroll, employee, organisation }) {
             .summary-row.net-pay {
               margin-top: 20px;
               padding: 24px;
-              background: linear-gradient(135deg, var(--success) 0%, #059669 100%);
+              background: linear-gradient(135deg, var(--success) 0%, var(--success-dark) 100%);
               border-radius: 16px;
               color: white;
               font-size: 24px;
               font-weight: 800;
-              box-shadow: 0 8px 24px rgba(16, 185, 129, 0.3);
+              box-shadow: 0 8px 24px rgba(30, 176, 83, 0.3);
             }
             
             .summary-row.net-pay .label {
