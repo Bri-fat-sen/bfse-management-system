@@ -19,17 +19,10 @@ const mobileNavItems = [
 
 export default function MobileNav({ currentPageName }) {
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-50 block lg:hidden">
-      {/* Glass effect background */}
-      <div className="absolute inset-0 bg-white/95 backdrop-blur-xl border-t border-gray-200 shadow-[0_-2px_10px_rgba(0,0,0,0.06)]" />
-      
-      {/* Nav content */}
+    <nav className="fixed bottom-0 inset-x-0 z-50 lg:hidden bg-white border-t border-gray-200">
       <div 
-        className="relative flex items-center justify-around px-1"
-        style={{ 
-          paddingTop: '0.5rem',
-          paddingBottom: 'max(0.5rem, env(safe-area-inset-bottom, 0.5rem))' 
-        }}
+        className="flex items-stretch justify-between w-full"
+        style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}
       >
         {mobileNavItems.map((item) => {
           const isActive = currentPageName === item.page;
@@ -37,36 +30,15 @@ export default function MobileNav({ currentPageName }) {
             <Link
               key={item.page}
               to={createPageUrl(item.page)}
-              className="relative flex flex-col items-center flex-1 py-1 group"
+              className="flex-1 flex flex-col items-center justify-center py-2 min-h-[56px] relative"
             >
-              {/* Active indicator pill at top */}
               {isActive && (
-                <div className="absolute -top-2 left-1/2 -translate-x-1/2 w-8 h-1 rounded-full bg-gradient-to-r from-[#1EB053] to-[#0072C6]" />
+                <div className="absolute top-0 inset-x-2 h-0.5 bg-[#1EB053] rounded-full" />
               )}
-              
-              {/* Icon container */}
-              <div 
-                className={`p-2 rounded-xl transition-all duration-200 ${
-                  isActive 
-                    ? 'bg-[#1EB053]/10' 
-                    : 'active:bg-gray-100'
-                }`}
-              >
-                <item.icon 
-                  className={`w-5 h-5 transition-all duration-200 ${
-                    isActive 
-                      ? "text-[#1EB053]" 
-                      : "text-gray-400"
-                  }`} 
-                />
-              </div>
-              
-              {/* Label */}
-              <span 
-                className={`text-[10px] font-medium transition-colors duration-200 ${
-                  isActive ? 'text-[#1EB053]' : 'text-gray-400'
-                }`}
-              >
+              <item.icon 
+                className={`w-5 h-5 ${isActive ? "text-[#1EB053]" : "text-gray-400"}`} 
+              />
+              <span className={`text-[10px] mt-0.5 ${isActive ? 'text-[#1EB053] font-semibold' : 'text-gray-400'}`}>
                 {item.label}
               </span>
             </Link>
