@@ -1,8 +1,8 @@
-import React, { useState, useEffect, createContext, useContext } from "react";
-import { Wifi, WifiOff, Upload, Check, AlertCircle } from "lucide-react";
+import React, { useState, useEffect, createContext, useContext, useCallback } from "react";
+import { Wifi, WifiOff, Upload, Check, AlertCircle, Database, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { useToast } from "@/components/ui/use-toast";
+import { toast } from "sonner";
 import {
   Dialog,
   DialogContent,
@@ -13,23 +13,36 @@ import {
 const OfflineContext = createContext();
 
 const OFFLINE_STORAGE_KEY = 'bfse_offline_queue';
+const OFFLINE_CACHE_KEY = 'bfse_offline_cache';
+const CACHE_EXPIRY_HOURS = 24;
 
 export function useOffline() {
   return useContext(OfflineContext);
 }
 
 export function OfflineProvider({ children }) {
-  const { toast } = useToast();
   const [isOnline, setIsOnline] = useState(navigator.onLine);
   const [pendingActions, setPendingActions] = useState([]);
+  const [cachedData, setCachedData] = useState({});
   const [showSyncDialog, setShowSyncDialog] = useState(false);
   const [isSyncing, setIsSyncing] = useState(false);
+  const [lastSyncTime, setLastSyncTime] = useState(null);
 
-  // Load pending actions from localStorage
+  // Load pending actions and cached data from localStorage
   useEffect(() => {
-    const stored = localStorage.getItem(OFFLINE_STORAGE_KEY);
-    if (stored) {
-      setPendingActions(JSON.parse(stored));
+    const storedQueue = localStorage.getItem(OFFLINE_STORAGE_KEY);
+    if (storedQueue) {
+      setPendingActions(JSON.parse(storedQueue));
+    }
+    
+    const storedCache = localStorage.getItem(OFFLINE_CACHE_KEY);
+    if (storedCache) {
+      const parsed = JSON.parse(storedCache);
+      // Check if cache is expired
+      if (parsed.timestamp && (Date.now() - parsed.timestamp) < CACHE_EXPIRY_HOURS * 60 * 60 * 1000) {
+        setCachedData(parsed.data || {});
+        setLastSyncTime(parsed.timestamp);
+      }
     }
   }, []);
 
@@ -38,12 +51,70 @@ export function OfflineProvider({ children }) {
     localStorage.setItem(OFFLINE_STORAGE_KEY, JSON.stringify(pendingActions));
   }, [pendingActions]);
 
+  // Save cached data to localStorage
+  const saveCacheToStorage = useCallback((data) => {
+    const cacheObj = {
+      timestamp: Date.now(),
+      data: data
+    };
+    localStorage.setItem(OFFLINE_CACHE_KEY, JSON.stringify(cacheObj));
+    setLastSyncTime(cacheObj.timestamp);
+  }, []);
+
+  // Cache data for offline access
+  const cacheData = useCallback((key, data) => {
+    setCachedData(prev => {
+      const newCache = { ...prev, [key]: data };
+      saveCacheToStorage(newCache);
+      return newCache;
+    });
+  }, [saveCacheToStorage]);
+
+  // Get cached data
+  const getCachedData = useCallback((key) => {
+    return cachedData[key] || null;
+  }, [cachedData]);
+
+  // Pre-cache essential data for offline use
+  const preCacheData = useCallback(async (orgId) => {
+    if (!isOnline || !orgId) return;
+    
+    try {
+      const { base44 } = await import("@/api/base44Client");
+      
+      const [products, customers, vehicles, warehouses, employees] = await Promise.all([
+        base44.entities.Product.filter({ organisation_id: orgId, is_active: true }),
+        base44.entities.Customer.filter({ organisation_id: orgId, status: 'active' }),
+        base44.entities.Vehicle.filter({ organisation_id: orgId, status: 'available' }),
+        base44.entities.Warehouse.filter({ organisation_id: orgId, is_active: true }),
+        base44.entities.Employee.filter({ organisation_id: orgId, status: 'active' })
+      ]);
+      
+      const newCache = {
+        products,
+        customers,
+        vehicles,
+        warehouses,
+        employees,
+        orgId
+      };
+      
+      setCachedData(newCache);
+      saveCacheToStorage(newCache);
+      
+      toast.success("Offline data synced", {
+        description: `${products.length} products, ${customers.length} customers cached`
+      });
+    } catch (error) {
+      console.error('Failed to pre-cache data:', error);
+    }
+  }, [isOnline, saveCacheToStorage]);
+
   // Listen for online/offline events
   useEffect(() => {
     const handleOnline = () => {
       setIsOnline(true);
-      toast({
-        title: "Back Online",
+      toast.success("Back Online", {
         description: pendingActions.length > 0 
           ? `${pendingActions.length} actions ready to sync` 
           : "Connected to the internet",
@@ -55,10 +126,8 @@ export function OfflineProvider({ children }) {
 
     const handleOffline = () => {
       setIsOnline(false);
-      toast({
-        title: "You're Offline",
-        description: "Your actions will be saved and synced when you're back online",
-        variant: "destructive"
+      toast.warning("You're Offline", {
+        description: "Your actions will be saved and synced when you're back online"
       });
     };
 
@@ -72,19 +141,23 @@ export function OfflineProvider({ children }) {
   }, [pendingActions.length]);
 
   // Queue an action for later sync
-  const queueAction = (action) => {
+  const queueAction = useCallback((action) => {
     const newAction = {
       id: Date.now().toString(),
       timestamp: new Date().toISOString(),
       ...action
     };
     setPendingActions(prev => [...prev, newAction]);
-    toast({
-      title: "Saved Offline",
+    toast.info("Saved Offline", {
       description: "This will sync when you're back online",
     });
     return newAction.id;
-  };
+  }, []);
+
+  // Remove a pending action
+  const removeAction = useCallback((actionId) => {
+    setPendingActions(prev => prev.filter(a => a.id !== actionId));
+  }, []);
 
   // Sync all pending actions
   const syncPendingActions = async () => {
@@ -153,19 +226,39 @@ export function OfflineProvider({ children }) {
     setIsSyncing(false);
     setShowSyncDialog(false);
 
-    toast({
-      title: "Sync Complete",
-      description: `${successCount} of ${results.length} actions synced successfully`,
-      variant: failedIds.length > 0 ? "destructive" : "default"
-    });
+    if (failedIds.length > 0) {
+      toast.error("Sync Incomplete", {
+        description: `${successCount} of ${results.length} actions synced. ${failedIds.length} failed.`
+      });
+    } else {
+      toast.success("Sync Complete", {
+        description: `All ${successCount} actions synced successfully`
+      });
+    }
   };
+
+  // Clear all cached data
+  const clearCache = useCallback(() => {
+    setCachedData({});
+    localStorage.removeItem(OFFLINE_CACHE_KEY);
+    setLastSyncTime(null);
+    toast.info("Cache cleared");
+  }, []);
 
   return (
     <OfflineContext.Provider value={{ 
       isOnline, 
       pendingActions, 
-      queueAction, 
-      syncPendingActions 
+      queueAction,
+      removeAction,
+      syncPendingActions,
+      cacheData,
+      getCachedData,
+      cachedData,
+      preCacheData,
+      clearCache,
+      lastSyncTime,
+      isSyncing
     }}>
       {children}
 
