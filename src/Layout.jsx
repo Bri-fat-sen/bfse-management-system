@@ -164,9 +164,30 @@ export default function Layout({ children, currentPageName }) {
   });
 
   useEffect(() => {
-    const createAdminEmployee = async () => {
-      if (user?.role === 'admin' && employee && employee.length === 0 && orgs && orgs.length > 0) {
-        try {
+    const linkOrCreateEmployee = async () => {
+      // Only run for users who don't have an employee record linked to their email
+      if (!user?.email || !employee || employee.length > 0) return;
+      
+      try {
+        // First, check if there's an existing employee record with matching email (created by admin)
+        // This handles the case where admin created employee before user accepted invite
+        const existingByEmail = await base44.entities.Employee.filter({ email: user.email });
+        
+        if (existingByEmail.length > 0) {
+          // Link existing employee to this user by setting user_email
+          const existingEmployee = existingByEmail[0];
+          if (!existingEmployee.user_email) {
+            await base44.entities.Employee.update(existingEmployee.id, {
+              user_email: user.email,
+              full_name: existingEmployee.full_name || user.full_name,
+            });
+            refetchEmployee();
+          }
+          return;
+        }
+        
+        // For admin users only - auto-create if no existing employee found
+        if (user?.role === 'admin' && orgs && orgs.length > 0) {
           const org = orgs[0];
           const existingEmployees = await base44.entities.Employee.filter({ organisation_id: org.id });
           const employeeCode = `EMP${String(existingEmployees.length + 1).padStart(4, '0')}`;
@@ -175,6 +196,7 @@ export default function Layout({ children, currentPageName }) {
             organisation_id: org.id,
             employee_code: employeeCode,
             user_email: user.email,
+            email: user.email,
             first_name: user.full_name?.split(' ')[0] || 'Admin',
             last_name: user.full_name?.split(' ').slice(1).join(' ') || 'User',
             full_name: user.full_name || 'Admin User',
@@ -186,13 +208,13 @@ export default function Layout({ children, currentPageName }) {
           });
           
           refetchEmployee();
-        } catch (err) {
-          console.error('Failed to auto-create employee record:', err);
         }
+      } catch (err) {
+        console.error('Failed to link/create employee record:', err);
       }
     };
     
-    createAdminEmployee();
+    linkOrCreateEmployee();
   }, [user, employee, orgs, refetchEmployee]);
 
   const currentEmployee = employee?.[0];
