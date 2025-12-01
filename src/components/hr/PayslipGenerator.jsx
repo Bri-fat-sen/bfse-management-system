@@ -625,6 +625,33 @@ export default function PayslipGenerator({ payroll, employee, organisation }) {
               </div>
             </div>
             
+            ${options.showAttendance ? `
+            <div class="attendance-section">
+              <div class="attendance-grid">
+                <div class="attendance-item">
+                  <div class="value">${daysWorked}</div>
+                  <div class="label">Days Worked</div>
+                </div>
+                <div class="attendance-item">
+                  <div class="value">${hoursWorked}</div>
+                  <div class="label">Regular Hours</div>
+                </div>
+                <div class="attendance-item">
+                  <div class="value">${overtimeHours}</div>
+                  <div class="label">Overtime Hours</div>
+                </div>
+                <div class="attendance-item">
+                  <div class="value">${weekendHours + holidayHours}</div>
+                  <div class="label">Special Hours</div>
+                </div>
+                <div class="attendance-item">
+                  <div class="value">Le ${hourlyRate.toLocaleString()}</div>
+                  <div class="label">Hourly Rate</div>
+                </div>
+              </div>
+            </div>
+            ` : ''}
+            
             <div class="pay-breakdown">
               <div class="breakdown-section earnings">
                 <h3>💰 Earnings</h3>
