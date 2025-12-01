@@ -66,6 +66,7 @@ import MobileStockCheck from "@/components/mobile/MobileStockCheck";
 import MobileDeliveryUpdate from "@/components/mobile/MobileDeliveryUpdate";
 import PushNotificationManager from "@/components/notifications/PushNotificationManager";
 import RolePreviewSwitcher, { RolePreviewBanner } from "@/components/admin/RolePreviewSwitcher";
+import OfflineSyncButton from "@/components/offline/OfflineSyncButton";
 
 const menuSections = [
   {
@@ -568,7 +569,7 @@ export default function Layout({ children, currentPageName }) {
               {darkMode ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
             </Button>
 
-            <OfflineStatus />
+            <OfflineSyncButton orgId={orgId} />
 
             <NotificationCenter orgId={orgId} currentEmployee={currentEmployee} />
 
