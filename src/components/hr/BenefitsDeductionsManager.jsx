@@ -7,6 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Switch } from "@/components/ui/switch";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Dialog,
   DialogContent,
@@ -30,8 +31,9 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { toast } from "sonner";
-import { Plus, Pencil, Trash2, Gift, Minus, Percent, DollarSign } from "lucide-react";
-import { formatSLE } from "./PayrollCalculator";
+import { Plus, Pencil, Trash2, Gift, Minus, Percent, DollarSign, Copy, Search } from "lucide-react";
+import { formatSLE, COMMON_ALLOWANCES, COMMON_DEDUCTIONS } from "./PayrollCalculator";
+import { safeNumber } from "@/components/utils/calculations";
 
 const CATEGORIES = [
   { value: 'statutory', label: 'Statutory' },
@@ -105,6 +107,7 @@ export default function BenefitsDeductionsManager({ orgId, employees = [] }) {
     is_active: true
   });
   const [assignmentMode, setAssignmentMode] = useState('roles'); // 'roles' or 'employees'
+  const [searchTerm, setSearchTerm] = useState('');
 
   const { data: templates = [], isLoading } = useQuery({
     queryKey: ['benefitDeductionTemplates', orgId],
@@ -225,6 +228,50 @@ export default function BenefitsDeductionsManager({ orgId, employees = [] }) {
 
   const benefits = templates.filter(t => t.type === 'benefit');
   const deductions = templates.filter(t => t.type === 'deduction');
+  
+  // Duplicate template
+  const duplicateTemplate = (template) => {
+    setFormData({
+      name: `${template.name} (Copy)`,
+      type: template.type,
+      category: template.category,
+      calculation_type: template.calculation_type,
+      amount: template.amount,
+      percentage_of: template.percentage_of || 'base_salary',
+      is_taxable: template.is_taxable ?? true,
+      applies_to_roles: template.applies_to_roles || [],
+      applies_to_employees: [],
+      description: template.description || '',
+      is_active: true
+    });
+    setAssignmentMode('roles');
+    setShowDialog(true);
+  };
+  
+  // Quick add from common templates
+  const quickAddTemplate = (preset, type) => {
+    setFormData({
+      name: preset.name,
+      type: type,
+      category: type === 'benefit' ? 'allowance' : 'other',
+      calculation_type: 'fixed',
+      amount: 0,
+      percentage_of: 'base_salary',
+      is_taxable: true,
+      applies_to_roles: [],
+      applies_to_employees: [],
+      description: preset.description || '',
+      is_active: true
+    });
+    setShowDialog(true);
+  };
+  
+  // Filter employees by search
+  const filteredEmployees = employees.filter(e => 
+    e.status === 'active' && 
+    (e.full_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+     e.role?.toLowerCase().includes(searchTerm.toLowerCase()))
+  );
 
   return (
     <div className="space-y-6">
@@ -243,10 +290,22 @@ export default function BenefitsDeductionsManager({ orgId, employees = [] }) {
         {/* Benefits */}
         <Card>
           <CardHeader className="pb-3">
-            <CardTitle className="flex items-center gap-2 text-green-600">
-              <Gift className="w-5 h-5" />
-              Benefits & Allowances ({benefits.length})
-            </CardTitle>
+            <div className="flex items-center justify-between">
+              <CardTitle className="flex items-center gap-2 text-green-600">
+                <Gift className="w-5 h-5" />
+                Benefits & Allowances ({benefits.length})
+              </CardTitle>
+              <Select onValueChange={(v) => quickAddTemplate(COMMON_ALLOWANCES.find(a => a.name === v), 'benefit')}>
+                <SelectTrigger className="w-36 h-8 text-xs">
+                  <SelectValue placeholder="Quick add..." />
+                </SelectTrigger>
+                <SelectContent>
+                  {COMMON_ALLOWANCES.map(a => (
+                    <SelectItem key={a.name} value={a.name} className="text-xs">{a.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
           </CardHeader>
           <CardContent>
             <Table>
@@ -269,17 +328,17 @@ export default function BenefitsDeductionsManager({ orgId, employees = [] }) {
                     </TableCell>
                     <TableCell>
                       {template.calculation_type === 'percentage' ? (
-                        <span className="flex items-center gap-1">
+                        <span className="flex items-center gap-1 text-blue-600 font-medium">
                           <Percent className="w-3 h-3" />
                           {template.amount}%
                         </span>
                       ) : (
-                        formatSLE(template.amount)
+                        <span className="font-medium">{formatSLE(template.amount)}</span>
                       )}
                     </TableCell>
                     <TableCell>
                       <div className="space-y-1">
-                        <Badge variant={template.is_active ? 'default' : 'secondary'}>
+                        <Badge variant={template.is_active ? 'default' : 'secondary'} className={template.is_active ? 'bg-green-500' : ''}>
                           {template.is_active ? 'Active' : 'Inactive'}
                         </Badge>
                         <p className="text-xs text-gray-500">{getAppliesTo(template)}</p>
@@ -287,10 +346,13 @@ export default function BenefitsDeductionsManager({ orgId, employees = [] }) {
                     </TableCell>
                     <TableCell>
                       <div className="flex gap-1">
-                        <Button size="icon" variant="ghost" onClick={() => handleEdit(template)}>
+                        <Button size="icon" variant="ghost" onClick={() => handleEdit(template)} title="Edit">
                           <Pencil className="w-4 h-4" />
                         </Button>
-                        <Button size="icon" variant="ghost" onClick={() => deleteMutation.mutate(template.id)}>
+                        <Button size="icon" variant="ghost" onClick={() => duplicateTemplate(template)} title="Duplicate">
+                          <Copy className="w-4 h-4" />
+                        </Button>
+                        <Button size="icon" variant="ghost" onClick={() => deleteMutation.mutate(template.id)} title="Delete">
                           <Trash2 className="w-4 h-4 text-red-500" />
                         </Button>
                       </div>
@@ -312,10 +374,22 @@ export default function BenefitsDeductionsManager({ orgId, employees = [] }) {
         {/* Deductions */}
         <Card>
           <CardHeader className="pb-3">
-            <CardTitle className="flex items-center gap-2 text-red-600">
-              <Minus className="w-5 h-5" />
-              Deductions ({deductions.length})
-            </CardTitle>
+            <div className="flex items-center justify-between">
+              <CardTitle className="flex items-center gap-2 text-red-600">
+                <Minus className="w-5 h-5" />
+                Deductions ({deductions.length})
+              </CardTitle>
+              <Select onValueChange={(v) => quickAddTemplate(COMMON_DEDUCTIONS.find(d => d.name === v), 'deduction')}>
+                <SelectTrigger className="w-36 h-8 text-xs">
+                  <SelectValue placeholder="Quick add..." />
+                </SelectTrigger>
+                <SelectContent>
+                  {COMMON_DEDUCTIONS.filter(d => d.type !== 'statutory').map(d => (
+                    <SelectItem key={d.name} value={d.name} className="text-xs">{d.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
           </CardHeader>
           <CardContent>
             <Table>
@@ -338,17 +412,17 @@ export default function BenefitsDeductionsManager({ orgId, employees = [] }) {
                     </TableCell>
                     <TableCell>
                       {template.calculation_type === 'percentage' ? (
-                        <span className="flex items-center gap-1">
+                        <span className="flex items-center gap-1 text-blue-600 font-medium">
                           <Percent className="w-3 h-3" />
                           {template.amount}%
                         </span>
                       ) : (
-                        formatSLE(template.amount)
+                        <span className="font-medium">{formatSLE(template.amount)}</span>
                       )}
                     </TableCell>
                     <TableCell>
                       <div className="space-y-1">
-                        <Badge variant={template.is_active ? 'default' : 'secondary'}>
+                        <Badge variant={template.is_active ? 'default' : 'secondary'} className={template.is_active ? 'bg-red-500' : ''}>
                           {template.is_active ? 'Active' : 'Inactive'}
                         </Badge>
                         <p className="text-xs text-gray-500">{getAppliesTo(template)}</p>
@@ -356,10 +430,13 @@ export default function BenefitsDeductionsManager({ orgId, employees = [] }) {
                     </TableCell>
                     <TableCell>
                       <div className="flex gap-1">
-                        <Button size="icon" variant="ghost" onClick={() => handleEdit(template)}>
+                        <Button size="icon" variant="ghost" onClick={() => handleEdit(template)} title="Edit">
                           <Pencil className="w-4 h-4" />
                         </Button>
-                        <Button size="icon" variant="ghost" onClick={() => deleteMutation.mutate(template.id)}>
+                        <Button size="icon" variant="ghost" onClick={() => duplicateTemplate(template)} title="Duplicate">
+                          <Copy className="w-4 h-4" />
+                        </Button>
+                        <Button size="icon" variant="ghost" onClick={() => deleteMutation.mutate(template.id)} title="Delete">
                           <Trash2 className="w-4 h-4 text-red-500" />
                         </Button>
                       </div>
@@ -444,8 +521,10 @@ export default function BenefitsDeductionsManager({ orgId, employees = [] }) {
                 <Input
                   type="number"
                   step={formData.calculation_type === 'percentage' ? '0.1' : '1'}
-                  value={formData.amount}
-                  onChange={(e) => setFormData({ ...formData, amount: parseFloat(e.target.value) || 0 })}
+                  value={formData.amount || ""}
+                  onChange={(e) => setFormData({ ...formData, amount: safeNumber(e.target.value) })}
+                  onWheel={(e) => e.target.blur()}
+                  placeholder="0"
                 />
               </div>
             </div>
@@ -504,33 +583,49 @@ export default function BenefitsDeductionsManager({ orgId, employees = [] }) {
                     <Badge
                       key={role.value}
                       variant={formData.applies_to_roles.includes(role.value) ? 'default' : 'outline'}
-                      className="cursor-pointer"
+                      className={`cursor-pointer ${formData.applies_to_roles.includes(role.value) ? 'bg-[#1EB053]' : ''}`}
                       onClick={() => toggleRole(role.value)}
                     >
                       {role.label}
                     </Badge>
                   ))}
                 </div>
+                {formData.applies_to_roles.length > 0 && (
+                  <p className="text-xs text-[#1EB053] mt-2">{formData.applies_to_roles.length} role(s) selected</p>
+                )}
               </div>
             ) : (
               <div>
                 <Label className="mb-2 block">Select Employees</Label>
+                <div className="relative mb-2">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                  <Input
+                    placeholder="Search employees..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="pl-9"
+                  />
+                </div>
                 <div className="max-h-40 overflow-y-auto border rounded-lg p-2 space-y-1">
-                  {employees.filter(e => e.status === 'active').map(emp => (
+                  {filteredEmployees.map(emp => (
                     <div 
                       key={emp.id}
-                      className={`flex items-center justify-between p-2 rounded cursor-pointer ${
+                      className={`flex items-center gap-2 p-2 rounded cursor-pointer ${
                         formData.applies_to_employees.includes(emp.id) ? 'bg-[#1EB053]/10' : 'hover:bg-gray-50'
                       }`}
                       onClick={() => toggleEmployee(emp.id)}
                     >
-                      <span className="text-sm">{emp.full_name}</span>
+                      <Checkbox checked={formData.applies_to_employees.includes(emp.id)} />
+                      <span className="text-sm flex-1">{emp.full_name}</span>
                       <Badge variant="outline" className="text-xs">{emp.role?.replace(/_/g, ' ')}</Badge>
                     </div>
                   ))}
+                  {filteredEmployees.length === 0 && (
+                    <p className="text-center text-gray-500 py-4 text-sm">No employees found</p>
+                  )}
                 </div>
                 {formData.applies_to_employees.length > 0 && (
-                  <p className="text-xs text-gray-500 mt-1">
+                  <p className="text-xs text-[#1EB053] mt-2">
                     {formData.applies_to_employees.length} employee(s) selected
                   </p>
                 )}
