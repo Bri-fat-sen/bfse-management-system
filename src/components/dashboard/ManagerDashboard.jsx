@@ -31,8 +31,17 @@ import StatCard from "@/components/ui/StatCard";
 import QuickActions from "@/components/dashboard/QuickActions";
 import RecentActivity from "@/components/dashboard/RecentActivity";
 
-export default function ManagerDashboard({ currentEmployee, orgId, user, organisation }) {
+export default function ManagerDashboard({ currentEmployee, orgId: propOrgId, user, organisation: propOrganisation }) {
+  const orgId = propOrgId || currentEmployee?.organisation_id;
   const today = format(new Date(), 'yyyy-MM-dd');
+
+  // Fetch organisation if not provided
+  const { data: fetchedOrg } = useQuery({
+    queryKey: ['organisation', orgId],
+    queryFn: () => base44.entities.Organisation.filter({ id: orgId }),
+    enabled: !!orgId && !propOrganisation,
+  });
+  const organisation = propOrganisation || fetchedOrg?.[0];
 
   const { data: employees = [] } = useQuery({
     queryKey: ['employees', orgId],
