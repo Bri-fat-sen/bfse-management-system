@@ -182,12 +182,136 @@ export default function PayslipGenerator({ payroll, employee, organisation }) {
               font-size: 20px;
               font-weight: 800;
               box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+              overflow: hidden;
+            }
+            
+            .company-logo img {
+              width: 100%;
+              height: 100%;
+              object-fit: contain;
+              padding: 4px;
             }
             
             .company-logo span {
               background: linear-gradient(135deg, var(--success), var(--accent));
               -webkit-background-clip: text;
               -webkit-text-fill-color: transparent;
+            }
+            
+            /* Attendance Info */
+            .attendance-section {
+              background: var(--gray-50);
+              padding: 16px 40px;
+              border-bottom: 1px solid var(--gray-200);
+            }
+            
+            .attendance-grid {
+              display: grid;
+              grid-template-columns: repeat(5, 1fr);
+              gap: 16px;
+            }
+            
+            .attendance-item {
+              text-align: center;
+            }
+            
+            .attendance-item .value {
+              font-size: 18px;
+              font-weight: 700;
+              color: var(--gray-800);
+            }
+            
+            .attendance-item .label {
+              font-size: 11px;
+              color: var(--gray-500);
+              text-transform: uppercase;
+              letter-spacing: 0.5px;
+            }
+            
+            /* Rate Cards */
+            .rate-cards {
+              display: grid;
+              grid-template-columns: repeat(3, 1fr);
+              gap: 12px;
+              margin-top: 12px;
+            }
+            
+            .rate-card {
+              background: white;
+              padding: 12px;
+              border-radius: 8px;
+              border: 1px solid var(--gray-200);
+              text-align: center;
+            }
+            
+            .rate-card .value {
+              font-size: 14px;
+              font-weight: 600;
+              color: var(--success);
+            }
+            
+            .rate-card .label {
+              font-size: 10px;
+              color: var(--gray-500);
+              margin-top: 2px;
+            }
+            
+            /* Tax Breakdown */
+            .tax-breakdown {
+              background: #fef3c7;
+              border: 1px solid #fcd34d;
+              border-radius: 8px;
+              padding: 12px 16px;
+              margin-top: 12px;
+            }
+            
+            .tax-breakdown h4 {
+              font-size: 11px;
+              font-weight: 600;
+              color: #92400e;
+              margin-bottom: 8px;
+              text-transform: uppercase;
+              letter-spacing: 0.5px;
+            }
+            
+            .tax-row {
+              display: flex;
+              justify-content: space-between;
+              font-size: 12px;
+              padding: 4px 0;
+            }
+            
+            .tax-row .label { color: #a16207; }
+            .tax-row .value { font-weight: 600; color: #92400e; }
+            
+            /* Employer Cost Section */
+            .employer-cost-section {
+              background: var(--gray-100);
+              padding: 16px 40px;
+              border-top: 1px dashed var(--gray-300);
+            }
+            
+            .employer-cost-grid {
+              display: grid;
+              grid-template-columns: repeat(3, 1fr);
+              gap: 16px;
+              text-align: center;
+            }
+            
+            .employer-cost-item .value {
+              font-size: 16px;
+              font-weight: 700;
+              color: var(--gray-700);
+            }
+            
+            .employer-cost-item .label {
+              font-size: 11px;
+              color: var(--gray-500);
+            }
+            
+            .employer-cost-item.total .value {
+              color: var(--primary);
+              font-size: 18px;
             }
             
             .company-details h1 {
