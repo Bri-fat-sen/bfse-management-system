@@ -54,7 +54,6 @@ export default function StockAlerts({
   products = [],
   currentEmployee
 }) {
-  const { toast } = useToast();
   const queryClient = useQueryClient();
 
   const acknowledgeMutation = useMutation({
@@ -65,7 +64,7 @@ export default function StockAlerts({
     }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['stockAlerts'] });
-      toast({ title: "Alert updated" });
+      toast.success("Alert updated");
     },
   });
 
