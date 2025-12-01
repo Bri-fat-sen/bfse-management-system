@@ -82,7 +82,7 @@ export default function ChatWindow({
   });
 
   const handleSendMessage = async () => {
-    if (!messageText.trim() && attachments.length === 0) return;
+    if (!messageText.trim() && attachments.length === 0 && !currentAttachment) return;
 
     const messageData = {
       organisation_id: orgId,
@@ -91,7 +91,7 @@ export default function ChatWindow({
       sender_name: currentEmployee?.full_name,
       sender_photo: currentEmployee?.profile_photo,
       content: messageText,
-      message_type: attachments.length > 0 ? 'file' : 'text',
+      message_type: currentAttachment ? currentAttachment.type : (attachments.length > 0 ? 'file' : 'text'),
       file_url: attachments[0]?.url,
       file_name: attachments[0]?.name,
       reply_to_id: replyTo?.id,
@@ -99,14 +99,29 @@ export default function ChatWindow({
       reply_to_sender: replyTo?.sender_name,
     };
 
+    // Add attachment data
+    if (currentAttachment) {
+      if (currentAttachment.type === 'file' || currentAttachment.type === 'image') {
+        messageData.file_url = currentAttachment.url;
+        messageData.file_name = currentAttachment.name;
+      }
+      messageData.attachment = currentAttachment;
+    }
+
     sendMessageMutation.mutate(messageData);
 
     // Update room's last message
+    const lastMsgText = currentAttachment 
+      ? (currentAttachment.type === 'product' ? `📦 ${currentAttachment.productName}` : `📎 ${currentAttachment.name}`)
+      : (messageText || `Sent ${attachments.length} file(s)`);
+
     base44.entities.ChatRoom.update(room.id, {
-      last_message: messageText || `Sent ${attachments.length} file(s)`,
+      last_message: lastMsgText,
       last_message_time: new Date().toISOString(),
       last_message_sender: currentEmployee?.full_name,
     });
+
+    setCurrentAttachment(null);
   };
 
   const handleFileUpload = async (e) => {
