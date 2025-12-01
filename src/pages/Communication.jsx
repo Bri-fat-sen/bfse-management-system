@@ -67,23 +67,6 @@ export default function Communication() {
 
   const currentEmployee = employee?.[0];
   const orgId = currentEmployee?.organisation_id;
-
-  if (!user) {
-    return <LoadingSpinner message="Loading..." fullScreen />;
-  }
-
-  if (!currentEmployee || !orgId) {
-    return (
-      <div className="flex flex-col items-center justify-center min-h-[60vh] text-center p-4">
-        <MessageSquare className="w-16 h-16 text-gray-300 mb-4" />
-        <h2 className="text-xl font-semibold text-gray-600">No Employee Record</h2>
-        <p className="text-gray-500 mt-2 max-w-md">
-          Your account is not linked to an employee record yet. Please contact your administrator.
-        </p>
-      </div>
-    );
-  }
-
   const canPost = ['super_admin', 'org_admin', 'hr_admin'].includes(currentEmployee?.role);
 
   const { data: chatRooms = [] } = useQuery({
