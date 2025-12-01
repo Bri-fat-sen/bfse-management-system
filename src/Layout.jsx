@@ -64,7 +64,7 @@ import MobileQuickActions from "@/components/mobile/MobileQuickActions";
 import MobileQuickSale from "@/components/mobile/MobileQuickSale";
 import MobileStockCheck from "@/components/mobile/MobileStockCheck";
 import MobileDeliveryUpdate from "@/components/mobile/MobileDeliveryUpdate";
-import PushNotificationManager from "@/components/notifications/PushNotificationManager";
+
 import RolePreviewSwitcher, { RolePreviewBanner } from "@/components/admin/RolePreviewSwitcher";
 import OfflineSyncButton from "@/components/offline/OfflineSyncButton";
 import { ToastProvider } from "@/components/ui/Toast";
