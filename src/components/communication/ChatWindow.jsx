@@ -324,21 +324,17 @@ export default function ChatWindow({
                               ? 'bg-gradient-to-r from-[#1EB053] to-[#0072C6] text-white rounded-br-sm'
                               : 'bg-gray-100 text-gray-900 rounded-bl-sm'
                           }`}>
-                            {msg.message_type === 'file' && msg.file_url && (
-                              <div className={`flex items-center gap-2 mb-1 p-2 rounded ${
-                                isOwn ? 'bg-white/20' : 'bg-white'
-                              }`}>
-                                {msg.file_url.match(/\.(jpg|jpeg|png|gif|webp)$/i) ? (
-                                  <img src={msg.file_url} alt="" className="max-w-[200px] rounded" />
-                                ) : (
-                                  <>
-                                    <File className="w-5 h-5" />
-                                    <span className="text-sm truncate max-w-[150px]">{msg.file_name}</span>
-                                    <a href={msg.file_url} target="_blank" rel="noopener noreferrer">
-                                      <Download className="w-4 h-4" />
-                                    </a>
-                                  </>
-                                )}
+                            {/* Render attachments */}
+                            {(msg.attachment || msg.file_url) && (
+                              <div className="mb-1">
+                                <MessageAttachment 
+                                  attachment={msg.attachment || { 
+                                    type: msg.file_url?.match(/\.(jpg|jpeg|png|gif|webp)$/i) ? 'image' : 'file',
+                                    url: msg.file_url,
+                                    name: msg.file_name
+                                  }} 
+                                  isOwn={isOwn} 
+                                />
                               </div>
                             )}
                             {msg.content && <p className="text-sm whitespace-pre-wrap">{msg.content}</p>}
