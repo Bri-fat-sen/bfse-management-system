@@ -63,6 +63,7 @@ export default function ChatWindow({
   const [isUploading, setIsUploading] = useState(false);
   const [showVideoCall, setShowVideoCall] = useState(false);
   const [callType, setCallType] = useState("video");
+  const [currentAttachment, setCurrentAttachment] = useState(null);
   const messagesEndRef = useRef(null);
   const fileInputRef = useRef(null);
 
