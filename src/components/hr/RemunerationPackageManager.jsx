@@ -411,7 +411,18 @@ export default function RemunerationPackageManager({ orgId }) {
 
   const formatSLE = (amount) => `NLE ${formatNumber(safeNumber(amount))}`;
   
-  // Calculate total package value
+  // Calculate bonus monthly equivalent based on frequency
+  const getBonusMonthlyValue = (bonus) => {
+    const amount = safeNumber(bonus.amount);
+    switch (bonus.frequency) {
+      case 'annual': return amount / 12;
+      case 'quarterly': return amount / 3;
+      case 'per_trip': return 0; // Variable, don't include in estimate
+      default: return amount; // monthly
+    }
+  };
+
+  // Calculate total package value (monthly estimate)
   const calculatePackageTotal = (pkg) => {
     const base = safeNumber(pkg.base_salary);
     const allowancesTotal = (pkg.allowances || []).reduce((sum, a) => {
@@ -420,11 +431,11 @@ export default function RemunerationPackageManager({ orgId }) {
       }
       return sum + safeNumber(a.amount);
     }, 0);
-    const bonusesTotal = (pkg.bonuses || []).reduce((sum, b) => sum + safeNumber(b.amount), 0);
+    const bonusesTotal = (pkg.bonuses || []).reduce((sum, b) => sum + getBonusMonthlyValue(b), 0);
     return base + allowancesTotal + bonusesTotal;
   };
   
-  // Calculate form total
+  // Calculate form total (monthly estimate)
   const formTotal = useMemo(() => {
     const base = safeNumber(formData.base_salary);
     const allowancesTotal = formData.allowances.reduce((sum, a) => {
@@ -433,7 +444,7 @@ export default function RemunerationPackageManager({ orgId }) {
       }
       return sum + safeNumber(a.amount);
     }, 0);
-    const bonusesTotal = formData.bonuses.reduce((sum, b) => sum + safeNumber(b.amount), 0);
+    const bonusesTotal = formData.bonuses.reduce((sum, b) => sum + getBonusMonthlyValue(b), 0);
     return base + allowancesTotal + bonusesTotal;
   }, [formData.base_salary, formData.allowances, formData.bonuses]);
   
@@ -660,7 +671,7 @@ export default function RemunerationPackageManager({ orgId }) {
               </h4>
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <Label>Amount (SLE)</Label>
+                  <Label>Amount (NLE)</Label>
                   <Input
                     type="number"
                     value={formData.base_salary || ""}
@@ -847,7 +858,7 @@ export default function RemunerationPackageManager({ orgId }) {
               {formData.bonuses.length > 0 && (
                 <div className="flex justify-between text-sm font-medium pt-2 border-t border-purple-200">
                   <span>Total Bonuses (monthly equivalent)</span>
-                  <span className="text-purple-700">{formatSLE(formData.bonuses.reduce((s, b) => s + safeNumber(b.amount), 0))}</span>
+                  <span className="text-purple-700">{formatSLE(formData.bonuses.reduce((s, b) => s + getBonusMonthlyValue(b), 0))}</span>
                 </div>
               )}
             </div>
@@ -960,8 +971,8 @@ export default function RemunerationPackageManager({ orgId }) {
                   }, 0))}</span>
                 </div>
                 <div className="flex justify-between text-purple-600">
-                  <span>+ Bonuses</span>
-                  <span>{formatSLE(formData.bonuses.reduce((s, b) => s + safeNumber(b.amount), 0))}</span>
+                  <span>+ Bonuses (monthly equiv.)</span>
+                  <span>{formatSLE(formData.bonuses.reduce((s, b) => s + getBonusMonthlyValue(b), 0))}</span>
                 </div>
                 <div className="flex justify-between font-bold text-lg pt-2 border-t">
                   <span>Est. Monthly Total</span>
