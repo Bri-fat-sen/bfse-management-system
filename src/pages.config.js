@@ -27,6 +27,7 @@ import Calendar from './pages/Calendar';
 import HRAnalytics from './pages/HRAnalytics';
 import Reports from './pages/Reports';
 import Documents from './pages/Documents';
+import UserManagement from './pages/UserManagement';
 import __Layout from './Layout.jsx';
 
 
@@ -60,6 +61,7 @@ export const PAGES = {
     "HRAnalytics": HRAnalytics,
     "Reports": Reports,
     "Documents": Documents,
+    "UserManagement": UserManagement,
 }
 
 export const pagesConfig = {
