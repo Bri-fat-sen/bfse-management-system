@@ -336,19 +336,17 @@ export default function Sales() {
       return;
     }
 
-    const availableStock = safeInt(product.location_stock ?? product.stock_quantity);
+    const availableStock = product.location_stock ?? product.stock_quantity ?? 0;
     const existing = cart.find(item => item.product_id === product.id);
-    const unitPrice = safeNumber(saleType === 'warehouse' ? (product.wholesale_price || product.unit_price) : product.unit_price);
     
     if (existing) {
       if (existing.quantity >= availableStock) {
-        toast.error("Stock Limit", { description: `Only ${formatNumber(availableStock)} available at this location.` });
+        toast.error("Stock Limit", { description: `Only ${availableStock} available at this location.` });
         return;
       }
-      const newQty = existing.quantity + 1;
       setCart(cart.map(item => 
         item.product_id === product.id 
-          ? { ...item, quantity: newQty, total: newQty * safeNumber(item.unit_price) }
+          ? { ...item, quantity: item.quantity + 1, total: (item.quantity + 1) * item.unit_price }
           : item
       ));
     } else {
@@ -360,24 +358,24 @@ export default function Sales() {
         product_id: product.id,
         product_name: product.name,
         quantity: 1,
-        unit_price: unitPrice,
-        total: unitPrice
+        unit_price: saleType === 'warehouse' ? (product.wholesale_price || product.unit_price) : product.unit_price,
+        total: saleType === 'warehouse' ? (product.wholesale_price || product.unit_price) : product.unit_price
       }]);
     }
   };
 
   const updateQuantity = (productId, delta) => {
     const product = filteredProducts.find(p => p.id === productId);
-    const availableStock = safeInt(product?.location_stock);
+    const availableStock = product?.location_stock ?? 0;
     
     setCart(cart.map(item => {
       if (item.product_id === productId) {
-        const newQty = Math.max(1, safeInt(item.quantity) + delta);
+        const newQty = Math.max(1, item.quantity + delta);
         if (newQty > availableStock) {
-          toast.error("Stock Limit", { description: `Only ${formatNumber(availableStock)} available at this location.` });
+          toast.error("Stock Limit", { description: `Only ${availableStock} available at this location.` });
           return item;
         }
-        return { ...item, quantity: newQty, total: newQty * safeNumber(item.unit_price) };
+        return { ...item, quantity: newQty, total: newQty * item.unit_price };
       }
       return item;
     }));
@@ -387,7 +385,7 @@ export default function Sales() {
     setCart(cart.filter(item => item.product_id !== productId));
   };
 
-  const cartTotal = cart.reduce((sum, item) => sum + safeNumber(item.total), 0);
+  const cartTotal = cart.reduce((sum, item) => sum + item.total, 0);
 
   const completeSale = async () => {
     if (!selectedLocation) {
@@ -417,15 +415,14 @@ export default function Sales() {
 
     // Update customer stats if a customer is linked
     if (selectedCustomer) {
-      const newTotalSpent = safeNumber(selectedCustomer.total_spent) + cartTotal;
-      const newTotalPurchases = safeInt(selectedCustomer.total_purchases) + 1;
-      const avgOrderValue = newTotalPurchases > 0 ? Math.round(newTotalSpent / newTotalPurchases) : 0;
+      const newTotalSpent = (selectedCustomer.total_spent || 0) + cartTotal;
+      const newTotalPurchases = (selectedCustomer.total_purchases || 0) + 1;
       await base44.entities.Customer.update(selectedCustomer.id, {
         total_spent: newTotalSpent,
         total_purchases: newTotalPurchases,
-        average_order_value: avgOrderValue,
+        average_order_value: newTotalSpent / newTotalPurchases,
         last_purchase_date: format(new Date(), 'yyyy-MM-dd'),
-        loyalty_points: safeInt(selectedCustomer.loyalty_points) + Math.floor(cartTotal / 1000)
+        loyalty_points: (selectedCustomer.loyalty_points || 0) + Math.floor(cartTotal / 1000)
       });
 
       // Log customer interaction
@@ -598,7 +595,23 @@ export default function Sales() {
   const canChangeLocation = ['super_admin', 'org_admin', 'warehouse_manager'].includes(currentEmployee?.role) || 
     !currentEmployee?.assigned_location_id;
 
-  if (!user || !currentEmployee || !orgId || loadingProducts || !saleType) {
+  if (!user) {
+    return <LoadingSpinner message="Loading Sales..." subtitle="Setting up your point of sale" fullScreen={true} />;
+  }
+
+  if (!currentEmployee || !orgId) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[60vh] text-center p-4">
+        <ShoppingCart className="w-16 h-16 text-gray-300 mb-4" />
+        <h2 className="text-xl font-semibold text-gray-600">No Employee Record</h2>
+        <p className="text-gray-500 mt-2 max-w-md">
+          Your account is not linked to an employee record yet. Please contact your administrator.
+        </p>
+      </div>
+    );
+  }
+
+  if (loadingProducts || !saleType) {
     return <LoadingSpinner message="Loading Sales..." subtitle="Setting up your point of sale" fullScreen={true} />;
   }
 
