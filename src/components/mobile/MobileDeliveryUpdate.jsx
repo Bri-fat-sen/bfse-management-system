@@ -21,8 +21,10 @@ import {
   Navigation,
   Package,
   Phone,
-  Loader2
+  Loader2,
+  WifiOff
 } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { useOffline } from "@/components/offline/OfflineManager";
 
@@ -119,6 +121,12 @@ export default function MobileDeliveryUpdate({
           <SheetTitle className="flex items-center gap-2">
             <Truck className="w-5 h-5 text-purple-500" />
             Delivery Updates
+            {!isOnline && (
+              <Badge variant="outline" className="ml-2 text-amber-600 border-amber-300">
+                <WifiOff className="w-3 h-3 mr-1" />
+                Offline
+              </Badge>
+            )}
           </SheetTitle>
         </SheetHeader>
 

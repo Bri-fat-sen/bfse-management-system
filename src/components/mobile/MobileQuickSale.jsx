@@ -167,6 +167,11 @@ export default function MobileQuickSale({
           <SheetTitle className="flex items-center gap-2">
             <ShoppingCart className="w-5 h-5 text-[#1EB053]" />
             Quick Sale
+            {!isOnline && (
+              <Badge variant="outline" className="ml-2 text-amber-600 border-amber-300">
+                Offline Mode
+              </Badge>
+            )}
           </SheetTitle>
         </SheetHeader>
 
