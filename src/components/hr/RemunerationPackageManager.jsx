@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -26,8 +26,10 @@ import {
 import { toast } from "sonner";
 import { 
   DollarSign, Plus, Edit, Trash2, Package, Users, 
-  Briefcase, Calendar, Clock, Loader2, Gift, X
+  Briefcase, Calendar, Clock, Loader2, Gift, X, Copy, Check
 } from "lucide-react";
+import { safeNumber, formatNumber } from "@/components/utils/calculations";
+import { COMMON_ALLOWANCES } from "./PayrollCalculator";
 
 const ROLES = [
   { value: "super_admin", label: "Super Admin" },
@@ -204,7 +206,54 @@ export default function RemunerationPackageManager({ orgId }) {
     }));
   };
 
-  const formatSLE = (amount) => `SLE ${(amount || 0).toLocaleString()}`;
+  const formatSLE = (amount) => `SLE ${formatNumber(safeNumber(amount))}`;
+  
+  // Calculate total package value
+  const calculatePackageTotal = (pkg) => {
+    const base = safeNumber(pkg.base_salary);
+    const allowancesTotal = (pkg.allowances || []).reduce((sum, a) => {
+      if (a.type === 'percentage') {
+        return sum + (base * safeNumber(a.amount) / 100);
+      }
+      return sum + safeNumber(a.amount);
+    }, 0);
+    const bonusesTotal = (pkg.bonuses || []).reduce((sum, b) => sum + safeNumber(b.amount), 0);
+    return base + allowancesTotal + bonusesTotal;
+  };
+  
+  // Calculate form total
+  const formTotal = useMemo(() => {
+    const base = safeNumber(formData.base_salary);
+    const allowancesTotal = formData.allowances.reduce((sum, a) => {
+      if (a.type === 'percentage') {
+        return sum + (base * safeNumber(a.amount) / 100);
+      }
+      return sum + safeNumber(a.amount);
+    }, 0);
+    const bonusesTotal = formData.bonuses.reduce((sum, b) => sum + safeNumber(b.amount), 0);
+    return base + allowancesTotal + bonusesTotal;
+  }, [formData.base_salary, formData.allowances, formData.bonuses]);
+  
+  // Duplicate package
+  const duplicatePackage = (pkg) => {
+    setFormData({
+      name: `${pkg.name} (Copy)`,
+      description: pkg.description || "",
+      applicable_roles: pkg.applicable_roles || [],
+      base_salary: pkg.base_salary || 0,
+      salary_type: pkg.salary_type || "monthly",
+      allowances: pkg.allowances || [],
+      benefits: pkg.benefits || [],
+      bonuses: pkg.bonuses || [],
+      leave_entitlement: pkg.leave_entitlement || {
+        annual_days: 21, sick_days: 10, maternity_days: 90, paternity_days: 5
+      },
+      overtime_rate_multiplier: pkg.overtime_rate_multiplier || 1.5,
+      probation_period_months: pkg.probation_period_months || 3,
+      is_active: true
+    });
+    setShowDialog(true);
+  };
 
   return (
     <div className="space-y-6">
@@ -275,21 +324,38 @@ export default function RemunerationPackageManager({ orgId }) {
                   </div>
                 )}
 
-                <div className="grid grid-cols-2 gap-2 text-xs">
+                <div className="grid grid-cols-3 gap-2 text-xs">
                   <div className="p-2 bg-gray-50 rounded">
                     <p className="text-gray-500">Allowances</p>
                     <p className="font-medium">{pkg.allowances?.length || 0} items</p>
                   </div>
                   <div className="p-2 bg-gray-50 rounded">
-                    <p className="text-gray-500">Annual Leave</p>
+                    <p className="text-gray-500">Bonuses</p>
+                    <p className="font-medium">{pkg.bonuses?.length || 0} items</p>
+                  </div>
+                  <div className="p-2 bg-gray-50 rounded">
+                    <p className="text-gray-500">Leave</p>
                     <p className="font-medium">{pkg.leave_entitlement?.annual_days || 21} days</p>
                   </div>
+                </div>
+                
+                <div className="p-2 bg-blue-50 rounded text-xs">
+                  <p className="text-blue-600">Est. Monthly Total</p>
+                  <p className="font-bold text-blue-700">{formatSLE(calculatePackageTotal(pkg))}</p>
                 </div>
 
                 <div className="flex gap-2 pt-2 border-t">
                   <Button size="sm" variant="outline" className="flex-1" onClick={() => handleEdit(pkg)}>
                     <Edit className="w-3 h-3 mr-1" />
                     Edit
+                  </Button>
+                  <Button 
+                    size="sm" 
+                    variant="ghost" 
+                    onClick={() => duplicatePackage(pkg)}
+                    title="Duplicate"
+                  >
+                    <Copy className="w-3 h-3" />
                   </Button>
                   <Button 
                     size="sm" 
@@ -356,8 +422,10 @@ export default function RemunerationPackageManager({ orgId }) {
                   <Label>Amount (SLE)</Label>
                   <Input
                     type="number"
-                    value={formData.base_salary}
-                    onChange={(e) => setFormData({ ...formData, base_salary: parseFloat(e.target.value) || 0 })}
+                    value={formData.base_salary || ""}
+                    onChange={(e) => setFormData({ ...formData, base_salary: safeNumber(e.target.value) })}
+                    onWheel={(e) => e.target.blur()}
+                    placeholder="0"
                     className="mt-1"
                   />
                 </div>
@@ -398,36 +466,149 @@ export default function RemunerationPackageManager({ orgId }) {
             </div>
 
             {/* Allowances */}
-            <div className="p-4 bg-blue-50 rounded-lg space-y-3">
+            <div className="p-4 bg-green-50 rounded-lg border border-green-200 space-y-3">
               <div className="flex items-center justify-between">
-                <h4 className="font-medium text-blue-800 flex items-center gap-2">
+                <h4 className="font-medium text-green-800 flex items-center gap-2">
                   <Gift className="w-4 h-4" />
-                  Allowances
+                  Allowances ({formData.allowances.length})
                 </h4>
-                <Button type="button" size="sm" variant="outline" onClick={addAllowance}>
-                  <Plus className="w-3 h-3 mr-1" /> Add
-                </Button>
-              </div>
-              {formData.allowances.map((allowance, i) => (
-                <div key={i} className="flex gap-2 items-center">
-                  <Input
-                    placeholder="Name"
-                    value={allowance.name}
-                    onChange={(e) => updateItem('allowances', i, 'name', e.target.value)}
-                    className="flex-1"
-                  />
-                  <Input
-                    type="number"
-                    placeholder="Amount"
-                    value={allowance.amount}
-                    onChange={(e) => updateItem('allowances', i, 'amount', parseFloat(e.target.value) || 0)}
-                    className="w-28"
-                  />
-                  <Button type="button" size="icon" variant="ghost" onClick={() => removeItem('allowances', i)}>
-                    <X className="w-4 h-4 text-red-500" />
+                <div className="flex gap-2">
+                  <Select onValueChange={(v) => {
+                    const preset = COMMON_ALLOWANCES.find(a => a.name === v);
+                    if (preset) {
+                      setFormData(prev => ({
+                        ...prev,
+                        allowances: [...prev.allowances, { name: preset.name, amount: 0, type: "fixed" }]
+                      }));
+                    }
+                  }}>
+                    <SelectTrigger className="w-40 h-8 text-xs">
+                      <SelectValue placeholder="Quick add..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {COMMON_ALLOWANCES.map(a => (
+                        <SelectItem key={a.name} value={a.name} className="text-xs">{a.name}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <Button type="button" size="sm" variant="outline" onClick={addAllowance}>
+                    <Plus className="w-3 h-3" />
                   </Button>
                 </div>
-              ))}
+              </div>
+              {formData.allowances.length === 0 ? (
+                <p className="text-sm text-green-600/70 text-center py-2">No allowances added</p>
+              ) : (
+                formData.allowances.map((allowance, i) => (
+                  <div key={i} className="flex gap-2 items-center bg-white p-2 rounded-lg">
+                    <Input
+                      placeholder="Allowance name"
+                      value={allowance.name}
+                      onChange={(e) => updateItem('allowances', i, 'name', e.target.value)}
+                      className="flex-1"
+                    />
+                    <Select 
+                      value={allowance.type || "fixed"} 
+                      onValueChange={(v) => updateItem('allowances', i, 'type', v)}
+                    >
+                      <SelectTrigger className="w-28">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="fixed">Fixed</SelectItem>
+                        <SelectItem value="percentage">% of Base</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <div className="relative">
+                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-xs">
+                        {allowance.type === 'percentage' ? '%' : 'SLE'}
+                      </span>
+                      <Input
+                        type="number"
+                        placeholder="0"
+                        value={allowance.amount || ""}
+                        onChange={(e) => updateItem('allowances', i, 'amount', safeNumber(e.target.value))}
+                        onWheel={(e) => e.target.blur()}
+                        className="w-28 pl-10"
+                      />
+                    </div>
+                    <Button type="button" size="icon" variant="ghost" className="h-9 w-9" onClick={() => removeItem('allowances', i)}>
+                      <X className="w-4 h-4 text-red-500" />
+                    </Button>
+                  </div>
+                ))
+              )}
+              {formData.allowances.length > 0 && (
+                <div className="flex justify-between text-sm font-medium pt-2 border-t border-green-200">
+                  <span>Total Allowances</span>
+                  <span className="text-green-700">{formatSLE(formData.allowances.reduce((s, a) => {
+                    if (a.type === 'percentage') {
+                      return s + (safeNumber(formData.base_salary) * safeNumber(a.amount) / 100);
+                    }
+                    return s + safeNumber(a.amount);
+                  }, 0))}</span>
+                </div>
+              )}
+            </div>
+            
+            {/* Bonuses */}
+            <div className="p-4 bg-purple-50 rounded-lg border border-purple-200 space-y-3">
+              <div className="flex items-center justify-between">
+                <h4 className="font-medium text-purple-800 flex items-center gap-2">
+                  <DollarSign className="w-4 h-4" />
+                  Bonuses ({formData.bonuses.length})
+                </h4>
+                <Button type="button" size="sm" variant="outline" onClick={addBonus}>
+                  <Plus className="w-3 h-3 mr-1" /> Add Bonus
+                </Button>
+              </div>
+              {formData.bonuses.length === 0 ? (
+                <p className="text-sm text-purple-600/70 text-center py-2">No bonuses added</p>
+              ) : (
+                formData.bonuses.map((bonus, i) => (
+                  <div key={i} className="flex gap-2 items-center bg-white p-2 rounded-lg">
+                    <Input
+                      placeholder="Bonus name"
+                      value={bonus.name}
+                      onChange={(e) => updateItem('bonuses', i, 'name', e.target.value)}
+                      className="flex-1"
+                    />
+                    <Select 
+                      value={bonus.frequency || "monthly"} 
+                      onValueChange={(v) => updateItem('bonuses', i, 'frequency', v)}
+                    >
+                      <SelectTrigger className="w-28">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="monthly">Monthly</SelectItem>
+                        <SelectItem value="quarterly">Quarterly</SelectItem>
+                        <SelectItem value="annual">Annual</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <div className="relative">
+                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-xs">SLE</span>
+                      <Input
+                        type="number"
+                        placeholder="0"
+                        value={bonus.amount || ""}
+                        onChange={(e) => updateItem('bonuses', i, 'amount', safeNumber(e.target.value))}
+                        onWheel={(e) => e.target.blur()}
+                        className="w-28 pl-10"
+                      />
+                    </div>
+                    <Button type="button" size="icon" variant="ghost" className="h-9 w-9" onClick={() => removeItem('bonuses', i)}>
+                      <X className="w-4 h-4 text-red-500" />
+                    </Button>
+                  </div>
+                ))
+              )}
+              {formData.bonuses.length > 0 && (
+                <div className="flex justify-between text-sm font-medium pt-2 border-t border-purple-200">
+                  <span>Total Bonuses (monthly equivalent)</span>
+                  <span className="text-purple-700">{formatSLE(formData.bonuses.reduce((s, b) => s + safeNumber(b.amount), 0))}</span>
+                </div>
+              )}
             </div>
 
             {/* Leave Entitlement */}
@@ -517,6 +698,35 @@ export default function RemunerationPackageManager({ orgId }) {
                 checked={formData.is_active}
                 onCheckedChange={(v) => setFormData({ ...formData, is_active: v })}
               />
+            </div>
+            
+            {/* Package Summary */}
+            <div className="p-4 bg-gradient-to-r from-[#1EB053]/10 to-[#0072C6]/10 rounded-lg border border-[#1EB053]/20">
+              <h4 className="font-medium text-gray-700 mb-3 flex items-center gap-2">
+                <Check className="w-4 h-4 text-[#1EB053]" />
+                Package Summary
+              </h4>
+              <div className="space-y-2 text-sm">
+                <div className="flex justify-between">
+                  <span className="text-gray-600">Base Salary</span>
+                  <span>{formatSLE(formData.base_salary)}</span>
+                </div>
+                <div className="flex justify-between text-green-600">
+                  <span>+ Allowances</span>
+                  <span>{formatSLE(formData.allowances.reduce((s, a) => {
+                    if (a.type === 'percentage') return s + (safeNumber(formData.base_salary) * safeNumber(a.amount) / 100);
+                    return s + safeNumber(a.amount);
+                  }, 0))}</span>
+                </div>
+                <div className="flex justify-between text-purple-600">
+                  <span>+ Bonuses</span>
+                  <span>{formatSLE(formData.bonuses.reduce((s, b) => s + safeNumber(b.amount), 0))}</span>
+                </div>
+                <div className="flex justify-between font-bold text-lg pt-2 border-t">
+                  <span>Est. Monthly Total</span>
+                  <span className="text-[#1EB053]">{formatSLE(formTotal)}</span>
+                </div>
+              </div>
             </div>
 
             <DialogFooter>
