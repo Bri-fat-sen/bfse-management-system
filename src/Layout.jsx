@@ -56,7 +56,7 @@ import NotificationCenter from "@/components/notifications/NotificationCenter";
 import MobileNav from "@/components/mobile/MobileNav";
 import { OfflineProvider, OfflineStatus } from "@/components/offline/OfflineManager";
 import GlobalSearch from "@/components/search/GlobalSearch";
-import { Toaster } from "sonner";
+
 import InstallPrompt from "@/components/pwa/InstallPrompt";
 import ChatPanel from "@/components/communication/ChatPanel";
 import { ChatNotificationProvider } from "@/components/communication/ChatNotificationManager";
@@ -635,13 +635,7 @@ export default function Layout({ children, currentPageName }) {
           onClose={() => setSearchOpen(false)} 
         />
 
-        <Toaster 
-          position="top-right" 
-          expand={false}
-          visibleToasts={4}
-          duration={3000}
-          closeButton
-        />
+
 
         <InstallPrompt />
 
