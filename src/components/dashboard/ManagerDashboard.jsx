@@ -246,7 +246,7 @@ export default function ManagerDashboard({ currentEmployee, orgId, user, organis
       )}
 
       {/* Main Stats */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-4">
         <StatCard
           title="Today's Total Revenue"
           value={`Le ${todayTotalRevenue.toLocaleString()}`}
@@ -286,39 +286,39 @@ export default function ManagerDashboard({ currentEmployee, orgId, user, organis
             Today's Revenue Breakdown
           </CardTitle>
         </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            <div className="p-4 bg-green-50 rounded-lg">
-              <div className="flex items-center gap-2 mb-2">
-                <ShoppingCart className="w-5 h-5 text-green-600" />
-                <span className="font-medium text-green-800">Sales</span>
+        <CardContent className="p-3 sm:p-6">
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-4">
+            <div className="p-2 sm:p-4 bg-green-50 rounded-lg">
+              <div className="flex items-center gap-1.5 sm:gap-2 mb-1 sm:mb-2">
+                <ShoppingCart className="w-4 h-4 sm:w-5 sm:h-5 text-green-600" />
+                <span className="font-medium text-green-800 text-xs sm:text-base">Sales</span>
               </div>
-              <p className="text-2xl font-bold text-green-700">Le {todaySalesRevenue.toLocaleString()}</p>
-              <p className="text-sm text-green-600">{todaySales.length} transactions</p>
+              <p className="text-base sm:text-2xl font-bold text-green-700 truncate">Le {todaySalesRevenue.toLocaleString()}</p>
+              <p className="text-[10px] sm:text-sm text-green-600">{todaySales.length} transactions</p>
             </div>
-            <div className="p-4 bg-blue-50 rounded-lg">
-              <div className="flex items-center gap-2 mb-2">
-                <Truck className="w-5 h-5 text-blue-600" />
-                <span className="font-medium text-blue-800">Transport</span>
+            <div className="p-2 sm:p-4 bg-blue-50 rounded-lg">
+              <div className="flex items-center gap-1.5 sm:gap-2 mb-1 sm:mb-2">
+                <Truck className="w-4 h-4 sm:w-5 sm:h-5 text-blue-600" />
+                <span className="font-medium text-blue-800 text-xs sm:text-base">Transport</span>
               </div>
-              <p className="text-2xl font-bold text-blue-700">Le {todayTransportRevenue.toLocaleString()}</p>
-              <p className="text-sm text-blue-600">{todayTrips.length} trips</p>
+              <p className="text-base sm:text-2xl font-bold text-blue-700 truncate">Le {todayTransportRevenue.toLocaleString()}</p>
+              <p className="text-[10px] sm:text-sm text-blue-600">{todayTrips.length} trips</p>
             </div>
-            <div className="p-4 bg-teal-50 rounded-lg">
-              <div className="flex items-center gap-2 mb-2">
-                <FileText className="w-5 h-5 text-teal-600" />
-                <span className="font-medium text-teal-800">Contracts</span>
+            <div className="p-2 sm:p-4 bg-teal-50 rounded-lg">
+              <div className="flex items-center gap-1.5 sm:gap-2 mb-1 sm:mb-2">
+                <FileText className="w-4 h-4 sm:w-5 sm:h-5 text-teal-600" />
+                <span className="font-medium text-teal-800 text-xs sm:text-base">Contracts</span>
               </div>
-              <p className="text-2xl font-bold text-teal-700">Le {todayContractRevenue.toLocaleString()}</p>
-              <p className="text-sm text-teal-600">{todayContracts.length} completed</p>
+              <p className="text-base sm:text-2xl font-bold text-teal-700 truncate">Le {todayContractRevenue.toLocaleString()}</p>
+              <p className="text-[10px] sm:text-sm text-teal-600">{todayContracts.length} completed</p>
             </div>
-            <div className="p-4 bg-gray-100 rounded-lg">
-              <div className="flex items-center gap-2 mb-2">
-                <TrendingUp className="w-5 h-5 text-gray-600" />
-                <span className="font-medium text-gray-800">Total</span>
+            <div className="p-2 sm:p-4 bg-gray-100 rounded-lg">
+              <div className="flex items-center gap-1.5 sm:gap-2 mb-1 sm:mb-2">
+                <TrendingUp className="w-4 h-4 sm:w-5 sm:h-5 text-gray-600" />
+                <span className="font-medium text-gray-800 text-xs sm:text-base">Total</span>
               </div>
-              <p className="text-2xl font-bold text-gray-900">Le {todayTotalRevenue.toLocaleString()}</p>
-              <p className="text-sm text-gray-600">All sources combined</p>
+              <p className="text-base sm:text-2xl font-bold text-gray-900 truncate">Le {todayTotalRevenue.toLocaleString()}</p>
+              <p className="text-[10px] sm:text-sm text-gray-600">All sources</p>
             </div>
           </div>
         </CardContent>
@@ -332,49 +332,49 @@ export default function ManagerDashboard({ currentEmployee, orgId, user, organis
             This Month's Expense Breakdown
           </CardTitle>
         </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
-            <div className="p-3 bg-red-50 rounded-lg">
-              <div className="flex items-center gap-2 mb-1">
-                <Receipt className="w-4 h-4 text-red-600" />
-                <span className="text-sm font-medium text-red-800">Recorded</span>
+        <CardContent className="p-3 sm:p-6">
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2 sm:gap-4">
+            <div className="p-2 sm:p-3 bg-red-50 rounded-lg">
+              <div className="flex items-center gap-1 sm:gap-2 mb-0.5 sm:mb-1">
+                <Receipt className="w-3 h-3 sm:w-4 sm:h-4 text-red-600" />
+                <span className="text-[10px] sm:text-sm font-medium text-red-800">Recorded</span>
               </div>
-              <p className="text-lg font-bold text-red-700">Le {monthRecordedExpenses.toLocaleString()}</p>
+              <p className="text-sm sm:text-lg font-bold text-red-700 truncate">Le {monthRecordedExpenses.toLocaleString()}</p>
             </div>
-            <div className="p-3 bg-orange-50 rounded-lg">
-              <div className="flex items-center gap-2 mb-1">
-                <Fuel className="w-4 h-4 text-orange-600" />
-                <span className="text-sm font-medium text-orange-800">Trip Costs</span>
+            <div className="p-2 sm:p-3 bg-orange-50 rounded-lg">
+              <div className="flex items-center gap-1 sm:gap-2 mb-0.5 sm:mb-1">
+                <Fuel className="w-3 h-3 sm:w-4 sm:h-4 text-orange-600" />
+                <span className="text-[10px] sm:text-sm font-medium text-orange-800">Trip Costs</span>
               </div>
-              <p className="text-lg font-bold text-orange-700">Le {monthTripExpenses.toLocaleString()}</p>
+              <p className="text-sm sm:text-lg font-bold text-orange-700 truncate">Le {monthTripExpenses.toLocaleString()}</p>
             </div>
-            <div className="p-3 bg-violet-50 rounded-lg">
-              <div className="flex items-center gap-2 mb-1">
-                <Truck className="w-4 h-4 text-violet-600" />
-                <span className="text-sm font-medium text-violet-800">Contract</span>
+            <div className="p-2 sm:p-3 bg-violet-50 rounded-lg">
+              <div className="flex items-center gap-1 sm:gap-2 mb-0.5 sm:mb-1">
+                <Truck className="w-3 h-3 sm:w-4 sm:h-4 text-violet-600" />
+                <span className="text-[10px] sm:text-sm font-medium text-violet-800">Contract</span>
               </div>
-              <p className="text-lg font-bold text-violet-700">Le {monthContractExpenses.toLocaleString()}</p>
+              <p className="text-sm sm:text-lg font-bold text-violet-700 truncate">Le {monthContractExpenses.toLocaleString()}</p>
             </div>
-            <div className="p-3 bg-cyan-50 rounded-lg">
-              <div className="flex items-center gap-2 mb-1">
-                <Wrench className="w-4 h-4 text-cyan-600" />
-                <span className="text-sm font-medium text-cyan-800">Maintenance</span>
+            <div className="p-2 sm:p-3 bg-cyan-50 rounded-lg">
+              <div className="flex items-center gap-1 sm:gap-2 mb-0.5 sm:mb-1">
+                <Wrench className="w-3 h-3 sm:w-4 sm:h-4 text-cyan-600" />
+                <span className="text-[10px] sm:text-sm font-medium text-cyan-800">Maint.</span>
               </div>
-              <p className="text-lg font-bold text-cyan-700">Le {monthMaintenanceExpenses.toLocaleString()}</p>
+              <p className="text-sm sm:text-lg font-bold text-cyan-700 truncate">Le {monthMaintenanceExpenses.toLocaleString()}</p>
             </div>
-            <div className="p-3 bg-gray-100 rounded-lg">
-              <div className="flex items-center gap-2 mb-1">
-                <DollarSign className="w-4 h-4 text-gray-600" />
-                <span className="text-sm font-medium text-gray-800">Total</span>
+            <div className="p-2 sm:p-3 bg-gray-100 rounded-lg col-span-2 sm:col-span-1">
+              <div className="flex items-center gap-1 sm:gap-2 mb-0.5 sm:mb-1">
+                <DollarSign className="w-3 h-3 sm:w-4 sm:h-4 text-gray-600" />
+                <span className="text-[10px] sm:text-sm font-medium text-gray-800">Total</span>
               </div>
-              <p className="text-lg font-bold text-gray-900">Le {monthTotalExpenses.toLocaleString()}</p>
+              <p className="text-sm sm:text-lg font-bold text-gray-900 truncate">Le {monthTotalExpenses.toLocaleString()}</p>
             </div>
           </div>
         </CardContent>
       </Card>
 
       {/* Staff Stats */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-4">
         <StatCard
           title="Staff Present"
           value={`${clockedIn.length}/${activeEmployees.length}`}

@@ -30,30 +30,30 @@ export default function StatCard({
   };
 
   return (
-    <Card className={`relative overflow-hidden p-6 bg-white hover:shadow-lg transition-all duration-300 border-0 shadow-sm border-t-4 ${borderColors[color]}`}>
-      <div className={`absolute top-0 right-0 w-32 h-32 bg-gradient-to-br ${colorClasses[color]} opacity-10 rounded-full transform translate-x-8 -translate-y-8`} />
+    <Card className={`relative overflow-hidden p-3 sm:p-6 bg-white hover:shadow-lg transition-all duration-300 border-0 shadow-sm border-t-4 ${borderColors[color]}`}>
+      <div className={`absolute top-0 right-0 w-24 sm:w-32 h-24 sm:h-32 bg-gradient-to-br ${colorClasses[color]} opacity-10 rounded-full transform translate-x-8 -translate-y-8`} />
       
-      <div className="flex items-start justify-between relative">
-        <div className="space-y-2">
-          <p className="text-sm font-medium text-gray-500">{title}</p>
-          <p className="text-3xl font-bold text-gray-900">{value}</p>
+      <div className="flex items-start justify-between relative gap-2">
+        <div className="space-y-1 sm:space-y-2 min-w-0 flex-1">
+          <p className="text-[10px] sm:text-sm font-medium text-gray-500 truncate">{title}</p>
+          <p className="text-lg sm:text-3xl font-bold text-gray-900 truncate">{value}</p>
           {subtitle && (
-            <p className="text-sm text-gray-500">{subtitle}</p>
+            <p className="text-[10px] sm:text-sm text-gray-500 truncate">{subtitle}</p>
           )}
           {trend && (
-            <div className={`flex items-center gap-1 text-sm ${trend === 'up' ? 'text-[#1EB053]' : 'text-red-500'}`}>
+            <div className={`flex items-center gap-1 text-[10px] sm:text-sm ${trend === 'up' ? 'text-[#1EB053]' : 'text-red-500'}`}>
               {trend === 'up' ? (
-                <TrendingUp className="w-4 h-4" />
+                <TrendingUp className="w-3 h-3 sm:w-4 sm:h-4" />
               ) : (
-                <TrendingDown className="w-4 h-4" />
+                <TrendingDown className="w-3 h-3 sm:w-4 sm:h-4" />
               )}
-              <span className="font-medium">{trendValue}</span>
+              <span className="font-medium truncate">{trendValue}</span>
             </div>
           )}
         </div>
         
-        <div className={`p-3 rounded-xl bg-gradient-to-br ${colorClasses[color]}`}>
-          <Icon className="w-6 h-6 text-white" />
+        <div className={`p-2 sm:p-3 rounded-lg sm:rounded-xl bg-gradient-to-br ${colorClasses[color]} flex-shrink-0`}>
+          <Icon className="w-4 h-4 sm:w-6 sm:h-6 text-white" />
         </div>
       </div>
     </Card>
