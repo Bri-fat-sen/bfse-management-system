@@ -29,7 +29,209 @@ import {
   Briefcase, Calendar, Clock, Loader2, Gift, X, Copy, Check
 } from "lucide-react";
 import { safeNumber, formatNumber } from "@/components/utils/calculations";
-import { COMMON_ALLOWANCES } from "./PayrollCalculator";
+import { COMMON_ALLOWANCES, SL_MINIMUM_WAGE } from "./PayrollCalculator";
+
+// Pre-defined Sierra Leone Remuneration Packages (2025)
+// Based on Sierra Leone Employment Act 2023 & market rates
+export const SL_PACKAGE_TEMPLATES = [
+  {
+    name: "Executive Director Package",
+    description: "Senior executive leadership package with comprehensive benefits per Employment Act 2023",
+    applicable_roles: ["super_admin", "org_admin"],
+    base_salary: 15000000,
+    salary_type: "monthly",
+    allowances: [
+      { name: "Housing Allowance", amount: 3000000, type: "fixed" },
+      { name: "Transport Allowance", amount: 1500000, type: "fixed" },
+      { name: "Medical Allowance", amount: 800000, type: "fixed" },
+      { name: "Communication Allowance", amount: 500000, type: "fixed" },
+      { name: "Entertainment Allowance", amount: 500000, type: "fixed" },
+      { name: "Executive Allowance", amount: 20, type: "percentage" }
+    ],
+    bonuses: [
+      { name: "Performance Bonus", amount: 2000000, frequency: "quarterly" },
+      { name: "13th Month Bonus", amount: 15000000, frequency: "annual" }
+    ],
+    leave_entitlement: { annual_days: 30, sick_days: 15, maternity_days: 90, paternity_days: 10 },
+    overtime_rate_multiplier: 2.0,
+    probation_period_months: 3
+  },
+  {
+    name: "Senior Manager Package",
+    description: "Management level package with standard executive benefits",
+    applicable_roles: ["org_admin", "warehouse_manager"],
+    base_salary: 8000000,
+    salary_type: "monthly",
+    allowances: [
+      { name: "Housing Allowance", amount: 1500000, type: "fixed" },
+      { name: "Transport Allowance", amount: 800000, type: "fixed" },
+      { name: "Medical Allowance", amount: 500000, type: "fixed" },
+      { name: "Communication Allowance", amount: 300000, type: "fixed" },
+      { name: "Responsibility Allowance", amount: 15, type: "percentage" }
+    ],
+    bonuses: [
+      { name: "Performance Bonus", amount: 1000000, frequency: "quarterly" },
+      { name: "13th Month Bonus", amount: 8000000, frequency: "annual" }
+    ],
+    leave_entitlement: { annual_days: 25, sick_days: 12, maternity_days: 90, paternity_days: 7 },
+    overtime_rate_multiplier: 1.75,
+    probation_period_months: 3
+  },
+  {
+    name: "Department Head Package",
+    description: "Mid-level management package for department heads and supervisors",
+    applicable_roles: ["hr_admin", "payroll_admin", "warehouse_manager", "accountant"],
+    base_salary: 5000000,
+    salary_type: "monthly",
+    allowances: [
+      { name: "Housing Allowance", amount: 1000000, type: "fixed" },
+      { name: "Transport Allowance", amount: 500000, type: "fixed" },
+      { name: "Medical Allowance", amount: 400000, type: "fixed" },
+      { name: "Communication Allowance", amount: 200000, type: "fixed" },
+      { name: "Responsibility Allowance", amount: 10, type: "percentage" }
+    ],
+    bonuses: [
+      { name: "Performance Bonus", amount: 500000, frequency: "quarterly" },
+      { name: "13th Month Bonus", amount: 5000000, frequency: "annual" }
+    ],
+    leave_entitlement: { annual_days: 21, sick_days: 10, maternity_days: 90, paternity_days: 5 },
+    overtime_rate_multiplier: 1.5,
+    probation_period_months: 3
+  },
+  {
+    name: "Professional Staff Package",
+    description: "Skilled professional workers - accountants, administrators, technicians",
+    applicable_roles: ["accountant", "hr_admin", "payroll_admin"],
+    base_salary: 3500000,
+    salary_type: "monthly",
+    allowances: [
+      { name: "Housing Allowance", amount: 700000, type: "fixed" },
+      { name: "Transport Allowance", amount: 400000, type: "fixed" },
+      { name: "Medical Allowance", amount: 300000, type: "fixed" },
+      { name: "Communication Allowance", amount: 150000, type: "fixed" },
+      { name: "Professional Allowance", amount: 8, type: "percentage" }
+    ],
+    bonuses: [
+      { name: "13th Month Bonus", amount: 3500000, frequency: "annual" }
+    ],
+    leave_entitlement: { annual_days: 21, sick_days: 10, maternity_days: 90, paternity_days: 5 },
+    overtime_rate_multiplier: 1.5,
+    probation_period_months: 3
+  },
+  {
+    name: "Sales Representative Package",
+    description: "Field sales staff with commission structure per Employment Act 2023",
+    applicable_roles: ["vehicle_sales", "retail_cashier"],
+    base_salary: 2000000,
+    salary_type: "monthly",
+    allowances: [
+      { name: "Transport Allowance", amount: 350000, type: "fixed" },
+      { name: "Communication Allowance", amount: 150000, type: "fixed" },
+      { name: "Medical Allowance", amount: 250000, type: "fixed" },
+      { name: "Meal Allowance", amount: 200000, type: "fixed" },
+      { name: "Sales Allowance", amount: 5, type: "percentage" }
+    ],
+    bonuses: [
+      { name: "Sales Commission", amount: 2, type: "percentage", frequency: "monthly" },
+      { name: "Target Achievement Bonus", amount: 300000, frequency: "monthly" }
+    ],
+    leave_entitlement: { annual_days: 21, sick_days: 10, maternity_days: 90, paternity_days: 5 },
+    overtime_rate_multiplier: 1.5,
+    probation_period_months: 3
+  },
+  {
+    name: "Driver Package",
+    description: "Commercial driver package with risk and fuel allowances per Employment Act 2023",
+    applicable_roles: ["driver"],
+    base_salary: 1800000,
+    salary_type: "monthly",
+    allowances: [
+      { name: "Risk Allowance", amount: 15, type: "percentage" },
+      { name: "Fuel Allowance", amount: 300000, type: "fixed" },
+      { name: "Meal Allowance", amount: 250000, type: "fixed" },
+      { name: "Medical Allowance", amount: 250000, type: "fixed" },
+      { name: "Uniform Allowance", amount: 100000, type: "fixed" },
+      { name: "Night Shift Allowance", amount: 150000, type: "fixed" }
+    ],
+    bonuses: [
+      { name: "Trip Bonus", amount: 50000, frequency: "per_trip" },
+      { name: "Safety Bonus", amount: 200000, frequency: "monthly" }
+    ],
+    leave_entitlement: { annual_days: 21, sick_days: 10, maternity_days: 90, paternity_days: 5 },
+    overtime_rate_multiplier: 1.5,
+    probation_period_months: 3
+  },
+  {
+    name: "Retail Cashier Package",
+    description: "Point of sale and customer service staff package",
+    applicable_roles: ["retail_cashier"],
+    base_salary: 1500000,
+    salary_type: "monthly",
+    allowances: [
+      { name: "Transport Allowance", amount: 250000, type: "fixed" },
+      { name: "Meal Allowance", amount: 200000, type: "fixed" },
+      { name: "Medical Allowance", amount: 200000, type: "fixed" },
+      { name: "Uniform Allowance", amount: 100000, type: "fixed" }
+    ],
+    bonuses: [
+      { name: "Attendance Bonus", amount: 100000, frequency: "monthly" },
+      { name: "13th Month Bonus", amount: 1500000, frequency: "annual" }
+    ],
+    leave_entitlement: { annual_days: 21, sick_days: 10, maternity_days: 90, paternity_days: 5 },
+    overtime_rate_multiplier: 1.5,
+    probation_period_months: 3
+  },
+  {
+    name: "Support Staff Package",
+    description: "General support and administrative staff - cleaners, security, messengers",
+    applicable_roles: ["support_staff", "read_only"],
+    base_salary: 1200000,
+    salary_type: "monthly",
+    allowances: [
+      { name: "Transport Allowance", amount: 200000, type: "fixed" },
+      { name: "Meal Allowance", amount: 150000, type: "fixed" },
+      { name: "Medical Allowance", amount: 150000, type: "fixed" },
+      { name: "Uniform Allowance", amount: 75000, type: "fixed" }
+    ],
+    bonuses: [
+      { name: "Attendance Bonus", amount: 75000, frequency: "monthly" }
+    ],
+    leave_entitlement: { annual_days: 21, sick_days: 5, maternity_days: 90, paternity_days: 5 },
+    overtime_rate_multiplier: 1.5,
+    probation_period_months: 6
+  },
+  {
+    name: "Entry Level Package",
+    description: "New employees and trainees - minimum wage compliant per Sierra Leone law",
+    applicable_roles: ["read_only", "support_staff"],
+    base_salary: SL_MINIMUM_WAGE.monthly,
+    salary_type: "monthly",
+    allowances: [
+      { name: "Transport Allowance", amount: 150000, type: "fixed" },
+      { name: "Meal Allowance", amount: 100000, type: "fixed" },
+      { name: "Medical Allowance", amount: 100000, type: "fixed" }
+    ],
+    bonuses: [],
+    leave_entitlement: { annual_days: 21, sick_days: 5, maternity_days: 90, paternity_days: 5 },
+    overtime_rate_multiplier: 1.5,
+    probation_period_months: 6
+  },
+  {
+    name: "Daily Worker Package",
+    description: "Casual/daily wage workers per Employment Act 2023 Section 5",
+    applicable_roles: ["support_staff"],
+    base_salary: SL_MINIMUM_WAGE.daily,
+    salary_type: "daily",
+    allowances: [
+      { name: "Transport Allowance", amount: 10000, type: "fixed" },
+      { name: "Meal Allowance", amount: 8000, type: "fixed" }
+    ],
+    bonuses: [],
+    leave_entitlement: { annual_days: 0, sick_days: 0, maternity_days: 0, paternity_days: 0 },
+    overtime_rate_multiplier: 1.5,
+    probation_period_months: 0
+  }
+];
 
 const ROLES = [
   { value: "super_admin", label: "Super Admin" },
@@ -257,7 +459,7 @@ export default function RemunerationPackageManager({ orgId }) {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between flex-wrap gap-4">
         <div>
           <h3 className="text-lg font-semibold flex items-center gap-2">
             <Package className="w-5 h-5 text-[#1EB053]" />
@@ -265,10 +467,48 @@ export default function RemunerationPackageManager({ orgId }) {
           </h3>
           <p className="text-sm text-gray-500">Define salary packages for different roles</p>
         </div>
-        <Button onClick={() => setShowDialog(true)} className="bg-[#1EB053] hover:bg-[#178f43]">
-          <Plus className="w-4 h-4 mr-2" />
-          Add Package
-        </Button>
+        <div className="flex gap-2">
+          <Select onValueChange={(name) => {
+            const template = SL_PACKAGE_TEMPLATES.find(t => t.name === name);
+            if (template) {
+              setFormData({
+                name: template.name,
+                description: template.description,
+                applicable_roles: template.applicable_roles || [],
+                base_salary: template.base_salary,
+                salary_type: template.salary_type || "monthly",
+                allowances: template.allowances || [],
+                benefits: [],
+                bonuses: template.bonuses || [],
+                leave_entitlement: template.leave_entitlement || {
+                  annual_days: 21, sick_days: 10, maternity_days: 90, paternity_days: 5
+                },
+                overtime_rate_multiplier: template.overtime_rate_multiplier || 1.5,
+                probation_period_months: template.probation_period_months || 3,
+                is_active: true
+              });
+              setShowDialog(true);
+            }
+          }}>
+            <SelectTrigger className="w-52">
+              <SelectValue placeholder="Use SL Template..." />
+            </SelectTrigger>
+            <SelectContent>
+              {SL_PACKAGE_TEMPLATES.map(t => (
+                <SelectItem key={t.name} value={t.name}>
+                  <div className="flex flex-col">
+                    <span className="font-medium">{t.name}</span>
+                    <span className="text-xs text-gray-500">{formatSLE(t.base_salary)}/month</span>
+                  </div>
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <Button onClick={() => setShowDialog(true)} className="bg-[#1EB053] hover:bg-[#178f43]">
+            <Plus className="w-4 h-4 mr-2" />
+            Custom Package
+          </Button>
+        </div>
       </div>
 
       {isLoading ? (
