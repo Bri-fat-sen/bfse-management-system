@@ -670,7 +670,20 @@ export default function ChatPanel({ isOpen, onClose, orgId, currentEmployee }) {
                               {msg.sender_name}
                             </p>
                           )}
-                          <p className="text-sm whitespace-pre-wrap">{msg.content}</p>
+                          {/* Render attachment */}
+                          {(msg.attachment || msg.file_url) && (
+                            <div className="mb-1">
+                              <MessageAttachment 
+                                attachment={msg.attachment || { 
+                                  type: msg.message_type === 'image' ? 'image' : 'file',
+                                  url: msg.file_url,
+                                  name: msg.file_name
+                                }} 
+                                isOwn={isOwn} 
+                              />
+                            </div>
+                          )}
+                          {msg.content && <p className="text-sm whitespace-pre-wrap">{msg.content}</p>}
                           <div className={cn(
                             "flex items-center gap-1 mt-1",
                             isOwn ? "justify-end" : ""
