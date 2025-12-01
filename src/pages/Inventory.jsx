@@ -240,7 +240,6 @@ export default function Inventory() {
       queryClient.invalidateQueries({ queryKey: ['products'] });
       setShowProductDialog(false);
       setEditingProduct(null);
-      toast.success("Product created successfully");
     },
   });
 
@@ -250,7 +249,6 @@ export default function Inventory() {
       queryClient.invalidateQueries({ queryKey: ['products'] });
       setShowProductDialog(false);
       setEditingProduct(null);
-      toast.success("Product updated successfully");
     },
   });
 
@@ -258,7 +256,6 @@ export default function Inventory() {
     mutationFn: (id) => base44.entities.Product.delete(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['products'] });
-      toast.success("Product deleted successfully");
     },
   });
 

@@ -146,7 +146,6 @@ export default function Transport() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['trips'] });
       setShowTripDialog(false);
-      toast({ title: "Trip recorded successfully" });
     },
   });
 
@@ -155,7 +154,6 @@ export default function Transport() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['vehicles'] });
       setShowVehicleDialog(false);
-      toast({ title: "Vehicle added successfully" });
     },
   });
 
@@ -163,7 +161,6 @@ export default function Transport() {
     mutationFn: ({ id, data }) => base44.entities.Trip.update(id, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['trips'] });
-      toast({ title: "Trip updated successfully" });
     },
   });
 

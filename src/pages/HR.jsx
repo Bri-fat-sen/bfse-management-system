@@ -176,7 +176,6 @@ export default function HR() {
       queryClient.invalidateQueries({ queryKey: ['employees'] });
       setShowEmployeeDialog(false);
       setEditingEmployee(null);
-      toast.success("Employee updated successfully");
     },
   });
 
@@ -199,10 +198,6 @@ export default function HR() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['payrolls'] });
-      toast.success("Payroll deleted successfully");
-    },
-    onError: () => {
-      toast.error("Failed to delete payroll");
     },
   });
 
@@ -226,10 +221,6 @@ export default function HR() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['payrolls'] });
-      toast.success("Payroll reversed successfully");
-    },
-    onError: () => {
-      toast.error("Failed to reverse payroll");
     },
   });
 
@@ -240,11 +231,10 @@ export default function HR() {
     try {
       await base44.entities.Employee.delete(employeeToDelete.id);
       queryClient.invalidateQueries({ queryKey: ['employees'] });
-      toast.success(`${employeeToDelete.full_name} has been removed`);
       setShowDeleteDialog(false);
       setEmployeeToDelete(null);
     } catch (error) {
-      toast.error("Failed to delete employee: " + error.message);
+      console.error("Failed to delete employee:", error);
     } finally {
       setIsDeleting(false);
     }
