@@ -566,18 +566,20 @@ export default function PayslipGenerator({ payroll, employee, organisation }) {
               <div class="header-content">
                 <div class="company-brand">
                   <div class="company-logo">
-                    <span>${orgInitials}</span>
+                    ${hasLogo ? `<img src="${organisation.logo_url}" alt="${organisation.name}" />` : `<span>${orgInitials}</span>`}
                   </div>
                   <div class="company-details">
                     <h1>${organisation?.name || 'Organisation'}</h1>
                     <div class="address">
                       ${organisation?.address ? `${organisation.address}${organisation?.city ? `, ${organisation.city}` : ''}` : 'Sierra Leone'}
+                      ${organisation?.phone ? ` • ${organisation.phone}` : ''}
                     </div>
                   </div>
                 </div>
                 <div class="payslip-badge">
                   <h2>Payslip</h2>
                   <div class="period">${format(new Date(payroll?.period_start), 'MMMM yyyy')}</div>
+                  <div style="font-size: 10px; opacity: 0.7; margin-top: 4px;">${frequency.charAt(0).toUpperCase() + frequency.slice(1)} Pay</div>
                 </div>
               </div>
             </div>
