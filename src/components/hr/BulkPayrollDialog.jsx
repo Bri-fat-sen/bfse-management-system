@@ -1,7 +1,7 @@
 import React, { useState, useMemo } from "react";
 import { base44 } from "@/api/base44Client";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { format, startOfMonth, endOfMonth, subMonths } from "date-fns";
+import { format, startOfMonth, endOfMonth, subMonths, differenceInDays, parseISO, isWithinInterval } from "date-fns";
 import {
   Dialog,
   DialogContent,
@@ -16,10 +16,19 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
 import { 
   Users, Calculator, CheckCircle2, AlertCircle, Loader2, 
-  ChevronDown, ChevronUp, DollarSign
+  ChevronDown, ChevronUp, DollarSign, Package, Clock, Calendar,
+  TrendingUp, Info
 } from "lucide-react";
 import {
   Collapsible,
@@ -27,8 +36,15 @@ import {
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
 import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import {
   calculateFullPayroll,
-  formatSLE
+  formatSLE,
+  PAYROLL_FREQUENCIES
 } from "./PayrollCalculator";
 import { safeNumber } from "@/components/utils/calculations";
 
