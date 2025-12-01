@@ -165,12 +165,12 @@ export default function Layout({ children, currentPageName }) {
   });
 
   useEffect(() => {
-    const linkOrCreateEmployee = async () => {
+    const linkExistingEmployee = async () => {
       // Only run for users who don't have an employee record linked to their email
       if (!user?.email || !employee || employee.length > 0) return;
       
       try {
-        // First, check if there's an existing employee record with matching email (created by admin)
+        // Check if there's an existing employee record with matching email (created by admin)
         // This handles the case where admin created employee before user accepted invite
         const existingByEmail = await base44.entities.Employee.filter({ email: user.email });
         
@@ -187,55 +187,14 @@ export default function Layout({ children, currentPageName }) {
           return;
         }
         
-        // For platform admin users only - auto-create if no existing employee found
-        // This is ONLY for the initial platform admin, not for invited users
-        if (user?.role === 'admin' && orgs && orgs.length > 0) {
-          // Double-check no employee exists with this email before creating
-          const doubleCheck = await base44.entities.Employee.filter({ email: user.email });
-          const doubleCheckUserEmail = await base44.entities.Employee.filter({ user_email: user.email });
-          
-          if (doubleCheck.length > 0 || doubleCheckUserEmail.length > 0) {
-            // Already exists, just link it
-            const existing = doubleCheck[0] || doubleCheckUserEmail[0];
-            if (!existing.user_email) {
-              await base44.entities.Employee.update(existing.id, {
-                user_email: user.email,
-              });
-            }
-            refetchEmployee();
-            return;
-          }
-          
-          const org = orgs[0];
-          const existingEmployees = await base44.entities.Employee.filter({ organisation_id: org.id });
-          const employeeCode = `EMP${String(existingEmployees.length + 1).padStart(4, '0')}`;
-          
-          await base44.entities.Employee.create({
-            organisation_id: org.id,
-            employee_code: employeeCode,
-            user_email: user.email,
-            email: user.email,
-            first_name: user.full_name?.split(' ')[0] || 'Admin',
-            last_name: user.full_name?.split(' ').slice(1).join(' ') || 'User',
-            full_name: user.full_name || 'Admin User',
-            role: 'super_admin',
-            department: 'Management',
-            position: 'System Administrator',
-            status: 'active',
-            hire_date: new Date().toISOString().split('T')[0],
-          });
-          
-          refetchEmployee();
-        }
-        // Note: Non-admin invited users should have their employee record created manually by HR/Admin
-        // before or after they accept the invite - they won't get auto-created records
+        // No auto-creation - all employee records must be created manually by HR/Admin
       } catch (err) {
-        console.error('Failed to link/create employee record:', err);
+        console.error('Failed to link employee record:', err);
       }
     };
     
-    linkOrCreateEmployee();
-  }, [user, employee, orgs, refetchEmployee]);
+    linkExistingEmployee();
+  }, [user, employee, refetchEmployee]);
 
   const currentEmployee = employee?.[0];
 
