@@ -46,7 +46,8 @@ export default function MobileDeliveryUpdate({
       driver_id: currentEmployee?.id,
       status: 'in_progress'
     }),
-    enabled: !!orgId && !!currentEmployee?.id && open,
+    enabled: !!orgId && !!currentEmployee?.id && open && isOnline,
+    staleTime: 2 * 60 * 1000,
   });
 
   const { data: pendingTrips = [] } = useQuery({
@@ -56,7 +57,8 @@ export default function MobileDeliveryUpdate({
       driver_id: currentEmployee?.id,
       status: 'scheduled'
     }),
-    enabled: !!orgId && !!currentEmployee?.id && open,
+    enabled: !!orgId && !!currentEmployee?.id && open && isOnline,
+    staleTime: 2 * 60 * 1000,
   });
 
   const updateTripMutation = useMutation({

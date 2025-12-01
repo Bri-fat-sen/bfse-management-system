@@ -15,25 +15,33 @@ import {
   AlertTriangle,
   CheckCircle2,
   XCircle,
-  MapPin
+  MapPin,
+  WifiOff
 } from "lucide-react";
+import { useOffline } from "@/components/offline/OfflineManager";
 
 export default function MobileStockCheck({ open, onOpenChange, orgId }) {
   const [searchTerm, setSearchTerm] = useState("");
+  const offlineContext = useOffline();
+  const isOnline = offlineContext?.isOnline ?? true;
+  const cachedProducts = offlineContext?.getCachedData?.('products') || [];
 
-  const { data: products = [], isLoading } = useQuery({
+  const { data: fetchedProducts = [], isLoading } = useQuery({
     queryKey: ['products', orgId],
     queryFn: () => base44.entities.Product.filter({ organisation_id: orgId, is_active: true }),
-    enabled: !!orgId && open,
+    enabled: !!orgId && open && isOnline,
     staleTime: 2 * 60 * 1000,
   });
 
   const { data: stockLevels = [] } = useQuery({
     queryKey: ['stockLevels', orgId],
     queryFn: () => base44.entities.StockLevel.filter({ organisation_id: orgId }),
-    enabled: !!orgId && open,
+    enabled: !!orgId && open && isOnline,
     staleTime: 2 * 60 * 1000,
   });
+
+  // Use fetched products when online, cached when offline
+  const products = isOnline ? fetchedProducts : (fetchedProducts.length > 0 ? fetchedProducts : cachedProducts);
 
   const filteredProducts = products.filter(p =>
     p.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -61,6 +69,12 @@ export default function MobileStockCheck({ open, onOpenChange, orgId }) {
           <SheetTitle className="flex items-center gap-2">
             <Package className="w-5 h-5 text-[#0072C6]" />
             Stock Check
+            {!isOnline && (
+              <Badge variant="outline" className="ml-2 text-amber-600 border-amber-300">
+                <WifiOff className="w-3 h-3 mr-1" />
+                Offline
+              </Badge>
+            )}
           </SheetTitle>
         </SheetHeader>
 

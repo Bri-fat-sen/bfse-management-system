@@ -42,12 +42,17 @@ export default function MobileQuickSale({
   const [paymentMethod, setPaymentMethod] = useState("cash");
   const [isProcessing, setIsProcessing] = useState(false);
 
-  const { data: products = [] } = useQuery({
+  const cachedProducts = offlineContext?.getCachedData?.('products') || [];
+  
+  const { data: fetchedProducts = [] } = useQuery({
     queryKey: ['products', orgId],
     queryFn: () => base44.entities.Product.filter({ organisation_id: orgId, is_active: true }),
-    enabled: !!orgId && open,
-    staleTime: 5 * 60 * 1000, // Cache for 5 mins for offline
+    enabled: !!orgId && open && isOnline,
+    staleTime: 5 * 60 * 1000,
   });
+
+  // Use fetched products when online, cached when offline
+  const products = isOnline ? fetchedProducts : (fetchedProducts.length > 0 ? fetchedProducts : cachedProducts);
 
   const filteredProducts = products.filter(p =>
     p.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
