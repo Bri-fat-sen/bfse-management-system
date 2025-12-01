@@ -51,6 +51,7 @@ import {
   PAYROLL_FREQUENCIES,
   applyTemplates
 } from "./PayrollCalculator";
+import { safeNumber, safeInt, formatNumber } from "@/components/utils/calculations";
 
 export default function PayrollProcessDialog({ 
   open, 
@@ -410,37 +411,43 @@ export default function PayrollProcessDialog({
                   <Label className="text-xs">Overtime Hours</Label>
                   <Input 
                     type="number" 
+                    min="0"
                     step="0.5"
                     value={overtimeHours}
-                    onChange={(e) => setOvertimeHours(e.target.value)}
+                    onChange={(e) => setOvertimeHours(safeNumber(e.target.value, 0))}
+                    onWheel={(e) => e.target.blur()}
                     className="mt-1"
                     placeholder="0"
                   />
-                  <p className="text-xs text-gray-400 mt-0.5">@ {OVERTIME_MULTIPLIERS.regular}x rate</p>
+                  <p className="text-xs text-gray-400 mt-0.5">@ {OVERTIME_MULTIPLIERS.regular}x = {formatSLE(safeNumber(overtimeHours) * safeNumber(payrollData?.calculation_details?.hourly_rate) * OVERTIME_MULTIPLIERS.regular)}</p>
                 </div>
                 <div>
                   <Label className="text-xs">Weekend Hours</Label>
                   <Input 
                     type="number" 
+                    min="0"
                     step="0.5"
                     value={weekendHours}
-                    onChange={(e) => setWeekendHours(e.target.value)}
+                    onChange={(e) => setWeekendHours(safeNumber(e.target.value, 0))}
+                    onWheel={(e) => e.target.blur()}
                     className="mt-1"
                     placeholder="0"
                   />
-                  <p className="text-xs text-gray-400 mt-0.5">@ {OVERTIME_MULTIPLIERS.weekend}x rate</p>
+                  <p className="text-xs text-gray-400 mt-0.5">@ {OVERTIME_MULTIPLIERS.weekend}x = {formatSLE(safeNumber(weekendHours) * safeNumber(payrollData?.calculation_details?.hourly_rate) * OVERTIME_MULTIPLIERS.weekend)}</p>
                 </div>
                 <div>
                   <Label className="text-xs">Holiday Hours</Label>
                   <Input 
                     type="number" 
+                    min="0"
                     step="0.5"
                     value={holidayHours}
-                    onChange={(e) => setHolidayHours(e.target.value)}
+                    onChange={(e) => setHolidayHours(safeNumber(e.target.value, 0))}
+                    onWheel={(e) => e.target.blur()}
                     className="mt-1"
                     placeholder="0"
                   />
-                  <p className="text-xs text-gray-400 mt-0.5">@ {OVERTIME_MULTIPLIERS.holiday}x rate</p>
+                  <p className="text-xs text-gray-400 mt-0.5">@ {OVERTIME_MULTIPLIERS.holiday}x = {formatSLE(safeNumber(holidayHours) * safeNumber(payrollData?.calculation_details?.hourly_rate) * OVERTIME_MULTIPLIERS.holiday)}</p>
                 </div>
               </div>
 
@@ -456,8 +463,10 @@ export default function PayrollProcessDialog({
                       <Label className="text-xs">Total Sales (SLE)</Label>
                       <Input 
                         type="number"
+                        min="0"
                         value={salesAmount || totalSales}
-                        onChange={(e) => setSalesAmount(parseFloat(e.target.value) || 0)}
+                        onChange={(e) => setSalesAmount(safeNumber(e.target.value, 0))}
+                        onWheel={(e) => e.target.blur()}
                         className="mt-1"
                       />
                       {totalSales > 0 && !salesAmount && (
@@ -468,11 +477,17 @@ export default function PayrollProcessDialog({
                       <Label className="text-xs">Commission Rate (%)</Label>
                       <Input 
                         type="number"
+                        min="0"
+                        max="100"
                         step="0.5"
                         value={commissionRate}
-                        onChange={(e) => setCommissionRate(parseFloat(e.target.value) || 0)}
+                        onChange={(e) => setCommissionRate(safeNumber(e.target.value, 0))}
+                        onWheel={(e) => e.target.blur()}
                         className="mt-1"
                       />
+                      <p className="text-xs text-purple-600 mt-1">
+                        = {formatSLE(safeNumber(salesAmount || totalSales) * safeNumber(commissionRate) / 100)} commission
+                      </p>
                     </div>
                   </div>
                 </div>
@@ -567,13 +582,15 @@ export default function PayrollProcessDialog({
                           />
                           <Input 
                             type="number" 
+                            min="0"
                             placeholder="Amount"
                             value={allowance.amount || ""}
                             onChange={(e) => {
                               const updated = [...customAllowances];
-                              updated[index].amount = parseFloat(e.target.value) || 0;
+                              updated[index].amount = safeNumber(e.target.value, 0);
                               setCustomAllowances(updated);
                             }}
+                            onWheel={(e) => e.target.blur()}
                             className="w-32"
                           />
                           <Button type="button" variant="ghost" size="icon" onClick={() => {
@@ -609,13 +626,15 @@ export default function PayrollProcessDialog({
                           />
                           <Input 
                             type="number" 
+                            min="0"
                             placeholder="Amount"
                             value={bonus.amount || ""}
                             onChange={(e) => {
                               const updated = [...customBonuses];
-                              updated[index].amount = parseFloat(e.target.value) || 0;
+                              updated[index].amount = safeNumber(e.target.value, 0);
                               setCustomBonuses(updated);
                             }}
+                            onWheel={(e) => e.target.blur()}
                             className="w-32"
                           />
                           <Button type="button" variant="ghost" size="icon" onClick={() => {
@@ -665,13 +684,15 @@ export default function PayrollProcessDialog({
                           />
                           <Input 
                             type="number" 
+                            min="0"
                             placeholder="Amount"
                             value={deduction.amount || ""}
                             onChange={(e) => {
                               const updated = [...customDeductions];
-                              updated[index].amount = parseFloat(e.target.value) || 0;
+                              updated[index].amount = safeNumber(e.target.value, 0);
                               setCustomDeductions(updated);
                             }}
+                            onWheel={(e) => e.target.blur()}
                             className="w-32"
                           />
                           <Button type="button" variant="ghost" size="icon" onClick={() => {
@@ -802,7 +823,7 @@ export default function PayrollProcessDialog({
                 {customDeductions.length > 0 && (
                   <div className="flex justify-between text-sm text-red-500">
                     <span>- Other Deductions</span>
-                    <span>{formatSLE(customDeductions.reduce((s, d) => s + (d.amount || 0), 0))}</span>
+                    <span>{formatSLE(customDeductions.reduce((s, d) => s + safeNumber(d.amount), 0))}</span>
                   </div>
                 )}
                 
