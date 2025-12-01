@@ -517,7 +517,7 @@ export default function BenefitsDeductionsManager({ orgId, employees = [] }) {
                 </Select>
               </div>
               <div>
-                <Label>{formData.calculation_type === 'percentage' ? 'Percentage (%)' : 'Amount (NLE)'}</Label>
+                <Label>{formData.calculation_type === 'percentage' ? 'Percentage (%)' : 'Amount (Le)'}</Label>
                 <Input
                   type="number"
                   step={formData.calculation_type === 'percentage' ? '0.1' : '1'}

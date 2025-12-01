@@ -461,7 +461,7 @@ export default function PayrollProcessDialog({
                   </div>
                   <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <Label className="text-xs">Total Sales (NLE)</Label>
+                      <Label className="text-xs">Total Sales (Le)</Label>
                       <Input 
                         type="number"
                         min="0"
@@ -541,7 +541,7 @@ export default function PayrollProcessDialog({
                             className="flex-1"
                           />
                           <div className="relative">
-                            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">NLE</span>
+                            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">Le</span>
                             <Input 
                               type="number" 
                               min="0"
@@ -600,7 +600,7 @@ export default function PayrollProcessDialog({
                             className="flex-1"
                           />
                           <div className="relative">
-                            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">NLE</span>
+                            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">Le</span>
                             <Input 
                               type="number" 
                               min="0"
@@ -673,7 +673,7 @@ export default function PayrollProcessDialog({
                             className="flex-1"
                           />
                           <div className="relative">
-                            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">NLE</span>
+                            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">Le</span>
                             <Input 
                               type="number" 
                               min="0"
