@@ -382,8 +382,8 @@ export default function BulkPayrollDialog({
           </div>
         ) : (
           <div className="space-y-6">
-            {/* Period Selection */}
-            <div className="grid grid-cols-2 gap-4">
+            {/* Period & Frequency Selection */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div>
                 <Label>Period Start</Label>
                 <Input 
@@ -401,6 +401,61 @@ export default function BulkPayrollDialog({
                   onChange={(e) => setPeriodEnd(e.target.value)}
                   className="mt-1"
                 />
+              </div>
+              <div>
+                <Label>Payroll Frequency</Label>
+                <Select value={payrollFrequency} onValueChange={setPayrollFrequency}>
+                  <SelectTrigger className="mt-1">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {Object.entries(PAYROLL_FREQUENCIES).map(([key, config]) => (
+                      <SelectItem key={key} value={key}>{config.label}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            {/* Automation Options */}
+            <div className="p-4 bg-blue-50 rounded-lg border border-blue-200 space-y-3">
+              <div className="flex items-center gap-2 mb-2">
+                <Package className="w-4 h-4 text-blue-600" />
+                <span className="font-medium text-blue-800">Automation Options</span>
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger>
+                      <Info className="w-4 h-4 text-blue-400" />
+                    </TooltipTrigger>
+                    <TooltipContent className="max-w-xs">
+                      <p className="text-xs">Configure how payroll is automatically calculated based on remuneration packages and attendance data.</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+              </div>
+              
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium">Use Package Base Salary</p>
+                  <p className="text-xs text-gray-500">Override employee salary with assigned package salary</p>
+                </div>
+                <Switch checked={usePackageSalary} onCheckedChange={setUsePackageSalary} />
+              </div>
+              
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium">Include Package Allowances & Bonuses</p>
+                  <p className="text-xs text-gray-500">Auto-add allowances and bonuses from remuneration packages</p>
+                </div>
+                <Switch checked={usePackageAllowances} onCheckedChange={setUsePackageAllowances} />
+              </div>
+              
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium">Include Attendance Data</p>
+                  <p className="text-xs text-gray-500">Factor in actual days worked and overtime from attendance records</p>
+                </div>
+                <Switch checked={includeAttendanceData} onCheckedChange={setIncludeAttendanceData} />
               </div>
             </div>
 
