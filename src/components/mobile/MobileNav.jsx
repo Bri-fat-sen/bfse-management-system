@@ -37,42 +37,33 @@ export default function MobileNav({ currentPageName }) {
             <Link
               key={item.page}
               to={createPageUrl(item.page)}
-              className="relative flex flex-col items-center min-w-[60px] py-1 group"
+              className="relative flex flex-col items-center flex-1 py-1 group"
             >
               {/* Active indicator pill at top */}
-              <div 
-                className={`absolute -top-2.5 w-10 h-1 rounded-full transition-all duration-300 ${
-                  isActive 
-                    ? 'bg-gradient-to-r from-[#1EB053] to-[#0072C6] opacity-100' 
-                    : 'opacity-0'
-                }`} 
-              />
+              {isActive && (
+                <div className="absolute -top-2 left-1/2 -translate-x-1/2 w-8 h-1 rounded-full bg-gradient-to-r from-[#1EB053] to-[#0072C6]" />
+              )}
               
               {/* Icon container */}
               <div 
-                className={`relative p-2 rounded-2xl transition-all duration-300 ${
+                className={`p-2 rounded-xl transition-all duration-200 ${
                   isActive 
-                    ? 'bg-gradient-to-br from-[#1EB053]/15 to-[#0072C6]/10' 
-                    : 'group-active:bg-gray-100'
+                    ? 'bg-[#1EB053]/10' 
+                    : 'active:bg-gray-100'
                 }`}
               >
                 <item.icon 
-                  className={`w-5 h-5 transition-all duration-300 ${
+                  className={`w-5 h-5 transition-all duration-200 ${
                     isActive 
-                      ? "text-[#1EB053] scale-110" 
-                      : "text-gray-400 group-active:text-gray-600"
+                      ? "text-[#1EB053]" 
+                      : "text-gray-400"
                   }`} 
                 />
-                
-                {/* Glow effect for active */}
-                {isActive && (
-                  <div className="absolute inset-0 rounded-2xl bg-[#1EB053]/20 blur-md -z-10" />
-                )}
               </div>
               
               {/* Label */}
               <span 
-                className={`text-[10px] font-semibold mt-0.5 transition-colors duration-300 ${
+                className={`text-[10px] font-medium transition-colors duration-200 ${
                   isActive ? 'text-[#1EB053]' : 'text-gray-400'
                 }`}
               >
