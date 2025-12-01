@@ -89,13 +89,13 @@ export default function WorkSchedules() {
     );
   }
 
-  if (loadingEmployees) {
-    return <LoadingSpinner message="Loading Work Schedules..." subtitle="Fetching employee schedules" fullScreen={true} />;
-  }
-
   const departments = useMemo(() => {
     return [...new Set(employees.map(e => e.department).filter(Boolean))];
   }, [employees]);
+
+  if (loadingEmployees) {
+    return <LoadingSpinner message="Loading Work Schedules..." subtitle="Fetching employee schedules" fullScreen={true} />;
+  }
 
   const activeEmployees = employees.filter(e => e.status === 'active');
   const activeSchedules = schedules.filter(s => s.is_active);
