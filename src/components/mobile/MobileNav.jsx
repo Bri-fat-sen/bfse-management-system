@@ -14,32 +14,70 @@ const mobileNavItems = [
   { icon: ShoppingCart, label: "Sales", page: "Sales" },
   { icon: Package, label: "Stock", page: "Inventory" },
   { icon: Clock, label: "Clock", page: "Attendance" },
-  { icon: User, label: "Me", page: "EmployeeDashboard" },
+  { icon: User, label: "Me", page: "EmployeeSelfService" },
 ];
 
 export default function MobileNav({ currentPageName }) {
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-lg border-t border-gray-200 lg:hidden" style={{ paddingBottom: 'max(0.5rem, env(safe-area-inset-bottom, 0.5rem))' }}>
-      <div className="flex items-center justify-around py-2">
+    <nav className="fixed bottom-0 left-0 right-0 z-50 lg:hidden">
+      {/* Glass effect background */}
+      <div className="absolute inset-0 bg-white/80 backdrop-blur-xl border-t border-gray-100 shadow-[0_-4px_20px_rgba(0,0,0,0.08)]" />
+      
+      {/* Nav content */}
+      <div 
+        className="relative flex items-center justify-around px-2"
+        style={{ 
+          paddingTop: '0.625rem',
+          paddingBottom: 'max(0.625rem, env(safe-area-inset-bottom, 0.625rem))' 
+        }}
+      >
         {mobileNavItems.map((item) => {
           const isActive = currentPageName === item.page;
           return (
             <Link
               key={item.page}
               to={createPageUrl(item.page)}
-              className={`relative flex flex-col items-center gap-0.5 px-3 py-2 rounded-xl transition-all ${
-                isActive 
-                  ? "text-[#1EB053]" 
-                  : "text-gray-400 active:text-gray-600"
-              }`}
+              className="relative flex flex-col items-center min-w-[60px] py-1 group"
             >
-              <div className={`p-1.5 rounded-xl transition-all ${isActive ? 'bg-green-100' : ''}`}>
-                <item.icon className={`w-5 h-5 transition-transform ${isActive ? "scale-110" : ""}`} />
+              {/* Active indicator pill at top */}
+              <div 
+                className={`absolute -top-2.5 w-10 h-1 rounded-full transition-all duration-300 ${
+                  isActive 
+                    ? 'bg-gradient-to-r from-[#1EB053] to-[#0072C6] opacity-100' 
+                    : 'opacity-0'
+                }`} 
+              />
+              
+              {/* Icon container */}
+              <div 
+                className={`relative p-2 rounded-2xl transition-all duration-300 ${
+                  isActive 
+                    ? 'bg-gradient-to-br from-[#1EB053]/15 to-[#0072C6]/10' 
+                    : 'group-active:bg-gray-100'
+                }`}
+              >
+                <item.icon 
+                  className={`w-5 h-5 transition-all duration-300 ${
+                    isActive 
+                      ? "text-[#1EB053] scale-110" 
+                      : "text-gray-400 group-active:text-gray-600"
+                  }`} 
+                />
+                
+                {/* Glow effect for active */}
+                {isActive && (
+                  <div className="absolute inset-0 rounded-2xl bg-[#1EB053]/20 blur-md -z-10" />
+                )}
               </div>
-              <span className={`text-[10px] font-medium ${isActive ? 'text-[#1EB053]' : ''}`}>{item.label}</span>
-              {isActive && (
-                <div className="absolute -bottom-1 w-8 h-1 bg-gradient-to-r from-[#1EB053] to-[#0072C6] rounded-full" />
-              )}
+              
+              {/* Label */}
+              <span 
+                className={`text-[10px] font-semibold mt-0.5 transition-colors duration-300 ${
+                  isActive ? 'text-[#1EB053]' : 'text-gray-400'
+                }`}
+              >
+                {item.label}
+              </span>
             </Link>
           );
         })}
