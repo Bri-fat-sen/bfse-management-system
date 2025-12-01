@@ -127,7 +127,7 @@ export default function CalendarPage() {
   const isLoading = tasksLoading || meetingsLoading || leaveLoading;
 
   if (!user) {
-    return <LoadingSpinner message="Loading..." fullScreen />;
+    return <LoadingSpinner message="Loading Calendar..." fullScreen />;
   }
 
   if (!currentEmployee || !orgId) {
