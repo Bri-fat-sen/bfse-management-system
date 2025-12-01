@@ -203,7 +203,7 @@ export default function ChatPanel({ isOpen, onClose, orgId, currentEmployee }) {
   };
 
   const handleSendMessage = () => {
-    if (!messageText.trim() || !selectedRoom) return;
+    if ((!messageText.trim() && !currentAttachment) || !selectedRoom) return;
 
     const messageData = {
       organisation_id: orgId,
@@ -212,9 +212,18 @@ export default function ChatPanel({ isOpen, onClose, orgId, currentEmployee }) {
       sender_name: currentEmployee?.full_name,
       sender_photo: currentEmployee?.profile_photo,
       content: messageText,
-      message_type: 'text',
+      message_type: currentAttachment ? currentAttachment.type : 'text',
       read_by: [currentEmployee?.id],
     };
+
+    // Add attachment data
+    if (currentAttachment) {
+      if (currentAttachment.type === 'file' || currentAttachment.type === 'image') {
+        messageData.file_url = currentAttachment.url;
+        messageData.file_name = currentAttachment.name;
+      }
+      messageData.attachment = currentAttachment;
+    }
 
     if (replyingTo) {
       messageData.reply_to_id = replyingTo.id;
@@ -225,14 +234,20 @@ export default function ChatPanel({ isOpen, onClose, orgId, currentEmployee }) {
     sendMessageMutation.mutate(messageData);
 
     // Update room's last message
+    const lastMsgText = currentAttachment 
+      ? (currentAttachment.type === 'product' ? `📦 ${currentAttachment.productName}` : `📎 ${currentAttachment.name}`)
+      : messageText.substring(0, 50);
+
     updateRoomMutation.mutate({
       id: selectedRoom.id,
       data: {
-        last_message: messageText.substring(0, 50),
+        last_message: lastMsgText,
         last_message_at: new Date().toISOString(),
         last_message_sender: currentEmployee?.full_name,
       }
     });
+
+    setCurrentAttachment(null);
   };
 
   const handleEditMessage = (msg) => {
