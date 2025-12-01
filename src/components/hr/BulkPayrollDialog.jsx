@@ -28,9 +28,9 @@ import {
 } from "@/components/ui/collapsible";
 import {
   calculateFullPayroll,
-  formatSLE,
-  applyTemplates
+  formatSLE
 } from "./PayrollCalculator";
+import { safeNumber } from "@/components/utils/calculations";
 
 export default function BulkPayrollDialog({ 
   open, 
@@ -107,10 +107,10 @@ export default function BulkPayrollDialog({
 
   const totals = useMemo(() => {
     return payrollPreviews.reduce((acc, p) => ({
-      gross: acc.gross + p.gross_pay,
-      deductions: acc.deductions + p.total_deductions,
-      net: acc.net + p.net_pay,
-      employerCost: acc.employerCost + p.employer_cost
+      gross: acc.gross + safeNumber(p.gross_pay),
+      deductions: acc.deductions + safeNumber(p.total_deductions),
+      net: acc.net + safeNumber(p.net_pay),
+      employerCost: acc.employerCost + safeNumber(p.employer_cost)
     }), { gross: 0, deductions: 0, net: 0, employerCost: 0 });
   }, [payrollPreviews]);
 
