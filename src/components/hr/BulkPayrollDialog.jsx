@@ -469,27 +469,44 @@ export default function BulkPayrollDialog({
               </div>
               <ScrollArea className="h-48 border rounded-lg p-2">
                 <div className="space-y-2">
-                  {activeEmployees.map(emp => (
-                    <div 
-                      key={emp.id} 
-                      className={`flex items-center justify-between p-2 rounded-lg cursor-pointer transition-colors ${
-                        selectedEmployees.includes(emp.id) ? 'bg-[#1EB053]/10' : 'hover:bg-gray-50'
-                      }`}
-                      onClick={() => toggleEmployee(emp.id)}
-                    >
-                      <div className="flex items-center gap-3">
-                        <Checkbox 
-                          checked={selectedEmployees.includes(emp.id)}
-                          onCheckedChange={() => toggleEmployee(emp.id)}
-                        />
-                        <div>
-                          <p className="font-medium text-sm">{emp.full_name}</p>
-                          <p className="text-xs text-gray-500">{emp.role?.replace('_', ' ')} • {emp.department}</p>
+                  {activeEmployees.map(emp => {
+                    const pkg = getEmployeePackage(emp);
+                    const effectiveSalary = (usePackageSalary && pkg) ? pkg.base_salary : emp.base_salary;
+                    return (
+                      <div 
+                        key={emp.id} 
+                        className={`flex items-center justify-between p-2 rounded-lg cursor-pointer transition-colors ${
+                          selectedEmployees.includes(emp.id) ? 'bg-[#1EB053]/10' : 'hover:bg-gray-50'
+                        }`}
+                        onClick={() => toggleEmployee(emp.id)}
+                      >
+                        <div className="flex items-center gap-3">
+                          <Checkbox 
+                            checked={selectedEmployees.includes(emp.id)}
+                            onCheckedChange={() => toggleEmployee(emp.id)}
+                          />
+                          <div>
+                            <p className="font-medium text-sm">{emp.full_name}</p>
+                            <div className="flex items-center gap-2">
+                              <p className="text-xs text-gray-500">{emp.role?.replace('_', ' ')} • {emp.department}</p>
+                              {pkg && (
+                                <Badge variant="outline" className="text-xs bg-green-50 text-green-700 border-green-200">
+                                  <Package className="w-3 h-3 mr-1" />
+                                  {pkg.name}
+                                </Badge>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                        <div className="text-right">
+                          <span className="text-sm font-medium">{formatSLE(effectiveSalary)}</span>
+                          {pkg && usePackageSalary && emp.base_salary !== pkg.base_salary && (
+                            <p className="text-xs text-gray-400 line-through">{formatSLE(emp.base_salary)}</p>
+                          )}
                         </div>
                       </div>
-                      <span className="text-sm font-medium">{formatSLE(emp.base_salary)}</span>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               </ScrollArea>
             </div>
