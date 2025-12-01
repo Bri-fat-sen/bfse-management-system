@@ -208,7 +208,22 @@ export default function CustomerDialog({ open, onOpenChange, customer, orgId, em
             </div>
             <div>
               <Label>Credit Limit (Le)</Label>
-              <Input type="number" value={formData.credit_limit} onChange={(e) => setFormData({ ...formData, credit_limit: parseFloat(e.target.value) || 0 })} />
+              <Input 
+                type="number" 
+                min="0"
+                step="1000"
+                value={formData.credit_limit} 
+                onChange={(e) => {
+                  const value = e.target.value;
+                  // Allow empty string for better UX
+                  if (value === '') {
+                    setFormData({ ...formData, credit_limit: 0 });
+                  } else {
+                    const parsed = parseFloat(value);
+                    setFormData({ ...formData, credit_limit: isNaN(parsed) ? 0 : Math.max(0, parsed) });
+                  }
+                }} 
+              />
             </div>
             <div>
               <Label>Payment Method</Label>

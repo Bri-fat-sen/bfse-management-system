@@ -19,10 +19,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { useToast } from "@/components/ui/use-toast";
+import { toast } from "sonner";
 import { Package, Plus, Minus, ArrowLeftRight, AlertTriangle } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { format } from "date-fns";
+import { safeNumber, safeInt, calculateNewStock, formatNumber } from "@/components/utils/calculations";
 
 export default function StockAdjustmentDialog({ 
   open, 
@@ -32,10 +33,11 @@ export default function StockAdjustmentDialog({
   orgId,
   currentEmployee 
 }) {
-  const { toast } = useToast();
   const queryClient = useQueryClient();
   const [adjustmentType, setAdjustmentType] = useState("in");
   const [selectedProduct, setSelectedProduct] = useState("");
+  const [quantity, setQuantity] = useState("");
+  const [errors, setErrors] = useState({});
 
   const createMovementMutation = useMutation({
     mutationFn: async (data) => {
@@ -120,30 +122,70 @@ export default function StockAdjustmentDialog({
       queryClient.invalidateQueries({ queryKey: ['stockAlerts'] });
       queryClient.invalidateQueries({ queryKey: ['inventoryBatches'] });
       onOpenChange(false);
-      setSelectedProduct("");
-      toast({ title: "Stock adjusted successfully" });
+      resetForm();
+      toast.success("Stock adjusted successfully");
     },
+    onError: (error) => {
+      toast.error("Failed to adjust stock", { description: error.message });
+    }
   });
+
+  const resetForm = () => {
+    setSelectedProduct("");
+    setQuantity("");
+    setErrors({});
+  };
+
+  const validateForm = (formData) => {
+    const newErrors = {};
+    const productId = formData.get('product_id');
+    const qty = safeInt(formData.get('quantity'));
+    const product = products.find(p => p.id === productId);
+    
+    if (!productId) {
+      newErrors.product = "Please select a product";
+    }
+    
+    if (qty <= 0) {
+      newErrors.quantity = "Quantity must be greater than 0";
+    }
+    
+    if (adjustmentType === "out" && product) {
+      const currentStock = safeInt(product.stock_quantity);
+      if (qty > currentStock) {
+        newErrors.quantity = `Cannot remove more than current stock (${formatNumber(currentStock)})`;
+      }
+    }
+    
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
 
   const handleSubmit = (e) => {
     e.preventDefault();
     const formData = new FormData(e.target);
+    
+    if (!validateForm(formData)) {
+      toast.error("Please fix the errors before submitting");
+      return;
+    }
+    
     const productId = formData.get('product_id');
-    const quantity = parseInt(formData.get('quantity')) || 0;
+    const qty = safeInt(formData.get('quantity'));
     const product = products.find(p => p.id === productId);
     const warehouse = warehouses.find(w => w.id === formData.get('warehouse_id'));
     
     if (!product) return;
 
-    const previousStock = product.stock_quantity || 0;
+    const previousStock = safeInt(product.stock_quantity);
     let newStock = previousStock;
     
     if (adjustmentType === "in") {
-      newStock = previousStock + quantity;
+      newStock = previousStock + qty;
     } else if (adjustmentType === "out") {
-      newStock = Math.max(0, previousStock - quantity);
+      newStock = Math.max(0, previousStock - qty);
     } else {
-      newStock = quantity; // Direct adjustment
+      newStock = qty; // Direct adjustment
     }
 
     const movementData = {
@@ -153,7 +195,7 @@ export default function StockAdjustmentDialog({
       warehouse_id: formData.get('warehouse_id'),
       warehouse_name: warehouse?.name || 'Main',
       movement_type: adjustmentType === "adjustment" ? "adjustment" : adjustmentType,
-      quantity: quantity,
+      quantity: qty,
       previous_stock: previousStock,
       new_stock: newStock,
       reference_type: "manual",
@@ -178,20 +220,26 @@ export default function StockAdjustmentDialog({
   };
 
   // Check if this would trigger a low stock alert
-  const getStockWarning = (productId, quantity) => {
+  const getStockWarning = (productId, qty) => {
     const prod = products.find(p => p.id === productId);
     if (!prod) return null;
     
-    let newStock = prod.stock_quantity || 0;
-    if (adjustmentType === "in") newStock += quantity;
-    else if (adjustmentType === "out") newStock = Math.max(0, newStock - quantity);
-    else newStock = quantity;
+    const currentStock = safeInt(prod.stock_quantity);
+    const qtyNum = safeInt(qty);
     
-    const threshold = prod.low_stock_threshold || 10;
-    if (newStock === 0) return { type: "out_of_stock", message: "This will result in OUT OF STOCK" };
-    if (newStock <= threshold) return { type: "low_stock", message: `This will result in LOW STOCK (below ${threshold})` };
+    let newStock = currentStock;
+    if (adjustmentType === "in") newStock = currentStock + qtyNum;
+    else if (adjustmentType === "out") newStock = Math.max(0, currentStock - qtyNum);
+    else newStock = qtyNum;
+    
+    const threshold = safeInt(prod.low_stock_threshold, 10);
+    if (newStock === 0) return { type: "out_of_stock", message: "This will result in OUT OF STOCK", color: "text-red-600" };
+    if (newStock <= threshold) return { type: "low_stock", message: `This will result in LOW STOCK (below ${threshold})`, color: "text-amber-600" };
+    if (adjustmentType === "out" && qtyNum > currentStock) return { type: "error", message: `Cannot remove more than ${formatNumber(currentStock)} units`, color: "text-red-600" };
     return null;
   };
+
+  const stockWarning = getStockWarning(selectedProduct, quantity);
 
   const product = products.find(p => p.id === selectedProduct);
 
@@ -247,6 +295,13 @@ export default function StockAdjustmentDialog({
             </Select>
           </div>
 
+          {errors.product && (
+            <p className="text-sm text-red-600 flex items-center gap-1">
+              <AlertTriangle className="w-3 h-3" />
+              {errors.product}
+            </p>
+          )}
+
           {product && (
             <div className="p-3 bg-gray-50 rounded-lg flex items-center gap-3">
               <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-[#1EB053]/20 to-[#0072C6]/20 flex items-center justify-center">
@@ -254,7 +309,9 @@ export default function StockAdjustmentDialog({
               </div>
               <div>
                 <p className="font-medium">{product.name}</p>
-                <p className="text-sm text-gray-500">Current Stock: {product.stock_quantity} {product.unit}</p>
+                <p className="text-sm text-gray-500">
+                  Current Stock: <span className="font-medium">{formatNumber(safeInt(product.stock_quantity))}</span> {product.unit || 'units'}
+                </p>
               </div>
             </div>
           )}
@@ -266,29 +323,43 @@ export default function StockAdjustmentDialog({
             <Input 
               name="quantity" 
               type="number" 
-              min="0" 
+              min="1" 
+              step="1"
               required 
-              className="mt-1" 
-              id="adjustment-quantity"
+              className={`mt-1 ${errors.quantity ? 'border-red-500 focus:ring-red-200' : ''}`}
+              value={quantity}
               onChange={(e) => {
-                // Trigger re-render for warning
-                const form = e.target.closest('form');
-                if (form) {
-                  const qty = parseInt(e.target.value) || 0;
-                  const warning = getStockWarning(selectedProduct, qty);
-                  const warningEl = document.getElementById('stock-warning');
-                  if (warningEl && warning) {
-                    warningEl.classList.remove('hidden');
-                    warningEl.textContent = warning.message;
-                  } else if (warningEl) {
-                    warningEl.classList.add('hidden');
-                  }
+                setQuantity(e.target.value);
+                if (errors.quantity) {
+                  setErrors(prev => ({ ...prev, quantity: null }));
                 }
               }}
             />
-            <p id="stock-warning" className="hidden text-sm text-amber-600 mt-1 flex items-center gap-1">
-              <AlertTriangle className="w-3 h-3" />
-            </p>
+            {errors.quantity && (
+              <p className="text-sm text-red-600 mt-1 flex items-center gap-1">
+                <AlertTriangle className="w-3 h-3" />
+                {errors.quantity}
+              </p>
+            )}
+            {!errors.quantity && stockWarning && (
+              <p className={`text-sm ${stockWarning.color} mt-1 flex items-center gap-1`}>
+                <AlertTriangle className="w-3 h-3" />
+                {stockWarning.message}
+              </p>
+            )}
+            {product && safeInt(quantity) > 0 && !errors.quantity && !stockWarning?.type?.includes('error') && (
+              <p className="text-sm text-gray-500 mt-1">
+                New stock will be: <span className="font-medium">
+                  {formatNumber(
+                    adjustmentType === "in" 
+                      ? safeInt(product.stock_quantity) + safeInt(quantity)
+                      : adjustmentType === "out"
+                        ? Math.max(0, safeInt(product.stock_quantity) - safeInt(quantity))
+                        : safeInt(quantity)
+                  )} {product.unit || 'units'}
+                </span>
+              </p>
+            )}
           </div>
 
           {warehouses.length > 0 && (

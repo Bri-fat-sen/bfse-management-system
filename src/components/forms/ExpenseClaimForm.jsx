@@ -5,10 +5,12 @@ import { motion } from "framer-motion";
 import { Receipt, Camera, X, Plus, Check, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { useToast } from "@/components/ui/use-toast";
+import { toast } from "sonner";
 import { FormWrapper, FormWrapperHeader, FormWrapperContent } from "./FormWrapper";
 import { FormInput, FormTextarea, FormSelect, FormField, FormActions } from "./FormField";
+import { safeNumber, formatNumber, safeSum } from "@/components/utils/calculations";
 
 const CATEGORIES = [
   { value: "fuel", label: "Fuel & Transport", icon: "⛽", color: "bg-orange-100 text-orange-700" },
@@ -29,10 +31,10 @@ const PAYMENT_METHODS = [
 ];
 
 export default function ExpenseClaimForm({ orgId, currentEmployee, onSuccess, onClose }) {
-  const { toast } = useToast();
   const queryClient = useQueryClient();
   const [uploading, setUploading] = useState(false);
   const [items, setItems] = useState([{ description: "", amount: "", category: "other" }]);
+  const [errors, setErrors] = useState({});
   
   const [formData, setFormData] = useState({
     date: new Date().toISOString().split('T')[0],
@@ -46,9 +48,12 @@ export default function ExpenseClaimForm({ orgId, currentEmployee, onSuccess, on
     mutationFn: (data) => base44.entities.Expense.create(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['expenses'] });
-      toast({ title: "Expense Submitted!", description: "Your claim is pending approval" });
+      toast.success("Expense Submitted!", { description: "Your claim is pending approval" });
       onSuccess?.();
     },
+    onError: (error) => {
+      toast.error("Failed to submit expense", { description: error.message });
+    }
   });
 
   const updateField = (field, value) => {
@@ -57,6 +62,10 @@ export default function ExpenseClaimForm({ orgId, currentEmployee, onSuccess, on
 
   const updateItem = (index, field, value) => {
     setItems(items.map((item, i) => i === index ? { ...item, [field]: value } : item));
+    // Clear errors when user types
+    if (errors.items) {
+      setErrors(prev => ({ ...prev, items: null }));
+    }
   };
 
   const addItem = () => {
@@ -77,32 +86,61 @@ export default function ExpenseClaimForm({ orgId, currentEmployee, onSuccess, on
     try {
       const { file_url } = await base44.integrations.Core.UploadFile({ file });
       updateField('receipt_url', file_url);
-      toast({ title: "Receipt uploaded!" });
+      toast.success("Receipt uploaded!");
     } catch (error) {
-      toast({ title: "Upload failed", variant: "destructive" });
+      toast.error("Upload failed", { description: error.message });
     }
     setUploading(false);
   };
 
-  const totalAmount = items.reduce((sum, item) => sum + (parseFloat(item.amount) || 0), 0);
+  // Use safe calculation for total
+  const totalAmount = items.reduce((sum, item) => sum + safeNumber(item.amount), 0);
+
+  const validateForm = () => {
+    const newErrors = {};
+    
+    // Check if at least one valid item exists
+    const validItems = items.filter(item => item.description.trim() && safeNumber(item.amount) > 0);
+    if (validItems.length === 0) {
+      newErrors.items = "Please add at least one expense item with description and amount";
+    }
+    
+    // Check for invalid amounts
+    items.forEach((item, index) => {
+      if (item.amount && safeNumber(item.amount) <= 0 && item.description) {
+        newErrors[`item_${index}`] = "Amount must be greater than 0";
+      }
+    });
+    
+    if (!formData.date) {
+      newErrors.date = "Date is required";
+    }
+    
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
 
   const handleSubmit = (e) => {
     e.preventDefault();
     
-    if (!items.some(item => item.description && item.amount)) {
-      toast({ title: "Please add at least one expense item", variant: "destructive" });
+    if (!validateForm()) {
+      toast.error("Please fix the errors before submitting");
       return;
     }
 
+    // Filter valid items only
+    const validItems = items.filter(item => item.description.trim() && safeNumber(item.amount) > 0);
+    
     // Create one expense per item or combine them
-    const mainCategory = items[0]?.category || "other";
-    const description = items.map(i => `${i.description}: Le ${parseFloat(i.amount || 0).toLocaleString()}`).join('; ');
+    const mainCategory = validItems[0]?.category || "other";
+    const description = validItems.map(i => `${i.description}: Le ${formatNumber(safeNumber(i.amount))}`).join('; ');
+    const calculatedTotal = validItems.reduce((sum, item) => sum + safeNumber(item.amount), 0);
 
     createMutation.mutate({
       organisation_id: orgId,
       category: mainCategory,
       description: description,
-      amount: totalAmount,
+      amount: calculatedTotal,
       date: formData.date,
       vendor: formData.vendor,
       payment_method: formData.payment_method,
@@ -157,12 +195,18 @@ export default function ExpenseClaimForm({ orgId, currentEmployee, onSuccess, on
               </Button>
             </div>
             
+            {errors.items && (
+              <p className="text-red-500 text-sm flex items-center gap-1">
+                <X className="w-3 h-3" /> {errors.items}
+              </p>
+            )}
+            
             {items.map((item, index) => (
               <motion.div
                 key={index}
                 initial={{ opacity: 0, y: -10 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="flex gap-3 items-start p-4 bg-gray-50 rounded-xl"
+                className={`flex gap-3 items-start p-4 bg-gray-50 rounded-xl ${errors[`item_${index}`] ? 'ring-2 ring-red-200' : ''}`}
               >
                 <div className="flex-1">
                   <Input
@@ -170,16 +214,20 @@ export default function ExpenseClaimForm({ orgId, currentEmployee, onSuccess, on
                     onChange={(e) => updateItem(index, 'description', e.target.value)}
                     placeholder="What was this expense for?"
                     className="mb-2"
+                    required
                   />
                   <div className="flex gap-2">
                     <div className="relative flex-1">
                       <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 text-sm">Le</span>
                       <Input
                         type="number"
+                        min="0"
+                        step="0.01"
                         value={item.amount}
                         onChange={(e) => updateItem(index, 'amount', e.target.value)}
                         placeholder="0"
                         className="pl-10"
+                        required
                       />
                     </div>
                     <Select value={item.category} onValueChange={(v) => updateItem(index, 'category', v)}>
@@ -195,6 +243,12 @@ export default function ExpenseClaimForm({ orgId, currentEmployee, onSuccess, on
                       </SelectContent>
                     </Select>
                   </div>
+                  {errors[`item_${index}`] && (
+                    <p className="text-red-500 text-xs mt-1">{errors[`item_${index}`]}</p>
+                  )}
+                  {safeNumber(item.amount) > 0 && (
+                    <p className="text-xs text-gray-500 mt-1">= Le {formatNumber(safeNumber(item.amount))}</p>
+                  )}
                 </div>
                 {items.length > 1 && (
                   <Button type="button" variant="ghost" size="icon" onClick={() => removeItem(index)} className="text-red-500 mt-1">
@@ -266,14 +320,18 @@ export default function ExpenseClaimForm({ orgId, currentEmployee, onSuccess, on
           <div className="pt-4 border-t">
             <div className="flex items-center justify-between mb-4 p-4 bg-gradient-to-r from-[#1EB053]/10 to-[#0072C6]/10 rounded-xl">
               <span className="font-medium text-gray-700">Total Claim Amount</span>
-              <span className="text-2xl font-bold text-[#1EB053]">Le {totalAmount.toLocaleString()}</span>
+              <span className="text-2xl font-bold text-[#1EB053]">Le {formatNumber(totalAmount)}</span>
             </div>
+            
+            {totalAmount === 0 && (
+              <p className="text-amber-600 text-sm text-center mb-4">Add expense items with amounts to submit</p>
+            )}
             
             <FormActions
               onCancel={onClose}
               submitLabel={createMutation.isPending ? "Submitting..." : "Submit Claim"}
               isLoading={createMutation.isPending}
-              disabled={totalAmount === 0}
+              disabled={totalAmount === 0 || createMutation.isPending}
             />
           </div>
         </form>
