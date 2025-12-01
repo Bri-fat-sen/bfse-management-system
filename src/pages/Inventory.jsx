@@ -62,6 +62,9 @@ import BatchReports from "@/components/inventory/BatchReports";
 import StockTransferDialog from "@/components/inventory/StockTransferDialog";
 import ProductDetailsDialog from "@/components/inventory/ProductDetailsDialog";
 import AIInventoryRecommendations from "@/components/ai/AIInventoryRecommendations";
+import SerialNumberManager from "@/components/inventory/SerialNumberManager";
+import ReorderSuggestions from "@/components/inventory/ReorderSuggestions";
+import MultiLocationStock from "@/components/inventory/MultiLocationStock";
 
 const DEFAULT_CATEGORIES = ["Water", "Beverages", "Food", "Electronics", "Clothing", "Other"];
 
@@ -172,6 +175,12 @@ export default function Inventory() {
     enabled: !!orgId,
   });
 
+  const { data: suppliers = [] } = useQuery({
+    queryKey: ['suppliers', orgId],
+    queryFn: () => base44.entities.Supplier.filter({ organisation_id: orgId }),
+    enabled: !!orgId,
+  });
+
   // Auto-generate stock alerts for low stock items (run only when products change)
   useEffect(() => {
     const checkStockAlerts = async () => {
@@ -273,6 +282,11 @@ export default function Inventory() {
       wholesale_price: parseFloat(formData.get('wholesale_price')) || 0,
       stock_quantity: parseInt(formData.get('stock_quantity')) || 0,
       low_stock_threshold: parseInt(formData.get('low_stock_threshold')) || 10,
+      reorder_point: parseInt(formData.get('reorder_point')) || 10,
+      reorder_quantity: parseInt(formData.get('reorder_quantity')) || 50,
+      lead_time_days: parseInt(formData.get('lead_time_days')) || 7,
+      is_serialized: formData.get('is_serialized') === 'on',
+      track_batches: formData.get('track_batches') === 'on',
       unit: formData.get('unit'),
       location_ids: selectedLocations,
       is_active: true,
@@ -424,6 +438,15 @@ export default function Inventory() {
           </TabsTrigger>
           <TabsTrigger value="expiry" className="text-xs sm:text-sm px-2 sm:px-3 data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#1EB053] data-[state=active]:to-[#0072C6] data-[state=active]:text-white">
             Expiry
+          </TabsTrigger>
+          <TabsTrigger value="locations" className="text-xs sm:text-sm px-2 sm:px-3 data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#1EB053] data-[state=active]:to-[#0072C6] data-[state=active]:text-white">
+            Locations
+          </TabsTrigger>
+          <TabsTrigger value="serials" className="text-xs sm:text-sm px-2 sm:px-3 data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#1EB053] data-[state=active]:to-[#0072C6] data-[state=active]:text-white">
+            Serial #
+          </TabsTrigger>
+          <TabsTrigger value="reorder" className="text-xs sm:text-sm px-2 sm:px-3 data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#1EB053] data-[state=active]:to-[#0072C6] data-[state=active]:text-white">
+            Reorder
           </TabsTrigger>
         </TabsList>
 
@@ -773,6 +796,39 @@ export default function Inventory() {
             <BatchReports batches={inventoryBatches} products={products} warehouses={warehouses} organisation={organisation?.[0]} />
           </div>
         </TabsContent>
+
+        {/* Multi-Location Stock Tab */}
+        <TabsContent value="locations" className="mt-6">
+          <MultiLocationStock
+            orgId={orgId}
+            products={products}
+            warehouses={warehouses}
+            vehicles={vehicles}
+            stockLevels={stockLevels}
+            currentEmployee={currentEmployee}
+          />
+        </TabsContent>
+
+        {/* Serial Numbers Tab */}
+        <TabsContent value="serials" className="mt-6">
+          <SerialNumberManager
+            orgId={orgId}
+            products={products}
+            warehouses={warehouses}
+            vehicles={vehicles}
+          />
+        </TabsContent>
+
+        {/* Reorder Suggestions Tab */}
+        <TabsContent value="reorder" className="mt-6">
+          <ReorderSuggestions
+            orgId={orgId}
+            products={products}
+            sales={sales}
+            suppliers={suppliers}
+            currentEmployee={currentEmployee}
+          />
+        </TabsContent>
       </Tabs>
 
       {/* Stock Adjustment Dialog */}
@@ -904,6 +960,34 @@ export default function Inventory() {
               <div>
                 <Label>Low Stock Threshold</Label>
                 <Input name="low_stock_threshold" type="number" defaultValue={editingProduct?.low_stock_threshold || 10} className="mt-1" />
+              </div>
+              <div>
+                <Label>Reorder Point</Label>
+                <Input name="reorder_point" type="number" defaultValue={editingProduct?.reorder_point || 10} className="mt-1" />
+              </div>
+              <div>
+                <Label>Reorder Quantity</Label>
+                <Input name="reorder_quantity" type="number" defaultValue={editingProduct?.reorder_quantity || 50} className="mt-1" />
+              </div>
+              <div>
+                <Label>Lead Time (days)</Label>
+                <Input name="lead_time_days" type="number" defaultValue={editingProduct?.lead_time_days || 7} className="mt-1" />
+              </div>
+              <div className="flex items-center gap-4 col-span-2">
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <Checkbox 
+                    name="is_serialized"
+                    defaultChecked={editingProduct?.is_serialized}
+                  />
+                  <span className="text-sm">Track Serial Numbers</span>
+                </label>
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <Checkbox 
+                    name="track_batches"
+                    defaultChecked={editingProduct?.track_batches}
+                  />
+                  <span className="text-sm">Track Batches/Lots</span>
+                </label>
               </div>
               <div className="col-span-2">
                 <Label>Description</Label>
