@@ -1,11 +1,53 @@
-import React from "react";
+import React, { useState } from "react";
 import { format } from "date-fns";
 import { Button } from "@/components/ui/button";
-import { Printer, Download } from "lucide-react";
+import { Printer, Download, Settings2, Eye } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+
+const safeNum = (val) => {
+  if (val === null || val === undefined) return 0;
+  const num = typeof val === 'number' ? val : parseFloat(val);
+  return isNaN(num) ? 0 : num;
+};
 
 export default function PayslipGenerator({ payroll, employee, organisation }) {
+  const [showPreview, setShowPreview] = useState(false);
+  const [options, setOptions] = useState({
+    showLogo: true,
+    showBankDetails: true,
+    showAttendance: true,
+    showTaxBreakdown: true,
+    showEmployerCost: false,
+    colorScheme: 'green', // green, blue, purple
+    layout: 'modern' // modern, classic, compact
+  });
+
+  const colorSchemes = {
+    green: { primary: '#1EB053', secondary: '#059669', accent: '#10b981' },
+    blue: { primary: '#0072C6', secondary: '#0284c7', accent: '#3b82f6' },
+    purple: { primary: '#7c3aed', secondary: '#6d28d9', accent: '#8b5cf6' }
+  };
+
+  const colors = colorSchemes[options.colorScheme];
+
   const generatePayslipHTML = () => {
     const orgInitials = (organisation?.name || 'ORG').split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase();
+    const hasLogo = options.showLogo && organisation?.logo_url;
     
     return `
       <!DOCTYPE html>
