@@ -159,7 +159,9 @@ export default function Sales() {
   const locationStockMap = React.useMemo(() => {
     const map = {};
     stockLevels.forEach(sl => {
-      map[sl.product_id] = sl.available_quantity ?? sl.quantity ?? 0;
+      // Use quantity if available_quantity is 0 or undefined
+      const availableQty = sl.available_quantity || sl.quantity || 0;
+      map[sl.product_id] = availableQty;
     });
     return map;
   }, [stockLevels]);
