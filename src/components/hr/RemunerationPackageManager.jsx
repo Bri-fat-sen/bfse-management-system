@@ -409,7 +409,7 @@ export default function RemunerationPackageManager({ orgId }) {
     }));
   };
 
-  const formatSLE = (amount) => `NLE ${formatNumber(safeNumber(amount))}`;
+  const formatSLE = (amount) => `Le ${formatNumber(safeNumber(amount))}`;
   
   // Calculate bonus monthly equivalent based on frequency
   const getBonusMonthlyValue = (bonus) => {
@@ -671,7 +671,7 @@ export default function RemunerationPackageManager({ orgId }) {
               </h4>
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <Label>Amount (NLE)</Label>
+                  <Label>Amount (Le)</Label>
                   <Input
                     type="number"
                     value={formData.base_salary || ""}
@@ -773,7 +773,7 @@ export default function RemunerationPackageManager({ orgId }) {
                     </Select>
                     <div className="relative">
                       <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-xs">
-                        {allowance.type === 'percentage' ? '%' : 'NLE'}
+                        {allowance.type === 'percentage' ? '%' : 'Le'}
                       </span>
                       <Input
                         type="number"
@@ -839,7 +839,7 @@ export default function RemunerationPackageManager({ orgId }) {
                       </SelectContent>
                     </Select>
                     <div className="relative">
-                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-xs">NLE</span>
+                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-xs">Le</span>
                       <Input
                         type="number"
                         placeholder="0"

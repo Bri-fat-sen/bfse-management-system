@@ -723,10 +723,10 @@ export function calculateFullPayroll({
 }
 
 /**
- * Format currency for display - NLE (New Leone)
+ * Format currency for display - Le (New Leone)
  */
 export function formatSLE(amount) {
-  return `NLE ${Math.round(safeNum(amount)).toLocaleString()}`;
+  return `Le ${Math.round(safeNum(amount)).toLocaleString()}`;
 }
 
 // Alias for new naming
