@@ -627,10 +627,7 @@ export default function Layout({ children, currentPageName }) {
           currentEmployee={currentEmployee}
         />
 
-        <PushNotificationManager
-          orgId={orgId}
-          currentEmployee={currentEmployee}
-        />
+
 
         <GlobalSearch 
           orgId={orgId} 
