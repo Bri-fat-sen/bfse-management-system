@@ -49,6 +49,40 @@ export default function PayslipGenerator({ payroll, employee, organisation }) {
     const orgInitials = (organisation?.name || 'ORG').split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase();
     const hasLogo = options.showLogo && organisation?.logo_url;
     
+    // Calculate detailed breakdowns
+    const basePay = safeNum(payroll?.base_salary);
+    const proratedSalary = safeNum(payroll?.prorated_salary) || basePay;
+    const overtimePay = safeNum(payroll?.overtime_pay);
+    const weekendPay = safeNum(payroll?.weekend_pay);
+    const holidayPay = safeNum(payroll?.holiday_pay);
+    const totalBonuses = safeNum(payroll?.total_bonuses);
+    const totalAllowances = safeNum(payroll?.total_allowances);
+    const grossPay = safeNum(payroll?.gross_pay);
+    const nassitEmployee = safeNum(payroll?.nassit_employee);
+    const nassitEmployer = safeNum(payroll?.nassit_employer);
+    const payeTax = safeNum(payroll?.paye_tax);
+    const totalDeductions = safeNum(payroll?.total_deductions);
+    const netPay = safeNum(payroll?.net_pay);
+    const employerCost = safeNum(payroll?.employer_cost);
+    
+    const allowances = payroll?.allowances || [];
+    const bonuses = payroll?.bonuses || [];
+    const deductions = (payroll?.deductions || []).filter(d => 
+      d.type !== 'statutory' && !d.name?.toLowerCase().includes('nassit') && !d.name?.toLowerCase().includes('paye')
+    );
+    
+    const daysWorked = safeNum(payroll?.days_worked);
+    const hoursWorked = safeNum(payroll?.hours_worked);
+    const overtimeHours = safeNum(payroll?.overtime_hours);
+    const weekendHours = safeNum(payroll?.weekend_hours);
+    const holidayHours = safeNum(payroll?.holiday_hours);
+    
+    const taxBracket = payroll?.calculation_details?.tax_bracket || 'N/A';
+    const effectiveTaxRate = safeNum(payroll?.calculation_details?.effective_tax_rate);
+    const hourlyRate = safeNum(payroll?.calculation_details?.hourly_rate);
+    const dailyRate = safeNum(payroll?.calculation_details?.daily_rate);
+    const frequency = payroll?.payroll_frequency || 'monthly';
+
     return `
       <!DOCTYPE html>
       <html lang="en">
@@ -61,8 +95,9 @@ export default function PayslipGenerator({ payroll, employee, organisation }) {
             :root {
               --primary: #0f172a;
               --primary-light: #1e293b;
-              --accent: #3b82f6;
-              --success: #10b981;
+              --accent: ${colors.accent};
+              --success: ${colors.primary};
+              --success-dark: ${colors.secondary};
               --danger: #ef4444;
               --gray-50: #f8fafc;
               --gray-100: #f1f5f9;
