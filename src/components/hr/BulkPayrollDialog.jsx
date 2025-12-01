@@ -64,6 +64,10 @@ export default function BulkPayrollDialog({
   const [progress, setProgress] = useState(0);
   const [results, setResults] = useState([]);
   const [showResults, setShowResults] = useState(false);
+  const [payrollFrequency, setPayrollFrequency] = useState("monthly");
+  const [usePackageSalary, setUsePackageSalary] = useState(true);
+  const [usePackageAllowances, setUsePackageAllowances] = useState(true);
+  const [includeAttendanceData, setIncludeAttendanceData] = useState(true);
 
   // Fetch benefit/deduction templates
   const { data: templates = [] } = useQuery({
@@ -75,7 +79,117 @@ export default function BulkPayrollDialog({
     enabled: !!orgId,
   });
 
+  // Fetch remuneration packages
+  const { data: remunerationPackages = [] } = useQuery({
+    queryKey: ['remunerationPackages', orgId],
+    queryFn: () => base44.entities.RemunerationPackage.filter({ 
+      organisation_id: orgId, 
+      is_active: true 
+    }),
+    enabled: !!orgId,
+  });
+
+  // Fetch attendance records for the period
+  const { data: attendanceRecords = [] } = useQuery({
+    queryKey: ['bulkAttendance', orgId, periodStart, periodEnd],
+    queryFn: () => base44.entities.Attendance.filter({ organisation_id: orgId }),
+    enabled: !!orgId && includeAttendanceData,
+  });
+
+  // Fetch sales records for commission calculation
+  const { data: salesRecords = [] } = useQuery({
+    queryKey: ['bulkSales', orgId, periodStart, periodEnd],
+    queryFn: () => base44.entities.Sale.filter({ organisation_id: orgId }),
+    enabled: !!orgId,
+  });
+
   const activeEmployees = employees.filter(e => e.status === 'active');
+
+  // Get employee's remuneration package
+  const getEmployeePackage = (employee) => {
+    if (!employee.remuneration_package_id) return null;
+    return remunerationPackages.find(p => p.id === employee.remuneration_package_id);
+  };
+
+  // Get attendance data for an employee in the period
+  const getEmployeeAttendance = (employeeId) => {
+    if (!includeAttendanceData) {
+      const frequencyConfig = PAYROLL_FREQUENCIES[payrollFrequency] || PAYROLL_FREQUENCIES.monthly;
+      return { 
+        daysWorked: frequencyConfig.workingDays, 
+        expectedDays: frequencyConfig.workingDays, 
+        regularHours: frequencyConfig.workingDays * 8,
+        overtimeHours: 0
+      };
+    }
+
+    const periodRecords = attendanceRecords.filter(r => {
+      if (r.employee_id !== employeeId) return false;
+      const date = r.date || r.check_in?.split('T')[0];
+      return date >= periodStart && date <= periodEnd;
+    });
+
+    const daysWorked = periodRecords.filter(r => 
+      r.status === 'present' || r.status === 'late'
+    ).length;
+
+    const totalHours = periodRecords.reduce((sum, r) => sum + safeNumber(r.hours_worked), 0);
+    const recordedOvertime = periodRecords.reduce((sum, r) => sum + safeNumber(r.overtime_hours), 0);
+
+    const frequencyConfig = PAYROLL_FREQUENCIES[payrollFrequency] || PAYROLL_FREQUENCIES.monthly;
+    const expectedDays = frequencyConfig.workingDays;
+
+    return {
+      daysWorked: daysWorked || expectedDays,
+      expectedDays,
+      regularHours: totalHours || (daysWorked * 8),
+      overtimeHours: recordedOvertime
+    };
+  };
+
+  // Get sales for commission calculation
+  const getEmployeeSales = (employeeId) => {
+    return salesRecords
+      .filter(s => {
+        if (s.employee_id !== employeeId) return false;
+        const date = s.created_date?.split('T')[0];
+        return date >= periodStart && date <= periodEnd;
+      })
+      .reduce((sum, s) => sum + safeNumber(s.total_amount), 0);
+  };
+
+  // Build custom allowances from package
+  const getPackageAllowances = (pkg) => {
+    if (!pkg || !usePackageAllowances) return [];
+    return (pkg.allowances || []).map(a => ({
+      name: a.name,
+      amount: a.type === 'percentage' ? 0 : safeNumber(a.amount), // Percentage calculated in payroll
+      type: 'package'
+    }));
+  };
+
+  // Build custom bonuses from package (prorated for frequency)
+  const getPackageBonuses = (pkg) => {
+    if (!pkg) return [];
+    const frequencyConfig = PAYROLL_FREQUENCIES[payrollFrequency] || PAYROLL_FREQUENCIES.monthly;
+    
+    return (pkg.bonuses || []).map(b => {
+      let amount = safeNumber(b.amount);
+      // Prorate annual/quarterly bonuses to the pay period
+      if (b.frequency === 'annual') {
+        amount = amount / 12 * frequencyConfig.multiplier;
+      } else if (b.frequency === 'quarterly') {
+        amount = amount / 3 * frequencyConfig.multiplier;
+      } else {
+        amount = amount * frequencyConfig.multiplier;
+      }
+      return {
+        name: b.name,
+        amount: Math.round(amount),
+        type: 'package'
+      };
+    });
+  };
 
   const toggleEmployee = (employeeId) => {
     setSelectedEmployees(prev => 
@@ -99,6 +213,14 @@ export default function BulkPayrollDialog({
       const employee = employees.find(e => e.id === empId);
       if (!employee) return null;
 
+      // Get employee's remuneration package
+      const pkg = getEmployeePackage(employee);
+      
+      // If using package salary and employee has a package, use package base salary
+      const effectiveEmployee = (usePackageSalary && pkg) 
+        ? { ...employee, base_salary: pkg.base_salary, salary_type: pkg.salary_type || employee.salary_type }
+        : employee;
+
       // Get applicable templates for this employee
       const empTemplates = templates.filter(t => {
         if (t.applies_to_employees?.length > 0) {
@@ -110,16 +232,36 @@ export default function BulkPayrollDialog({
         return true;
       });
 
+      // Get attendance data
+      const attendanceData = getEmployeeAttendance(empId);
+
+      // Get sales for commission
+      const totalSales = getEmployeeSales(empId);
+
+      // Get package allowances and bonuses
+      const packageAllowances = getPackageAllowances(pkg);
+      const packageBonuses = getPackageBonuses(pkg);
+
       return calculateFullPayroll({
-        employee,
+        employee: effectiveEmployee,
         periodStart,
         periodEnd,
+        attendanceData,
+        salesData: {
+          totalSales,
+          commissionRate: 0.02 // 2% default commission
+        },
+        customAllowances: packageAllowances,
+        customBonuses: packageBonuses,
         templates: empTemplates,
         applyNASSIT: true,
-        applyPAYE: true
+        applyPAYE: true,
+        payrollFrequency,
+        skipRoleAllowances: usePackageAllowances && pkg // Skip role allowances if using package
       });
     }).filter(Boolean);
-  }, [selectedEmployees, employees, periodStart, periodEnd, templates]);
+  }, [selectedEmployees, employees, periodStart, periodEnd, templates, remunerationPackages, 
+      attendanceRecords, salesRecords, payrollFrequency, usePackageSalary, usePackageAllowances, includeAttendanceData]);
 
   const totals = useMemo(() => {
     return payrollPreviews.reduce((acc, p) => ({
