@@ -82,12 +82,17 @@ export default function BatchManagement({ products = [], warehouses = [], vehicl
   });
 
   const deleteMutation = useMutation({
-    mutationFn: async (id) => {
-      // First, delete all stock level allocations for this batch
-      const batchAllocations = stockLevels.filter(sl => sl.batch_id === id);
-      await Promise.all(batchAllocations.map(sl => base44.entities.StockLevel.delete(sl.id)));
+    mutationFn: async (batchId) => {
+      // First, fetch and delete all stock level allocations for this batch
+      const batchAllocations = await base44.entities.StockLevel.filter({ 
+        organisation_id: orgId, 
+        batch_id: batchId 
+      });
+      if (batchAllocations.length > 0) {
+        await Promise.all(batchAllocations.map(sl => base44.entities.StockLevel.delete(sl.id)));
+      }
       // Then delete the batch itself
-      await base44.entities.InventoryBatch.delete(id);
+      await base44.entities.InventoryBatch.delete(batchId);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['inventoryBatches'] });
