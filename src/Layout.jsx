@@ -67,6 +67,7 @@ import MobileDeliveryUpdate from "@/components/mobile/MobileDeliveryUpdate";
 import PushNotificationManager from "@/components/notifications/PushNotificationManager";
 import RolePreviewSwitcher, { RolePreviewBanner } from "@/components/admin/RolePreviewSwitcher";
 import OfflineSyncButton from "@/components/offline/OfflineSyncButton";
+import { ToastProvider } from "@/components/ui/Toast";
 
 const menuSections = [
   {
@@ -593,11 +594,13 @@ export default function Layout({ children, currentPageName }) {
         />
 
         <main className={`p-4 lg:p-6 ${darkMode ? 'text-white' : ''} overflow-x-hidden`} style={{ paddingBottom: 'max(6rem, calc(5rem + env(safe-area-inset-bottom, 0px)))', minHeight: 'calc(100vh - 4.5rem)' }}>
-          <PermissionsProvider>
-            <OfflineProvider>
-              {children}
-            </OfflineProvider>
-          </PermissionsProvider>
+          <ToastProvider>
+            <PermissionsProvider>
+              <OfflineProvider>
+                {children}
+              </OfflineProvider>
+            </PermissionsProvider>
+          </ToastProvider>
         </main>
 
         <MobileNav currentPageName={currentPageName} />
