@@ -20,8 +20,10 @@ import {
   Users,
   Info,
   Search,
-  FolderOpen
+  FolderOpen,
+  Package
 } from "lucide-react";
+import AttachmentPicker, { AttachmentPreview, MessageAttachment } from "./AttachmentPicker";
 import TypingIndicator from "./TypingIndicator";
 import MessageReactions from "./MessageReactions";
 import VideoCallDialog from "./VideoCallDialog";
