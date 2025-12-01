@@ -263,18 +263,17 @@ function ToastItem({ toast, onRemove, index, total }) {
               )}
             </div>
           </div>
-          <motion.button
-            whileHover={{ scale: 1.1, backgroundColor: "rgba(0,0,0,0.05)" }}
-            whileTap={{ scale: 0.9 }}
+          <button
+            type="button"
             onClick={(e) => {
               e.preventDefault();
               e.stopPropagation();
               onRemove(toast.id);
             }}
-            className="flex-shrink-0 text-gray-400 hover:text-gray-600 transition-colors p-1.5 -m-1 rounded-lg"
+            className="flex-shrink-0 text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors p-2 rounded-lg cursor-pointer z-10 relative"
           >
             <X className="w-4 h-4" />
-          </motion.button>
+          </button>
         </div>
       </div>
       
