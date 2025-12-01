@@ -89,6 +89,26 @@ export default function AddEmployeeDialog({ open, onOpenChange, orgId, employeeC
 
   const createEmployeeMutation = useMutation({
     mutationFn: async (data) => {
+      // Check if employee with this email already exists (to prevent duplicates)
+      if (data.email) {
+        const existingByEmail = await base44.entities.Employee.filter({ 
+          organisation_id: orgId, 
+          email: data.email 
+        });
+        if (existingByEmail.length > 0) {
+          throw new Error('An employee with this email already exists');
+        }
+        
+        // Also check by user_email
+        const existingByUserEmail = await base44.entities.Employee.filter({ 
+          organisation_id: orgId, 
+          user_email: data.email 
+        });
+        if (existingByUserEmail.length > 0) {
+          throw new Error('An employee with this email already exists');
+        }
+      }
+      
       const employeeCode = `EMP${String(employeeCount + 1).padStart(4, '0')}`;
       const selectedPackage = packages.find(p => p.id === data.remuneration_package_id);
       const employee = await base44.entities.Employee.create({
@@ -100,6 +120,8 @@ export default function AddEmployeeDialog({ open, onOpenChange, orgId, employeeC
         base_salary: parseFloat(data.base_salary) || 0,
         remuneration_package_id: data.remuneration_package_id || null,
         remuneration_package_name: selectedPackage?.name || null,
+        // Store email in both fields so it can be linked when user accepts invite
+        email: data.email || null,
       });
       return { employee, email: data.email, firstName: data.first_name, role: data.role, position: data.position };
     },
