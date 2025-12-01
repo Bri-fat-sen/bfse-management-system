@@ -827,59 +827,15 @@ export default function ChatPanel({ isOpen, onClose, orgId, currentEmployee }) {
         </DialogContent>
       </Dialog>
 
-      {/* New Group Dialog */}
-      <Dialog open={showNewGroupDialog} onOpenChange={setShowNewGroupDialog}>
-        <DialogContent className="max-w-sm">
-          <DialogHeader>
-            <DialogTitle>Create New Group</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4">
-            <div>
-              <Label>Group Name</Label>
-              <Input
-                value={groupName}
-                onChange={(e) => setGroupName(e.target.value)}
-                placeholder="Enter group name"
-                className="mt-1"
-              />
-            </div>
-            <div>
-              <Label>Select Members</Label>
-              <div className="mt-2 max-h-48 overflow-y-auto space-y-2">
-                {employees.filter(e => e.id !== currentEmployee?.id).map((emp) => (
-                  <label key={emp.id} className="flex items-center gap-2 p-2 hover:bg-gray-50 rounded cursor-pointer">
-                    <Checkbox
-                      checked={selectedMembers.includes(emp.id)}
-                      onCheckedChange={(checked) => {
-                        if (checked) {
-                          setSelectedMembers([...selectedMembers, emp.id]);
-                        } else {
-                          setSelectedMembers(selectedMembers.filter(id => id !== emp.id));
-                        }
-                      }}
-                    />
-                    <Avatar className="w-6 h-6">
-                      <AvatarImage src={emp.profile_photo} />
-                      <AvatarFallback className="text-xs">{emp.full_name?.charAt(0)}</AvatarFallback>
-                    </Avatar>
-                    <span className="text-sm">{emp.full_name}</span>
-                  </label>
-                ))}
-              </div>
-            </div>
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setShowNewGroupDialog(false)}>Cancel</Button>
-            <Button 
-              onClick={handleCreateGroup} 
-              className="bg-[#1EB053] hover:bg-[#178f43]"
-              disabled={!groupName.trim() || selectedMembers.length === 0}
-            >
-              Create Group
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      {/* Enhanced New Group Dialog */}
+      <EnhancedNewGroupDialog
+        open={showNewGroupDialog}
+        onOpenChange={setShowNewGroupDialog}
+        employees={employees}
+        currentEmployee={currentEmployee}
+        orgId={orgId}
+        onGroupCreated={(room) => setSelectedRoom(room)}
+      />
 
       {/* New Chat Dialog */}
       <Dialog open={showNewChatDialog} onOpenChange={setShowNewChatDialog}>
