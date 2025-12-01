@@ -65,6 +65,7 @@ import AIInventoryRecommendations from "@/components/ai/AIInventoryRecommendatio
 import SerialNumberManager from "@/components/inventory/SerialNumberManager";
 import ReorderSuggestions from "@/components/inventory/ReorderSuggestions";
 import MultiLocationStock from "@/components/inventory/MultiLocationStock";
+import LowStockNotificationBanner from "@/components/inventory/LowStockNotificationBanner";
 
 const DEFAULT_CATEGORIES = ["Water", "Beverages", "Food", "Electronics", "Clothing", "Other"];
 
@@ -290,11 +291,12 @@ export default function Inventory() {
       low_stock_threshold: parseInt(formData.get('low_stock_threshold')) || 10,
       reorder_point: parseInt(formData.get('reorder_point')) || 10,
       reorder_quantity: parseInt(formData.get('reorder_quantity')) || 50,
+      lead_time_days: parseInt(formData.get('lead_time_days')) || 7,
+      is_serialized: formData.get('is_serialized') === 'on',
+      track_batches: formData.get('track_batches') === 'on',
       unit: formData.get('unit'),
       location_ids: selectedLocations,
       is_active: true,
-      is_serialized: formData.get('is_serialized') === 'on',
-      track_batches: formData.get('track_batches') === 'on',
     };
 
     if (editingProduct) {
@@ -391,6 +393,12 @@ export default function Inventory() {
         </div>
         </PageHeader>
 
+      {/* Low Stock Alert Banner */}
+      <LowStockNotificationBanner 
+        products={products}
+        reorderSuggestions={reorderSuggestions}
+      />
+
       {/* AI Recommendations */}
       <AIInventoryRecommendations 
         products={products}
@@ -448,7 +456,7 @@ export default function Inventory() {
             Locations
           </TabsTrigger>
           <TabsTrigger value="serials" className="text-xs sm:text-sm px-2 sm:px-3 data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#1EB053] data-[state=active]:to-[#0072C6] data-[state=active]:text-white">
-            Serials
+            Serial #
           </TabsTrigger>
           <TabsTrigger value="reorder" className="text-xs sm:text-sm px-2 sm:px-3 data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#1EB053] data-[state=active]:to-[#0072C6] data-[state=active]:text-white relative">
             Reorder
@@ -977,25 +985,29 @@ export default function Inventory() {
                 <Label>Reorder Quantity</Label>
                 <Input name="reorder_quantity" type="number" defaultValue={editingProduct?.reorder_quantity || 50} className="mt-1" />
               </div>
-              <div className="col-span-2">
-                <Label>Description</Label>
-                <Textarea name="description" defaultValue={editingProduct?.description} className="mt-1" />
+              <div>
+                <Label>Lead Time (days)</Label>
+                <Input name="lead_time_days" type="number" defaultValue={editingProduct?.lead_time_days || 7} className="mt-1" />
               </div>
-              <div className="col-span-2 flex flex-wrap gap-4">
+              <div className="flex items-center gap-4 col-span-2">
                 <label className="flex items-center gap-2 cursor-pointer">
                   <Checkbox 
-                    name="is_serialized" 
+                    name="is_serialized"
                     defaultChecked={editingProduct?.is_serialized}
                   />
                   <span className="text-sm">Track Serial Numbers</span>
                 </label>
                 <label className="flex items-center gap-2 cursor-pointer">
                   <Checkbox 
-                    name="track_batches" 
+                    name="track_batches"
                     defaultChecked={editingProduct?.track_batches}
                   />
                   <span className="text-sm">Track Batches/Lots</span>
                 </label>
+              </div>
+              <div className="col-span-2">
+                <Label>Description</Label>
+                <Textarea name="description" defaultValue={editingProduct?.description} className="mt-1" />
               </div>
               
               {/* Location Selection */}
