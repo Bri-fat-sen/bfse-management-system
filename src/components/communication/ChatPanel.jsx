@@ -770,12 +770,22 @@ export default function ChatPanel({ isOpen, onClose, orgId, currentEmployee }) {
             </div>
           )}
 
+          {/* Attachment Preview */}
+          {currentAttachment && (
+            <AttachmentPreview 
+              attachment={currentAttachment} 
+              onRemove={() => setCurrentAttachment(null)} 
+            />
+          )}
+
           {/* Message Input */}
           <div className="p-3 border-t bg-white">
             <div className="flex items-center gap-2">
-              <Button variant="ghost" size="icon" className="text-gray-400 hover:text-gray-600 h-8 w-8">
-                <Paperclip className="w-4 h-4" />
-              </Button>
+              <AttachmentPicker 
+                orgId={orgId}
+                onAttach={setCurrentAttachment}
+                disabled={sendMessageMutation.isPending}
+              />
               <Input
                 placeholder="Type a message..."
                 value={messageText}
@@ -789,7 +799,7 @@ export default function ChatPanel({ isOpen, onClose, orgId, currentEmployee }) {
               <Button
                 size="icon"
                 onClick={handleSendMessage}
-                disabled={!messageText.trim() || sendMessageMutation.isPending}
+                disabled={(!messageText.trim() && !currentAttachment) || sendMessageMutation.isPending}
                 className="bg-gradient-to-r from-[#1EB053] to-[#0072C6] text-white h-8 w-8"
               >
                 <Send className="w-4 h-4" />
