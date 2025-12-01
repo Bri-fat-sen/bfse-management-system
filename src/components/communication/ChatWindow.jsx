@@ -402,7 +402,7 @@ export default function ChatWindow({
         </div>
       )}
 
-      {/* Attachment Preview */}
+      {/* Attachment Preview (old style) */}
       {attachments.length > 0 && (
         <div className="px-4 py-2 bg-gray-50 border-t flex items-center gap-2">
           <div className="flex items-center gap-2 bg-white px-3 py-2 rounded-lg border">
@@ -415,6 +415,14 @@ export default function ChatWindow({
         </div>
       )}
 
+      {/* New Attachment Preview */}
+      {currentAttachment && (
+        <AttachmentPreview 
+          attachment={currentAttachment} 
+          onRemove={() => setCurrentAttachment(null)} 
+        />
+      )}
+
       {/* Input */}
       <div className="p-3 border-t bg-white">
         <div className="flex items-center gap-2">
@@ -424,15 +432,11 @@ export default function ChatWindow({
             onChange={handleFileUpload}
             className="hidden"
           />
-          <Button 
-            variant="ghost" 
-            size="icon" 
-            className="h-9 w-9 flex-shrink-0"
-            onClick={() => fileInputRef.current?.click()}
+          <AttachmentPicker 
+            orgId={orgId}
+            onAttach={setCurrentAttachment}
             disabled={isUploading}
-          >
-            <Paperclip className="w-4 h-4" />
-          </Button>
+          />
           <Input
             placeholder="Type a message..."
             value={messageText}
@@ -443,7 +447,7 @@ export default function ChatWindow({
           />
           <Button
             onClick={handleSendMessage}
-            disabled={(!messageText.trim() && attachments.length === 0) || isUploading}
+            disabled={(!messageText.trim() && attachments.length === 0 && !currentAttachment) || isUploading}
             className="bg-gradient-to-r from-[#1EB053] to-[#0072C6] h-10 w-10 p-0"
           >
             <Send className="w-4 h-4" />
