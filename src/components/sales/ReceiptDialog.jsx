@@ -11,12 +11,12 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Printer, Download, Mail, Loader2, Check } from "lucide-react";
-import { useToast } from "@/components/ui/use-toast";
+import { toast } from "sonner";
 import { getBrandedStyles, getBrandedHeader, getBrandedFooter } from "@/components/branding/BrandedDocumentStyles";
+import { safeNumber, formatNumber } from "@/components/utils/calculations";
 
 export default function ReceiptDialog({ open, onOpenChange, sale, organisation }) {
   const receiptRef = useRef(null);
-  const { toast } = useToast();
   const [emailTo, setEmailTo] = useState("");
   const [showEmailInput, setShowEmailInput] = useState(false);
   const [sending, setSending] = useState(false);
@@ -24,6 +24,9 @@ export default function ReceiptDialog({ open, onOpenChange, sale, organisation }
 
   const primaryColor = organisation?.primary_color || '#1EB053';
   const secondaryColor = organisation?.secondary_color || '#0072C6';
+  
+  // Safe formatting helper
+  const formatAmount = (amount) => formatNumber(safeNumber(amount));
 
   const getReceiptHTML = () => {
     return `
@@ -81,13 +84,13 @@ export default function ReceiptDialog({ open, onOpenChange, sale, organisation }
                   </tr>
                 </thead>
                 <tbody>
-                  ${sale?.items?.map(item => `
+                  ${(sale?.items || []).map(item => `
                     <tr>
                       <td>
-                        ${item.product_name}
-                        <span style="color: ${secondaryColor}; font-size: 12px; font-weight: 600;"> × ${item.quantity}</span>
+                        ${item.product_name || 'Item'}
+                        <span style="color: ${secondaryColor}; font-size: 12px; font-weight: 600;"> × ${safeNumber(item.quantity, 1)}</span>
                       </td>
-                      <td class="amount">SLE ${item.total?.toLocaleString()}</td>
+                      <td class="amount">SLE ${formatNumber(safeNumber(item.total))}</td>
                     </tr>
                   `).join('') || ''}
                 </tbody>
@@ -97,23 +100,23 @@ export default function ReceiptDialog({ open, onOpenChange, sale, organisation }
             <div class="brand-totals">
               <div class="brand-totals-row">
                 <span>Subtotal</span>
-                <span>SLE ${sale?.subtotal?.toLocaleString()}</span>
+                <span>SLE ${formatAmount(sale?.subtotal)}</span>
               </div>
-              ${sale?.tax > 0 ? `
+              ${safeNumber(sale?.tax) > 0 ? `
                 <div class="brand-totals-row">
                   <span>GST</span>
-                  <span>SLE ${sale.tax?.toLocaleString()}</span>
+                  <span>SLE ${formatAmount(sale.tax)}</span>
                 </div>
               ` : ''}
-              ${sale?.discount > 0 ? `
+              ${safeNumber(sale?.discount) > 0 ? `
                 <div class="brand-totals-row">
                   <span>Discount</span>
-                  <span>-SLE ${sale.discount?.toLocaleString()}</span>
+                  <span>-SLE ${formatAmount(sale.discount)}</span>
                 </div>
               ` : ''}
               <div class="brand-totals-row grand">
                 <span>Total</span>
-                <span>SLE ${sale?.total_amount?.toLocaleString()}</span>
+                <span>SLE ${formatAmount(sale?.total_amount)}</span>
               </div>
               <div class="brand-totals-row" style="margin-top: 12px;">
                 <span>Payment</span>
@@ -155,8 +158,7 @@ export default function ReceiptDialog({ open, onOpenChange, sale, organisation }
           }, 300);
         };
         
-        toast({ 
-          title: "Receipt ready", 
+        toast.success("Receipt ready", { 
           description: "Choose 'Save as PDF' in the print dialog to download as PDF" 
         });
       } else {
@@ -170,20 +172,19 @@ export default function ReceiptDialog({ open, onOpenChange, sale, organisation }
         link.click();
         document.body.removeChild(link);
         URL.revokeObjectURL(url);
-        toast({ 
-          title: "Receipt downloaded", 
+        toast.success("Receipt downloaded", { 
           description: "Open the file in browser and use Print > Save as PDF" 
         });
       }
     } catch (error) {
-      toast({ title: "Download failed", variant: "destructive" });
+      toast.error("Download failed", { description: error.message });
     }
     setDownloading(false);
   };
 
   const handleEmailReceipt = async () => {
     if (!emailTo) {
-      toast({ title: "Please enter an email address", variant: "destructive" });
+      toast.error("Please enter an email address");
       return;
     }
     setSending(true);
@@ -194,7 +195,7 @@ export default function ReceiptDialog({ open, onOpenChange, sale, organisation }
         toName: sale?.customer_name || 'Customer',
         subject: `Receipt - ${sale?.sale_number} from ${organisation?.name || 'Our Company'}`,
         htmlContent: receiptHTML,
-        textContent: `Thank you for your purchase!\n\nReceipt: ${sale?.sale_number}\nTotal: SLE ${sale?.total_amount?.toLocaleString()}\nPayment: ${sale?.payment_method}\n\nThank you for your patronage!`,
+        textContent: `Thank you for your purchase!\n\nReceipt: ${sale?.sale_number}\nTotal: SLE ${formatAmount(sale?.total_amount)}\nPayment: ${sale?.payment_method}\n\nThank you for your patronage!`,
         fromName: organisation?.name || 'Our Company',
         replyTo: organisation?.email
       });
@@ -203,15 +204,14 @@ export default function ReceiptDialog({ open, onOpenChange, sale, organisation }
         throw new Error(response.data.error);
       }
       
-      toast({ 
-        title: "Email sent successfully", 
+      toast.success("Email sent successfully", { 
         description: `Receipt sent to ${emailTo}` 
       });
       setShowEmailInput(false);
       setEmailTo("");
     } catch (error) {
       console.error('Email error:', error);
-      toast({ title: "Failed to send email", description: error.message || "Please try again", variant: "destructive" });
+      toast.error("Failed to send email", { description: error.message || "Please try again" });
     }
     setSending(false);
   };
@@ -278,12 +278,12 @@ export default function ReceiptDialog({ open, onOpenChange, sale, organisation }
 
             {/* Items */}
             <div className="border-t border-dashed pt-3">
-              {sale?.items?.map((item, i) => (
+              {(sale?.items || []).map((item, i) => (
                 <div key={i} className="flex justify-between text-sm py-1">
                   <span>
-                    {item.product_name} <span className="text-gray-400">×{item.quantity}</span>
+                    {item.product_name || 'Item'} <span className="text-gray-400">×{safeNumber(item.quantity, 1)}</span>
                   </span>
-                  <span className="font-medium">SLE {item.total?.toLocaleString()}</span>
+                  <span className="font-medium">SLE {formatAmount(item.total)}</span>
                 </div>
               ))}
             </div>
@@ -292,7 +292,7 @@ export default function ReceiptDialog({ open, onOpenChange, sale, organisation }
             <div className="border-t border-dashed pt-3">
               <div className="flex justify-between text-lg font-bold" style={{ color: primaryColor }}>
                 <span>Total</span>
-                <span>SLE {sale?.total_amount?.toLocaleString()}</span>
+                <span>SLE {formatAmount(sale?.total_amount)}</span>
               </div>
               <div className="flex justify-between text-xs text-gray-500 mt-1">
                 <span>Payment</span>
