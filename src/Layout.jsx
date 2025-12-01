@@ -157,45 +157,8 @@ export default function Layout({ children, currentPageName }) {
     refetchOnWindowFocus: false,
   });
 
-  // Auto-create employee record for admin users who don't have one
-  const { data: orgs } = useQuery({
-    queryKey: ['allOrganisations'],
-    queryFn: () => base44.entities.Organisation.list(),
-    enabled: !!user?.email && user?.role === 'admin' && employee && employee.length === 0,
-    staleTime: 10 * 60 * 1000,
-  });
-
-  useEffect(() => {
-    const linkExistingEmployee = async () => {
-      // Only run for users who don't have an employee record linked to their email
-      if (!user?.email || !employee || employee.length > 0) return;
-      
-      try {
-        // Check if there's an existing employee record with matching email (created by admin)
-        // This handles the case where admin created employee before user accepted invite
-        const existingByEmail = await base44.entities.Employee.filter({ email: user.email });
-        
-        if (existingByEmail.length > 0) {
-          // Link existing employee to this user by setting user_email
-          const existingEmployee = existingByEmail[0];
-          if (!existingEmployee.user_email) {
-            await base44.entities.Employee.update(existingEmployee.id, {
-              user_email: user.email,
-              full_name: existingEmployee.full_name || user.full_name,
-            });
-            refetchEmployee();
-          }
-          return;
-        }
-        
-        // No auto-creation - all employee records must be created manually by HR/Admin
-      } catch (err) {
-        console.error('Failed to link employee record:', err);
-      }
-    };
-    
-    linkExistingEmployee();
-  }, [user, employee, refetchEmployee]);
+  // Employee linking is now done manually through User Management page
+  // No auto-linking or auto-creation in Layout
 
   const currentEmployee = employee?.[0];
 
