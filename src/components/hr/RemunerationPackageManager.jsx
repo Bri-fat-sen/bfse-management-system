@@ -32,7 +32,7 @@ import { safeNumber, formatNumber } from "@/components/utils/calculations";
 import { COMMON_ALLOWANCES, SL_MINIMUM_WAGE } from "./PayrollCalculator";
 
 // Pre-defined Sierra Leone Remuneration Packages (2025)
-// All amounts in NLE (New Leone - redenominated April 2024)
+// All amounts in NLE (New Leone) - Redenominated April 2024
 // Based on Sierra Leone Employment Act 2023 & market rates
 export const SL_PACKAGE_TEMPLATES = [
   {
@@ -409,7 +409,7 @@ export default function RemunerationPackageManager({ orgId }) {
     }));
   };
 
-  const formatSLE = (amount) => `NLE ${safeNumber(amount).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+  const formatSLE = (amount) => `NLE ${formatNumber(safeNumber(amount))}`;
   
   // Calculate total package value
   const calculatePackageTotal = (pkg) => {
@@ -762,7 +762,7 @@ export default function RemunerationPackageManager({ orgId }) {
                     </Select>
                     <div className="relative">
                       <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-xs">
-                        {allowance.type === 'percentage' ? '%' : 'SLE'}
+                        {allowance.type === 'percentage' ? '%' : 'NLE'}
                       </span>
                       <Input
                         type="number"
@@ -828,7 +828,7 @@ export default function RemunerationPackageManager({ orgId }) {
                       </SelectContent>
                     </Select>
                     <div className="relative">
-                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-xs">SLE</span>
+                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-xs">NLE</span>
                       <Input
                         type="number"
                         placeholder="0"

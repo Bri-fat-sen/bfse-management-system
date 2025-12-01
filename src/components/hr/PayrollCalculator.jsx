@@ -1,6 +1,6 @@
 // Sierra Leone Payroll Calculator
 // All amounts in NLE (New Leone - Redenominated April 2024)
-// 1 NLE = 1,000 old Leones
+// 1 NLE = 1000 old SLE (Leones)
 // Reference: Finance Act 2024, Employment Act 2023, NASSIT Act
 
 // Safe number helper to prevent NaN/undefined errors
@@ -62,18 +62,18 @@ export const SL_PUBLIC_HOLIDAYS_2025 = [
   { date: "2025-12-26", name: "Boxing Day" }
 ];
 
-// Sierra Leone Minimum Wage (as of 2024) - in NLE
+// Sierra Leone Minimum Wage (as of 2024) - in NLE (New Leone)
 // Per Minimum Wage Act and subsequent amendments
+// 1 NLE = 1000 old SLE
 export const SL_MINIMUM_WAGE = {
   monthly: 800,     // NLE 800 per month
   daily: 36,        // Approximately NLE 36 per day
   hourly: 5         // Approximately NLE 5 per hour
 };
 
-// Role-based allowances configuration
+// Role-based allowances configuration - amounts in NLE (New Leone)
 // Per Employment Act 2023 Section 5 - casual/temporary workers entitled to:
 // rent, transport, medical, relocation, risk allowances
-// Role-based allowances configuration - amounts in NLE
 export const ROLE_BONUS_CONFIG = {
   super_admin: {
     allowances: [
@@ -726,12 +726,8 @@ export function calculateFullPayroll({
  * Format currency for display - NLE (New Leone)
  */
 export function formatSLE(amount) {
-  return `NLE ${safeNum(amount).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+  return `NLE ${Math.round(safeNum(amount)).toLocaleString()}`;
 }
 
-/**
- * Format currency short form
- */
-export function formatNLE(amount) {
-  return `NLE ${safeNum(amount).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-}
+// Alias for new naming
+export const formatNLE = formatSLE;
