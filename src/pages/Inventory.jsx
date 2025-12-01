@@ -188,51 +188,58 @@ export default function Inventory() {
     enabled: !!orgId,
   });
 
-  // Auto-generate stock alerts for low stock items (run only when products change)
+  // Auto-generate stock alerts for low stock items (run only for authorized roles)
+  const canManageAlerts = ['super_admin', 'org_admin', 'warehouse_manager'].includes(currentEmployee?.role);
+  
   useEffect(() => {
     const checkStockAlerts = async () => {
-      if (!products.length || !orgId) return;
+      if (!products.length || !orgId || !canManageAlerts) return;
       
-      // Get current alerts to check against
-      const currentAlerts = await base44.entities.StockAlert.filter({ organisation_id: orgId, status: 'active' });
-      
-      for (const product of products) {
-        const threshold = product.low_stock_threshold || 10;
-        const existingAlert = currentAlerts.find(
-          a => a.product_id === product.id && a.status === 'active'
-        );
+      try {
+        // Get current alerts to check against
+        const currentAlerts = await base44.entities.StockAlert.filter({ organisation_id: orgId, status: 'active' });
         
-        if (product.stock_quantity === 0 && !existingAlert) {
-          await base44.entities.StockAlert.create({
-            organisation_id: orgId,
-            product_id: product.id,
-            product_name: product.name,
-            warehouse_id: product.warehouse_id,
-            alert_type: 'out_of_stock',
-            current_quantity: 0,
-            threshold_quantity: threshold,
-            status: 'active'
-          });
-        } else if (product.stock_quantity > 0 && product.stock_quantity <= threshold && !existingAlert) {
-          await base44.entities.StockAlert.create({
-            organisation_id: orgId,
-            product_id: product.id,
-            product_name: product.name,
-            warehouse_id: product.warehouse_id,
-            alert_type: 'low_stock',
-            current_quantity: product.stock_quantity,
-            threshold_quantity: threshold,
-            status: 'active'
-          });
+        for (const product of products) {
+          const threshold = product.low_stock_threshold || 10;
+          const existingAlert = currentAlerts.find(
+            a => a.product_id === product.id && a.status === 'active'
+          );
+          
+          if (product.stock_quantity === 0 && !existingAlert) {
+            await base44.entities.StockAlert.create({
+              organisation_id: orgId,
+              product_id: product.id,
+              product_name: product.name,
+              warehouse_id: product.warehouse_id,
+              alert_type: 'out_of_stock',
+              current_quantity: 0,
+              threshold_quantity: threshold,
+              status: 'active'
+            });
+          } else if (product.stock_quantity > 0 && product.stock_quantity <= threshold && !existingAlert) {
+            await base44.entities.StockAlert.create({
+              organisation_id: orgId,
+              product_id: product.id,
+              product_name: product.name,
+              warehouse_id: product.warehouse_id,
+              alert_type: 'low_stock',
+              current_quantity: product.stock_quantity,
+              threshold_quantity: threshold,
+              status: 'active'
+            });
+          }
         }
+        
+        // Refresh alerts after creating new ones
+        queryClient.invalidateQueries({ queryKey: ['stockAlerts'] });
+      } catch (error) {
+        // Silently fail - user may not have permission
+        console.log('Stock alert check skipped - insufficient permissions');
       }
-      
-      // Refresh alerts after creating new ones
-      queryClient.invalidateQueries({ queryKey: ['stockAlerts'] });
     };
     
     checkStockAlerts();
-  }, [products, orgId, queryClient]);
+  }, [products, orgId, queryClient, canManageAlerts]);
 
   const createProductMutation = useMutation({
     mutationFn: (data) => base44.entities.Product.create(data),
@@ -240,6 +247,7 @@ export default function Inventory() {
       queryClient.invalidateQueries({ queryKey: ['products'] });
       setShowProductDialog(false);
       setEditingProduct(null);
+      toast.success("Product created successfully");
     },
   });
 
@@ -249,6 +257,7 @@ export default function Inventory() {
       queryClient.invalidateQueries({ queryKey: ['products'] });
       setShowProductDialog(false);
       setEditingProduct(null);
+      toast.success("Product updated successfully");
     },
   });
 
@@ -256,6 +265,7 @@ export default function Inventory() {
     mutationFn: (id) => base44.entities.Product.delete(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['products'] });
+      toast.success("Product deleted successfully");
     },
   });
 
