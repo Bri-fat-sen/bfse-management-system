@@ -19,16 +19,16 @@ const mobileNavItems = [
 
 export default function MobileNav({ currentPageName }) {
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-50 lg:hidden">
+    <nav className="fixed bottom-0 left-0 right-0 z-50 block lg:hidden">
       {/* Glass effect background */}
-      <div className="absolute inset-0 bg-white/80 backdrop-blur-xl border-t border-gray-100 shadow-[0_-4px_20px_rgba(0,0,0,0.08)]" />
+      <div className="absolute inset-0 bg-white/95 backdrop-blur-xl border-t border-gray-200 shadow-[0_-2px_10px_rgba(0,0,0,0.06)]" />
       
       {/* Nav content */}
       <div 
-        className="relative flex items-center justify-around px-2"
+        className="relative flex items-center justify-around px-1"
         style={{ 
-          paddingTop: '0.625rem',
-          paddingBottom: 'max(0.625rem, env(safe-area-inset-bottom, 0.625rem))' 
+          paddingTop: '0.5rem',
+          paddingBottom: 'max(0.5rem, env(safe-area-inset-bottom, 0.5rem))' 
         }}
       >
         {mobileNavItems.map((item) => {
