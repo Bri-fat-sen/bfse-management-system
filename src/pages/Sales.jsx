@@ -321,14 +321,29 @@ export default function Sales() {
         p.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
         p.sku?.toLowerCase().includes(searchTerm.toLowerCase())
       ))
-      .map(p => ({
-        ...p,
-        // Use location-specific stock if available, fall back to product's general stock
+      .map(p => {
         // For default locations (main_store, default_warehouse), use product stock directly
-        location_stock: selectedLocation && !selectedLocation.startsWith('main_') && !selectedLocation.startsWith('default_')
-          ? (locationStockMap[p.id] ?? p.stock_quantity ?? 0) 
-          : (p.stock_quantity ?? 0)
-      }));
+        const isDefaultLocation = !selectedLocation || selectedLocation.startsWith('main_') || selectedLocation.startsWith('default_');
+        
+        // Check if we have a specific stock level for this product at this location
+        const locationStock = locationStockMap[p.id];
+        
+        // Use location stock if available and not a default location, otherwise fall back to product stock
+        let stockValue;
+        if (isDefaultLocation) {
+          stockValue = p.stock_quantity ?? 0;
+        } else if (locationStock !== undefined && locationStock > 0) {
+          stockValue = locationStock;
+        } else {
+          // If no stock level record but product has stock, use product stock
+          stockValue = p.stock_quantity ?? 0;
+        }
+        
+        return {
+          ...p,
+          location_stock: stockValue
+        };
+      });
   }, [products, searchTerm, selectedLocation, locationStockMap]);
 
   const addToCart = (product) => {
