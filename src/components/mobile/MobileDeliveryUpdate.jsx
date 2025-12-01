@@ -24,7 +24,6 @@ import {
   Loader2,
   WifiOff
 } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { useOffline } from "@/components/offline/OfflineManager";
 
