@@ -281,7 +281,7 @@ export const PAYROLL_FREQUENCIES = {
  */
 export function calculateProratedSalary(monthlySalary, frequency) {
   const config = PAYROLL_FREQUENCIES[frequency] || PAYROLL_FREQUENCIES.monthly;
-  return Math.round(monthlySalary * config.multiplier);
+  return Math.round(safeNum(monthlySalary) * safeNum(config.multiplier, 1));
 }
 
 /**
@@ -289,7 +289,7 @@ export function calculateProratedSalary(monthlySalary, frequency) {
  */
 export function getAnnualEquivalent(periodicSalary, frequency) {
   const config = PAYROLL_FREQUENCIES[frequency] || PAYROLL_FREQUENCIES.monthly;
-  return Math.round(periodicSalary * config.periodsPerYear);
+  return Math.round(safeNum(periodicSalary) * safeNum(config.periodsPerYear, 12));
 }
 
 /**
@@ -305,32 +305,44 @@ export function getExpectedWorkingDays(frequency) {
 // ============================================
 
 /**
+ * Safely parse a number (prevents NaN)
+ */
+function safeNum(value, defaultValue = 0) {
+  if (value === null || value === undefined || value === '') {
+    return defaultValue;
+  }
+  const parsed = typeof value === 'number' ? value : parseFloat(value);
+  return isNaN(parsed) || !isFinite(parsed) ? defaultValue : parsed;
+}
+
+/**
  * Calculate PAYE Tax based on annual income
  * Uses progressive tax brackets
  */
 export function calculatePAYE(annualIncome) {
+  const income = safeNum(annualIncome);
   let tax = 0;
-  let remainingIncome = annualIncome;
+  let remainingIncome = income;
   let currentBracket = "0%";
   
   for (const bracket of SL_TAX_BRACKETS) {
     if (remainingIncome <= 0) break;
     
-    if (annualIncome > bracket.min) {
+    if (income > bracket.min) {
       const bracketRange = bracket.max === Infinity ? remainingIncome : (bracket.max - bracket.min);
       const taxableInBracket = Math.min(bracketRange, remainingIncome);
-      tax += taxableInBracket * bracket.rate;
+      tax += taxableInBracket * safeNum(bracket.rate);
       remainingIncome -= taxableInBracket;
       currentBracket = bracket.label;
     }
   }
   
   const monthlyTax = tax / 12;
-  const effectiveRate = annualIncome > 0 ? (tax / annualIncome) * 100 : 0;
+  const effectiveRate = income > 0 ? (tax / income) * 100 : 0;
   
   return {
-    annualTax: tax,
-    monthlyTax,
+    annualTax: Math.round(tax),
+    monthlyTax: Math.round(monthlyTax),
     effectiveRate: effectiveRate.toFixed(2),
     taxBracket: currentBracket
   };
@@ -340,10 +352,11 @@ export function calculatePAYE(annualIncome) {
  * Calculate NASSIT contributions
  */
 export function calculateNASSIT(grossPay) {
+  const gross = safeNum(grossPay);
   return {
-    employee: grossPay * NASSIT_EMPLOYEE_RATE,
-    employer: grossPay * NASSIT_EMPLOYER_RATE,
-    total: grossPay * (NASSIT_EMPLOYEE_RATE + NASSIT_EMPLOYER_RATE)
+    employee: Math.round(gross * NASSIT_EMPLOYEE_RATE),
+    employer: Math.round(gross * NASSIT_EMPLOYER_RATE),
+    total: Math.round(gross * (NASSIT_EMPLOYEE_RATE + NASSIT_EMPLOYER_RATE))
   };
 }
 
@@ -355,53 +368,62 @@ export function calculateRates(baseSalary, salaryType = "monthly") {
   const WORKING_HOURS_PER_DAY = 8;
   const WORKING_HOURS_PER_MONTH = WORKING_DAYS_PER_MONTH * WORKING_HOURS_PER_DAY;
   
+  const salary = safeNum(baseSalary);
   let monthlyRate, dailyRate, hourlyRate;
   
   switch (salaryType) {
     case "hourly":
-      hourlyRate = baseSalary;
+      hourlyRate = salary;
       dailyRate = hourlyRate * WORKING_HOURS_PER_DAY;
       monthlyRate = hourlyRate * WORKING_HOURS_PER_MONTH;
       break;
     case "daily":
-      dailyRate = baseSalary;
-      hourlyRate = dailyRate / WORKING_HOURS_PER_DAY;
+      dailyRate = salary;
+      hourlyRate = WORKING_HOURS_PER_DAY > 0 ? dailyRate / WORKING_HOURS_PER_DAY : 0;
       monthlyRate = dailyRate * WORKING_DAYS_PER_MONTH;
       break;
     case "monthly":
     default:
-      monthlyRate = baseSalary;
-      dailyRate = monthlyRate / WORKING_DAYS_PER_MONTH;
-      hourlyRate = monthlyRate / WORKING_HOURS_PER_MONTH;
+      monthlyRate = salary;
+      dailyRate = WORKING_DAYS_PER_MONTH > 0 ? monthlyRate / WORKING_DAYS_PER_MONTH : 0;
+      hourlyRate = WORKING_HOURS_PER_MONTH > 0 ? monthlyRate / WORKING_HOURS_PER_MONTH : 0;
       break;
   }
   
-  return { monthlyRate, dailyRate, hourlyRate };
+  return { 
+    monthlyRate: Math.round(monthlyRate), 
+    dailyRate: Math.round(dailyRate), 
+    hourlyRate: Math.round(hourlyRate) 
+  };
 }
 
 /**
  * Calculate overtime pay
  */
 export function calculateOvertimePay(hourlyRate, overtimeHours, multiplier = 1.5) {
-  return hourlyRate * overtimeHours * multiplier;
+  return Math.round(safeNum(hourlyRate) * safeNum(overtimeHours) * safeNum(multiplier, 1.5));
 }
 
 /**
  * Calculate attendance-based pay adjustment
  */
 export function calculateAttendanceAdjustment(baseSalary, daysWorked, expectedDays = 22) {
-  if (daysWorked >= expectedDays) {
-    return { adjustment: 0, bonus: 0 };
+  const salary = safeNum(baseSalary);
+  const worked = safeNum(daysWorked);
+  const expected = safeNum(expectedDays, 22);
+  
+  if (worked >= expected || expected === 0) {
+    return { adjustment: 0, bonus: 0, missedDays: 0, dailyRate: 0 };
   }
   
-  const dailyRate = baseSalary / expectedDays;
-  const missedDays = expectedDays - daysWorked;
+  const dailyRate = salary / expected;
+  const missedDays = expected - worked;
   const deduction = dailyRate * missedDays;
   
   return {
-    adjustment: -deduction,
+    adjustment: -Math.round(deduction),
     missedDays,
-    dailyRate
+    dailyRate: Math.round(dailyRate)
   };
 }
 
@@ -410,8 +432,8 @@ export function calculateAttendanceAdjustment(baseSalary, daysWorked, expectedDa
  */
 export function calculateAttendanceBonus(baseSalary, daysWorked, expectedDays = 22) {
   // Perfect attendance bonus (5% of base salary)
-  if (daysWorked >= expectedDays) {
-    return baseSalary * 0.05;
+  if (safeNum(daysWorked) >= safeNum(expectedDays, 22)) {
+    return Math.round(safeNum(baseSalary) * 0.05);
   }
   return 0;
 }
@@ -420,7 +442,7 @@ export function calculateAttendanceBonus(baseSalary, daysWorked, expectedDays = 
  * Calculate sales commission
  */
 export function calculateSalesCommission(totalSales, commissionRate = 0.02) {
-  return totalSales * commissionRate;
+  return Math.round(safeNum(totalSales) * safeNum(commissionRate, 0.02));
 }
 
 /**
@@ -652,5 +674,6 @@ export function calculateFullPayroll({
  * Format currency for display
  */
 export function formatSLE(amount) {
-  return `SLE ${Math.round(amount || 0).toLocaleString()}`;
+  const num = safeNum(amount);
+  return `SLE ${Math.round(num).toLocaleString()}`;
 }
