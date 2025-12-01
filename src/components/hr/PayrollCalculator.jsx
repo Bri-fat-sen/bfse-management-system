@@ -520,7 +520,8 @@ export function calculateFullPayroll({
   templates = [],
   applyNASSIT = true,
   applyPAYE = true,
-  payrollFrequency = "monthly"
+  payrollFrequency = "monthly",
+  skipRoleAllowances = false
 }) {
   const baseSalary = safeNum(employee.base_salary);
   const salaryType = employee.salary_type || "monthly";
@@ -555,8 +556,8 @@ export function calculateFullPayroll({
   const weekendPay = calculateOvertimePay(rates.hourlyRate, weekendHours, OVERTIME_MULTIPLIERS.weekend);
   const holidayPay = calculateOvertimePay(rates.hourlyRate, holidayHours, OVERTIME_MULTIPLIERS.holiday);
   
-  // Get role-based allowances (prorated for frequency)
-  const roleAllowances = getRoleBasedAllowances(role, baseSalary).map(a => ({
+  // Get role-based allowances (prorated for frequency) - only if not skipped
+  const roleAllowances = skipRoleAllowances ? [] : getRoleBasedAllowances(role, baseSalary).map(a => ({
     ...a,
     amount: Math.round(safeNum(a.amount) * safeNum(frequencyConfig.multiplier, 1))
   }));

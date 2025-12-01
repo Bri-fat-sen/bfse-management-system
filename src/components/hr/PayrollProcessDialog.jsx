@@ -194,10 +194,11 @@ export default function PayrollProcessDialog({
       customAllowances,
       customDeductions,
       customBonuses,
-      templates: applicableTemplates,
+      templates: [], // No auto templates - manual entry only
       applyNASSIT,
       applyPAYE,
-      payrollFrequency
+      payrollFrequency,
+      skipRoleAllowances: true // Skip auto role-based allowances
     });
   }, [
     selectedEmployee, periodStart, periodEnd, attendanceData,
@@ -493,83 +494,42 @@ export default function PayrollProcessDialog({
                 </div>
               )}
 
-              {/* Role-based Allowances (Auto-calculated) */}
-              {payrollData.allowances.filter(a => a.type === 'role_based').length > 0 && (
+
+
+
+
+              {/* Allowances, Bonuses & Deductions */}
+              <div className="space-y-4">
+                {/* Allowances */}
                 <div className="p-4 bg-green-50 rounded-lg border border-green-200">
-                  <div className="flex items-center gap-2 mb-2">
-                    <Briefcase className="w-4 h-4 text-green-600" />
-                    <span className="font-medium text-green-800">Role-based Allowances (Auto)</span>
-                  </div>
-                  <div className="space-y-1">
-                    {payrollData.allowances.filter(a => a.type === 'role_based').map((a, i) => (
-                      <div key={i} className="flex justify-between text-sm">
-                        <span className="text-green-700">{a.name}</span>
-                        <span className="font-medium">{formatSLE(a.amount)}</span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {/* Template-based Benefits/Deductions */}
-              {applicableTemplates.length > 0 && (
-                <div className="p-4 bg-blue-50 rounded-lg border border-blue-200">
-                  <div className="flex items-center gap-2 mb-2">
-                    <DollarSign className="w-4 h-4 text-blue-600" />
-                    <span className="font-medium text-blue-800">Benefits & Deductions Templates</span>
-                    <Badge variant="secondary" className="text-xs">{applicableTemplates.length} applied</Badge>
-                  </div>
-                  <div className="space-y-1">
-                    {payrollData.allowances.filter(a => a.template_id).map((a, i) => (
-                      <div key={`b-${i}`} className="flex justify-between text-sm">
-                        <span className="text-green-600">+ {a.name}</span>
-                        <span className="font-medium text-green-600">{formatSLE(a.amount)}</span>
-                      </div>
-                    ))}
-                    {payrollData.deductions.filter(d => d.template_id).map((d, i) => (
-                      <div key={`d-${i}`} className="flex justify-between text-sm">
-                        <span className="text-red-600">- {d.name}</span>
-                        <span className="font-medium text-red-600">{formatSLE(d.amount)}</span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {/* Custom Allowances */}
-              <Collapsible open={showAdvanced} onOpenChange={setShowAdvanced}>
-                <CollapsibleTrigger asChild>
-                  <Button type="button" variant="outline" className="w-full justify-between">
-                    <span>Additional Allowances, Bonuses & Deductions</span>
-                    {showAdvanced ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
-                  </Button>
-                </CollapsibleTrigger>
-                <CollapsibleContent className="space-y-4 mt-4">
-                  {/* Custom Allowances */}
-                  <div>
-                    <div className="flex items-center justify-between mb-2">
-                      <Label className="text-green-600">Additional Allowances</Label>
-                      <div className="flex gap-2">
-                        <Select onValueChange={(v) => addCustomAllowance(COMMON_ALLOWANCES.find(a => a.name === v))}>
-                          <SelectTrigger className="w-40 h-8 text-xs">
-                            <SelectValue placeholder="Quick add..." />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {COMMON_ALLOWANCES.map(a => (
-                              <SelectItem key={a.name} value={a.name} className="text-xs">
-                                {a.name}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                        <Button type="button" variant="outline" size="sm" onClick={() => addCustomAllowance()}>
-                          <Plus className="w-4 h-4" />
-                        </Button>
-                      </div>
+                  <div className="flex items-center justify-between mb-3">
+                    <Label className="text-green-700 font-medium flex items-center gap-2">
+                      <Plus className="w-4 h-4" /> Allowances
+                    </Label>
+                    <div className="flex gap-2">
+                      <Select onValueChange={(v) => addCustomAllowance(COMMON_ALLOWANCES.find(a => a.name === v))}>
+                        <SelectTrigger className="w-44 h-8 text-xs">
+                          <SelectValue placeholder="Select allowance..." />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {COMMON_ALLOWANCES.map(a => (
+                            <SelectItem key={a.name} value={a.name} className="text-xs">
+                              {a.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <Button type="button" variant="outline" size="sm" onClick={() => addCustomAllowance()}>
+                        <Plus className="w-4 h-4" /> Custom
+                      </Button>
                     </div>
-                    <div className="space-y-2">
-                      {customAllowances.map((allowance, index) => (
-                        <div key={index} className="flex gap-2">
+                  </div>
+                  <div className="space-y-2">
+                    {customAllowances.length === 0 ? (
+                      <p className="text-sm text-green-600/70 text-center py-2">No allowances added</p>
+                    ) : (
+                      customAllowances.map((allowance, index) => (
+                        <div key={index} className="flex gap-2 items-center bg-white p-2 rounded-lg">
                           <Input 
                             placeholder="Allowance name" 
                             value={allowance.name}
@@ -580,40 +540,55 @@ export default function PayrollProcessDialog({
                             }}
                             className="flex-1"
                           />
-                          <Input 
-                            type="number" 
-                            min="0"
-                            placeholder="Amount"
-                            value={allowance.amount || ""}
-                            onChange={(e) => {
-                              const updated = [...customAllowances];
-                              updated[index].amount = safeNumber(e.target.value, 0);
-                              setCustomAllowances(updated);
-                            }}
-                            onWheel={(e) => e.target.blur()}
-                            className="w-32"
-                          />
-                          <Button type="button" variant="ghost" size="icon" onClick={() => {
+                          <div className="relative">
+                            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">SLE</span>
+                            <Input 
+                              type="number" 
+                              min="0"
+                              placeholder="0"
+                              value={allowance.amount || ""}
+                              onChange={(e) => {
+                                const updated = [...customAllowances];
+                                updated[index].amount = safeNumber(e.target.value, 0);
+                                setCustomAllowances(updated);
+                              }}
+                              onWheel={(e) => e.target.blur()}
+                              className="w-36 pl-12"
+                            />
+                          </div>
+                          <Button type="button" variant="ghost" size="icon" className="h-9 w-9" onClick={() => {
                             setCustomAllowances(customAllowances.filter((_, i) => i !== index));
                           }}>
                             <Minus className="w-4 h-4 text-red-500" />
                           </Button>
                         </div>
-                      ))}
-                    </div>
+                      ))
+                    )}
+                    {customAllowances.length > 0 && (
+                      <div className="flex justify-between text-sm font-medium pt-2 border-t border-green-200">
+                        <span>Total Allowances</span>
+                        <span className="text-green-700">{formatSLE(customAllowances.reduce((s, a) => s + safeNumber(a.amount), 0))}</span>
+                      </div>
+                    )}
                   </div>
+                </div>
 
-                  {/* Custom Bonuses */}
-                  <div>
-                    <div className="flex items-center justify-between mb-2">
-                      <Label className="text-purple-600">Additional Bonuses</Label>
-                      <Button type="button" variant="outline" size="sm" onClick={addCustomBonus}>
-                        <Plus className="w-4 h-4 mr-1" /> Add Bonus
-                      </Button>
-                    </div>
-                    <div className="space-y-2">
-                      {customBonuses.map((bonus, index) => (
-                        <div key={index} className="flex gap-2">
+                {/* Bonuses */}
+                <div className="p-4 bg-purple-50 rounded-lg border border-purple-200">
+                  <div className="flex items-center justify-between mb-3">
+                    <Label className="text-purple-700 font-medium flex items-center gap-2">
+                      <TrendingUp className="w-4 h-4" /> Bonuses
+                    </Label>
+                    <Button type="button" variant="outline" size="sm" onClick={addCustomBonus}>
+                      <Plus className="w-4 h-4 mr-1" /> Add Bonus
+                    </Button>
+                  </div>
+                  <div className="space-y-2">
+                    {customBonuses.length === 0 ? (
+                      <p className="text-sm text-purple-600/70 text-center py-2">No bonuses added</p>
+                    ) : (
+                      customBonuses.map((bonus, index) => (
+                        <div key={index} className="flex gap-2 items-center bg-white p-2 rounded-lg">
                           <Input 
                             placeholder="Bonus name" 
                             value={bonus.name}
@@ -624,54 +599,69 @@ export default function PayrollProcessDialog({
                             }}
                             className="flex-1"
                           />
-                          <Input 
-                            type="number" 
-                            min="0"
-                            placeholder="Amount"
-                            value={bonus.amount || ""}
-                            onChange={(e) => {
-                              const updated = [...customBonuses];
-                              updated[index].amount = safeNumber(e.target.value, 0);
-                              setCustomBonuses(updated);
-                            }}
-                            onWheel={(e) => e.target.blur()}
-                            className="w-32"
-                          />
-                          <Button type="button" variant="ghost" size="icon" onClick={() => {
+                          <div className="relative">
+                            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">SLE</span>
+                            <Input 
+                              type="number" 
+                              min="0"
+                              placeholder="0"
+                              value={bonus.amount || ""}
+                              onChange={(e) => {
+                                const updated = [...customBonuses];
+                                updated[index].amount = safeNumber(e.target.value, 0);
+                                setCustomBonuses(updated);
+                              }}
+                              onWheel={(e) => e.target.blur()}
+                              className="w-36 pl-12"
+                            />
+                          </div>
+                          <Button type="button" variant="ghost" size="icon" className="h-9 w-9" onClick={() => {
                             setCustomBonuses(customBonuses.filter((_, i) => i !== index));
                           }}>
                             <Minus className="w-4 h-4 text-red-500" />
                           </Button>
                         </div>
-                      ))}
+                      ))
+                    )}
+                    {customBonuses.length > 0 && (
+                      <div className="flex justify-between text-sm font-medium pt-2 border-t border-purple-200">
+                        <span>Total Bonuses</span>
+                        <span className="text-purple-700">{formatSLE(customBonuses.reduce((s, b) => s + safeNumber(b.amount), 0))}</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Deductions */}
+                <div className="p-4 bg-red-50 rounded-lg border border-red-200">
+                  <div className="flex items-center justify-between mb-3">
+                    <Label className="text-red-700 font-medium flex items-center gap-2">
+                      <Minus className="w-4 h-4" /> Deductions
+                    </Label>
+                    <div className="flex gap-2">
+                      <Select onValueChange={(v) => addCustomDeduction(COMMON_DEDUCTIONS.find(d => d.name === v))}>
+                        <SelectTrigger className="w-44 h-8 text-xs">
+                          <SelectValue placeholder="Select deduction..." />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {COMMON_DEDUCTIONS.filter(d => d.type !== 'statutory').map(d => (
+                            <SelectItem key={d.name} value={d.name} className="text-xs">
+                              {d.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <Button type="button" variant="outline" size="sm" onClick={() => addCustomDeduction()}>
+                        <Plus className="w-4 h-4" /> Custom
+                      </Button>
                     </div>
                   </div>
-
-                  {/* Custom Deductions */}
-                  <div>
-                    <div className="flex items-center justify-between mb-2">
-                      <Label className="text-red-600">Other Deductions</Label>
-                      <div className="flex gap-2">
-                        <Select onValueChange={(v) => addCustomDeduction(COMMON_DEDUCTIONS.find(d => d.name === v))}>
-                          <SelectTrigger className="w-40 h-8 text-xs">
-                            <SelectValue placeholder="Quick add..." />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {COMMON_DEDUCTIONS.map(d => (
-                              <SelectItem key={d.name} value={d.name} className="text-xs">
-                                {d.name}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                        <Button type="button" variant="outline" size="sm" onClick={() => addCustomDeduction()}>
-                          <Plus className="w-4 h-4" />
-                        </Button>
-                      </div>
-                    </div>
-                    <div className="space-y-2">
-                      {customDeductions.map((deduction, index) => (
-                        <div key={index} className="flex gap-2">
+                  <div className="space-y-2">
+                    {customDeductions.length === 0 ? (
+                      <p className="text-sm text-red-600/70 text-center py-2">No deductions added (statutory deductions are automatic)</p>
+                    ) : (
+                      customDeductions.map((deduction, index) => (
+                        <div key={index} className="flex gap-2 items-center bg-white p-2 rounded-lg">
                           <Input 
                             placeholder="Deduction name" 
                             value={deduction.name}
@@ -682,30 +672,39 @@ export default function PayrollProcessDialog({
                             }}
                             className="flex-1"
                           />
-                          <Input 
-                            type="number" 
-                            min="0"
-                            placeholder="Amount"
-                            value={deduction.amount || ""}
-                            onChange={(e) => {
-                              const updated = [...customDeductions];
-                              updated[index].amount = safeNumber(e.target.value, 0);
-                              setCustomDeductions(updated);
-                            }}
-                            onWheel={(e) => e.target.blur()}
-                            className="w-32"
-                          />
-                          <Button type="button" variant="ghost" size="icon" onClick={() => {
+                          <div className="relative">
+                            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">SLE</span>
+                            <Input 
+                              type="number" 
+                              min="0"
+                              placeholder="0"
+                              value={deduction.amount || ""}
+                              onChange={(e) => {
+                                const updated = [...customDeductions];
+                                updated[index].amount = safeNumber(e.target.value, 0);
+                                setCustomDeductions(updated);
+                              }}
+                              onWheel={(e) => e.target.blur()}
+                              className="w-36 pl-12"
+                            />
+                          </div>
+                          <Button type="button" variant="ghost" size="icon" className="h-9 w-9" onClick={() => {
                             setCustomDeductions(customDeductions.filter((_, i) => i !== index));
                           }}>
                             <Minus className="w-4 h-4 text-red-500" />
                           </Button>
                         </div>
-                      ))}
-                    </div>
+                      ))
+                    )}
+                    {customDeductions.length > 0 && (
+                      <div className="flex justify-between text-sm font-medium pt-2 border-t border-red-200">
+                        <span>Total Deductions</span>
+                        <span className="text-red-700">{formatSLE(customDeductions.reduce((s, d) => s + safeNumber(d.amount), 0))}</span>
+                      </div>
+                    )}
                   </div>
-                </CollapsibleContent>
-              </Collapsible>
+                </div>
+              </div>
 
               {/* Statutory Deductions */}
               <div className="p-4 bg-blue-50 rounded-lg border border-blue-200">
