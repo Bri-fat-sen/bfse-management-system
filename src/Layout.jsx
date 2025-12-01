@@ -187,8 +187,25 @@ export default function Layout({ children, currentPageName }) {
           return;
         }
         
-        // For admin users only - auto-create if no existing employee found
+        // For platform admin users only - auto-create if no existing employee found
+        // This is ONLY for the initial platform admin, not for invited users
         if (user?.role === 'admin' && orgs && orgs.length > 0) {
+          // Double-check no employee exists with this email before creating
+          const doubleCheck = await base44.entities.Employee.filter({ email: user.email });
+          const doubleCheckUserEmail = await base44.entities.Employee.filter({ user_email: user.email });
+          
+          if (doubleCheck.length > 0 || doubleCheckUserEmail.length > 0) {
+            // Already exists, just link it
+            const existing = doubleCheck[0] || doubleCheckUserEmail[0];
+            if (!existing.user_email) {
+              await base44.entities.Employee.update(existing.id, {
+                user_email: user.email,
+              });
+            }
+            refetchEmployee();
+            return;
+          }
+          
           const org = orgs[0];
           const existingEmployees = await base44.entities.Employee.filter({ organisation_id: org.id });
           const employeeCode = `EMP${String(existingEmployees.length + 1).padStart(4, '0')}`;
@@ -210,6 +227,8 @@ export default function Layout({ children, currentPageName }) {
           
           refetchEmployee();
         }
+        // Note: Non-admin invited users should have their employee record created manually by HR/Admin
+        // before or after they accept the invite - they won't get auto-created records
       } catch (err) {
         console.error('Failed to link/create employee record:', err);
       }
