@@ -98,7 +98,23 @@ export default function ActivityLog() {
     enabled: !!orgId,
   });
 
-  if (!orgId || isLoading) {
+  if (!user) {
+    return <LoadingSpinner message="Loading Activity Log..." subtitle="Fetching system activities" fullScreen={true} />;
+  }
+
+  if (!currentEmployee || !orgId) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[60vh] text-center p-4">
+        <Activity className="w-16 h-16 text-gray-300 mb-4" />
+        <h2 className="text-xl font-semibold text-gray-600">No Employee Record</h2>
+        <p className="text-gray-500 mt-2 max-w-md">
+          Your account is not linked to an employee record yet. Please contact your administrator.
+        </p>
+      </div>
+    );
+  }
+
+  if (isLoading) {
     return <LoadingSpinner message="Loading Activity Log..." subtitle="Fetching system activities" fullScreen={true} />;
   }
 
