@@ -36,6 +36,7 @@ import NewGroupDialog from "@/components/communication/NewGroupDialog";
 import GroupSettings from "@/components/communication/GroupSettings";
 import MessageSearch from "@/components/communication/MessageSearch";
 import SharedFilesGallery from "@/components/communication/SharedFilesGallery";
+import LoadingSpinner from "@/components/ui/LoadingSpinner";
 
 export default function Communication() {
   const queryClient = useQueryClient();
@@ -66,7 +67,6 @@ export default function Communication() {
 
   const currentEmployee = employee?.[0];
   const orgId = currentEmployee?.organisation_id;
-  const canPost = ['super_admin', 'org_admin', 'hr_admin'].includes(currentEmployee?.role);
 
   if (!user) {
     return <LoadingSpinner message="Loading..." fullScreen />;
@@ -83,6 +83,8 @@ export default function Communication() {
       </div>
     );
   }
+
+  const canPost = ['super_admin', 'org_admin', 'hr_admin'].includes(currentEmployee?.role);
 
   const { data: chatRooms = [] } = useQuery({
     queryKey: ['chatRooms', orgId],
