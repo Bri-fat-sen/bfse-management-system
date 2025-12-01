@@ -137,30 +137,62 @@ export default function CalendarView({
   return (
     <div className="bg-white rounded-xl shadow-sm border overflow-hidden">
       {/* Header */}
-      <div className="p-4 border-b bg-gradient-to-r from-[#1EB053]/5 to-[#0072C6]/5">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#1EB053] to-[#0072C6] flex items-center justify-center">
-              <CalendarIcon className="w-5 h-5 text-white" />
+      <div className="p-3 sm:p-4 border-b bg-gradient-to-r from-[#1EB053]/5 to-[#0072C6]/5">
+        <div className="flex flex-col gap-3">
+          {/* Top row: Title and navigation */}
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2 sm:gap-3">
+              <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-xl bg-gradient-to-br from-[#1EB053] to-[#0072C6] flex items-center justify-center flex-shrink-0">
+                <CalendarIcon className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
+              </div>
+              <div>
+                <h2 className="text-base sm:text-xl font-bold text-gray-800">
+                  {format(currentDate, 'MMM yyyy')}
+                </h2>
+                <p className="text-[10px] sm:text-sm text-gray-500">
+                  {allEvents.length} events
+                </p>
+              </div>
             </div>
-            <div>
-              <h2 className="text-xl font-bold text-gray-800">
-                {format(currentDate, 'MMMM yyyy')}
-              </h2>
-              <p className="text-sm text-gray-500">
-                {allEvents.length} events this month
-              </p>
+            
+            {/* Navigation buttons */}
+            <div className="flex items-center gap-1">
+              <Button
+                variant="outline"
+                size="icon"
+                onClick={() => setCurrentDate(subMonths(currentDate, 1))}
+                className="h-8 w-8 sm:h-9 sm:w-9"
+              >
+                <ChevronLeft className="w-4 h-4" />
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setCurrentDate(new Date())}
+                className="h-8 sm:h-9 text-xs sm:text-sm px-2 sm:px-3"
+              >
+                Today
+              </Button>
+              <Button
+                variant="outline"
+                size="icon"
+                onClick={() => setCurrentDate(addMonths(currentDate, 1))}
+                className="h-8 w-8 sm:h-9 sm:w-9"
+              >
+                <ChevronRight className="w-4 h-4" />
+              </Button>
             </div>
           </div>
           
-          <div className="flex items-center gap-2">
-            <div className="flex items-center bg-gray-100 rounded-lg p-1">
+          {/* Bottom row: View toggle and Add button */}
+          <div className="flex items-center justify-between">
+            <div className="flex items-center bg-gray-100 rounded-lg p-0.5 sm:p-1">
               <Button
                 variant="ghost"
                 size="sm"
                 onClick={() => setView("month")}
                 className={cn(
-                  "rounded-md px-3",
+                  "rounded-md px-2 sm:px-3 h-7 sm:h-8 text-xs sm:text-sm",
                   view === "month" && "bg-white shadow-sm"
                 )}
               >
@@ -171,56 +203,32 @@ export default function CalendarView({
                 size="sm"
                 onClick={() => setView("week")}
                 className={cn(
-                  "rounded-md px-3",
+                  "rounded-md px-2 sm:px-3 h-7 sm:h-8 text-xs sm:text-sm",
                   view === "week" && "bg-white shadow-sm"
                 )}
               >
                 Week
               </Button>
             </div>
-            
-            <div className="flex items-center gap-1">
-              <Button
-                variant="outline"
-                size="icon"
-                onClick={() => setCurrentDate(subMonths(currentDate, 1))}
-              >
-                <ChevronLeft className="w-4 h-4" />
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setCurrentDate(new Date())}
-              >
-                Today
-              </Button>
-              <Button
-                variant="outline"
-                size="icon"
-                onClick={() => setCurrentDate(addMonths(currentDate, 1))}
-              >
-                <ChevronRight className="w-4 h-4" />
-              </Button>
-            </div>
 
             {onAddTask && (
               <Button
                 onClick={() => onAddTask()}
-                className="bg-gradient-to-r from-[#1EB053] to-[#0072C6]"
+                className="bg-gradient-to-r from-[#1EB053] to-[#0072C6] h-8 sm:h-9 text-xs sm:text-sm"
               >
-                <Plus className="w-4 h-4 mr-1" />
-                Add Task
+                <Plus className="w-4 h-4 sm:mr-1" />
+                <span className="hidden sm:inline">Add Task</span>
               </Button>
             )}
           </div>
         </div>
 
-        {/* Legend */}
-        <div className="flex flex-wrap gap-3 mt-4">
+        {/* Legend - scrollable on mobile */}
+        <div className="flex gap-2 sm:gap-3 mt-3 overflow-x-auto pb-1 -mx-3 px-3 sm:mx-0 sm:px-0">
           {Object.entries(eventColors).map(([type, colors]) => (
-            <div key={type} className="flex items-center gap-1.5">
-              <div className={cn("w-2.5 h-2.5 rounded-full", colors.dot)} />
-              <span className="text-xs text-gray-600 capitalize">{type}</span>
+            <div key={type} className="flex items-center gap-1 flex-shrink-0">
+              <div className={cn("w-2 h-2 sm:w-2.5 sm:h-2.5 rounded-full", colors.dot)} />
+              <span className="text-[10px] sm:text-xs text-gray-600 capitalize">{type}</span>
             </div>
           ))}
         </div>
@@ -228,11 +236,11 @@ export default function CalendarView({
 
       {/* Calendar Grid */}
       <DragDropContext onDragEnd={handleDragEnd}>
-        <div className="p-2 sm:p-4">
+        <div className="p-1.5 sm:p-4">
           {/* Week day headers */}
-          <div className="grid grid-cols-7 gap-1 mb-2">
+          <div className="grid grid-cols-7 gap-0.5 sm:gap-1 mb-1 sm:mb-2">
             {weekDays.map(day => (
-              <div key={day} className="text-center text-xs font-medium text-gray-500 py-2">
+              <div key={day} className="text-center text-[10px] sm:text-xs font-medium text-gray-500 py-1 sm:py-2">
                 <span className="hidden sm:inline">{day}</span>
                 <span className="sm:hidden">{day.charAt(0)}</span>
               </div>
@@ -240,7 +248,7 @@ export default function CalendarView({
           </div>
 
           {/* Calendar days */}
-          <div className="grid grid-cols-7 gap-1">
+          <div className="grid grid-cols-7 gap-0.5 sm:gap-1">
             {calendarDays.map((day, idx) => {
               const dayEvents = getEventsForDate(day);
               const isToday = isSameDay(day, new Date());
@@ -253,8 +261,9 @@ export default function CalendarView({
                     <div
                       ref={provided.innerRef}
                       {...provided.droppableProps}
+                      onClick={() => dayEvents.length === 0 && onAddTask?.(dateStr)}
                       className={cn(
-                        "min-h-[80px] sm:min-h-[100px] p-1 rounded-lg border transition-colors",
+                        "min-h-[60px] sm:min-h-[100px] p-0.5 sm:p-1 rounded-md sm:rounded-lg border transition-colors",
                         !isCurrentMonth && "bg-gray-50 opacity-50",
                         isToday && "border-[#1EB053] bg-green-50/50",
                         snapshot.isDraggingOver && "bg-blue-50 border-blue-300",
@@ -262,7 +271,7 @@ export default function CalendarView({
                       )}
                     >
                       <div className={cn(
-                        "text-sm font-medium mb-1 flex items-center justify-center w-6 h-6 rounded-full mx-auto sm:mx-0",
+                        "text-[10px] sm:text-sm font-medium mb-0.5 sm:mb-1 flex items-center justify-center w-5 h-5 sm:w-6 sm:h-6 rounded-full mx-auto",
                         isToday && "bg-[#1EB053] text-white",
                         !isToday && !isCurrentMonth && "text-gray-400",
                         !isToday && isCurrentMonth && "text-gray-700"
@@ -270,8 +279,8 @@ export default function CalendarView({
                         {format(day, 'd')}
                       </div>
                       
-                      <div className="space-y-0.5 max-h-[60px] sm:max-h-[80px] overflow-y-auto">
-                        {dayEvents.slice(0, view === "month" ? 3 : 10).map((event, eventIdx) => (
+                      <div className="space-y-0.5 max-h-[35px] sm:max-h-[80px] overflow-y-auto">
+                        {dayEvents.slice(0, view === "month" ? 2 : 10).map((event, eventIdx) => (
                           <Draggable
                             key={event.id}
                             draggableId={event.id}
@@ -283,9 +292,12 @@ export default function CalendarView({
                                 ref={provided.innerRef}
                                 {...provided.draggableProps}
                                 {...provided.dragHandleProps}
-                                onClick={() => onEventClick?.(event)}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  onEventClick?.(event);
+                                }}
                                 className={cn(
-                                  "text-[10px] sm:text-xs px-1.5 py-0.5 rounded truncate cursor-pointer transition-all",
+                                  "text-[8px] sm:text-xs px-1 sm:px-1.5 py-0.5 rounded truncate cursor-pointer transition-all",
                                   eventColors[event.category || event.type]?.bg,
                                   eventColors[event.category || event.type]?.text,
                                   "border-l-2",
@@ -294,17 +306,20 @@ export default function CalendarView({
                                   event.status === 'completed' && "line-through opacity-60"
                                 )}
                               >
-                                {event.time && (
-                                  <span className="font-medium mr-1">{event.time}</span>
-                                )}
-                                {event.title}
+                                <span className="hidden sm:inline">
+                                  {event.time && (
+                                    <span className="font-medium mr-1">{event.time}</span>
+                                  )}
+                                  {event.title}
+                                </span>
+                                <span className="sm:hidden">{event.title.substring(0, 8)}{event.title.length > 8 ? '…' : ''}</span>
                               </div>
                             )}
                           </Draggable>
                         ))}
-                        {dayEvents.length > 3 && view === "month" && (
-                          <div className="text-[10px] text-gray-500 text-center">
-                            +{dayEvents.length - 3} more
+                        {dayEvents.length > 2 && view === "month" && (
+                          <div className="text-[8px] sm:text-[10px] text-gray-500 text-center">
+                            +{dayEvents.length - 2}
                           </div>
                         )}
                       </div>
