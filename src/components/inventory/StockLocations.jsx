@@ -33,7 +33,6 @@ export default function StockLocations({
   orgId,
   currentEmployee
 }) {
-  const { toast } = useToast();
   const queryClient = useQueryClient();
   const [showTransfer, setShowTransfer] = useState(false);
   const [transferData, setTransferData] = useState({
