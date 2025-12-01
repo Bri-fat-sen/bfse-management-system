@@ -373,7 +373,12 @@ export default function BulkPayrollDialog({
                       ) : (
                         <AlertCircle className="w-4 h-4 text-red-600" />
                       )}
-                      <span className="font-medium">{result.employee}</span>
+                      <div>
+                        <span className="font-medium">{result.employee}</span>
+                        {result.package && (
+                          <p className="text-xs text-gray-500">Package: {result.package}</p>
+                        )}
+                      </div>
                     </div>
                     {result.status === 'success' ? (
                       <span className="text-green-600 font-semibold">{formatSLE(result.netPay)}</span>
