@@ -1,5 +1,6 @@
 // Sierra Leone Payroll Calculator
-// All amounts in SLE (New Sierra Leonean Leone - Redenominated March 2024)
+// All amounts in NLE (New Leone - Redenominated April 2024)
+// 1 NLE = 1,000 old Leones
 // Reference: Finance Act 2024, Employment Act 2023, NASSIT Act
 
 // Safe number helper to prevent NaN/undefined errors
@@ -20,23 +21,23 @@ export const NASSIT_EMPLOYEE_RATE = 0.05;  // 5% employee contribution
 export const NASSIT_EMPLOYER_RATE = 0.10;  // 10% employer contribution
 
 // PAYE Tax Brackets (Annual Income) - 2025
-// Based on Finance Act 2024 and sl.icalculator.com/income-tax-rates/2025
-// Note: First SLE 6,000,000 annually (SLE 500,000 monthly) is tax-free
+// Based on Finance Act 2024 - amounts in NLE (New Leone)
+// Note: First NLE 6,000 annually (NLE 500 monthly) is tax-free
 export const SL_TAX_BRACKETS = [
-  { min: 0, max: 6000000, rate: 0, label: "0% (Tax-Free)" },
-  { min: 6000001, max: 12000000, rate: 0.15, label: "15%" },
-  { min: 12000001, max: 18000000, rate: 0.20, label: "20%" },
-  { min: 18000001, max: 24000000, rate: 0.25, label: "25%" },
-  { min: 24000001, max: Infinity, rate: 0.30, label: "30%" }
+  { min: 0, max: 6000, rate: 0, label: "0% (Tax-Free)" },
+  { min: 6001, max: 12000, rate: 0.15, label: "15%" },
+  { min: 12001, max: 18000, rate: 0.20, label: "20%" },
+  { min: 18001, max: 24000, rate: 0.25, label: "25%" },
+  { min: 24001, max: Infinity, rate: 0.30, label: "30%" }
 ];
 
 // Monthly equivalents for reference (annual / 12)
 export const SL_TAX_BRACKETS_MONTHLY = [
-  { min: 0, max: 500000, rate: 0, label: "0% (Tax-Free)" },
-  { min: 500001, max: 1000000, rate: 0.15, label: "15%" },
-  { min: 1000001, max: 1500000, rate: 0.20, label: "20%" },
-  { min: 1500001, max: 2000000, rate: 0.25, label: "25%" },
-  { min: 2000001, max: Infinity, rate: 0.30, label: "30%" }
+  { min: 0, max: 500, rate: 0, label: "0% (Tax-Free)" },
+  { min: 501, max: 1000, rate: 0.15, label: "15%" },
+  { min: 1001, max: 1500, rate: 0.20, label: "20%" },
+  { min: 1501, max: 2000, rate: 0.25, label: "25%" },
+  { min: 2001, max: Infinity, rate: 0.30, label: "30%" }
 ];
 
 // Overtime Multipliers - Per Employment Act 2023 Section 42
@@ -61,122 +62,123 @@ export const SL_PUBLIC_HOLIDAYS_2025 = [
   { date: "2025-12-26", name: "Boxing Day" }
 ];
 
-// Sierra Leone Minimum Wage (as of 2024)
+// Sierra Leone Minimum Wage (as of 2024) - in NLE
 // Per Minimum Wage Act and subsequent amendments
 export const SL_MINIMUM_WAGE = {
-  monthly: 800000,  // SLE 800,000 per month (increased from SLE 600,000)
-  daily: 36364,     // Approximately SLE 36,364 per day
-  hourly: 4545      // Approximately SLE 4,545 per hour
+  monthly: 800,     // NLE 800 per month
+  daily: 36,        // Approximately NLE 36 per day
+  hourly: 5         // Approximately NLE 5 per hour
 };
 
 // Role-based allowances configuration
 // Per Employment Act 2023 Section 5 - casual/temporary workers entitled to:
 // rent, transport, medical, relocation, risk allowances
+// Role-based allowances configuration - amounts in NLE
 export const ROLE_BONUS_CONFIG = {
   super_admin: {
     allowances: [
       { name: "Executive Allowance", percentage: 0.20 },
-      { name: "Transport Allowance", fixed: 500000 },
+      { name: "Transport Allowance", fixed: 500 },
       { name: "Housing Allowance", percentage: 0.20 },
-      { name: "Communication Allowance", fixed: 200000 },
-      { name: "Medical Allowance", fixed: 300000 }
+      { name: "Communication Allowance", fixed: 200 },
+      { name: "Medical Allowance", fixed: 300 }
     ],
     bonusEligible: ["performance"]
   },
   org_admin: {
     allowances: [
       { name: "Executive Allowance", percentage: 0.15 },
-      { name: "Transport Allowance", fixed: 500000 },
+      { name: "Transport Allowance", fixed: 500 },
       { name: "Housing Allowance", percentage: 0.20 },
-      { name: "Communication Allowance", fixed: 200000 },
-      { name: "Medical Allowance", fixed: 300000 }
+      { name: "Communication Allowance", fixed: 200 },
+      { name: "Medical Allowance", fixed: 300 }
     ],
     bonusEligible: ["performance"]
   },
   hr_admin: {
     allowances: [
       { name: "Responsibility Allowance", percentage: 0.10 },
-      { name: "Transport Allowance", fixed: 250000 },
+      { name: "Transport Allowance", fixed: 250 },
       { name: "Housing Allowance", percentage: 0.10 },
-      { name: "Communication Allowance", fixed: 75000 },
-      { name: "Medical Allowance", fixed: 150000 }
+      { name: "Communication Allowance", fixed: 75 },
+      { name: "Medical Allowance", fixed: 150 }
     ],
     bonusEligible: ["performance"]
   },
   payroll_admin: {
     allowances: [
       { name: "Responsibility Allowance", percentage: 0.10 },
-      { name: "Transport Allowance", fixed: 250000 },
+      { name: "Transport Allowance", fixed: 250 },
       { name: "Housing Allowance", percentage: 0.10 },
-      { name: "Communication Allowance", fixed: 75000 },
-      { name: "Medical Allowance", fixed: 150000 }
+      { name: "Communication Allowance", fixed: 75 },
+      { name: "Medical Allowance", fixed: 150 }
     ],
     bonusEligible: ["performance"]
   },
   warehouse_manager: {
     allowances: [
       { name: "Responsibility Allowance", percentage: 0.10 },
-      { name: "Transport Allowance", fixed: 250000 },
+      { name: "Transport Allowance", fixed: 250 },
       { name: "Housing Allowance", percentage: 0.10 },
-      { name: "Communication Allowance", fixed: 75000 },
-      { name: "Medical Allowance", fixed: 150000 }
+      { name: "Communication Allowance", fixed: 75 },
+      { name: "Medical Allowance", fixed: 150 }
     ],
     bonusEligible: ["performance", "attendance"]
   },
   accountant: {
     allowances: [
       { name: "Professional Allowance", percentage: 0.08 },
-      { name: "Transport Allowance", fixed: 250000 },
+      { name: "Transport Allowance", fixed: 250 },
       { name: "Housing Allowance", percentage: 0.10 },
-      { name: "Communication Allowance", fixed: 75000 },
-      { name: "Medical Allowance", fixed: 150000 }
+      { name: "Communication Allowance", fixed: 75 },
+      { name: "Medical Allowance", fixed: 150 }
     ],
     bonusEligible: ["performance"]
   },
   driver: {
     allowances: [
       { name: "Risk Allowance", percentage: 0.15 },
-      { name: "Transport Allowance", fixed: 150000 },
-      { name: "Fuel Allowance", fixed: 100000 },
-      { name: "Meal Allowance", fixed: 100000 },
-      { name: "Medical Allowance", fixed: 150000 },
-      { name: "Uniform Allowance", fixed: 50000 }
+      { name: "Transport Allowance", fixed: 150 },
+      { name: "Fuel Allowance", fixed: 100 },
+      { name: "Meal Allowance", fixed: 100 },
+      { name: "Medical Allowance", fixed: 150 },
+      { name: "Uniform Allowance", fixed: 50 }
     ],
     bonusEligible: ["performance", "attendance", "sales_commission"]
   },
   vehicle_sales: {
     allowances: [
       { name: "Sales Allowance", percentage: 0.02 },
-      { name: "Transport Allowance", fixed: 150000 },
-      { name: "Communication Allowance", fixed: 75000 },
-      { name: "Meal Allowance", fixed: 100000 },
-      { name: "Medical Allowance", fixed: 150000 }
+      { name: "Transport Allowance", fixed: 150 },
+      { name: "Communication Allowance", fixed: 75 },
+      { name: "Meal Allowance", fixed: 100 },
+      { name: "Medical Allowance", fixed: 150 }
     ],
     bonusEligible: ["performance", "sales_commission"]
   },
   retail_cashier: {
     allowances: [
-      { name: "Transport Allowance", fixed: 150000 },
-      { name: "Meal Allowance", fixed: 100000 },
-      { name: "Medical Allowance", fixed: 150000 },
-      { name: "Uniform Allowance", fixed: 50000 }
+      { name: "Transport Allowance", fixed: 150 },
+      { name: "Meal Allowance", fixed: 100 },
+      { name: "Medical Allowance", fixed: 150 },
+      { name: "Uniform Allowance", fixed: 50 }
     ],
     bonusEligible: ["performance", "attendance"]
   },
   support_staff: {
     allowances: [
-      { name: "Transport Allowance", fixed: 150000 },
-      { name: "Meal Allowance", fixed: 100000 },
-      { name: "Medical Allowance", fixed: 150000 },
-      { name: "Uniform Allowance", fixed: 50000 }
+      { name: "Transport Allowance", fixed: 150 },
+      { name: "Meal Allowance", fixed: 100 },
+      { name: "Medical Allowance", fixed: 150 },
+      { name: "Uniform Allowance", fixed: 50 }
     ],
     bonusEligible: ["attendance"]
   },
   read_only: {
     allowances: [
-      { name: "Transport Allowance", fixed: 150000 },
-      { name: "Meal Allowance", fixed: 100000 },
-      { name: "Medical Allowance", fixed: 150000 }
+      { name: "Transport Allowance", fixed: 150 },
+      { name: "Meal Allowance", fixed: 100 },
+      { name: "Medical Allowance", fixed: 150 }
     ],
     bonusEligible: []
   }
@@ -721,8 +723,15 @@ export function calculateFullPayroll({
 }
 
 /**
- * Format currency for display
+ * Format currency for display - NLE (New Leone)
  */
 export function formatSLE(amount) {
-  return `SLE ${Math.round(safeNum(amount)).toLocaleString()}`;
+  return `NLE ${safeNum(amount).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+}
+
+/**
+ * Format currency short form
+ */
+export function formatNLE(amount) {
+  return `NLE ${safeNum(amount).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 }

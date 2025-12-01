@@ -32,25 +32,26 @@ import { safeNumber, formatNumber } from "@/components/utils/calculations";
 import { COMMON_ALLOWANCES, SL_MINIMUM_WAGE } from "./PayrollCalculator";
 
 // Pre-defined Sierra Leone Remuneration Packages (2025)
+// All amounts in NLE (New Leone - redenominated April 2024)
 // Based on Sierra Leone Employment Act 2023 & market rates
 export const SL_PACKAGE_TEMPLATES = [
   {
     name: "Executive Director Package",
     description: "Senior executive leadership package with comprehensive benefits per Employment Act 2023",
     applicable_roles: ["super_admin", "org_admin"],
-    base_salary: 15000000,
+    base_salary: 15000,
     salary_type: "monthly",
     allowances: [
-      { name: "Housing Allowance", amount: 3000000, type: "fixed" },
-      { name: "Transport Allowance", amount: 1500000, type: "fixed" },
-      { name: "Medical Allowance", amount: 800000, type: "fixed" },
-      { name: "Communication Allowance", amount: 500000, type: "fixed" },
-      { name: "Entertainment Allowance", amount: 500000, type: "fixed" },
+      { name: "Housing Allowance", amount: 3000, type: "fixed" },
+      { name: "Transport Allowance", amount: 1500, type: "fixed" },
+      { name: "Medical Allowance", amount: 800, type: "fixed" },
+      { name: "Communication Allowance", amount: 500, type: "fixed" },
+      { name: "Entertainment Allowance", amount: 500, type: "fixed" },
       { name: "Executive Allowance", amount: 20, type: "percentage" }
     ],
     bonuses: [
-      { name: "Performance Bonus", amount: 2000000, frequency: "quarterly" },
-      { name: "13th Month Bonus", amount: 15000000, frequency: "annual" }
+      { name: "Performance Bonus", amount: 2000, frequency: "quarterly" },
+      { name: "13th Month Bonus", amount: 15000, frequency: "annual" }
     ],
     leave_entitlement: { annual_days: 30, sick_days: 15, maternity_days: 90, paternity_days: 10 },
     overtime_rate_multiplier: 2.0,
@@ -60,18 +61,18 @@ export const SL_PACKAGE_TEMPLATES = [
     name: "Senior Manager Package",
     description: "Management level package with standard executive benefits",
     applicable_roles: ["org_admin", "warehouse_manager"],
-    base_salary: 8000000,
+    base_salary: 8000,
     salary_type: "monthly",
     allowances: [
-      { name: "Housing Allowance", amount: 1500000, type: "fixed" },
-      { name: "Transport Allowance", amount: 800000, type: "fixed" },
-      { name: "Medical Allowance", amount: 500000, type: "fixed" },
-      { name: "Communication Allowance", amount: 300000, type: "fixed" },
+      { name: "Housing Allowance", amount: 1500, type: "fixed" },
+      { name: "Transport Allowance", amount: 800, type: "fixed" },
+      { name: "Medical Allowance", amount: 500, type: "fixed" },
+      { name: "Communication Allowance", amount: 300, type: "fixed" },
       { name: "Responsibility Allowance", amount: 15, type: "percentage" }
     ],
     bonuses: [
-      { name: "Performance Bonus", amount: 1000000, frequency: "quarterly" },
-      { name: "13th Month Bonus", amount: 8000000, frequency: "annual" }
+      { name: "Performance Bonus", amount: 1000, frequency: "quarterly" },
+      { name: "13th Month Bonus", amount: 8000, frequency: "annual" }
     ],
     leave_entitlement: { annual_days: 25, sick_days: 12, maternity_days: 90, paternity_days: 7 },
     overtime_rate_multiplier: 1.75,
@@ -81,18 +82,18 @@ export const SL_PACKAGE_TEMPLATES = [
     name: "Department Head Package",
     description: "Mid-level management package for department heads and supervisors",
     applicable_roles: ["hr_admin", "payroll_admin", "warehouse_manager", "accountant"],
-    base_salary: 5000000,
+    base_salary: 5000,
     salary_type: "monthly",
     allowances: [
-      { name: "Housing Allowance", amount: 1000000, type: "fixed" },
-      { name: "Transport Allowance", amount: 500000, type: "fixed" },
-      { name: "Medical Allowance", amount: 400000, type: "fixed" },
-      { name: "Communication Allowance", amount: 200000, type: "fixed" },
+      { name: "Housing Allowance", amount: 1000, type: "fixed" },
+      { name: "Transport Allowance", amount: 500, type: "fixed" },
+      { name: "Medical Allowance", amount: 400, type: "fixed" },
+      { name: "Communication Allowance", amount: 200, type: "fixed" },
       { name: "Responsibility Allowance", amount: 10, type: "percentage" }
     ],
     bonuses: [
-      { name: "Performance Bonus", amount: 500000, frequency: "quarterly" },
-      { name: "13th Month Bonus", amount: 5000000, frequency: "annual" }
+      { name: "Performance Bonus", amount: 500, frequency: "quarterly" },
+      { name: "13th Month Bonus", amount: 5000, frequency: "annual" }
     ],
     leave_entitlement: { annual_days: 21, sick_days: 10, maternity_days: 90, paternity_days: 5 },
     overtime_rate_multiplier: 1.5,
@@ -102,17 +103,17 @@ export const SL_PACKAGE_TEMPLATES = [
     name: "Professional Staff Package",
     description: "Skilled professional workers - accountants, administrators, technicians",
     applicable_roles: ["accountant", "hr_admin", "payroll_admin"],
-    base_salary: 3500000,
+    base_salary: 3500,
     salary_type: "monthly",
     allowances: [
-      { name: "Housing Allowance", amount: 700000, type: "fixed" },
-      { name: "Transport Allowance", amount: 400000, type: "fixed" },
-      { name: "Medical Allowance", amount: 300000, type: "fixed" },
-      { name: "Communication Allowance", amount: 150000, type: "fixed" },
+      { name: "Housing Allowance", amount: 700, type: "fixed" },
+      { name: "Transport Allowance", amount: 400, type: "fixed" },
+      { name: "Medical Allowance", amount: 300, type: "fixed" },
+      { name: "Communication Allowance", amount: 150, type: "fixed" },
       { name: "Professional Allowance", amount: 8, type: "percentage" }
     ],
     bonuses: [
-      { name: "13th Month Bonus", amount: 3500000, frequency: "annual" }
+      { name: "13th Month Bonus", amount: 3500, frequency: "annual" }
     ],
     leave_entitlement: { annual_days: 21, sick_days: 10, maternity_days: 90, paternity_days: 5 },
     overtime_rate_multiplier: 1.5,
@@ -122,18 +123,18 @@ export const SL_PACKAGE_TEMPLATES = [
     name: "Sales Representative Package",
     description: "Field sales staff with commission structure per Employment Act 2023",
     applicable_roles: ["vehicle_sales", "retail_cashier"],
-    base_salary: 2000000,
+    base_salary: 2000,
     salary_type: "monthly",
     allowances: [
-      { name: "Transport Allowance", amount: 350000, type: "fixed" },
-      { name: "Communication Allowance", amount: 150000, type: "fixed" },
-      { name: "Medical Allowance", amount: 250000, type: "fixed" },
-      { name: "Meal Allowance", amount: 200000, type: "fixed" },
+      { name: "Transport Allowance", amount: 350, type: "fixed" },
+      { name: "Communication Allowance", amount: 150, type: "fixed" },
+      { name: "Medical Allowance", amount: 250, type: "fixed" },
+      { name: "Meal Allowance", amount: 200, type: "fixed" },
       { name: "Sales Allowance", amount: 5, type: "percentage" }
     ],
     bonuses: [
       { name: "Sales Commission", amount: 2, type: "percentage", frequency: "monthly" },
-      { name: "Target Achievement Bonus", amount: 300000, frequency: "monthly" }
+      { name: "Target Achievement Bonus", amount: 300, frequency: "monthly" }
     ],
     leave_entitlement: { annual_days: 21, sick_days: 10, maternity_days: 90, paternity_days: 5 },
     overtime_rate_multiplier: 1.5,
@@ -143,19 +144,19 @@ export const SL_PACKAGE_TEMPLATES = [
     name: "Driver Package",
     description: "Commercial driver package with risk and fuel allowances per Employment Act 2023",
     applicable_roles: ["driver"],
-    base_salary: 1800000,
+    base_salary: 1800,
     salary_type: "monthly",
     allowances: [
       { name: "Risk Allowance", amount: 15, type: "percentage" },
-      { name: "Fuel Allowance", amount: 300000, type: "fixed" },
-      { name: "Meal Allowance", amount: 250000, type: "fixed" },
-      { name: "Medical Allowance", amount: 250000, type: "fixed" },
-      { name: "Uniform Allowance", amount: 100000, type: "fixed" },
-      { name: "Night Shift Allowance", amount: 150000, type: "fixed" }
+      { name: "Fuel Allowance", amount: 300, type: "fixed" },
+      { name: "Meal Allowance", amount: 250, type: "fixed" },
+      { name: "Medical Allowance", amount: 250, type: "fixed" },
+      { name: "Uniform Allowance", amount: 100, type: "fixed" },
+      { name: "Night Shift Allowance", amount: 150, type: "fixed" }
     ],
     bonuses: [
-      { name: "Trip Bonus", amount: 50000, frequency: "per_trip" },
-      { name: "Safety Bonus", amount: 200000, frequency: "monthly" }
+      { name: "Trip Bonus", amount: 50, frequency: "per_trip" },
+      { name: "Safety Bonus", amount: 200, frequency: "monthly" }
     ],
     leave_entitlement: { annual_days: 21, sick_days: 10, maternity_days: 90, paternity_days: 5 },
     overtime_rate_multiplier: 1.5,
@@ -165,17 +166,17 @@ export const SL_PACKAGE_TEMPLATES = [
     name: "Retail Cashier Package",
     description: "Point of sale and customer service staff package",
     applicable_roles: ["retail_cashier"],
-    base_salary: 1500000,
+    base_salary: 1500,
     salary_type: "monthly",
     allowances: [
-      { name: "Transport Allowance", amount: 250000, type: "fixed" },
-      { name: "Meal Allowance", amount: 200000, type: "fixed" },
-      { name: "Medical Allowance", amount: 200000, type: "fixed" },
-      { name: "Uniform Allowance", amount: 100000, type: "fixed" }
+      { name: "Transport Allowance", amount: 250, type: "fixed" },
+      { name: "Meal Allowance", amount: 200, type: "fixed" },
+      { name: "Medical Allowance", amount: 200, type: "fixed" },
+      { name: "Uniform Allowance", amount: 100, type: "fixed" }
     ],
     bonuses: [
-      { name: "Attendance Bonus", amount: 100000, frequency: "monthly" },
-      { name: "13th Month Bonus", amount: 1500000, frequency: "annual" }
+      { name: "Attendance Bonus", amount: 100, frequency: "monthly" },
+      { name: "13th Month Bonus", amount: 1500, frequency: "annual" }
     ],
     leave_entitlement: { annual_days: 21, sick_days: 10, maternity_days: 90, paternity_days: 5 },
     overtime_rate_multiplier: 1.5,
@@ -185,16 +186,16 @@ export const SL_PACKAGE_TEMPLATES = [
     name: "Support Staff Package",
     description: "General support and administrative staff - cleaners, security, messengers",
     applicable_roles: ["support_staff", "read_only"],
-    base_salary: 1200000,
+    base_salary: 1200,
     salary_type: "monthly",
     allowances: [
-      { name: "Transport Allowance", amount: 200000, type: "fixed" },
-      { name: "Meal Allowance", amount: 150000, type: "fixed" },
-      { name: "Medical Allowance", amount: 150000, type: "fixed" },
-      { name: "Uniform Allowance", amount: 75000, type: "fixed" }
+      { name: "Transport Allowance", amount: 200, type: "fixed" },
+      { name: "Meal Allowance", amount: 150, type: "fixed" },
+      { name: "Medical Allowance", amount: 150, type: "fixed" },
+      { name: "Uniform Allowance", amount: 75, type: "fixed" }
     ],
     bonuses: [
-      { name: "Attendance Bonus", amount: 75000, frequency: "monthly" }
+      { name: "Attendance Bonus", amount: 75, frequency: "monthly" }
     ],
     leave_entitlement: { annual_days: 21, sick_days: 5, maternity_days: 90, paternity_days: 5 },
     overtime_rate_multiplier: 1.5,
@@ -207,9 +208,9 @@ export const SL_PACKAGE_TEMPLATES = [
     base_salary: SL_MINIMUM_WAGE.monthly,
     salary_type: "monthly",
     allowances: [
-      { name: "Transport Allowance", amount: 150000, type: "fixed" },
-      { name: "Meal Allowance", amount: 100000, type: "fixed" },
-      { name: "Medical Allowance", amount: 100000, type: "fixed" }
+      { name: "Transport Allowance", amount: 150, type: "fixed" },
+      { name: "Meal Allowance", amount: 100, type: "fixed" },
+      { name: "Medical Allowance", amount: 100, type: "fixed" }
     ],
     bonuses: [],
     leave_entitlement: { annual_days: 21, sick_days: 5, maternity_days: 90, paternity_days: 5 },
@@ -223,8 +224,8 @@ export const SL_PACKAGE_TEMPLATES = [
     base_salary: SL_MINIMUM_WAGE.daily,
     salary_type: "daily",
     allowances: [
-      { name: "Transport Allowance", amount: 10000, type: "fixed" },
-      { name: "Meal Allowance", amount: 8000, type: "fixed" }
+      { name: "Transport Allowance", amount: 10, type: "fixed" },
+      { name: "Meal Allowance", amount: 8, type: "fixed" }
     ],
     bonuses: [],
     leave_entitlement: { annual_days: 0, sick_days: 0, maternity_days: 0, paternity_days: 0 },
@@ -408,7 +409,7 @@ export default function RemunerationPackageManager({ orgId }) {
     }));
   };
 
-  const formatSLE = (amount) => `SLE ${formatNumber(safeNumber(amount))}`;
+  const formatSLE = (amount) => `NLE ${safeNumber(amount).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
   
   // Calculate total package value
   const calculatePackageTotal = (pkg) => {
