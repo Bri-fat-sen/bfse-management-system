@@ -157,8 +157,33 @@ export default function Layout({ children, currentPageName }) {
     refetchOnWindowFocus: false,
   });
 
-  // Employee linking is now done manually through User Management page
-  // No auto-linking or auto-creation in Layout
+  // Auto-link user to unlinked employee record if one exists with matching email
+  useEffect(() => {
+    const autoLinkEmployee = async () => {
+      if (!user?.email || employee?.length > 0) return;
+      
+      try {
+        // Check if there's an employee record with this email but no user_email set
+        const unlinkedEmployees = await base44.entities.Employee.filter({ 
+          email: user.email 
+        });
+        
+        const matchingEmployee = unlinkedEmployees.find(e => !e.user_email);
+        
+        if (matchingEmployee) {
+          // Link the user to this employee record
+          await base44.entities.Employee.update(matchingEmployee.id, {
+            user_email: user.email
+          });
+          refetchEmployee();
+        }
+      } catch (error) {
+        console.error('Auto-link employee failed:', error);
+      }
+    };
+    
+    autoLinkEmployee();
+  }, [user?.email, employee]);
 
   const currentEmployee = employee?.[0];
 
