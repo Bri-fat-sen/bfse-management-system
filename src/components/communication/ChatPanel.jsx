@@ -75,6 +75,7 @@ export default function ChatPanel({ isOpen, onClose, orgId, currentEmployee }) {
   const [selectedMembers, setSelectedMembers] = useState([]);
   const [showPinnedMessages, setShowPinnedMessages] = useState(false);
   const [lastMessageCount, setLastMessageCount] = useState(0);
+  const [currentAttachment, setCurrentAttachment] = useState(null);
   const messagesEndRef = useRef(null);
   const typingTimeoutRef = useRef(null);
   const notificationSettings = useNotificationSettings();
