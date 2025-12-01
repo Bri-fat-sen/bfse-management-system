@@ -175,7 +175,23 @@ export default function Suppliers() {
     );
   };
 
-  if (!orgId || loadingSuppliers) {
+  if (!user) {
+    return <LoadingSpinner message="Loading Suppliers..." subtitle="Fetching supplier information" fullScreen={true} />;
+  }
+
+  if (!currentEmployee || !orgId) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[60vh] text-center p-4">
+        <Truck className="w-16 h-16 text-gray-300 mb-4" />
+        <h2 className="text-xl font-semibold text-gray-600">No Employee Record</h2>
+        <p className="text-gray-500 mt-2 max-w-md">
+          Your account is not linked to an employee record yet. Please contact your administrator.
+        </p>
+      </div>
+    );
+  }
+
+  if (loadingSuppliers) {
     return <LoadingSpinner message="Loading Suppliers..." subtitle="Fetching supplier information" fullScreen={true} />;
   }
 
