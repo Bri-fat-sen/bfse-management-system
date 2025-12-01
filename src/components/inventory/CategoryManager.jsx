@@ -19,7 +19,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { useToast } from "@/components/ui/use-toast";
+import { toast } from "sonner";
 import { FolderPlus, Palette, Edit, Trash2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
@@ -41,7 +41,6 @@ export default function CategoryManager({
   categories = [],
   orgId 
 }) {
-  
   const queryClient = useQueryClient();
   const [showForm, setShowForm] = useState(false);
   const [editingCategory, setEditingCategory] = useState(null);
@@ -57,7 +56,7 @@ export default function CategoryManager({
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['categories'] });
       resetForm();
-      toast({ title: "Category created successfully" });
+      toast.success("Category created successfully");
     },
   });
 
@@ -66,7 +65,7 @@ export default function CategoryManager({
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['categories'] });
       resetForm();
-      toast({ title: "Category updated successfully" });
+      toast.success("Category updated successfully");
     },
   });
 
@@ -74,7 +73,7 @@ export default function CategoryManager({
     mutationFn: (id) => base44.entities.ProductCategory.delete(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['categories'] });
-      toast({ title: "Category deleted successfully" });
+      toast.success("Category deleted successfully");
     },
   });
 
