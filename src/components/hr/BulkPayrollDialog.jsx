@@ -280,14 +280,18 @@ export default function BulkPayrollDialog({
 
     for (let i = 0; i < payrollPreviews.length; i++) {
       const payroll = payrollPreviews[i];
+      const employee = employees.find(e => e.id === payroll.employee_id);
+      const pkg = employee ? getEmployeePackage(employee) : null;
+      
       try {
         const created = await base44.entities.Payroll.create({
           ...payroll,
           organisation_id: orgId,
-          status: 'pending_approval'
+          status: 'pending_approval',
+          payroll_frequency: payrollFrequency
         });
 
-        // Create audit log
+        // Create audit log with detailed information
         await base44.entities.PayrollAudit.create({
           organisation_id: orgId,
           payroll_id: created.id,
@@ -299,15 +303,20 @@ export default function BulkPayrollDialog({
           new_values: {
             gross_pay: payroll.gross_pay,
             net_pay: payroll.net_pay,
-            period: `${periodStart} to ${periodEnd}`
+            period: `${periodStart} to ${periodEnd}`,
+            frequency: payrollFrequency,
+            package_used: pkg?.name || 'None',
+            days_worked: payroll.days_worked,
+            overtime_hours: payroll.overtime_hours
           },
-          reason: 'Bulk payroll processing'
+          reason: `Automated bulk payroll - ${pkg ? `Package: ${pkg.name}` : 'No package'}`
         });
 
         processedResults.push({ 
           employee: payroll.employee_name, 
           status: 'success',
-          netPay: payroll.net_pay 
+          netPay: payroll.net_pay,
+          package: pkg?.name
         });
       } catch (error) {
         processedResults.push({ 
@@ -323,6 +332,7 @@ export default function BulkPayrollDialog({
     setShowResults(true);
     setProcessing(false);
     queryClient.invalidateQueries({ queryKey: ['payrolls'] });
+    queryClient.invalidateQueries({ queryKey: ['payrollAudit'] });
     
     const successCount = processedResults.filter(r => r.status === 'success').length;
     toast.success(`Processed ${successCount} of ${processedResults.length} payrolls`);
