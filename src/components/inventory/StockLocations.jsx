@@ -128,11 +128,11 @@ export default function StockLocations({
 
   const handleTransfer = () => {
     if (!transferData.product_id || !transferData.from_warehouse || !transferData.to_warehouse || !transferData.quantity) {
-      toast({ title: "Please fill all fields", variant: "destructive" });
+      toast.error("Please fill all fields");
       return;
     }
     if (transferData.from_warehouse === transferData.to_warehouse) {
-      toast({ title: "Source and destination must be different", variant: "destructive" });
+      toast.error("Source and destination must be different");
       return;
     }
     transferMutation.mutate(transferData);
