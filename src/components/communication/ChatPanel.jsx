@@ -25,8 +25,12 @@ import {
   CheckCheck,
   Copy,
   Reply,
-  BellOff
+  BellOff,
+  Package,
+  FileText
 } from "lucide-react";
+import AttachmentPicker, { AttachmentPreview, MessageAttachment } from "./AttachmentPicker";
+import EnhancedNewGroupDialog from "./EnhancedNewGroupDialog";
 import VideoCallDialog from "./VideoCallDialog";
 import { useChatNotifications, NotificationSettingsButton, useNotificationSettings } from "./ChatNotificationManager";
 import { Button } from "@/components/ui/button";
