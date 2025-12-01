@@ -513,7 +513,7 @@ export default function BulkPayrollDialog({
 
             {/* Preview Summary */}
             {selectedEmployees.length > 0 && (
-              <Collapsible>
+              <Collapsible defaultOpen>
                 <CollapsibleTrigger asChild>
                   <Button variant="outline" className="w-full justify-between">
                     <span className="flex items-center gap-2">
@@ -523,7 +523,7 @@ export default function BulkPayrollDialog({
                     <ChevronDown className="w-4 h-4" />
                   </Button>
                 </CollapsibleTrigger>
-                <CollapsibleContent className="mt-4">
+                <CollapsibleContent className="mt-4 space-y-4">
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                     <div className="bg-blue-50 p-3 rounded-lg">
                       <p className="text-xs text-blue-600">Total Gross</p>
@@ -541,6 +541,29 @@ export default function BulkPayrollDialog({
                       <p className="text-xs text-purple-600">Employer Cost</p>
                       <p className="text-lg font-bold">{formatSLE(totals.employerCost)}</p>
                     </div>
+                  </div>
+
+                  {/* Individual Employee Breakdown */}
+                  <div className="border rounded-lg overflow-hidden">
+                    <div className="bg-gray-50 px-3 py-2 text-xs font-medium text-gray-600 grid grid-cols-5 gap-2">
+                      <span className="col-span-2">Employee</span>
+                      <span className="text-right">Gross</span>
+                      <span className="text-right">Deductions</span>
+                      <span className="text-right">Net Pay</span>
+                    </div>
+                    <ScrollArea className="max-h-40">
+                      {payrollPreviews.map((preview, i) => (
+                        <div key={i} className="px-3 py-2 text-sm grid grid-cols-5 gap-2 border-t hover:bg-gray-50">
+                          <div className="col-span-2">
+                            <p className="font-medium truncate">{preview.employee_name}</p>
+                            <p className="text-xs text-gray-500">{preview.employee_role?.replace('_', ' ')}</p>
+                          </div>
+                          <span className="text-right">{formatSLE(preview.gross_pay)}</span>
+                          <span className="text-right text-red-600">-{formatSLE(preview.total_deductions)}</span>
+                          <span className="text-right font-medium text-[#1EB053]">{formatSLE(preview.net_pay)}</span>
+                        </div>
+                      ))}
+                    </ScrollArea>
                   </div>
                 </CollapsibleContent>
               </Collapsible>
