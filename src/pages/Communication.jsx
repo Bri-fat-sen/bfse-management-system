@@ -38,41 +38,6 @@ import MessageSearch from "@/components/communication/MessageSearch";
 import SharedFilesGallery from "@/components/communication/SharedFilesGallery";
 
 export default function Communication() {
-  const { data: user } = useQuery({
-    queryKey: ['currentUser'],
-    queryFn: () => base44.auth.me(),
-    staleTime: 5 * 60 * 1000,
-    refetchOnWindowFocus: false,
-  });
-
-  const { data: employee } = useQuery({
-    queryKey: ['employee', user?.email],
-    queryFn: () => base44.entities.Employee.filter({ user_email: user?.email }),
-    enabled: !!user?.email,
-    staleTime: 5 * 60 * 1000,
-    refetchOnWindowFocus: false,
-  });
-
-  const currentEmployee = employee?.[0];
-  const orgId = currentEmployee?.organisation_id;
-
-  if (!user) {
-    return <LoadingSpinner message="Loading..." fullScreen />;
-  }
-
-  if (!currentEmployee || !orgId) {
-    return (
-      <div className="flex flex-col items-center justify-center min-h-[60vh] text-center p-4">
-        <MessageSquare className="w-16 h-16 text-gray-300 mb-4" />
-        <h2 className="text-xl font-semibold text-gray-600">No Employee Record</h2>
-        <p className="text-gray-500 mt-2 max-w-md">
-          Your account is not linked to an employee record yet. Please contact your administrator.
-        </p>
-      </div>
-    );
-  }
-
-export default function Communication() {
   const queryClient = useQueryClient();
   const [activeTab, setActiveTab] = useState("chat");
   const [selectedRoom, setSelectedRoom] = useState(null);
@@ -102,6 +67,22 @@ export default function Communication() {
   const currentEmployee = employee?.[0];
   const orgId = currentEmployee?.organisation_id;
   const canPost = ['super_admin', 'org_admin', 'hr_admin'].includes(currentEmployee?.role);
+
+  if (!user) {
+    return <LoadingSpinner message="Loading..." fullScreen />;
+  }
+
+  if (!currentEmployee || !orgId) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[60vh] text-center p-4">
+        <MessageSquare className="w-16 h-16 text-gray-300 mb-4" />
+        <h2 className="text-xl font-semibold text-gray-600">No Employee Record</h2>
+        <p className="text-gray-500 mt-2 max-w-md">
+          Your account is not linked to an employee record yet. Please contact your administrator.
+        </p>
+      </div>
+    );
+  }
 
   const { data: chatRooms = [] } = useQuery({
     queryKey: ['chatRooms', orgId],
