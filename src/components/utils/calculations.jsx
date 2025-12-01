@@ -86,11 +86,11 @@ export function formatNumber(value, decimals = 0) {
 }
 
 /**
- * Format currency (SLE)
+ * Format currency (NLE - New Leone)
  */
-export function formatCurrency(value, currency = 'SLE', decimals = 0) {
+export function formatCurrency(value, currency = 'NLE', decimals = 2) {
   const num = safeNumber(value);
-  return `${currency} ${formatNumber(num, decimals)}`;
+  return `${currency} ${num.toLocaleString('en-US', { minimumFractionDigits: decimals, maximumFractionDigits: decimals })}`;
 }
 
 /**
