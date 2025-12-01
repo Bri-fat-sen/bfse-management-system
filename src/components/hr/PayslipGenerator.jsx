@@ -864,7 +864,7 @@ export default function PayslipGenerator({ payroll, employee, organisation }) {
   if (!payroll || !employee) return null;
 
   return (
-    <div className="flex gap-2">
+    <div className="flex gap-2 flex-wrap">
       <Button size="sm" variant="outline" onClick={handlePrint}>
         <Printer className="w-4 h-4 mr-1" />
         Print
@@ -873,6 +873,122 @@ export default function PayslipGenerator({ payroll, employee, organisation }) {
         <Download className="w-4 h-4 mr-1" />
         Download
       </Button>
+      
+      <Dialog open={showPreview} onOpenChange={setShowPreview}>
+        <DialogTrigger asChild>
+          <Button size="sm" variant="outline">
+            <Eye className="w-4 h-4 mr-1" />
+            Preview
+          </Button>
+        </DialogTrigger>
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Payslip Preview</DialogTitle>
+          </DialogHeader>
+          <iframe
+            srcDoc={generatePayslipHTML()}
+            className="w-full h-[600px] border rounded-lg"
+            title="Payslip Preview"
+          />
+        </DialogContent>
+      </Dialog>
+
+      <Dialog>
+        <DialogTrigger asChild>
+          <Button size="sm" variant="ghost">
+            <Settings2 className="w-4 h-4" />
+          </Button>
+        </DialogTrigger>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Settings2 className="w-5 h-5" />
+              Payslip Options
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-3">
+              <Label className="text-sm font-medium">Color Scheme</Label>
+              <Select 
+                value={options.colorScheme} 
+                onValueChange={(v) => setOptions({...options, colorScheme: v})}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="green">
+                    <div className="flex items-center gap-2">
+                      <div className="w-4 h-4 rounded bg-[#1EB053]" />
+                      Sierra Leone Green
+                    </div>
+                  </SelectItem>
+                  <SelectItem value="blue">
+                    <div className="flex items-center gap-2">
+                      <div className="w-4 h-4 rounded bg-[#0072C6]" />
+                      Corporate Blue
+                    </div>
+                  </SelectItem>
+                  <SelectItem value="purple">
+                    <div className="flex items-center gap-2">
+                      <div className="w-4 h-4 rounded bg-[#7c3aed]" />
+                      Modern Purple
+                    </div>
+                  </SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            
+            <div className="space-y-3 pt-2">
+              <Label className="text-sm font-medium">Display Options</Label>
+              
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm">Show Company Logo</p>
+                  <p className="text-xs text-gray-500">Display organization logo in header</p>
+                </div>
+                <Switch 
+                  checked={options.showLogo} 
+                  onCheckedChange={(v) => setOptions({...options, showLogo: v})}
+                />
+              </div>
+              
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm">Show Attendance Data</p>
+                  <p className="text-xs text-gray-500">Days worked, hours, and rates</p>
+                </div>
+                <Switch 
+                  checked={options.showAttendance} 
+                  onCheckedChange={(v) => setOptions({...options, showAttendance: v})}
+                />
+              </div>
+              
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm">Show Tax Breakdown</p>
+                  <p className="text-xs text-gray-500">Tax bracket and effective rate</p>
+                </div>
+                <Switch 
+                  checked={options.showTaxBreakdown} 
+                  onCheckedChange={(v) => setOptions({...options, showTaxBreakdown: v})}
+                />
+              </div>
+              
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm">Show Employer Cost</p>
+                  <p className="text-xs text-gray-500">Total cost including employer contributions</p>
+                </div>
+                <Switch 
+                  checked={options.showEmployerCost} 
+                  onCheckedChange={(v) => setOptions({...options, showEmployerCost: v})}
+                />
+              </div>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
