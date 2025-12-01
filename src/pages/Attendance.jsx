@@ -253,7 +253,23 @@ export default function Attendance() {
     { name: 'On Leave', value: analytics.byStatus.leave, color: '#0072C6' },
   ].filter(d => d.value > 0);
 
-  if (!user || !currentEmployee || !orgId || loadingAttendance) {
+  if (!user) {
+    return <LoadingSpinner message="Loading Attendance..." subtitle="Fetching attendance records" fullScreen={true} />;
+  }
+
+  if (!currentEmployee || !orgId) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[60vh] text-center p-4">
+        <Clock className="w-16 h-16 text-gray-300 mb-4" />
+        <h2 className="text-xl font-semibold text-gray-600">No Employee Record</h2>
+        <p className="text-gray-500 mt-2 max-w-md">
+          Your account is not linked to an employee record yet. Please contact your administrator.
+        </p>
+      </div>
+    );
+  }
+
+  if (loadingAttendance) {
     return <LoadingSpinner message="Loading Attendance..." subtitle="Fetching attendance records" fullScreen={true} />;
   }
 
