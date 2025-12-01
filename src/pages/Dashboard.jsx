@@ -165,8 +165,26 @@ export default function Dashboard() {
     refetchOnWindowFocus: false,
   });
 
-  if (!user || !currentEmployee) {
+  // Allow super admins to see dashboard even without employee record
+  if (!user) {
     return <LoadingSpinner message="Loading Dashboard..." subtitle="Preparing your overview" fullScreen={true} />;
+  }
+
+  // If user is admin but has no employee record, show manager dashboard
+  if (!currentEmployee && user?.role === 'admin') {
+    return <ManagerDashboard currentEmployee={null} orgId={null} user={user} />;
+  }
+
+  if (!currentEmployee) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[60vh] text-center p-4">
+        <Users className="w-16 h-16 text-gray-300 mb-4" />
+        <h2 className="text-xl font-semibold text-gray-600">No Employee Record</h2>
+        <p className="text-gray-500 mt-2 max-w-md">
+          Your account is not linked to an employee record yet. Please contact your administrator to set up your employee profile.
+        </p>
+      </div>
+    );
   }
 
   // Show role-specific dashboard
