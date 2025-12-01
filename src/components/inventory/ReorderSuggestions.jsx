@@ -43,6 +43,8 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { differenceInDays, subDays, format } from "date-fns";
+import { Link } from "react-router-dom";
+import { createPageUrl } from "@/utils";
 
 export default function ReorderSuggestions({ orgId, products, sales, suppliers, currentEmployee }) {
   const queryClient = useQueryClient();
@@ -133,29 +135,33 @@ export default function ReorderSuggestions({ orgId, products, sales, suppliers, 
     return suggestions.sort((a, b) => priorityOrder[a.priority] - priorityOrder[b.priority]);
   }, [products, sales, existingSuggestions]);
 
-  // Auto-create suggestions
+  // Auto-create suggestions (debounced to prevent duplicates)
   useEffect(() => {
-    if (!orgId) return;
+    if (!orgId || calculatedSuggestions.length === 0) return;
     
-    calculatedSuggestions.forEach(suggestion => {
-      createSuggestionMutation.mutate({
-        organisation_id: orgId,
-        product_id: suggestion.product.id,
-        product_name: suggestion.product.name,
-        current_stock: suggestion.product.stock_quantity,
-        reorder_point: suggestion.product.reorder_point || suggestion.product.low_stock_threshold,
-        suggested_quantity: suggestion.suggestedQty,
-        avg_daily_sales: suggestion.avgDailySales,
-        days_of_stock: suggestion.daysOfStock,
-        lead_time_days: suggestion.product.lead_time_days || 7,
-        priority: suggestion.priority,
-        status: 'pending',
-        supplier_id: suggestion.product.preferred_supplier_id,
-        supplier_name: suggestion.product.preferred_supplier_name,
-        estimated_cost: suggestion.estimatedCost,
+    const timeoutId = setTimeout(() => {
+      calculatedSuggestions.forEach(suggestion => {
+        createSuggestionMutation.mutate({
+          organisation_id: orgId,
+          product_id: suggestion.product.id,
+          product_name: suggestion.product.name,
+          current_stock: suggestion.product.stock_quantity,
+          reorder_point: suggestion.product.reorder_point || suggestion.product.low_stock_threshold,
+          suggested_quantity: suggestion.suggestedQty,
+          avg_daily_sales: suggestion.avgDailySales,
+          days_of_stock: suggestion.daysOfStock,
+          lead_time_days: suggestion.product.lead_time_days || 7,
+          priority: suggestion.priority,
+          status: 'pending',
+          supplier_id: suggestion.product.preferred_supplier_id,
+          supplier_name: suggestion.product.preferred_supplier_name,
+          estimated_cost: suggestion.estimatedCost,
+        });
       });
-    });
-  }, [calculatedSuggestions.length]);
+    }, 1000);
+    
+    return () => clearTimeout(timeoutId);
+  }, [calculatedSuggestions.length, orgId]);
 
   const allSuggestions = [...existingSuggestions].sort((a, b) => {
     const priorityOrder = { critical: 0, high: 1, medium: 2, low: 3 };
@@ -319,17 +325,19 @@ export default function ReorderSuggestions({ orgId, products, sales, suppliers, 
                         variant="outline" 
                         size="sm"
                         onClick={() => handleDismiss(suggestion)}
+                        title="Dismiss"
                       >
                         <X className="w-4 h-4" />
                       </Button>
-                      <Button 
-                        size="sm"
-                        className="bg-[#1EB053] hover:bg-[#178f43]"
-                        onClick={() => handleCreatePO(suggestion)}
-                      >
-                        <Truck className="w-4 h-4 mr-1" />
-                        Order
-                      </Button>
+                      <Link to={createPageUrl("Suppliers") + `?createPO=true&productId=${suggestion.product_id}&qty=${suggestion.suggested_quantity}`}>
+                        <Button 
+                          size="sm"
+                          className="bg-[#1EB053] hover:bg-[#178f43]"
+                        >
+                          <Truck className="w-4 h-4 mr-1" />
+                          Create PO
+                        </Button>
+                      </Link>
                     </div>
                   </div>
                 </div>
