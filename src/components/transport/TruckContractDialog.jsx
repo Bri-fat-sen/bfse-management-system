@@ -116,6 +116,21 @@ export default function TruckContractDialog({
     },
   });
 
+  const deleteMutation = useMutation({
+    mutationFn: () => base44.entities.TruckContract.delete(contract.id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['truckContracts'] });
+      onOpenChange(false);
+      toast.success("Contract deleted successfully");
+    },
+  });
+
+  const handleDelete = () => {
+    if (window.confirm("Are you sure you want to delete this contract? This action cannot be undone.")) {
+      deleteMutation.mutate();
+    }
+  };
+
   const addExpense = () => {
     setExpenses([...expenses, { description: '', category: 'fuel', amount: 0 }]);
   };
