@@ -659,7 +659,6 @@ export default function Suppliers() {
                 })}
               </div>
               </>
-            )
             )}
           </TabsContent>
         </Tabs>
