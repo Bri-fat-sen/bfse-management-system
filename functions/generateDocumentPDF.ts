@@ -41,8 +41,8 @@ Deno.serve(async (req) => {
     const secondary = hexToRgb(secondaryColor);
     const navy = { r: 15, g: 31, b: 60 };
 
-    // Draw Sierra Leone Flag Stripe
-    const drawFlagStripe = (y, height = 4) => {
+    // Draw Sierra Leone Flag Stripe - compact
+    const drawFlagStripe = (y, height = 5) => {
       doc.setFillColor(30, 176, 83);
       doc.rect(0, y, pageWidth / 3, height, 'F');
       doc.setFillColor(255, 255, 255);
@@ -51,48 +51,64 @@ Deno.serve(async (req) => {
       doc.rect((pageWidth / 3) * 2, y, pageWidth / 3, height, 'F');
     };
 
-    // Draw Header
+    // Draw Header - compact receipt style
     const drawHeader = (title, docNumber, docDate) => {
       drawFlagStripe(0, 5);
       
-      // Header background
+      // Header background - gradient effect
       doc.setFillColor(primary.r, primary.g, primary.b);
-      doc.rect(0, 5, pageWidth, 30, 'F');
+      doc.rect(0, 5, pageWidth, 28, 'F');
       
       // Organisation name
       doc.setTextColor(255, 255, 255);
       doc.setFontSize(16);
       doc.setFont('helvetica', 'bold');
-      doc.text(orgName, margin, 18);
+      doc.text(orgName, margin, 17);
       
-      // Address
-      doc.setFontSize(9);
+      // Address line
+      doc.setFontSize(8);
       doc.setFont('helvetica', 'normal');
       const addressParts = [orgAddress, orgCity, orgCountry].filter(Boolean);
-      doc.text(addressParts.join(', '), margin, 26);
+      doc.text(addressParts.join(', '), margin, 24);
+      if (orgPhone) {
+        doc.text(orgPhone, margin, 30);
+      }
       
       // Doc info on right
-      doc.setFontSize(9);
+      doc.setFontSize(8);
       doc.setFont('helvetica', 'bold');
-      doc.text(title.toUpperCase(), pageWidth - margin, 15, { align: 'right' });
-      doc.setFont('helvetica', 'normal');
+      doc.text(title.toUpperCase(), pageWidth - margin, 14, { align: 'right' });
+      doc.setFontSize(10);
       doc.text(docNumber, pageWidth - margin, 22, { align: 'right' });
+      doc.setFontSize(8);
+      doc.setFont('helvetica', 'normal');
       doc.text(docDate, pageWidth - margin, 29, { align: 'right' });
       
-      return 40;
+      return 38;
     };
 
-    // Draw Footer
+    // Draw Footer - compact
     const drawFooter = () => {
-      const footerY = pageHeight - 20;
+      const footerY = pageHeight - 18;
       doc.setFillColor(navy.r, navy.g, navy.b);
-      doc.rect(0, footerY, pageWidth, 20, 'F');
+      doc.rect(0, footerY, pageWidth, 18, 'F');
+      
+      // Flag bars in center
+      const barWidth = 14;
+      const barHeight = 4;
+      const barY = footerY + 4;
+      const barStartX = (pageWidth - (barWidth * 3 + 4)) / 2;
+      
+      doc.setFillColor(30, 176, 83);
+      doc.roundedRect(barStartX, barY, barWidth, barHeight, 1, 1, 'F');
+      doc.setFillColor(255, 255, 255);
+      doc.roundedRect(barStartX + barWidth + 2, barY, barWidth, barHeight, 1, 1, 'F');
+      doc.setFillColor(0, 114, 198);
+      doc.roundedRect(barStartX + (barWidth * 2) + 4, barY, barWidth, barHeight, 1, 1, 'F');
       
       doc.setTextColor(255, 255, 255);
-      doc.setFontSize(9);
-      doc.text('Thank you for your business!', pageWidth / 2, footerY + 8, { align: 'center' });
-      doc.setFontSize(8);
-      doc.text(`${orgName} | ${orgPhone} | ${orgEmail}`.replace(/\s*\|\s*\|\s*/g, ' | ').replace(/^\s*\|\s*|\s*\|\s*$/g, ''), pageWidth / 2, footerY + 15, { align: 'center' });
+      doc.setFontSize(7);
+      doc.text('Thank You For Your Business', pageWidth / 2, footerY + 13, { align: 'center' });
     };
 
     // Format currency
@@ -111,94 +127,107 @@ Deno.serve(async (req) => {
         
         yPos = drawHeader('Receipt', sale?.sale_number || 'RECEIPT', sale?.created_date ? new Date(sale.created_date).toLocaleDateString('en-GB') : new Date().toLocaleDateString('en-GB'));
         
-        // Info section
+        // Info bar - compact
         doc.setFillColor(248, 250, 252);
-        doc.rect(0, yPos, pageWidth, 18, 'F');
+        doc.rect(0, yPos, pageWidth, 14, 'F');
         doc.setTextColor(100, 116, 139);
-        doc.setFontSize(9);
+        doc.setFontSize(8);
         let infoX = margin;
         if (sale?.employee_name) {
-          doc.text(`Cashier: ${sale.employee_name}`, infoX, yPos + 8);
-          infoX += 60;
+          doc.text(`Cashier: ${sale.employee_name}`, infoX, yPos + 9);
+          infoX += 55;
         }
         if (sale?.customer_name) {
-          doc.text(`Customer: ${sale.customer_name}`, infoX, yPos + 8);
-          infoX += 60;
+          doc.text(`Customer: ${sale.customer_name}`, infoX, yPos + 9);
+          infoX += 55;
         }
         if (sale?.location) {
-          doc.text(`Location: ${sale.location}`, infoX, yPos + 8);
+          doc.text(`Location: ${sale.location}`, infoX, yPos + 9);
         }
-        yPos += 22;
+        yPos += 18;
         
-        // Items table
+        // Items table - compact
         const items = sale?.items || [];
-        const colWidths = [90, 25, 35, 30];
+        const tableWidth = pageWidth - (margin * 2);
         
         // Header
         doc.setFillColor(primary.r, primary.g, primary.b);
-        doc.rect(margin, yPos, pageWidth - (margin * 2), 10, 'F');
+        doc.rect(margin, yPos, tableWidth, 8, 'F');
         doc.setTextColor(255, 255, 255);
-        doc.setFontSize(8);
+        doc.setFontSize(7);
         doc.setFont('helvetica', 'bold');
-        doc.text('ITEM', margin + 3, yPos + 7);
-        doc.text('QTY', margin + colWidths[0] + 3, yPos + 7);
-        doc.text('PRICE', margin + colWidths[0] + colWidths[1] + 3, yPos + 7);
-        doc.text('TOTAL', pageWidth - margin - 3, yPos + 7, { align: 'right' });
-        yPos += 12;
+        doc.text('ITEM', margin + 3, yPos + 5.5);
+        doc.text('QTY', margin + 100, yPos + 5.5);
+        doc.text('PRICE', margin + 120, yPos + 5.5);
+        doc.text('TOTAL', pageWidth - margin - 3, yPos + 5.5, { align: 'right' });
+        yPos += 9;
         
-        // Items
+        // Items - compact rows
         doc.setFont('helvetica', 'normal');
         doc.setTextColor(51, 65, 85);
         items.forEach((item, i) => {
           if (i % 2 === 0) {
             doc.setFillColor(248, 250, 252);
-            doc.rect(margin, yPos - 2, pageWidth - (margin * 2), 10, 'F');
+            doc.rect(margin, yPos - 1, tableWidth, 7, 'F');
           }
-          doc.text(item.product_name || 'Item', margin + 3, yPos + 4);
-          doc.text(String(item.quantity || 1), margin + colWidths[0] + 3, yPos + 4);
-          doc.text(formatCurrency(item.unit_price), margin + colWidths[0] + colWidths[1] + 3, yPos + 4);
+          doc.setFontSize(8);
+          doc.text(String(item.product_name || 'Item').substring(0, 45), margin + 3, yPos + 4);
+          doc.text(String(item.quantity || 1), margin + 100, yPos + 4);
+          doc.text(formatCurrency(item.unit_price), margin + 120, yPos + 4);
+          doc.setFont('helvetica', 'bold');
           doc.text(formatCurrency(item.total), pageWidth - margin - 3, yPos + 4, { align: 'right' });
-          yPos += 10;
+          doc.setFont('helvetica', 'normal');
+          yPos += 7;
         });
         
-        yPos += 5;
+        yPos += 3;
         doc.setDrawColor(203, 213, 225);
+        doc.setLineDashPattern([2, 2], 0);
         doc.line(margin, yPos, pageWidth - margin, yPos);
-        yPos += 8;
+        doc.setLineDashPattern([], 0);
+        yPos += 6;
         
-        // Totals
-        doc.setFontSize(10);
+        // Totals - compact
+        doc.setFontSize(9);
+        const totalsX = margin + 100;
         if (sale?.subtotal) {
-          doc.text('Subtotal:', margin + 100, yPos);
+          doc.text('Subtotal:', totalsX, yPos);
           doc.text(formatCurrency(sale.subtotal), pageWidth - margin, yPos, { align: 'right' });
-          yPos += 8;
+          yPos += 6;
         }
         if (sale?.tax && sale.tax > 0) {
-          doc.text('Tax:', margin + 100, yPos);
+          doc.text('GST:', totalsX, yPos);
           doc.text(formatCurrency(sale.tax), pageWidth - margin, yPos, { align: 'right' });
-          yPos += 8;
+          yPos += 6;
         }
         if (sale?.discount && sale.discount > 0) {
-          doc.text('Discount:', margin + 100, yPos);
+          doc.text('Discount:', totalsX, yPos);
           doc.text(`-${formatCurrency(sale.discount)}`, pageWidth - margin, yPos, { align: 'right' });
-          yPos += 8;
+          yPos += 6;
         }
         
-        // Grand Total
-        yPos += 5;
+        // Grand Total - prominent
+        yPos += 3;
         doc.setFillColor(primary.r, primary.g, primary.b);
-        doc.roundedRect(margin + 80, yPos - 3, pageWidth - margin - 80 - margin, 15, 3, 3, 'F');
+        doc.roundedRect(totalsX - 5, yPos - 2, pageWidth - margin - totalsX + 5, 12, 2, 2, 'F');
         doc.setTextColor(255, 255, 255);
-        doc.setFontSize(12);
+        doc.setFontSize(11);
         doc.setFont('helvetica', 'bold');
-        doc.text('TOTAL', margin + 90, yPos + 7);
-        doc.text(formatCurrency(sale?.total_amount), pageWidth - margin - 5, yPos + 7, { align: 'right' });
+        doc.text('TOTAL', totalsX, yPos + 6);
+        doc.text(formatCurrency(sale?.total_amount), pageWidth - margin - 3, yPos + 6, { align: 'right' });
         
-        yPos += 20;
+        yPos += 16;
         doc.setTextColor(100, 116, 139);
-        doc.setFontSize(9);
+        doc.setFontSize(8);
         doc.setFont('helvetica', 'normal');
-        doc.text(`Payment: ${(sale?.payment_method || 'cash').toUpperCase()}`, margin, yPos);
+        
+        // Payment badge
+        doc.setFillColor(220, 252, 231);
+        doc.roundedRect(margin, yPos - 2, 50, 8, 2, 2, 'F');
+        doc.setTextColor(22, 101, 52);
+        doc.setFontSize(7);
+        doc.setFont('helvetica', 'bold');
+        doc.text(`Payment: ${(sale?.payment_method || 'cash').toUpperCase()}`, margin + 3, yPos + 3);
         
         drawFooter();
         break;
@@ -210,99 +239,100 @@ Deno.serve(async (req) => {
         
         yPos = drawHeader('Invoice', invoice?.invoiceNumber || 'INVOICE', new Date().toLocaleDateString('en-GB'));
         
-        // Bill To / Due Date section
+        // Bill To / Due Date - compact
         doc.setFillColor(248, 250, 252);
-        doc.rect(0, yPos, pageWidth, 35, 'F');
+        doc.rect(0, yPos, pageWidth, 28, 'F');
         
         doc.setTextColor(100, 116, 139);
-        doc.setFontSize(8);
+        doc.setFontSize(7);
         doc.setFont('helvetica', 'bold');
-        doc.text('BILL TO', margin, yPos + 8);
-        doc.text('PAYMENT TERMS', pageWidth / 2 + 10, yPos + 8);
+        doc.text('BILL TO', margin, yPos + 6);
+        doc.text('PAYMENT TERMS', pageWidth / 2 + 10, yPos + 6);
         
         doc.setTextColor(51, 65, 85);
-        doc.setFontSize(10);
+        doc.setFontSize(9);
         doc.setFont('helvetica', 'normal');
-        let billY = yPos + 15;
+        let billY = yPos + 12;
         if (invoice?.company_name) {
           doc.setFont('helvetica', 'bold');
           doc.text(invoice.company_name, margin, billY);
-          billY += 6;
+          billY += 5;
           doc.setFont('helvetica', 'normal');
         }
         if (invoice?.customer_name) {
           doc.text(invoice.customer_name, margin, billY);
-          billY += 6;
+          billY += 5;
         }
         if (invoice?.customer_phone) {
           doc.text(invoice.customer_phone, margin, billY);
         }
         
-        // Due date
-        doc.text(`Net ${invoice?.payment_terms || 30} days`, pageWidth / 2 + 10, yPos + 15);
+        doc.text(`Net ${invoice?.payment_terms || 30} days`, pageWidth / 2 + 10, yPos + 12);
         doc.setFont('helvetica', 'bold');
         doc.setTextColor(secondary.r, secondary.g, secondary.b);
-        doc.text(`Due: ${invoice?.dueDate || 'N/A'}`, pageWidth / 2 + 10, yPos + 24);
+        doc.text(`Due: ${invoice?.dueDate || 'N/A'}`, pageWidth / 2 + 10, yPos + 20);
         
-        yPos += 40;
+        yPos += 32;
         
-        // Items table
+        // Items table - compact
         const items = invoice?.items || [];
+        const tableWidth = pageWidth - (margin * 2);
         
         doc.setFillColor(primary.r, primary.g, primary.b);
-        doc.rect(margin, yPos, pageWidth - (margin * 2), 10, 'F');
+        doc.rect(margin, yPos, tableWidth, 8, 'F');
         doc.setTextColor(255, 255, 255);
-        doc.setFontSize(8);
+        doc.setFontSize(7);
         doc.setFont('helvetica', 'bold');
-        doc.text('DESCRIPTION', margin + 3, yPos + 7);
-        doc.text('QTY', margin + 85, yPos + 7);
-        doc.text('UNIT PRICE', margin + 105, yPos + 7);
-        doc.text('AMOUNT', pageWidth - margin - 3, yPos + 7, { align: 'right' });
-        yPos += 12;
+        doc.text('DESCRIPTION', margin + 3, yPos + 5.5);
+        doc.text('QTY', margin + 90, yPos + 5.5);
+        doc.text('UNIT PRICE', margin + 110, yPos + 5.5);
+        doc.text('AMOUNT', pageWidth - margin - 3, yPos + 5.5, { align: 'right' });
+        yPos += 9;
         
         doc.setFont('helvetica', 'normal');
         doc.setTextColor(51, 65, 85);
         items.forEach((item, i) => {
           if (i % 2 === 0) {
             doc.setFillColor(248, 250, 252);
-            doc.rect(margin, yPos - 2, pageWidth - (margin * 2), 10, 'F');
+            doc.rect(margin, yPos - 1, tableWidth, 7, 'F');
           }
+          doc.setFontSize(8);
           doc.text(String(item.product_name || 'Item').substring(0, 40), margin + 3, yPos + 4);
-          doc.text(String(item.quantity || 1), margin + 85, yPos + 4);
-          doc.text(formatCurrency(item.unit_price), margin + 105, yPos + 4);
+          doc.text(String(item.quantity || 1), margin + 90, yPos + 4);
+          doc.text(formatCurrency(item.unit_price), margin + 110, yPos + 4);
           doc.text(formatCurrency(item.total), pageWidth - margin - 3, yPos + 4, { align: 'right' });
-          yPos += 10;
+          yPos += 7;
         });
         
-        yPos += 10;
+        yPos += 8;
         
-        // Totals box
-        const totalsX = pageWidth - margin - 80;
+        // Totals box - compact
+        const totalsX = pageWidth - margin - 75;
         doc.setDrawColor(226, 232, 240);
-        doc.roundedRect(totalsX - 5, yPos - 3, 85, 45, 2, 2, 'S');
+        doc.roundedRect(totalsX - 5, yPos - 3, 80, 38, 2, 2, 'S');
         
-        doc.setFontSize(9);
+        doc.setFontSize(8);
         doc.setTextColor(100, 116, 139);
-        doc.text('Subtotal', totalsX, yPos + 5);
+        doc.text('Subtotal', totalsX, yPos + 4);
         doc.setTextColor(51, 65, 85);
-        doc.text(formatCurrency(invoice?.cartTotal), pageWidth - margin - 3, yPos + 5, { align: 'right' });
+        doc.text(formatCurrency(invoice?.cartTotal), pageWidth - margin - 3, yPos + 4, { align: 'right' });
         
         if (invoice?.include_tax && invoice?.taxAmount > 0) {
-          yPos += 10;
+          yPos += 8;
           doc.setTextColor(100, 116, 139);
-          doc.text(`GST (${invoice?.tax_rate || 15}%)`, totalsX, yPos + 5);
+          doc.text(`GST (${invoice?.tax_rate || 15}%)`, totalsX, yPos + 4);
           doc.setTextColor(51, 65, 85);
-          doc.text(formatCurrency(invoice.taxAmount), pageWidth - margin - 3, yPos + 5, { align: 'right' });
+          doc.text(formatCurrency(invoice.taxAmount), pageWidth - margin - 3, yPos + 4, { align: 'right' });
         }
         
-        yPos += 15;
+        yPos += 12;
         doc.setFillColor(primary.r, primary.g, primary.b);
-        doc.roundedRect(totalsX - 5, yPos, 85, 12, 2, 2, 'F');
+        doc.roundedRect(totalsX - 5, yPos, 80, 10, 2, 2, 'F');
         doc.setTextColor(255, 255, 255);
-        doc.setFontSize(10);
+        doc.setFontSize(9);
         doc.setFont('helvetica', 'bold');
-        doc.text('TOTAL DUE', totalsX, yPos + 8);
-        doc.text(formatCurrency(invoice?.totalWithTax), pageWidth - margin - 3, yPos + 8, { align: 'right' });
+        doc.text('TOTAL DUE', totalsX, yPos + 7);
+        doc.text(formatCurrency(invoice?.totalWithTax), pageWidth - margin - 3, yPos + 7, { align: 'right' });
         
         drawFooter();
         break;
@@ -315,57 +345,57 @@ Deno.serve(async (req) => {
         const periodLabel = payroll?.period_start ? new Date(payroll.period_start).toLocaleDateString('en-GB', { month: 'long', year: 'numeric' }) : 'Pay Period';
         yPos = drawHeader('Payslip', periodLabel, payroll?.payment_date ? new Date(payroll.payment_date).toLocaleDateString('en-GB') : 'Pending');
         
-        // Employee Info
+        // Employee Info - compact
         doc.setFillColor(248, 250, 252);
-        doc.rect(0, yPos, pageWidth, 35, 'F');
+        doc.rect(0, yPos, pageWidth, 28, 'F');
         
         const infoCol1 = margin;
         const infoCol2 = pageWidth / 2 + 5;
         
-        doc.setFontSize(8);
+        doc.setFontSize(7);
         doc.setTextColor(100, 116, 139);
         doc.setFont('helvetica', 'bold');
-        doc.text('EMPLOYEE DETAILS', infoCol1, yPos + 8);
-        doc.text('PAY PERIOD', infoCol2, yPos + 8);
+        doc.text('EMPLOYEE DETAILS', infoCol1, yPos + 6);
+        doc.text('PAY PERIOD', infoCol2, yPos + 6);
         
-        doc.setFontSize(9);
+        doc.setFontSize(8);
         doc.setTextColor(51, 65, 85);
         doc.setFont('helvetica', 'normal');
         
-        doc.text(`Name: ${employee?.full_name || 'N/A'}`, infoCol1, yPos + 16);
-        doc.text(`ID: ${employee?.employee_code || 'N/A'}`, infoCol1, yPos + 23);
-        doc.text(`Dept: ${employee?.department || 'N/A'}`, infoCol1, yPos + 30);
+        doc.text(`Name: ${employee?.full_name || 'N/A'}`, infoCol1, yPos + 12);
+        doc.text(`ID: ${employee?.employee_code || 'N/A'}`, infoCol1, yPos + 18);
+        doc.text(`Dept: ${employee?.department || 'N/A'}`, infoCol1, yPos + 24);
         
-        doc.text(`Start: ${payroll?.period_start ? new Date(payroll.period_start).toLocaleDateString('en-GB') : 'N/A'}`, infoCol2, yPos + 16);
-        doc.text(`End: ${payroll?.period_end ? new Date(payroll.period_end).toLocaleDateString('en-GB') : 'N/A'}`, infoCol2, yPos + 23);
-        doc.text(`Payment: ${(payroll?.payment_method || 'Bank Transfer').replace(/_/g, ' ')}`, infoCol2, yPos + 30);
+        doc.text(`Start: ${payroll?.period_start ? new Date(payroll.period_start).toLocaleDateString('en-GB') : 'N/A'}`, infoCol2, yPos + 12);
+        doc.text(`End: ${payroll?.period_end ? new Date(payroll.period_end).toLocaleDateString('en-GB') : 'N/A'}`, infoCol2, yPos + 18);
+        doc.text(`Payment: ${(payroll?.payment_method || 'Bank Transfer').replace(/_/g, ' ')}`, infoCol2, yPos + 24);
         
-        yPos += 40;
+        yPos += 32;
         
-        // Earnings and Deductions side by side
-        const colWidth = (pageWidth - (margin * 2) - 10) / 2;
+        // Earnings and Deductions - compact side by side
+        const colWidth = (pageWidth - (margin * 2) - 8) / 2;
         const leftCol = margin;
-        const rightCol = margin + colWidth + 10;
+        const rightCol = margin + colWidth + 8;
         
         // Earnings Header
         doc.setFillColor(primary.r, primary.g, primary.b);
-        doc.rect(leftCol, yPos, colWidth, 8, 'F');
+        doc.rect(leftCol, yPos, colWidth, 7, 'F');
         doc.setTextColor(255, 255, 255);
-        doc.setFontSize(9);
+        doc.setFontSize(7);
         doc.setFont('helvetica', 'bold');
-        doc.text('EARNINGS', leftCol + 3, yPos + 6);
+        doc.text('EARNINGS', leftCol + 3, yPos + 5);
         
         // Deductions Header
         doc.setFillColor(220, 38, 38);
-        doc.rect(rightCol, yPos, colWidth, 8, 'F');
-        doc.text('DEDUCTIONS', rightCol + 3, yPos + 6);
+        doc.rect(rightCol, yPos, colWidth, 7, 'F');
+        doc.text('DEDUCTIONS', rightCol + 3, yPos + 5);
         
-        yPos += 12;
+        yPos += 9;
         let earningsY = yPos;
         let deductionsY = yPos;
         
         doc.setTextColor(51, 65, 85);
-        doc.setFontSize(8);
+        doc.setFontSize(7);
         doc.setFont('helvetica', 'normal');
         
         // Earnings items
@@ -374,24 +404,24 @@ Deno.serve(async (req) => {
         
         doc.text('Base Salary', leftCol + 3, earningsY);
         doc.text(formatCurrency(baseSalary), leftCol + colWidth - 3, earningsY, { align: 'right' });
-        earningsY += 8;
+        earningsY += 6;
         
         if (payroll?.overtime_pay > 0) {
           doc.text('Overtime', leftCol + 3, earningsY);
           doc.text(formatCurrency(payroll.overtime_pay), leftCol + colWidth - 3, earningsY, { align: 'right' });
-          earningsY += 8;
+          earningsY += 6;
         }
         
         (payroll?.allowances || []).forEach(a => {
-          doc.text(a.name, leftCol + 3, earningsY);
+          doc.text(String(a.name).substring(0, 20), leftCol + 3, earningsY);
           doc.text(formatCurrency(a.amount), leftCol + colWidth - 3, earningsY, { align: 'right' });
-          earningsY += 8;
+          earningsY += 6;
         });
         
         (payroll?.bonuses || []).forEach(b => {
-          doc.text(b.name, leftCol + 3, earningsY);
+          doc.text(String(b.name).substring(0, 20), leftCol + 3, earningsY);
           doc.text(formatCurrency(b.amount), leftCol + colWidth - 3, earningsY, { align: 'right' });
-          earningsY += 8;
+          earningsY += 6;
         });
         
         // Deductions items
@@ -402,43 +432,44 @@ Deno.serve(async (req) => {
         if (nassitEmployee > 0) {
           doc.text('NASSIT (5%)', rightCol + 3, deductionsY);
           doc.text(formatCurrency(nassitEmployee), rightCol + colWidth - 3, deductionsY, { align: 'right' });
-          deductionsY += 8;
+          deductionsY += 6;
         }
         
         if (payeTax > 0) {
           doc.text('PAYE Tax', rightCol + 3, deductionsY);
           doc.text(formatCurrency(payeTax), rightCol + colWidth - 3, deductionsY, { align: 'right' });
-          deductionsY += 8;
+          deductionsY += 6;
         }
         
         (payroll?.deductions || []).filter(d => d.type !== 'statutory').forEach(d => {
-          doc.text(d.name, rightCol + 3, deductionsY);
+          doc.text(String(d.name).substring(0, 20), rightCol + 3, deductionsY);
           doc.text(formatCurrency(d.amount), rightCol + colWidth - 3, deductionsY, { align: 'right' });
-          deductionsY += 8;
+          deductionsY += 6;
         });
         
         // Subtotals
-        const maxY = Math.max(earningsY, deductionsY) + 5;
+        const maxY = Math.max(earningsY, deductionsY) + 3;
         doc.setDrawColor(203, 213, 225);
         doc.line(leftCol, maxY, leftCol + colWidth, maxY);
         doc.line(rightCol, maxY, rightCol + colWidth, maxY);
         
         doc.setFont('helvetica', 'bold');
-        doc.text('Gross Pay', leftCol + 3, maxY + 8);
-        doc.text(formatCurrency(grossPay), leftCol + colWidth - 3, maxY + 8, { align: 'right' });
+        doc.setFontSize(8);
+        doc.text('Gross Pay', leftCol + 3, maxY + 6);
+        doc.text(formatCurrency(grossPay), leftCol + colWidth - 3, maxY + 6, { align: 'right' });
         
-        doc.text('Total Deductions', rightCol + 3, maxY + 8);
-        doc.text(formatCurrency(totalDeductions), rightCol + colWidth - 3, maxY + 8, { align: 'right' });
+        doc.text('Total Deductions', rightCol + 3, maxY + 6);
+        doc.text(formatCurrency(totalDeductions), rightCol + colWidth - 3, maxY + 6, { align: 'right' });
         
-        // Net Pay
-        yPos = maxY + 20;
+        // Net Pay - prominent
+        yPos = maxY + 14;
         const netPay = payroll?.net_pay || 0;
         doc.setFillColor(primary.r, primary.g, primary.b);
-        doc.roundedRect(margin, yPos, pageWidth - (margin * 2), 18, 3, 3, 'F');
+        doc.roundedRect(margin, yPos, pageWidth - (margin * 2), 14, 3, 3, 'F');
         doc.setTextColor(255, 255, 255);
-        doc.setFontSize(14);
-        doc.text('NET PAY', margin + 10, yPos + 12);
-        doc.text(formatCurrency(netPay), pageWidth - margin - 10, yPos + 12, { align: 'right' });
+        doc.setFontSize(12);
+        doc.text('NET PAY', margin + 8, yPos + 9);
+        doc.text(formatCurrency(netPay), pageWidth - margin - 8, yPos + 9, { align: 'right' });
         
         drawFooter();
         break;
@@ -450,14 +481,15 @@ Deno.serve(async (req) => {
         
         yPos = drawHeader(report?.title || 'Report', report?.reportId || `RPT-${Date.now().toString(36).toUpperCase()}`, report?.dateRange || new Date().toLocaleDateString('en-GB'));
         
-        // Summary cards
+        // Summary cards - compact
         if (report?.summaryCards?.length > 0) {
-          const cardWidth = (pageWidth - (margin * 2) - ((report.summaryCards.length - 1) * 5)) / Math.min(report.summaryCards.length, 4);
+          const cardCount = Math.min(report.summaryCards.length, 4);
+          const cardWidth = (pageWidth - (margin * 2) - ((cardCount - 1) * 4)) / cardCount;
           let cardX = margin;
           
-          report.summaryCards.forEach((card, i) => {
+          report.summaryCards.slice(0, 4).forEach((card, i) => {
             doc.setFillColor(248, 250, 252);
-            doc.roundedRect(cardX, yPos, cardWidth, 25, 2, 2, 'F');
+            doc.roundedRect(cardX, yPos, cardWidth, 20, 2, 2, 'F');
             
             // Highlight bar
             if (card.highlight === 'green') {
@@ -469,36 +501,37 @@ Deno.serve(async (req) => {
             } else {
               doc.setFillColor(primary.r, primary.g, primary.b);
             }
-            doc.rect(cardX, yPos, 3, 25, 'F');
+            doc.rect(cardX, yPos, 3, 20, 'F');
             
-            doc.setFontSize(7);
+            doc.setFontSize(6);
             doc.setTextColor(100, 116, 139);
-            doc.text((card.label || '').toUpperCase(), cardX + 8, yPos + 8);
-            
-            doc.setFontSize(12);
-            doc.setTextColor(51, 65, 85);
-            doc.setFont('helvetica', 'bold');
-            doc.text(String(card.value || '-'), cardX + 8, yPos + 18);
-            
-            cardX += cardWidth + 5;
-          });
-          
-          yPos += 32;
-        }
-        
-        // Sections with tables
-        (report?.sections || []).forEach(section => {
-          if (section.title) {
-            doc.setFillColor(248, 250, 252);
-            doc.rect(margin, yPos, pageWidth - (margin * 2), 10, 'F');
-            doc.setFillColor(primary.r, primary.g, primary.b);
-            doc.rect(margin, yPos, 3, 10, 'F');
+            doc.text((card.label || '').toUpperCase().substring(0, 18), cardX + 6, yPos + 6);
             
             doc.setFontSize(10);
             doc.setTextColor(51, 65, 85);
             doc.setFont('helvetica', 'bold');
-            doc.text(section.title, margin + 8, yPos + 7);
-            yPos += 15;
+            doc.text(String(card.value || '-').substring(0, 15), cardX + 6, yPos + 14);
+            doc.setFont('helvetica', 'normal');
+            
+            cardX += cardWidth + 4;
+          });
+          
+          yPos += 26;
+        }
+        
+        // Sections with tables - compact
+        (report?.sections || []).forEach(section => {
+          if (section.title) {
+            doc.setFillColor(248, 250, 252);
+            doc.rect(margin, yPos, pageWidth - (margin * 2), 8, 'F');
+            doc.setFillColor(primary.r, primary.g, primary.b);
+            doc.rect(margin, yPos, 3, 8, 'F');
+            
+            doc.setFontSize(9);
+            doc.setTextColor(51, 65, 85);
+            doc.setFont('helvetica', 'bold');
+            doc.text(section.title, margin + 6, yPos + 5.5);
+            yPos += 11;
           }
           
           if (section.table) {
@@ -508,16 +541,16 @@ Deno.serve(async (req) => {
             
             // Header
             doc.setFillColor(primary.r, primary.g, primary.b);
-            doc.rect(margin, yPos, pageWidth - (margin * 2), 8, 'F');
+            doc.rect(margin, yPos, pageWidth - (margin * 2), 7, 'F');
             doc.setTextColor(255, 255, 255);
-            doc.setFontSize(7);
+            doc.setFontSize(6);
             doc.setFont('helvetica', 'bold');
             cols.forEach((col, i) => {
-              doc.text(String(col).toUpperCase(), margin + (i * colWidth) + 3, yPos + 5);
+              doc.text(String(col).toUpperCase().substring(0, 15), margin + (i * colWidth) + 2, yPos + 5);
             });
-            yPos += 10;
+            yPos += 8;
             
-            // Rows
+            // Rows - compact
             doc.setFont('helvetica', 'normal');
             rows.forEach((row, rowIdx) => {
               const cells = Array.isArray(row) ? row : Object.values(row);
@@ -531,24 +564,25 @@ Deno.serve(async (req) => {
               } else {
                 doc.setFillColor(255, 255, 255);
               }
-              doc.rect(margin, yPos - 2, pageWidth - (margin * 2), 8, 'F');
+              doc.rect(margin, yPos - 1, pageWidth - (margin * 2), 6, 'F');
               
               doc.setTextColor(51, 65, 85);
-              doc.setFontSize(8);
+              doc.setFontSize(7);
               cells.forEach((cell, i) => {
-                doc.text(String(cell ?? '-').substring(0, 25), margin + (i * colWidth) + 3, yPos + 3);
+                doc.text(String(cell ?? '-').substring(0, 20), margin + (i * colWidth) + 2, yPos + 3);
               });
               
               if (isTotal) doc.setFont('helvetica', 'normal');
-              yPos += 8;
+              yPos += 6;
               
-              if (yPos > pageHeight - 40) {
+              // Page break if needed
+              if (yPos > pageHeight - 30) {
                 doc.addPage();
                 yPos = 20;
               }
             });
             
-            yPos += 10;
+            yPos += 6;
           }
         });
         
