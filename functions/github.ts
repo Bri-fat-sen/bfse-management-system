@@ -2,13 +2,25 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.4';
 
 const GITHUB_TOKEN = Deno.env.get("GITHUB_TOKEN");
 
+// Simple in-memory cache with TTL
+const cache = new Map();
+const CACHE_TTL = 60000; // 1 minute
+
+function getCached(key) {
+  const item = cache.get(key);
+  if (item && Date.now() - item.timestamp < CACHE_TTL) {
+    return item.data;
+  }
+  cache.delete(key);
+  return null;
+}
+
+function setCache(key, data) {
+  cache.set(key, { data, timestamp: Date.now() });
+}
+
 Deno.serve(async (req) => {
   try {
-    // Check token first
-    if (!GITHUB_TOKEN) {
-      return Response.json({ error: 'GitHub token not configured', message: 'Please set GITHUB_TOKEN secret' }, { status: 400 });
-    }
-
     const base44 = createClientFromRequest(req);
     const user = await base44.auth.me();
 
@@ -16,101 +28,88 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { action, owner, repo, issueData, projectId, itemId, fieldId, optionId } = await req.json();
+    if (!GITHUB_TOKEN) {
+      return Response.json({ error: 'GitHub token not configured' }, { status: 500 });
+    }
+
+    const { action, owner, repo, issueData, projectId, itemId, fieldId, optionId, skipCache } = await req.json();
 
     const headers = {
       'Authorization': `Bearer ${GITHUB_TOKEN}`,
       'Accept': 'application/vnd.github.v3+json',
-      'User-Agent': 'Base44-App',
-      'X-GitHub-Api-Version': '2022-11-28'
+      'User-Agent': 'Base44-App'
     };
 
     const graphqlHeaders = {
       'Authorization': `Bearer ${GITHUB_TOKEN}`,
       'Content-Type': 'application/json',
-      'X-GitHub-Api-Version': '2022-11-28'
-    };
-
-    // Helper to handle GitHub API responses
-    const handleResponse = async (response, fallback = null) => {
-      if (!response.ok) {
-        const error = await response.json().catch(() => ({}));
-        console.error('GitHub API error:', response.status, error);
-        if (response.status === 401) {
-          return { error: 'Invalid GitHub token', status: 401 };
-        }
-        if (response.status === 403) {
-          return { error: 'Rate limited or insufficient permissions', status: 403 };
-        }
-        return fallback !== null ? fallback : { error: error.message || 'GitHub API error' };
-      }
-      return response.json();
     };
 
     switch (action) {
       case 'getUser': {
+        const cacheKey = 'user';
+        if (!skipCache) {
+          const cached = getCached(cacheKey);
+          if (cached) return Response.json(cached);
+        }
         const response = await fetch('https://api.github.com/user', { headers });
-        const data = await handleResponse(response, null);
+        const data = await response.json();
+        setCache(cacheKey, data);
         return Response.json(data);
       }
 
       case 'getRepos': {
-        const response = await fetch('https://api.github.com/user/repos?sort=updated&per_page=30&affiliation=owner,collaborator', { headers });
-        const data = await handleResponse(response, []);
+        const cacheKey = 'repos';
+        if (!skipCache) {
+          const cached = getCached(cacheKey);
+          if (cached) return Response.json(cached);
+        }
+        const response = await fetch('https://api.github.com/user/repos?sort=updated&per_page=30', { headers });
+        const data = await response.json();
+        setCache(cacheKey, data);
         return Response.json(data);
       }
 
       case 'getRepoDetails': {
-        if (!owner || !repo) {
-          return Response.json({ error: 'Owner and repo required' }, { status: 400 });
-        }
         const response = await fetch(`https://api.github.com/repos/${owner}/${repo}`, { headers });
-        const data = await handleResponse(response, null);
+        const data = await response.json();
         return Response.json(data);
       }
 
       case 'getIssues': {
-        if (!owner || !repo) {
-          return Response.json({ error: 'Owner and repo required' }, { status: 400 });
-        }
-        const response = await fetch(`https://api.github.com/repos/${owner}/${repo}/issues?state=all&per_page=30&sort=updated`, { headers });
-        const data = await handleResponse(response, []);
+        const response = await fetch(`https://api.github.com/repos/${owner}/${repo}/issues?state=all&per_page=30`, { headers });
+        const data = await response.json();
         return Response.json(data);
       }
 
       case 'createIssue': {
-        if (!owner || !repo || !issueData) {
-          return Response.json({ error: 'Owner, repo, and issueData required' }, { status: 400 });
-        }
         const response = await fetch(`https://api.github.com/repos/${owner}/${repo}/issues`, {
           method: 'POST',
-          headers: { ...headers, 'Content-Type': 'application/json' },
+          headers,
           body: JSON.stringify(issueData)
         });
-        const data = await handleResponse(response, null);
+        const data = await response.json();
         return Response.json(data);
       }
 
       case 'getCommits': {
-        if (!owner || !repo) {
-          return Response.json({ error: 'Owner and repo required' }, { status: 400 });
-        }
         const response = await fetch(`https://api.github.com/repos/${owner}/${repo}/commits?per_page=20`, { headers });
-        const data = await handleResponse(response, []);
+        const data = await response.json();
         return Response.json(data);
       }
 
       case 'getPullRequests': {
-        if (!owner || !repo) {
-          return Response.json({ error: 'Owner and repo required' }, { status: 400 });
-        }
         const response = await fetch(`https://api.github.com/repos/${owner}/${repo}/pulls?state=all&per_page=20`, { headers });
-        const data = await handleResponse(response, []);
+        const data = await response.json();
         return Response.json(data);
       }
 
       case 'getProjects': {
-        // Get user's projects using GraphQL API
+        const cacheKey = 'projects';
+        if (!skipCache) {
+          const cached = getCached(cacheKey);
+          if (cached) return Response.json(cached);
+        }
         const query = `
           query {
             viewer {
@@ -149,11 +148,50 @@ Deno.serve(async (req) => {
           body: JSON.stringify({ query })
         });
         const data = await response.json();
-        if (data.errors) {
-          console.error('GraphQL errors:', data.errors);
-          return Response.json([]);
+        const projects = data?.data?.viewer?.projectsV2?.nodes || [];
+        setCache(cacheKey, projects);
+        return Response.json(projects);
+      }
+
+      case 'getDashboard': {
+        // Batch fetch: user, repos, and projects in parallel
+        const cacheKey = 'dashboard';
+        if (!skipCache) {
+          const cached = getCached(cacheKey);
+          if (cached) return Response.json(cached);
         }
-        return Response.json(data?.data?.viewer?.projectsV2?.nodes || []);
+
+        const [userRes, reposRes, projectsRes] = await Promise.all([
+          fetch('https://api.github.com/user', { headers }),
+          fetch('https://api.github.com/user/repos?sort=updated&per_page=10', { headers }),
+          fetch('https://api.github.com/graphql', {
+            method: 'POST',
+            headers: graphqlHeaders,
+            body: JSON.stringify({
+              query: `query {
+                viewer {
+                  projectsV2(first: 10) {
+                    nodes { id title url closed }
+                  }
+                }
+              }`
+            })
+          })
+        ]);
+
+        const [userData, reposData, projectsData] = await Promise.all([
+          userRes.json(),
+          reposRes.json(),
+          projectsRes.json()
+        ]);
+
+        const result = {
+          user: userData,
+          repos: Array.isArray(reposData) ? reposData : [],
+          projects: projectsData?.data?.viewer?.projectsV2?.nodes || []
+        };
+        setCache(cacheKey, result);
+        return Response.json(result);
       }
 
       case 'getProjectItems': {
@@ -213,10 +251,6 @@ Deno.serve(async (req) => {
           body: JSON.stringify({ query, variables: { projectId } })
         });
         const data = await response.json();
-        if (data.errors) {
-          console.error('GraphQL errors:', data.errors);
-          return Response.json([]);
-        }
         return Response.json(data?.data?.node?.items?.nodes || []);
       }
 
