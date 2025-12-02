@@ -145,7 +145,7 @@ export default function Transport() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['trips'] });
       setShowTripDialog(false);
-      toast({ title: "Trip recorded successfully" });
+      toast.success("Trip recorded successfully");
     },
   });
 
