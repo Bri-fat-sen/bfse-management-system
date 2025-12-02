@@ -4,9 +4,6 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   Dialog,
   DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
 } from "@/components/ui/dialog";
 import {
   Select,
@@ -19,7 +16,10 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { ArrowRight, Warehouse, Truck, Package } from "lucide-react";
+import { 
+  ArrowRight, Warehouse, Truck, Package, X, Check, Loader2,
+  ArrowRightLeft
+} from "lucide-react";
 import { toast } from "sonner";
 
 export default function StockTransferDialog({
@@ -30,7 +30,8 @@ export default function StockTransferDialog({
   vehicles,
   stockLevels,
   orgId,
-  currentEmployee
+  currentEmployee,
+  organisation
 }) {
   const queryClient = useQueryClient();
   const [selectedProduct, setSelectedProduct] = useState("");
@@ -38,6 +39,9 @@ export default function StockTransferDialog({
   const [toLocation, setToLocation] = useState("");
   const [quantity, setQuantity] = useState("");
   const [notes, setNotes] = useState("");
+
+  const primaryColor = organisation?.primary_color || '#1EB053';
+  const secondaryColor = organisation?.secondary_color || '#0072C6';
 
   // Combine warehouses and vehicles into locations
   const allLocations = [
@@ -182,120 +186,179 @@ export default function StockTransferDialog({
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogContent className="max-w-md">
-        <DialogHeader>
-          <div className="flex h-1 w-16 rounded-full overflow-hidden mb-3">
-            <div className="flex-1 bg-[#1EB053]" />
-            <div className="flex-1 bg-white border-y border-gray-200" />
-            <div className="flex-1 bg-[#0072C6]" />
-          </div>
-          <DialogTitle>Transfer Stock</DialogTitle>
-        </DialogHeader>
+      <DialogContent className="max-w-lg max-h-[90vh] overflow-hidden p-0 w-[95vw] sm:w-full">
+        {/* Sierra Leone Flag Header */}
+        <div className="h-2 flex">
+          <div className="flex-1" style={{ backgroundColor: primaryColor }} />
+          <div className="flex-1 bg-white" />
+          <div className="flex-1" style={{ backgroundColor: secondaryColor }} />
+        </div>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <Label>Product</Label>
-            <Select value={selectedProduct} onValueChange={setSelectedProduct}>
-              <SelectTrigger className="mt-1">
-                <SelectValue placeholder="Select product" />
-              </SelectTrigger>
-              <SelectContent>
-                {products.map(p => (
-                  <SelectItem key={p.id} value={p.id}>
-                    <div className="flex items-center gap-2">
-                      <Package className="w-4 h-4" />
-                      {p.name}
-                    </div>
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+        {/* Header with gradient */}
+        <div 
+          className="px-6 py-4 text-white"
+          style={{ background: `linear-gradient(135deg, ${primaryColor} 0%, ${secondaryColor} 100%)` }}
+        >
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="w-12 h-12 rounded-xl bg-white/20 flex items-center justify-center">
+                <ArrowRightLeft className="w-6 h-6 text-white" />
+              </div>
+              <div>
+                <h2 className="text-xl font-bold">Transfer Stock</h2>
+                <p className="text-white/80 text-sm">Move inventory between locations</p>
+              </div>
+            </div>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => handleOpenChange(false)}
+              className="text-white hover:bg-white/20"
+            >
+              <X className="w-5 h-5" />
+            </Button>
           </div>
+        </div>
 
-          <div className="grid grid-cols-[1fr,auto,1fr] gap-2 items-end">
-            <div>
-              <Label>From</Label>
-              <Select value={fromLocation} onValueChange={setFromLocation}>
-                <SelectTrigger className="mt-1">
-                  <SelectValue placeholder="Source" />
+        {/* Form Content */}
+        <form onSubmit={handleSubmit} className="overflow-y-auto max-h-[calc(90vh-180px)]">
+          <div className="p-6 space-y-6">
+            
+            <div className="flex items-center gap-2 mb-4">
+              <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ backgroundColor: `${primaryColor}20` }}>
+                <Package className="w-4 h-4" style={{ color: primaryColor }} />
+              </div>
+              <h3 className="font-semibold text-gray-900">Select Product</h3>
+            </div>
+
+            <div className="p-4 rounded-xl border-2 border-[#1EB053]/30 bg-[#1EB053]/5">
+              <Label className="text-[#1EB053] font-medium">Product *</Label>
+              <Select value={selectedProduct} onValueChange={setSelectedProduct}>
+                <SelectTrigger className="mt-2 border-[#1EB053]/30 bg-white">
+                  <SelectValue placeholder="Select product to transfer" />
                 </SelectTrigger>
                 <SelectContent>
-                  {allLocations.map(loc => (
-                    <SelectItem key={loc.id} value={loc.id} disabled={loc.id === toLocation}>
+                  {products.map(p => (
+                    <SelectItem key={p.id} value={p.id}>
                       <div className="flex items-center gap-2">
-                        <LocationIcon type={loc.type} />
-                        {loc.name}
+                        <Package className="w-4 h-4" />
+                        {p.name}
                       </div>
                     </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
             </div>
-            
-            <ArrowRight className="w-5 h-5 text-gray-400 mb-2" />
-            
+
+            <div className="grid grid-cols-[1fr,auto,1fr] gap-3 items-end">
+              <div className="p-4 rounded-xl border border-gray-200 bg-gray-50">
+                <Label className="text-gray-700 font-medium">From *</Label>
+                <Select value={fromLocation} onValueChange={setFromLocation}>
+                  <SelectTrigger className="mt-2 border-gray-200 bg-white">
+                    <SelectValue placeholder="Source" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {allLocations.map(loc => (
+                      <SelectItem key={loc.id} value={loc.id} disabled={loc.id === toLocation}>
+                        <div className="flex items-center gap-2">
+                          <LocationIcon type={loc.type} />
+                          {loc.name}
+                        </div>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              
+              <div className="pb-4">
+                <div className="w-10 h-10 rounded-full bg-gradient-to-r from-[#1EB053] to-[#0072C6] flex items-center justify-center">
+                  <ArrowRight className="w-5 h-5 text-white" />
+                </div>
+              </div>
+              
+              <div className="p-4 rounded-xl border-2 border-[#0072C6]/30 bg-[#0072C6]/5">
+                <Label className="text-[#0072C6] font-medium">To *</Label>
+                <Select value={toLocation} onValueChange={setToLocation}>
+                  <SelectTrigger className="mt-2 border-[#0072C6]/30 bg-white">
+                    <SelectValue placeholder="Destination" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {allLocations.map(loc => (
+                      <SelectItem key={loc.id} value={loc.id} disabled={loc.id === fromLocation}>
+                        <div className="flex items-center gap-2">
+                          <LocationIcon type={loc.type} />
+                          {loc.name}
+                        </div>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            {fromLocation && selectedProduct && (
+              <div className="p-3 rounded-lg bg-[#1EB053]/10 border border-[#1EB053]/20 flex items-center justify-between">
+                <span className="text-sm text-gray-600">Available at source:</span>
+                <span className="font-bold text-[#1EB053] text-lg">{availableQty} units</span>
+              </div>
+            )}
+
             <div>
-              <Label>To</Label>
-              <Select value={toLocation} onValueChange={setToLocation}>
-                <SelectTrigger className="mt-1">
-                  <SelectValue placeholder="Destination" />
-                </SelectTrigger>
-                <SelectContent>
-                  {allLocations.map(loc => (
-                    <SelectItem key={loc.id} value={loc.id} disabled={loc.id === fromLocation}>
-                      <div className="flex items-center gap-2">
-                        <LocationIcon type={loc.type} />
-                        {loc.name}
-                      </div>
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <Label className="text-gray-700 font-medium">Quantity *</Label>
+              <Input
+                type="number"
+                min="1"
+                max={availableQty}
+                value={quantity}
+                onChange={(e) => setQuantity(e.target.value)}
+                placeholder="Enter quantity to transfer"
+                className="mt-1.5 border-gray-200"
+              />
+            </div>
+
+            <div>
+              <Label className="text-gray-700 font-medium">Notes (optional)</Label>
+              <Textarea
+                value={notes}
+                onChange={(e) => setNotes(e.target.value)}
+                placeholder="Reason for transfer..."
+                className="mt-1.5 border-gray-200"
+                rows={3}
+              />
             </div>
           </div>
 
-          {fromLocation && selectedProduct && (
-            <p className="text-sm text-gray-500">
-              Available at source: <span className="font-semibold text-[#1EB053]">{availableQty}</span> units
-            </p>
-          )}
-
-          <div>
-            <Label>Quantity</Label>
-            <Input
-              type="number"
-              min="1"
-              max={availableQty}
-              value={quantity}
-              onChange={(e) => setQuantity(e.target.value)}
-              placeholder="Enter quantity"
-              className="mt-1"
-            />
-          </div>
-
-          <div>
-            <Label>Notes (optional)</Label>
-            <Textarea
-              value={notes}
-              onChange={(e) => setNotes(e.target.value)}
-              placeholder="Reason for transfer..."
-              className="mt-1"
-            />
-          </div>
-
-          <DialogFooter>
-            <Button type="button" variant="outline" onClick={() => handleOpenChange(false)}>
+          {/* Footer */}
+          <div className="sticky bottom-0 bg-white border-t p-4 flex flex-col sm:flex-row gap-3">
+            <Button 
+              type="button" 
+              variant="outline" 
+              onClick={() => handleOpenChange(false)}
+              className="w-full sm:w-auto"
+            >
               Cancel
             </Button>
-            <Button
-              type="submit"
+            <Button 
+              type="submit" 
               disabled={transferMutation.isPending}
-              className="bg-gradient-to-r from-[#1EB053] to-[#0072C6]"
+              className="w-full sm:flex-1 text-white"
+              style={{ background: `linear-gradient(135deg, ${primaryColor} 0%, ${secondaryColor} 100%)` }}
             >
-              {transferMutation.isPending ? "Transferring..." : "Transfer Stock"}
+              {transferMutation.isPending ? (
+                <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Transferring...</>
+              ) : (
+                <><Check className="w-4 h-4 mr-2" />Transfer Stock</>
+              )}
             </Button>
-          </DialogFooter>
+          </div>
         </form>
+
+        {/* Bottom flag stripe */}
+        <div className="h-1 flex">
+          <div className="flex-1" style={{ backgroundColor: primaryColor }} />
+          <div className="flex-1 bg-white" />
+          <div className="flex-1" style={{ backgroundColor: secondaryColor }} />
+        </div>
       </DialogContent>
     </Dialog>
   );

@@ -4,9 +4,6 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   Dialog,
   DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -20,14 +17,17 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { toast } from "sonner";
-import { Loader2, Calendar, Clock, Flag, Tag, User, Trash2 } from "lucide-react";
+import { 
+  Loader2, Calendar, Clock, Flag, Tag, User, Trash2, X, Check,
+  FileText
+} from "lucide-react";
 import { format } from "date-fns";
 
 const priorities = [
-  { value: "low", label: "Low", color: "text-gray-600" },
-  { value: "medium", label: "Medium", color: "text-blue-600" },
-  { value: "high", label: "High", color: "text-orange-600" },
-  { value: "urgent", label: "Urgent", color: "text-red-600" },
+  { value: "low", label: "Low", color: "bg-gray-100 text-gray-600" },
+  { value: "medium", label: "Medium", color: "bg-blue-100 text-blue-600" },
+  { value: "high", label: "High", color: "bg-orange-100 text-orange-600" },
+  { value: "urgent", label: "Urgent", color: "bg-red-100 text-red-600" },
 ];
 
 const categories = [
@@ -53,10 +53,15 @@ export default function TaskDialog({
   orgId, 
   employees = [],
   currentEmployee,
-  defaultDate 
+  defaultDate,
+  organisation
 }) {
   const queryClient = useQueryClient();
   const isEditing = !!task;
+  const [activeSection, setActiveSection] = useState('details');
+
+  const primaryColor = organisation?.primary_color || '#1EB053';
+  const secondaryColor = organisation?.secondary_color || '#0072C6';
 
   const [formData, setFormData] = useState({
     title: "",
@@ -96,7 +101,10 @@ export default function TaskDialog({
         assigned_to_name: currentEmployee?.full_name || "",
       });
     }
-  }, [task, defaultDate, currentEmployee]);
+    if (open) {
+      setActiveSection('details');
+    }
+  }, [task, defaultDate, currentEmployee, open]);
 
   const createMutation = useMutation({
     mutationFn: (data) => base44.entities.Task.create({
@@ -167,185 +175,275 @@ export default function TaskDialog({
 
   const isPending = createMutation.isPending || updateMutation.isPending || deleteMutation.isPending;
 
+  const sections = [
+    { id: 'details', label: 'Details', icon: FileText },
+    { id: 'schedule', label: 'Schedule', icon: Calendar },
+  ];
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-lg w-[95vw] max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <div className="flex h-1 w-16 rounded-full overflow-hidden mb-3">
-            <div className="flex-1 bg-[#1EB053]" />
-            <div className="flex-1 bg-white border-y border-gray-200" />
-            <div className="flex-1 bg-[#0072C6]" />
-          </div>
-          <DialogTitle className="flex items-center gap-2">
-            <Calendar className="w-5 h-5 text-[#1EB053]" />
-            {isEditing ? "Edit Task" : "New Task"}
-          </DialogTitle>
-        </DialogHeader>
+      <DialogContent className="max-w-lg max-h-[90vh] overflow-hidden p-0 w-[95vw] sm:w-full">
+        {/* Sierra Leone Flag Header */}
+        <div className="h-2 flex">
+          <div className="flex-1" style={{ backgroundColor: primaryColor }} />
+          <div className="flex-1 bg-white" />
+          <div className="flex-1" style={{ backgroundColor: secondaryColor }} />
+        </div>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <Label>Title *</Label>
-            <Input
-              value={formData.title}
-              onChange={(e) => setFormData(prev => ({ ...prev, title: e.target.value }))}
-              placeholder="Enter task title"
-              className="mt-1"
-            />
-          </div>
-
-          <div>
-            <Label>Description</Label>
-            <Textarea
-              value={formData.description}
-              onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
-              placeholder="Add details about this task..."
-              className="mt-1"
-              rows={3}
-            />
-          </div>
-
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <Label className="flex items-center gap-1">
-                <Calendar className="w-3 h-3" /> Due Date *
-              </Label>
-              <Input
-                type="date"
-                value={formData.due_date}
-                onChange={(e) => setFormData(prev => ({ ...prev, due_date: e.target.value }))}
-                className="mt-1"
-              />
-            </div>
-            <div>
-              <Label className="flex items-center gap-1">
-                <Clock className="w-3 h-3" /> Time
-              </Label>
-              <Input
-                type="time"
-                value={formData.due_time}
-                onChange={(e) => setFormData(prev => ({ ...prev, due_time: e.target.value }))}
-                className="mt-1"
-              />
-            </div>
-          </div>
-
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <Label className="flex items-center gap-1">
-                <Flag className="w-3 h-3" /> Priority
-              </Label>
-              <Select 
-                value={formData.priority} 
-                onValueChange={(v) => setFormData(prev => ({ ...prev, priority: v }))}
-              >
-                <SelectTrigger className="mt-1">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {priorities.map(p => (
-                    <SelectItem key={p.value} value={p.value}>
-                      <span className={p.color}>{p.label}</span>
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div>
-              <Label className="flex items-center gap-1">
-                <Tag className="w-3 h-3" /> Category
-              </Label>
-              <Select 
-                value={formData.category} 
-                onValueChange={(v) => setFormData(prev => ({ ...prev, category: v }))}
-              >
-                <SelectTrigger className="mt-1">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {categories.map(c => (
-                    <SelectItem key={c.value} value={c.value}>{c.label}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <Label className="flex items-center gap-1">
-                <User className="w-3 h-3" /> Assigned To
-              </Label>
-              <Select 
-                value={formData.assigned_to_id} 
-                onValueChange={handleAssigneeChange}
-              >
-                <SelectTrigger className="mt-1">
-                  <SelectValue placeholder="Select assignee" />
-                </SelectTrigger>
-                <SelectContent>
-                  {employees.map(emp => (
-                    <SelectItem key={emp.id} value={emp.id}>{emp.full_name}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            {isEditing && (
+        {/* Header with gradient */}
+        <div 
+          className="px-6 py-4 text-white"
+          style={{ background: `linear-gradient(135deg, ${primaryColor} 0%, ${secondaryColor} 100%)` }}
+        >
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="w-12 h-12 rounded-xl bg-white/20 flex items-center justify-center">
+                <Calendar className="w-6 h-6 text-white" />
+              </div>
               <div>
-                <Label>Status</Label>
-                <Select 
-                  value={formData.status} 
-                  onValueChange={(v) => setFormData(prev => ({ ...prev, status: v }))}
-                >
-                  <SelectTrigger className="mt-1">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {statuses.map(s => (
-                      <SelectItem key={s.value} value={s.value}>{s.label}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <h2 className="text-xl font-bold">
+                  {isEditing ? 'Edit Task' : 'New Task'}
+                </h2>
+                <p className="text-white/80 text-sm">
+                  {isEditing ? `Updating: ${task.title}` : 'Create a new task'}
+                </p>
+              </div>
+            </div>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => onOpenChange(false)}
+              className="text-white hover:bg-white/20"
+            >
+              <X className="w-5 h-5" />
+            </Button>
+          </div>
+
+          {/* Section Tabs */}
+          <div className="flex gap-1 mt-4 overflow-x-auto pb-1">
+            {sections.map((section) => (
+              <button
+                key={section.id}
+                type="button"
+                onClick={() => setActiveSection(section.id)}
+                className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-all whitespace-nowrap ${
+                  activeSection === section.id
+                    ? 'bg-white text-gray-900'
+                    : 'bg-white/20 text-white hover:bg-white/30'
+                }`}
+              >
+                <section.icon className="w-4 h-4" />
+                {section.label}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Form Content */}
+        <form onSubmit={handleSubmit} className="overflow-y-auto max-h-[calc(90vh-220px)]">
+          <div className="p-6 space-y-6">
+            
+            {/* Details Section */}
+            {activeSection === 'details' && (
+              <div className="space-y-4">
+                <div className="flex items-center gap-2 mb-4">
+                  <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ backgroundColor: `${primaryColor}20` }}>
+                    <FileText className="w-4 h-4" style={{ color: primaryColor }} />
+                  </div>
+                  <h3 className="font-semibold text-gray-900">Task Details</h3>
+                </div>
+
+                <div>
+                  <Label className="text-gray-700 font-medium">Title *</Label>
+                  <Input
+                    value={formData.title}
+                    onChange={(e) => setFormData(prev => ({ ...prev, title: e.target.value }))}
+                    placeholder="Enter task title"
+                    className="mt-1.5 border-gray-200"
+                  />
+                </div>
+
+                <div>
+                  <Label className="text-gray-700 font-medium">Description</Label>
+                  <Textarea
+                    value={formData.description}
+                    onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
+                    placeholder="Add details about this task..."
+                    className="mt-1.5 border-gray-200"
+                    rows={3}
+                  />
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <Label className="text-gray-700 font-medium flex items-center gap-2">
+                      <Flag className="w-3 h-3" /> Priority
+                    </Label>
+                    <Select 
+                      value={formData.priority} 
+                      onValueChange={(v) => setFormData(prev => ({ ...prev, priority: v }))}
+                    >
+                      <SelectTrigger className="mt-1.5 border-gray-200">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {priorities.map(p => (
+                          <SelectItem key={p.value} value={p.value}>
+                            <span className={`px-2 py-0.5 rounded ${p.color}`}>{p.label}</span>
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div>
+                    <Label className="text-gray-700 font-medium flex items-center gap-2">
+                      <Tag className="w-3 h-3" /> Category
+                    </Label>
+                    <Select 
+                      value={formData.category} 
+                      onValueChange={(v) => setFormData(prev => ({ ...prev, category: v }))}
+                    >
+                      <SelectTrigger className="mt-1.5 border-gray-200">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {categories.map(c => (
+                          <SelectItem key={c.value} value={c.value}>{c.label}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+
+                <div>
+                  <Label className="text-gray-700 font-medium flex items-center gap-2">
+                    <User className="w-3 h-3" /> Assigned To
+                  </Label>
+                  <Select 
+                    value={formData.assigned_to_id} 
+                    onValueChange={handleAssigneeChange}
+                  >
+                    <SelectTrigger className="mt-1.5 border-gray-200">
+                      <SelectValue placeholder="Select assignee" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {employees.map(emp => (
+                        <SelectItem key={emp.id} value={emp.id}>{emp.full_name}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+            )}
+
+            {/* Schedule Section */}
+            {activeSection === 'schedule' && (
+              <div className="space-y-4">
+                <div className="flex items-center gap-2 mb-4">
+                  <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ backgroundColor: `${secondaryColor}20` }}>
+                    <Calendar className="w-4 h-4" style={{ color: secondaryColor }} />
+                  </div>
+                  <h3 className="font-semibold text-gray-900">Schedule</h3>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="p-4 rounded-xl border-2 border-[#1EB053]/30 bg-[#1EB053]/5">
+                    <Label className="text-[#1EB053] font-medium flex items-center gap-2">
+                      <Calendar className="w-4 h-4" /> Due Date *
+                    </Label>
+                    <Input
+                      type="date"
+                      value={formData.due_date}
+                      onChange={(e) => setFormData(prev => ({ ...prev, due_date: e.target.value }))}
+                      className="mt-2 border-[#1EB053]/30 bg-white"
+                    />
+                  </div>
+                  <div className="p-4 rounded-xl border border-gray-200 bg-gray-50">
+                    <Label className="text-gray-700 font-medium flex items-center gap-2">
+                      <Clock className="w-4 h-4" /> Time
+                    </Label>
+                    <Input
+                      type="time"
+                      value={formData.due_time}
+                      onChange={(e) => setFormData(prev => ({ ...prev, due_time: e.target.value }))}
+                      className="mt-2 border-gray-200 bg-white"
+                    />
+                  </div>
+                </div>
+
+                {isEditing && (
+                  <div>
+                    <Label className="text-gray-700 font-medium">Status</Label>
+                    <Select 
+                      value={formData.status} 
+                      onValueChange={(v) => setFormData(prev => ({ ...prev, status: v }))}
+                    >
+                      <SelectTrigger className="mt-1.5 border-gray-200">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {statuses.map(s => (
+                          <SelectItem key={s.value} value={s.value}>{s.label}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                )}
+
+                {isEditing && (
+                  <div className="pt-4 border-t">
+                    <Button
+                      type="button"
+                      variant="destructive"
+                      onClick={() => {
+                        if (confirm("Delete this task?")) {
+                          deleteMutation.mutate();
+                        }
+                      }}
+                      disabled={isPending}
+                      className="w-full"
+                    >
+                      <Trash2 className="w-4 h-4 mr-2" />
+                      Delete Task
+                    </Button>
+                  </div>
+                )}
               </div>
             )}
           </div>
 
-          <DialogFooter className="flex-col sm:flex-row gap-2 pt-4">
-            {isEditing && (
-              <Button
-                type="button"
-                variant="destructive"
-                onClick={() => {
-                  if (confirm("Delete this task?")) {
-                    deleteMutation.mutate();
-                  }
-                }}
-                disabled={isPending}
-                className="w-full sm:w-auto"
-              >
-                <Trash2 className="w-4 h-4 mr-1" />
-                Delete
-              </Button>
-            )}
-            <div className="flex-1" />
-            <Button
-              type="button"
-              variant="outline"
+          {/* Footer */}
+          <div className="sticky bottom-0 bg-white border-t p-4 flex flex-col sm:flex-row gap-3">
+            <Button 
+              type="button" 
+              variant="outline" 
               onClick={() => onOpenChange(false)}
               disabled={isPending}
               className="w-full sm:w-auto"
             >
               Cancel
             </Button>
-            <Button
-              type="submit"
+            <Button 
+              type="submit" 
               disabled={isPending}
-              className="bg-gradient-to-r from-[#1EB053] to-[#0072C6] w-full sm:w-auto"
+              className="w-full sm:flex-1 text-white"
+              style={{ background: `linear-gradient(135deg, ${primaryColor} 0%, ${secondaryColor} 100%)` }}
             >
-              {isPending && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
-              {isEditing ? "Update Task" : "Create Task"}
+              {isPending ? (
+                <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Processing...</>
+              ) : (
+                <><Check className="w-4 h-4 mr-2" />{isEditing ? 'Update Task' : 'Create Task'}</>
+              )}
             </Button>
-          </DialogFooter>
+          </div>
         </form>
+
+        {/* Bottom flag stripe */}
+        <div className="h-1 flex">
+          <div className="flex-1" style={{ backgroundColor: primaryColor }} />
+          <div className="flex-1 bg-white" />
+          <div className="flex-1" style={{ backgroundColor: secondaryColor }} />
+        </div>
       </DialogContent>
     </Dialog>
   );
