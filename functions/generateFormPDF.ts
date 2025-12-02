@@ -353,7 +353,7 @@ Deno.serve(async (req) => {
 
     // Extra fields after table - compact
     if (config.extraFields) {
-      yPos += 6;
+      yPos += 4;
       config.extraFields.forEach(fieldRow => {
         let xPos = margin;
         const availableWidth = pageWidth - (margin * 2);
@@ -363,7 +363,7 @@ Deno.serve(async (req) => {
           drawField(field.label, xPos, fieldWidth);
           xPos += fieldWidth;
         });
-        yPos += 18;
+        yPos += 15;
       });
     }
 
