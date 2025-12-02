@@ -366,8 +366,8 @@ export default function Reports() {
           </div>
 
           {selectedReports.length > 0 && (
-            <div className="flex justify-end">
-              <Button onClick={() => setShowConsolidatedPrint(true)} className="gap-2">
+            <div className="flex justify-center sm:justify-end">
+              <Button size="sm" onClick={() => setShowConsolidatedPrint(true)} className="gap-2 w-full sm:w-auto">
                 <Printer className="w-4 h-4" />
                 Print {selectedReports.length} Selected
               </Button>
@@ -449,11 +449,11 @@ export default function Reports() {
 
       {/* Report Builder Sheet */}
       <Sheet open={showBuilder} onOpenChange={setShowBuilder}>
-        <SheetContent className="w-full sm:max-w-2xl overflow-y-auto">
+        <SheetContent className="w-full sm:max-w-2xl overflow-y-auto p-4 sm:p-6">
           <SheetHeader>
-            <SheetTitle>{editingReport ? "Edit Report" : "Create Report"}</SheetTitle>
+            <SheetTitle className="text-lg">{editingReport ? "Edit Report" : "Create Report"}</SheetTitle>
           </SheetHeader>
-          <div className="mt-6">
+          <div className="mt-4 sm:mt-6">
             <ReportBuilder
               report={editingReport}
               onSave={handleSaveReport}
@@ -468,10 +468,10 @@ export default function Reports() {
 
       {/* Consolidated Print Dialog */}
       <Dialog open={showConsolidatedPrint} onOpenChange={setShowConsolidatedPrint}>
-        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="max-w-[95vw] sm:max-w-4xl max-h-[85vh] overflow-y-auto p-4 sm:p-6">
           <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <Printer className="w-5 h-5" />
+            <DialogTitle className="flex items-center gap-2 text-base sm:text-lg">
+              <Printer className="w-4 h-4 sm:w-5 sm:h-5" />
               Print Report Bundle
             </DialogTitle>
           </DialogHeader>
