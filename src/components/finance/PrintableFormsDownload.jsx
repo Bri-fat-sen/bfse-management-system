@@ -941,26 +941,18 @@ export default function PrintableFormsDownload({ open, onOpenChange, organisatio
 
   const handleDownload = (formId) => {
     const html = generateFormHTML(formId, organisation);
+    const formName = FORM_TEMPLATES.find(f => f.id === formId)?.name || formId;
     
-    // Create a blob and open in new tab
+    // Direct download as HTML file
     const blob = new Blob([html], { type: 'text/html' });
     const url = URL.createObjectURL(blob);
-    const newWindow = window.open(url, '_blank');
-    
-    if (newWindow) {
-      newWindow.onload = () => {
-        URL.revokeObjectURL(url);
-      };
-    } else {
-      // Fallback: download as file
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = `${formId}_form.html`;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      URL.revokeObjectURL(url);
-    }
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `${formName.replace(/\s+/g, '_')}.html`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
   };
 
   const handleDownloadAll = (category) => {
