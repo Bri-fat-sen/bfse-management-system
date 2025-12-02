@@ -916,158 +916,16 @@ export default function Inventory() {
       />
 
       {/* Product Dialog */}
-      <Dialog open={showProductDialog} onOpenChange={setShowProductDialog}>
-        <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto w-[95vw] sm:w-full">
-          <DialogHeader>
-            <div className="flex h-1 w-16 rounded-full overflow-hidden mb-3">
-              <div className="flex-1 bg-[#1EB053]" />
-              <div className="flex-1 bg-white border-y border-gray-200" />
-              <div className="flex-1 bg-[#0072C6]" />
-            </div>
-            <DialogTitle>{editingProduct ? 'Edit Product' : 'Add New Product'}</DialogTitle>
-          </DialogHeader>
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div className="col-span-2">
-                <Label>Product Name</Label>
-                <Input name="name" defaultValue={editingProduct?.name} required className="mt-1" />
-              </div>
-              <div>
-                <Label>SKU</Label>
-                <Input name="sku" defaultValue={editingProduct?.sku} className="mt-1" />
-              </div>
-              <div>
-                <Label>Category</Label>
-                <Select name="category" defaultValue={editingProduct?.category || "Other"}>
-                  <SelectTrigger className="mt-1">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {categoryList.map(cat => (
-                      <SelectItem key={cat} value={cat}>{cat}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div>
-                <Label>Unit Price (Le)</Label>
-                <Input name="unit_price" type="number" defaultValue={editingProduct?.unit_price} required className="mt-1" />
-              </div>
-              <div>
-                <Label>Cost Price (Le)</Label>
-                <Input name="cost_price" type="number" defaultValue={editingProduct?.cost_price} className="mt-1" />
-              </div>
-              <div>
-                <Label>Wholesale Price (Le)</Label>
-                <Input name="wholesale_price" type="number" defaultValue={editingProduct?.wholesale_price} className="mt-1" />
-              </div>
-              <div>
-                <Label>Unit</Label>
-                <Input name="unit" defaultValue={editingProduct?.unit || "piece"} className="mt-1" />
-              </div>
-              <div>
-                <Label>Stock Quantity</Label>
-                <Input name="stock_quantity" type="number" defaultValue={editingProduct?.stock_quantity || 0} className="mt-1" />
-              </div>
-              <div>
-                <Label>Low Stock Threshold</Label>
-                <Input name="low_stock_threshold" type="number" defaultValue={editingProduct?.low_stock_threshold || 10} className="mt-1" />
-              </div>
-              <div>
-                <Label>Reorder Point</Label>
-                <Input name="reorder_point" type="number" defaultValue={editingProduct?.reorder_point || 10} className="mt-1" />
-              </div>
-              <div>
-                <Label>Reorder Quantity</Label>
-                <Input name="reorder_quantity" type="number" defaultValue={editingProduct?.reorder_quantity || 50} className="mt-1" />
-              </div>
-              <div>
-                <Label>Lead Time (days)</Label>
-                <Input name="lead_time_days" type="number" defaultValue={editingProduct?.lead_time_days || 7} className="mt-1" />
-              </div>
-              <div className="flex items-center gap-4 col-span-2">
-                <label className="flex items-center gap-2 cursor-pointer">
-                  <Checkbox 
-                    name="is_serialized"
-                    defaultChecked={editingProduct?.is_serialized}
-                  />
-                  <span className="text-sm">Track Serial Numbers</span>
-                </label>
-                <label className="flex items-center gap-2 cursor-pointer">
-                  <Checkbox 
-                    name="track_batches"
-                    defaultChecked={editingProduct?.track_batches}
-                  />
-                  <span className="text-sm">Track Batches/Lots</span>
-                </label>
-              </div>
-              <div className="col-span-2">
-                <Label>Description</Label>
-                <Textarea name="description" defaultValue={editingProduct?.description} className="mt-1" />
-              </div>
-              
-              {/* Location Selection */}
-              <div className="col-span-2">
-                <Label className="flex items-center gap-2 mb-2">
-                  <MapPin className="w-4 h-4" />
-                  Available Locations
-                </Label>
-                <p className="text-xs text-gray-500 mb-3">Select where this product is available for sale</p>
-                
-                {allLocations.length === 0 ? (
-                  <p className="text-sm text-gray-500 italic">No locations available. Add warehouses or vehicles first.</p>
-                ) : (
-                  <div className="grid grid-cols-1 gap-2 max-h-40 overflow-y-auto border rounded-lg p-3 bg-gray-50">
-                    {allLocations.map((location) => (
-                      <label 
-                        key={location.id}
-                        htmlFor={`location-${location.id}`}
-                        className={`flex items-center gap-3 p-2 rounded-lg cursor-pointer transition-colors ${
-                          selectedLocations.includes(location.id) 
-                            ? 'bg-[#1EB053]/10 border border-[#1EB053]' 
-                            : 'bg-white border border-gray-200 hover:border-gray-300'
-                        }`}
-                      >
-                        <Checkbox 
-                          id={`location-${location.id}`}
-                          checked={selectedLocations.includes(location.id)}
-                          onCheckedChange={(checked) => {
-                            setSelectedLocations(prev => {
-                              if (checked) {
-                                return [...prev, location.id];
-                              } else {
-                                return prev.filter(id => id !== location.id);
-                              }
-                            });
-                          }}
-                        />
-                        {location.type === 'warehouse' ? (
-                          <Warehouse className="w-4 h-4 text-blue-600" />
-                        ) : (
-                          <Truck className="w-4 h-4 text-purple-600" />
-                        )}
-                        <span className="text-sm flex-1">{location.name}</span>
-                        <span className="text-xs text-gray-400 capitalize">{location.type}</span>
-                      </label>
-                    ))}
-                  </div>
-                )}
-                {selectedLocations.length > 0 && (
-                  <p className="text-xs text-[#1EB053] mt-2">{selectedLocations.length} location(s) selected</p>
-                )}
-              </div>
-            </div>
-            <DialogFooter className="flex-col sm:flex-row gap-2">
-              <Button type="button" variant="outline" onClick={() => setShowProductDialog(false)} className="w-full sm:w-auto">
-                Cancel
-              </Button>
-              <Button type="submit" className="bg-gradient-to-r from-[#1EB053] to-[#0072C6] hover:from-[#178f43] hover:to-[#005a9e] w-full sm:w-auto">
-                {editingProduct ? 'Update' : 'Create'} Product
-              </Button>
-            </DialogFooter>
-          </form>
-        </DialogContent>
-      </Dialog>
+      <ProductFormDialog
+        open={showProductDialog}
+        onOpenChange={setShowProductDialog}
+        editingProduct={editingProduct}
+        onSubmit={handleProductSubmit}
+        categoryList={categoryList}
+        allLocations={allLocations}
+        organisation={organisation?.[0]}
+        isLoading={createProductMutation.isPending || updateProductMutation.isPending}
+      />
     </div>
   );
 }
