@@ -40,38 +40,39 @@ Deno.serve(async (req) => {
     const secondary = hexToRgb(secondaryColor);
     const navy = { r: 15, g: 31, b: 60 };
 
-    // Sierra Leone Flag Stripe
+    // Sierra Leone Flag Stripe - compact
     doc.setFillColor(30, 176, 83); // Green
-    doc.rect(0, 0, pageWidth / 3, 6, 'F');
+    doc.rect(0, 0, pageWidth / 3, 4, 'F');
     doc.setFillColor(255, 255, 255); // White
-    doc.rect(pageWidth / 3, 0, pageWidth / 3, 6, 'F');
+    doc.rect(pageWidth / 3, 0, pageWidth / 3, 4, 'F');
     doc.setFillColor(0, 114, 198); // Blue
-    doc.rect((pageWidth / 3) * 2, 0, pageWidth / 3, 6, 'F');
+    doc.rect((pageWidth / 3) * 2, 0, pageWidth / 3, 4, 'F');
 
-    // Header Background with gradient effect
+    // Header Background - compact
     doc.setFillColor(primary.r, primary.g, primary.b);
-    doc.rect(0, 6, pageWidth, 35, 'F');
+    doc.rect(0, 4, pageWidth, 28, 'F');
 
     // Organisation Name
     doc.setTextColor(255, 255, 255);
-    doc.setFontSize(18);
+    doc.setFontSize(14);
     doc.setFont('helvetica', 'bold');
-    doc.text(orgName, margin, 22);
+    doc.text(orgName, margin, 16);
 
     // Address
-    doc.setFontSize(10);
+    doc.setFontSize(8);
     doc.setFont('helvetica', 'normal');
     const addressText = [orgAddress, orgCity, organisation?.country || 'Sierra Leone'].filter(Boolean).join(', ');
-    doc.text(addressText, margin, 30);
+    doc.text(addressText, margin, 24);
 
     // Date on right
-    doc.setFontSize(10);
-    doc.text(new Date().toLocaleDateString('en-GB'), pageWidth - margin, 22, { align: 'right' });
+    doc.setFontSize(9);
+    doc.text(new Date().toLocaleDateString('en-GB'), pageWidth - margin, 16, { align: 'right' });
     if (orgPhone) {
-      doc.text(orgPhone, pageWidth - margin, 30, { align: 'right' });
+      doc.setFontSize(8);
+      doc.text(orgPhone, pageWidth - margin, 24, { align: 'right' });
     }
 
-    yPos = 50;
+    yPos = 38;
 
     // Form configurations
     const formConfigs = {
