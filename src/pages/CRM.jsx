@@ -15,7 +15,7 @@ import {
 import PageHeader from "@/components/ui/PageHeader";
 import CustomerDialog from "@/components/crm/CustomerDialog";
 import CustomerDetail from "@/components/crm/CustomerDetail";
-import CRMAnalyticsDashboard from "@/components/crm/CRMAnalyticsDashboard";
+import CRMAnalytics from "@/components/crm/CRMAnalytics";
 import LoadingSpinner from "@/components/ui/LoadingSpinner";
 
 
@@ -34,7 +34,6 @@ export default function CRM() {
   const [search, setSearch] = useState("");
   const [segmentFilter, setSegmentFilter] = useState("all");
   const [typeFilter, setTypeFilter] = useState("all");
-  const [activeTab, setActiveTab] = useState("customers");
 
   const { data: user } = useQuery({
     queryKey: ['currentUser'],
