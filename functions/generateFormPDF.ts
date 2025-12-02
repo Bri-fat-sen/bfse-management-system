@@ -408,7 +408,7 @@ Deno.serve(async (req) => {
 
     doc.setTextColor(255, 255, 255);
     doc.setFontSize(6);
-    doc.text('For Manual Record Keeping', pageWidth / 2, footerY + 15, { align: 'center' });
+    doc.text('Thank You For Your Business', pageWidth / 2, footerY + 15, { align: 'center' });
 
     // Generate PDF
     const pdfBytes = doc.output('arraybuffer');
