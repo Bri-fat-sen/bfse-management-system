@@ -12,6 +12,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Select,
   SelectContent,
@@ -21,7 +22,7 @@ import {
 } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
-import { Github, Loader2, ExternalLink, AlertCircle, CheckCircle } from "lucide-react";
+import { Github, Loader2, ExternalLink, AlertCircle, CheckCircle, LayoutGrid } from "lucide-react";
 
 export default function CreateGitHubIssueDialog({
   open,
@@ -34,6 +35,8 @@ export default function CreateGitHubIssueDialog({
   const [body, setBody] = useState("");
   const [labels, setLabels] = useState("inventory");
   const [createdIssue, setCreatedIssue] = useState(null);
+  const [addToProject, setAddToProject] = useState(false);
+  const [selectedProjectId, setSelectedProjectId] = useState("");
 
   // Fetch repositories
   const { data: repos = [], isLoading: reposLoading } = useQuery({
@@ -45,20 +48,44 @@ export default function CreateGitHubIssueDialog({
     enabled: open,
   });
 
+  // Fetch projects
+  const { data: projects = [], isLoading: projectsLoading } = useQuery({
+    queryKey: ['githubProjectsForIssue'],
+    queryFn: async () => {
+      const res = await base44.functions.invoke('github', { action: 'getProjects' });
+      return res.data || [];
+    },
+    enabled: open && addToProject,
+  });
+
   // Create issue mutation
   const createIssueMutation = useMutation({
     mutationFn: async ({ owner, repo, issueData }) => {
+      // Create the issue first
       const res = await base44.functions.invoke('github', {
         action: 'createIssue',
         owner,
         repo,
         issueData
       });
-      return res.data;
+      const issue = res.data;
+
+      // Add to project if selected
+      if (addToProject && selectedProjectId && issue.node_id) {
+        await base44.functions.invoke('github', {
+          action: 'addItemToProject',
+          projectId: selectedProjectId,
+          itemId: issue.node_id
+        });
+      }
+
+      return issue;
     },
     onSuccess: (issueData) => {
       setCreatedIssue(issueData);
-      toast.success("GitHub issue created successfully!");
+      toast.success(addToProject && selectedProjectId 
+        ? "Issue created and added to project!" 
+        : "GitHub issue created successfully!");
     },
     onError: (error) => {
       toast.error("Failed to create issue: " + error.message);
@@ -153,6 +180,8 @@ Create a purchase order to replenish stock before it runs out.
   const handleClose = () => {
     setCreatedIssue(null);
     setSelectedRepo("");
+    setAddToProject(false);
+    setSelectedProjectId("");
     onOpenChange(false);
   };
 
@@ -254,6 +283,53 @@ Create a purchase order to replenish stock before it runs out.
                     )
                   ))}
                 </div>
+              </div>
+
+              {/* Add to Project Option */}
+              <div className="border-t pt-4">
+                <div className="flex items-center space-x-2">
+                  <Checkbox
+                    id="addToProject"
+                    checked={addToProject}
+                    onCheckedChange={setAddToProject}
+                  />
+                  <label
+                    htmlFor="addToProject"
+                    className="text-sm font-medium flex items-center gap-1.5 cursor-pointer"
+                  >
+                    <LayoutGrid className="w-4 h-4" />
+                    Add to GitHub Project Board
+                  </label>
+                </div>
+
+                {addToProject && (
+                  <div className="mt-3">
+                    <Label>Select Project</Label>
+                    {projectsLoading ? (
+                      <div className="flex items-center gap-2 mt-1 text-gray-500 text-sm">
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                        Loading projects...
+                      </div>
+                    ) : projects.length === 0 ? (
+                      <p className="text-sm text-amber-600 mt-1">
+                        No projects found. Create one in GitHub first.
+                      </p>
+                    ) : (
+                      <Select value={selectedProjectId} onValueChange={setSelectedProjectId}>
+                        <SelectTrigger className="mt-1">
+                          <SelectValue placeholder="Select project" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {projects.filter(p => !p.closed).map((project) => (
+                            <SelectItem key={project.id} value={project.id}>
+                              {project.title}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    )}
+                  </div>
+                )}
               </div>
             </div>
 
