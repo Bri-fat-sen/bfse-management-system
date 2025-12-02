@@ -129,6 +129,7 @@ export default function Suppliers() {
     mutationFn: (id) => base44.entities.Supplier.delete(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['suppliers'] });
+      toast({ title: "Supplier deleted" });
     },
   });
 
@@ -136,6 +137,7 @@ export default function Suppliers() {
     mutationFn: ({ id, data }) => base44.entities.PurchaseOrder.update(id, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['purchaseOrders'] });
+      toast({ title: "Purchase order updated" });
     },
   });
 
@@ -222,55 +224,55 @@ export default function Suppliers() {
         </PageHeader>
 
         {/* Stats */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
           <Card className="border-l-4 border-l-[#1EB053]">
-            <CardContent className="p-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-xs text-gray-500 uppercase tracking-wide">Active Suppliers</p>
-                  <p className="text-2xl font-bold text-[#1EB053]">{activeSuppliers}</p>
+            <CardContent className="p-3 sm:p-4">
+              <div className="flex items-center justify-between gap-2">
+                <div className="min-w-0">
+                  <p className="text-[10px] sm:text-xs text-gray-500 uppercase tracking-wide truncate">Active</p>
+                  <p className="text-xl sm:text-2xl font-bold text-[#1EB053]">{activeSuppliers}</p>
                 </div>
-                <div className="w-12 h-12 rounded-full bg-green-100 flex items-center justify-center">
-                  <Truck className="w-6 h-6 text-[#1EB053]" />
+                <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-green-100 flex items-center justify-center flex-shrink-0">
+                  <Truck className="w-5 h-5 sm:w-6 sm:h-6 text-[#1EB053]" />
                 </div>
               </div>
             </CardContent>
           </Card>
           <Card className="border-l-4 border-l-[#f59e0b]">
-            <CardContent className="p-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-xs text-gray-500 uppercase tracking-wide">Pending Orders</p>
-                  <p className="text-2xl font-bold text-[#f59e0b]">{pendingOrders}</p>
+            <CardContent className="p-3 sm:p-4">
+              <div className="flex items-center justify-between gap-2">
+                <div className="min-w-0">
+                  <p className="text-[10px] sm:text-xs text-gray-500 uppercase tracking-wide truncate">Pending</p>
+                  <p className="text-xl sm:text-2xl font-bold text-[#f59e0b]">{pendingOrders}</p>
                 </div>
-                <div className="w-12 h-12 rounded-full bg-orange-100 flex items-center justify-center">
-                  <ShoppingCart className="w-6 h-6 text-[#f59e0b]" />
+                <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-orange-100 flex items-center justify-center flex-shrink-0">
+                  <ShoppingCart className="w-5 h-5 sm:w-6 sm:h-6 text-[#f59e0b]" />
                 </div>
               </div>
             </CardContent>
           </Card>
           <Card className="border-l-4 border-l-[#0072C6]">
-            <CardContent className="p-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-xs text-gray-500 uppercase tracking-wide">Total Spent</p>
-                  <p className="text-2xl font-bold text-[#0072C6]">Le {totalSpent.toLocaleString()}</p>
+            <CardContent className="p-3 sm:p-4">
+              <div className="flex items-center justify-between gap-2">
+                <div className="min-w-0 flex-1">
+                  <p className="text-[10px] sm:text-xs text-gray-500 uppercase tracking-wide truncate">Total Spent</p>
+                  <p className="text-base sm:text-2xl font-bold text-[#0072C6] truncate">Le {totalSpent.toLocaleString()}</p>
                 </div>
-                <div className="w-12 h-12 rounded-full bg-blue-100 flex items-center justify-center">
-                  <DollarSign className="w-6 h-6 text-[#0072C6]" />
+                <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-blue-100 flex items-center justify-center flex-shrink-0">
+                  <DollarSign className="w-5 h-5 sm:w-6 sm:h-6 text-[#0072C6]" />
                 </div>
               </div>
             </CardContent>
           </Card>
           <Card className="border-l-4 border-l-[#8b5cf6]">
-            <CardContent className="p-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-xs text-gray-500 uppercase tracking-wide">Avg Lead Time</p>
-                  <p className="text-2xl font-bold text-[#8b5cf6]">{Math.round(avgLeadTime)} days</p>
+            <CardContent className="p-3 sm:p-4">
+              <div className="flex items-center justify-between gap-2">
+                <div className="min-w-0">
+                  <p className="text-[10px] sm:text-xs text-gray-500 uppercase tracking-wide truncate">Lead Time</p>
+                  <p className="text-xl sm:text-2xl font-bold text-[#8b5cf6]">{Math.round(avgLeadTime)}d</p>
                 </div>
-                <div className="w-12 h-12 rounded-full bg-purple-100 flex items-center justify-center">
-                  <Clock className="w-6 h-6 text-[#8b5cf6]" />
+                <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-purple-100 flex items-center justify-center flex-shrink-0">
+                  <Clock className="w-5 h-5 sm:w-6 sm:h-6 text-[#8b5cf6]" />
                 </div>
               </div>
             </CardContent>
@@ -339,105 +341,105 @@ export default function Suppliers() {
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 {filteredSuppliers.map((supplier) => (
                   <Card key={supplier.id} className="hover:shadow-lg transition-all border-t-4 border-t-[#1EB053]">
-                    <CardContent className="p-4">
-                      <div className="flex items-start justify-between mb-3">
-                        <div className="flex items-center gap-3">
-                          <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-[#1EB053] to-[#0072C6] flex items-center justify-center text-white font-bold text-lg">
-                            {supplier.name?.charAt(0)}
-                          </div>
-                          <div>
-                            <h3 className="font-semibold">{supplier.name}</h3>
-                            <Badge variant="secondary" className={
-                              supplier.status === 'active' ? 'bg-green-100 text-green-700' :
-                              supplier.status === 'blocked' ? 'bg-red-100 text-red-700' :
-                              'bg-gray-100 text-gray-700'
-                            }>
-                              {supplier.status}
-                            </Badge>
-                          </div>
-                        </div>
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="icon">
-                              <MoreVertical className="w-4 h-4" />
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end">
-                            <DropdownMenuItem onClick={() => {
-                              setSelectedSupplier(supplier);
-                              setShowProductsDialog(true);
-                            }}>
-                              <Package className="w-4 h-4 mr-2" />
-                              Manage Products
-                            </DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => {
-                              setPriceHistorySupplier(supplier);
-                              setShowPriceHistory(true);
-                            }}>
-                              <TrendingUp className="w-4 h-4 mr-2" />
-                              Price History
-                            </DropdownMenuItem>
-                            <DropdownMenuSeparator />
-                            <DropdownMenuItem onClick={() => {
-                              setEditingSupplier(supplier);
-                              setShowSupplierDialog(true);
-                            }}>
-                              <Edit className="w-4 h-4 mr-2" />
-                              Edit
-                            </DropdownMenuItem>
-                            <DropdownMenuItem 
-                              className="text-red-600"
-                              onClick={() => deleteMutation.mutate(supplier.id)}
-                            >
-                              <Trash2 className="w-4 h-4 mr-2" />
-                              Delete
-                            </DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      </div>
+                    <CardContent className="p-3 sm:p-4">
+                     <div className="flex items-start justify-between mb-3 gap-2">
+                       <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1">
+                         <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-gradient-to-br from-[#1EB053] to-[#0072C6] flex items-center justify-center text-white font-bold text-base sm:text-lg flex-shrink-0">
+                           {supplier.name?.charAt(0)}
+                         </div>
+                         <div className="min-w-0">
+                           <h3 className="font-semibold text-sm sm:text-base truncate">{supplier.name}</h3>
+                           <Badge variant="secondary" className={`text-[10px] sm:text-xs ${
+                             supplier.status === 'active' ? 'bg-green-100 text-green-700' :
+                             supplier.status === 'blocked' ? 'bg-red-100 text-red-700' :
+                             'bg-gray-100 text-gray-700'
+                           }`}>
+                             {supplier.status}
+                           </Badge>
+                         </div>
+                       </div>
+                       <DropdownMenu>
+                         <DropdownMenuTrigger asChild>
+                           <Button variant="ghost" size="icon" className="flex-shrink-0">
+                             <MoreVertical className="w-4 h-4" />
+                           </Button>
+                         </DropdownMenuTrigger>
+                         <DropdownMenuContent align="end">
+                           <DropdownMenuItem onClick={() => {
+                             setSelectedSupplier(supplier);
+                             setShowProductsDialog(true);
+                           }}>
+                             <Package className="w-4 h-4 mr-2" />
+                             Manage Products
+                           </DropdownMenuItem>
+                           <DropdownMenuItem onClick={() => {
+                             setPriceHistorySupplier(supplier);
+                             setShowPriceHistory(true);
+                           }}>
+                             <TrendingUp className="w-4 h-4 mr-2" />
+                             Price History
+                           </DropdownMenuItem>
+                           <DropdownMenuSeparator />
+                           <DropdownMenuItem onClick={() => {
+                             setEditingSupplier(supplier);
+                             setShowSupplierDialog(true);
+                           }}>
+                             <Edit className="w-4 h-4 mr-2" />
+                             Edit
+                           </DropdownMenuItem>
+                           <DropdownMenuItem 
+                             className="text-red-600"
+                             onClick={() => deleteMutation.mutate(supplier.id)}
+                           >
+                             <Trash2 className="w-4 h-4 mr-2" />
+                             Delete
+                           </DropdownMenuItem>
+                         </DropdownMenuContent>
+                       </DropdownMenu>
+                     </div>
 
-                      {renderStars(supplier.rating)}
+                     {renderStars(supplier.rating)}
 
-                      <div className="mt-4 space-y-2 text-sm text-gray-600">
-                        {supplier.contact_person && (
-                          <div className="flex items-center gap-2">
-                            <span className="font-medium">{supplier.contact_person}</span>
-                          </div>
-                        )}
-                        {supplier.phone && (
-                          <div className="flex items-center gap-2">
-                            <Phone className="w-4 h-4 text-gray-400" />
-                            <span>{supplier.phone}</span>
-                          </div>
-                        )}
-                        {supplier.email && (
-                          <div className="flex items-center gap-2">
-                            <Mail className="w-4 h-4 text-gray-400" />
-                            <span className="truncate">{supplier.email}</span>
-                          </div>
-                        )}
-                        {supplier.city && (
-                          <div className="flex items-center gap-2">
-                            <MapPin className="w-4 h-4 text-gray-400" />
-                            <span>{supplier.city}, {supplier.country}</span>
-                          </div>
-                        )}
-                      </div>
+                     <div className="mt-3 sm:mt-4 space-y-1.5 sm:space-y-2 text-xs sm:text-sm text-gray-600">
+                       {supplier.contact_person && (
+                         <div className="flex items-center gap-2 truncate">
+                           <span className="font-medium truncate">{supplier.contact_person}</span>
+                         </div>
+                       )}
+                       {supplier.phone && (
+                         <div className="flex items-center gap-2 truncate">
+                           <Phone className="w-3 h-3 sm:w-4 sm:h-4 text-gray-400 flex-shrink-0" />
+                           <span className="truncate">{supplier.phone}</span>
+                         </div>
+                       )}
+                       {supplier.email && (
+                         <div className="flex items-center gap-2 truncate">
+                           <Mail className="w-3 h-3 sm:w-4 sm:h-4 text-gray-400 flex-shrink-0" />
+                           <span className="truncate">{supplier.email}</span>
+                         </div>
+                       )}
+                       {supplier.city && (
+                         <div className="flex items-center gap-2 truncate">
+                           <MapPin className="w-3 h-3 sm:w-4 sm:h-4 text-gray-400 flex-shrink-0" />
+                           <span className="truncate">{supplier.city}, {supplier.country}</span>
+                         </div>
+                       )}
+                     </div>
 
-                      <div className="mt-4 pt-4 border-t flex items-center justify-between text-sm">
-                        <div>
-                          <p className="text-gray-500">Lead Time</p>
-                          <p className="font-medium">{supplier.default_lead_time_days || 7} days</p>
-                        </div>
-                        <div className="text-right">
-                          <p className="text-gray-500">Total Orders</p>
-                          <p className="font-medium">{supplier.total_orders || 0}</p>
-                        </div>
-                        <div className="text-right">
-                          <p className="text-gray-500">Total Spent</p>
-                          <p className="font-bold text-[#1EB053]">Le {(supplier.total_spent || 0).toLocaleString()}</p>
-                        </div>
-                      </div>
+                     <div className="mt-3 sm:mt-4 pt-3 sm:pt-4 border-t grid grid-cols-3 gap-2 text-xs sm:text-sm">
+                       <div className="text-center">
+                         <p className="text-gray-500 text-[10px] sm:text-xs">Lead Time</p>
+                         <p className="font-medium">{supplier.default_lead_time_days || 7}d</p>
+                       </div>
+                       <div className="text-center">
+                         <p className="text-gray-500 text-[10px] sm:text-xs">Orders</p>
+                         <p className="font-medium">{supplier.total_orders || 0}</p>
+                       </div>
+                       <div className="text-center">
+                         <p className="text-gray-500 text-[10px] sm:text-xs truncate">Spent</p>
+                         <p className="font-bold text-[#1EB053] text-xs sm:text-sm truncate">Le {(supplier.total_spent || 0).toLocaleString()}</p>
+                       </div>
+                     </div>
                     </CardContent>
                   </Card>
                 ))}
@@ -462,7 +464,8 @@ export default function Suppliers() {
                 actionLabel="Create Order"
               />
             ) : (
-              <Card>
+              {/* Desktop Table View */}
+              <Card className="hidden md:block">
                 <CardContent className="p-0">
                   <div className="overflow-x-auto">
                     <table className="w-full">
@@ -559,6 +562,101 @@ export default function Suppliers() {
                   </div>
                 </CardContent>
               </Card>
+
+              {/* Mobile Card View */}
+              <div className="md:hidden space-y-3">
+                {filteredPOs.map((po) => {
+                  const statusConfig = STATUS_CONFIG[po.status] || STATUS_CONFIG.draft;
+                  const StatusIcon = statusConfig.icon;
+                  return (
+                    <Card key={po.id} className="border-t-4 border-t-[#1EB053]">
+                      <CardContent className="p-4">
+                        <div className="flex items-start justify-between mb-3">
+                          <div className="flex-1 min-w-0">
+                            <h3 className="font-bold text-sm truncate">{po.po_number}</h3>
+                            <p className="text-xs text-gray-500">{po.supplier_name}</p>
+                          </div>
+                          <Badge className={`${statusConfig.color} ml-2 flex-shrink-0 text-[10px]`}>
+                            <StatusIcon className="w-3 h-3 mr-1" />
+                            {statusConfig.label}
+                          </Badge>
+                        </div>
+                        
+                        <div className="grid grid-cols-2 gap-3 text-xs mb-3">
+                          <div>
+                            <p className="text-gray-500">Order Date</p>
+                            <p className="font-medium">{po.order_date && format(new Date(po.order_date), 'PP')}</p>
+                          </div>
+                          <div>
+                            <p className="text-gray-500">Expected</p>
+                            <p className="font-medium">{po.expected_delivery_date && format(new Date(po.expected_delivery_date), 'PP')}</p>
+                          </div>
+                          <div>
+                            <p className="text-gray-500">Items</p>
+                            <p className="font-medium">{po.items?.length || 0}</p>
+                          </div>
+                          <div>
+                            <p className="text-gray-500">Total</p>
+                            <p className="font-bold text-[#1EB053]">Le {(po.total_amount || 0).toLocaleString()}</p>
+                          </div>
+                        </div>
+
+                        <div className="flex gap-2 pt-3 border-t">
+                          {['ordered', 'partial'].includes(po.status) && (
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => {
+                                setReceivingPO(po);
+                                setShowReceiveDialog(true);
+                              }}
+                              className="text-[#1EB053] border-[#1EB053] text-xs flex-1"
+                            >
+                              <Download className="w-3 h-3 mr-1" />
+                              Receive
+                            </Button>
+                          )}
+                          {po.status === 'draft' && (
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => updatePOMutation.mutate({ id: po.id, data: { status: 'ordered' } })}
+                              className="text-xs flex-1"
+                            >
+                              Send Order
+                            </Button>
+                          )}
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button variant="ghost" size="icon" className="flex-shrink-0">
+                                <MoreVertical className="w-4 h-4" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                              <DropdownMenuItem onClick={() => {
+                                setEditingPO(po);
+                                setShowPODialog(true);
+                              }}>
+                                <Edit className="w-4 h-4 mr-2" />
+                                Edit
+                              </DropdownMenuItem>
+                              {po.status !== 'cancelled' && po.status !== 'received' && (
+                                <DropdownMenuItem 
+                                  className="text-red-600"
+                                  onClick={() => updatePOMutation.mutate({ id: po.id, data: { status: 'cancelled' } })}
+                                >
+                                  <Ban className="w-4 h-4 mr-2" />
+                                  Cancel Order
+                                </DropdownMenuItem>
+                              )}
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  );
+                })}
+              </div>
             )}
           </TabsContent>
         </Tabs>
@@ -569,6 +667,7 @@ export default function Suppliers() {
           onOpenChange={setShowSupplierDialog}
           supplier={editingSupplier}
           orgId={orgId}
+          organisation={currentEmployee?.organisation_id ? { primary_color: '#1EB053', secondary_color: '#0072C6' } : null}
         />
 
         <SupplierProductsDialog
@@ -588,6 +687,7 @@ export default function Suppliers() {
           warehouses={warehouses}
           orgId={orgId}
           currentEmployee={currentEmployee}
+          organisation={currentEmployee?.organisation_id ? { primary_color: '#1EB053', secondary_color: '#0072C6' } : null}
         />
 
         <ReceiveStockDialog
