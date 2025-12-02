@@ -118,7 +118,7 @@ export default function GitHubProjectBoard({ className = "" }) {
     );
   }
 
-  if (projects.length === 0) {
+  if (!projects || projects.length === 0 || projects.message) {
     return (
       <Card className={className}>
         <CardContent className="text-center py-8">
@@ -157,7 +157,7 @@ export default function GitHubProjectBoard({ className = "" }) {
             <SelectValue placeholder="Select a project" />
           </SelectTrigger>
           <SelectContent>
-            {projects.filter(p => !p.closed).map((project) => (
+            {projects.filter(p => p && p.id && !p.closed).map((project) => (
               <SelectItem key={project.id} value={project.id}>
                 {project.title}
               </SelectItem>
