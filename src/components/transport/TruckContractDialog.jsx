@@ -468,18 +468,34 @@ export default function TruckContractDialog({
             />
           </div>
 
-          <DialogFooter>
-            <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
-              Cancel
-            </Button>
-            <Button 
-              type="submit" 
-              disabled={isPending}
-              className="bg-gradient-to-r from-[#1EB053] to-[#0072C6]"
-            >
-              {isPending && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
-              {isEditing ? 'Update Contract' : 'Create Contract'}
-            </Button>
+          <DialogFooter className="flex justify-between">
+            <div>
+              {isEditing && (
+                <Button 
+                  type="button" 
+                  variant="destructive" 
+                  onClick={handleDelete}
+                  disabled={isPending}
+                >
+                  {deleteMutation.isPending && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+                  <Trash2 className="w-4 h-4 mr-2" />
+                  Delete
+                </Button>
+              )}
+            </div>
+            <div className="flex gap-2">
+              <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+                Cancel
+              </Button>
+              <Button 
+                type="submit" 
+                disabled={isPending}
+                className="bg-gradient-to-r from-[#1EB053] to-[#0072C6]"
+              >
+                {(createMutation.isPending || updateMutation.isPending) && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+                {isEditing ? 'Update Contract' : 'Create Contract'}
+              </Button>
+            </div>
           </DialogFooter>
         </form>
       </DialogContent>
