@@ -67,6 +67,7 @@ import ReorderSuggestions from "@/components/inventory/ReorderSuggestions";
 import MultiLocationStock from "@/components/inventory/MultiLocationStock";
 import LowStockNotificationBanner from "@/components/inventory/LowStockNotificationBanner";
 import InventoryAuditLog from "@/components/inventory/InventoryAuditLog";
+import ProductFormDialog from "@/components/inventory/ProductFormDialog";
 
 const DEFAULT_CATEGORIES = ["Water", "Beverages", "Food", "Electronics", "Clothing", "Other"];
 
