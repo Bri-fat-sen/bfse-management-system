@@ -197,7 +197,7 @@ export default function Suppliers() {
 
   return (
     <PermissionGate module="inventory" action="view" showDenied>
-      <div className="space-y-6">
+      <div className="space-y-4 sm:space-y-6 w-full max-w-full overflow-x-hidden">
         <PageHeader
           title="Supplier Management"
           subtitle="Manage suppliers and purchase orders"
@@ -283,10 +283,10 @@ export default function Suppliers() {
           </Card>
         </div>
 
-        <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList className="bg-gray-100 p-1">
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+          <TabsList className="bg-gray-100 p-1 w-full grid grid-cols-2">
             <TabsTrigger value="suppliers" className="text-xs sm:text-sm data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#1EB053] data-[state=active]:to-[#0072C6] data-[state=active]:text-white">Suppliers</TabsTrigger>
-            <TabsTrigger value="orders" className="text-xs sm:text-sm data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#1EB053] data-[state=active]:to-[#0072C6] data-[state=active]:text-white">Purchase Orders</TabsTrigger>
+            <TabsTrigger value="orders" className="text-xs sm:text-sm data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#1EB053] data-[state=active]:to-[#0072C6] data-[state=active]:text-white">Orders</TabsTrigger>
           </TabsList>
 
           {/* Filters */}
@@ -342,7 +342,7 @@ export default function Suppliers() {
                 actionLabel="Add Supplier"
               />
             ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
                 {filteredSuppliers.map((supplier) => (
                   <Card key={supplier.id} className="hover:shadow-lg transition-all border-t-4 border-t-[#1EB053]">
                     <CardContent className="p-3 sm:p-4">
