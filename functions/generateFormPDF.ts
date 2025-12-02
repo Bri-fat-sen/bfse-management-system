@@ -73,100 +73,140 @@ Deno.serve(async (req) => {
 
     yPos = 50;
 
-    // Form configurations
+    // Form configurations - all form types
     const formConfigs = {
+      // EXPENSE FORMS
       expense_fuel: {
         title: 'Fuel Expense Form',
-        icon: '⛽',
         fields: [
           { row: [{ label: 'Date', width: 0.3 }, { label: 'Vehicle Registration', width: 0.35 }, { label: 'Driver Name', width: 0.35 }] },
           { row: [{ label: 'Fuel Station', width: 0.5 }, { label: 'Current Mileage (km)', width: 0.5 }] }
         ],
-        table: {
-          title: 'Fuel Details',
-          columns: ['Fuel Type', 'Litres', 'Price per Litre (Le)', 'Total (Le)'],
-          rows: 2,
-          hasTotal: true
-        },
-        extraFields: [
-          { row: [{ label: 'Receipt Number', width: 0.5 }, { label: 'Notes', width: 0.5 }] }
-        ]
+        checkboxes: ['Petrol', 'Diesel'],
+        table: { title: 'Fuel Details', columns: ['Fuel Type', 'Litres', 'Price/L (Le)', 'Total (Le)'], rows: 1, hasTotal: true },
+        extraFields: [{ row: [{ label: 'Receipt Number', width: 0.5 }, { label: 'Notes', width: 0.5 }] }]
       },
       expense_maintenance: {
         title: 'Maintenance Expense Form',
-        icon: '🔧',
-        fields: [
-          { row: [{ label: 'Date', width: 0.3 }, { label: 'Vehicle Registration', width: 0.35 }, { label: 'Current Mileage', width: 0.35 }] }
-        ],
-        checkboxes: ['Oil Change', 'Tire Rotation', 'Tire Replacement', 'Brake Service', 'Engine Repair', 'Battery', 'Electrical', 'Other'],
-        table: {
-          title: 'Parts Replaced',
-          columns: ['Part Name', 'Qty', 'Unit Cost (Le)', 'Total (Le)'],
-          rows: 3,
-          hasTotal: true
-        },
-        extraFields: [
-          { row: [{ label: 'Vendor/Mechanic', width: 0.5 }, { label: 'Next Service Date', width: 0.5 }] }
-        ]
+        fields: [{ row: [{ label: 'Date', width: 0.3 }, { label: 'Vehicle Registration', width: 0.35 }, { label: 'Current Mileage', width: 0.35 }] }],
+        checkboxes: ['Oil Change', 'Tires', 'Brakes', 'Engine', 'Battery', 'Electrical', 'Other'],
+        table: { title: 'Parts Replaced', columns: ['Part Name', 'Qty', 'Cost (Le)', 'Total (Le)'], rows: 2, hasTotal: true, labourRow: true },
+        extraFields: [{ row: [{ label: 'Vendor/Mechanic', width: 0.5 }, { label: 'Next Service Date', width: 0.5 }] }]
       },
       expense_utilities: {
         title: 'Utilities Expense Form',
-        icon: '⚡',
-        fields: [
-          { row: [{ label: 'Date', width: 0.5 }, { label: 'Bill Period', width: 0.5 }] }
-        ],
-        checkboxes: ['Electricity', 'Water', 'Internet', 'Phone', 'Generator Fuel'],
-        table: {
-          title: 'Utility Details',
-          columns: ['Description', 'Meter Reading', 'Units', 'Amount (Le)'],
-          rows: 2,
-          hasTotal: true
-        },
-        extraFields: [
-          { row: [{ label: 'Account Number', width: 0.5 }, { label: 'Receipt Number', width: 0.5 }] }
-        ]
+        fields: [{ row: [{ label: 'Date', width: 0.5 }, { label: 'Bill Period', width: 0.5 }] }],
+        checkboxes: ['Electricity', 'Water', 'Internet', 'Phone', 'Generator'],
+        table: { title: 'Utility Details', columns: ['Description', 'Reading', 'Units', 'Amount (Le)'], rows: 1, hasTotal: true },
+        extraFields: [{ row: [{ label: 'Account Number', width: 0.5 }, { label: 'Receipt Number', width: 0.5 }] }]
       },
       expense_supplies: {
         title: 'Supplies Expense Form',
-        icon: '📦',
+        fields: [{ row: [{ label: 'Date', width: 0.3 }, { label: 'Supplier', width: 0.35 }, { label: 'Invoice No.', width: 0.35 }] }],
+        table: { title: 'Items Purchased', columns: ['Item', 'Qty', 'Price (Le)', 'Total (Le)'], rows: 3, hasTotal: true }
+      },
+      expense_rent: {
+        title: 'Rent Expense Form',
+        fields: [{ row: [{ label: 'Date Paid', width: 0.5 }, { label: 'Rent Period', width: 0.5 }] }],
+        checkboxes: ['Office', 'Warehouse', 'Shop', 'Parking'],
+        table: { title: 'Property Details', columns: ['Property/Location', 'Address', 'Rent (Le)'], rows: 1, hasTotal: true },
+        extraFields: [{ row: [{ label: 'Landlord Name', width: 0.5 }, { label: 'Receipt Number', width: 0.5 }] }]
+      },
+      expense_salaries: {
+        title: 'Salary / Wages Form',
+        fields: [{ row: [{ label: 'Pay Period', width: 0.5 }, { label: 'Payment Date', width: 0.5 }] }],
+        table: { title: 'Employee Payments', columns: ['Employee', 'Position', 'Days', 'Basic', 'Allow.', 'Deduct.', 'Net Pay'], rows: 3, hasTotal: true }
+      },
+      expense_transport: {
+        title: 'Transport Expense Form',
+        fields: [{ row: [{ label: 'Date', width: 0.5 }, { label: 'Employee Name', width: 0.5 }] }],
+        table: { title: 'Trip Details', columns: ['From', 'To', 'Purpose', 'Amount (Le)'], rows: 2, hasTotal: true }
+      },
+      expense_marketing: {
+        title: 'Marketing Expense Form',
+        fields: [{ row: [{ label: 'Date', width: 0.5 }, { label: 'Campaign Name', width: 0.5 }] }],
+        checkboxes: ['Radio/TV', 'Print', 'Social Media', 'Event', 'Billboard'],
+        table: { title: 'Marketing Details', columns: ['Description', 'Vendor', 'Amount (Le)'], rows: 1, hasTotal: true }
+      },
+      expense_insurance: {
+        title: 'Insurance Expense Form',
+        fields: [{ row: [{ label: 'Date Paid', width: 0.5 }, { label: 'Policy Number', width: 0.5 }] }],
+        checkboxes: ['Vehicle', 'Property', 'Business', 'Cargo'],
+        table: { title: 'Insurance Details', columns: ['Item Insured', 'Coverage Period', 'Premium (Le)'], rows: 1, hasTotal: true },
+        extraFields: [{ row: [{ label: 'Insurance Company', width: 0.5 }, { label: 'Expiry Date', width: 0.5 }] }]
+      },
+      expense_petty_cash: {
+        title: 'Petty Cash Form',
         fields: [
-          { row: [{ label: 'Date', width: 0.3 }, { label: 'Supplier', width: 0.35 }, { label: 'Invoice No.', width: 0.35 }] }
+          { row: [{ label: 'Date', width: 0.5 }, { label: 'Requested By', width: 0.5 }] },
+          { row: [{ label: 'Opening Balance (Le)', width: 0.5 }, { label: 'Closing Balance (Le)', width: 0.5 }] }
         ],
-        table: {
-          title: 'Items Purchased',
-          columns: ['Item Description', 'Qty', 'Unit Price (Le)', 'Total (Le)'],
-          rows: 4,
-          hasTotal: true
-        }
+        table: { title: 'Expense Items', columns: ['Date', 'Description', 'Amount (Le)', 'Receipt #'], rows: 3, hasTotal: true }
+      },
+      expense_truck_contract: {
+        title: 'Truck Contract Expense Form',
+        fields: [
+          { row: [{ label: 'Contract Number', width: 0.5 }, { label: 'Date', width: 0.5 }] },
+          { row: [{ label: 'Vehicle', width: 0.5 }, { label: 'Driver', width: 0.5 }] }
+        ],
+        table: { title: 'Contract Expenses', columns: ['Category', 'Description', 'Amount (Le)'], rows: 5, hasTotal: true, prefillRows: ['Fuel', 'Tolls', 'Loading', 'Unloading', 'Food/Accommodation'] }
       },
       expense_general: {
         title: 'General Expense Form',
-        icon: '📋',
-        fields: [
-          { row: [{ label: 'Date', width: 0.3 }, { label: 'Invoice No.', width: 0.35 }, { label: 'Vendor', width: 0.35 }] }
-        ],
-        table: {
-          title: 'Expense Details',
-          columns: ['Description', 'Qty', 'Unit Price (Le)', 'Total (Le)'],
-          rows: 3,
-          hasTotal: true
-        },
+        fields: [{ row: [{ label: 'Date', width: 0.3 }, { label: 'Invoice No.', width: 0.35 }, { label: 'Vendor', width: 0.35 }] }],
+        table: { title: 'Expense Details', columns: ['Description', 'Qty', 'Price (Le)', 'Total (Le)'], rows: 2, hasTotal: true },
         checkboxes: ['Cash', 'Bank Transfer', 'Mobile Money']
       },
+      // REVENUE FORMS
       revenue_retail_sales: {
         title: 'Retail Sales Form',
-        icon: '🛒',
         fields: [
           { row: [{ label: 'Date', width: 0.3 }, { label: 'Receipt No.', width: 0.35 }, { label: 'Sales Person', width: 0.35 }] },
           { row: [{ label: 'Customer Name', width: 0.5 }, { label: 'Customer Phone', width: 0.5 }] }
         ],
-        table: {
-          title: 'Items Sold',
-          columns: ['Product', 'Qty', 'Unit Price (Le)', 'Total (Le)'],
-          rows: 4,
-          hasTotal: true
-        },
+        table: { title: 'Items Sold', columns: ['Product', 'Qty', 'Price (Le)', 'Total (Le)'], rows: 3, hasTotal: true, discountRow: true },
         checkboxes: ['Cash', 'Mobile Money', 'Card', 'Credit']
+      },
+      revenue_warehouse_sales: {
+        title: 'Warehouse/Wholesale Sales Form',
+        fields: [
+          { row: [{ label: 'Date', width: 0.5 }, { label: 'Invoice No.', width: 0.5 }] },
+          { row: [{ label: 'Customer/Business', width: 0.5 }, { label: 'Delivery Address', width: 0.5 }] }
+        ],
+        table: { title: 'Items Sold', columns: ['Product', 'SKU', 'Qty', 'W/Sale Price', 'Total (Le)'], rows: 2, hasTotal: true, discountRow: true }
+      },
+      revenue_vehicle_sales: {
+        title: 'Vehicle Sales Form',
+        fields: [
+          { row: [{ label: 'Date', width: 0.3 }, { label: 'Vehicle', width: 0.35 }, { label: 'Driver', width: 0.35 }] },
+          { row: [{ label: 'Route/Location', width: 0.5 }, { label: 'Customer', width: 0.5 }] }
+        ],
+        table: { title: 'Items Sold', columns: ['Product', 'Qty', 'Price (Le)', 'Total (Le)'], rows: 2, hasTotal: true }
+      },
+      revenue_trip: {
+        title: 'Trip Revenue Form',
+        fields: [
+          { row: [{ label: 'Date', width: 0.5 }, { label: 'Trip No.', width: 0.5 }] },
+          { row: [{ label: 'Vehicle', width: 0.33 }, { label: 'Driver', width: 0.33 }, { label: 'Route', width: 0.34 }] }
+        ],
+        table: { title: 'Trip Revenue', columns: ['Description', 'Amount (Le)'], rows: 3, hasTotal: true, prefillRows: ['Number of Passengers', 'Ticket Price per Passenger', 'Total Ticket Revenue'] },
+        table2: { title: 'Trip Expenses', columns: ['Expense Type', 'Amount (Le)'], rows: 2, hasTotal: true, totalLabel: 'NET REVENUE', prefillRows: ['Fuel Cost', 'Other Expenses'] }
+      },
+      revenue_truck_contract: {
+        title: 'Truck Contract Revenue Form',
+        fields: [
+          { row: [{ label: 'Contract No.', width: 0.5 }, { label: 'Date', width: 0.5 }] },
+          { row: [{ label: 'Client', width: 0.33 }, { label: 'Vehicle', width: 0.33 }, { label: 'Driver', width: 0.34 }] },
+          { row: [{ label: 'Pickup Location', width: 0.5 }, { label: 'Delivery Location', width: 0.5 }] }
+        ],
+        table: { title: 'Contract Summary', columns: ['Description', 'Amount (Le)'], rows: 4, hasTotal: true, totalLabel: 'NET REVENUE', prefillRows: ['Contract Amount', 'Less: Fuel', 'Less: Tolls', 'Less: Other Expenses'] }
+      },
+      revenue_other: {
+        title: 'Other Income Form',
+        fields: [{ row: [{ label: 'Date', width: 0.5 }, { label: 'Reference No.', width: 0.5 }] }],
+        checkboxes: ['Service Fee', 'Rental Income', 'Commission', 'Refund', 'Other'],
+        table: { title: 'Income Details', columns: ['Description', 'Amount (Le)'], rows: 1, hasTotal: true },
+        extraFields: [{ row: [{ label: 'Received From', width: 0.5 }, { label: 'Notes', width: 0.5 }] }]
       }
     };
 
@@ -186,16 +226,122 @@ Deno.serve(async (req) => {
 
     yPos += 20;
 
+    // Compact sizing for fitting content
+    const fieldHeight = 10;
+    const rowHeight = 10;
+    const sectionGap = 3;
+    const fieldGap = 16;
+
     // Helper function to draw field
-    const drawField = (label, x, width, height = 12) => {
-      doc.setFontSize(8);
+    const drawField = (label, x, width) => {
+      doc.setFontSize(7);
       doc.setTextColor(100, 116, 139);
       doc.setFont('helvetica', 'bold');
       doc.text(label.toUpperCase(), x, yPos);
       
       doc.setDrawColor(226, 232, 240);
       doc.setFillColor(255, 255, 255);
-      doc.roundedRect(x, yPos + 2, width - 5, height, 2, 2, 'FD');
+      doc.roundedRect(x, yPos + 2, width - 4, fieldHeight, 1, 1, 'FD');
+    };
+
+    // Helper function to draw a table
+    const drawTable = (tableConfig) => {
+      yPos += sectionGap;
+      
+      // Section title
+      doc.setFillColor(248, 250, 252);
+      doc.roundedRect(margin, yPos, pageWidth - (margin * 2), 8, 1, 1, 'F');
+      doc.setFillColor(primary.r, primary.g, primary.b);
+      doc.rect(margin, yPos, 2, 8, 'F');
+      
+      doc.setFontSize(9);
+      doc.setTextColor(51, 65, 85);
+      doc.setFont('helvetica', 'bold');
+      doc.text(tableConfig.title, margin + 6, yPos + 5.5);
+      yPos += 10;
+
+      // Table header
+      const tableWidth = pageWidth - (margin * 2);
+      const colWidth = tableWidth / tableConfig.columns.length;
+      
+      doc.setFillColor(primary.r, primary.g, primary.b);
+      doc.rect(margin, yPos, tableWidth, 8, 'F');
+      
+      doc.setTextColor(255, 255, 255);
+      doc.setFontSize(6);
+      doc.setFont('helvetica', 'bold');
+      
+      tableConfig.columns.forEach((col, i) => {
+        doc.text(col.toUpperCase(), margin + (i * colWidth) + 2, yPos + 5.5);
+      });
+      yPos += 8;
+
+      // Table rows
+      for (let i = 0; i < tableConfig.rows; i++) {
+        doc.setDrawColor(241, 245, 249);
+        doc.setFillColor(255, 255, 255);
+        doc.rect(margin, yPos, tableWidth, rowHeight, 'FD');
+        
+        // Prefill first column if specified
+        if (tableConfig.prefillRows && tableConfig.prefillRows[i]) {
+          doc.setFontSize(7);
+          doc.setTextColor(71, 85, 105);
+          doc.setFont('helvetica', 'normal');
+          doc.text(tableConfig.prefillRows[i], margin + 2, yPos + 6.5);
+        }
+        
+        // Column dividers
+        for (let j = 1; j < tableConfig.columns.length; j++) {
+          doc.line(margin + (j * colWidth), yPos, margin + (j * colWidth), yPos + rowHeight);
+        }
+        yPos += rowHeight;
+      }
+
+      // Labour row for maintenance
+      if (tableConfig.labourRow) {
+        doc.setDrawColor(241, 245, 249);
+        doc.setFillColor(255, 255, 255);
+        doc.rect(margin, yPos, tableWidth, rowHeight, 'FD');
+        doc.setFontSize(7);
+        doc.setTextColor(71, 85, 105);
+        doc.text('Labour Cost', margin + 2, yPos + 6.5);
+        for (let j = 1; j < tableConfig.columns.length; j++) {
+          doc.line(margin + (j * colWidth), yPos, margin + (j * colWidth), yPos + rowHeight);
+        }
+        yPos += rowHeight;
+      }
+
+      // Discount row for sales
+      if (tableConfig.discountRow) {
+        doc.setDrawColor(241, 245, 249);
+        doc.setFillColor(255, 255, 255);
+        doc.rect(margin, yPos, tableWidth, rowHeight, 'FD');
+        doc.setFontSize(7);
+        doc.setTextColor(71, 85, 105);
+        doc.text('Discount', margin + 2, yPos + 6.5);
+        for (let j = 1; j < tableConfig.columns.length; j++) {
+          doc.line(margin + (j * colWidth), yPos, margin + (j * colWidth), yPos + rowHeight);
+        }
+        yPos += rowHeight;
+      }
+
+      // Total row
+      if (tableConfig.hasTotal) {
+        doc.setFillColor(241, 245, 249);
+        doc.rect(margin, yPos, tableWidth, rowHeight, 'F');
+        doc.setDrawColor(203, 213, 225);
+        doc.line(margin, yPos, margin + tableWidth, yPos);
+        
+        doc.setTextColor(30, 41, 59);
+        doc.setFontSize(8);
+        doc.setFont('helvetica', 'bold');
+        doc.text(tableConfig.totalLabel || 'TOTAL AMOUNT', margin + 3, yPos + 6.5);
+        
+        // Last column border for total
+        doc.setFillColor(255, 255, 255);
+        doc.rect(margin + ((tableConfig.columns.length - 1) * colWidth), yPos + 1, colWidth - 1, rowHeight - 2, 'F');
+        yPos += rowHeight;
+      }
     };
 
     // Draw fields
@@ -209,151 +355,52 @@ Deno.serve(async (req) => {
           drawField(field.label, xPos, fieldWidth);
           xPos += fieldWidth;
         });
-        yPos += 22;
+        yPos += fieldGap;
       });
     }
 
     // Draw checkboxes
     if (config.checkboxes) {
-      yPos += 5;
+      yPos += 2;
       doc.setFillColor(248, 250, 252);
-      doc.roundedRect(margin, yPos, pageWidth - (margin * 2), 15, 2, 2, 'F');
+      const checkboxHeight = config.checkboxes.length > 5 ? 12 : 10;
+      doc.roundedRect(margin, yPos, pageWidth - (margin * 2), checkboxHeight, 1, 1, 'F');
       
-      let xPos = margin + 5;
+      let xPos = margin + 4;
+      let checkboxY = yPos + 3;
       config.checkboxes.forEach((checkbox, i) => {
         doc.setDrawColor(203, 213, 225);
         doc.setFillColor(255, 255, 255);
-        doc.rect(xPos, yPos + 4, 5, 5, 'FD');
+        doc.rect(xPos, checkboxY, 4, 4, 'FD');
         
-        doc.setFontSize(8);
+        doc.setFontSize(7);
         doc.setTextColor(71, 85, 105);
         doc.setFont('helvetica', 'normal');
-        doc.text(checkbox, xPos + 7, yPos + 8);
+        doc.text(checkbox, xPos + 5, checkboxY + 3);
         
-        xPos += doc.getTextWidth(checkbox) + 15;
-        if (xPos > pageWidth - margin - 30 && i < config.checkboxes.length - 1) {
-          xPos = margin + 5;
-          yPos += 10;
+        xPos += doc.getTextWidth(checkbox) + 12;
+        if (xPos > pageWidth - margin - 25 && i < config.checkboxes.length - 1) {
+          xPos = margin + 4;
+          checkboxY += 6;
         }
       });
-      yPos += 20;
+      yPos += checkboxHeight + 3;
     }
-
-    // Helper to draw a table
-    const drawTable = (tableConfig, startY) => {
-      let y = startY + 5;
-      const tableWidth = pageWidth - (margin * 2);
-      const colCount = tableConfig.columns.length;
-      const colWidth = tableWidth / colCount;
-      const rowHeight = 10;
-      
-      // Section title
-      doc.setFillColor(248, 250, 252);
-      doc.roundedRect(margin, y, tableWidth, 10, 2, 2, 'F');
-      doc.setFillColor(primary.r, primary.g, primary.b);
-      doc.rect(margin, y, 3, 10, 'F');
-      
-      doc.setFontSize(9);
-      doc.setTextColor(51, 65, 85);
-      doc.setFont('helvetica', 'bold');
-      doc.text(tableConfig.title, margin + 8, y + 7);
-      y += 12;
-
-      // Table header
-      doc.setFillColor(primary.r, primary.g, primary.b);
-      doc.rect(margin, y, tableWidth, 8, 'F');
-      
-      doc.setTextColor(255, 255, 255);
-      doc.setFontSize(7);
-      doc.setFont('helvetica', 'bold');
-      
-      tableConfig.columns.forEach((col, i) => {
-        doc.text(col.toUpperCase(), margin + (i * colWidth) + 2, y + 5.5);
-      });
-      y += 8;
-
-      // Table rows
-      for (let i = 0; i < tableConfig.rows; i++) {
-        doc.setDrawColor(226, 232, 240);
-        doc.setFillColor(255, 255, 255);
-        doc.rect(margin, y, tableWidth, rowHeight, 'FD');
-        
-        // Column dividers
-        for (let j = 1; j < colCount; j++) {
-          doc.line(margin + (j * colWidth), y, margin + (j * colWidth), y + rowHeight);
-        }
-        
-        // Prefill first column if specified
-        if (tableConfig.prefillRows && tableConfig.prefillRows[i]) {
-          doc.setFontSize(8);
-          doc.setTextColor(71, 85, 105);
-          doc.setFont('helvetica', 'normal');
-          doc.text(tableConfig.prefillRows[i], margin + 2, y + 7);
-        }
-        y += rowHeight;
-      }
-
-      // Labour row for maintenance forms
-      if (tableConfig.labourRow) {
-        doc.setDrawColor(226, 232, 240);
-        doc.setFillColor(255, 255, 255);
-        doc.rect(margin, y, tableWidth, rowHeight, 'FD');
-        for (let j = 1; j < colCount; j++) {
-          doc.line(margin + (j * colWidth), y, margin + (j * colWidth), y + rowHeight);
-        }
-        doc.setFontSize(8);
-        doc.setTextColor(71, 85, 105);
-        doc.setFont('helvetica', 'normal');
-        doc.text('Labour Cost', margin + 2, y + 7);
-        y += rowHeight;
-      }
-
-      // Discount row for sales forms
-      if (tableConfig.discountRow) {
-        doc.setDrawColor(226, 232, 240);
-        doc.setFillColor(248, 250, 252);
-        doc.rect(margin, y, tableWidth, rowHeight, 'FD');
-        doc.setFontSize(8);
-        doc.setTextColor(71, 85, 105);
-        doc.setFont('helvetica', 'normal');
-        doc.text('Discount', margin + 2, y + 7);
-        y += rowHeight;
-      }
-
-      // Total row
-      if (tableConfig.hasTotal) {
-        doc.setFillColor(241, 245, 249);
-        doc.rect(margin, y, tableWidth, rowHeight, 'F');
-        doc.setDrawColor(203, 213, 225);
-        doc.line(margin, y, margin + tableWidth, y);
-        
-        doc.setTextColor(30, 41, 59);
-        doc.setFontSize(9);
-        doc.setFont('helvetica', 'bold');
-        doc.text(tableConfig.totalLabel || 'TOTAL AMOUNT', margin + 3, y + 7);
-        
-        // Last column for total value
-        doc.setFillColor(255, 255, 255);
-        doc.rect(margin + ((colCount - 1) * colWidth) + 1, y + 1, colWidth - 2, rowHeight - 2, 'F');
-        y += rowHeight;
-      }
-      
-      return y;
-    };
 
     // Draw main table
     if (config.table) {
-      yPos = drawTable(config.table, yPos);
+      drawTable(config.table);
     }
 
-    // Draw second table if exists (for trip forms)
+    // Draw second table if exists
     if (config.table2) {
-      yPos = drawTable(config.table2, yPos + 5);
+      yPos += 3;
+      drawTable(config.table2);
     }
 
     // Extra fields after table
     if (config.extraFields) {
-      yPos += 10;
+      yPos += 5;
       config.extraFields.forEach(fieldRow => {
         let xPos = margin;
         const availableWidth = pageWidth - (margin * 2);
@@ -363,7 +410,7 @@ Deno.serve(async (req) => {
           drawField(field.label, xPos, fieldWidth);
           xPos += fieldWidth;
         });
-        yPos += 22;
+        yPos += fieldGap;
       });
     }
 
