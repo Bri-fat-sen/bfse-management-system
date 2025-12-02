@@ -162,7 +162,7 @@ export default function Transport() {
     mutationFn: ({ id, data }) => base44.entities.Trip.update(id, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['trips'] });
-      toast({ title: "Trip updated successfully" });
+      toast.success("Trip updated successfully");
     },
   });
 
