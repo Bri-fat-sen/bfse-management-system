@@ -193,7 +193,7 @@ export const printProfessionalReport = (html, filename = 'report') => {
 export const downloadProfessionalReportAsPDF = async (reportConfig, filename = 'report') => {
   // Handle both string HTML and config object
   if (typeof reportConfig === 'string') {
-    // Legacy HTML fallback
+    // Legacy - open print dialog for PDF save
     const pdfWindow = window.open('', '_blank', 'width=900,height=800');
     if (pdfWindow) {
       pdfWindow.document.write(reportConfig);
@@ -240,18 +240,18 @@ export const downloadProfessionalReportAsPDF = async (reportConfig, filename = '
     URL.revokeObjectURL(url);
   } catch (error) {
     console.error('PDF generation error:', error);
-    // Fallback to print dialog
+    // Fallback: Open print dialog so user can save as PDF
     const html = generateProfessionalReport(reportConfig);
     const pdfWindow = window.open('', '_blank', 'width=900,height=800');
     
     if (!pdfWindow) {
-      alert('Please allow popups to download the PDF report');
+      alert('Please allow popups to download the report');
       return;
     }
     
     pdfWindow.document.write(html);
     pdfWindow.document.close();
-    pdfWindow.document.title = filename;
+    pdfWindow.document.title = `${filename}.pdf`;
     
     setTimeout(() => {
       pdfWindow.print();
@@ -260,15 +260,14 @@ export const downloadProfessionalReportAsPDF = async (reportConfig, filename = '
 };
 
 export const downloadProfessionalReport = (html, filename) => {
-  const blob = new Blob([html], { type: 'text/html' });
-  const url = URL.createObjectURL(blob);
-  const link = document.createElement('a');
-  link.href = url;
-  link.download = filename.endsWith('.html') ? filename : `${filename}.html`;
-  document.body.appendChild(link);
-  link.click();
-  document.body.removeChild(link);
-  URL.revokeObjectURL(url);
+  // Open print dialog for PDF save instead of HTML download
+  const pdfWindow = window.open('', '_blank', 'width=900,height=800');
+  if (pdfWindow) {
+    pdfWindow.document.write(html);
+    pdfWindow.document.close();
+    pdfWindow.document.title = filename.replace('.html', '.pdf');
+    setTimeout(() => pdfWindow.print(), 500);
+  }
 };
 
 export default {

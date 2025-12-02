@@ -964,18 +964,16 @@ export default function PrintableFormsDownload({ open, onOpenChange, organisatio
       URL.revokeObjectURL(url);
     } catch (error) {
       console.error('Error generating PDF:', error);
-      // Fallback to HTML if PDF generation fails
+      // Fallback: Open print dialog so user can save as PDF
       const html = generateFormHTML(formId, organisation);
       const formName = FORM_TEMPLATES.find(f => f.id === formId)?.name || formId;
-      const blob = new Blob([html], { type: 'text/html' });
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = `${formName.replace(/\s+/g, '_')}.html`;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      URL.revokeObjectURL(url);
+      const pdfWindow = window.open('', '_blank', 'width=900,height=800');
+      if (pdfWindow) {
+        pdfWindow.document.write(html);
+        pdfWindow.document.close();
+        pdfWindow.document.title = `${formName.replace(/\s+/g, '_')}.pdf`;
+        setTimeout(() => pdfWindow.print(), 500);
+      }
     } finally {
       setLoading(null);
     }
