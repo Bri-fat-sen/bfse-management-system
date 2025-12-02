@@ -1048,7 +1048,7 @@ export default function PrintableFormsDownload({ open, onOpenChange, organisatio
                         <p className="font-medium text-sm">{form.name}</p>
                         <p className="text-xs text-gray-500">{form.description}</p>
                       </div>
-                      {downloadingForm === form.id ? (
+                      {loading === form.id ? (
                         <Loader2 className="w-4 h-4 text-gray-400 animate-spin" />
                       ) : (
                         <Download className="w-4 h-4 text-gray-400" />
@@ -1082,7 +1082,7 @@ export default function PrintableFormsDownload({ open, onOpenChange, organisatio
                         <p className="font-medium text-sm">{form.name}</p>
                         <p className="text-xs text-gray-500">{form.description}</p>
                       </div>
-                      {downloadingForm === form.id ? (
+                      {loading === form.id ? (
                         <Loader2 className="w-4 h-4 text-gray-400 animate-spin" />
                       ) : (
                         <Download className="w-4 h-4 text-gray-400" />
