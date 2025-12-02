@@ -40,38 +40,39 @@ Deno.serve(async (req) => {
     const secondary = hexToRgb(secondaryColor);
     const navy = { r: 15, g: 31, b: 60 };
 
-    // Sierra Leone Flag Stripe
+    // Sierra Leone Flag Stripe - compact
     doc.setFillColor(30, 176, 83); // Green
-    doc.rect(0, 0, pageWidth / 3, 6, 'F');
+    doc.rect(0, 0, pageWidth / 3, 4, 'F');
     doc.setFillColor(255, 255, 255); // White
-    doc.rect(pageWidth / 3, 0, pageWidth / 3, 6, 'F');
+    doc.rect(pageWidth / 3, 0, pageWidth / 3, 4, 'F');
     doc.setFillColor(0, 114, 198); // Blue
-    doc.rect((pageWidth / 3) * 2, 0, pageWidth / 3, 6, 'F');
+    doc.rect((pageWidth / 3) * 2, 0, pageWidth / 3, 4, 'F');
 
-    // Header Background with gradient effect
+    // Header Background - compact
     doc.setFillColor(primary.r, primary.g, primary.b);
-    doc.rect(0, 6, pageWidth, 35, 'F');
+    doc.rect(0, 4, pageWidth, 28, 'F');
 
     // Organisation Name
     doc.setTextColor(255, 255, 255);
-    doc.setFontSize(18);
+    doc.setFontSize(14);
     doc.setFont('helvetica', 'bold');
-    doc.text(orgName, margin, 22);
+    doc.text(orgName, margin, 16);
 
     // Address
-    doc.setFontSize(10);
+    doc.setFontSize(8);
     doc.setFont('helvetica', 'normal');
     const addressText = [orgAddress, orgCity, organisation?.country || 'Sierra Leone'].filter(Boolean).join(', ');
-    doc.text(addressText, margin, 30);
+    doc.text(addressText, margin, 24);
 
     // Date on right
-    doc.setFontSize(10);
-    doc.text(new Date().toLocaleDateString('en-GB'), pageWidth - margin, 22, { align: 'right' });
+    doc.setFontSize(9);
+    doc.text(new Date().toLocaleDateString('en-GB'), pageWidth - margin, 16, { align: 'right' });
     if (orgPhone) {
-      doc.text(orgPhone, pageWidth - margin, 30, { align: 'right' });
+      doc.setFontSize(8);
+      doc.text(orgPhone, pageWidth - margin, 24, { align: 'right' });
     }
 
-    yPos = 50;
+    yPos = 38;
 
     // Form configurations
     const formConfigs = {
@@ -367,16 +368,9 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Footer height
+    // Signature section - positioned to fit before footer
     const footerHeight = 18;
-    const footerY = pageHeight - footerHeight;
-    
-    // Calculate max content area (leave space for signature + footer)
-    const signatureHeight = 35;
-    const maxContentY = footerY - signatureHeight;
-    
-    // If content exceeds page, we need to constrain - but signature always fits
-    const signatureY = Math.min(yPos + 10, maxContentY);
+    const signatureY = Math.min(yPos + 10, pageHeight - footerHeight - 45);
     const sigWidth = (pageWidth - (margin * 2) - 15) / 2;
     
     doc.setDrawColor(203, 213, 225);
@@ -390,6 +384,7 @@ Deno.serve(async (req) => {
     doc.text('Approved By (Name & Signature)', margin + sigWidth + 15 + (sigWidth / 2), signatureY + 26, { align: 'center' });
 
     // Footer - compact
+    const footerY = pageHeight - footerHeight;
     doc.setFillColor(navy.r, navy.g, navy.b);
     doc.rect(0, footerY, pageWidth, footerHeight, 'F');
 
@@ -407,7 +402,7 @@ Deno.serve(async (req) => {
     doc.roundedRect(barStartX + (barWidth * 2) + 4, barY, barWidth, barHeight, 1, 1, 'F');
 
     doc.setTextColor(255, 255, 255);
-    doc.setFontSize(6);
+    doc.setFontSize(7);
     doc.text('For Manual Record Keeping', pageWidth / 2, footerY + 15, { align: 'center' });
 
     // Generate PDF
