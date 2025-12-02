@@ -175,7 +175,7 @@ export default function CRM() {
         </TabsContent>
 
         <TabsContent value="customers" className="mt-6 space-y-6">
-      {/* Stats */}
+          {/* Stats */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         <Card className="border-l-4 border-l-[#1EB053]">
           <CardContent className="p-4">
