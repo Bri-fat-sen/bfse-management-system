@@ -107,7 +107,7 @@ export default function GitHubIntegration() {
     );
   }
 
-  if (user?.message || !user) {
+  if (dashboard?.user?.message || !dashboard?.user) {
     return (
       <Card>
         <CardContent className="py-12 text-center">
