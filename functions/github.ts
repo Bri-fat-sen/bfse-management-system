@@ -4,6 +4,11 @@ const GITHUB_TOKEN = Deno.env.get("GITHUB_TOKEN");
 
 Deno.serve(async (req) => {
   try {
+    // Check token first
+    if (!GITHUB_TOKEN) {
+      return Response.json({ error: 'GitHub token not configured', message: 'Please set GITHUB_TOKEN secret' }, { status: 400 });
+    }
+
     const base44 = createClientFromRequest(req);
     const user = await base44.auth.me();
 
@@ -16,58 +21,91 @@ Deno.serve(async (req) => {
     const headers = {
       'Authorization': `Bearer ${GITHUB_TOKEN}`,
       'Accept': 'application/vnd.github.v3+json',
-      'User-Agent': 'Base44-App'
+      'User-Agent': 'Base44-App',
+      'X-GitHub-Api-Version': '2022-11-28'
     };
 
     const graphqlHeaders = {
       'Authorization': `Bearer ${GITHUB_TOKEN}`,
       'Content-Type': 'application/json',
+      'X-GitHub-Api-Version': '2022-11-28'
+    };
+
+    // Helper to handle GitHub API responses
+    const handleResponse = async (response, fallback = null) => {
+      if (!response.ok) {
+        const error = await response.json().catch(() => ({}));
+        console.error('GitHub API error:', response.status, error);
+        if (response.status === 401) {
+          return { error: 'Invalid GitHub token', status: 401 };
+        }
+        if (response.status === 403) {
+          return { error: 'Rate limited or insufficient permissions', status: 403 };
+        }
+        return fallback !== null ? fallback : { error: error.message || 'GitHub API error' };
+      }
+      return response.json();
     };
 
     switch (action) {
       case 'getUser': {
         const response = await fetch('https://api.github.com/user', { headers });
-        const data = await response.json();
+        const data = await handleResponse(response, null);
         return Response.json(data);
       }
 
       case 'getRepos': {
-        const response = await fetch('https://api.github.com/user/repos?sort=updated&per_page=20', { headers });
-        const data = await response.json();
+        const response = await fetch('https://api.github.com/user/repos?sort=updated&per_page=30&affiliation=owner,collaborator', { headers });
+        const data = await handleResponse(response, []);
         return Response.json(data);
       }
 
       case 'getRepoDetails': {
+        if (!owner || !repo) {
+          return Response.json({ error: 'Owner and repo required' }, { status: 400 });
+        }
         const response = await fetch(`https://api.github.com/repos/${owner}/${repo}`, { headers });
-        const data = await response.json();
+        const data = await handleResponse(response, null);
         return Response.json(data);
       }
 
       case 'getIssues': {
-        const response = await fetch(`https://api.github.com/repos/${owner}/${repo}/issues?state=all&per_page=30`, { headers });
-        const data = await response.json();
+        if (!owner || !repo) {
+          return Response.json({ error: 'Owner and repo required' }, { status: 400 });
+        }
+        const response = await fetch(`https://api.github.com/repos/${owner}/${repo}/issues?state=all&per_page=30&sort=updated`, { headers });
+        const data = await handleResponse(response, []);
         return Response.json(data);
       }
 
       case 'createIssue': {
+        if (!owner || !repo || !issueData) {
+          return Response.json({ error: 'Owner, repo, and issueData required' }, { status: 400 });
+        }
         const response = await fetch(`https://api.github.com/repos/${owner}/${repo}/issues`, {
           method: 'POST',
-          headers,
+          headers: { ...headers, 'Content-Type': 'application/json' },
           body: JSON.stringify(issueData)
         });
-        const data = await response.json();
+        const data = await handleResponse(response, null);
         return Response.json(data);
       }
 
       case 'getCommits': {
+        if (!owner || !repo) {
+          return Response.json({ error: 'Owner and repo required' }, { status: 400 });
+        }
         const response = await fetch(`https://api.github.com/repos/${owner}/${repo}/commits?per_page=20`, { headers });
-        const data = await response.json();
+        const data = await handleResponse(response, []);
         return Response.json(data);
       }
 
       case 'getPullRequests': {
+        if (!owner || !repo) {
+          return Response.json({ error: 'Owner and repo required' }, { status: 400 });
+        }
         const response = await fetch(`https://api.github.com/repos/${owner}/${repo}/pulls?state=all&per_page=20`, { headers });
-        const data = await response.json();
+        const data = await handleResponse(response, []);
         return Response.json(data);
       }
 
@@ -111,6 +149,10 @@ Deno.serve(async (req) => {
           body: JSON.stringify({ query })
         });
         const data = await response.json();
+        if (data.errors) {
+          console.error('GraphQL errors:', data.errors);
+          return Response.json([]);
+        }
         return Response.json(data?.data?.viewer?.projectsV2?.nodes || []);
       }
 
@@ -171,6 +213,10 @@ Deno.serve(async (req) => {
           body: JSON.stringify({ query, variables: { projectId } })
         });
         const data = await response.json();
+        if (data.errors) {
+          console.error('GraphQL errors:', data.errors);
+          return Response.json([]);
+        }
         return Response.json(data?.data?.node?.items?.nodes || []);
       }
 

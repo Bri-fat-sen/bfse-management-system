@@ -38,24 +38,29 @@ export default function CreateGitHubIssueDialog({
   const [addToProject, setAddToProject] = useState(false);
   const [selectedProjectId, setSelectedProjectId] = useState("");
 
-  // Fetch repositories
+  // Fetch repositories with caching
   const { data: repos = [], isLoading: reposLoading } = useQuery({
-    queryKey: ['githubReposForIssue'],
+    queryKey: ['githubRepos'],
     queryFn: async () => {
       const res = await base44.functions.invoke('github', { action: 'getRepos' });
-      return res.data;
+      const data = res.data;
+      if (data?.error) return [];
+      return Array.isArray(data) ? data : [];
     },
     enabled: open,
+    staleTime: 5 * 60 * 1000, // Cache for 5 minutes
   });
 
-  // Fetch projects
+  // Fetch projects with caching
   const { data: projects = [], isLoading: projectsLoading } = useQuery({
-    queryKey: ['githubProjectsForIssue'],
+    queryKey: ['githubProjects'],
     queryFn: async () => {
       const res = await base44.functions.invoke('github', { action: 'getProjects' });
-      return res.data || [];
+      const data = res.data;
+      return Array.isArray(data) ? data : [];
     },
     enabled: open && addToProject,
+    staleTime: 5 * 60 * 1000,
   });
 
   // Create issue mutation
@@ -235,7 +240,7 @@ Create a purchase order to replenish stock before it runs out.
                       <SelectValue placeholder="Select repository" />
                     </SelectTrigger>
                     <SelectContent>
-                      {repos.map((repo) => (
+                      {repos.filter(r => r && r.id && r.full_name).map((repo) => (
                         <SelectItem key={repo.id} value={repo.full_name}>
                           {repo.full_name}
                         </SelectItem>
@@ -320,7 +325,7 @@ Create a purchase order to replenish stock before it runs out.
                           <SelectValue placeholder="Select project" />
                         </SelectTrigger>
                         <SelectContent>
-                          {projects.filter(p => !p.closed).map((project) => (
+                          {projects.filter(p => p && p.id && !p.closed).map((project) => (
                             <SelectItem key={project.id} value={project.id}>
                               {project.title}
                             </SelectItem>
