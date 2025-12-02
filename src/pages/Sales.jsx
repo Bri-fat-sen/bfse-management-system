@@ -140,11 +140,6 @@ export default function Sales() {
     refetchOnWindowFocus: false,
   });
 
-  const filteredCustomers = customers.filter(c =>
-    c.name?.toLowerCase().includes(customerSearch.toLowerCase()) ||
-    c.phone?.includes(customerSearch)
-  ).slice(0, 5);
-
   // Fetch stock levels for the selected location
   const { data: stockLevels = [] } = useQuery({
     queryKey: ['stockLevels', orgId, selectedLocation],
