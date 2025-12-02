@@ -1,30 +1,40 @@
 // Branded document styles generator for receipts, invoices, and forms
 // Uses organisation colors, logo, and Sierra Leone theming
+// Now uses unified PDF styles for consistent receipt-like design
 
-export function getBrandedStyles(organisation) {
+import { getUnifiedPDFStyles } from "@/components/exports/UnifiedPDFStyles";
+
+export function getBrandedStyles(organisation, documentType = 'receipt') {
   const primaryColor = organisation?.primary_color || '#1EB053';
   const secondaryColor = organisation?.secondary_color || '#0072C6';
   const navyColor = '#0F1F3C';
   
+  // Include unified styles for consistency
+  const unifiedBase = getUnifiedPDFStyles(organisation, documentType);
+  
   return `
+    ${unifiedBase}
+    
     * { margin: 0; padding: 0; box-sizing: border-box; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
     body { 
-      font-family: 'Segoe UI', Arial, sans-serif; 
+      font-family: 'Plus Jakarta Sans', 'Segoe UI', Arial, sans-serif; 
       background: #f5f5f5;
       padding: 20px;
       color: #333;
+      line-height: 1.6;
+      -webkit-font-smoothing: antialiased;
     }
     
-    /* Brand Flag Stripe */
+    /* Brand Flag Stripe - Receipt Style */
     .brand-stripe {
-      height: 8px;
+      height: 6px;
       display: flex;
     }
     .brand-stripe .primary { flex: 1; background-color: ${primaryColor} !important; }
     .brand-stripe .white { flex: 1; background-color: #FFFFFF !important; border-top: 1px solid #e5e5e5; border-bottom: 1px solid #e5e5e5; }
     .brand-stripe .secondary { flex: 1; background-color: ${secondaryColor} !important; }
     
-    /* Logo Header */
+    /* Logo Header - Gradient Style */
     .brand-header {
       background: linear-gradient(135deg, ${primaryColor} 0%, ${secondaryColor} 100%) !important;
       -webkit-print-color-adjust: exact !important;
@@ -33,6 +43,18 @@ export function getBrandedStyles(organisation) {
       display: flex;
       align-items: center;
       gap: 20px;
+      position: relative;
+      overflow: hidden;
+    }
+    
+    .brand-header::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0; bottom: 0;
+      opacity: 0.05;
+      background-image: 
+        radial-gradient(circle at 20% 80%, rgba(255,255,255,0.4) 0%, transparent 50%),
+        radial-gradient(circle at 80% 20%, rgba(255,255,255,0.4) 0%, transparent 50%);
     }
     .brand-header .logo-container {
       flex-shrink: 0;
@@ -41,19 +63,29 @@ export function getBrandedStyles(organisation) {
       max-height: 60px;
       max-width: 80px;
       object-fit: contain;
-      background: white;
-      padding: 8px;
-      border-radius: 8px;
     }
-    .brand-header .logo-placeholder {
-      width: 60px;
-      height: 60px;
-      background: rgba(255,255,255,0.2);
-      border-radius: 8px;
+    .brand-header .logo-container {
+      width: 56px;
+      height: 56px;
+      background: white;
+      border-radius: 12px;
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 28px;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.15);
+      overflow: hidden;
+      padding: 6px;
+    }
+    .brand-header .logo-placeholder {
+      width: 56px;
+      height: 56px;
+      background: white;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 24px;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.15);
     }
     .brand-header .company-info {
       flex: 1;
@@ -187,28 +219,28 @@ export function getBrandedStyles(organisation) {
       background-color: ${primaryColor} !important;
     }
     
-    /* Footer */
+    /* Footer - Navy Style with Flag */
     .brand-footer {
       text-align: center;
       padding: 24px;
-      background: linear-gradient(135deg, ${navyColor} 0%, ${navyColor}ee 100%) !important;
+      background: ${navyColor} !important;
       -webkit-print-color-adjust: exact !important;
       color: white !important;
       border-top: 4px solid ${primaryColor};
     }
     .brand-footer .thanks {
-      font-size: 16px;
+      font-size: 15px;
       font-weight: 600;
-      margin-bottom: 8px;
+      margin-bottom: 6px;
       color: white !important;
     }
     .brand-footer .tagline {
       font-size: 13px;
-      color: rgba(255,255,255,0.9) !important;
+      color: rgba(255,255,255,0.85) !important;
     }
     .brand-footer .flag {
       margin-top: 12px;
-      font-size: 24px;
+      font-size: 22px;
     }
     .brand-footer .contact {
       margin-top: 16px;
