@@ -17,8 +17,10 @@ import {
   CheckCircle,
   XCircle,
   Bell,
-  BellOff 
+  BellOff,
+  Github
 } from "lucide-react";
+import CreateGitHubIssueDialog from "./CreateGitHubIssueDialog";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { format } from "date-fns";
@@ -55,6 +57,8 @@ export default function StockAlerts({
   currentEmployee
 }) {
   const queryClient = useQueryClient();
+  const [showGitHubDialog, setShowGitHubDialog] = React.useState(false);
+  const [selectedAlertForGitHub, setSelectedAlertForGitHub] = React.useState(null);
 
   const acknowledgeMutation = useMutation({
     mutationFn: ({ id, status }) => base44.entities.StockAlert.update(id, {
@@ -106,6 +110,18 @@ export default function StockAlerts({
             <div className="flex items-center gap-2">
               {alert.status === 'active' && (
                 <>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="text-gray-600"
+                    onClick={() => {
+                      setSelectedAlertForGitHub(alert);
+                      setShowGitHubDialog(true);
+                    }}
+                    title="Create GitHub Issue"
+                  >
+                    <Github className="w-3 h-3" />
+                  </Button>
                   <Button
                     size="sm"
                     variant="outline"
@@ -222,6 +238,13 @@ export default function StockAlerts({
             )}
           </div>
         )}
+
+        <CreateGitHubIssueDialog
+          open={showGitHubDialog}
+          onOpenChange={setShowGitHubDialog}
+          issueType="alert"
+          data={selectedAlertForGitHub}
+        />
       </DialogContent>
     </Dialog>
   );

@@ -39,8 +39,10 @@ import {
   Package,
   Clock,
   Truck,
-  ArrowRight
+  ArrowRight,
+  Github
 } from "lucide-react";
+import CreateGitHubIssueDialog from "./CreateGitHubIssueDialog";
 import { toast } from "sonner";
 import { differenceInDays, subDays, format } from "date-fns";
 import { Link } from "react-router-dom";
@@ -50,6 +52,8 @@ export default function ReorderSuggestions({ orgId, products, sales, suppliers, 
   const queryClient = useQueryClient();
   const [showCreatePO, setShowCreatePO] = useState(false);
   const [selectedSuggestion, setSelectedSuggestion] = useState(null);
+  const [showGitHubDialog, setShowGitHubDialog] = useState(false);
+  const [selectedForGitHub, setSelectedForGitHub] = useState(null);
 
   const { data: existingSuggestions = [] } = useQuery({
     queryKey: ['reorderSuggestions', orgId],
@@ -324,6 +328,17 @@ export default function ReorderSuggestions({ orgId, products, sales, suppliers, 
                       <Button 
                         variant="outline" 
                         size="sm"
+                        onClick={() => {
+                          setSelectedForGitHub(suggestion);
+                          setShowGitHubDialog(true);
+                        }}
+                        title="Create GitHub Issue"
+                      >
+                        <Github className="w-4 h-4" />
+                      </Button>
+                      <Button 
+                        variant="outline" 
+                        size="sm"
                         onClick={() => handleDismiss(suggestion)}
                         title="Dismiss"
                       >
@@ -401,6 +416,14 @@ export default function ReorderSuggestions({ orgId, products, sales, suppliers, 
           )}
         </DialogContent>
       </Dialog>
+
+      {/* GitHub Issue Dialog */}
+      <CreateGitHubIssueDialog
+        open={showGitHubDialog}
+        onOpenChange={setShowGitHubDialog}
+        issueType="reorder"
+        data={selectedForGitHub}
+      />
     </div>
   );
 }
