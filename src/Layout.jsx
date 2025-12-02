@@ -35,7 +35,8 @@ import {
   Lock,
   AlertTriangle,
   FileText,
-  Github
+  Github,
+  Plug
 } from "lucide-react";
 import PinLockScreen from "@/components/auth/PinLockScreen";
 import SetPinDialog from "@/components/auth/SetPinDialog";
@@ -109,7 +110,8 @@ const menuSections = [
   {
     title: "Admin",
           items: [
-            { name: "GitHub", icon: Github, page: "GitHub", module: "settings", adminOnly: true },
+              { name: "Integrations", icon: Plug, page: "Integrations", module: "settings", adminOnly: true },
+              { name: "GitHub", icon: Github, page: "GitHub", module: "settings", adminOnly: true },
             { name: "User Management", icon: Users, page: "UserManagement", module: "settings", adminOnly: true },
       { name: "Locations", icon: MapPin, page: "Locations", module: "settings", adminOnly: true },
       { name: "Stock Audit", icon: Package, page: "StockAudit", module: "inventory", adminOnly: true },
