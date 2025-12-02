@@ -34,6 +34,7 @@ export default function CRM() {
   const [search, setSearch] = useState("");
   const [segmentFilter, setSegmentFilter] = useState("all");
   const [typeFilter, setTypeFilter] = useState("all");
+  const [activeTab, setActiveTab] = useState("customers");
 
   const { data: user } = useQuery({
     queryKey: ['currentUser'],
