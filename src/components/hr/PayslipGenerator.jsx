@@ -47,8 +47,8 @@ export default function PayslipGenerator({ payroll, employee, organisation }) {
   const colors = colorSchemes[options.colorScheme];
 
   const generatePayslipHTML = () => {
-    const orgInitials = (organisation?.name || 'ORG').split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase();
-    const hasLogo = options.showLogo && organisation?.logo_url;
+    const primaryColor = organisation?.primary_color || colors.primary;
+    const secondaryColor = organisation?.secondary_color || colors.secondary;
     
     // Calculate detailed breakdowns
     const basePay = safeNum(payroll?.base_salary);
@@ -83,9 +83,6 @@ export default function PayslipGenerator({ payroll, employee, organisation }) {
     const hourlyRate = safeNum(payroll?.calculation_details?.hourly_rate);
     const dailyRate = safeNum(payroll?.calculation_details?.daily_rate);
     const frequency = payroll?.payroll_frequency || 'monthly';
-    
-    // Use unified styles for consistent receipt-like design
-    const unifiedStyles = getUnifiedPDFStyles(organisation, 'payslip');
 
     return `
       <!DOCTYPE html>
@@ -94,124 +91,21 @@ export default function PayslipGenerator({ payroll, employee, organisation }) {
           <meta charset="UTF-8">
           <meta name="viewport" content="width=device-width, initial-scale=1.0">
           <title>Payslip - ${employee?.full_name} - ${format(new Date(payroll?.period_start), 'MMMM yyyy')}</title>
-          <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
           <style>
-            ${unifiedStyles}
+            ${getUnifiedPDFStyles(organisation, 'payslip')}
             
+            /* Payslip-specific styles */
             :root {
-              --primary: #0f172a;
-              --primary-light: #1e293b;
               --accent: ${colors.accent};
               --success: ${colors.primary};
               --success-dark: ${colors.secondary};
-              --danger: #ef4444;
-              --gray-50: #f8fafc;
-              --gray-100: #f1f5f9;
-              --gray-200: #e2e8f0;
-              --gray-400: #94a3b8;
-              --gray-500: #64748b;
-              --gray-600: #475569;
-              --gray-700: #334155;
-              --gray-800: #1e293b;
-              --gray-900: #0f172a;
-            }
-            
-            * { margin: 0; padding: 0; box-sizing: border-box; }
-            
-            body { 
-              font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
-              background: var(--gray-50);
-              padding: 24px;
-              color: var(--gray-800);
-              line-height: 1.6;
-              -webkit-font-smoothing: antialiased;
-            }
-            
-            .payslip-container {
-              max-width: 800px;
-              margin: 0 auto;
-              background: white;
-              border-radius: 12px;
-              overflow: hidden;
-              box-shadow: 0 10px 40px rgba(0,0,0,0.12);
-            }
-            
-            /* Header Accent - Receipt Style Flag Stripe */
-            .header-accent {
-              height: 6px;
-              display: flex;
-            }
-            .header-accent .primary { flex: 1; background: ${colors.primary}; }
-            .header-accent .white { flex: 1; background: #fff; border-top: 1px solid #e5e5e5; border-bottom: 1px solid #e5e5e5; }
-            .header-accent .secondary { flex: 1; background: ${colors.secondary}; }
-            
-            /* Header */
-            .payslip-header {
-              background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
-              color: white;
-              padding: 32px 40px;
-              position: relative;
-              overflow: hidden;
-            }
-            
-            .header-bg {
-              position: absolute;
-              top: 0;
-              left: 0;
-              right: 0;
-              bottom: 0;
-              opacity: 0.05;
-              background-image: 
-                radial-gradient(circle at 20% 80%, rgba(59, 130, 246, 0.4) 0%, transparent 50%),
-                radial-gradient(circle at 80% 20%, rgba(16, 185, 129, 0.4) 0%, transparent 50%);
-            }
-            
-            .header-content {
-              display: flex;
-              justify-content: space-between;
-              align-items: flex-start;
-              position: relative;
-              z-index: 1;
-            }
-            
-            .company-brand {
-              display: flex;
-              align-items: center;
-              gap: 16px;
-            }
-            
-            .company-logo {
-              width: 56px;
-              height: 56px;
-              background: white;
-              border-radius: 14px;
-              display: flex;
-              align-items: center;
-              justify-content: center;
-              font-size: 20px;
-              font-weight: 800;
-              box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
-              overflow: hidden;
-            }
-            
-            .company-logo img {
-              width: 100%;
-              height: 100%;
-              object-fit: contain;
-              padding: 4px;
-            }
-            
-            .company-logo span {
-              background: linear-gradient(135deg, var(--success), var(--accent));
-              -webkit-background-clip: text;
-              -webkit-text-fill-color: transparent;
             }
             
             /* Attendance Info */
             .attendance-section {
-              background: var(--gray-50);
-              padding: 16px 40px;
-              border-bottom: 1px solid var(--gray-200);
+              background: #f8fafc;
+              padding: 16px 32px;
+              border-bottom: 1px solid #e2e8f0;
             }
             
             .attendance-grid {
@@ -224,45 +118,17 @@ export default function PayslipGenerator({ payroll, employee, organisation }) {
               text-align: center;
             }
             
-            .attendance-item .value {
+            .attendance-item .att-value {
               font-size: 18px;
               font-weight: 700;
-              color: var(--gray-800);
+              color: #1e293b;
             }
             
-            .attendance-item .label {
+            .attendance-item .att-label {
               font-size: 11px;
-              color: var(--gray-500);
+              color: #64748b;
               text-transform: uppercase;
               letter-spacing: 0.5px;
-            }
-            
-            /* Rate Cards */
-            .rate-cards {
-              display: grid;
-              grid-template-columns: repeat(3, 1fr);
-              gap: 12px;
-              margin-top: 12px;
-            }
-            
-            .rate-card {
-              background: white;
-              padding: 12px;
-              border-radius: 8px;
-              border: 1px solid var(--gray-200);
-              text-align: center;
-            }
-            
-            .rate-card .value {
-              font-size: 14px;
-              font-weight: 600;
-              color: var(--success);
-            }
-            
-            .rate-card .label {
-              font-size: 10px;
-              color: var(--gray-500);
-              margin-top: 2px;
             }
             
             /* Tax Breakdown */
@@ -290,14 +156,14 @@ export default function PayslipGenerator({ payroll, employee, organisation }) {
               padding: 4px 0;
             }
             
-            .tax-row .label { color: #a16207; }
-            .tax-row .value { font-weight: 600; color: #92400e; }
+            .tax-row .tax-label { color: #a16207; }
+            .tax-row .tax-value { font-weight: 600; color: #92400e; }
             
             /* Employer Cost Section */
             .employer-cost-section {
-              background: var(--gray-100);
-              padding: 16px 40px;
-              border-top: 1px dashed var(--gray-300);
+              background: #f1f5f9;
+              padding: 16px 32px;
+              border-top: 1px dashed #cbd5e1;
             }
             
             .employer-cost-grid {
@@ -307,95 +173,66 @@ export default function PayslipGenerator({ payroll, employee, organisation }) {
               text-align: center;
             }
             
-            .employer-cost-item .value {
+            .employer-cost-item .ec-value {
               font-size: 16px;
               font-weight: 700;
-              color: var(--gray-700);
+              color: #334155;
             }
             
-            .employer-cost-item .label {
+            .employer-cost-item .ec-label {
               font-size: 11px;
-              color: var(--gray-500);
+              color: #64748b;
             }
             
-            .employer-cost-item.total .value {
-              color: var(--primary);
+            .employer-cost-item.total .ec-value {
+              color: #0f172a;
               font-size: 18px;
             }
             
-            .company-details h1 {
-              font-size: 22px;
-              font-weight: 700;
-              letter-spacing: -0.5px;
-              margin-bottom: 4px;
-            }
-            
-            .company-details .address {
-              font-size: 12px;
-              opacity: 0.8;
-            }
-            
-            .payslip-badge {
-              text-align: right;
-            }
-            
-            .payslip-badge h2 {
-              font-size: 11px;
-              text-transform: uppercase;
-              letter-spacing: 2px;
-              opacity: 0.7;
-              margin-bottom: 4px;
-            }
-            
-            .payslip-badge .period {
-              font-size: 18px;
-              font-weight: 700;
-            }
-            
-            /* Employee Info */
+            /* Employee Info Grid */
             .employee-info {
               display: grid;
               grid-template-columns: 1fr 1fr;
-              border-bottom: 1px solid var(--gray-200);
+              border-bottom: 1px solid #e2e8f0;
             }
             
-            .info-section {
-              padding: 24px 40px;
-              background: var(--gray-50);
+            .info-section-box {
+              padding: 24px 32px;
+              background: #f8fafc;
             }
             
-            .info-section:first-child {
-              border-right: 1px solid var(--gray-200);
+            .info-section-box:first-child {
+              border-right: 1px solid #e2e8f0;
             }
             
-            .info-section h3 {
+            .info-section-box h3 {
               font-size: 11px;
               text-transform: uppercase;
               letter-spacing: 1px;
-              color: var(--gray-400);
+              color: #94a3b8;
               margin-bottom: 16px;
               font-weight: 600;
             }
             
-            .info-row {
+            .info-row-box {
               display: flex;
               justify-content: space-between;
               padding: 8px 0;
               font-size: 13px;
-              border-bottom: 1px dashed var(--gray-200);
+              border-bottom: 1px dashed #e2e8f0;
             }
             
-            .info-row:last-child {
+            .info-row-box:last-child {
               border-bottom: none;
             }
             
-            .info-row .label {
-              color: var(--gray-500);
+            .info-row-box .ir-label {
+              color: #64748b;
             }
             
-            .info-row .value {
+            .info-row-box .ir-value {
               font-weight: 600;
-              color: var(--gray-800);
+              color: #1e293b;
             }
             
             /* Pay Breakdown */
@@ -405,11 +242,11 @@ export default function PayslipGenerator({ payroll, employee, organisation }) {
             }
             
             .breakdown-section {
-              padding: 28px 40px;
+              padding: 28px 32px;
             }
             
             .breakdown-section.earnings {
-              border-right: 1px solid var(--gray-200);
+              border-right: 1px solid #e2e8f0;
             }
             
             .breakdown-section h3 {
@@ -424,13 +261,13 @@ export default function PayslipGenerator({ payroll, employee, organisation }) {
             }
             
             .breakdown-section.earnings h3 {
-              color: var(--success);
-              border-color: var(--success);
+              color: ${primaryColor};
+              border-color: ${primaryColor};
             }
             
             .breakdown-section.deductions h3 {
-              color: var(--danger);
-              border-color: var(--danger);
+              color: #ef4444;
+              border-color: #ef4444;
             }
             
             .pay-item {
@@ -439,18 +276,18 @@ export default function PayslipGenerator({ payroll, employee, organisation }) {
               align-items: center;
               padding: 10px 0;
               font-size: 13px;
-              border-bottom: 1px dashed var(--gray-200);
+              border-bottom: 1px dashed #e2e8f0;
             }
             
             .pay-item:last-of-type {
               border-bottom: none;
             }
             
-            .pay-item .label {
-              color: var(--gray-600);
+            .pay-item .pi-label {
+              color: #475569;
             }
             
-            .pay-item .amount {
+            .pay-item .pi-amount {
               font-weight: 600;
               font-family: 'SF Mono', 'Monaco', 'Consolas', monospace;
               font-size: 13px;
@@ -459,181 +296,84 @@ export default function PayslipGenerator({ payroll, employee, organisation }) {
             .pay-item.subtotal {
               margin-top: 16px;
               padding-top: 16px;
-              border-top: 2px solid var(--gray-200);
+              border-top: 2px solid #e2e8f0;
               font-weight: 700;
               font-size: 14px;
             }
             
-            .breakdown-section.earnings .pay-item.subtotal .amount {
-              color: var(--success);
+            .breakdown-section.earnings .pay-item.subtotal .pi-amount {
+              color: ${primaryColor};
             }
             
-            .breakdown-section.deductions .pay-item.subtotal .amount {
-              color: var(--danger);
+            .breakdown-section.deductions .pay-item.subtotal .pi-amount {
+              color: #ef4444;
             }
             
             /* Statutory Note */
             .statutory-note {
-              background: var(--gray-50);
-              padding: 12px 40px;
+              background: #f8fafc;
+              padding: 12px 32px;
               font-size: 11px;
-              color: var(--gray-500);
+              color: #64748b;
               text-align: center;
-              border-top: 1px solid var(--gray-200);
-              border-bottom: 1px solid var(--gray-200);
+              border-top: 1px solid #e2e8f0;
+              border-bottom: 1px solid #e2e8f0;
             }
             
             /* Net Pay Section */
             .net-pay-section {
-              padding: 28px 40px;
+              padding: 28px 32px;
             }
             
-            .summary-row {
+            .summary-row-pay {
               display: flex;
               justify-content: space-between;
               font-size: 14px;
               padding: 8px 0;
             }
-            
-            .summary-row.net-pay {
-              margin-top: 20px;
-              padding: 24px;
-              background: linear-gradient(135deg, var(--success) 0%, var(--success-dark) 100%);
-              border-radius: 16px;
-              color: white;
-              font-size: 24px;
-              font-weight: 800;
-              box-shadow: 0 8px 24px rgba(30, 176, 83, 0.3);
-            }
-            
-            .summary-row.net-pay .label {
-              display: flex;
-              align-items: center;
-              gap: 8px;
-            }
-            
-            .summary-row.net-pay .amount {
-              font-family: 'SF Mono', 'Monaco', 'Consolas', monospace;
-            }
-            
-            /* Footer */
-            .footer-accent {
-              height: 4px;
-              background: linear-gradient(90deg, var(--success), var(--accent));
-            }
-            
-            .payslip-footer {
-              background: var(--gray-900);
-              color: white;
-              padding: 24px 40px;
-              text-align: center;
-            }
-            
-            .footer-text {
-              font-size: 12px;
-              opacity: 0.7;
-            }
-            
-            .footer-brand {
-              margin-top: 8px;
-              font-size: 11px;
-              opacity: 0.5;
-            }
-            
-            /* Print Styles */
-            @media print {
-              * {
-                -webkit-print-color-adjust: exact !important;
-                print-color-adjust: exact !important;
-              }
-              
-              html, body {
-                padding: 0;
-                margin: 0;
-                background: white !important;
-              }
-              
-              .payslip-container {
-                box-shadow: none;
-                max-width: 100%;
-                border-radius: 0;
-              }
-            }
-            
-            @page {
-              margin: 10mm;
-              size: A4 portrait;
-            }
           </style>
         </head>
         <body>
-          <div class="payslip-container">
-            <div class="header-accent">
-              <div class="primary"></div>
-              <div class="white"></div>
-              <div class="secondary"></div>
-            </div>
-            
-            <div class="payslip-header">
-              <div class="header-bg"></div>
-              <div class="header-content">
-                <div class="company-brand">
-                  <div class="company-logo">
-                    ${hasLogo ? `<img src="${organisation.logo_url}" alt="${organisation.name}" />` : `<span>${orgInitials}</span>`}
-                  </div>
-                  <div class="company-details">
-                    <h1>${organisation?.name || 'Organisation'}</h1>
-                    <div class="address">
-                      ${organisation?.address ? `${organisation.address}${organisation?.city ? `, ${organisation.city}` : ''}` : 'Sierra Leone'}
-                      ${organisation?.phone ? ` • ${organisation.phone}` : ''}
-                    </div>
-                  </div>
-                </div>
-                <div class="payslip-badge">
-                  <h2>Payslip</h2>
-                  <div class="period">${format(new Date(payroll?.period_start), 'MMMM yyyy')}</div>
-                  <div style="font-size: 10px; opacity: 0.7; margin-top: 4px;">${frequency.charAt(0).toUpperCase() + frequency.slice(1)} Pay</div>
-                </div>
-              </div>
-            </div>
+          <div class="document">
+            ${getUnifiedHeader(organisation, 'Payslip', format(new Date(payroll?.period_start), 'MMMM yyyy'), `${frequency.charAt(0).toUpperCase() + frequency.slice(1)} Pay`, 'payslip')}
             
             <div class="employee-info">
-              <div class="info-section">
+              <div class="info-section-box">
                 <h3>Employee Details</h3>
-                <div class="info-row">
-                  <span class="label">Full Name</span>
-                  <span class="value">${employee?.full_name}</span>
+                <div class="info-row-box">
+                  <span class="ir-label">Full Name</span>
+                  <span class="ir-value">${employee?.full_name}</span>
                 </div>
-                <div class="info-row">
-                  <span class="label">Employee ID</span>
-                  <span class="value">${employee?.employee_code}</span>
+                <div class="info-row-box">
+                  <span class="ir-label">Employee ID</span>
+                  <span class="ir-value">${employee?.employee_code}</span>
                 </div>
-                <div class="info-row">
-                  <span class="label">Department</span>
-                  <span class="value">${employee?.department || 'N/A'}</span>
+                <div class="info-row-box">
+                  <span class="ir-label">Department</span>
+                  <span class="ir-value">${employee?.department || 'N/A'}</span>
                 </div>
-                <div class="info-row">
-                  <span class="label">Position</span>
-                  <span class="value">${employee?.position || 'N/A'}</span>
+                <div class="info-row-box">
+                  <span class="ir-label">Position</span>
+                  <span class="ir-value">${employee?.position || 'N/A'}</span>
                 </div>
               </div>
-              <div class="info-section">
+              <div class="info-section-box">
                 <h3>Pay Period</h3>
-                <div class="info-row">
-                  <span class="label">Period Start</span>
-                  <span class="value">${format(new Date(payroll?.period_start), 'dd MMMM yyyy')}</span>
+                <div class="info-row-box">
+                  <span class="ir-label">Period Start</span>
+                  <span class="ir-value">${format(new Date(payroll?.period_start), 'dd MMMM yyyy')}</span>
                 </div>
-                <div class="info-row">
-                  <span class="label">Period End</span>
-                  <span class="value">${format(new Date(payroll?.period_end), 'dd MMMM yyyy')}</span>
+                <div class="info-row-box">
+                  <span class="ir-label">Period End</span>
+                  <span class="ir-value">${format(new Date(payroll?.period_end), 'dd MMMM yyyy')}</span>
                 </div>
-                <div class="info-row">
-                  <span class="label">Payment Date</span>
-                  <span class="value">${payroll?.payment_date ? format(new Date(payroll.payment_date), 'dd MMMM yyyy') : 'Pending'}</span>
+                <div class="info-row-box">
+                  <span class="ir-label">Payment Date</span>
+                  <span class="ir-value">${payroll?.payment_date ? format(new Date(payroll.payment_date), 'dd MMMM yyyy') : 'Pending'}</span>
                 </div>
-                <div class="info-row">
-                  <span class="label">Payment Method</span>
-                  <span class="value">${(payroll?.payment_method || 'Bank Transfer').replace(/_/g, ' ')}</span>
+                <div class="info-row-box">
+                  <span class="ir-label">Payment Method</span>
+                  <span class="ir-value">${(payroll?.payment_method || 'Bank Transfer').replace(/_/g, ' ')}</span>
                 </div>
               </div>
             </div>
@@ -642,24 +382,24 @@ export default function PayslipGenerator({ payroll, employee, organisation }) {
             <div class="attendance-section">
               <div class="attendance-grid">
                 <div class="attendance-item">
-                  <div class="value">${daysWorked}</div>
-                  <div class="label">Days Worked</div>
+                  <div class="att-value">${daysWorked}</div>
+                  <div class="att-label">Days Worked</div>
                 </div>
                 <div class="attendance-item">
-                  <div class="value">${hoursWorked}</div>
-                  <div class="label">Regular Hours</div>
+                  <div class="att-value">${hoursWorked}</div>
+                  <div class="att-label">Regular Hours</div>
                 </div>
                 <div class="attendance-item">
-                  <div class="value">${overtimeHours}</div>
-                  <div class="label">Overtime Hours</div>
+                  <div class="att-value">${overtimeHours}</div>
+                  <div class="att-label">Overtime Hours</div>
                 </div>
                 <div class="attendance-item">
-                  <div class="value">${weekendHours + holidayHours}</div>
-                  <div class="label">Special Hours</div>
+                  <div class="att-value">${weekendHours + holidayHours}</div>
+                  <div class="att-label">Special Hours</div>
                 </div>
                 <div class="attendance-item">
-                  <div class="value">Le ${hourlyRate.toLocaleString()}</div>
-                  <div class="label">Hourly Rate</div>
+                  <div class="att-value">Le ${hourlyRate.toLocaleString()}</div>
+                  <div class="att-label">Hourly Rate</div>
                 </div>
               </div>
             </div>
@@ -670,40 +410,40 @@ export default function PayslipGenerator({ payroll, employee, organisation }) {
                 <h3>💰 Earnings</h3>
                 
                 <!-- Base Pay Section -->
-                <div style="margin-bottom: 12px; padding-bottom: 12px; border-bottom: 1px dashed var(--gray-200);">
-                  <div style="font-size: 10px; text-transform: uppercase; color: var(--gray-400); margin-bottom: 8px; font-weight: 600;">Base Pay</div>
+                <div style="margin-bottom: 12px; padding-bottom: 12px; border-bottom: 1px dashed #e2e8f0;">
+                  <div style="font-size: 10px; text-transform: uppercase; color: #94a3b8; margin-bottom: 8px; font-weight: 600;">Base Pay</div>
                   <div class="pay-item">
-                    <span class="label">Base Salary (${frequency})</span>
-                    <span class="amount">Le ${basePay.toLocaleString()}</span>
+                    <span class="pi-label">Base Salary (${frequency})</span>
+                    <span class="pi-amount">Le ${basePay.toLocaleString()}</span>
                   </div>
                   ${proratedSalary !== basePay ? `
                     <div class="pay-item">
-                      <span class="label">Prorated Amount</span>
-                      <span class="amount">Le ${proratedSalary.toLocaleString()}</span>
+                      <span class="pi-label">Prorated Amount</span>
+                      <span class="pi-amount">Le ${proratedSalary.toLocaleString()}</span>
                     </div>
                   ` : ''}
                 </div>
                 
                 <!-- Overtime Section -->
                 ${(overtimePay > 0 || weekendPay > 0 || holidayPay > 0) ? `
-                <div style="margin-bottom: 12px; padding-bottom: 12px; border-bottom: 1px dashed var(--gray-200);">
-                  <div style="font-size: 10px; text-transform: uppercase; color: var(--gray-400); margin-bottom: 8px; font-weight: 600;">Overtime & Special Pay</div>
+                <div style="margin-bottom: 12px; padding-bottom: 12px; border-bottom: 1px dashed #e2e8f0;">
+                  <div style="font-size: 10px; text-transform: uppercase; color: #94a3b8; margin-bottom: 8px; font-weight: 600;">Overtime & Special Pay</div>
                   ${overtimePay > 0 ? `
                     <div class="pay-item">
-                      <span class="label">Overtime (${overtimeHours} hrs @ 1.5x)</span>
-                      <span class="amount">Le ${overtimePay.toLocaleString()}</span>
+                      <span class="pi-label">Overtime (${overtimeHours} hrs @ 1.5x)</span>
+                      <span class="pi-amount">Le ${overtimePay.toLocaleString()}</span>
                     </div>
                   ` : ''}
                   ${weekendPay > 0 ? `
                     <div class="pay-item">
-                      <span class="label">Weekend (${weekendHours} hrs @ 2x)</span>
-                      <span class="amount">Le ${weekendPay.toLocaleString()}</span>
+                      <span class="pi-label">Weekend (${weekendHours} hrs @ 2x)</span>
+                      <span class="pi-amount">Le ${weekendPay.toLocaleString()}</span>
                     </div>
                   ` : ''}
                   ${holidayPay > 0 ? `
                     <div class="pay-item">
-                      <span class="label">Holiday (${holidayHours} hrs @ 2.5x)</span>
-                      <span class="amount">Le ${holidayPay.toLocaleString()}</span>
+                      <span class="pi-label">Holiday (${holidayHours} hrs @ 2.5x)</span>
+                      <span class="pi-amount">Le ${holidayPay.toLocaleString()}</span>
                     </div>
                   ` : ''}
                 </div>
@@ -711,12 +451,12 @@ export default function PayslipGenerator({ payroll, employee, organisation }) {
                 
                 <!-- Allowances Section -->
                 ${allowances.length > 0 ? `
-                <div style="margin-bottom: 12px; padding-bottom: 12px; border-bottom: 1px dashed var(--gray-200);">
-                  <div style="font-size: 10px; text-transform: uppercase; color: var(--gray-400); margin-bottom: 8px; font-weight: 600;">Allowances</div>
+                <div style="margin-bottom: 12px; padding-bottom: 12px; border-bottom: 1px dashed #e2e8f0;">
+                  <div style="font-size: 10px; text-transform: uppercase; color: #94a3b8; margin-bottom: 8px; font-weight: 600;">Allowances</div>
                   ${allowances.map(a => `
                     <div class="pay-item">
-                      <span class="label">${a.name}</span>
-                      <span class="amount">Le ${safeNum(a.amount).toLocaleString()}</span>
+                      <span class="pi-label">${a.name}</span>
+                      <span class="pi-amount">Le ${safeNum(a.amount).toLocaleString()}</span>
                     </div>
                   `).join('')}
                 </div>
@@ -724,20 +464,20 @@ export default function PayslipGenerator({ payroll, employee, organisation }) {
                 
                 <!-- Bonuses Section -->
                 ${bonuses.length > 0 ? `
-                <div style="margin-bottom: 12px; padding-bottom: 12px; border-bottom: 1px dashed var(--gray-200);">
-                  <div style="font-size: 10px; text-transform: uppercase; color: var(--gray-400); margin-bottom: 8px; font-weight: 600;">Bonuses</div>
+                <div style="margin-bottom: 12px; padding-bottom: 12px; border-bottom: 1px dashed #e2e8f0;">
+                  <div style="font-size: 10px; text-transform: uppercase; color: #94a3b8; margin-bottom: 8px; font-weight: 600;">Bonuses</div>
                   ${bonuses.map(b => `
                     <div class="pay-item">
-                      <span class="label">${b.name}${b.type ? ` (${b.type.replace('_', ' ')})` : ''}</span>
-                      <span class="amount">Le ${safeNum(b.amount).toLocaleString()}</span>
+                      <span class="pi-label">${b.name}${b.type ? ` (${b.type.replace('_', ' ')})` : ''}</span>
+                      <span class="pi-amount">Le ${safeNum(b.amount).toLocaleString()}</span>
                     </div>
                   `).join('')}
                 </div>
                 ` : ''}
                 
                 <div class="pay-item subtotal">
-                  <span class="label">Total Earnings (Gross)</span>
-                  <span class="amount">Le ${grossPay.toLocaleString()}</span>
+                  <span class="pi-label">Total Earnings (Gross)</span>
+                  <span class="pi-amount">Le ${grossPay.toLocaleString()}</span>
                 </div>
               </div>
               
@@ -745,36 +485,36 @@ export default function PayslipGenerator({ payroll, employee, organisation }) {
                 <h3>📉 Deductions</h3>
                 
                 <!-- Statutory Deductions -->
-                <div style="margin-bottom: 12px; padding-bottom: 12px; border-bottom: 1px dashed var(--gray-200);">
-                  <div style="font-size: 10px; text-transform: uppercase; color: var(--gray-400); margin-bottom: 8px; font-weight: 600;">Statutory Deductions</div>
+                <div style="margin-bottom: 12px; padding-bottom: 12px; border-bottom: 1px dashed #e2e8f0;">
+                  <div style="font-size: 10px; text-transform: uppercase; color: #94a3b8; margin-bottom: 8px; font-weight: 600;">Statutory Deductions</div>
                   ${nassitEmployee > 0 ? `
                     <div class="pay-item">
-                      <span class="label">NASSIT Employee (5%)</span>
-                      <span class="amount">Le ${nassitEmployee.toLocaleString()}</span>
+                      <span class="pi-label">NASSIT Employee (5%)</span>
+                      <span class="pi-amount">Le ${nassitEmployee.toLocaleString()}</span>
                     </div>
                   ` : ''}
                   ${payeTax > 0 ? `
                     <div class="pay-item">
-                      <span class="label">PAYE Income Tax</span>
-                      <span class="amount">Le ${payeTax.toLocaleString()}</span>
+                      <span class="pi-label">PAYE Income Tax</span>
+                      <span class="pi-amount">Le ${payeTax.toLocaleString()}</span>
                     </div>
                   ` : ''}
                   ${nassitEmployee === 0 && payeTax === 0 ? `
                     <div class="pay-item">
-                      <span class="label" style="color: var(--gray-400);">No statutory deductions</span>
-                      <span class="amount">Le 0</span>
+                      <span class="pi-label" style="color: #94a3b8;">No statutory deductions</span>
+                      <span class="pi-amount">Le 0</span>
                     </div>
                   ` : ''}
                 </div>
                 
                 <!-- Other Deductions -->
                 ${deductions.length > 0 ? `
-                <div style="margin-bottom: 12px; padding-bottom: 12px; border-bottom: 1px dashed var(--gray-200);">
-                  <div style="font-size: 10px; text-transform: uppercase; color: var(--gray-400); margin-bottom: 8px; font-weight: 600;">Other Deductions</div>
+                <div style="margin-bottom: 12px; padding-bottom: 12px; border-bottom: 1px dashed #e2e8f0;">
+                  <div style="font-size: 10px; text-transform: uppercase; color: #94a3b8; margin-bottom: 8px; font-weight: 600;">Other Deductions</div>
                   ${deductions.map(d => `
                     <div class="pay-item">
-                      <span class="label">${d.name}</span>
-                      <span class="amount">Le ${safeNum(d.amount).toLocaleString()}</span>
+                      <span class="pi-label">${d.name}</span>
+                      <span class="pi-amount">Le ${safeNum(d.amount).toLocaleString()}</span>
                     </div>
                   `).join('')}
                 </div>
@@ -784,19 +524,19 @@ export default function PayslipGenerator({ payroll, employee, organisation }) {
                 <div class="tax-breakdown">
                   <h4>🇸🇱 Tax Information</h4>
                   <div class="tax-row">
-                    <span class="label">Tax Bracket</span>
-                    <span class="value">${taxBracket}</span>
+                    <span class="tax-label">Tax Bracket</span>
+                    <span class="tax-value">${taxBracket}</span>
                   </div>
                   <div class="tax-row">
-                    <span class="label">Effective Rate</span>
-                    <span class="value">${effectiveTaxRate.toFixed(2)}%</span>
+                    <span class="tax-label">Effective Rate</span>
+                    <span class="tax-value">${effectiveTaxRate.toFixed(2)}%</span>
                   </div>
                 </div>
                 ` : ''}
                 
                 <div class="pay-item subtotal">
-                  <span class="label">Total Deductions</span>
-                  <span class="amount">Le ${totalDeductions.toLocaleString()}</span>
+                  <span class="pi-label">Total Deductions</span>
+                  <span class="pi-amount">Le ${totalDeductions.toLocaleString()}</span>
                 </div>
               </div>
             </div>
@@ -806,15 +546,15 @@ export default function PayslipGenerator({ payroll, employee, organisation }) {
             </div>
             
             <div class="net-pay-section">
-              <div class="summary-row">
-                <span class="label">Gross Pay</span>
-                <span class="value">Le ${grossPay.toLocaleString()}</span>
+              <div class="summary-row-pay">
+                <span>Gross Pay</span>
+                <span>Le ${grossPay.toLocaleString()}</span>
               </div>
-              <div class="summary-row">
-                <span class="label">Total Deductions</span>
-                <span class="value" style="color: var(--danger);">- Le ${totalDeductions.toLocaleString()}</span>
+              <div class="summary-row-pay">
+                <span>Total Deductions</span>
+                <span style="color: #ef4444;">- Le ${totalDeductions.toLocaleString()}</span>
               </div>
-              <div class="summary-row net-pay">
+              <div class="net-pay-box">
                 <span class="label">💵 NET PAY</span>
                 <span class="amount">Le ${netPay.toLocaleString()}</span>
               </div>
@@ -822,29 +562,25 @@ export default function PayslipGenerator({ payroll, employee, organisation }) {
             
             ${options.showEmployerCost ? `
             <div class="employer-cost-section">
-              <div style="font-size: 11px; text-transform: uppercase; color: var(--gray-500); margin-bottom: 12px; font-weight: 600; text-align: center;">Employer Contribution Summary</div>
+              <div style="font-size: 11px; text-transform: uppercase; color: #64748b; margin-bottom: 12px; font-weight: 600; text-align: center;">Employer Contribution Summary</div>
               <div class="employer-cost-grid">
                 <div class="employer-cost-item">
-                  <div class="value">Le ${grossPay.toLocaleString()}</div>
-                  <div class="label">Gross Salary</div>
+                  <div class="ec-value">Le ${grossPay.toLocaleString()}</div>
+                  <div class="ec-label">Gross Salary</div>
                 </div>
                 <div class="employer-cost-item">
-                  <div class="value">+ Le ${nassitEmployer.toLocaleString()}</div>
-                  <div class="label">NASSIT Employer (10%)</div>
+                  <div class="ec-value">+ Le ${nassitEmployer.toLocaleString()}</div>
+                  <div class="ec-label">NASSIT Employer (10%)</div>
                 </div>
                 <div class="employer-cost-item total">
-                  <div class="value">Le ${employerCost.toLocaleString()}</div>
-                  <div class="label">Total Employer Cost</div>
+                  <div class="ec-value">Le ${employerCost.toLocaleString()}</div>
+                  <div class="ec-label">Total Employer Cost</div>
                 </div>
               </div>
             </div>
             ` : ''}
             
-            <div class="footer-accent"></div>
-            <div class="payslip-footer">
-              <div class="footer-text">This is a computer-generated payslip and does not require a signature.</div>
-              <div class="footer-brand">${organisation?.name || 'Organisation'} • Sierra Leone</div>
-            </div>
+            ${getUnifiedFooter(organisation)}
           </div>
         </body>
       </html>
