@@ -338,6 +338,7 @@ export default function BatchManagement({ products = [], warehouses = [], vehicl
         warehouses={warehouses}
         vehicles={vehicles}
         stockLevels={stockLevels}
+        allBatches={batches}
         orgId={orgId}
         currentEmployee={currentEmployee}
       />
