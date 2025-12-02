@@ -283,7 +283,7 @@ export default function BatchStockAllocation({
             </Button>
             <Button
               type="submit"
-              disabled={allocateMutation.isPending || totalAllocated === 0 || totalAllocated > batch.quantity}
+              disabled={allocateMutation.isPending || totalAllocated === 0 || totalAllocated > (batch.quantity - alreadyAllocated)}
               className="bg-gradient-to-r from-[#1EB053] to-[#0072C6]"
             >
               {allocateMutation.isPending ? "Allocating..." : "Allocate Stock"}
