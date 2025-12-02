@@ -158,8 +158,9 @@ export default function BatchStockAllocation({
       toast.error("Please allocate at least some stock");
       return;
     }
-    if (totalAllocated > batch.quantity) {
-      toast.error("Cannot allocate more than batch quantity");
+    const availableToAllocate = batch.quantity - (batch.allocated_quantity || 0);
+    if (totalAllocated > availableToAllocate) {
+      toast.error("Cannot allocate more than available batch quantity");
       return;
     }
     allocateMutation.mutate();
