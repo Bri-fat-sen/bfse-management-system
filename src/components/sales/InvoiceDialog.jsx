@@ -506,8 +506,8 @@ export default function InvoiceDialog({
               <Printer className="w-4 h-4 mr-2" />
               Print
             </Button>
-            <Button variant="outline" onClick={handleDownload}>
-              <Download className="w-4 h-4 mr-2" />
+            <Button variant="outline" onClick={handleDownload} disabled={isDownloading}>
+              {isDownloading ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Download className="w-4 h-4 mr-2" />}
               PDF
             </Button>
           </div>
