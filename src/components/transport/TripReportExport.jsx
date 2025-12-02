@@ -1,11 +1,15 @@
-import React from "react";
+import React, { useState } from "react";
 import { format } from "date-fns";
 import { Button } from "@/components/ui/button";
-import { Download, Printer } from "lucide-react";
+import { Download, Printer, Loader2 } from "lucide-react";
+import { base44 } from "@/api/base44Client";
+import { toast } from "sonner";
 import { exportToCSV } from "@/components/exports/SierraLeoneExportStyles";
 import { generateProfessionalReport, downloadProfessionalReportAsPDF } from "@/components/exports/ProfessionalReportExport";
 
 export default function TripReportExport({ trips = [], routes = [], vehicles = [], organisation }) {
+  const [isPrinting, setIsPrinting] = useState(false);
+  
   // Calculate summary stats
   const totalRevenue = trips.reduce((sum, t) => sum + (t.total_revenue || 0), 0);
   const totalPassengers = trips.reduce((sum, t) => sum + (t.passengers_count || 0), 0);
@@ -29,62 +33,68 @@ export default function TripReportExport({ trips = [], routes = [], vehicles = [
     exportToCSV(columns, rows, `trip-report-${format(new Date(), 'yyyy-MM-dd')}.csv`, organisation);
   };
 
-  const handlePrint = () => {
-    const summaryCards = [
-      { label: 'Total Trips', value: trips.length.toString(), subtext: 'Completed trips' },
-      { label: 'Total Passengers', value: totalPassengers.toLocaleString(), subtext: 'Passengers carried' },
-      { label: 'Total Revenue', value: `SLE ${totalRevenue.toLocaleString()}`, subtext: 'Gross income' },
-      { label: 'Net Revenue', value: `SLE ${netRevenue.toLocaleString()}`, subtext: 'After fuel costs', highlight: netRevenue >= 0 ? 'green' : 'red' }
-    ];
+  const handlePrint = async () => {
+    setIsPrinting(true);
+    try {
+      const summaryCards = [
+        { label: 'Total Trips', value: trips.length.toString(), subtext: 'Completed trips' },
+        { label: 'Total Passengers', value: totalPassengers.toLocaleString(), subtext: 'Passengers carried' },
+        { label: 'Total Revenue', value: `SLE ${totalRevenue.toLocaleString()}`, subtext: 'Gross income' },
+        { label: 'Net Revenue', value: `SLE ${netRevenue.toLocaleString()}`, subtext: 'After fuel costs', highlight: netRevenue >= 0 ? 'green' : 'red' }
+      ];
 
-    // Route breakdown
-    const routeBreakdown = {};
-    trips.forEach(t => {
-      const route = t.route_name || 'Unknown Route';
-      if (!routeBreakdown[route]) routeBreakdown[route] = 0;
-      routeBreakdown[route] += t.total_revenue || 0;
-    });
+      const columns = ['Date', 'Route', 'Vehicle', 'Driver', 'Passengers', 'Revenue', 'Fuel', 'Net', 'Status'];
+      const rows = [
+        ...trips.map(t => [
+          t.date ? format(new Date(t.date), 'dd MMM yyyy') : '-',
+          t.route_name || 'N/A',
+          t.vehicle_registration || 'N/A',
+          t.driver_name || 'N/A',
+          t.passengers_count || 0,
+          `SLE ${(t.total_revenue || 0).toLocaleString()}`,
+          `SLE ${(t.fuel_cost || 0).toLocaleString()}`,
+          `SLE ${(t.net_revenue || 0).toLocaleString()}`,
+          t.status || 'completed'
+        ]),
+        ['GRAND TOTAL', '', '', '', totalPassengers, `SLE ${totalRevenue.toLocaleString()}`, `SLE ${totalFuelCost.toLocaleString()}`, `SLE ${netRevenue.toLocaleString()}`, '']
+      ];
 
-    const sections = [
-      {
-        title: 'Revenue by Route',
-        icon: '🛣️',
-        breakdown: routeBreakdown
-      },
-      {
-        title: 'Trip Records',
-        icon: '🚐',
-        table: {
-          columns: ['Date', 'Route', 'Vehicle', 'Driver', 'Passengers', 'Revenue', 'Fuel', 'Net (SLE)', 'Status'],
-          rows: [
-            ...trips.map(t => [
-              t.date ? format(new Date(t.date), 'dd MMM yyyy') : '-',
-              t.route_name || 'N/A',
-              t.vehicle_registration || 'N/A',
-              t.driver_name || 'N/A',
-              t.passengers_count || 0,
-              `SLE ${(t.total_revenue || 0).toLocaleString()}`,
-              `SLE ${(t.fuel_cost || 0).toLocaleString()}`,
-              `SLE ${(t.net_revenue || 0).toLocaleString()}`,
-              t.status || 'completed'
-            ]),
-            ['GRAND TOTAL', '', '', '', totalPassengers, `SLE ${totalRevenue.toLocaleString()}`, `SLE ${totalFuelCost.toLocaleString()}`, `SLE ${netRevenue.toLocaleString()}`, '']
-          ]
-        }
-      }
-    ];
+      const response = await base44.functions.invoke('generateDocumentPDF', {
+        documentType: 'report',
+        data: {
+          title: 'Transport Trip Report',
+          dateRange: format(new Date(), 'MMMM d, yyyy'),
+          summaryCards,
+          sections: [{
+            title: 'Trip Records',
+            table: { columns, rows }
+          }]
+        },
+        organisation
+      });
 
-    const html = generateProfessionalReport({
-      title: 'Transport Trip Report',
-      subtitle: 'Passenger trips, revenue, and fuel cost analysis',
-      organisation,
-      dateRange: `Generated ${format(new Date(), 'MMMM d, yyyy')}`,
-      summaryCards,
-      sections,
-      reportType: 'standard'
-    });
-
-    downloadProfessionalReportAsPDF(html);
+      const blob = new Blob([response.data], { type: 'application/pdf' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `Trip-Report-${format(new Date(), 'yyyy-MM-dd')}.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+      toast.success("Report downloaded");
+    } catch (error) {
+      console.error('PDF error:', error);
+      // Fallback
+      const html = generateProfessionalReport({
+        title: 'Transport Trip Report',
+        organisation,
+        summaryCards: [],
+        sections: []
+      });
+      downloadProfessionalReportAsPDF(html);
+    }
+    setIsPrinting(false);
   };
 
   return (
@@ -93,9 +103,9 @@ export default function TripReportExport({ trips = [], routes = [], vehicles = [
         <Download className="w-4 h-4 mr-1" />
         CSV
       </Button>
-      <Button variant="outline" size="sm" onClick={handlePrint}>
-        <Printer className="w-4 h-4 mr-1" />
-        Print
+      <Button variant="outline" size="sm" onClick={handlePrint} disabled={isPrinting}>
+        {isPrinting ? <Loader2 className="w-4 h-4 mr-1 animate-spin" /> : <Printer className="w-4 h-4 mr-1" />}
+        {isPrinting ? 'PDF...' : 'Print'}
       </Button>
     </div>
   );

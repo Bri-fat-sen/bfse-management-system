@@ -29,8 +29,11 @@ import {
   Printer,
   Package,
   Calendar,
-  AlertTriangle
+  AlertTriangle,
+  Loader2
 } from "lucide-react";
+import { base44 } from "@/api/base44Client";
+import { toast } from "sonner";
 import { generateExportHTML, printDocument, exportToCSV as exportCSVUtil } from "@/components/exports/SierraLeoneExportStyles";
 import { generateUnifiedPDF, printUnifiedPDF } from "@/components/exports/UnifiedPDFStyles";
 
@@ -38,6 +41,7 @@ const COLORS = ['#1EB053', '#0072C6', '#D4AF37', '#EF4444', '#8B5CF6'];
 
 export default function BatchReports({ batches = [], products = [], warehouses = [], organisation }) {
   const [reportType, setReportType] = useState("summary");
+  const [isPrinting, setIsPrinting] = useState(false);
 
   // Calculate report data
   const reportData = useMemo(() => {
@@ -116,39 +120,67 @@ export default function BatchReports({ batches = [], products = [], warehouses =
     exportCSVUtil(columns, rows, `batch-report-${format(new Date(), 'yyyy-MM-dd')}.csv`);
   };
 
-  const handlePrint = () => {
-    const summaryCards = [
-      { label: 'Total Batches', value: batches.length.toString() },
-      { label: 'Total Quantity', value: batches.reduce((sum, b) => sum + (b.quantity || 0), 0).toLocaleString() },
-      { label: 'Total Value', value: `SLE ${reportData.totalValue.toLocaleString()}` },
-      { label: 'Expired Value', value: `SLE ${reportData.expiredValue.toLocaleString()}`, highlight: reportData.expiredValue > 0 ? 'red' : 'green' }
-    ];
+  const handlePrint = async () => {
+    setIsPrinting(true);
+    try {
+      const summaryCards = [
+        { label: 'Total Batches', value: batches.length.toString() },
+        { label: 'Total Quantity', value: batches.reduce((sum, b) => sum + (b.quantity || 0), 0).toLocaleString() },
+        { label: 'Total Value', value: `SLE ${reportData.totalValue.toLocaleString()}` },
+        { label: 'Expired Value', value: `SLE ${reportData.expiredValue.toLocaleString()}`, highlight: reportData.expiredValue > 0 ? 'red' : 'green' }
+      ];
 
-    const columns = ['Batch #', 'Product', 'Warehouse', 'Qty', 'Mfg Date', 'Expiry Date', 'Value', 'Status'];
-    const rows = batches.map(b => [
-      b.batch_number,
-      b.product_name,
-      b.warehouse_name || 'Main',
-      b.quantity,
-      b.manufacturing_date ? format(new Date(b.manufacturing_date), 'dd MMM yyyy') : '-',
-      b.expiry_date ? format(new Date(b.expiry_date), 'dd MMM yyyy') : '-',
-      `SLE ${((b.quantity || 0) * (b.cost_price || 0)).toLocaleString()}`,
-      b.status
-    ]);
+      const columns = ['Batch #', 'Product', 'Warehouse', 'Qty', 'Mfg Date', 'Expiry Date', 'Value', 'Status'];
+      const rows = batches.map(b => [
+        b.batch_number,
+        b.product_name,
+        b.warehouse_name || 'Main',
+        b.quantity,
+        b.manufacturing_date ? format(new Date(b.manufacturing_date), 'dd MMM yyyy') : '-',
+        b.expiry_date ? format(new Date(b.expiry_date), 'dd MMM yyyy') : '-',
+        `SLE ${((b.quantity || 0) * (b.cost_price || 0)).toLocaleString()}`,
+        b.status
+      ]);
 
-    const html = generateUnifiedPDF({
-      documentType: 'report',
-      title: 'Batch Inventory Report',
-      organisation: organisation,
-      summaryCards: summaryCards,
-      sections: [{
-        title: 'Batch Details',
-        icon: '📦',
-        table: { columns, rows, showTotal: false }
-      }]
-    });
+      const response = await base44.functions.invoke('generateDocumentPDF', {
+        documentType: 'report',
+        data: {
+          title: 'Batch Inventory Report',
+          summaryCards,
+          sections: [{
+            title: 'Batch Details',
+            table: { columns, rows }
+          }]
+        },
+        organisation
+      });
 
-    printUnifiedPDF(html);
+      const blob = new Blob([response.data], { type: 'application/pdf' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `Batch-Report-${format(new Date(), 'yyyy-MM-dd')}.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+      toast.success("Report downloaded");
+    } catch (error) {
+      console.error('PDF error:', error);
+      // Fallback to HTML print
+      const html = generateUnifiedPDF({
+        documentType: 'report',
+        title: 'Batch Inventory Report',
+        organisation,
+        summaryCards: [
+          { label: 'Total Batches', value: batches.length.toString() },
+          { label: 'Total Quantity', value: batches.reduce((sum, b) => sum + (b.quantity || 0), 0).toLocaleString() }
+        ],
+        sections: []
+      });
+      printUnifiedPDF(html);
+    }
+    setIsPrinting(false);
   };
 
   return (
@@ -172,9 +204,9 @@ export default function BatchReports({ batches = [], products = [], warehouses =
                 <Download className="w-4 h-4 mr-2" />
                 Export CSV
               </Button>
-              <Button variant="outline" onClick={handlePrint}>
-                <Printer className="w-4 h-4 mr-2" />
-                Print
+              <Button variant="outline" onClick={handlePrint} disabled={isPrinting}>
+                {isPrinting ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Printer className="w-4 h-4 mr-2" />}
+                {isPrinting ? 'Generating...' : 'Print'}
               </Button>
             </div>
           </div>

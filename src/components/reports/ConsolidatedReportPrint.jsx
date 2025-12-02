@@ -7,8 +7,10 @@ import { Separator } from "@/components/ui/separator";
 import { format, startOfMonth, endOfMonth, startOfWeek, endOfWeek, startOfYear, subMonths, parseISO } from "date-fns";
 import { 
   Printer, Download, FileText, TrendingUp, DollarSign, Users, 
-  Package, Truck, PieChart, Clock, CheckCircle
+  Package, Truck, PieChart, Clock, CheckCircle, Loader2
 } from "lucide-react";
+import { base44 } from "@/api/base44Client";
+import { toast } from "sonner";
 import { generateProfessionalReport, downloadProfessionalReportAsPDF } from "@/components/exports/ProfessionalReportExport";
 
 const REPORT_CONFIGS = {
@@ -485,17 +487,40 @@ export default function ConsolidatedReportPrint({
 
     const orgName = organisation?.name || 'Business Report';
     
-    const html = generateProfessionalReport({
-      title: `${orgName} - Consolidated Report`,
-      subtitle: `Comprehensive report covering ${reportsToInclude.length} areas`,
-      organisation: organisation || {},
-      dateRange: dateLabel,
-      summaryCards: mainSummaryCards,
-      sections: allSections,
-      reportType: 'financial'
-    });
+    try {
+      const response = await base44.functions.invoke('generateDocumentPDF', {
+        documentType: 'report',
+        data: {
+          title: `${orgName} - Consolidated Report`,
+          dateRange: dateLabel,
+          summaryCards: mainSummaryCards,
+          sections: allSections
+        },
+        organisation: organisation || {}
+      });
 
-    downloadProfessionalReportAsPDF(html);
+      const blob = new Blob([response.data], { type: 'application/pdf' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `Consolidated-Report-${format(new Date(), 'yyyy-MM-dd')}.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+      toast.success("Report downloaded");
+    } catch (error) {
+      console.error('PDF error:', error);
+      // Fallback
+      const html = generateProfessionalReport({
+        title: `${orgName} - Consolidated Report`,
+        organisation: organisation || {},
+        dateRange: dateLabel,
+        summaryCards: mainSummaryCards,
+        sections: allSections
+      });
+      downloadProfessionalReportAsPDF(html);
+    }
     setIsPrinting(false);
   };
 
@@ -543,11 +568,14 @@ export default function ConsolidatedReportPrint({
           className="gap-2 bg-gradient-to-r from-[#1EB053] to-[#0072C6]"
         >
           {isPrinting ? (
-            <>Generating...</>
+            <>
+              <Loader2 className="w-4 h-4 animate-spin" />
+              Generating PDF...
+            </>
           ) : (
             <>
               <Printer className="w-4 h-4" />
-              Print Consolidated Report
+              Download PDF Report
             </>
           )}
         </Button>
