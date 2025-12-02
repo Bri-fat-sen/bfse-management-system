@@ -207,20 +207,24 @@ export default function Suppliers() {
           }}
           actionLabel="Add Supplier"
         >
-          <Button variant="outline" onClick={() => {
-            setEditingPO(null);
-            setShowPODialog(true);
-          }}>
-            <FileText className="w-4 h-4 mr-2" />
-            New Purchase Order
-          </Button>
-          <Button variant="outline" onClick={() => {
-            setPriceHistorySupplier(null);
-            setShowPriceHistory(true);
-          }}>
-            <TrendingUp className="w-4 h-4 mr-2" />
-            Price History
-          </Button>
+          <div className="flex flex-wrap gap-2">
+            <Button variant="outline" size="sm" className="text-xs sm:text-sm" onClick={() => {
+              setEditingPO(null);
+              setShowPODialog(true);
+            }}>
+              <FileText className="w-4 h-4 sm:mr-2" />
+              <span className="hidden sm:inline">New Purchase Order</span>
+              <span className="sm:hidden">New PO</span>
+            </Button>
+            <Button variant="outline" size="sm" className="text-xs sm:text-sm" onClick={() => {
+              setPriceHistorySupplier(null);
+              setShowPriceHistory(true);
+            }}>
+              <TrendingUp className="w-4 h-4 sm:mr-2" />
+              <span className="hidden sm:inline">Price History</span>
+              <span className="sm:hidden">Prices</span>
+            </Button>
+          </div>
         </PageHeader>
 
         {/* Stats */}
