@@ -190,21 +190,49 @@ export const printProfessionalReport = (html, filename = 'report') => {
   }, 400);
 };
 
-export const downloadProfessionalReportAsPDF = async (html, filename = 'report') => {
-  const pdfWindow = window.open('', '_blank', 'width=900,height=800');
-  
-  if (!pdfWindow) {
-    alert('Please allow popups to download the PDF report');
-    return;
+export const downloadProfessionalReportAsPDF = async (reportConfig, filename = 'report') => {
+  try {
+    // Try to generate real PDF via backend
+    const response = await base44.functions.invoke('generateDocumentPDF', {
+      documentType: 'report',
+      data: {
+        title: reportConfig.title,
+        reportId: `RPT-${Date.now().toString(36).toUpperCase()}`,
+        dateRange: reportConfig.dateRange,
+        summaryCards: reportConfig.summaryCards,
+        sections: reportConfig.sections
+      },
+      organisation: reportConfig.organisation
+    });
+    
+    const blob = new Blob([response.data], { type: 'application/pdf' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `${filename}.pdf`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  } catch (error) {
+    console.error('PDF generation error:', error);
+    // Fallback to print dialog
+    const html = typeof reportConfig === 'string' ? reportConfig : generateProfessionalReport(reportConfig);
+    const pdfWindow = window.open('', '_blank', 'width=900,height=800');
+    
+    if (!pdfWindow) {
+      alert('Please allow popups to download the PDF report');
+      return;
+    }
+    
+    pdfWindow.document.write(html);
+    pdfWindow.document.close();
+    pdfWindow.document.title = filename;
+    
+    setTimeout(() => {
+      pdfWindow.print();
+    }, 500);
   }
-  
-  pdfWindow.document.write(html);
-  pdfWindow.document.close();
-  pdfWindow.document.title = filename;
-  
-  setTimeout(() => {
-    pdfWindow.print();
-  }, 500);
 };
 
 export const downloadProfessionalReport = (html, filename) => {
