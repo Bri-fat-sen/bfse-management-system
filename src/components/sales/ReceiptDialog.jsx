@@ -12,7 +12,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Printer, Download, Mail, Loader2, Check } from "lucide-react";
 import { toast } from "sonner";
-import { getBrandedStyles, getBrandedHeader, getBrandedFooter } from "@/components/branding/BrandedDocumentStyles";
+import { getUnifiedPDFStyles, getUnifiedHeader, getUnifiedFooter } from "@/components/exports/UnifiedPDFStyles";
 import { safeNumber, formatNumber } from "@/components/utils/calculations";
 
 export default function ReceiptDialog({ open, onOpenChange, sale, organisation }) {
@@ -36,47 +36,65 @@ export default function ReceiptDialog({ open, onOpenChange, sale, organisation }
           <meta charset="UTF-8">
           <title>Receipt - ${sale?.sale_number}</title>
           <style>
-            ${getBrandedStyles(organisation)}
-            .receipt {
-              max-width: 420px;
-              margin: 0 auto;
-              background: white;
-              border-radius: 12px;
-              overflow: hidden;
-              box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+            ${getUnifiedPDFStyles(organisation, 'receipt')}
+            
+            /* Receipt-specific overrides */
+            .totals-section {
+              padding: 16px 24px;
+              border-top: 2px dashed var(--gray-200);
             }
-            .receipt .brand-header {
-              padding: 20px;
-              flex-direction: column;
-              text-align: center;
-              gap: 12px;
+            .totals-row {
+              display: flex;
+              justify-content: space-between;
+              padding: 8px 0;
+              font-size: 14px;
             }
-            .receipt .brand-header .logo-container img {
-              max-height: 50px;
-              max-width: 120px;
+            .totals-row.grand {
+              margin-top: 12px;
+              padding: 16px;
+              background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%) !important;
+              color: white !important;
+              border-radius: 10px;
+              font-size: 18px;
+              font-weight: 700;
             }
-            .receipt .brand-header .company-info {
-              text-align: center;
-            }
-            .receipt .brand-header .document-info {
-              display: none;
+            .payment-badge {
+              display: inline-block;
+              padding: 4px 12px;
+              background: #dcfce7;
+              color: #166534;
+              border-radius: 20px;
+              font-size: 12px;
+              font-weight: 600;
+              text-transform: capitalize;
             }
           </style>
         </head>
         <body>
-          <div class="receipt">
-            ${getBrandedHeader(organisation, 'Receipt', sale?.sale_number, format(new Date(sale?.created_date), 'dd MMM yyyy, HH:mm'))}
+          <div class="document">
+            ${getUnifiedHeader(organisation, 'Receipt', sale?.sale_number, format(new Date(sale?.created_date), 'dd MMM yyyy, HH:mm'), 'receipt')}
             
-            <div class="brand-info-bar">
-              <p><strong>Receipt:</strong> ${sale?.sale_number}</p>
-              <p><strong>Date:</strong> ${format(new Date(sale?.created_date), 'dd MMMM yyyy, HH:mm')}</p>
-              <p><strong>Cashier:</strong> ${sale?.employee_name || 'Staff'}</p>
-              ${sale?.customer_name ? `<p><strong>Customer:</strong> ${sale.customer_name}</p>` : ''}
-              ${sale?.location ? `<p><strong>Location:</strong> ${sale.location}</p>` : ''}
+            <div class="info-bar">
+              <div class="info-item">
+                <span class="label">Cashier:</span>
+                <span class="value">${sale?.employee_name || 'Staff'}</span>
+              </div>
+              ${sale?.customer_name ? `
+                <div class="info-item">
+                  <span class="label">Customer:</span>
+                  <span class="value">${sale.customer_name}</span>
+                </div>
+              ` : ''}
+              ${sale?.location ? `
+                <div class="info-item">
+                  <span class="label">Location:</span>
+                  <span class="value">${sale.location}</span>
+                </div>
+              ` : ''}
             </div>
             
-            <div class="brand-content">
-              <table class="brand-table">
+            <div class="content">
+              <table class="data-table">
                 <thead>
                   <tr>
                     <th>Item</th>
@@ -88,7 +106,7 @@ export default function ReceiptDialog({ open, onOpenChange, sale, organisation }
                     <tr>
                       <td>
                         ${item.product_name || 'Item'}
-                        <span style="color: ${secondaryColor}; font-size: 12px; font-weight: 600;"> × ${safeNumber(item.quantity, 1)}</span>
+                        <span style="color: var(--secondary); font-size: 12px; font-weight: 600;"> × ${safeNumber(item.quantity, 1)}</span>
                       </td>
                       <td class="amount">SLE ${formatNumber(safeNumber(item.total))}</td>
                     </tr>
@@ -97,34 +115,34 @@ export default function ReceiptDialog({ open, onOpenChange, sale, organisation }
               </table>
             </div>
             
-            <div class="brand-totals">
-              <div class="brand-totals-row">
+            <div class="totals-section">
+              <div class="totals-row">
                 <span>Subtotal</span>
                 <span>SLE ${formatAmount(sale?.subtotal)}</span>
               </div>
               ${safeNumber(sale?.tax) > 0 ? `
-                <div class="brand-totals-row">
+                <div class="totals-row">
                   <span>GST</span>
                   <span>SLE ${formatAmount(sale.tax)}</span>
                 </div>
               ` : ''}
               ${safeNumber(sale?.discount) > 0 ? `
-                <div class="brand-totals-row">
+                <div class="totals-row">
                   <span>Discount</span>
                   <span>-SLE ${formatAmount(sale.discount)}</span>
                 </div>
               ` : ''}
-              <div class="brand-totals-row grand">
+              <div class="totals-row grand">
                 <span>Total</span>
                 <span>SLE ${formatAmount(sale?.total_amount)}</span>
               </div>
-              <div class="brand-totals-row" style="margin-top: 12px;">
+              <div class="totals-row" style="margin-top: 12px;">
                 <span>Payment</span>
-                <span class="brand-badge paid">${sale?.payment_method}</span>
+                <span class="payment-badge">${sale?.payment_method}</span>
               </div>
             </div>
             
-            ${getBrandedFooter(organisation)}
+            ${getUnifiedFooter(organisation)}
           </div>
         </body>
       </html>
