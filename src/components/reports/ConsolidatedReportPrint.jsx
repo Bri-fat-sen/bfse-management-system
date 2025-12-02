@@ -498,16 +498,16 @@ export default function ConsolidatedReportPrint({
   };
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <p className="text-sm text-gray-500">Select reports to include in the consolidated print</p>
-          <p className="text-xs text-gray-400 mt-1">Period: {dateLabel}</p>
+    <div className="space-y-4 sm:space-y-6">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+        <div className="min-w-0">
+          <p className="text-xs sm:text-sm text-gray-500">Select reports to include</p>
+          <p className="text-[10px] sm:text-xs text-gray-400 mt-0.5 sm:mt-1 truncate">Period: {dateLabel}</p>
         </div>
-        <Badge variant="outline">{reportsToInclude.length} selected</Badge>
+        <Badge variant="outline" className="self-start sm:self-auto text-[10px] sm:text-xs">{reportsToInclude.length} selected</Badge>
       </div>
 
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-2 sm:gap-3 max-h-[45vh] overflow-y-auto">
         {allReports.map(report => {
           const config = REPORT_CONFIGS[report.id];
           const Icon = config?.icon || FileText;
@@ -519,10 +519,10 @@ export default function ConsolidatedReportPrint({
               className={`cursor-pointer transition-all ${isSelected ? 'ring-2 ring-[#1EB053] bg-green-50' : 'hover:bg-gray-50'}`}
               onClick={() => toggleReport(report.id)}
             >
-              <CardContent className="p-3 flex items-center gap-3">
-                <Checkbox checked={isSelected} />
-                <Icon className={`w-4 h-4 ${isSelected ? 'text-[#1EB053]' : 'text-gray-400'}`} />
-                <span className="text-sm font-medium truncate">{report.name}</span>
+              <CardContent className="p-2.5 sm:p-3 flex items-center gap-2 sm:gap-3">
+                <Checkbox checked={isSelected} className="h-4 w-4" />
+                <Icon className={`w-4 h-4 flex-shrink-0 ${isSelected ? 'text-[#1EB053]' : 'text-gray-400'}`} />
+                <span className="text-xs sm:text-sm font-medium truncate">{report.name}</span>
               </CardContent>
             </Card>
           );
@@ -531,21 +531,23 @@ export default function ConsolidatedReportPrint({
 
       <Separator />
 
-      <div className="flex justify-end gap-3">
-        <Button variant="outline" onClick={onClose}>
+      <div className="flex flex-col-reverse sm:flex-row justify-end gap-2 sm:gap-3">
+        <Button variant="outline" size="sm" onClick={onClose} className="w-full sm:w-auto">
           Cancel
         </Button>
         <Button 
+          size="sm"
           onClick={handlePrint}
           disabled={reportsToInclude.length === 0 || isPrinting}
-          className="gap-2 bg-gradient-to-r from-[#1EB053] to-[#0072C6]"
+          className="gap-2 bg-gradient-to-r from-[#1EB053] to-[#0072C6] w-full sm:w-auto"
         >
           {isPrinting ? (
             <>Generating...</>
           ) : (
             <>
               <Printer className="w-4 h-4" />
-              Print Consolidated Report
+              <span className="hidden sm:inline">Print Consolidated Report</span>
+              <span className="sm:hidden">Print Report</span>
             </>
           )}
         </Button>
