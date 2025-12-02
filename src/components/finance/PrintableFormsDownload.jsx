@@ -379,6 +379,21 @@ const generateFormHTML = (formType, org) => {
         font-size: 22px;
       }
       
+      .footer .flag-bar {
+        display: flex;
+        justify-content: center;
+        gap: 4px;
+        margin: 12px 0;
+      }
+      .footer .flag-bar span {
+        width: 24px;
+        height: 16px;
+        border-radius: 2px;
+      }
+      .footer .bar-green { background: #1EB053 !important; }
+      .footer .bar-white { background: #FFFFFF !important; }
+      .footer .bar-blue { background: #0072C6 !important; }
+      
       .footer .contact {
         font-size: 11px;
         opacity: 0.7;
@@ -425,7 +440,11 @@ const generateFormHTML = (formType, org) => {
     <div class="footer">
       <div class="thanks">For Manual Record Keeping</div>
       <div class="tagline">Please enter data into the system when ready</div>
-      <div class="flag">🇸🇱</div>
+      <div class="flag-bar">
+        <span class="bar-green"></span>
+        <span class="bar-white"></span>
+        <span class="bar-blue"></span>
+      </div>
       <div class="contact">
         ${orgName}${orgPhone ? ' • ' + orgPhone : ''}${orgEmail ? ' • ' + orgEmail : ''}
       </div>
