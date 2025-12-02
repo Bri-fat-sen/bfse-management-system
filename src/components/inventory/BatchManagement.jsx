@@ -248,7 +248,16 @@ export default function BatchManagement({ products = [], warehouses = [], vehicl
                           </div>
                         </td>
                         <td className="p-4 text-gray-600">{batch.warehouse_name || 'Main'}</td>
-                        <td className="p-4 text-right font-medium">{batch.quantity}</td>
+                        <td className="p-4 text-right">
+                          <div>
+                            <span className="font-medium">{batch.quantity}</span>
+                            {(batch.allocated_quantity || 0) > 0 && (
+                              <p className="text-xs text-gray-500">
+                                {batch.allocated_quantity} allocated
+                              </p>
+                            )}
+                          </div>
+                        </td>
                         <td className="p-4 text-gray-600">
                           {batch.manufacturing_date && format(new Date(batch.manufacturing_date), 'dd MMM yyyy')}
                         </td>
