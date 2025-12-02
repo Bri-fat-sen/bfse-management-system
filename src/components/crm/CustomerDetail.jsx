@@ -1,14 +1,24 @@
 import React, { useState } from "react";
+import { base44 } from "@/api/base44Client";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
 import { format } from "date-fns";
+import { toast } from "sonner";
 import {
   Phone, Mail, MapPin, Building2, Calendar, DollarSign,
   ShoppingCart, MessageSquare, Edit, Star, TrendingUp,
-  Clock, Plus, ArrowLeft
+  Clock, Plus, ArrowLeft, Trash2, AlertTriangle
 } from "lucide-react";
 import InteractionDialog from "./InteractionDialog";
 
