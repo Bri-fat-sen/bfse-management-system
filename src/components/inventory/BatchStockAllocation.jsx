@@ -195,6 +195,16 @@ export default function BatchStockAllocation({
               <span className="text-sm text-gray-600">Total Batch Quantity:</span>
               <Badge variant="secondary" className="text-lg">{batch.quantity}</Badge>
             </div>
+            {alreadyAllocated > 0 && (
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-gray-600">Already Allocated:</span>
+                <Badge variant="outline" className="text-sm">{alreadyAllocated}</Badge>
+              </div>
+            )}
+            <div className="flex items-center justify-between">
+              <span className="text-sm text-gray-600">Available to Allocate:</span>
+              <Badge className="text-sm bg-[#1EB053]">{batch.quantity - alreadyAllocated}</Badge>
+            </div>
           </div>
 
           {/* Allocation Summary */}
