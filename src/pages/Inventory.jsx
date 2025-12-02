@@ -67,7 +67,6 @@ import ReorderSuggestions from "@/components/inventory/ReorderSuggestions";
 import MultiLocationStock from "@/components/inventory/MultiLocationStock";
 import LowStockNotificationBanner from "@/components/inventory/LowStockNotificationBanner";
 import InventoryAuditLog from "@/components/inventory/InventoryAuditLog";
-import GitHubProjectBoard from "@/components/inventory/GitHubProjectBoard";
 
 const DEFAULT_CATEGORIES = ["Water", "Beverages", "Food", "Electronics", "Clothing", "Other"];
 
@@ -424,17 +423,12 @@ export default function Inventory() {
         reorderSuggestions={reorderSuggestions}
       />
 
-      {/* AI Recommendations & GitHub Project Board */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-        <div className="lg:col-span-2">
-          <AIInventoryRecommendations 
-            products={products}
-            sales={sales}
-            orgId={orgId}
-          />
-        </div>
-        <GitHubProjectBoard className="h-fit" />
-      </div>
+      {/* AI Recommendations */}
+      <AIInventoryRecommendations 
+        products={products}
+        sales={sales}
+        orgId={orgId}
+      />
 
       {/* Stats */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
