@@ -171,7 +171,15 @@ export default function Transport() {
   const totalPassengers = todayTrips.reduce((sum, t) => sum + (t.passengers_count || 0), 0);
   const activeVehicles = vehicles.filter(v => v.status === 'active');
   const activeContracts = truckContracts.filter(c => c.status === 'in_progress' || c.status === 'pending');
-  const totalContractRevenue = truckContracts.filter(c => c.status === 'completed').reduce((sum, c) => sum + (c.net_revenue || 0), 0);
+  // Calculate total net revenue from completed contracts (contract_amount - total_expenses)
+  const totalContractRevenue = truckContracts
+    .filter(c => c.status === 'completed')
+    .reduce((sum, c) => {
+      const contractAmount = c.contract_amount || 0;
+      const totalExpenses = c.total_expenses || 0;
+      const netRev = c.net_revenue !== undefined ? c.net_revenue : (contractAmount - totalExpenses);
+      return sum + netRev;
+    }, 0);
 
   // Upcoming and overdue maintenance
   const upcomingMaintenance = maintenanceRecords.filter(m => 
