@@ -28,6 +28,7 @@ import HRAnalytics from './pages/HRAnalytics';
 import Reports from './pages/Reports';
 import Documents from './pages/Documents';
 import UserManagement from './pages/UserManagement';
+import InventoryFix from './pages/InventoryFix';
 import __Layout from './Layout.jsx';
 
 
@@ -62,6 +63,7 @@ export const PAGES = {
     "Reports": Reports,
     "Documents": Documents,
     "UserManagement": UserManagement,
+    "InventoryFix": InventoryFix,
 }
 
 export const pagesConfig = {
