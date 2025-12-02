@@ -173,18 +173,18 @@ Deno.serve(async (req) => {
     // Get form config or use general
     const config = formConfigs[formType] || formConfigs.expense_general;
 
-    // Form Title Bar
+    // Form Title Bar - compact
     doc.setFillColor(248, 250, 252);
-    doc.rect(0, yPos - 5, pageWidth, 15, 'F');
+    doc.rect(0, yPos - 5, pageWidth, 12, 'F');
     doc.setDrawColor(226, 232, 240);
-    doc.line(0, yPos + 10, pageWidth, yPos + 10);
+    doc.line(0, yPos + 7, pageWidth, yPos + 7);
 
     doc.setTextColor(30, 41, 59);
-    doc.setFontSize(14);
+    doc.setFontSize(12);
     doc.setFont('helvetica', 'bold');
-    doc.text(config.title, margin, yPos + 5);
+    doc.text(config.title, margin, yPos + 3);
 
-    yPos += 20;
+    yPos += 14;
 
     // Helper function to draw field - compact version
     const drawField = (label, x, width, height = 10) => {
