@@ -226,7 +226,7 @@ export default function BatchStockAllocation({
                       : `${remainingToAllocate} units remaining`}
                 </span>
               </div>
-              <span className="font-semibold">{totalAllocated} / {batch.quantity}</span>
+              <span className="font-semibold">{totalAllocated} / {batch.quantity - alreadyAllocated}</span>
             </div>
           </div>
 
