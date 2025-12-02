@@ -38,14 +38,38 @@ export default function NotificationCenter({ orgId, currentEmployee }) {
   const queryClient = useQueryClient();
   const [open, setOpen] = useState(false);
 
-  const { data: notifications = [] } = useQuery({
-    queryKey: ['notifications', currentEmployee?.id],
+  // Fetch notifications - try by employee ID first, fall back to email
+  const { data: notificationsByEmployee = [] } = useQuery({
+    queryKey: ['notifications', 'employee', currentEmployee?.id],
     queryFn: () => base44.entities.Notification.filter({ 
       recipient_id: currentEmployee?.id 
     }, '-created_date', 50),
     enabled: !!currentEmployee?.id,
-    refetchInterval: 30000, // Poll every 30 seconds
+    refetchInterval: 30000,
   });
+
+  const { data: notificationsByEmail = [] } = useQuery({
+    queryKey: ['notifications', 'email', currentEmployee?.user_email],
+    queryFn: () => base44.entities.Notification.filter({ 
+      recipient_email: currentEmployee?.user_email 
+    }, '-created_date', 50),
+    enabled: !!currentEmployee?.user_email,
+    refetchInterval: 30000,
+  });
+
+  // Combine and deduplicate notifications
+  const notifications = React.useMemo(() => {
+    const allNotifications = [...notificationsByEmployee, ...notificationsByEmail];
+    const uniqueIds = new Set();
+    return allNotifications
+      .filter(n => {
+        if (uniqueIds.has(n.id)) return false;
+        uniqueIds.add(n.id);
+        return true;
+      })
+      .sort((a, b) => new Date(b.created_date) - new Date(a.created_date))
+      .slice(0, 50);
+  }, [notificationsByEmployee, notificationsByEmail]);
 
   const unreadCount = notifications.filter(n => !n.is_read).length;
 
