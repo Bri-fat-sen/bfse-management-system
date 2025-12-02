@@ -194,8 +194,13 @@ export default function TruckContractDialog({
     }
   };
 
-  const totalExpenses = expenses.reduce((sum, exp) => sum + (parseFloat(exp.amount) || 0), 0);
-  const netRevenue = (parseFloat(formData.contract_amount) || 0) - totalExpenses;
+  // Calculate totals - ensure we parse all amounts properly
+  const totalExpenses = expenses.reduce((sum, exp) => {
+    const amount = typeof exp.amount === 'number' ? exp.amount : parseFloat(exp.amount) || 0;
+    return sum + amount;
+  }, 0);
+  const contractAmount = parseFloat(formData.contract_amount) || 0;
+  const netRevenue = contractAmount - totalExpenses;
 
   const isPending = createMutation.isPending || updateMutation.isPending || deleteMutation.isPending;
 
