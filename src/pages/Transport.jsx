@@ -154,7 +154,7 @@ export default function Transport() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['vehicles'] });
       setShowVehicleDialog(false);
-      toast({ title: "Vehicle added successfully" });
+      toast.success("Vehicle added successfully");
     },
   });
 
