@@ -122,13 +122,19 @@ export default function BatchStockAllocation({
         stock_quantity: newTotalStock
       });
 
-      // Update batch status if fully allocated
-      if (remainingToAllocate === 0 || totalAllocated === batch.quantity) {
-        await base44.entities.InventoryBatch.update(batch.id, {
-          status: 'active',
-          notes: `${batch.notes || ''} | Stock allocated on ${new Date().toLocaleDateString()}`
-        });
+      // Update batch allocated_quantity and status
+      const newAllocatedQty = (batch.allocated_quantity || 0) + totalAllocated;
+      const batchUpdate = {
+        allocated_quantity: newAllocatedQty,
+        notes: `${batch.notes || ''} | ${totalAllocated} units allocated on ${new Date().toLocaleDateString()}`
+      };
+      
+      // Mark as depleted if fully allocated
+      if (newAllocatedQty >= batch.quantity) {
+        batchUpdate.status = 'depleted';
       }
+      
+      await base44.entities.InventoryBatch.update(batch.id, batchUpdate);
 
       return { allocated: totalAllocated };
     },
