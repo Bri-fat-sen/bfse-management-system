@@ -701,21 +701,11 @@ export function downloadUnifiedPDF(html, filename = 'document') {
   if (printWindow) {
     printWindow.document.write(html);
     printWindow.document.close();
-    printWindow.onload = () => {
-      setTimeout(() => {
-        printWindow.print();
-      }, 300);
-    };
+    printWindow.document.title = `${filename}.pdf`;
+    setTimeout(() => {
+      printWindow.print();
+    }, 500);
   } else {
-    // Fallback: download as HTML
-    const blob = new Blob([html], { type: 'text/html' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = `${filename}.html`;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    URL.revokeObjectURL(url);
+    alert('Please allow popups to download the document');
   }
 }

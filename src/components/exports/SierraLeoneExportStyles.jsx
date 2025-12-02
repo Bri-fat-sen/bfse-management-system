@@ -1,16 +1,19 @@
-// Modern Export Styles for PDF/Print exports - Uses unified receipt-style design
-import { getUnifiedPDFStyles } from "./UnifiedPDFStyles";
+// Modern Export Styles for PDF/Print exports
+// Now uses unified receipt-style design
+import { getUnifiedPDFStyles, getUnifiedHeader, getUnifiedFooter } from "./UnifiedPDFStyles";
 
-export const getSierraLeoneStyles = (organisation = {}) => `
-  ${getUnifiedPDFStyles(organisation, 'report')}
+export const getSierraLeoneStyles = (organisation) => getUnifiedPDFStyles(organisation, 'report');
+
+// Legacy styles kept for backwards compatibility
+export const getLegacySierraLeoneStyles = () => `
   @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap');
   
   :root {
     --primary: #0f172a;
     --primary-light: #1e293b;
-    --accent: ${organisation.secondary_color || '#0072C6'};
+    --accent: #3b82f6;
     --accent-light: #60a5fa;
-    --success: ${organisation.primary_color || '#1EB053'};
+    --success: #10b981;
     --warning: #f59e0b;
     --danger: #ef4444;
     --gray-50: #f8fafc;
@@ -23,8 +26,8 @@ export const getSierraLeoneStyles = (organisation = {}) => `
     --gray-700: #334155;
     --gray-800: #1e293b;
     --gray-900: #0f172a;
-    --sl-green: ${organisation.primary_color || '#1EB053'};
-    --sl-blue: ${organisation.secondary_color || '#0072C6'};
+    --sl-green: #10b981;
+    --sl-blue: #3b82f6;
   }
   
   * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -47,20 +50,11 @@ export const getSierraLeoneStyles = (organisation = {}) => `
     box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.1);
   }
   
-  /* Flag Stripe - Receipt Style */
-  .flag-stripe {
-    height: 6px;
-    display: flex;
-  }
-  .flag-stripe .primary { flex: 1; background: var(--sl-green); }
-  .flag-stripe .white { flex: 1; background: #fff; border-top: 1px solid #e5e5e5; border-bottom: 1px solid #e5e5e5; }
-  .flag-stripe .secondary { flex: 1; background: var(--sl-blue); }
-
-  /* Modern Header - Gradient Style */
+  /* Modern Header */
   .header {
-    background: linear-gradient(135deg, var(--sl-green) 0%, var(--sl-blue) 100%);
+    background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
     color: white;
-    padding: 32px 48px;
+    padding: 40px 48px;
     position: relative;
     overflow: hidden;
   }
@@ -71,11 +65,8 @@ export const getSierraLeoneStyles = (organisation = {}) => `
     top: 0;
     left: 0;
     right: 0;
-    bottom: 0;
-    opacity: 0.05;
-    background-image: 
-      radial-gradient(circle at 20% 80%, rgba(255,255,255,0.4) 0%, transparent 50%),
-      radial-gradient(circle at 80% 20%, rgba(255,255,255,0.4) 0%, transparent 50%);
+    height: 4px;
+    background: linear-gradient(90deg, var(--sl-green), var(--sl-blue));
   }
   
   .header::after {
@@ -543,14 +534,12 @@ export const generateExportHTML = ({
   notes = null,
   footer = true
 }) => {
-  const styles = getSierraLeoneStyles(organisation);
+  const styles = getUnifiedPDFStyles(organisation, 'report');
   const generatedDate = new Date().toLocaleString('en-GB', { 
     day: 'numeric', month: 'long', year: 'numeric', 
     hour: '2-digit', minute: '2-digit' 
   });
   const reportId = `RPT-${Date.now().toString(36).toUpperCase()}`;
-
-  const orgInitials = (organisation?.name || 'ORG').split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase();
 
   return `
     <!DOCTYPE html>
@@ -563,70 +552,39 @@ export const generateExportHTML = ({
       </head>
       <body>
         <div class="document">
-          <div class="flag-stripe">
-            <div class="primary"></div>
-            <div class="white"></div>
-            <div class="secondary"></div>
-          </div>
-          <div class="header">
-            <div style="position: relative; z-index: 1; display: flex; align-items: center; justify-content: space-between;">
-              <div style="display: flex; align-items: center; gap: 16px;">
-                <div class="org-logo">
-                  ${organisation?.logo_url 
-                    ? `<img src="${organisation.logo_url}" alt="${organisation.name}">` 
-                    : `<span>${orgInitials}</span>`
-                  }
-                </div>
-                <div>
-                  <div class="org-name">${organisation?.name || 'Organisation'}</div>
-                  <div class="tagline">${organisation?.address || ''} ${organisation?.city ? '• ' + organisation.city : ''}, ${organisation?.country || 'Sierra Leone'}</div>
-                </div>
-              </div>
-              <div style="text-align: right;">
-                <div style="font-size: 11px; text-transform: uppercase; letter-spacing: 2px; opacity: 0.8;">REPORT</div>
-                <div style="font-size: 13px; opacity: 0.7; margin-top: 4px;">${dateRange || generatedDate}</div>
-              </div>
-            </div>
-          </div>
-          
-          <div class="report-title">
-            <h1>📊 ${title}</h1>
-            <div class="date">
-              Generated: ${new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}
-            </div>
-          </div>
+          ${getUnifiedHeader(organisation, title, reportId, dateRange || generatedDate, 'report')}
           
           <div class="content">
             ${summary.length > 0 ? `
-              <div class="summary-grid">
+              <div class="summary-cards">
                 ${summary.map((item, idx) => `
                   <div class="summary-card ${item.highlight ? `highlight-${item.highlight}` : ''}">
-                    <div class="summary-label">${item.label}</div>
-                    <div class="summary-value">${item.value}</div>
-                    ${item.subtitle ? `<div class="summary-subtitle">${item.subtitle}</div>` : ''}
+                    <div class="label">${item.label}</div>
+                    <div class="value">${item.value}</div>
+                    ${item.subtitle ? `<div class="subtext">${item.subtitle}</div>` : ''}
                   </div>
                 `).join('')}
               </div>
             ` : ''}
             
             ${categoryBreakdown ? `
-              <div class="section-title">Category Breakdown</div>
-              <div class="category-breakdown">
+              <div class="section-title"><div class="icon">📊</div>Category Breakdown</div>
+              <div class="breakdown-grid">
                 ${Object.entries(categoryBreakdown).map(([cat, amount]) => `
-                  <div class="category-tag">
-                    <span>${cat.replace(/_/g, ' ')}</span>
-                    <strong>SLE ${amount.toLocaleString()}</strong>
+                  <div class="breakdown-item">
+                    <span class="label">${cat.replace(/_/g, ' ')}</span>
+                    <span class="value">SLE ${amount.toLocaleString()}</span>
                   </div>
                 `).join('')}
               </div>
             ` : ''}
             
             ${columns.length > 0 && rows.length > 0 ? `
-              <div class="section-title">Detailed Records</div>
-              <table>
+              <div class="section-title"><div class="icon">📋</div>Detailed Records</div>
+              <table class="data-table">
                 <thead>
                   <tr>
-                    ${columns.map(col => `<th>${col}</th>`).join('')}
+                    ${columns.map((col, i) => `<th class="${i === columns.length - 1 ? 'amount' : ''}">${col}</th>`).join('')}
                   </tr>
                 </thead>
                 <tbody>
@@ -636,36 +594,25 @@ export const generateExportHTML = ({
                                    firstCell.toLowerCase().includes('net') ||
                                    firstCell.toLowerCase().includes('grand');
                     return `
-                      <tr class="${isTotal ? 'totals-row' : ''}">
+                      <tr class="${isTotal ? 'total-row' : ''}">
                         ${(Array.isArray(row) ? row : Object.values(row)).map((cell, cellIdx) => {
                           const colName = columns[cellIdx]?.toLowerCase() || '';
-                          const isAmount = colName.includes('amount') || 
-                                          colName.includes('value') ||
-                                          colName.includes('price') ||
-                                          colName.includes('pay') ||
-                                          colName.includes('revenue') ||
-                                          colName.includes('cost') ||
-                                          colName.includes('total');
+                          const isAmount = colName.includes('amount') || colName.includes('value') || colName.includes('price') || colName.includes('total') || colName.includes('cost');
                           const isStatus = colName.includes('status');
                           
-                          let statusClass = '';
+                          let badgeClass = '';
                           if (isStatus && cell) {
                             const cellStr = cell.toString().toLowerCase();
-                            if (['paid', 'approved', 'completed', 'active', 'in stock', 'success', 'present'].some(s => cellStr.includes(s))) {
-                              statusClass = 'success';
-                            } else if (['pending', 'low', 'warning', 'draft', 'scheduled'].some(s => cellStr.includes(s))) {
-                              statusClass = 'warning';
-                            } else if (['rejected', 'cancelled', 'out', 'critical', 'expired', 'failed', 'absent'].some(s => cellStr.includes(s))) {
-                              statusClass = 'danger';
-                            } else {
-                              statusClass = 'info';
-                            }
+                            if (['paid', 'approved', 'completed', 'active', 'success', 'present'].some(s => cellStr.includes(s))) badgeClass = 'success';
+                            else if (['pending', 'low', 'warning', 'draft'].some(s => cellStr.includes(s))) badgeClass = 'warning';
+                            else if (['rejected', 'cancelled', 'expired', 'failed', 'absent'].some(s => cellStr.includes(s))) badgeClass = 'danger';
+                            else badgeClass = 'info';
                           }
                           
                           const cellValue = cell ?? '-';
                           
                           return `<td class="${isAmount ? 'amount' : ''}">
-                            ${isStatus && cell ? `<span class="status-badge ${statusClass}">${cellValue}</span>` : cellValue}
+                            ${isStatus && cell ? `<span class="badge ${badgeClass}">${cellValue}</span>` : cellValue}
                           </td>`;
                         }).join('')}
                       </tr>
@@ -673,29 +620,17 @@ export const generateExportHTML = ({
                   }).join('')}
                 </tbody>
               </table>
-            ` : '<p style="text-align: center; color: var(--gray-400); padding: 48px; background: var(--gray-50); border-radius: 12px;">No data available for this report</p>'}
+            ` : '<p style="text-align: center; color: #94a3b8; padding: 48px; background: #f8fafc; border-radius: 12px;">No data available for this report</p>'}
             
             ${notes ? `
-              <div class="notes-section">
-                <div>⚠️</div>
-                <div>
-                  <div class="notes-title">Notes</div>
-                  <div>${notes}</div>
-                </div>
+              <div class="note-box">
+                <h4>Notes</h4>
+                <p>${notes}</p>
               </div>
             ` : ''}
           </div>
           
-          ${footer ? `
-            <div class="footer">
-              <div class="thanks">Thank you for your business!</div>
-              <div class="pride">Proudly serving ${organisation?.city || 'Sierra Leone'}</div>
-              <div class="sl-flag">🇸🇱</div>
-              <div class="generated-info">
-                ${organisation?.name || ''} ${organisation?.phone ? '• ' + organisation.phone : ''} ${organisation?.email ? '• ' + organisation.email : ''}
-              </div>
-            </div>
-          ` : ''}
+          ${footer ? getUnifiedFooter(organisation) : ''}
         </div>
       </body>
     </html>
@@ -712,15 +647,14 @@ export const printDocument = (html) => {
 };
 
 export const downloadHTML = (html, filename) => {
-  const blob = new Blob([html], { type: 'text/html' });
-  const url = URL.createObjectURL(blob);
-  const link = document.createElement('a');
-  link.href = url;
-  link.download = filename;
-  document.body.appendChild(link);
-  link.click();
-  document.body.removeChild(link);
-  URL.revokeObjectURL(url);
+  // Open print dialog for PDF save instead of HTML download
+  const pdfWindow = window.open('', '_blank', 'width=900,height=700');
+  if (pdfWindow) {
+    pdfWindow.document.write(html);
+    pdfWindow.document.close();
+    pdfWindow.document.title = filename.replace('.html', '.pdf');
+    setTimeout(() => pdfWindow.print(), 500);
+  }
 };
 
 export const exportToCSV = (columns, rows, filename, organisation = null) => {
