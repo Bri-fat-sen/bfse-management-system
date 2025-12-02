@@ -10,10 +10,7 @@ import {
   Calendar,
   X,
   Check,
-  ChevronRight,
-  Trash2,
-  Users,
-  MessageSquare
+  ChevronRight
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -24,9 +21,10 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
-import { format } from "date-fns";
+import { format, formatDistanceToNow } from "date-fns";
 import { Link } from "react-router-dom";
 import { createPageUrl } from "@/utils";
+import { toast } from "sonner";
 
 const notificationIcons = {
   low_stock: { icon: Package, color: "text-amber-500", bg: "bg-amber-100" },
@@ -35,9 +33,6 @@ const notificationIcons = {
   transport: { icon: Truck, color: "text-purple-500", bg: "bg-purple-100" },
   alert: { icon: AlertTriangle, color: "text-red-500", bg: "bg-red-100" },
   system: { icon: Bell, color: "text-gray-500", bg: "bg-gray-100" },
-  hr: { icon: Users, color: "text-indigo-500", bg: "bg-indigo-100" },
-  approval: { icon: Check, color: "text-emerald-500", bg: "bg-emerald-100" },
-  chat: { icon: MessageSquare, color: "text-cyan-500", bg: "bg-cyan-100" },
 };
 
 export default function NotificationCenter({ orgId, currentEmployee }) {
@@ -103,18 +98,6 @@ export default function NotificationCenter({ orgId, currentEmployee }) {
     mutationFn: (id) => base44.entities.Notification.delete(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['notifications'] });
-    }
-  });
-
-  const clearAllMutation = useMutation({
-    mutationFn: async () => {
-      await Promise.all(notifications.map(n => 
-        base44.entities.Notification.delete(n.id)
-      ));
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['notifications'] });
-      toast.success("All notifications cleared");
     }
   });
 
@@ -227,27 +210,42 @@ export default function NotificationCenter({ orgId, currentEmployee }) {
                             </p>
                             <p className="text-sm text-gray-500 mt-0.5">{notification.message}</p>
                           </div>
-                          {!notification.is_read && (
+                          <div className="flex items-center gap-1 flex-shrink-0">
+                            {!notification.is_read && (
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-6 w-6"
+                                onClick={() => markAsReadMutation.mutate(notification.id)}
+                                title="Mark as read"
+                              >
+                                <Check className="w-3 h-3" />
+                              </Button>
+                            )}
                             <Button
                               variant="ghost"
                               size="icon"
-                              className="h-6 w-6 flex-shrink-0"
-                              onClick={() => markAsReadMutation.mutate(notification.id)}
+                              className="h-6 w-6 text-gray-400 hover:text-red-500"
+                              onClick={() => deleteNotificationMutation.mutate(notification.id)}
+                              title="Delete"
                             >
                               <X className="w-3 h-3" />
                             </Button>
-                          )}
+                          </div>
                         </div>
-                        <div className="flex items-center gap-2 mt-2">
+                        <div className="flex items-center gap-2 mt-2 flex-wrap">
                           <span className={`w-2 h-2 rounded-full ${getPriorityColor(notification.priority)}`} />
                           <span className="text-xs text-gray-400">
-                            {format(new Date(notification.created_date), 'MMM d, h:mm a')}
+                            {formatDistanceToNow(new Date(notification.created_date), { addSuffix: true })}
                           </span>
                           {notification.link && (
                             <Link 
                               to={notification.link}
                               className="text-xs text-[#0072C6] hover:underline flex items-center gap-1"
-                              onClick={() => setOpen(false)}
+                              onClick={() => {
+                                markAsReadMutation.mutate(notification.id);
+                                setOpen(false);
+                              }}
                             >
                               View <ChevronRight className="w-3 h-3" />
                             </Link>
