@@ -940,10 +940,10 @@ const generateFormHTML = (formType, org) => {
 
 export default function PrintableFormsDownload({ open, onOpenChange, organisation }) {
   const [selectedCategory, setSelectedCategory] = useState('all');
-  const [downloadingForm, setDownloadingForm] = useState(null);
+  const [loading, setLoading] = useState(null);
 
   const handleDownload = async (formId) => {
-    setDownloadingForm(formId);
+    setLoading(formId);
     try {
       const response = await base44.functions.invoke('generateFormPDF', {
         formType: formId,
@@ -977,7 +977,7 @@ export default function PrintableFormsDownload({ open, onOpenChange, organisatio
       document.body.removeChild(link);
       URL.revokeObjectURL(url);
     } finally {
-      setDownloadingForm(null);
+      setLoading(null);
     }
   };
 
