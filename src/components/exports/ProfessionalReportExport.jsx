@@ -1,7 +1,8 @@
 import React from "react";
 import { format } from "date-fns";
+import { generateUnifiedPDF, getUnifiedPDFStyles, getUnifiedHeader, getUnifiedFooter, generateSummaryCards, generateTable } from "./UnifiedPDFStyles";
 
-// Modern Professional Report Generator
+// Modern Professional Report Generator - Uses unified receipt-style design
 export const generateProfessionalReport = ({
   title,
   subtitle,
@@ -28,6 +29,9 @@ export const generateProfessionalReport = ({
   const orgTIN = org.tin_number || '';
   const orgLogo = org.logo_url || '';
 
+  // Use unified PDF styles for consistent receipt-like design
+  const unifiedStyles = getUnifiedPDFStyles(organisation, 'report');
+
   return `
     <!DOCTYPE html>
     <html lang="en">
@@ -40,9 +44,9 @@ export const generateProfessionalReport = ({
           :root {
             --primary: #0f172a;
             --primary-light: #1e293b;
-            --accent: #3b82f6;
+            --accent: ${org.secondary_color || '#0072C6'};
             --accent-light: #60a5fa;
-            --success: #10b981;
+            --success: ${org.primary_color || '#1EB053'};
             --warning: #f59e0b;
             --danger: #ef4444;
             --gray-50: #f8fafc;
@@ -55,8 +59,8 @@ export const generateProfessionalReport = ({
             --gray-700: #334155;
             --gray-800: #1e293b;
             --gray-900: #0f172a;
-            --sl-green: #10b981;
-            --sl-blue: #3b82f6;
+            --sl-green: ${org.primary_color || '#1EB053'};
+            --sl-blue: ${org.secondary_color || '#0072C6'};
           }
           
           * { margin: 0; padding: 0; box-sizing: border-box; }
