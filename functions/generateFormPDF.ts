@@ -198,7 +198,7 @@ Deno.serve(async (req) => {
       doc.roundedRect(x, yPos + 2, width - 4, height, 2, 2, 'FD');
     };
 
-    // Draw fields - more compact spacing
+    // Draw fields - compact spacing
     if (config.fields) {
       config.fields.forEach(fieldRow => {
         let xPos = margin;
@@ -209,34 +209,34 @@ Deno.serve(async (req) => {
           drawField(field.label, xPos, fieldWidth);
           xPos += fieldWidth;
         });
-        yPos += 18;
+        yPos += 15;
       });
     }
 
     // Draw checkboxes - compact single row
     if (config.checkboxes) {
-      yPos += 3;
+      yPos += 2;
       doc.setFillColor(248, 250, 252);
-      doc.roundedRect(margin, yPos, pageWidth - (margin * 2), 12, 2, 2, 'F');
+      doc.roundedRect(margin, yPos, pageWidth - (margin * 2), 10, 1, 1, 'F');
       
-      let xPos = margin + 4;
+      let xPos = margin + 3;
       config.checkboxes.forEach((checkbox, i) => {
         doc.setDrawColor(203, 213, 225);
         doc.setFillColor(255, 255, 255);
-        doc.rect(xPos, yPos + 3.5, 4, 4, 'FD');
+        doc.rect(xPos, yPos + 3, 3.5, 3.5, 'FD');
         
-        doc.setFontSize(7);
+        doc.setFontSize(6);
         doc.setTextColor(71, 85, 105);
         doc.setFont('helvetica', 'normal');
-        doc.text(checkbox, xPos + 5.5, yPos + 7);
+        doc.text(checkbox, xPos + 5, yPos + 6);
         
-        xPos += doc.getTextWidth(checkbox) + 12;
-        if (xPos > pageWidth - margin - 25 && i < config.checkboxes.length - 1) {
-          xPos = margin + 4;
-          yPos += 8;
+        xPos += doc.getTextWidth(checkbox) + 10;
+        if (xPos > pageWidth - margin - 20 && i < config.checkboxes.length - 1) {
+          xPos = margin + 3;
+          yPos += 6;
         }
       });
-      yPos += 15;
+      yPos += 12;
     }
 
     // Helper to draw a table - compact version
