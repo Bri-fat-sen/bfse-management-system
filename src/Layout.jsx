@@ -34,7 +34,8 @@ import {
   Calendar,
   Lock,
   AlertTriangle,
-  FileText
+  FileText,
+  Github
 } from "lucide-react";
 import PinLockScreen from "@/components/auth/PinLockScreen";
 import SetPinDialog from "@/components/auth/SetPinDialog";
@@ -103,13 +104,13 @@ const menuSections = [
       { name: "Analytics & Reports", icon: BarChart3, page: "Analytics", module: "dashboard" },
       { name: "Finance", icon: DollarSign, page: "Finance", module: "finance" },
       { name: "Activity Log", icon: Activity, page: "ActivityLog", module: "activity_log" },
-      { name: "GitHub", icon: Activity, page: "GitHub", module: "dashboard" },
     ]
   },
   {
     title: "Admin",
-    items: [
-      { name: "User Management", icon: Users, page: "UserManagement", module: "settings", adminOnly: true },
+          items: [
+            { name: "GitHub", icon: Github, page: "GitHub", module: "settings", adminOnly: true },
+            { name: "User Management", icon: Users, page: "UserManagement", module: "settings", adminOnly: true },
       { name: "Locations", icon: MapPin, page: "Locations", module: "settings", adminOnly: true },
       { name: "Stock Audit", icon: Package, page: "StockAudit", module: "inventory", adminOnly: true },
       { name: "Organisation", icon: Building2, page: "OrganisationManage", module: "settings", adminOnly: true },
