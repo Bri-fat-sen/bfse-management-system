@@ -191,18 +191,42 @@ export const printProfessionalReport = (html, filename = 'report') => {
 };
 
 export const downloadProfessionalReportAsPDF = async (reportConfig, filename = 'report') => {
+  // Handle both string HTML and config object
+  if (typeof reportConfig === 'string') {
+    // Legacy HTML fallback
+    const pdfWindow = window.open('', '_blank', 'width=900,height=800');
+    if (pdfWindow) {
+      pdfWindow.document.write(reportConfig);
+      pdfWindow.document.close();
+      pdfWindow.document.title = filename;
+      setTimeout(() => pdfWindow.print(), 500);
+    }
+    return;
+  }
+
   try {
-    // Try to generate real PDF via backend
     const response = await base44.functions.invoke('generateDocumentPDF', {
       documentType: 'report',
       data: {
-        title: reportConfig.title,
+        title: reportConfig.title || 'Report',
         reportId: `RPT-${Date.now().toString(36).toUpperCase()}`,
-        dateRange: reportConfig.dateRange,
-        summaryCards: reportConfig.summaryCards,
-        sections: reportConfig.sections
+        dateRange: reportConfig.dateRange || '',
+        summaryCards: (reportConfig.summaryCards || []).map(card => ({
+          label: card.label || '',
+          value: String(card.value ?? '-'),
+          highlight: card.highlight || ''
+        })),
+        sections: (reportConfig.sections || []).map(section => ({
+          title: section.title || '',
+          table: section.table ? {
+            columns: section.table.columns || [],
+            rows: (section.table.rows || []).map(row => 
+              Array.isArray(row) ? row : Object.values(row)
+            )
+          } : null
+        })).filter(s => s.title || s.table)
       },
-      organisation: reportConfig.organisation
+      organisation: reportConfig.organisation || {}
     });
     
     const blob = new Blob([response.data], { type: 'application/pdf' });
@@ -217,7 +241,7 @@ export const downloadProfessionalReportAsPDF = async (reportConfig, filename = '
   } catch (error) {
     console.error('PDF generation error:', error);
     // Fallback to print dialog
-    const html = typeof reportConfig === 'string' ? reportConfig : generateProfessionalReport(reportConfig);
+    const html = generateProfessionalReport(reportConfig);
     const pdfWindow = window.open('', '_blank', 'width=900,height=800');
     
     if (!pdfWindow) {
