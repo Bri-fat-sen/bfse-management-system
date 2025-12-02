@@ -284,55 +284,18 @@ export default function Inventory() {
   const activeAlerts = stockAlerts.filter(a => a.status === 'active');
   const categoryList = categories.length > 0 ? categories.map(c => c.name) : DEFAULT_CATEGORIES;
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    const formData = new FormData(e.target);
-    const data = {
+  const handleProductSubmit = (data) => {
+    const productData = {
       organisation_id: orgId,
-      name: formData.get('name'),
-      sku: formData.get('sku'),
-      category: formData.get('category'),
-      description: formData.get('description'),
-      unit_price: parseFloat(formData.get('unit_price')) || 0,
-      cost_price: parseFloat(formData.get('cost_price')) || 0,
-      wholesale_price: parseFloat(formData.get('wholesale_price')) || 0,
-      stock_quantity: parseInt(formData.get('stock_quantity')) || 0,
-      low_stock_threshold: parseInt(formData.get('low_stock_threshold')) || 10,
-      reorder_point: parseInt(formData.get('reorder_point')) || 10,
-      reorder_quantity: parseInt(formData.get('reorder_quantity')) || 50,
-      lead_time_days: parseInt(formData.get('lead_time_days')) || 7,
-      is_serialized: formData.get('is_serialized') === 'on',
-      track_batches: formData.get('track_batches') === 'on',
-      unit: formData.get('unit'),
-      location_ids: selectedLocations,
-      is_active: true,
+      ...data
     };
 
     if (editingProduct) {
-      updateProductMutation.mutate({ id: editingProduct.id, data });
+      updateProductMutation.mutate({ id: editingProduct.id, data: productData });
     } else {
-      createProductMutation.mutate(data);
+      createProductMutation.mutate(productData);
     }
   };
-
-  const toggleLocation = (locationId) => {
-    setSelectedLocations(prev => {
-      if (prev.includes(locationId)) {
-        return prev.filter(id => id !== locationId);
-      } else {
-        return [...prev, locationId];
-      }
-    });
-  };
-
-  // Reset selected locations when dialog opens or editingProduct changes
-  useEffect(() => {
-    if (showProductDialog) {
-      setSelectedLocations(editingProduct?.location_ids || []);
-    } else {
-      setSelectedLocations([]);
-    }
-  }, [showProductDialog, editingProduct]);
 
   if (!user) {
     return <LoadingSpinner message="Loading Inventory..." subtitle="Fetching your products and stock" fullScreen={true} />;
