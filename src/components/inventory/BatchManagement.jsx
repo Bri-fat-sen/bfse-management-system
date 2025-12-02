@@ -37,6 +37,7 @@ import {
 } from "lucide-react";
 import EmptyState from "@/components/ui/EmptyState";
 import BatchStockAllocation from "./BatchStockAllocation";
+import { logInventoryAudit } from "./inventoryAuditHelper";
 
 const STATUS_COLORS = {
   active: "bg-green-100 text-green-700",
@@ -63,7 +64,23 @@ export default function BatchManagement({ products = [], warehouses = [], vehicl
   });
 
   const createMutation = useMutation({
-    mutationFn: (data) => base44.entities.InventoryBatch.create(data),
+    mutationFn: async (data) => {
+      const result = await base44.entities.InventoryBatch.create(data);
+      await logInventoryAudit({
+        orgId,
+        actionType: 'batch_created',
+        entityType: 'batch',
+        entityId: result.id,
+        entityName: data.product_name,
+        performedById: currentEmployee?.id,
+        performedByName: currentEmployee?.full_name,
+        batchNumber: data.batch_number,
+        quantityChanged: data.quantity,
+        notes: `Created batch ${data.batch_number} with ${data.quantity} units`,
+        newValues: { quantity: data.quantity, status: data.status }
+      });
+      return result;
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['inventoryBatches'] });
       setShowBatchDialog(false);
@@ -72,7 +89,22 @@ export default function BatchManagement({ products = [], warehouses = [], vehicl
   });
 
   const updateMutation = useMutation({
-    mutationFn: ({ id, data }) => base44.entities.InventoryBatch.update(id, data),
+    mutationFn: async ({ id, data, previousData }) => {
+      await base44.entities.InventoryBatch.update(id, data);
+      await logInventoryAudit({
+        orgId,
+        actionType: 'batch_updated',
+        entityType: 'batch',
+        entityId: id,
+        entityName: data.product_name,
+        performedById: currentEmployee?.id,
+        performedByName: currentEmployee?.full_name,
+        batchNumber: data.batch_number,
+        previousValues: previousData,
+        newValues: data,
+        notes: `Updated batch ${data.batch_number}`
+      });
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['inventoryBatches'] });
       setShowBatchDialog(false);
@@ -102,6 +134,21 @@ export default function BatchManagement({ products = [], warehouses = [], vehicl
       if (batchMovements.length > 0) {
         await Promise.all(batchMovements.map(sm => base44.entities.StockMovement.delete(sm.id)));
       }
+      
+      // Log audit before deletion
+      await logInventoryAudit({
+        orgId,
+        actionType: 'batch_deleted',
+        entityType: 'batch',
+        entityId: batchId,
+        entityName: batch?.product_name,
+        performedById: currentEmployee?.id,
+        performedByName: currentEmployee?.full_name,
+        batchNumber: batch?.batch_number,
+        quantityChanged: -(batch?.quantity || 0),
+        notes: `Deleted batch ${batch?.batch_number} with ${batch?.quantity} units. Also deleted ${batchAllocations.length} allocations and ${batchMovements.length} movements.`,
+        previousValues: { quantity: batch?.quantity, allocated: batch?.allocated_quantity }
+      });
       
       // Then delete the batch itself
       await base44.entities.InventoryBatch.delete(batchId);
@@ -161,7 +208,11 @@ export default function BatchManagement({ products = [], warehouses = [], vehicl
     };
 
     if (editingBatch) {
-      updateMutation.mutate({ id: editingBatch.id, data });
+      updateMutation.mutate({ 
+        id: editingBatch.id, 
+        data,
+        previousData: { quantity: editingBatch.quantity, status: editingBatch.status }
+      });
     } else {
       createMutation.mutate(data);
     }
