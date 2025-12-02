@@ -103,6 +103,7 @@ const menuSections = [
       { name: "Analytics & Reports", icon: BarChart3, page: "Analytics", module: "dashboard" },
       { name: "Finance", icon: DollarSign, page: "Finance", module: "finance" },
       { name: "Activity Log", icon: Activity, page: "ActivityLog", module: "activity_log" },
+      { name: "GitHub", icon: Activity, page: "GitHub", module: "dashboard" },
     ]
   },
   {
