@@ -176,6 +176,7 @@ export default function HR() {
       queryClient.invalidateQueries({ queryKey: ['employees'] });
       setShowEmployeeDialog(false);
       setEditingEmployee(null);
+      toast.success("Employee updated successfully");
     },
   });
 
@@ -198,6 +199,10 @@ export default function HR() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['payrolls'] });
+      toast.success("Payroll deleted successfully");
+    },
+    onError: () => {
+      toast.error("Failed to delete payroll");
     },
   });
 
@@ -221,6 +226,10 @@ export default function HR() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['payrolls'] });
+      toast.success("Payroll reversed successfully");
+    },
+    onError: () => {
+      toast.error("Failed to reverse payroll");
     },
   });
 
@@ -231,10 +240,11 @@ export default function HR() {
     try {
       await base44.entities.Employee.delete(employeeToDelete.id);
       queryClient.invalidateQueries({ queryKey: ['employees'] });
+      toast.success(`${employeeToDelete.full_name} has been removed`);
       setShowDeleteDialog(false);
       setEmployeeToDelete(null);
     } catch (error) {
-      console.error("Failed to delete employee:", error);
+      toast.error("Failed to delete employee: " + error.message);
     } finally {
       setIsDeleting(false);
     }
@@ -362,23 +372,23 @@ export default function HR() {
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="bg-gray-100 p-1 flex-wrap">
-          <TabsTrigger value="employees" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#1EB053] data-[state=active]:to-[#0072C6] data-[state=active]:text-white">
+        <TabsList className="bg-gray-100 p-1 flex flex-wrap h-auto gap-1">
+          <TabsTrigger value="employees" className="text-xs sm:text-sm px-2 sm:px-3 data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#1EB053] data-[state=active]:to-[#0072C6] data-[state=active]:text-white">
             Employees
           </TabsTrigger>
-          <TabsTrigger value="attendance" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#1EB053] data-[state=active]:to-[#0072C6] data-[state=active]:text-white">
+          <TabsTrigger value="attendance" className="text-xs sm:text-sm px-2 sm:px-3 data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#1EB053] data-[state=active]:to-[#0072C6] data-[state=active]:text-white">
             Attendance
           </TabsTrigger>
-          <TabsTrigger value="payroll" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#1EB053] data-[state=active]:to-[#0072C6] data-[state=active]:text-white">
+          <TabsTrigger value="payroll" className="text-xs sm:text-sm px-2 sm:px-3 data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#1EB053] data-[state=active]:to-[#0072C6] data-[state=active]:text-white">
             Payroll
           </TabsTrigger>
-          <TabsTrigger value="leave" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#1EB053] data-[state=active]:to-[#0072C6] data-[state=active]:text-white">
-            <Calendar className="w-4 h-4 mr-1" />
-            Leave
+          <TabsTrigger value="leave" className="text-xs sm:text-sm px-2 sm:px-3 data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#1EB053] data-[state=active]:to-[#0072C6] data-[state=active]:text-white">
+            <Calendar className="w-3 h-3 sm:w-4 sm:h-4 sm:mr-1" />
+            <span className="hidden sm:inline">Leave</span>
           </TabsTrigger>
-          <TabsTrigger value="performance" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#1EB053] data-[state=active]:to-[#0072C6] data-[state=active]:text-white">
-            <Star className="w-4 h-4 mr-1" />
-            Performance
+          <TabsTrigger value="performance" className="text-xs sm:text-sm px-2 sm:px-3 data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#1EB053] data-[state=active]:to-[#0072C6] data-[state=active]:text-white">
+            <Star className="w-3 h-3 sm:w-4 sm:h-4 sm:mr-1" />
+            <span className="hidden sm:inline">Perf.</span>
           </TabsTrigger>
         </TabsList>
 
@@ -428,107 +438,110 @@ export default function HR() {
               description="Employees are created by Super Admin"
             />
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
               {filteredEmployees.map((emp) => (
                 <Card key={emp.id} className="hover:shadow-lg transition-shadow">
-                  <CardContent className="p-6">
-                    <div className="flex items-start justify-between mb-4">
-                      <div className="flex items-center gap-3">
-                        <Avatar className="w-12 h-12">
+                  <CardContent className="p-4 sm:p-6">
+                    <div className="flex items-start justify-between mb-3 sm:mb-4">
+                      <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+                        <Avatar className="w-10 h-10 sm:w-12 sm:h-12 flex-shrink-0">
                           <AvatarImage src={emp.profile_photo} />
-                          <AvatarFallback className="sl-gradient text-white">
+                          <AvatarFallback className="sl-gradient text-white text-sm">
                             {emp.full_name?.charAt(0) || 'E'}
                           </AvatarFallback>
                         </Avatar>
-                        <div>
-                          <h3 className="font-semibold">{emp.full_name}</h3>
-                          <p className="text-sm text-gray-500">{emp.employee_code}</p>
+                        <div className="min-w-0">
+                          <h3 className="font-semibold text-sm sm:text-base truncate">{emp.full_name}</h3>
+                          <p className="text-xs sm:text-sm text-gray-500 truncate">{emp.employee_code}</p>
                         </div>
                       </div>
-                      <Badge className={getStatusColor(emp.status)}>
+                      <Badge className={getStatusColor(emp.status) + " text-[10px] sm:text-xs flex-shrink-0"}>
                         {emp.status}
                       </Badge>
                     </div>
                     
-                    <div className="space-y-2 text-sm">
+                    <div className="space-y-1.5 sm:space-y-2 text-xs sm:text-sm">
                       <div className="flex items-center gap-2 text-gray-600">
-                        <Building2 className="w-4 h-4" />
-                        <span>{emp.department || 'No department'}</span>
+                        <Building2 className="w-3 h-3 sm:w-4 sm:h-4 flex-shrink-0" />
+                        <span className="truncate">{emp.department || 'No department'}</span>
                       </div>
                       <div className="flex items-center gap-2 text-gray-600">
-                        <Mail className="w-4 h-4" />
-                        <span>{emp.email || 'No email'}</span>
+                        <Mail className="w-3 h-3 sm:w-4 sm:h-4 flex-shrink-0" />
+                        <span className="truncate">{emp.email || 'No email'}</span>
                       </div>
                       <div className="flex items-center gap-2 text-gray-600">
-                        <Phone className="w-4 h-4" />
-                        <span>{emp.phone || 'No phone'}</span>
+                        <Phone className="w-3 h-3 sm:w-4 sm:h-4 flex-shrink-0" />
+                        <span className="truncate">{emp.phone || 'No phone'}</span>
                       </div>
                     </div>
 
-                    <div className="mt-4 pt-4 border-t flex items-center justify-between">
-                      <Badge variant="secondary">
+                    <div className="mt-3 sm:mt-4 pt-3 sm:pt-4 border-t flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
+                      <Badge variant="secondary" className="text-[10px] sm:text-xs truncate max-w-full">
                         {emp.role?.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
                       </Badge>
-                      <div className="flex items-center gap-1">
+                      <div className="flex items-center gap-1 flex-wrap">
                         {['super_admin', 'org_admin', 'hr_admin'].includes(currentEmployee?.role) && (
                           <Button
                             variant="ghost"
                             size="icon"
+                            className={`h-7 w-7 sm:h-8 sm:w-8 ${!emp.pin_hash ? "text-amber-600" : ""}`}
                             onClick={() => {
                               setSelectedEmployeeForPin(emp);
                               setShowSetPinDialog(true);
                             }}
                             title={emp.pin_hash ? "Change PIN" : "Set PIN"}
-                            className={!emp.pin_hash ? "text-amber-600" : ""}
                           >
-                            <Lock className="w-4 h-4" />
+                            <Lock className="w-3 h-3 sm:w-4 sm:h-4" />
                           </Button>
                         )}
                         <Button
                           variant="ghost"
                           size="icon"
+                          className="h-7 w-7 sm:h-8 sm:w-8"
                           onClick={() => {
                             setSelectedEmployeeForDocs(emp);
                             setShowDocumentsDialog(true);
                           }}
                           title="Documents"
                         >
-                          <FolderOpen className="w-4 h-4" />
+                          <FolderOpen className="w-3 h-3 sm:w-4 sm:h-4" />
                         </Button>
                         <Button
                           variant="ghost"
                           size="icon"
+                          className="h-7 w-7 sm:h-8 sm:w-8"
                           onClick={() => {
                             setSelectedEmployeeForReview(emp);
                             setShowPerformanceDialog(true);
                           }}
                           title="Performance Review"
                         >
-                          <Star className="w-4 h-4" />
+                          <Star className="w-3 h-3 sm:w-4 sm:h-4" />
                         </Button>
                         <Button
                           variant="ghost"
                           size="sm"
+                          className="h-7 text-xs sm:h-8 sm:text-sm"
                           onClick={() => {
                             setEditingEmployee(emp);
                             setShowEmployeeDialog(true);
                           }}
                         >
-                          <Edit className="w-4 h-4 mr-1" />
-                          Edit
+                          <Edit className="w-3 h-3 sm:w-4 sm:h-4 sm:mr-1" />
+                          <span className="hidden sm:inline">Edit</span>
                         </Button>
                         {['super_admin', 'org_admin'].includes(currentEmployee?.role) && emp.id !== currentEmployee?.id && (
                           <Button
                             variant="ghost"
                             size="icon"
+                            className="h-7 w-7 sm:h-8 sm:w-8 text-red-500 hover:text-red-700 hover:bg-red-50"
                             onClick={() => {
                               setEmployeeToDelete(emp);
                               setShowDeleteDialog(true);
                             }}
-                            className="text-red-500 hover:text-red-700 hover:bg-red-50"
                             title="Delete Employee"
                           >
-                            <Trash2 className="w-4 h-4" />
+                            <Trash2 className="w-3 h-3 sm:w-4 sm:h-4" />
                           </Button>
                         )}
                       </div>
@@ -585,24 +598,25 @@ export default function HR() {
 
         <TabsContent value="payroll" className="mt-6">
           {/* Payroll Sub-Navigation */}
-          <div className="flex flex-wrap gap-2 mb-6">
+          <div className="flex flex-wrap gap-1 sm:gap-2 mb-6">
             {[
-              { id: 'records', label: 'Payroll Records', icon: FileText },
-              { id: 'packages', label: 'Packages', icon: Users },
-              { id: 'benefits', label: 'Benefits & Deductions', icon: DollarSign },
-              { id: 'reports', label: 'Reports', icon: FileText },
-              { id: 'audit', label: 'Audit Trail', icon: Clock },
-              { id: 'tax', label: 'Tax Info', icon: Building2 }
+              { id: 'records', label: 'Records', fullLabel: 'Payroll Records', icon: FileText },
+              { id: 'packages', label: 'Packages', fullLabel: 'Packages', icon: Users },
+              { id: 'benefits', label: 'Benefits', fullLabel: 'Benefits & Deductions', icon: DollarSign },
+              { id: 'reports', label: 'Reports', fullLabel: 'Reports', icon: FileText },
+              { id: 'audit', label: 'Audit', fullLabel: 'Audit Trail', icon: Clock },
+              { id: 'tax', label: 'Tax', fullLabel: 'Tax Info', icon: Building2 }
             ].map(tab => (
               <Button
                 key={tab.id}
                 variant={payrollSubTab === tab.id ? 'default' : 'outline'}
                 size="sm"
                 onClick={() => setPayrollSubTab(tab.id)}
-                className={payrollSubTab === tab.id ? 'bg-[#1EB053] hover:bg-[#178f43]' : ''}
+                className={`text-xs sm:text-sm ${payrollSubTab === tab.id ? 'bg-[#1EB053] hover:bg-[#178f43]' : ''}`}
               >
-                <tab.icon className="w-4 h-4 mr-1" />
-                {tab.label}
+                <tab.icon className="w-3 h-3 sm:w-4 sm:h-4 sm:mr-1" />
+                <span className="hidden sm:inline">{tab.fullLabel}</span>
+                <span className="sm:hidden">{tab.label}</span>
               </Button>
             ))}
           </div>

@@ -299,6 +299,7 @@ export default function Sales() {
     mutationFn: (saleId) => base44.entities.Sale.delete(saleId),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['sales'] });
+      toast.success("Sale Deleted", { description: "The sale has been removed." });
     },
   });
 
@@ -348,6 +349,7 @@ export default function Sales() {
   const addToCart = (product) => {
     // For default locations, always allow (no strict location requirement)
     if (!selectedLocation && locationOptions.length > 1) {
+      toast.error("Select Location", { description: `Please select a ${saleType === 'vehicle' ? 'vehicle' : saleType === 'warehouse' ? 'warehouse' : 'store'} first.` });
       return;
     }
 
@@ -356,6 +358,7 @@ export default function Sales() {
     
     if (existing) {
       if (existing.quantity >= availableStock) {
+        toast.error("Stock Limit", { description: `Only ${availableStock} available at this location.` });
         return;
       }
       setCart(cart.map(item => 
@@ -365,6 +368,7 @@ export default function Sales() {
       ));
     } else {
       if (availableStock < 1) {
+        toast.error("Out of Stock", { description: "This product is not available at this location." });
         return;
       }
       setCart([...cart, {
@@ -385,6 +389,7 @@ export default function Sales() {
       if (item.product_id === productId) {
         const newQty = Math.max(1, item.quantity + delta);
         if (newQty > availableStock) {
+          toast.error("Stock Limit", { description: `Only ${availableStock} available at this location.` });
           return item;
         }
         return { ...item, quantity: newQty, total: newQty * item.unit_price };
@@ -549,8 +554,13 @@ export default function Sales() {
               threshold_quantity: threshold,
               status: 'active'
             });
-            }
-            } else if (newLocationStock === 0) {
+            
+            // Show notification
+            toast.warning("Low Stock Alert", { 
+              description: `${item.product_name} is running low (${newLocationStock} left)` 
+            });
+          }
+        } else if (newLocationStock === 0) {
           const existingAlerts = await base44.entities.StockAlert.filter({
             organisation_id: orgId,
             product_id: item.product_id,
@@ -569,7 +579,12 @@ export default function Sales() {
               threshold_quantity: threshold,
               status: 'active'
             });
-            }
+            
+            // Show critical notification
+            toast.error("Out of Stock", { 
+              description: `${item.product_name} is now out of stock!` 
+            });
+          }
         }
       }
     }
@@ -625,22 +640,22 @@ export default function Sales() {
       />
 
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="mb-6 bg-gray-100 p-1">
-          <TabsTrigger value="pos" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#1EB053] data-[state=active]:to-[#0072C6] data-[state=active]:text-white">
-            Point of Sale
+        <TabsList className="mb-6 bg-gray-100 p-1 w-full">
+          <TabsTrigger value="pos" className="flex-1 text-xs sm:text-sm data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#1EB053] data-[state=active]:to-[#0072C6] data-[state=active]:text-white">
+            POS
           </TabsTrigger>
-          <TabsTrigger value="history" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#1EB053] data-[state=active]:to-[#0072C6] data-[state=active]:text-white">
-            Sales History
+          <TabsTrigger value="history" className="flex-1 text-xs sm:text-sm data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#1EB053] data-[state=active]:to-[#0072C6] data-[state=active]:text-white">
+            History
           </TabsTrigger>
         </TabsList>
 
         <TabsContent value="pos">
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
             {/* Products Grid */}
-            <div className="lg:col-span-2 space-y-4">
+            <div className="lg:col-span-2 space-y-3 sm:space-y-4">
               {/* Sale Type & Location Selection */}
-              <div className="bg-white rounded-xl p-4 border shadow-sm mb-4">
-                <div className="flex flex-col sm:flex-row gap-4">
+              <div className="bg-white rounded-xl p-3 sm:p-4 border shadow-sm mb-3 sm:mb-4">
+                <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
                   <div className="flex-1">
                     <label className="text-xs font-medium text-gray-500 uppercase mb-1 block">Sale Type</label>
                     <Select value={saleType} onValueChange={setSaleType} disabled={!canChangeSaleType}>
@@ -785,22 +800,22 @@ export default function Sales() {
             </div>
 
             {/* Cart */}
-            <Card className="h-fit sticky top-24">
-              <CardHeader className="border-b">
-                <CardTitle className="flex items-center gap-2">
-                  <ShoppingCart className="w-5 h-5" />
+            <Card className="h-fit sticky top-20 lg:top-24">
+              <CardHeader className="border-b p-3 sm:p-6">
+                <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
+                  <ShoppingCart className="w-4 h-4 sm:w-5 sm:h-5" />
                   Cart ({cart.length})
                 </CardTitle>
               </CardHeader>
-              <CardContent className="p-4">
+              <CardContent className="p-3 sm:p-4">
                 {cart.length === 0 ? (
-                  <div className="text-center py-8 text-gray-500">
-                    <ShoppingCart className="w-12 h-12 mx-auto mb-3 text-gray-300" />
-                    <p>Cart is empty</p>
-                    <p className="text-sm">Click products to add</p>
+                  <div className="text-center py-6 sm:py-8 text-gray-500">
+                    <ShoppingCart className="w-10 h-10 sm:w-12 sm:h-12 mx-auto mb-2 sm:mb-3 text-gray-300" />
+                    <p className="text-sm">Cart is empty</p>
+                    <p className="text-xs sm:text-sm">Click products to add</p>
                   </div>
                 ) : (
-                  <div className="space-y-3 max-h-80 overflow-y-auto">
+                  <div className="space-y-2 sm:space-y-3 max-h-64 sm:max-h-80 overflow-y-auto">
                     {cart.map((item) => (
                       <div key={item.product_id} className="flex items-center gap-3 p-2 bg-gray-50 rounded-lg">
                         <div className="flex-1 min-w-0">

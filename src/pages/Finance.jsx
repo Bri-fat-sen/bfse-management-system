@@ -393,64 +393,64 @@ export default function Finance() {
         </div>
 
         {/* Key Metrics */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-4">
           <Card className="border-l-4 border-l-[#1EB053]">
-            <CardContent className="p-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-xs text-gray-500 uppercase tracking-wide">Total Revenue</p>
-                  <p className="text-2xl font-bold text-[#1EB053]">Le {financials.totalRevenue.toLocaleString()}</p>
-                  <p className="text-xs text-gray-500 mt-1">{financials.transactionCount + financials.tripCount} transactions</p>
+            <CardContent className="p-3 sm:p-4">
+              <div className="flex items-center justify-between gap-2">
+                <div className="min-w-0">
+                  <p className="text-[10px] sm:text-xs text-gray-500 uppercase tracking-wide truncate">Revenue</p>
+                  <p className="text-base sm:text-2xl font-bold text-[#1EB053] truncate">Le {financials.totalRevenue.toLocaleString()}</p>
+                  <p className="text-[9px] sm:text-xs text-gray-500 mt-0.5 sm:mt-1 truncate">{financials.transactionCount + financials.tripCount} txns</p>
                 </div>
-                <div className="w-12 h-12 rounded-full bg-green-100 flex items-center justify-center">
-                  <TrendingUp className="w-6 h-6 text-[#1EB053]" />
+                <div className="w-8 h-8 sm:w-12 sm:h-12 rounded-full bg-green-100 flex items-center justify-center flex-shrink-0">
+                  <TrendingUp className="w-4 h-4 sm:w-6 sm:h-6 text-[#1EB053]" />
                 </div>
               </div>
             </CardContent>
           </Card>
 
           <Card className="border-l-4 border-l-red-500">
-            <CardContent className="p-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-xs text-gray-500 uppercase tracking-wide">Total Expenses</p>
-                  <p className="text-2xl font-bold text-red-500">Le {financials.totalExpenses.toLocaleString()}</p>
-                  <p className="text-xs text-gray-500 mt-1">{filteredExpenses.length} records</p>
+            <CardContent className="p-3 sm:p-4">
+              <div className="flex items-center justify-between gap-2">
+                <div className="min-w-0">
+                  <p className="text-[10px] sm:text-xs text-gray-500 uppercase tracking-wide truncate">Expenses</p>
+                  <p className="text-base sm:text-2xl font-bold text-red-500 truncate">Le {financials.totalExpenses.toLocaleString()}</p>
+                  <p className="text-[9px] sm:text-xs text-gray-500 mt-0.5 sm:mt-1 truncate">{filteredExpenses.length} records</p>
                 </div>
-                <div className="w-12 h-12 rounded-full bg-red-100 flex items-center justify-center">
-                  <TrendingDown className="w-6 h-6 text-red-500" />
+                <div className="w-8 h-8 sm:w-12 sm:h-12 rounded-full bg-red-100 flex items-center justify-center flex-shrink-0">
+                  <TrendingDown className="w-4 h-4 sm:w-6 sm:h-6 text-red-500" />
                 </div>
               </div>
             </CardContent>
           </Card>
 
           <Card className={`border-l-4 ${financials.netProfit >= 0 ? 'border-l-[#0072C6]' : 'border-l-orange-500'}`}>
-            <CardContent className="p-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-xs text-gray-500 uppercase tracking-wide">Net Profit</p>
-                  <p className={`text-2xl font-bold ${financials.netProfit >= 0 ? 'text-[#0072C6]' : 'text-orange-500'}`}>
+            <CardContent className="p-3 sm:p-4">
+              <div className="flex items-center justify-between gap-2">
+                <div className="min-w-0">
+                  <p className="text-[10px] sm:text-xs text-gray-500 uppercase tracking-wide truncate">Net Profit</p>
+                  <p className={`text-base sm:text-2xl font-bold truncate ${financials.netProfit >= 0 ? 'text-[#0072C6]' : 'text-orange-500'}`}>
                     Le {financials.netProfit.toLocaleString()}
                   </p>
-                  <p className="text-xs text-gray-500 mt-1">{financials.profitMargin}% margin</p>
+                  <p className="text-[9px] sm:text-xs text-gray-500 mt-0.5 sm:mt-1">{financials.profitMargin}%</p>
                 </div>
-                <div className={`w-12 h-12 rounded-full flex items-center justify-center ${financials.netProfit >= 0 ? 'bg-blue-100' : 'bg-orange-100'}`}>
-                  <DollarSign className={`w-6 h-6 ${financials.netProfit >= 0 ? 'text-[#0072C6]' : 'text-orange-500'}`} />
+                <div className={`w-8 h-8 sm:w-12 sm:h-12 rounded-full flex items-center justify-center flex-shrink-0 ${financials.netProfit >= 0 ? 'bg-blue-100' : 'bg-orange-100'}`}>
+                  <DollarSign className={`w-4 h-4 sm:w-6 sm:h-6 ${financials.netProfit >= 0 ? 'text-[#0072C6]' : 'text-orange-500'}`} />
                 </div>
               </div>
             </CardContent>
           </Card>
 
           <Card className="border-l-4 border-l-[#D4AF37]">
-            <CardContent className="p-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-xs text-gray-500 uppercase tracking-wide">Pending Approval</p>
-                  <p className="text-2xl font-bold text-[#D4AF37]">{expenses.filter(e => e.status === 'pending').length}</p>
-                  <p className="text-xs text-gray-500 mt-1">expense records</p>
+            <CardContent className="p-3 sm:p-4">
+              <div className="flex items-center justify-between gap-2">
+                <div className="min-w-0">
+                  <p className="text-[10px] sm:text-xs text-gray-500 uppercase tracking-wide truncate">Pending</p>
+                  <p className="text-base sm:text-2xl font-bold text-[#D4AF37]">{expenses.filter(e => e.status === 'pending').length}</p>
+                  <p className="text-[9px] sm:text-xs text-gray-500 mt-0.5 sm:mt-1">expenses</p>
                 </div>
-                <div className="w-12 h-12 rounded-full bg-amber-100 flex items-center justify-center">
-                  <Clock className="w-6 h-6 text-[#D4AF37]" />
+                <div className="w-8 h-8 sm:w-12 sm:h-12 rounded-full bg-amber-100 flex items-center justify-center flex-shrink-0">
+                  <Clock className="w-4 h-4 sm:w-6 sm:h-6 text-[#D4AF37]" />
                 </div>
               </div>
             </CardContent>
@@ -625,77 +625,77 @@ export default function Finance() {
           </TabsContent>
 
           {/* Revenue Tab */}
-          <TabsContent value="revenue" className="mt-6 space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <TabsContent value="revenue" className="mt-6 space-y-4 sm:space-y-6">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
               <Card className="bg-gradient-to-br from-green-50 to-white">
-                <CardContent className="p-5">
-                  <div className="flex items-center gap-4">
-                    <div className="w-14 h-14 rounded-xl bg-green-100 flex items-center justify-center">
-                      <ShoppingCart className="w-7 h-7 text-green-600" />
+                <CardContent className="p-4 sm:p-5">
+                  <div className="flex items-center gap-3 sm:gap-4">
+                    <div className="w-10 h-10 sm:w-14 sm:h-14 rounded-xl bg-green-100 flex items-center justify-center flex-shrink-0">
+                      <ShoppingCart className="w-5 h-5 sm:w-7 sm:h-7 text-green-600" />
                     </div>
-                    <div>
-                      <p className="text-sm text-gray-500">Retail Sales</p>
-                      <p className="text-2xl font-bold text-green-600">Le {financials.retailSales.toLocaleString()}</p>
+                    <div className="min-w-0">
+                      <p className="text-xs sm:text-sm text-gray-500">Retail Sales</p>
+                      <p className="text-lg sm:text-2xl font-bold text-green-600 truncate">Le {financials.retailSales.toLocaleString()}</p>
                     </div>
                   </div>
                 </CardContent>
               </Card>
 
               <Card className="bg-gradient-to-br from-blue-50 to-white">
-                <CardContent className="p-5">
-                  <div className="flex items-center gap-4">
-                    <div className="w-14 h-14 rounded-xl bg-blue-100 flex items-center justify-center">
-                      <Package className="w-7 h-7 text-blue-600" />
+                <CardContent className="p-4 sm:p-5">
+                  <div className="flex items-center gap-3 sm:gap-4">
+                    <div className="w-10 h-10 sm:w-14 sm:h-14 rounded-xl bg-blue-100 flex items-center justify-center flex-shrink-0">
+                      <Package className="w-5 h-5 sm:w-7 sm:h-7 text-blue-600" />
                     </div>
-                    <div>
-                      <p className="text-sm text-gray-500">Wholesale Sales</p>
-                      <p className="text-2xl font-bold text-blue-600">Le {financials.wholesaleSales.toLocaleString()}</p>
+                    <div className="min-w-0">
+                      <p className="text-xs sm:text-sm text-gray-500">Wholesale</p>
+                      <p className="text-lg sm:text-2xl font-bold text-blue-600 truncate">Le {financials.wholesaleSales.toLocaleString()}</p>
                     </div>
                   </div>
                 </CardContent>
               </Card>
 
               <Card className="bg-gradient-to-br from-purple-50 to-white">
-                <CardContent className="p-5">
-                  <div className="flex items-center gap-4">
-                    <div className="w-14 h-14 rounded-xl bg-purple-100 flex items-center justify-center">
-                      <Truck className="w-7 h-7 text-purple-600" />
+                <CardContent className="p-4 sm:p-5">
+                  <div className="flex items-center gap-3 sm:gap-4">
+                    <div className="w-10 h-10 sm:w-14 sm:h-14 rounded-xl bg-purple-100 flex items-center justify-center flex-shrink-0">
+                      <Truck className="w-5 h-5 sm:w-7 sm:h-7 text-purple-600" />
                     </div>
-                    <div>
-                      <p className="text-sm text-gray-500">Vehicle Sales</p>
-                      <p className="text-2xl font-bold text-purple-600">Le {financials.vehicleSales.toLocaleString()}</p>
+                    <div className="min-w-0">
+                      <p className="text-xs sm:text-sm text-gray-500">Vehicle</p>
+                      <p className="text-lg sm:text-2xl font-bold text-purple-600 truncate">Le {financials.vehicleSales.toLocaleString()}</p>
                     </div>
                   </div>
                 </CardContent>
               </Card>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
               <Card className="bg-gradient-to-br from-teal-50 to-white">
-                <CardContent className="p-5">
-                  <div className="flex items-center gap-4">
-                    <div className="w-14 h-14 rounded-xl bg-teal-100 flex items-center justify-center">
-                      <TrendingUp className="w-7 h-7 text-teal-600" />
+                <CardContent className="p-4 sm:p-5">
+                  <div className="flex items-center gap-3 sm:gap-4">
+                    <div className="w-10 h-10 sm:w-14 sm:h-14 rounded-xl bg-teal-100 flex items-center justify-center flex-shrink-0">
+                      <TrendingUp className="w-5 h-5 sm:w-7 sm:h-7 text-teal-600" />
                     </div>
-                    <div>
-                      <p className="text-sm text-gray-500">Transport Revenue</p>
-                      <p className="text-2xl font-bold text-teal-600">Le {financials.transportRevenue.toLocaleString()}</p>
-                      <p className="text-xs text-gray-400">{financials.tripCount} trips</p>
+                    <div className="min-w-0">
+                      <p className="text-xs sm:text-sm text-gray-500">Transport</p>
+                      <p className="text-lg sm:text-2xl font-bold text-teal-600 truncate">Le {financials.transportRevenue.toLocaleString()}</p>
+                      <p className="text-[10px] sm:text-xs text-gray-400">{financials.tripCount} trips</p>
                     </div>
                   </div>
                 </CardContent>
               </Card>
 
               <Card className="bg-gradient-to-br from-amber-50 to-white">
-                <CardContent className="p-5">
-                  <div className="flex items-center gap-4">
-                    <div className="w-14 h-14 rounded-xl bg-amber-100 flex items-center justify-center">
-                      <FileText className="w-7 h-7 text-amber-600" />
+                <CardContent className="p-4 sm:p-5">
+                  <div className="flex items-center gap-3 sm:gap-4">
+                    <div className="w-10 h-10 sm:w-14 sm:h-14 rounded-xl bg-amber-100 flex items-center justify-center flex-shrink-0">
+                      <FileText className="w-5 h-5 sm:w-7 sm:h-7 text-amber-600" />
                     </div>
-                    <div>
-                      <p className="text-sm text-gray-500">Contract Revenue</p>
-                      <p className="text-2xl font-bold text-amber-600">Le {financials.contractRevenue.toLocaleString()}</p>
-                      <p className="text-xs text-gray-400">{financials.contractCount} contracts</p>
+                    <div className="min-w-0">
+                      <p className="text-xs sm:text-sm text-gray-500">Contracts</p>
+                      <p className="text-lg sm:text-2xl font-bold text-amber-600 truncate">Le {financials.contractRevenue.toLocaleString()}</p>
+                      <p className="text-[10px] sm:text-xs text-gray-400">{financials.contractCount} contracts</p>
                     </div>
                   </div>
                 </CardContent>
@@ -737,59 +737,59 @@ export default function Finance() {
           </TabsContent>
 
           {/* Expenses Tab */}
-          <TabsContent value="expenses" className="mt-6 space-y-6">
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <TabsContent value="expenses" className="mt-6 space-y-4 sm:space-y-6">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-2 sm:gap-4">
               <Card className="bg-gradient-to-br from-red-50 to-white">
-                <CardContent className="p-4">
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-lg bg-red-100 flex items-center justify-center">
-                      <Receipt className="w-5 h-5 text-red-600" />
+                <CardContent className="p-3 sm:p-4">
+                  <div className="flex items-center gap-2 sm:gap-3">
+                    <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg bg-red-100 flex items-center justify-center flex-shrink-0">
+                      <Receipt className="w-4 h-4 sm:w-5 sm:h-5 text-red-600" />
                     </div>
-                    <div>
-                      <p className="text-xs text-gray-500">Recorded</p>
-                      <p className="text-lg font-bold">Le {financials.recordedExpenses.toLocaleString()}</p>
+                    <div className="min-w-0">
+                      <p className="text-[10px] sm:text-xs text-gray-500">Recorded</p>
+                      <p className="text-sm sm:text-lg font-bold truncate">Le {financials.recordedExpenses.toLocaleString()}</p>
                     </div>
                   </div>
                 </CardContent>
               </Card>
 
               <Card className="bg-gradient-to-br from-orange-50 to-white">
-                <CardContent className="p-4">
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-lg bg-orange-100 flex items-center justify-center">
-                      <Fuel className="w-5 h-5 text-orange-600" />
+                <CardContent className="p-3 sm:p-4">
+                  <div className="flex items-center gap-2 sm:gap-3">
+                    <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg bg-orange-100 flex items-center justify-center flex-shrink-0">
+                      <Fuel className="w-4 h-4 sm:w-5 sm:h-5 text-orange-600" />
                     </div>
-                    <div>
-                      <p className="text-xs text-gray-500">Fuel Costs</p>
-                      <p className="text-lg font-bold">Le {financials.tripFuelCosts.toLocaleString()}</p>
+                    <div className="min-w-0">
+                      <p className="text-[10px] sm:text-xs text-gray-500">Fuel</p>
+                      <p className="text-sm sm:text-lg font-bold truncate">Le {financials.tripFuelCosts.toLocaleString()}</p>
                     </div>
                   </div>
                 </CardContent>
               </Card>
 
               <Card className="bg-gradient-to-br from-cyan-50 to-white">
-                <CardContent className="p-4">
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-lg bg-cyan-100 flex items-center justify-center">
-                      <Wrench className="w-5 h-5 text-cyan-600" />
+                <CardContent className="p-3 sm:p-4">
+                  <div className="flex items-center gap-2 sm:gap-3">
+                    <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg bg-cyan-100 flex items-center justify-center flex-shrink-0">
+                      <Wrench className="w-4 h-4 sm:w-5 sm:h-5 text-cyan-600" />
                     </div>
-                    <div>
-                      <p className="text-xs text-gray-500">Maintenance</p>
-                      <p className="text-lg font-bold">Le {financials.maintenanceCosts.toLocaleString()}</p>
+                    <div className="min-w-0">
+                      <p className="text-[10px] sm:text-xs text-gray-500">Maint.</p>
+                      <p className="text-sm sm:text-lg font-bold truncate">Le {financials.maintenanceCosts.toLocaleString()}</p>
                     </div>
                   </div>
                 </CardContent>
               </Card>
 
               <Card className="bg-gradient-to-br from-violet-50 to-white">
-                <CardContent className="p-4">
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-lg bg-violet-100 flex items-center justify-center">
-                      <Truck className="w-5 h-5 text-violet-600" />
+                <CardContent className="p-3 sm:p-4">
+                  <div className="flex items-center gap-2 sm:gap-3">
+                    <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg bg-violet-100 flex items-center justify-center flex-shrink-0">
+                      <Truck className="w-4 h-4 sm:w-5 sm:h-5 text-violet-600" />
                     </div>
-                    <div>
-                      <p className="text-xs text-gray-500">Contract Exp.</p>
-                      <p className="text-lg font-bold">Le {financials.contractExpenses.toLocaleString()}</p>
+                    <div className="min-w-0">
+                      <p className="text-[10px] sm:text-xs text-gray-500">Contract</p>
+                      <p className="text-sm sm:text-lg font-bold truncate">Le {financials.contractExpenses.toLocaleString()}</p>
                     </div>
                   </div>
                 </CardContent>
