@@ -68,12 +68,23 @@ const expenseCategories = [
   "salaries", "transport", "marketing", "insurance", "petty_cash", "other"
 ];
 
+const revenueSources = [
+  { value: "owner_contribution", label: "Owner Contribution" },
+  { value: "ceo_contribution", label: "CEO Contribution" },
+  { value: "investor_funding", label: "Investor Funding" },
+  { value: "loan", label: "Loan" },
+  { value: "grant", label: "Grant" },
+  { value: "dividend", label: "Dividend Return" },
+  { value: "other", label: "Other" }
+];
+
 const COLORS = ['#1EB053', '#0072C6', '#D4AF37', '#0F1F3C', '#9333ea', '#f59e0b', '#ef4444', '#10b981', '#6366f1', '#ec4899'];
 
 export default function Finance() {
   const queryClient = useQueryClient();
   const [activeTab, setActiveTab] = useState("dashboard");
   const [showExpenseDialog, setShowExpenseDialog] = useState(false);
+  const [showRevenueDialog, setShowRevenueDialog] = useState(false);
   const [categoryFilter, setCategoryFilter] = useState("all");
   const [showFormsDialog, setShowFormsDialog] = useState(false);
   const [dateRange, setDateRange] = useState("this_month");
@@ -136,11 +147,25 @@ export default function Finance() {
     enabled: !!orgId,
   });
 
+  const { data: revenues = [] } = useQuery({
+    queryKey: ['revenues', orgId],
+    queryFn: () => base44.entities.Revenue.filter({ organisation_id: orgId }, '-date', 200),
+    enabled: !!orgId,
+  });
+
   const createExpenseMutation = useMutation({
     mutationFn: (data) => base44.entities.Expense.create(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['expenses'] });
       setShowExpenseDialog(false);
+    },
+  });
+
+  const createRevenueMutation = useMutation({
+    mutationFn: (data) => base44.entities.Revenue.create(data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['revenues'] });
+      setShowRevenueDialog(false);
     },
   });
 
@@ -189,13 +214,21 @@ export default function Finance() {
     });
   }, [truckContracts, getDateRange]);
 
+  const filteredRevenues = useMemo(() => {
+    return revenues.filter(r => {
+      const d = new Date(r.date || r.created_date);
+      return d >= getDateRange.start && d <= getDateRange.end;
+    });
+  }, [revenues, getDateRange]);
+
   // Calculate comprehensive financials
   const financials = useMemo(() => {
     // Revenue streams
     const salesRevenue = filteredSales.reduce((sum, s) => sum + (s.total_amount || 0), 0);
     const transportRevenue = filteredTrips.reduce((sum, t) => sum + (t.total_revenue || 0), 0);
     const contractRevenue = filteredContracts.filter(c => c.status === 'completed').reduce((sum, c) => sum + (c.contract_amount || 0), 0);
-    const totalRevenue = salesRevenue + transportRevenue + contractRevenue;
+    const ownerContributions = filteredRevenues.filter(r => r.status === 'confirmed').reduce((sum, r) => sum + (r.amount || 0), 0);
+    const totalRevenue = salesRevenue + transportRevenue + contractRevenue + ownerContributions;
 
     // Revenue by type
     const retailSales = filteredSales.filter(s => s.sale_type === 'retail').reduce((sum, s) => sum + (s.total_amount || 0), 0);
@@ -249,11 +282,13 @@ export default function Finance() {
       profitMargin,
       paymentMethods,
       expensesByCategory,
+      ownerContributions,
       transactionCount: filteredSales.length,
       tripCount: filteredTrips.length,
-      contractCount: filteredContracts.length
+      contractCount: filteredContracts.length,
+      revenueCount: filteredRevenues.length
     };
-  }, [filteredSales, filteredExpenses, filteredTrips, filteredContracts, maintenanceRecords, getDateRange]);
+  }, [filteredSales, filteredExpenses, filteredTrips, filteredContracts, maintenanceRecords, filteredRevenues, getDateRange]);
 
   // Monthly trend data
   const monthlyTrend = useMemo(() => {
@@ -306,6 +341,7 @@ export default function Finance() {
     if (financials.vehicleSales > 0) data.push({ name: 'Vehicle Sales', value: financials.vehicleSales });
     if (financials.transportRevenue > 0) data.push({ name: 'Transport', value: financials.transportRevenue });
     if (financials.contractRevenue > 0) data.push({ name: 'Contracts', value: financials.contractRevenue });
+    if (financials.ownerContributions > 0) data.push({ name: 'Owner/CEO', value: financials.ownerContributions });
     return data;
   }, [financials]);
 
@@ -331,6 +367,26 @@ export default function Finance() {
   const categoryFilteredExpenses = categoryFilter === "all" 
     ? expenses 
     : expenses.filter(e => e.category === categoryFilter);
+
+  const handleRevenueSubmit = (e) => {
+    e.preventDefault();
+    const formData = new FormData(e.target);
+    const data = {
+      organisation_id: orgId,
+      source: formData.get('source'),
+      contributor_name: formData.get('contributor_name'),
+      amount: parseFloat(formData.get('amount')) || 0,
+      date: formData.get('date'),
+      payment_method: formData.get('payment_method'),
+      reference_number: formData.get('reference_number'),
+      purpose: formData.get('purpose'),
+      notes: formData.get('notes'),
+      recorded_by: currentEmployee?.id,
+      recorded_by_name: currentEmployee?.full_name,
+      status: 'confirmed',
+    };
+    createRevenueMutation.mutate(data);
+  };
 
   if (!user) {
     return <LoadingSpinner message="Loading Finance..." subtitle="Fetching financial data" fullScreen={true} />;
@@ -467,6 +523,9 @@ export default function Finance() {
             </TabsTrigger>
             <TabsTrigger value="expenses" className="text-xs sm:text-sm data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#1EB053] data-[state=active]:to-[#0072C6] data-[state=active]:text-white">
               Expenses
+            </TabsTrigger>
+            <TabsTrigger value="contributions" className="text-xs sm:text-sm data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#1EB053] data-[state=active]:to-[#0072C6] data-[state=active]:text-white">
+              Owner/CEO
             </TabsTrigger>
             <TabsTrigger value="cashflow" className="text-xs sm:text-sm data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#1EB053] data-[state=active]:to-[#0072C6] data-[state=active]:text-white">
               Cash Flow
@@ -864,6 +923,113 @@ export default function Finance() {
             </Card>
           </TabsContent>
 
+          {/* Owner/CEO Contributions Tab */}
+          <TabsContent value="contributions" className="mt-6 space-y-6">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              <Card className="bg-gradient-to-br from-[#1EB053]/10 to-white border-t-4 border-t-[#1EB053]">
+                <CardContent className="p-5">
+                  <div className="flex items-center gap-4">
+                    <div className="w-14 h-14 rounded-xl bg-green-100 flex items-center justify-center">
+                      <Users className="w-7 h-7 text-[#1EB053]" />
+                    </div>
+                    <div>
+                      <p className="text-sm text-gray-500">Total Contributions</p>
+                      <p className="text-2xl font-bold text-[#1EB053]">Le {financials.ownerContributions.toLocaleString()}</p>
+                      <p className="text-xs text-gray-400">{financials.revenueCount} records</p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card className="bg-gradient-to-br from-blue-50 to-white">
+                <CardContent className="p-5">
+                  <div className="flex items-center gap-4">
+                    <div className="w-14 h-14 rounded-xl bg-blue-100 flex items-center justify-center">
+                      <Building2 className="w-7 h-7 text-blue-600" />
+                    </div>
+                    <div>
+                      <p className="text-sm text-gray-500">Owner</p>
+                      <p className="text-2xl font-bold text-blue-600">
+                        Le {filteredRevenues.filter(r => r.source === 'owner_contribution').reduce((sum, r) => sum + (r.amount || 0), 0).toLocaleString()}
+                      </p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card className="bg-gradient-to-br from-purple-50 to-white">
+                <CardContent className="p-5">
+                  <div className="flex items-center gap-4">
+                    <div className="w-14 h-14 rounded-xl bg-purple-100 flex items-center justify-center">
+                      <Users className="w-7 h-7 text-purple-600" />
+                    </div>
+                    <div>
+                      <p className="text-sm text-gray-500">CEO</p>
+                      <p className="text-2xl font-bold text-purple-600">
+                        Le {filteredRevenues.filter(r => r.source === 'ceo_contribution').reduce((sum, r) => sum + (r.amount || 0), 0).toLocaleString()}
+                      </p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between">
+                <CardTitle className="flex items-center gap-2">
+                  <DollarSign className="w-5 h-5 text-[#1EB053]" />
+                  Revenue from Owners & CEO
+                </CardTitle>
+                <Button onClick={() => setShowRevenueDialog(true)} className="bg-gradient-to-r from-[#1EB053] to-[#0072C6]">
+                  <Plus className="w-4 h-4 mr-2" />
+                  Add Contribution
+                </Button>
+              </CardHeader>
+              <CardContent>
+                <ScrollArea className="h-[400px]">
+                  <div className="space-y-3">
+                    {revenues.length === 0 ? (
+                      <div className="text-center py-12 text-gray-500">
+                        <DollarSign className="w-12 h-12 mx-auto mb-3 text-gray-300" />
+                        <p>No contributions recorded yet</p>
+                        <p className="text-sm mt-1">Record money received from owners or CEO</p>
+                      </div>
+                    ) : (
+                      revenues.map((revenue) => (
+                        <div key={revenue.id} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
+                          <div className="flex items-center gap-4">
+                            <div className="w-10 h-10 rounded-full bg-green-100 flex items-center justify-center">
+                              <ArrowUpRight className="w-5 h-5 text-green-600" />
+                            </div>
+                            <div>
+                              <p className="font-medium">{revenue.contributor_name || revenueSources.find(s => s.value === revenue.source)?.label || 'Contribution'}</p>
+                              <div className="flex items-center gap-2 text-sm text-gray-500">
+                                <Badge variant="outline" className="text-xs bg-green-50 text-green-700 border-green-200">
+                                  {revenueSources.find(s => s.value === revenue.source)?.label || revenue.source}
+                                </Badge>
+                                <span>•</span>
+                                <span>{revenue.date ? format(new Date(revenue.date), 'MMM d, yyyy') : '-'}</span>
+                              </div>
+                              {revenue.purpose && (
+                                <p className="text-xs text-gray-400 mt-1">{revenue.purpose}</p>
+                              )}
+                            </div>
+                          </div>
+                          <div className="text-right">
+                            <p className="font-bold text-[#1EB053]">+Le {revenue.amount?.toLocaleString()}</p>
+                            <Badge variant={revenue.status === 'confirmed' ? 'secondary' : 'outline'} className="bg-green-100 text-green-700">
+                              {revenue.status}
+                            </Badge>
+                          </div>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                </ScrollArea>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
           {/* Cash Flow Tab */}
           <TabsContent value="cashflow" className="mt-6 space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -1020,6 +1186,86 @@ export default function Finance() {
                 </Button>
                 <Button type="submit" className="bg-gradient-to-r from-[#1EB053] to-[#0072C6] w-full sm:w-auto">
                   Record Expense
+                </Button>
+              </DialogFooter>
+            </form>
+          </DialogContent>
+        </Dialog>
+
+        {/* Add Revenue Dialog */}
+        <Dialog open={showRevenueDialog} onOpenChange={setShowRevenueDialog}>
+          <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto w-[95vw] sm:w-full">
+            <DialogHeader>
+              <div className="flex h-1 w-16 rounded-full overflow-hidden mb-3">
+                <div className="flex-1 bg-[#1EB053]" />
+                <div className="flex-1 bg-white border-y border-gray-200" />
+                <div className="flex-1 bg-[#0072C6]" />
+              </div>
+              <DialogTitle>Record Owner/CEO Contribution</DialogTitle>
+            </DialogHeader>
+            <form onSubmit={handleRevenueSubmit} className="space-y-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="col-span-2">
+                  <Label>Source Type</Label>
+                  <Select name="source" required defaultValue="owner_contribution">
+                    <SelectTrigger className="mt-1">
+                      <SelectValue placeholder="Select source" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {revenueSources.map(src => (
+                        <SelectItem key={src.value} value={src.value}>
+                          {src.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="col-span-2">
+                  <Label>Contributor Name</Label>
+                  <Input name="contributor_name" required className="mt-1" placeholder="Name of owner, CEO, or investor" />
+                </div>
+                <div>
+                  <Label>Amount (Le)</Label>
+                  <Input name="amount" type="number" step="0.01" required className="mt-1" />
+                </div>
+                <div>
+                  <Label>Date</Label>
+                  <Input name="date" type="date" defaultValue={format(new Date(), 'yyyy-MM-dd')} required className="mt-1" />
+                </div>
+                <div>
+                  <Label>Payment Method</Label>
+                  <Select name="payment_method" defaultValue="bank_transfer">
+                    <SelectTrigger className="mt-1">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="cash">Cash</SelectItem>
+                      <SelectItem value="bank_transfer">Bank Transfer</SelectItem>
+                      <SelectItem value="cheque">Cheque</SelectItem>
+                      <SelectItem value="mobile_money">Mobile Money</SelectItem>
+                      <SelectItem value="other">Other</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label>Reference Number</Label>
+                  <Input name="reference_number" className="mt-1" placeholder="Bank ref or transaction ID" />
+                </div>
+                <div className="col-span-2">
+                  <Label>Purpose</Label>
+                  <Input name="purpose" className="mt-1" placeholder="e.g., Capital injection, Working capital" />
+                </div>
+                <div className="col-span-2">
+                  <Label>Notes</Label>
+                  <Textarea name="notes" className="mt-1" placeholder="Additional details..." />
+                </div>
+              </div>
+              <DialogFooter className="flex-col sm:flex-row gap-2">
+                <Button type="button" variant="outline" onClick={() => setShowRevenueDialog(false)} className="w-full sm:w-auto">
+                  Cancel
+                </Button>
+                <Button type="submit" className="bg-gradient-to-r from-[#1EB053] to-[#0072C6] w-full sm:w-auto" disabled={createRevenueMutation.isPending}>
+                  {createRevenueMutation.isPending ? 'Recording...' : 'Record Contribution'}
                 </Button>
               </DialogFooter>
             </form>
