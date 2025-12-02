@@ -10,7 +10,10 @@ import {
   Calendar,
   X,
   Check,
-  ChevronRight
+  ChevronRight,
+  Trash2,
+  Users,
+  MessageSquare
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -21,10 +24,9 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
-import { format, formatDistanceToNow } from "date-fns";
+import { format } from "date-fns";
 import { Link } from "react-router-dom";
 import { createPageUrl } from "@/utils";
-import { toast } from "sonner";
 
 const notificationIcons = {
   low_stock: { icon: Package, color: "text-amber-500", bg: "bg-amber-100" },
@@ -33,9 +35,9 @@ const notificationIcons = {
   transport: { icon: Truck, color: "text-purple-500", bg: "bg-purple-100" },
   alert: { icon: AlertTriangle, color: "text-red-500", bg: "bg-red-100" },
   system: { icon: Bell, color: "text-gray-500", bg: "bg-gray-100" },
-  chat: { icon: Bell, color: "text-indigo-500", bg: "bg-indigo-100" },
-  hr: { icon: Bell, color: "text-pink-500", bg: "bg-pink-100" },
-  approval: { icon: Bell, color: "text-teal-500", bg: "bg-teal-100" },
+  hr: { icon: Users, color: "text-indigo-500", bg: "bg-indigo-100" },
+  approval: { icon: Check, color: "text-emerald-500", bg: "bg-emerald-100" },
+  chat: { icon: MessageSquare, color: "text-cyan-500", bg: "bg-cyan-100" },
 };
 
 export default function NotificationCenter({ orgId, currentEmployee }) {
@@ -101,6 +103,18 @@ export default function NotificationCenter({ orgId, currentEmployee }) {
     mutationFn: (id) => base44.entities.Notification.delete(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['notifications'] });
+    }
+  });
+
+  const clearAllMutation = useMutation({
+    mutationFn: async () => {
+      await Promise.all(notifications.map(n => 
+        base44.entities.Notification.delete(n.id)
+      ));
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['notifications'] });
+      toast.success("All notifications cleared");
     }
   });
 
@@ -170,17 +184,32 @@ export default function NotificationCenter({ orgId, currentEmployee }) {
                 <Badge className="bg-white text-[#1EB053]">{unreadCount} new</Badge>
               )}
             </SheetTitle>
-            {unreadCount > 0 && (
-              <Button 
-                variant="ghost" 
-                size="sm" 
-                className="text-white hover:bg-white/20"
-                onClick={() => markAllReadMutation.mutate()}
-              >
-                <Check className="w-4 h-4 mr-1" />
-                Mark all read
-              </Button>
-            )}
+            <div className="flex gap-1">
+              {unreadCount > 0 && (
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  className="text-white hover:bg-white/20"
+                  onClick={() => markAllReadMutation.mutate()}
+                  disabled={markAllReadMutation.isPending}
+                >
+                  <Check className="w-4 h-4 mr-1" />
+                  Mark all read
+                </Button>
+              )}
+              {notifications.length > 0 && (
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  className="text-white hover:bg-white/20"
+                  onClick={() => clearAllMutation.mutate()}
+                  disabled={clearAllMutation.isPending}
+                >
+                  <Trash2 className="w-4 h-4 mr-1" />
+                  Clear all
+                </Button>
+              )}
+            </div>
           </div>
         </SheetHeader>
 
@@ -213,46 +242,44 @@ export default function NotificationCenter({ orgId, currentEmployee }) {
                             </p>
                             <p className="text-sm text-gray-500 mt-0.5">{notification.message}</p>
                           </div>
-                          <div className="flex items-center gap-1 flex-shrink-0">
-                            {!notification.is_read && (
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                className="h-6 w-6"
-                                onClick={() => markAsReadMutation.mutate(notification.id)}
-                                title="Mark as read"
-                              >
-                                <Check className="w-3 h-3" />
-                              </Button>
-                            )}
+                          {!notification.is_read && (
                             <Button
                               variant="ghost"
                               size="icon"
-                              className="h-6 w-6 text-gray-400 hover:text-red-500"
-                              onClick={() => deleteNotificationMutation.mutate(notification.id)}
-                              title="Delete"
+                              className="h-6 w-6 flex-shrink-0"
+                              onClick={() => markAsReadMutation.mutate(notification.id)}
                             >
                               <X className="w-3 h-3" />
                             </Button>
-                          </div>
-                        </div>
-                        <div className="flex items-center gap-2 mt-2 flex-wrap">
-                          <span className={`w-2 h-2 rounded-full ${getPriorityColor(notification.priority)}`} />
-                          <span className="text-xs text-gray-400">
-                            {formatDistanceToNow(new Date(notification.created_date), { addSuffix: true })}
-                          </span>
-                          {notification.link && (
-                            <Link 
-                              to={notification.link}
-                              className="text-xs text-[#0072C6] hover:underline flex items-center gap-1"
-                              onClick={() => {
-                                markAsReadMutation.mutate(notification.id);
-                                setOpen(false);
-                              }}
-                            >
-                              View <ChevronRight className="w-3 h-3" />
-                            </Link>
                           )}
+                        </div>
+                        <div className="flex items-center justify-between mt-2">
+                          <div className="flex items-center gap-2">
+                            <span className={`w-2 h-2 rounded-full ${getPriorityColor(notification.priority)}`} />
+                            <span className="text-xs text-gray-400">
+                              {formatDistanceToNow(new Date(notification.created_date), { addSuffix: true })}
+                            </span>
+                            {notification.link && (
+                              <Link 
+                                to={notification.link}
+                                className="text-xs text-[#0072C6] hover:underline flex items-center gap-1"
+                                onClick={() => {
+                                  markAsReadMutation.mutate(notification.id);
+                                  setOpen(false);
+                                }}
+                              >
+                                View <ChevronRight className="w-3 h-3" />
+                              </Link>
+                            )}
+                          </div>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-6 w-6 text-gray-400 hover:text-red-500"
+                            onClick={() => deleteNotificationMutation.mutate(notification.id)}
+                          >
+                            <Trash2 className="w-3 h-3" />
+                          </Button>
                         </div>
                       </div>
                     </div>
