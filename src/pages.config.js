@@ -29,6 +29,7 @@ import Reports from './pages/Reports';
 import Documents from './pages/Documents';
 import UserManagement from './pages/UserManagement';
 import InventoryFix from './pages/InventoryFix';
+import GitHub from './pages/GitHub';
 import __Layout from './Layout.jsx';
 
 
@@ -64,6 +65,7 @@ export const PAGES = {
     "Documents": Documents,
     "UserManagement": UserManagement,
     "InventoryFix": InventoryFix,
+    "GitHub": GitHub,
 }
 
 export const pagesConfig = {
