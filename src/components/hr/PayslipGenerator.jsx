@@ -599,17 +599,43 @@ export default function PayslipGenerator({ payroll, employee, organisation }) {
     }, 250);
   };
 
-  const handleDownload = () => {
-    const html = generatePayslipHTML();
-    const blob = new Blob([html], { type: 'text/html' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = `Payslip-${employee?.full_name}-${format(new Date(payroll?.period_start), 'MMM-yyyy')}.html`;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    URL.revokeObjectURL(url);
+  const [isDownloading, setIsDownloading] = useState(false);
+
+  const handleDownload = async () => {
+    setIsDownloading(true);
+    try {
+      const response = await base44.functions.invoke('generateDocumentPDF', {
+        documentType: 'payslip',
+        data: { payroll, employee },
+        organisation
+      });
+      
+      const blob = new Blob([response.data], { type: 'application/pdf' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `Payslip-${employee?.full_name}-${format(new Date(payroll?.period_start), 'MMM-yyyy')}.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+      toast.success("Payslip downloaded");
+    } catch (error) {
+      console.error('PDF error:', error);
+      // Fallback to HTML
+      const html = generatePayslipHTML();
+      const blob = new Blob([html], { type: 'text/html' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `Payslip-${employee?.full_name}-${format(new Date(payroll?.period_start), 'MMM-yyyy')}.html`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+      toast.info("Downloaded as HTML");
+    }
+    setIsDownloading(false);
   };
 
   if (!payroll || !employee) return null;
