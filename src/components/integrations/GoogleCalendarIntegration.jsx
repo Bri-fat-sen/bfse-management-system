@@ -64,13 +64,12 @@ export default function GoogleCalendarIntegration() {
     staleTime: 5 * 60 * 1000,
   });
 
-  const calendars = calendarData?.calendars || [];
-  const primaryCalendar = calendars.find(c => c.primary) || calendars[0];
-
-  // Fetch upcoming events
+  // Fetch upcoming events - must be before any conditional returns
   const { data: eventsData, isLoading: eventsLoading } = useQuery({
-    queryKey: ['googleEvents', selectedCalendar || primaryCalendar?.id],
+    queryKey: ['googleEvents', selectedCalendar, calendarData],
     queryFn: async () => {
+      const calendars = calendarData?.calendars || [];
+      const primaryCalendar = calendars.find(c => c.primary) || calendars[0];
       const calId = selectedCalendar || primaryCalendar?.id;
       if (!calId) return { events: [] };
       const res = await base44.functions.invoke('googleCalendarSync', { 
@@ -82,15 +81,15 @@ export default function GoogleCalendarIntegration() {
       });
       return res.data;
     },
-    enabled: !!(selectedCalendar || primaryCalendar?.id),
+    enabled: !!(calendarData?.calendars?.length > 0),
     staleTime: 60 * 1000,
   });
 
-  const events = eventsData?.events || [];
-
-  // Create event mutation
+  // Create event mutation - must be before any conditional returns
   const createEventMutation = useMutation({
     mutationFn: async (eventData) => {
+      const calendars = calendarData?.calendars || [];
+      const primaryCalendar = calendars.find(c => c.primary) || calendars[0];
       const res = await base44.functions.invoke('googleCalendarSync', {
         action: 'createEvent',
         calendarId: selectedCalendar || primaryCalendar?.id,
@@ -108,6 +107,11 @@ export default function GoogleCalendarIntegration() {
       toast.error("Failed to create event: " + error.message);
     }
   });
+
+  // Derived data - after hooks
+  const calendars = calendarData?.calendars || [];
+  const primaryCalendar = calendars.find(c => c.primary) || calendars[0];
+  const events = eventsData?.events || [];
 
   const handleCreateEvent = () => {
     if (!newEvent.summary || !newEvent.start || !newEvent.end) {
