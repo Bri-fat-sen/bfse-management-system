@@ -12,7 +12,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
-import { useToast } from "@/components/ui/use-toast";
+import { toast } from "sonner";
 import { MapPin, Plus, Minus, Route } from "lucide-react";
 
 export default function RouteDialog({ 
@@ -21,7 +21,6 @@ export default function RouteDialog({
   orgId,
   editingRoute = null
 }) {
-  const { toast } = useToast();
   const queryClient = useQueryClient();
   const [stops, setStops] = useState(editingRoute?.stops || []);
 
@@ -33,7 +32,7 @@ export default function RouteDialog({
       queryClient.invalidateQueries({ queryKey: ['routes'] });
       onOpenChange(false);
       setStops([]);
-      toast({ title: editingRoute ? "Route updated" : "Route created successfully" });
+      toast.success(editingRoute ? "Route updated" : "Route created successfully");
     },
   });
 

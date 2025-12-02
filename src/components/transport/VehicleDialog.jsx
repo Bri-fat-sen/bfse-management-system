@@ -19,7 +19,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { useToast } from "@/components/ui/use-toast";
+import { toast } from "sonner";
 import { Loader2, Truck } from "lucide-react";
 
 const vehicleTypes = [
@@ -38,7 +38,6 @@ const fuelTypes = [
 ];
 
 export default function VehicleDialog({ open, onOpenChange, orgId, drivers = [], editingVehicle = null }) {
-  const { toast } = useToast();
   const queryClient = useQueryClient();
 
   const [formData, setFormData] = useState({
@@ -89,7 +88,7 @@ export default function VehicleDialog({ open, onOpenChange, orgId, drivers = [],
     }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['vehicles'] });
-      toast({ title: "Vehicle added successfully" });
+      toast.success("Vehicle added successfully");
       onOpenChange(false);
       resetForm();
     },
@@ -105,7 +104,7 @@ export default function VehicleDialog({ open, onOpenChange, orgId, drivers = [],
     }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['vehicles'] });
-      toast({ title: "Vehicle updated successfully" });
+      toast.success("Vehicle updated successfully");
       onOpenChange(false);
     },
   });
@@ -130,7 +129,7 @@ export default function VehicleDialog({ open, onOpenChange, orgId, drivers = [],
   const handleSubmit = (e) => {
     e.preventDefault();
     if (!formData.registration_number) {
-      toast({ title: "Registration number is required", variant: "destructive" });
+      toast.error("Registration number is required");
       return;
     }
     if (editingVehicle) {

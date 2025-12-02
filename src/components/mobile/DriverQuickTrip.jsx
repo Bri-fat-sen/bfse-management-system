@@ -14,10 +14,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { useToast } from "@/components/ui/use-toast";
+import { toast } from "sonner";
 
 export default function DriverQuickTrip({ currentEmployee, orgId, vehicles, routes }) {
-  const { toast } = useToast();
   const queryClient = useQueryClient();
   const [selectedVehicle, setSelectedVehicle] = useState("");
   const [selectedRoute, setSelectedRoute] = useState("");
@@ -52,7 +51,7 @@ export default function DriverQuickTrip({ currentEmployee, orgId, vehicles, rout
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['trips'] });
-      toast({ title: "Trip Recorded!", description: `Revenue: Le ${totalRevenue.toLocaleString()}` });
+      toast.success("Trip Recorded!", { description: `Revenue: Le ${totalRevenue.toLocaleString()}` });
       setPassengers(0);
       setFuelCost(0);
     }
