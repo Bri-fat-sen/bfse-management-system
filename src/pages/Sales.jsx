@@ -150,6 +150,11 @@ export default function Sales() {
     enabled: !!orgId && !!selectedLocation,
   });
 
+  const filteredCustomers = customers.filter(c =>
+    c.name?.toLowerCase().includes(customerSearch.toLowerCase()) ||
+    c.phone?.includes(customerSearch)
+  ).slice(0, 5);
+
   // Create a map of product stock at selected location
   const locationStockMap = React.useMemo(() => {
     const map = {};
