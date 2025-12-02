@@ -40,39 +40,38 @@ Deno.serve(async (req) => {
     const secondary = hexToRgb(secondaryColor);
     const navy = { r: 15, g: 31, b: 60 };
 
-    // Sierra Leone Flag Stripe - compact
+    // Sierra Leone Flag Stripe
     doc.setFillColor(30, 176, 83); // Green
-    doc.rect(0, 0, pageWidth / 3, 4, 'F');
+    doc.rect(0, 0, pageWidth / 3, 6, 'F');
     doc.setFillColor(255, 255, 255); // White
-    doc.rect(pageWidth / 3, 0, pageWidth / 3, 4, 'F');
+    doc.rect(pageWidth / 3, 0, pageWidth / 3, 6, 'F');
     doc.setFillColor(0, 114, 198); // Blue
-    doc.rect((pageWidth / 3) * 2, 0, pageWidth / 3, 4, 'F');
+    doc.rect((pageWidth / 3) * 2, 0, pageWidth / 3, 6, 'F');
 
-    // Header Background - compact
+    // Header Background with gradient effect
     doc.setFillColor(primary.r, primary.g, primary.b);
-    doc.rect(0, 4, pageWidth, 28, 'F');
+    doc.rect(0, 6, pageWidth, 35, 'F');
 
     // Organisation Name
     doc.setTextColor(255, 255, 255);
-    doc.setFontSize(14);
+    doc.setFontSize(18);
     doc.setFont('helvetica', 'bold');
-    doc.text(orgName, margin, 16);
+    doc.text(orgName, margin, 22);
 
     // Address
-    doc.setFontSize(8);
+    doc.setFontSize(10);
     doc.setFont('helvetica', 'normal');
     const addressText = [orgAddress, orgCity, organisation?.country || 'Sierra Leone'].filter(Boolean).join(', ');
-    doc.text(addressText, margin, 24);
+    doc.text(addressText, margin, 30);
 
     // Date on right
-    doc.setFontSize(9);
-    doc.text(new Date().toLocaleDateString('en-GB'), pageWidth - margin, 16, { align: 'right' });
+    doc.setFontSize(10);
+    doc.text(new Date().toLocaleDateString('en-GB'), pageWidth - margin, 22, { align: 'right' });
     if (orgPhone) {
-      doc.setFontSize(8);
-      doc.text(orgPhone, pageWidth - margin, 24, { align: 'right' });
+      doc.text(orgPhone, pageWidth - margin, 30, { align: 'right' });
     }
 
-    yPos = 38;
+    yPos = 50;
 
     // Form configurations
     const formConfigs = {
@@ -368,29 +367,36 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Signature section - positioned relative to remaining space
-    const signatureY = Math.max(yPos + 15, pageHeight - 70);
-    const sigWidth = (pageWidth - (margin * 2) - 20) / 2;
+    // Footer height
+    const footerHeight = 18;
+    const footerY = pageHeight - footerHeight;
+    
+    // Calculate max content area (leave space for signature + footer)
+    const signatureHeight = 35;
+    const maxContentY = footerY - signatureHeight;
+    
+    // If content exceeds page, we need to constrain - but signature always fits
+    const signatureY = Math.min(yPos + 10, maxContentY);
+    const sigWidth = (pageWidth - (margin * 2) - 15) / 2;
     
     doc.setDrawColor(203, 213, 225);
-    doc.line(margin, signatureY + 25, margin + sigWidth, signatureY + 25);
-    doc.line(margin + sigWidth + 20, signatureY + 25, pageWidth - margin, signatureY + 25);
+    doc.line(margin, signatureY + 20, margin + sigWidth, signatureY + 20);
+    doc.line(margin + sigWidth + 15, signatureY + 20, pageWidth - margin, signatureY + 20);
     
-    doc.setFontSize(8);
+    doc.setFontSize(7);
     doc.setTextColor(100, 116, 139);
     doc.setFont('helvetica', 'normal');
-    doc.text('Prepared By (Name & Signature)', margin + (sigWidth / 2), signatureY + 32, { align: 'center' });
-    doc.text('Approved By (Name & Signature)', margin + sigWidth + 20 + (sigWidth / 2), signatureY + 32, { align: 'center' });
+    doc.text('Prepared By (Name & Signature)', margin + (sigWidth / 2), signatureY + 26, { align: 'center' });
+    doc.text('Approved By (Name & Signature)', margin + sigWidth + 15 + (sigWidth / 2), signatureY + 26, { align: 'center' });
 
-    // Footer
-    const footerY = pageHeight - 25;
+    // Footer - compact
     doc.setFillColor(navy.r, navy.g, navy.b);
-    doc.rect(0, footerY, pageWidth, 25, 'F');
+    doc.rect(0, footerY, pageWidth, footerHeight, 'F');
 
-    // Footer flag stripe
-    const barWidth = 20;
-    const barHeight = 8;
-    const barY = footerY + 8;
+    // Footer flag stripe - compact
+    const barWidth = 14;
+    const barHeight = 5;
+    const barY = footerY + 6;
     const barStartX = (pageWidth - (barWidth * 3 + 4)) / 2;
     
     doc.setFillColor(30, 176, 83);
@@ -401,8 +407,8 @@ Deno.serve(async (req) => {
     doc.roundedRect(barStartX + (barWidth * 2) + 4, barY, barWidth, barHeight, 1, 1, 'F');
 
     doc.setTextColor(255, 255, 255);
-    doc.setFontSize(8);
-    doc.text('For Manual Record Keeping', pageWidth / 2, footerY + 22, { align: 'center' });
+    doc.setFontSize(6);
+    doc.text('For Manual Record Keeping', pageWidth / 2, footerY + 15, { align: 'center' });
 
     // Generate PDF
     const pdfBytes = doc.output('arraybuffer');
