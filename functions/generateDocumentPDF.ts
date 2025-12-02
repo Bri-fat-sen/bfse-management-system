@@ -124,94 +124,110 @@ Deno.serve(async (req) => {
         
         yPos = drawHeader('Receipt', sale?.sale_number || 'RECEIPT', sale?.created_date ? new Date(sale.created_date).toLocaleDateString('en-GB') : new Date().toLocaleDateString('en-GB'));
         
-        // Info section
+        // Info bar - compact
         doc.setFillColor(248, 250, 252);
-        doc.rect(0, yPos, pageWidth, 18, 'F');
+        doc.rect(0, yPos, pageWidth, 12, 'F');
         doc.setTextColor(100, 116, 139);
-        doc.setFontSize(9);
+        doc.setFontSize(8);
         let infoX = margin;
         if (sale?.employee_name) {
           doc.text(`Cashier: ${sale.employee_name}`, infoX, yPos + 8);
-          infoX += 60;
+          infoX += 55;
         }
         if (sale?.customer_name) {
           doc.text(`Customer: ${sale.customer_name}`, infoX, yPos + 8);
-          infoX += 60;
+          infoX += 55;
         }
         if (sale?.location) {
           doc.text(`Location: ${sale.location}`, infoX, yPos + 8);
         }
-        yPos += 22;
+        yPos += 16;
         
-        // Items table
+        // Items table - compact
         const items = sale?.items || [];
-        const colWidths = [90, 25, 35, 30];
         
-        // Header
+        // Table header
         doc.setFillColor(primary.r, primary.g, primary.b);
-        doc.rect(margin, yPos, pageWidth - (margin * 2), 10, 'F');
+        doc.rect(margin, yPos, pageWidth - (margin * 2), 8, 'F');
         doc.setTextColor(255, 255, 255);
-        doc.setFontSize(8);
+        doc.setFontSize(7);
         doc.setFont('helvetica', 'bold');
-        doc.text('ITEM', margin + 3, yPos + 7);
-        doc.text('QTY', margin + colWidths[0] + 3, yPos + 7);
-        doc.text('PRICE', margin + colWidths[0] + colWidths[1] + 3, yPos + 7);
-        doc.text('TOTAL', pageWidth - margin - 3, yPos + 7, { align: 'right' });
-        yPos += 12;
+        doc.text('ITEM', margin + 3, yPos + 5.5);
+        doc.text('QTY', margin + 95, yPos + 5.5);
+        doc.text('PRICE', margin + 115, yPos + 5.5);
+        doc.text('TOTAL', pageWidth - margin - 3, yPos + 5.5, { align: 'right' });
+        yPos += 10;
         
-        // Items
+        // Items - compact rows
         doc.setFont('helvetica', 'normal');
         doc.setTextColor(51, 65, 85);
+        doc.setFontSize(8);
         items.forEach((item, i) => {
           if (i % 2 === 0) {
             doc.setFillColor(248, 250, 252);
-            doc.rect(margin, yPos - 2, pageWidth - (margin * 2), 10, 'F');
+            doc.rect(margin, yPos - 1, pageWidth - (margin * 2), 8, 'F');
           }
-          doc.text(item.product_name || 'Item', margin + 3, yPos + 4);
-          doc.text(String(item.quantity || 1), margin + colWidths[0] + 3, yPos + 4);
-          doc.text(formatCurrency(item.unit_price), margin + colWidths[0] + colWidths[1] + 3, yPos + 4);
+          doc.text((item.product_name || 'Item').substring(0, 35), margin + 3, yPos + 4);
+          doc.text(String(item.quantity || 1), margin + 95, yPos + 4);
+          doc.text(formatCurrency(item.unit_price), margin + 115, yPos + 4);
           doc.text(formatCurrency(item.total), pageWidth - margin - 3, yPos + 4, { align: 'right' });
-          yPos += 10;
+          yPos += 8;
         });
         
-        yPos += 5;
+        // Dashed line separator
+        yPos += 3;
         doc.setDrawColor(203, 213, 225);
+        doc.setLineDashPattern([2, 2], 0);
         doc.line(margin, yPos, pageWidth - margin, yPos);
-        yPos += 8;
+        doc.setLineDashPattern([], 0);
+        yPos += 6;
         
-        // Totals
-        doc.setFontSize(10);
+        // Totals - compact
+        const totalsX = margin + 110;
+        doc.setFontSize(9);
+        doc.setTextColor(71, 85, 105);
+        
         if (sale?.subtotal) {
-          doc.text('Subtotal:', margin + 100, yPos);
+          doc.text('Subtotal', totalsX, yPos);
           doc.text(formatCurrency(sale.subtotal), pageWidth - margin, yPos, { align: 'right' });
-          yPos += 8;
+          yPos += 7;
         }
         if (sale?.tax && sale.tax > 0) {
-          doc.text('Tax:', margin + 100, yPos);
+          doc.text('GST', totalsX, yPos);
           doc.text(formatCurrency(sale.tax), pageWidth - margin, yPos, { align: 'right' });
-          yPos += 8;
+          yPos += 7;
         }
         if (sale?.discount && sale.discount > 0) {
-          doc.text('Discount:', margin + 100, yPos);
+          doc.text('Discount', totalsX, yPos);
           doc.text(`-${formatCurrency(sale.discount)}`, pageWidth - margin, yPos, { align: 'right' });
-          yPos += 8;
+          yPos += 7;
         }
         
-        // Grand Total
-        yPos += 5;
+        // Grand Total - gradient style box
+        yPos += 3;
         doc.setFillColor(primary.r, primary.g, primary.b);
-        doc.roundedRect(margin + 80, yPos - 3, pageWidth - margin - 80 - margin, 15, 3, 3, 'F');
+        doc.roundedRect(totalsX - 5, yPos - 2, pageWidth - margin - totalsX + 5, 12, 2, 2, 'F');
         doc.setTextColor(255, 255, 255);
-        doc.setFontSize(12);
+        doc.setFontSize(11);
         doc.setFont('helvetica', 'bold');
-        doc.text('TOTAL', margin + 90, yPos + 7);
-        doc.text(formatCurrency(sale?.total_amount), pageWidth - margin - 5, yPos + 7, { align: 'right' });
+        doc.text('TOTAL', totalsX, yPos + 6);
+        doc.text(formatCurrency(sale?.total_amount), pageWidth - margin - 3, yPos + 6, { align: 'right' });
         
-        yPos += 20;
+        // Payment method badge
+        yPos += 18;
         doc.setTextColor(100, 116, 139);
-        doc.setFontSize(9);
+        doc.setFontSize(8);
         doc.setFont('helvetica', 'normal');
-        doc.text(`Payment: ${(sale?.payment_method || 'cash').toUpperCase()}`, margin, yPos);
+        doc.text('Payment:', margin, yPos);
+        
+        // Payment badge
+        const paymentMethod = (sale?.payment_method || 'cash').toUpperCase();
+        doc.setFillColor(220, 252, 231);
+        doc.roundedRect(margin + 22, yPos - 4, doc.getTextWidth(paymentMethod) + 8, 7, 2, 2, 'F');
+        doc.setTextColor(22, 101, 52);
+        doc.setFontSize(7);
+        doc.setFont('helvetica', 'bold');
+        doc.text(paymentMethod, margin + 26, yPos);
         
         drawFooter();
         break;
