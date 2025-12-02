@@ -246,10 +246,11 @@ export default function NotificationCenter({ orgId, currentEmployee }) {
                             <Button
                               variant="ghost"
                               size="icon"
-                              className="h-6 w-6 flex-shrink-0"
+                              className="h-6 w-6 flex-shrink-0 text-blue-500 hover:text-blue-700"
                               onClick={() => markAsReadMutation.mutate(notification.id)}
+                              title="Mark as read"
                             >
-                              <X className="w-3 h-3" />
+                              <Check className="w-3 h-3" />
                             </Button>
                           )}
                         </div>
