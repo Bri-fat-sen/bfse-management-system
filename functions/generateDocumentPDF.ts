@@ -350,57 +350,55 @@ Deno.serve(async (req) => {
         const periodLabel = payroll?.period_start ? new Date(payroll.period_start).toLocaleDateString('en-GB', { month: 'long', year: 'numeric' }) : 'Pay Period';
         yPos = drawHeader('Payslip', periodLabel, payroll?.payment_date ? new Date(payroll.payment_date).toLocaleDateString('en-GB') : 'Pending');
         
-        // Employee Info
+        // Employee Info - compact
         doc.setFillColor(248, 250, 252);
-        doc.rect(0, yPos, pageWidth, 35, 'F');
+        doc.rect(0, yPos, pageWidth, 24, 'F');
         
         const infoCol1 = margin;
         const infoCol2 = pageWidth / 2 + 5;
         
-        doc.setFontSize(8);
+        doc.setFontSize(7);
         doc.setTextColor(100, 116, 139);
         doc.setFont('helvetica', 'bold');
-        doc.text('EMPLOYEE DETAILS', infoCol1, yPos + 8);
-        doc.text('PAY PERIOD', infoCol2, yPos + 8);
+        doc.text('EMPLOYEE DETAILS', infoCol1, yPos + 5);
+        doc.text('PAY PERIOD', infoCol2, yPos + 5);
         
-        doc.setFontSize(9);
+        doc.setFontSize(8);
         doc.setTextColor(51, 65, 85);
         doc.setFont('helvetica', 'normal');
         
-        doc.text(`Name: ${employee?.full_name || 'N/A'}`, infoCol1, yPos + 16);
-        doc.text(`ID: ${employee?.employee_code || 'N/A'}`, infoCol1, yPos + 23);
-        doc.text(`Dept: ${employee?.department || 'N/A'}`, infoCol1, yPos + 30);
+        doc.text(`Name: ${employee?.full_name || 'N/A'}`, infoCol1, yPos + 11);
+        doc.text(`ID: ${employee?.employee_code || 'N/A'}`, infoCol1, yPos + 17);
         
-        doc.text(`Start: ${payroll?.period_start ? new Date(payroll.period_start).toLocaleDateString('en-GB') : 'N/A'}`, infoCol2, yPos + 16);
-        doc.text(`End: ${payroll?.period_end ? new Date(payroll.period_end).toLocaleDateString('en-GB') : 'N/A'}`, infoCol2, yPos + 23);
-        doc.text(`Payment: ${(payroll?.payment_method || 'Bank Transfer').replace(/_/g, ' ')}`, infoCol2, yPos + 30);
+        doc.text(`${payroll?.period_start ? new Date(payroll.period_start).toLocaleDateString('en-GB') : 'N/A'} - ${payroll?.period_end ? new Date(payroll.period_end).toLocaleDateString('en-GB') : 'N/A'}`, infoCol2, yPos + 11);
+        doc.text(`Payment: ${(payroll?.payment_method || 'Bank Transfer').replace(/_/g, ' ')}`, infoCol2, yPos + 17);
         
-        yPos += 40;
+        yPos += 28;
         
-        // Earnings and Deductions side by side
-        const colWidth = (pageWidth - (margin * 2) - 10) / 2;
+        // Earnings and Deductions side by side - compact
+        const colWidth = (pageWidth - (margin * 2) - 8) / 2;
         const leftCol = margin;
-        const rightCol = margin + colWidth + 10;
+        const rightCol = margin + colWidth + 8;
         
         // Earnings Header
         doc.setFillColor(primary.r, primary.g, primary.b);
-        doc.rect(leftCol, yPos, colWidth, 8, 'F');
+        doc.rect(leftCol, yPos, colWidth, 7, 'F');
         doc.setTextColor(255, 255, 255);
-        doc.setFontSize(9);
+        doc.setFontSize(7);
         doc.setFont('helvetica', 'bold');
-        doc.text('EARNINGS', leftCol + 3, yPos + 6);
+        doc.text('EARNINGS', leftCol + 3, yPos + 5);
         
         // Deductions Header
         doc.setFillColor(220, 38, 38);
-        doc.rect(rightCol, yPos, colWidth, 8, 'F');
-        doc.text('DEDUCTIONS', rightCol + 3, yPos + 6);
+        doc.rect(rightCol, yPos, colWidth, 7, 'F');
+        doc.text('DEDUCTIONS', rightCol + 3, yPos + 5);
         
-        yPos += 12;
+        yPos += 10;
         let earningsY = yPos;
         let deductionsY = yPos;
         
         doc.setTextColor(51, 65, 85);
-        doc.setFontSize(8);
+        doc.setFontSize(7);
         doc.setFont('helvetica', 'normal');
         
         // Earnings items
@@ -409,24 +407,24 @@ Deno.serve(async (req) => {
         
         doc.text('Base Salary', leftCol + 3, earningsY);
         doc.text(formatCurrency(baseSalary), leftCol + colWidth - 3, earningsY, { align: 'right' });
-        earningsY += 8;
+        earningsY += 6;
         
         if (payroll?.overtime_pay > 0) {
           doc.text('Overtime', leftCol + 3, earningsY);
           doc.text(formatCurrency(payroll.overtime_pay), leftCol + colWidth - 3, earningsY, { align: 'right' });
-          earningsY += 8;
+          earningsY += 6;
         }
         
         (payroll?.allowances || []).forEach(a => {
           doc.text(a.name, leftCol + 3, earningsY);
           doc.text(formatCurrency(a.amount), leftCol + colWidth - 3, earningsY, { align: 'right' });
-          earningsY += 8;
+          earningsY += 6;
         });
         
         (payroll?.bonuses || []).forEach(b => {
           doc.text(b.name, leftCol + 3, earningsY);
           doc.text(formatCurrency(b.amount), leftCol + colWidth - 3, earningsY, { align: 'right' });
-          earningsY += 8;
+          earningsY += 6;
         });
         
         // Deductions items
@@ -437,43 +435,46 @@ Deno.serve(async (req) => {
         if (nassitEmployee > 0) {
           doc.text('NASSIT (5%)', rightCol + 3, deductionsY);
           doc.text(formatCurrency(nassitEmployee), rightCol + colWidth - 3, deductionsY, { align: 'right' });
-          deductionsY += 8;
+          deductionsY += 6;
         }
         
         if (payeTax > 0) {
           doc.text('PAYE Tax', rightCol + 3, deductionsY);
           doc.text(formatCurrency(payeTax), rightCol + colWidth - 3, deductionsY, { align: 'right' });
-          deductionsY += 8;
+          deductionsY += 6;
         }
         
         (payroll?.deductions || []).filter(d => d.type !== 'statutory').forEach(d => {
           doc.text(d.name, rightCol + 3, deductionsY);
           doc.text(formatCurrency(d.amount), rightCol + colWidth - 3, deductionsY, { align: 'right' });
-          deductionsY += 8;
+          deductionsY += 6;
         });
         
         // Subtotals
-        const maxY = Math.max(earningsY, deductionsY) + 5;
+        const maxY = Math.max(earningsY, deductionsY) + 3;
         doc.setDrawColor(203, 213, 225);
+        doc.setLineDashPattern([2, 2], 0);
         doc.line(leftCol, maxY, leftCol + colWidth, maxY);
         doc.line(rightCol, maxY, rightCol + colWidth, maxY);
+        doc.setLineDashPattern([], 0);
         
+        doc.setFontSize(8);
         doc.setFont('helvetica', 'bold');
-        doc.text('Gross Pay', leftCol + 3, maxY + 8);
-        doc.text(formatCurrency(grossPay), leftCol + colWidth - 3, maxY + 8, { align: 'right' });
+        doc.text('Gross Pay', leftCol + 3, maxY + 6);
+        doc.text(formatCurrency(grossPay), leftCol + colWidth - 3, maxY + 6, { align: 'right' });
         
-        doc.text('Total Deductions', rightCol + 3, maxY + 8);
-        doc.text(formatCurrency(totalDeductions), rightCol + colWidth - 3, maxY + 8, { align: 'right' });
+        doc.text('Total Deductions', rightCol + 3, maxY + 6);
+        doc.text(formatCurrency(totalDeductions), rightCol + colWidth - 3, maxY + 6, { align: 'right' });
         
-        // Net Pay
-        yPos = maxY + 20;
+        // Net Pay - gradient style box
+        yPos = maxY + 14;
         const netPay = payroll?.net_pay || 0;
         doc.setFillColor(primary.r, primary.g, primary.b);
-        doc.roundedRect(margin, yPos, pageWidth - (margin * 2), 18, 3, 3, 'F');
+        doc.roundedRect(margin, yPos, pageWidth - (margin * 2), 14, 2, 2, 'F');
         doc.setTextColor(255, 255, 255);
-        doc.setFontSize(14);
-        doc.text('NET PAY', margin + 10, yPos + 12);
-        doc.text(formatCurrency(netPay), pageWidth - margin - 10, yPos + 12, { align: 'right' });
+        doc.setFontSize(12);
+        doc.text('NET PAY', margin + 8, yPos + 10);
+        doc.text(formatCurrency(netPay), pageWidth - margin - 8, yPos + 10, { align: 'right' });
         
         drawFooter();
         break;
