@@ -464,6 +464,7 @@ export default function Suppliers() {
                 actionLabel="Create Order"
               />
             ) : (
+              <>
               {/* Desktop Table View */}
               <Card className="hidden md:block">
                 <CardContent className="p-0">
@@ -657,6 +658,8 @@ export default function Suppliers() {
                   );
                 })}
               </div>
+              </>
+            )
             )}
           </TabsContent>
         </Tabs>
