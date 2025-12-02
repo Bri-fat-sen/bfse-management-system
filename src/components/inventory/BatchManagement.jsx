@@ -83,7 +83,9 @@ export default function BatchManagement({ products = [], warehouses = [], vehicl
 
   const deleteMutation = useMutation({
     mutationFn: async (batchId) => {
-      // First, fetch and delete all stock level allocations for this batch
+      const batch = batches.find(b => b.id === batchId);
+      
+      // Delete all stock level allocations for this batch
       const batchAllocations = await base44.entities.StockLevel.filter({ 
         organisation_id: orgId, 
         batch_id: batchId 
@@ -91,13 +93,24 @@ export default function BatchManagement({ products = [], warehouses = [], vehicl
       if (batchAllocations.length > 0) {
         await Promise.all(batchAllocations.map(sl => base44.entities.StockLevel.delete(sl.id)));
       }
+      
+      // Delete all stock movements for this batch
+      const batchMovements = await base44.entities.StockMovement.filter({ 
+        organisation_id: orgId, 
+        batch_number: batch?.batch_number 
+      });
+      if (batchMovements.length > 0) {
+        await Promise.all(batchMovements.map(sm => base44.entities.StockMovement.delete(sm.id)));
+      }
+      
       // Then delete the batch itself
       await base44.entities.InventoryBatch.delete(batchId);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['inventoryBatches'] });
       queryClient.invalidateQueries({ queryKey: ['stockLevels'] });
-      toast({ title: "Batch and allocations deleted" });
+      queryClient.invalidateQueries({ queryKey: ['stockMovements'] });
+      toast({ title: "Batch, allocations and movements deleted" });
     },
   });
 
@@ -224,7 +237,7 @@ export default function BatchManagement({ products = [], warehouses = [], vehicl
                   <tr>
                     <th className="text-left p-4 font-medium">Batch / Product</th>
                     <th className="text-left p-4 font-medium">Warehouse</th>
-                    <th className="text-right p-4 font-medium">Qty / Allocated</th>
+                    <th className="text-right p-4 font-medium">Quantity</th>
                     <th className="text-left p-4 font-medium">Mfg Date</th>
                     <th className="text-left p-4 font-medium">Expiry</th>
                     <th className="text-center p-4 font-medium">Status</th>
@@ -249,9 +262,13 @@ export default function BatchManagement({ products = [], warehouses = [], vehicl
                         </td>
                         <td className="p-4 text-gray-600">{batch.warehouse_name || 'Main'}</td>
                         <td className="p-4 text-right">
-                          <div className="font-medium">{batch.quantity}</div>
-                          <div className="text-xs text-gray-500">
-                            {batch.allocated_quantity || 0} allocated
+                          <div>
+                            <span className="font-medium">{batch.quantity}</span>
+                            {(batch.allocated_quantity || 0) > 0 && (
+                              <p className="text-xs text-gray-500">
+                                {batch.allocated_quantity} allocated
+                              </p>
+                            )}
                           </div>
                         </td>
                         <td className="p-4 text-gray-600">
@@ -268,13 +285,7 @@ export default function BatchManagement({ products = [], warehouses = [], vehicl
                           )}
                         </td>
                         <td className="p-4 text-center">
-                          {(batch.allocated_quantity || 0) >= batch.quantity ? (
-                            <Badge className="bg-gray-100 text-gray-700">Fully Allocated</Badge>
-                          ) : (batch.allocated_quantity || 0) > 0 ? (
-                            <Badge className="bg-blue-100 text-blue-700">Partial ({batch.quantity - (batch.allocated_quantity || 0)} left)</Badge>
-                          ) : (
-                            <Badge className="bg-yellow-100 text-yellow-700">In Stock</Badge>
-                          )}
+                          <Badge className={STATUS_COLORS[batch.status]}>{batch.status}</Badge>
                         </td>
                         <td className="p-4 text-right">
                           <div className="flex justify-end gap-1">
