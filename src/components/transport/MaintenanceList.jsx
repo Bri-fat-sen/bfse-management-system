@@ -172,37 +172,37 @@ export function MaintenanceStats({ maintenanceRecords, vehicles }) {
   );
 
   return (
-    <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-      <div className="p-4 bg-gradient-to-br from-green-50 to-green-100 rounded-xl">
-        <div className="flex items-center gap-2 mb-1">
-          <CheckCircle className="w-4 h-4 text-green-600" />
-          <span className="text-xs text-green-700">Completed (30d)</span>
+    <div className="grid grid-cols-2 md:grid-cols-4 gap-2 sm:gap-3">
+      <div className="p-3 sm:p-4 bg-gradient-to-br from-green-50 to-green-100 rounded-xl">
+        <div className="flex items-center gap-1.5 sm:gap-2 mb-1">
+          <CheckCircle className="w-3 h-3 sm:w-4 sm:h-4 text-green-600" />
+          <span className="text-[10px] sm:text-xs text-green-700">Done (30d)</span>
         </div>
-        <p className="text-2xl font-bold text-green-800">{recentMaintenance.length}</p>
+        <p className="text-lg sm:text-2xl font-bold text-green-800">{recentMaintenance.length}</p>
       </div>
       
-      <div className="p-4 bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl">
-        <div className="flex items-center gap-2 mb-1">
-          <DollarSign className="w-4 h-4 text-blue-600" />
-          <span className="text-xs text-blue-700">Cost (30d)</span>
+      <div className="p-3 sm:p-4 bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl">
+        <div className="flex items-center gap-1.5 sm:gap-2 mb-1">
+          <DollarSign className="w-3 h-3 sm:w-4 sm:h-4 text-blue-600" />
+          <span className="text-[10px] sm:text-xs text-blue-700">Cost</span>
         </div>
-        <p className="text-2xl font-bold text-blue-800">Le {totalCost30Days.toLocaleString()}</p>
+        <p className="text-sm sm:text-2xl font-bold text-blue-800 truncate">Le {totalCost30Days.toLocaleString()}</p>
       </div>
       
-      <div className="p-4 bg-gradient-to-br from-amber-50 to-amber-100 rounded-xl">
-        <div className="flex items-center gap-2 mb-1">
-          <Clock className="w-4 h-4 text-amber-600" />
-          <span className="text-xs text-amber-700">Upcoming</span>
+      <div className="p-3 sm:p-4 bg-gradient-to-br from-amber-50 to-amber-100 rounded-xl">
+        <div className="flex items-center gap-1.5 sm:gap-2 mb-1">
+          <Clock className="w-3 h-3 sm:w-4 sm:h-4 text-amber-600" />
+          <span className="text-[10px] sm:text-xs text-amber-700">Upcoming</span>
         </div>
-        <p className="text-2xl font-bold text-amber-800">{upcomingMaintenance.length}</p>
+        <p className="text-lg sm:text-2xl font-bold text-amber-800">{upcomingMaintenance.length}</p>
       </div>
       
-      <div className="p-4 bg-gradient-to-br from-red-50 to-red-100 rounded-xl">
-        <div className="flex items-center gap-2 mb-1">
-          <AlertTriangle className="w-4 h-4 text-red-600" />
-          <span className="text-xs text-red-700">Overdue</span>
+      <div className="p-3 sm:p-4 bg-gradient-to-br from-red-50 to-red-100 rounded-xl">
+        <div className="flex items-center gap-1.5 sm:gap-2 mb-1">
+          <AlertTriangle className="w-3 h-3 sm:w-4 sm:h-4 text-red-600" />
+          <span className="text-[10px] sm:text-xs text-red-700">Overdue</span>
         </div>
-        <p className="text-2xl font-bold text-red-800">{overdueMaintenance.length}</p>
+        <p className="text-lg sm:text-2xl font-bold text-red-800">{overdueMaintenance.length}</p>
       </div>
     </div>
   );

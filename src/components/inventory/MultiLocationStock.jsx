@@ -226,27 +226,69 @@ export default function MultiLocationStock({ orgId, products, warehouses, vehicl
 
       {/* Stock Matrix */}
       <Card>
-        <CardHeader>
-          <div className="flex flex-col sm:flex-row gap-4 justify-between">
-            <CardTitle className="flex items-center gap-2">
-              <MapPin className="w-5 h-5" />
+        <CardHeader className="p-3 sm:p-6">
+          <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-between">
+            <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
+              <MapPin className="w-4 h-4 sm:w-5 sm:h-5" />
               Stock by Location
             </CardTitle>
-            <div className="flex gap-2">
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                <Input
-                  placeholder="Search products..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10 w-60"
-                />
-              </div>
+            <div className="relative w-full sm:w-60">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+              <Input
+                placeholder="Search products..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-10 w-full"
+              />
             </div>
           </div>
         </CardHeader>
-        <CardContent>
-          <div className="overflow-x-auto">
+        <CardContent className="p-0 sm:p-6 sm:pt-0">
+          {/* Mobile Cards */}
+          <div className="block md:hidden space-y-2 p-3">
+            {filteredProducts.slice(0, 30).map(product => {
+              const totalStock = getTotalStock(product.id);
+              const isLowStock = totalStock <= (product.low_stock_threshold || 10);
+              
+              return (
+                <div key={product.id} className={`p-3 rounded-lg border ${isLowStock ? 'bg-red-50 border-red-200' : 'bg-gray-50'}`}>
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="flex items-center gap-2 min-w-0">
+                      <Package className="w-4 h-4 text-gray-400 flex-shrink-0" />
+                      <div className="min-w-0">
+                        <p className="font-medium text-sm truncate">{product.name}</p>
+                        <p className="text-[10px] text-gray-500">{product.sku || 'No SKU'}</p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2 flex-shrink-0">
+                      <Badge variant={isLowStock ? "destructive" : "secondary"} className="text-xs">
+                        {totalStock}
+                      </Badge>
+                      <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => handleTransfer(product)} disabled={totalStock === 0}>
+                        <ArrowLeftRight className="w-3 h-3" />
+                      </Button>
+                    </div>
+                  </div>
+                  {totalStock > 0 && (
+                    <div className="flex flex-wrap gap-1 mt-2">
+                      {allLocations.map(loc => {
+                        const stock = getStockByLocation(product.id, loc.id);
+                        if (stock === 0) return null;
+                        return (
+                          <Badge key={loc.id} variant="outline" className="text-[10px]">
+                            {loc.type === 'warehouse' ? '🏭' : '🚛'} {stock}
+                          </Badge>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+
+          {/* Desktop Table */}
+          <div className="hidden md:block overflow-x-auto">
             <table className="w-full">
               <thead>
                 <tr className="border-b">
@@ -321,20 +363,20 @@ export default function MultiLocationStock({ orgId, products, warehouses, vehicl
 
       {/* Transfer Dialog */}
       <Dialog open={showTransferDialog} onOpenChange={setShowTransferDialog}>
-        <DialogContent>
+        <DialogContent className="w-[95vw] sm:w-full max-w-md">
           <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <ArrowLeftRight className="w-5 h-5" />
+            <DialogTitle className="flex items-center gap-2 text-base">
+              <ArrowLeftRight className="w-4 h-4" />
               Transfer Stock
             </DialogTitle>
           </DialogHeader>
           {transferProduct && (
             <form onSubmit={handleTransferSubmit} className="space-y-4">
               <div className="p-3 bg-gray-50 rounded-lg">
-                <p className="font-medium">{transferProduct.name}</p>
-                <p className="text-sm text-gray-500">Total stock: {getTotalStock(transferProduct.id)}</p>
+                <p className="font-medium text-sm">{transferProduct.name}</p>
+                <p className="text-xs text-gray-500">Total stock: {getTotalStock(transferProduct.id)}</p>
               </div>
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <Label>From Location</Label>
                   <Select name="from_location" required>
@@ -370,11 +412,11 @@ export default function MultiLocationStock({ orgId, products, warehouses, vehicl
                 <Label>Quantity</Label>
                 <Input name="quantity" type="number" min="1" required className="mt-1" />
               </div>
-              <DialogFooter>
-                <Button type="button" variant="outline" onClick={() => setShowTransferDialog(false)}>
+              <DialogFooter className="flex-col sm:flex-row gap-2">
+                <Button type="button" variant="outline" onClick={() => setShowTransferDialog(false)} className="w-full sm:w-auto">
                   Cancel
                 </Button>
-                <Button type="submit" className="bg-[#1EB053]">
+                <Button type="submit" className="bg-[#1EB053] w-full sm:w-auto">
                   Transfer Stock
                 </Button>
               </DialogFooter>

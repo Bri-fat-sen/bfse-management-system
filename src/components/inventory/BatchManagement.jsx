@@ -280,104 +280,155 @@ export default function BatchManagement({ products = [], warehouses = [], vehicl
           actionLabel="Add Batch"
         />
       ) : (
-        <Card>
-          <CardContent className="p-0">
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead className="bg-gray-50 border-b">
-                  <tr>
-                    <th className="text-left p-4 font-medium">Batch / Product</th>
-                    <th className="text-left p-4 font-medium">Warehouse</th>
-                    <th className="text-right p-4 font-medium">Quantity</th>
-                    <th className="text-left p-4 font-medium">Mfg Date</th>
-                    <th className="text-left p-4 font-medium">Expiry</th>
-                    <th className="text-center p-4 font-medium">Status</th>
-                    <th className="text-right p-4 font-medium">Actions</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {filteredBatches.map((batch) => {
-                    const expiryStatus = getExpiryStatus(batch.expiry_date);
-                    return (
-                      <tr key={batch.id} className="border-b hover:bg-gray-50">
-                        <td className="p-4">
-                          <div className="flex items-center gap-3">
-                            <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-[#1EB053]/20 to-[#0072C6]/20 flex items-center justify-center">
-                              <Package className="w-5 h-5 text-[#0072C6]" />
+        <>
+          {/* Mobile Cards */}
+          <div className="block md:hidden space-y-3">
+            {filteredBatches.map((batch) => {
+              const expiryStatus = getExpiryStatus(batch.expiry_date);
+              return (
+                <Card key={batch.id}>
+                  <CardContent className="p-3">
+                    <div className="flex items-start gap-3">
+                      <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-[#1EB053]/20 to-[#0072C6]/20 flex items-center justify-center flex-shrink-0">
+                        <Package className="w-5 h-5 text-[#0072C6]" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-start justify-between gap-2">
+                          <div className="min-w-0">
+                            <p className="font-semibold text-sm truncate">{batch.batch_number}</p>
+                            <p className="text-xs text-gray-500 truncate">{batch.product_name}</p>
+                          </div>
+                          <Badge className={STATUS_COLORS[batch.status] + " text-[10px] flex-shrink-0"}>{batch.status}</Badge>
+                        </div>
+                        <div className="flex flex-wrap items-center gap-2 mt-2 text-xs text-gray-600">
+                          <span>Qty: <strong>{batch.quantity}</strong></span>
+                          {batch.warehouse_name && <span>• {batch.warehouse_name}</span>}
+                        </div>
+                        {batch.expiry_date && (
+                          <div className="flex items-center gap-2 mt-1">
+                            <span className="text-xs text-gray-500">Exp: {format(new Date(batch.expiry_date), 'dd MMM yy')}</span>
+                            {expiryStatus && <Badge className={expiryStatus.color + " text-[10px]"}>{expiryStatus.label}</Badge>}
+                          </div>
+                        )}
+                        <div className="flex items-center gap-1 mt-2 justify-end">
+                          <Button variant="ghost" size="sm" className="h-7 text-xs text-[#1EB053]" onClick={() => { setAllocatingBatch(batch); setShowAllocationDialog(true); }}>
+                            <MapPin className="w-3 h-3 mr-1" />Allocate
+                          </Button>
+                          <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => { setEditingBatch(batch); setShowBatchDialog(true); }}>
+                            <Edit className="w-3 h-3" />
+                          </Button>
+                          <Button variant="ghost" size="icon" className="h-7 w-7 text-red-500" onClick={() => deleteMutation.mutate(batch.id)}>
+                            <Trash2 className="w-3 h-3" />
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              );
+            })}
+          </div>
+
+          {/* Desktop Table */}
+          <Card className="hidden md:block">
+            <CardContent className="p-0">
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead className="bg-gray-50 border-b">
+                    <tr>
+                      <th className="text-left p-4 font-medium">Batch / Product</th>
+                      <th className="text-left p-4 font-medium">Warehouse</th>
+                      <th className="text-right p-4 font-medium">Quantity</th>
+                      <th className="text-left p-4 font-medium">Mfg Date</th>
+                      <th className="text-left p-4 font-medium">Expiry</th>
+                      <th className="text-center p-4 font-medium">Status</th>
+                      <th className="text-right p-4 font-medium">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {filteredBatches.map((batch) => {
+                      const expiryStatus = getExpiryStatus(batch.expiry_date);
+                      return (
+                        <tr key={batch.id} className="border-b hover:bg-gray-50">
+                          <td className="p-4">
+                            <div className="flex items-center gap-3">
+                              <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-[#1EB053]/20 to-[#0072C6]/20 flex items-center justify-center">
+                                <Package className="w-5 h-5 text-[#0072C6]" />
+                              </div>
+                              <div>
+                                <p className="font-semibold">{batch.batch_number}</p>
+                                <p className="text-sm text-gray-500">{batch.product_name}</p>
+                              </div>
                             </div>
+                          </td>
+                          <td className="p-4 text-gray-600">{batch.warehouse_name || 'Main'}</td>
+                          <td className="p-4 text-right">
                             <div>
-                              <p className="font-semibold">{batch.batch_number}</p>
-                              <p className="text-sm text-gray-500">{batch.product_name}</p>
-                            </div>
-                          </div>
-                        </td>
-                        <td className="p-4 text-gray-600">{batch.warehouse_name || 'Main'}</td>
-                        <td className="p-4 text-right">
-                          <div>
-                            <span className="font-medium">{batch.quantity}</span>
-                            {(batch.allocated_quantity || 0) > 0 && (
-                              <p className="text-xs text-gray-500">
-                                {batch.allocated_quantity} allocated
-                              </p>
-                            )}
-                          </div>
-                        </td>
-                        <td className="p-4 text-gray-600">
-                          {batch.manufacturing_date && format(new Date(batch.manufacturing_date), 'dd MMM yyyy')}
-                        </td>
-                        <td className="p-4">
-                          {batch.expiry_date && (
-                            <div className="flex items-center gap-2">
-                              <span className="text-gray-600">{format(new Date(batch.expiry_date), 'dd MMM yyyy')}</span>
-                              {expiryStatus && (
-                                <Badge className={expiryStatus.color}>{expiryStatus.label}</Badge>
+                              <span className="font-medium">{batch.quantity}</span>
+                              {(batch.allocated_quantity || 0) > 0 && (
+                                <p className="text-xs text-gray-500">
+                                  {batch.allocated_quantity} allocated
+                                </p>
                               )}
                             </div>
-                          )}
-                        </td>
-                        <td className="p-4 text-center">
-                          <Badge className={STATUS_COLORS[batch.status]}>{batch.status}</Badge>
-                        </td>
-                        <td className="p-4 text-right">
-                          <div className="flex justify-end gap-1">
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              className="text-[#1EB053] hover:text-[#1EB053] hover:bg-[#1EB053]/10"
-                              onClick={() => { 
-                                setAllocatingBatch(batch); 
-                                setShowAllocationDialog(true); 
-                              }}
-                              title="Allocate to locations"
-                            >
-                              <MapPin className="w-4 h-4 mr-1" />
-                              Allocate
-                            </Button>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              onClick={() => { setEditingBatch(batch); setShowBatchDialog(true); }}
-                            >
-                              <Edit className="w-4 h-4" />
-                            </Button>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="text-red-500"
-                              onClick={() => deleteMutation.mutate(batch.id)}
-                            >
-                              <Trash2 className="w-4 h-4" />
-                            </Button>
-                          </div>
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
-          </CardContent>
-        </Card>
+                          </td>
+                          <td className="p-4 text-gray-600">
+                            {batch.manufacturing_date && format(new Date(batch.manufacturing_date), 'dd MMM yyyy')}
+                          </td>
+                          <td className="p-4">
+                            {batch.expiry_date && (
+                              <div className="flex items-center gap-2">
+                                <span className="text-gray-600">{format(new Date(batch.expiry_date), 'dd MMM yyyy')}</span>
+                                {expiryStatus && (
+                                  <Badge className={expiryStatus.color}>{expiryStatus.label}</Badge>
+                                )}
+                              </div>
+                            )}
+                          </td>
+                          <td className="p-4 text-center">
+                            <Badge className={STATUS_COLORS[batch.status]}>{batch.status}</Badge>
+                          </td>
+                          <td className="p-4 text-right">
+                            <div className="flex justify-end gap-1">
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="text-[#1EB053] hover:text-[#1EB053] hover:bg-[#1EB053]/10"
+                                onClick={() => { 
+                                  setAllocatingBatch(batch); 
+                                  setShowAllocationDialog(true); 
+                                }}
+                                title="Allocate to locations"
+                              >
+                                <MapPin className="w-4 h-4 mr-1" />
+                                Allocate
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                onClick={() => { setEditingBatch(batch); setShowBatchDialog(true); }}
+                              >
+                                <Edit className="w-4 h-4" />
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="text-red-500"
+                                onClick={() => deleteMutation.mutate(batch.id)}
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </Button>
+                            </div>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            </CardContent>
+          </Card>
+        </>
       )}
 
       {/* Batch Stock Allocation Dialog */}
@@ -396,12 +447,12 @@ export default function BatchManagement({ products = [], warehouses = [], vehicl
 
       {/* Add/Edit Dialog */}
       <Dialog open={showBatchDialog} onOpenChange={setShowBatchDialog}>
-        <DialogContent className="max-w-lg">
+        <DialogContent className="max-w-lg w-[95vw] sm:w-full max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>{editingBatch ? 'Edit Batch' : 'Add New Batch'}</DialogTitle>
           </DialogHeader>
           <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="col-span-2">
                 <Label>Product *</Label>
                 <Select name="product_id" defaultValue={editingBatch?.product_id} required>
@@ -465,9 +516,9 @@ export default function BatchManagement({ products = [], warehouses = [], vehicl
                 </Select>
               </div>
             </div>
-            <DialogFooter>
-              <Button type="button" variant="outline" onClick={() => setShowBatchDialog(false)}>Cancel</Button>
-              <Button type="submit" className="bg-[#1EB053]">{editingBatch ? 'Update' : 'Create'} Batch</Button>
+            <DialogFooter className="flex-col sm:flex-row gap-2">
+              <Button type="button" variant="outline" onClick={() => setShowBatchDialog(false)} className="w-full sm:w-auto">Cancel</Button>
+              <Button type="submit" className="bg-[#1EB053] w-full sm:w-auto">{editingBatch ? 'Update' : 'Create'} Batch</Button>
             </DialogFooter>
           </form>
         </DialogContent>
