@@ -1,14 +1,24 @@
 import React, { useState } from "react";
+import { base44 } from "@/api/base44Client";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
 import { format } from "date-fns";
+import { toast } from "sonner";
 import {
   Phone, Mail, MapPin, Building2, Calendar, DollarSign,
   ShoppingCart, MessageSquare, Edit, Star, TrendingUp,
-  Clock, Plus, ArrowLeft
+  Clock, Plus, ArrowLeft, Trash2, AlertTriangle
 } from "lucide-react";
 import InteractionDialog from "./InteractionDialog";
 
@@ -38,6 +48,9 @@ export default function CustomerDetail({ customer, sales = [], interactions = []
   const [interactionOpen, setInteractionOpen] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
 
+  const customerSales = sales.filter(s => s.customer_id === customer.id);
+  const customerInteractions = interactions.filter(i => i.customer_id === customer.id);
+
   const deleteCustomerMutation = useMutation({
     mutationFn: () => base44.entities.Customer.delete(customer.id),
     onSuccess: () => {
@@ -49,9 +62,6 @@ export default function CustomerDetail({ customer, sales = [], interactions = []
       toast.error("Failed to delete customer: " + error.message);
     },
   });
-
-  const customerSales = sales.filter(s => s.customer_id === customer.id);
-  const customerInteractions = interactions.filter(i => i.customer_id === customer.id);
 
   return (
     <div className="space-y-6">
@@ -89,7 +99,7 @@ export default function CustomerDetail({ customer, sales = [], interactions = []
             <Button 
               variant="outline" 
               onClick={() => setShowDeleteDialog(true)}
-              className="text-red-600 border-red-200 hover:bg-red-50 hover:border-red-300"
+              className="text-red-600 hover:text-red-700 hover:bg-red-50 border-red-200"
             >
               <Trash2 className="w-4 h-4 mr-2" /> Delete
             </Button>
@@ -271,7 +281,8 @@ export default function CustomerDetail({ customer, sales = [], interactions = []
             </p>
             <div className="bg-red-50 border border-red-200 rounded-lg p-4">
               <p className="text-sm text-red-800">
-                <strong>Warning:</strong> This action cannot be undone. Customer data, purchase history links, and interaction records may be affected.
+                <strong>Warning:</strong> This will permanently delete the customer record. 
+                Associated sales and interactions will remain but may be orphaned.
               </p>
             </div>
           </div>
