@@ -82,7 +82,6 @@ export default function Inventory() {
   const [showAlertsDialog, setShowAlertsDialog] = useState(false);
   const [showReportDialog, setShowReportDialog] = useState(false);
   const [showTransferDialog, setShowTransferDialog] = useState(false);
-  const [selectedLocations, setSelectedLocations] = useState([]);
   const [showProductDetails, setShowProductDetails] = useState(false);
   const [viewingProduct, setViewingProduct] = useState(null);
 
