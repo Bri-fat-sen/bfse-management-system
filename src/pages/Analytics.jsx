@@ -384,7 +384,7 @@ export default function Analytics() {
   }, [filteredExpenses]);
 
   const transportMetrics = useMemo(() => {
-    const totalRevenue = filteredTrips.reduce((sum, t) => sum + (t.ticket_revenue || 0), 0);
+    const totalRevenue = filteredTrips.reduce((sum, t) => sum + (t.total_revenue || 0), 0);
     const totalFuel = filteredTrips.reduce((sum, t) => sum + (t.fuel_cost || 0), 0);
     return { totalRevenue, totalFuel, count: filteredTrips.length };
   }, [filteredTrips]);

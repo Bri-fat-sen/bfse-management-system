@@ -116,7 +116,7 @@ export default function CRMAnalytics({ customers = [], sales = [], interactions 
       if (saleDate < dateRangeStart) return;
       
       // Find customer segment
-      const customer = customers.find(c => c.id === sale.customer_id);
+      const customer = customers.find(c => c.id === sale.customer_id || c.name === sale.customer_name);
       const segment = customer?.segment || 'unknown';
       
       if (!segmentSales[segment]) {
