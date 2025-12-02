@@ -31,6 +31,7 @@ import {
   Loader2
 } from "lucide-react";
 import { base44 } from "@/api/base44Client";
+import { toast } from "sonner";
 
 const FORM_TEMPLATES = [
   // EXPENSE FORMS
@@ -940,52 +941,52 @@ const generateFormHTML = (formType, org) => {
 
 export default function PrintableFormsDownload({ open, onOpenChange, organisation }) {
   const [selectedCategory, setSelectedCategory] = useState('all');
-  const [downloadingForm, setDownloadingForm] = useState(null);
+  const [loading, setLoading] = useState(null);
 
   const handleDownload = async (formId) => {
-    setDownloadingForm(formId);
     try {
-      const response = await base44.functions.invoke('generateFormPDF', {
+      setLoading(formId);
+      
+      const response = await base44.functions.invoke('generatePrintableForm', {
         formType: formId,
-        organisation: organisation
+        organisation
       });
       
-      const formName = FORM_TEMPLATES.find(f => f.id === formId)?.name || formId;
+      const { pdf, filename } = response.data;
       
-      // Create blob from response data
-      const blob = new Blob([response.data], { type: 'application/pdf' });
+      // Convert base64 to blob and download
+      const byteCharacters = atob(pdf);
+      const byteNumbers = new Array(byteCharacters.length);
+      for (let i = 0; i < byteCharacters.length; i++) {
+        byteNumbers[i] = byteCharacters.charCodeAt(i);
+      }
+      const byteArray = new Uint8Array(byteNumbers);
+      const blob = new Blob([byteArray], { type: 'application/pdf' });
+      
       const url = URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;
-      link.download = `${formName.replace(/\s+/g, '_')}.pdf`;
+      link.download = filename;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
       URL.revokeObjectURL(url);
+      
+      toast.success('PDF downloaded successfully');
     } catch (error) {
       console.error('Error generating PDF:', error);
-      // Fallback to HTML if PDF generation fails
-      const html = generateFormHTML(formId, organisation);
-      const formName = FORM_TEMPLATES.find(f => f.id === formId)?.name || formId;
-      const blob = new Blob([html], { type: 'text/html' });
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = `${formName.replace(/\s+/g, '_')}.html`;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      URL.revokeObjectURL(url);
+      toast.error('Failed to generate PDF');
     } finally {
-      setDownloadingForm(null);
+      setLoading(null);
     }
   };
 
-  const handleDownloadAll = (category) => {
+  const handleDownloadAll = async (category) => {
     const forms = FORM_TEMPLATES.filter(f => category === 'all' || f.category === category);
-    forms.forEach((form, index) => {
-      setTimeout(() => handleDownload(form.id), index * 1500);
-    });
+    for (let i = 0; i < forms.length; i++) {
+      await handleDownload(forms[i].id);
+      await new Promise(resolve => setTimeout(resolve, 500));
+    }
   };
 
   const expenseForms = FORM_TEMPLATES.filter(f => f.category === 'expense');
@@ -1037,8 +1038,8 @@ export default function PrintableFormsDownload({ open, onOpenChange, organisatio
                 return (
                   <Card 
                     key={form.id} 
-                    className="cursor-pointer hover:shadow-md transition-shadow"
-                    onClick={() => handleDownload(form.id)}
+                    className={`cursor-pointer hover:shadow-md transition-shadow ${loading === form.id ? 'opacity-70' : ''}`}
+                    onClick={() => !loading && handleDownload(form.id)}
                   >
                     <CardContent className="p-4 flex items-center gap-3">
                       <div className={`w-10 h-10 rounded-lg ${form.color} flex items-center justify-center`}>
@@ -1048,7 +1049,11 @@ export default function PrintableFormsDownload({ open, onOpenChange, organisatio
                         <p className="font-medium text-sm">{form.name}</p>
                         <p className="text-xs text-gray-500">{form.description}</p>
                       </div>
-                      <Download className="w-4 h-4 text-gray-400" />
+                      {loading === form.id ? (
+                        <Loader2 className="w-4 h-4 text-gray-400 animate-spin" />
+                      ) : (
+                        <Download className="w-4 h-4 text-gray-400" />
+                      )}
                     </CardContent>
                   </Card>
                 );
@@ -1067,8 +1072,8 @@ export default function PrintableFormsDownload({ open, onOpenChange, organisatio
                 return (
                   <Card 
                     key={form.id} 
-                    className="cursor-pointer hover:shadow-md transition-shadow"
-                    onClick={() => handleDownload(form.id)}
+                    className={`cursor-pointer hover:shadow-md transition-shadow ${loading === form.id ? 'opacity-70' : ''}`}
+                    onClick={() => !loading && handleDownload(form.id)}
                   >
                     <CardContent className="p-4 flex items-center gap-3">
                       <div className={`w-10 h-10 rounded-lg ${form.color} flex items-center justify-center`}>
@@ -1078,7 +1083,11 @@ export default function PrintableFormsDownload({ open, onOpenChange, organisatio
                         <p className="font-medium text-sm">{form.name}</p>
                         <p className="text-xs text-gray-500">{form.description}</p>
                       </div>
-                      <Download className="w-4 h-4 text-gray-400" />
+                      {loading === form.id ? (
+                        <Loader2 className="w-4 h-4 text-gray-400 animate-spin" />
+                      ) : (
+                        <Download className="w-4 h-4 text-gray-400" />
+                      )}
                     </CardContent>
                   </Card>
                 );
