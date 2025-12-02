@@ -30,6 +30,7 @@ import Documents from './pages/Documents';
 import UserManagement from './pages/UserManagement';
 import InventoryFix from './pages/InventoryFix';
 import GitHub from './pages/GitHub';
+import Integrations from './pages/Integrations';
 import __Layout from './Layout.jsx';
 
 
@@ -66,6 +67,7 @@ export const PAGES = {
     "UserManagement": UserManagement,
     "InventoryFix": InventoryFix,
     "GitHub": GitHub,
+    "Integrations": Integrations,
 }
 
 export const pagesConfig = {
