@@ -40,7 +40,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
-import { useToast } from "@/components/ui/use-toast";
+import { toast } from "sonner";
 import PageHeader from "@/components/ui/PageHeader";
 import EmptyState from "@/components/ui/EmptyState";
 import StatCard from "@/components/ui/StatCard";
@@ -146,6 +146,7 @@ export default function Transport() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['trips'] });
       setShowTripDialog(false);
+      toast({ title: "Trip recorded successfully" });
     },
   });
 
@@ -154,6 +155,7 @@ export default function Transport() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['vehicles'] });
       setShowVehicleDialog(false);
+      toast({ title: "Vehicle added successfully" });
     },
   });
 
@@ -161,6 +163,7 @@ export default function Transport() {
     mutationFn: ({ id, data }) => base44.entities.Trip.update(id, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['trips'] });
+      toast({ title: "Trip updated successfully" });
     },
   });
 
