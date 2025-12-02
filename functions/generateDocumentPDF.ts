@@ -486,14 +486,15 @@ Deno.serve(async (req) => {
         
         yPos = drawHeader(report?.title || 'Report', report?.reportId || `RPT-${Date.now().toString(36).toUpperCase()}`, report?.dateRange || new Date().toLocaleDateString('en-GB'));
         
-        // Summary cards
+        // Summary cards - compact
         if (report?.summaryCards?.length > 0) {
-          const cardWidth = (pageWidth - (margin * 2) - ((report.summaryCards.length - 1) * 5)) / Math.min(report.summaryCards.length, 4);
+          const numCards = Math.min(report.summaryCards.length, 4);
+          const cardWidth = (pageWidth - (margin * 2) - ((numCards - 1) * 4)) / numCards;
           let cardX = margin;
           
-          report.summaryCards.forEach((card, i) => {
+          report.summaryCards.slice(0, 4).forEach((card, i) => {
             doc.setFillColor(248, 250, 252);
-            doc.roundedRect(cardX, yPos, cardWidth, 25, 2, 2, 'F');
+            doc.roundedRect(cardX, yPos, cardWidth, 18, 2, 2, 'F');
             
             // Highlight bar
             if (card.highlight === 'green') {
@@ -505,36 +506,36 @@ Deno.serve(async (req) => {
             } else {
               doc.setFillColor(primary.r, primary.g, primary.b);
             }
-            doc.rect(cardX, yPos, 3, 25, 'F');
+            doc.rect(cardX, yPos, 2, 18, 'F');
             
-            doc.setFontSize(7);
+            doc.setFontSize(6);
             doc.setTextColor(100, 116, 139);
-            doc.text((card.label || '').toUpperCase(), cardX + 8, yPos + 8);
-            
-            doc.setFontSize(12);
-            doc.setTextColor(51, 65, 85);
-            doc.setFont('helvetica', 'bold');
-            doc.text(String(card.value || '-'), cardX + 8, yPos + 18);
-            
-            cardX += cardWidth + 5;
-          });
-          
-          yPos += 32;
-        }
-        
-        // Sections with tables
-        (report?.sections || []).forEach(section => {
-          if (section.title) {
-            doc.setFillColor(248, 250, 252);
-            doc.rect(margin, yPos, pageWidth - (margin * 2), 10, 'F');
-            doc.setFillColor(primary.r, primary.g, primary.b);
-            doc.rect(margin, yPos, 3, 10, 'F');
+            doc.text((card.label || '').toUpperCase().substring(0, 15), cardX + 6, yPos + 6);
             
             doc.setFontSize(10);
             doc.setTextColor(51, 65, 85);
             doc.setFont('helvetica', 'bold');
-            doc.text(section.title, margin + 8, yPos + 7);
-            yPos += 15;
+            doc.text(String(card.value || '-').substring(0, 12), cardX + 6, yPos + 14);
+            
+            cardX += cardWidth + 4;
+          });
+          
+          yPos += 24;
+        }
+        
+        // Sections with tables - compact
+        (report?.sections || []).forEach(section => {
+          if (section.title) {
+            doc.setFillColor(248, 250, 252);
+            doc.rect(margin, yPos, pageWidth - (margin * 2), 8, 'F');
+            doc.setFillColor(primary.r, primary.g, primary.b);
+            doc.rect(margin, yPos, 2, 8, 'F');
+            
+            doc.setFontSize(9);
+            doc.setTextColor(51, 65, 85);
+            doc.setFont('helvetica', 'bold');
+            doc.text(section.title, margin + 6, yPos + 5.5);
+            yPos += 12;
           }
           
           if (section.table) {
@@ -544,17 +545,18 @@ Deno.serve(async (req) => {
             
             // Header
             doc.setFillColor(primary.r, primary.g, primary.b);
-            doc.rect(margin, yPos, pageWidth - (margin * 2), 8, 'F');
+            doc.rect(margin, yPos, pageWidth - (margin * 2), 7, 'F');
             doc.setTextColor(255, 255, 255);
-            doc.setFontSize(7);
+            doc.setFontSize(6);
             doc.setFont('helvetica', 'bold');
             cols.forEach((col, i) => {
-              doc.text(String(col).toUpperCase(), margin + (i * colWidth) + 3, yPos + 5);
+              doc.text(String(col).toUpperCase().substring(0, 15), margin + (i * colWidth) + 2, yPos + 4.5);
             });
-            yPos += 10;
+            yPos += 8;
             
-            // Rows
+            // Rows - compact
             doc.setFont('helvetica', 'normal');
+            doc.setFontSize(7);
             rows.forEach((row, rowIdx) => {
               const cells = Array.isArray(row) ? row : Object.values(row);
               const isTotal = String(cells[0] || '').toLowerCase().includes('total');
@@ -567,24 +569,24 @@ Deno.serve(async (req) => {
               } else {
                 doc.setFillColor(255, 255, 255);
               }
-              doc.rect(margin, yPos - 2, pageWidth - (margin * 2), 8, 'F');
+              doc.rect(margin, yPos - 1, pageWidth - (margin * 2), 6, 'F');
               
               doc.setTextColor(51, 65, 85);
-              doc.setFontSize(8);
               cells.forEach((cell, i) => {
-                doc.text(String(cell ?? '-').substring(0, 25), margin + (i * colWidth) + 3, yPos + 3);
+                doc.text(String(cell ?? '-').substring(0, 20), margin + (i * colWidth) + 2, yPos + 3);
               });
               
               if (isTotal) doc.setFont('helvetica', 'normal');
-              yPos += 8;
+              yPos += 6;
               
-              if (yPos > pageHeight - 40) {
+              if (yPos > pageHeight - 30) {
                 doc.addPage();
-                yPos = 20;
+                drawFlagStripe(0, 3);
+                yPos = 10;
               }
             });
             
-            yPos += 10;
+            yPos += 8;
           }
         });
         
