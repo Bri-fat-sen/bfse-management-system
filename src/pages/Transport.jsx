@@ -55,7 +55,6 @@ import { isPast, differenceInDays } from "date-fns";
 import AIRouteOptimizer from "@/components/ai/AIRouteOptimizer";
 
 export default function Transport() {
-  const { toast } = useToast();
   const queryClient = useQueryClient();
   const [activeTab, setActiveTab] = useState("trips");
   const [showTripDialog, setShowTripDialog] = useState(false);
