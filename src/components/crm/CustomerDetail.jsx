@@ -1,24 +1,14 @@
 import React, { useState } from "react";
-import { base44 } from "@/api/base44Client";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
-} from "@/components/ui/dialog";
 import { format } from "date-fns";
-import { toast } from "sonner";
 import {
   Phone, Mail, MapPin, Building2, Calendar, DollarSign,
   ShoppingCart, MessageSquare, Edit, Star, TrendingUp,
-  Clock, Plus, ArrowLeft, Trash2, AlertTriangle
+  Clock, Plus, ArrowLeft
 } from "lucide-react";
 import InteractionDialog from "./InteractionDialog";
 
@@ -44,7 +34,21 @@ const interactionIcons = {
 };
 
 export default function CustomerDetail({ customer, sales = [], interactions = [], onEdit, onBack, currentEmployee, orgId }) {
+  const queryClient = useQueryClient();
   const [interactionOpen, setInteractionOpen] = useState(false);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+
+  const deleteCustomerMutation = useMutation({
+    mutationFn: () => base44.entities.Customer.delete(customer.id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['customers'] });
+      toast.success(`${customer.name} has been deleted`);
+      onBack();
+    },
+    onError: (error) => {
+      toast.error("Failed to delete customer: " + error.message);
+    },
+  });
 
   const customerSales = sales.filter(s => s.customer_id === customer.id);
   const customerInteractions = interactions.filter(i => i.customer_id === customer.id);
