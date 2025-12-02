@@ -73,100 +73,140 @@ Deno.serve(async (req) => {
 
     yPos = 50;
 
-    // Form configurations
+    // Form configurations - all form types
     const formConfigs = {
+      // EXPENSE FORMS
       expense_fuel: {
         title: 'Fuel Expense Form',
-        icon: '⛽',
         fields: [
           { row: [{ label: 'Date', width: 0.3 }, { label: 'Vehicle Registration', width: 0.35 }, { label: 'Driver Name', width: 0.35 }] },
           { row: [{ label: 'Fuel Station', width: 0.5 }, { label: 'Current Mileage (km)', width: 0.5 }] }
         ],
-        table: {
-          title: 'Fuel Details',
-          columns: ['Fuel Type', 'Litres', 'Price per Litre (Le)', 'Total (Le)'],
-          rows: 2,
-          hasTotal: true
-        },
-        extraFields: [
-          { row: [{ label: 'Receipt Number', width: 0.5 }, { label: 'Notes', width: 0.5 }] }
-        ]
+        checkboxes: ['Petrol', 'Diesel'],
+        table: { title: 'Fuel Details', columns: ['Fuel Type', 'Litres', 'Price/L (Le)', 'Total (Le)'], rows: 1, hasTotal: true },
+        extraFields: [{ row: [{ label: 'Receipt Number', width: 0.5 }, { label: 'Notes', width: 0.5 }] }]
       },
       expense_maintenance: {
         title: 'Maintenance Expense Form',
-        icon: '🔧',
-        fields: [
-          { row: [{ label: 'Date', width: 0.3 }, { label: 'Vehicle Registration', width: 0.35 }, { label: 'Current Mileage', width: 0.35 }] }
-        ],
-        checkboxes: ['Oil Change', 'Tire Rotation', 'Tire Replacement', 'Brake Service', 'Engine Repair', 'Battery', 'Electrical', 'Other'],
-        table: {
-          title: 'Parts Replaced',
-          columns: ['Part Name', 'Qty', 'Unit Cost (Le)', 'Total (Le)'],
-          rows: 3,
-          hasTotal: true
-        },
-        extraFields: [
-          { row: [{ label: 'Vendor/Mechanic', width: 0.5 }, { label: 'Next Service Date', width: 0.5 }] }
-        ]
+        fields: [{ row: [{ label: 'Date', width: 0.3 }, { label: 'Vehicle Registration', width: 0.35 }, { label: 'Current Mileage', width: 0.35 }] }],
+        checkboxes: ['Oil Change', 'Tires', 'Brakes', 'Engine', 'Battery', 'Electrical', 'Other'],
+        table: { title: 'Parts Replaced', columns: ['Part Name', 'Qty', 'Cost (Le)', 'Total (Le)'], rows: 2, hasTotal: true, labourRow: true },
+        extraFields: [{ row: [{ label: 'Vendor/Mechanic', width: 0.5 }, { label: 'Next Service Date', width: 0.5 }] }]
       },
       expense_utilities: {
         title: 'Utilities Expense Form',
-        icon: '⚡',
-        fields: [
-          { row: [{ label: 'Date', width: 0.5 }, { label: 'Bill Period', width: 0.5 }] }
-        ],
-        checkboxes: ['Electricity', 'Water', 'Internet', 'Phone', 'Generator Fuel'],
-        table: {
-          title: 'Utility Details',
-          columns: ['Description', 'Meter Reading', 'Units', 'Amount (Le)'],
-          rows: 2,
-          hasTotal: true
-        },
-        extraFields: [
-          { row: [{ label: 'Account Number', width: 0.5 }, { label: 'Receipt Number', width: 0.5 }] }
-        ]
+        fields: [{ row: [{ label: 'Date', width: 0.5 }, { label: 'Bill Period', width: 0.5 }] }],
+        checkboxes: ['Electricity', 'Water', 'Internet', 'Phone', 'Generator'],
+        table: { title: 'Utility Details', columns: ['Description', 'Reading', 'Units', 'Amount (Le)'], rows: 1, hasTotal: true },
+        extraFields: [{ row: [{ label: 'Account Number', width: 0.5 }, { label: 'Receipt Number', width: 0.5 }] }]
       },
       expense_supplies: {
         title: 'Supplies Expense Form',
-        icon: '📦',
+        fields: [{ row: [{ label: 'Date', width: 0.3 }, { label: 'Supplier', width: 0.35 }, { label: 'Invoice No.', width: 0.35 }] }],
+        table: { title: 'Items Purchased', columns: ['Item', 'Qty', 'Price (Le)', 'Total (Le)'], rows: 3, hasTotal: true }
+      },
+      expense_rent: {
+        title: 'Rent Expense Form',
+        fields: [{ row: [{ label: 'Date Paid', width: 0.5 }, { label: 'Rent Period', width: 0.5 }] }],
+        checkboxes: ['Office', 'Warehouse', 'Shop', 'Parking'],
+        table: { title: 'Property Details', columns: ['Property/Location', 'Address', 'Rent (Le)'], rows: 1, hasTotal: true },
+        extraFields: [{ row: [{ label: 'Landlord Name', width: 0.5 }, { label: 'Receipt Number', width: 0.5 }] }]
+      },
+      expense_salaries: {
+        title: 'Salary / Wages Form',
+        fields: [{ row: [{ label: 'Pay Period', width: 0.5 }, { label: 'Payment Date', width: 0.5 }] }],
+        table: { title: 'Employee Payments', columns: ['Employee', 'Position', 'Days', 'Basic', 'Allow.', 'Deduct.', 'Net Pay'], rows: 3, hasTotal: true }
+      },
+      expense_transport: {
+        title: 'Transport Expense Form',
+        fields: [{ row: [{ label: 'Date', width: 0.5 }, { label: 'Employee Name', width: 0.5 }] }],
+        table: { title: 'Trip Details', columns: ['From', 'To', 'Purpose', 'Amount (Le)'], rows: 2, hasTotal: true }
+      },
+      expense_marketing: {
+        title: 'Marketing Expense Form',
+        fields: [{ row: [{ label: 'Date', width: 0.5 }, { label: 'Campaign Name', width: 0.5 }] }],
+        checkboxes: ['Radio/TV', 'Print', 'Social Media', 'Event', 'Billboard'],
+        table: { title: 'Marketing Details', columns: ['Description', 'Vendor', 'Amount (Le)'], rows: 1, hasTotal: true }
+      },
+      expense_insurance: {
+        title: 'Insurance Expense Form',
+        fields: [{ row: [{ label: 'Date Paid', width: 0.5 }, { label: 'Policy Number', width: 0.5 }] }],
+        checkboxes: ['Vehicle', 'Property', 'Business', 'Cargo'],
+        table: { title: 'Insurance Details', columns: ['Item Insured', 'Coverage Period', 'Premium (Le)'], rows: 1, hasTotal: true },
+        extraFields: [{ row: [{ label: 'Insurance Company', width: 0.5 }, { label: 'Expiry Date', width: 0.5 }] }]
+      },
+      expense_petty_cash: {
+        title: 'Petty Cash Form',
         fields: [
-          { row: [{ label: 'Date', width: 0.3 }, { label: 'Supplier', width: 0.35 }, { label: 'Invoice No.', width: 0.35 }] }
+          { row: [{ label: 'Date', width: 0.5 }, { label: 'Requested By', width: 0.5 }] },
+          { row: [{ label: 'Opening Balance (Le)', width: 0.5 }, { label: 'Closing Balance (Le)', width: 0.5 }] }
         ],
-        table: {
-          title: 'Items Purchased',
-          columns: ['Item Description', 'Qty', 'Unit Price (Le)', 'Total (Le)'],
-          rows: 4,
-          hasTotal: true
-        }
+        table: { title: 'Expense Items', columns: ['Date', 'Description', 'Amount (Le)', 'Receipt #'], rows: 3, hasTotal: true }
+      },
+      expense_truck_contract: {
+        title: 'Truck Contract Expense Form',
+        fields: [
+          { row: [{ label: 'Contract Number', width: 0.5 }, { label: 'Date', width: 0.5 }] },
+          { row: [{ label: 'Vehicle', width: 0.5 }, { label: 'Driver', width: 0.5 }] }
+        ],
+        table: { title: 'Contract Expenses', columns: ['Category', 'Description', 'Amount (Le)'], rows: 5, hasTotal: true, prefillRows: ['Fuel', 'Tolls', 'Loading', 'Unloading', 'Food/Accommodation'] }
       },
       expense_general: {
         title: 'General Expense Form',
-        icon: '📋',
-        fields: [
-          { row: [{ label: 'Date', width: 0.3 }, { label: 'Invoice No.', width: 0.35 }, { label: 'Vendor', width: 0.35 }] }
-        ],
-        table: {
-          title: 'Expense Details',
-          columns: ['Description', 'Qty', 'Unit Price (Le)', 'Total (Le)'],
-          rows: 3,
-          hasTotal: true
-        },
+        fields: [{ row: [{ label: 'Date', width: 0.3 }, { label: 'Invoice No.', width: 0.35 }, { label: 'Vendor', width: 0.35 }] }],
+        table: { title: 'Expense Details', columns: ['Description', 'Qty', 'Price (Le)', 'Total (Le)'], rows: 2, hasTotal: true },
         checkboxes: ['Cash', 'Bank Transfer', 'Mobile Money']
       },
+      // REVENUE FORMS
       revenue_retail_sales: {
         title: 'Retail Sales Form',
-        icon: '🛒',
         fields: [
           { row: [{ label: 'Date', width: 0.3 }, { label: 'Receipt No.', width: 0.35 }, { label: 'Sales Person', width: 0.35 }] },
           { row: [{ label: 'Customer Name', width: 0.5 }, { label: 'Customer Phone', width: 0.5 }] }
         ],
-        table: {
-          title: 'Items Sold',
-          columns: ['Product', 'Qty', 'Unit Price (Le)', 'Total (Le)'],
-          rows: 4,
-          hasTotal: true
-        },
+        table: { title: 'Items Sold', columns: ['Product', 'Qty', 'Price (Le)', 'Total (Le)'], rows: 3, hasTotal: true, discountRow: true },
         checkboxes: ['Cash', 'Mobile Money', 'Card', 'Credit']
+      },
+      revenue_warehouse_sales: {
+        title: 'Warehouse/Wholesale Sales Form',
+        fields: [
+          { row: [{ label: 'Date', width: 0.5 }, { label: 'Invoice No.', width: 0.5 }] },
+          { row: [{ label: 'Customer/Business', width: 0.5 }, { label: 'Delivery Address', width: 0.5 }] }
+        ],
+        table: { title: 'Items Sold', columns: ['Product', 'SKU', 'Qty', 'W/Sale Price', 'Total (Le)'], rows: 2, hasTotal: true, discountRow: true }
+      },
+      revenue_vehicle_sales: {
+        title: 'Vehicle Sales Form',
+        fields: [
+          { row: [{ label: 'Date', width: 0.3 }, { label: 'Vehicle', width: 0.35 }, { label: 'Driver', width: 0.35 }] },
+          { row: [{ label: 'Route/Location', width: 0.5 }, { label: 'Customer', width: 0.5 }] }
+        ],
+        table: { title: 'Items Sold', columns: ['Product', 'Qty', 'Price (Le)', 'Total (Le)'], rows: 2, hasTotal: true }
+      },
+      revenue_trip: {
+        title: 'Trip Revenue Form',
+        fields: [
+          { row: [{ label: 'Date', width: 0.5 }, { label: 'Trip No.', width: 0.5 }] },
+          { row: [{ label: 'Vehicle', width: 0.33 }, { label: 'Driver', width: 0.33 }, { label: 'Route', width: 0.34 }] }
+        ],
+        table: { title: 'Trip Revenue', columns: ['Description', 'Amount (Le)'], rows: 3, hasTotal: true, prefillRows: ['Number of Passengers', 'Ticket Price per Passenger', 'Total Ticket Revenue'] },
+        table2: { title: 'Trip Expenses', columns: ['Expense Type', 'Amount (Le)'], rows: 2, hasTotal: true, totalLabel: 'NET REVENUE', prefillRows: ['Fuel Cost', 'Other Expenses'] }
+      },
+      revenue_truck_contract: {
+        title: 'Truck Contract Revenue Form',
+        fields: [
+          { row: [{ label: 'Contract No.', width: 0.5 }, { label: 'Date', width: 0.5 }] },
+          { row: [{ label: 'Client', width: 0.33 }, { label: 'Vehicle', width: 0.33 }, { label: 'Driver', width: 0.34 }] },
+          { row: [{ label: 'Pickup Location', width: 0.5 }, { label: 'Delivery Location', width: 0.5 }] }
+        ],
+        table: { title: 'Contract Summary', columns: ['Description', 'Amount (Le)'], rows: 4, hasTotal: true, totalLabel: 'NET REVENUE', prefillRows: ['Contract Amount', 'Less: Fuel', 'Less: Tolls', 'Less: Other Expenses'] }
+      },
+      revenue_other: {
+        title: 'Other Income Form',
+        fields: [{ row: [{ label: 'Date', width: 0.5 }, { label: 'Reference No.', width: 0.5 }] }],
+        checkboxes: ['Service Fee', 'Rental Income', 'Commission', 'Refund', 'Other'],
+        table: { title: 'Income Details', columns: ['Description', 'Amount (Le)'], rows: 1, hasTotal: true },
+        extraFields: [{ row: [{ label: 'Received From', width: 0.5 }, { label: 'Notes', width: 0.5 }] }]
       }
     };
 
