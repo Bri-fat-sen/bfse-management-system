@@ -31,7 +31,7 @@ import {
   Mail
 } from "lucide-react";
 import { toast } from "sonner";
-import { getBrandedStyles, getBrandedHeader, getBrandedFooter } from "@/components/branding/BrandedDocumentStyles";
+import { getUnifiedPDFStyles, getUnifiedHeader, getUnifiedFooter } from "@/components/exports/UnifiedPDFStyles";
 
 export default function InvoiceDialog({ 
   open, 
@@ -74,15 +74,9 @@ export default function InvoiceDialog({
           <meta charset="UTF-8">
           <title>Invoice - ${invoiceNumber}</title>
           <style>
-            ${getBrandedStyles(organisation)}
-            .invoice {
-              max-width: 800px;
-              margin: 0 auto;
-              background: white;
-              border-radius: 8px;
-              overflow: hidden;
-              box-shadow: 0 4px 20px rgba(0,0,0,0.1);
-            }
+            ${getUnifiedPDFStyles(organisation, 'invoice')}
+            
+            /* Invoice-specific styles */
             .totals-wrapper {
               display: flex;
               justify-content: flex-end;
@@ -91,28 +85,28 @@ export default function InvoiceDialog({
             .totals-box {
               width: 300px;
               border: 2px solid ${primaryColor}20;
-              border-radius: 8px;
+              border-radius: 12px;
               overflow: hidden;
             }
             .totals-box .row {
               display: flex;
               justify-content: space-between;
-              padding: 10px 16px;
+              padding: 12px 16px;
               font-size: 14px;
             }
             .totals-box .row:not(:last-child) {
               border-bottom: 1px solid #eee;
             }
             .totals-box .row.grand {
-              background: ${primaryColor};
+              background: linear-gradient(135deg, ${primaryColor} 0%, ${secondaryColor} 100%);
               color: white;
               font-weight: 700;
               font-size: 18px;
             }
             .payment-box {
               background: ${primaryColor}10;
-              padding: 16px;
-              border-radius: 8px;
+              padding: 16px 20px;
+              border-radius: 10px;
               border-left: 4px solid ${primaryColor};
               margin-top: 24px;
             }
@@ -120,17 +114,22 @@ export default function InvoiceDialog({
               color: ${primaryColor};
               margin-bottom: 8px;
               font-weight: 600;
+              font-size: 13px;
             }
-            @media print { body { background: white; padding: 0; } .invoice { box-shadow: none; } }
+            .payment-box p {
+              font-size: 13px;
+              color: #555;
+              line-height: 1.6;
+            }
           </style>
         </head>
         <body>
-          <div class="invoice">
-            ${getBrandedHeader(organisation, 'Invoice', invoiceNumber, format(new Date(), 'dd MMM yyyy'))}
+          <div class="document">
+            ${getUnifiedHeader(organisation, 'Invoice', invoiceNumber, format(new Date(), 'dd MMM yyyy'), 'invoice')}
             
-            <div class="brand-content">
-              <div class="brand-parties">
-                <div class="brand-party">
+            <div class="content">
+              <div class="parties-grid">
+                <div class="party">
                   <h3>Bill To</h3>
                   ${invoiceData.company_name ? `<p><strong>${invoiceData.company_name}</strong></p>` : ''}
                   <p>${invoiceData.customer_name}</p>
@@ -139,16 +138,16 @@ export default function InvoiceDialog({
                   ${invoiceData.customer_email ? `<p>Email: ${invoiceData.customer_email}</p>` : ''}
                   ${invoiceData.tax_id ? `<p>Tax ID: ${invoiceData.tax_id}</p>` : ''}
                 </div>
-                <div class="brand-party" style="text-align: right;">
+                <div class="party" style="text-align: right;">
                   <h3>Payment Terms</h3>
                   <p>Net ${invoiceData.payment_terms} days</p>
                   <p style="margin-top: 12px;"><strong>Due Date:</strong></p>
                   <p style="font-size: 16px; font-weight: 600; color: ${secondaryColor};">${format(dueDate, 'dd MMMM yyyy')}</p>
-                  <p style="margin-top: 10px;"><span class="brand-badge pending">PENDING</span></p>
+                  <p style="margin-top: 10px;"><span class="badge warning">PENDING</span></p>
                 </div>
               </div>
               
-              <table class="brand-table">
+              <table class="data-table">
                 <thead>
                   <tr>
                     <th>Description</th>
@@ -189,7 +188,7 @@ export default function InvoiceDialog({
               </div>
               
               ${invoiceData.notes ? `
-                <div class="brand-notes">
+                <div class="note-box">
                   <h4>Notes</h4>
                   <p>${invoiceData.notes}</p>
                 </div>
@@ -202,7 +201,7 @@ export default function InvoiceDialog({
               </div>
             </div>
             
-            ${getBrandedFooter(organisation)}
+            ${getUnifiedFooter(organisation)}
           </div>
         </body>
       </html>

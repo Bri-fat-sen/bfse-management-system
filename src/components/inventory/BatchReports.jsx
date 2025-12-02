@@ -117,38 +117,35 @@ export default function BatchReports({ batches = [], products = [], warehouses =
   };
 
   const handlePrint = () => {
+    const summaryCards = [
+      { label: 'Total Batches', value: batches.length.toString() },
+      { label: 'Total Quantity', value: batches.reduce((sum, b) => sum + (b.quantity || 0), 0).toLocaleString() },
+      { label: 'Total Value', value: `SLE ${reportData.totalValue.toLocaleString()}` },
+      { label: 'Expired Value', value: `SLE ${reportData.expiredValue.toLocaleString()}`, highlight: reportData.expiredValue > 0 ? 'red' : 'green' }
+    ];
+
+    const columns = ['Batch #', 'Product', 'Warehouse', 'Qty', 'Mfg Date', 'Expiry Date', 'Value', 'Status'];
+    const rows = batches.map(b => [
+      b.batch_number,
+      b.product_name,
+      b.warehouse_name || 'Main',
+      b.quantity,
+      b.manufacturing_date ? format(new Date(b.manufacturing_date), 'dd MMM yyyy') : '-',
+      b.expiry_date ? format(new Date(b.expiry_date), 'dd MMM yyyy') : '-',
+      `SLE ${((b.quantity || 0) * (b.cost_price || 0)).toLocaleString()}`,
+      b.status
+    ]);
+
     const html = generateUnifiedPDF({
       documentType: 'report',
       title: 'Batch Inventory Report',
-      docNumber: `BTR-${format(new Date(), 'yyyyMMdd')}`,
-      docDate: format(new Date(), 'dd MMMM yyyy'),
       organisation: organisation,
-      summaryCards: [
-        { label: 'Total Batches', value: batches.length.toString() },
-        { label: 'Total Quantity', value: batches.reduce((sum, b) => sum + (b.quantity || 0), 0).toLocaleString() },
-        { label: 'Total Value', value: `SLE ${reportData.totalValue.toLocaleString()}` },
-        { label: 'Expired Value', value: `SLE ${reportData.expiredValue.toLocaleString()}`, highlight: reportData.expiredValue > 0 ? 'red' : 'green' }
-      ],
-      sections: [
-        {
-          title: 'Batch Details',
-          icon: '📦',
-          table: {
-            columns: ['Batch #', 'Product', 'Warehouse', 'Qty', 'Mfg Date', 'Expiry Date', 'Value', 'Status'],
-            rows: batches.map(b => [
-              b.batch_number,
-              b.product_name,
-              b.warehouse_name || 'Main',
-              b.quantity,
-              b.manufacturing_date ? format(new Date(b.manufacturing_date), 'dd MMM yyyy') : '-',
-              b.expiry_date ? format(new Date(b.expiry_date), 'dd MMM yyyy') : '-',
-              `SLE ${((b.quantity || 0) * (b.cost_price || 0)).toLocaleString()}`,
-              b.status
-            ])
-          }
-        }
-      ],
-      showFooter: true
+      summaryCards: summaryCards,
+      sections: [{
+        title: 'Batch Details',
+        icon: '📦',
+        table: { columns, rows, showTotal: false }
+      }]
     });
 
     printUnifiedPDF(html);
