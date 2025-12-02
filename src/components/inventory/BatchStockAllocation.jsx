@@ -60,7 +60,9 @@ export default function BatchStockAllocation({
   }, [open, batch?.id]);
 
   const totalAllocated = allocations.reduce((sum, a) => sum + (a.allocate_qty || 0), 0);
-  const remainingToAllocate = (batch?.quantity || 0) - totalAllocated;
+  const alreadyAllocated = batch?.allocated_quantity || 0;
+  const availableToAllocate = (batch?.quantity || 0) - alreadyAllocated;
+  const remainingToAllocate = availableToAllocate - totalAllocated;
 
   const updateAllocation = (locationId, qty) => {
     const numQty = parseInt(qty) || 0;
@@ -122,19 +124,13 @@ export default function BatchStockAllocation({
         stock_quantity: newTotalStock
       });
 
-      // Update batch allocated_quantity and status
-      const newAllocatedQty = (batch.allocated_quantity || 0) + totalAllocated;
-      const batchUpdate = {
-        allocated_quantity: newAllocatedQty,
-        notes: `${batch.notes || ''} | ${totalAllocated} units allocated on ${new Date().toLocaleDateString()}`
-      };
-      
-      // Mark as depleted if fully allocated
-      if (newAllocatedQty >= batch.quantity) {
-        batchUpdate.status = 'depleted';
+      // Update batch status if fully allocated
+      if (remainingToAllocate === 0 || totalAllocated === batch.quantity) {
+        await base44.entities.InventoryBatch.update(batch.id, {
+          status: 'active',
+          notes: `${batch.notes || ''} | Stock allocated on ${new Date().toLocaleDateString()}`
+        });
       }
-      
-      await base44.entities.InventoryBatch.update(batch.id, batchUpdate);
 
       return { allocated: totalAllocated };
     },
@@ -157,8 +153,8 @@ export default function BatchStockAllocation({
       toast.error("Please allocate at least some stock");
       return;
     }
-    if (totalAllocated > batch.quantity) {
-      toast.error("Cannot allocate more than batch quantity");
+    if (totalAllocated > availableToAllocate) {
+      toast.error("Cannot allocate more than available quantity");
       return;
     }
     allocateMutation.mutate();
@@ -194,6 +190,16 @@ export default function BatchStockAllocation({
               <span className="text-sm text-gray-600">Total Batch Quantity:</span>
               <Badge variant="secondary" className="text-lg">{batch.quantity}</Badge>
             </div>
+            {alreadyAllocated > 0 && (
+              <div className="flex items-center justify-between pt-1">
+                <span className="text-sm text-gray-600">Already Allocated:</span>
+                <Badge variant="outline" className="text-orange-600">{alreadyAllocated}</Badge>
+              </div>
+            )}
+            <div className="flex items-center justify-between pt-1">
+              <span className="text-sm text-gray-600">Available to Allocate:</span>
+              <Badge className="bg-green-100 text-green-700">{availableToAllocate}</Badge>
+            </div>
           </div>
 
           {/* Allocation Summary */}
@@ -215,7 +221,7 @@ export default function BatchStockAllocation({
                       : `${remainingToAllocate} units remaining`}
                 </span>
               </div>
-              <span className="font-semibold">{totalAllocated} / {batch.quantity}</span>
+              <span className="font-semibold">{totalAllocated} / {availableToAllocate}</span>
             </div>
           </div>
 
@@ -271,7 +277,7 @@ export default function BatchStockAllocation({
             </Button>
             <Button
               type="submit"
-              disabled={allocateMutation.isPending || totalAllocated === 0 || totalAllocated > batch.quantity}
+              disabled={allocateMutation.isPending || totalAllocated === 0 || totalAllocated > availableToAllocate || availableToAllocate === 0}
               className="bg-gradient-to-r from-[#1EB053] to-[#0072C6]"
             >
               {allocateMutation.isPending ? "Allocating..." : "Allocate Stock"}
