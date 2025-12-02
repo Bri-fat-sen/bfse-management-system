@@ -18,6 +18,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { getUnifiedPDFStyles, getUnifiedHeader, getUnifiedFooter } from "@/components/exports/UnifiedPDFStyles";
 
 const safeNum = (val) => {
   if (val === null || val === undefined) return 0;
@@ -82,6 +83,9 @@ export default function PayslipGenerator({ payroll, employee, organisation }) {
     const hourlyRate = safeNum(payroll?.calculation_details?.hourly_rate);
     const dailyRate = safeNum(payroll?.calculation_details?.daily_rate);
     const frequency = payroll?.payroll_frequency || 'monthly';
+    
+    // Use unified styles for consistent receipt-like design
+    const unifiedStyles = getUnifiedPDFStyles(organisation, 'payslip');
 
     return `
       <!DOCTYPE html>
@@ -92,6 +96,8 @@ export default function PayslipGenerator({ payroll, employee, organisation }) {
           <title>Payslip - ${employee?.full_name} - ${format(new Date(payroll?.period_start), 'MMMM yyyy')}</title>
           <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
           <style>
+            ${unifiedStyles}
+            
             :root {
               --primary: #0f172a;
               --primary-light: #1e293b;
@@ -125,16 +131,19 @@ export default function PayslipGenerator({ payroll, employee, organisation }) {
               max-width: 800px;
               margin: 0 auto;
               background: white;
-              border-radius: 16px;
+              border-radius: 12px;
               overflow: hidden;
-              box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.15);
+              box-shadow: 0 10px 40px rgba(0,0,0,0.12);
             }
             
-            /* Header Accent */
+            /* Header Accent - Receipt Style Flag Stripe */
             .header-accent {
-              height: 4px;
-              background: linear-gradient(90deg, var(--success), var(--accent));
+              height: 6px;
+              display: flex;
             }
+            .header-accent .primary { flex: 1; background: ${colors.primary}; }
+            .header-accent .white { flex: 1; background: #fff; border-top: 1px solid #e5e5e5; border-bottom: 1px solid #e5e5e5; }
+            .header-accent .secondary { flex: 1; background: ${colors.secondary}; }
             
             /* Header */
             .payslip-header {
@@ -559,7 +568,11 @@ export default function PayslipGenerator({ payroll, employee, organisation }) {
         </head>
         <body>
           <div class="payslip-container">
-            <div class="header-accent"></div>
+            <div class="header-accent">
+              <div class="primary"></div>
+              <div class="white"></div>
+              <div class="secondary"></div>
+            </div>
             
             <div class="payslip-header">
               <div class="header-bg"></div>
