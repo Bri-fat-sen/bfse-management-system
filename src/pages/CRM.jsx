@@ -10,11 +10,12 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Users, Plus, Search, Filter, Star, Phone, Mail,
-  TrendingUp, ShoppingCart, DollarSign, UserCheck
+  TrendingUp, ShoppingCart, DollarSign, UserCheck, BarChart3
 } from "lucide-react";
 import PageHeader from "@/components/ui/PageHeader";
 import CustomerDialog from "@/components/crm/CustomerDialog";
 import CustomerDetail from "@/components/crm/CustomerDetail";
+import CRMAnalyticsDashboard from "@/components/crm/CRMAnalyticsDashboard";
 import LoadingSpinner from "@/components/ui/LoadingSpinner";
 
 
