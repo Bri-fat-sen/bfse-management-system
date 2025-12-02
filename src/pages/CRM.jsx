@@ -332,6 +332,9 @@ export default function CRM() {
         </CardContent>
       </Card>
 
+        </TabsContent>
+      </Tabs>
+
       <CustomerDialog
         open={dialogOpen}
         onOpenChange={setDialogOpen}
