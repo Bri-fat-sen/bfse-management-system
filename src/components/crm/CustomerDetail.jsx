@@ -1,24 +1,14 @@
 import React, { useState } from "react";
-import { base44 } from "@/api/base44Client";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
-} from "@/components/ui/dialog";
 import { format } from "date-fns";
-import { toast } from "sonner";
 import {
   Phone, Mail, MapPin, Building2, Calendar, DollarSign,
   ShoppingCart, MessageSquare, Edit, Star, TrendingUp,
-  Clock, Plus, ArrowLeft, Trash2, AlertTriangle
+  Clock, Plus, ArrowLeft
 } from "lucide-react";
 import InteractionDialog from "./InteractionDialog";
 
@@ -48,9 +38,6 @@ export default function CustomerDetail({ customer, sales = [], interactions = []
   const [interactionOpen, setInteractionOpen] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
 
-  const customerSales = sales.filter(s => s.customer_id === customer.id);
-  const customerInteractions = interactions.filter(i => i.customer_id === customer.id);
-
   const deleteCustomerMutation = useMutation({
     mutationFn: () => base44.entities.Customer.delete(customer.id),
     onSuccess: () => {
@@ -62,6 +49,9 @@ export default function CustomerDetail({ customer, sales = [], interactions = []
       toast.error("Failed to delete customer: " + error.message);
     },
   });
+
+  const customerSales = sales.filter(s => s.customer_id === customer.id);
+  const customerInteractions = interactions.filter(i => i.customer_id === customer.id);
 
   return (
     <div className="space-y-6">
@@ -95,6 +85,13 @@ export default function CustomerDetail({ customer, sales = [], interactions = []
             </Button>
             <Button onClick={onEdit} className="bg-[#0072C6]">
               <Edit className="w-4 h-4 mr-2" /> Edit
+            </Button>
+            <Button 
+              variant="outline" 
+              onClick={() => setShowDeleteDialog(true)}
+              className="text-red-600 border-red-200 hover:bg-red-50 hover:border-red-300"
+            >
+              <Trash2 className="w-4 h-4 mr-2" /> Delete
             </Button>
           </div>
         </div>
