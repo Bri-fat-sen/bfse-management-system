@@ -1,13 +1,16 @@
-// Modern Export Styles for PDF/Print exports
-export const getSierraLeoneStyles = () => `
+// Modern Export Styles for PDF/Print exports - Uses unified receipt-style design
+import { getUnifiedPDFStyles } from "./UnifiedPDFStyles";
+
+export const getSierraLeoneStyles = (organisation = {}) => `
+  ${getUnifiedPDFStyles(organisation, 'report')}
   @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap');
   
   :root {
     --primary: #0f172a;
     --primary-light: #1e293b;
-    --accent: #3b82f6;
+    --accent: ${organisation.secondary_color || '#0072C6'};
     --accent-light: #60a5fa;
-    --success: #10b981;
+    --success: ${organisation.primary_color || '#1EB053'};
     --warning: #f59e0b;
     --danger: #ef4444;
     --gray-50: #f8fafc;
@@ -20,8 +23,8 @@ export const getSierraLeoneStyles = () => `
     --gray-700: #334155;
     --gray-800: #1e293b;
     --gray-900: #0f172a;
-    --sl-green: #10b981;
-    --sl-blue: #3b82f6;
+    --sl-green: ${organisation.primary_color || '#1EB053'};
+    --sl-blue: ${organisation.secondary_color || '#0072C6'};
   }
   
   * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -44,11 +47,20 @@ export const getSierraLeoneStyles = () => `
     box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.1);
   }
   
-  /* Modern Header */
+  /* Flag Stripe - Receipt Style */
+  .flag-stripe {
+    height: 6px;
+    display: flex;
+  }
+  .flag-stripe .primary { flex: 1; background: var(--sl-green); }
+  .flag-stripe .white { flex: 1; background: #fff; border-top: 1px solid #e5e5e5; border-bottom: 1px solid #e5e5e5; }
+  .flag-stripe .secondary { flex: 1; background: var(--sl-blue); }
+
+  /* Modern Header - Gradient Style */
   .header {
-    background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
+    background: linear-gradient(135deg, var(--sl-green) 0%, var(--sl-blue) 100%);
     color: white;
-    padding: 40px 48px;
+    padding: 32px 48px;
     position: relative;
     overflow: hidden;
   }
@@ -59,8 +71,11 @@ export const getSierraLeoneStyles = () => `
     top: 0;
     left: 0;
     right: 0;
-    height: 4px;
-    background: linear-gradient(90deg, var(--sl-green), var(--sl-blue));
+    bottom: 0;
+    opacity: 0.05;
+    background-image: 
+      radial-gradient(circle at 20% 80%, rgba(255,255,255,0.4) 0%, transparent 50%),
+      radial-gradient(circle at 80% 20%, rgba(255,255,255,0.4) 0%, transparent 50%);
   }
   
   .header::after {
@@ -528,7 +543,7 @@ export const generateExportHTML = ({
   notes = null,
   footer = true
 }) => {
-  const styles = getSierraLeoneStyles();
+  const styles = getSierraLeoneStyles(organisation);
   const generatedDate = new Date().toLocaleString('en-GB', { 
     day: 'numeric', month: 'long', year: 'numeric', 
     hour: '2-digit', minute: '2-digit' 
@@ -548,6 +563,11 @@ export const generateExportHTML = ({
       </head>
       <body>
         <div class="document">
+          <div class="flag-stripe">
+            <div class="primary"></div>
+            <div class="white"></div>
+            <div class="secondary"></div>
+          </div>
           <div class="header">
             <div class="org-logo">
               ${organisation?.logo_url 
