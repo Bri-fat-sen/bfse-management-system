@@ -379,10 +379,9 @@ const generateFormHTML = (formType, org) => {
         font-size: 22px;
       }
       
-      .footer .form-id {
-        font-family: 'SF Mono', 'Monaco', monospace;
-        font-size: 10px;
-        opacity: 0.5;
+      .footer .contact {
+        font-size: 11px;
+        opacity: 0.7;
         margin-top: 12px;
         padding-top: 12px;
         border-top: 1px solid rgba(255,255,255,0.2);
@@ -427,8 +426,8 @@ const generateFormHTML = (formType, org) => {
       <div class="thanks">For Manual Record Keeping</div>
       <div class="tagline">Please enter data into the system when ready</div>
       <div class="flag">🇸🇱</div>
-      <div class="form-id">
-        Form ID: ${formType.toUpperCase()}-${Date.now().toString(36).toUpperCase()} • ${orgName}${orgPhone ? ' • ' + orgPhone : ''}
+      <div class="contact">
+        ${orgName}${orgPhone ? ' • ' + orgPhone : ''}${orgEmail ? ' • ' + orgEmail : ''}
       </div>
     </div>
   `;
