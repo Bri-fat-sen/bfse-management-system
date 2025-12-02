@@ -10,10 +10,7 @@ import {
   Calendar,
   X,
   Check,
-  ChevronRight,
-  Trash2,
-  Users,
-  MessageSquare
+  ChevronRight
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -24,9 +21,10 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
-import { format } from "date-fns";
+import { format, formatDistanceToNow } from "date-fns";
 import { Link } from "react-router-dom";
 import { createPageUrl } from "@/utils";
+import { toast } from "sonner";
 
 const notificationIcons = {
   low_stock: { icon: Package, color: "text-amber-500", bg: "bg-amber-100" },
@@ -100,18 +98,6 @@ export default function NotificationCenter({ orgId, currentEmployee }) {
     mutationFn: (id) => base44.entities.Notification.delete(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['notifications'] });
-    }
-  });
-
-  const clearAllMutation = useMutation({
-    mutationFn: async () => {
-      await Promise.all(notifications.map(n => 
-        base44.entities.Notification.delete(n.id)
-      ));
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['notifications'] });
-      toast.success("All notifications cleared");
     }
   });
 
@@ -224,16 +210,28 @@ export default function NotificationCenter({ orgId, currentEmployee }) {
                             </p>
                             <p className="text-sm text-gray-500 mt-0.5">{notification.message}</p>
                           </div>
-                          {!notification.is_read && (
+                          <div className="flex items-center gap-1 flex-shrink-0">
+                            {!notification.is_read && (
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-6 w-6"
+                                onClick={() => markAsReadMutation.mutate(notification.id)}
+                                title="Mark as read"
+                              >
+                                <Check className="w-3 h-3" />
+                              </Button>
+                            )}
                             <Button
                               variant="ghost"
                               size="icon"
-                              className="h-6 w-6 flex-shrink-0"
-                              onClick={() => markAsReadMutation.mutate(notification.id)}
+                              className="h-6 w-6 text-gray-400 hover:text-red-500"
+                              onClick={() => deleteNotificationMutation.mutate(notification.id)}
+                              title="Delete"
                             >
                               <X className="w-3 h-3" />
                             </Button>
-                          )}
+                          </div>
                         </div>
                         <div className="flex items-center gap-2 mt-2">
                           <span className={`w-2 h-2 rounded-full ${getPriorityColor(notification.priority)}`} />
