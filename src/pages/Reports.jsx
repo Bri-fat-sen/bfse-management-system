@@ -1,22 +1,20 @@
 import React, { useState, useMemo } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { format, startOfMonth, endOfMonth, subMonths, startOfYear, parseISO } from "date-fns";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { format, startOfMonth, endOfMonth, subMonths, startOfYear } from "date-fns";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import {
-  FileText, Download, Printer, Plus, Search, Filter, BarChart3, 
+  FileText, Download, Printer, Plus, Search, BarChart3, 
   TrendingUp, DollarSign, Users, Package, Truck, Calendar, Star,
-  Play, Edit, Trash2, Copy, MoreVertical, Clock, Share2, Mail,
-  ChevronRight, FileSpreadsheet, PieChart, Building2, Briefcase,
-  AlertTriangle, CheckCircle, Eye, Layers
+  Play, Edit, Trash2, Copy, MoreVertical, Clock, PieChart, Briefcase,
+  AlertTriangle, ChevronRight, Layers, ArrowUpRight, ArrowDownRight
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -28,43 +26,32 @@ import {
 import { toast } from "sonner";
 import ReportBuilder from "@/components/reports/ReportBuilder";
 import ConsolidatedReportPrint from "@/components/reports/ConsolidatedReportPrint";
-import QuickReportCards from "@/components/reports/QuickReportCards";
-
-const REPORT_CATEGORIES = [
-  { id: "all", label: "All Reports", icon: Layers },
-  { id: "financial", label: "Financial", icon: DollarSign },
-  { id: "sales", label: "Sales", icon: TrendingUp },
-  { id: "inventory", label: "Inventory", icon: Package },
-  { id: "hr", label: "HR & Payroll", icon: Users },
-  { id: "transport", label: "Transport", icon: Truck },
-];
+import { downloadProfessionalReportAsPDF } from "@/components/exports/ProfessionalReportExport";
 
 const QUICK_REPORTS = [
-  { id: "daily_sales", name: "Daily Sales Summary", category: "sales", icon: TrendingUp, color: "green" },
-  { id: "monthly_revenue", name: "Monthly Revenue", category: "financial", icon: DollarSign, color: "blue" },
-  { id: "inventory_status", name: "Inventory Status", category: "inventory", icon: Package, color: "purple" },
-  { id: "payroll_summary", name: "Payroll Summary", category: "hr", icon: Users, color: "orange" },
-  { id: "transport_trips", name: "Transport Trips", category: "transport", icon: Truck, color: "cyan" },
-  { id: "expense_report", name: "Expense Report", category: "financial", icon: Briefcase, color: "red" },
-  { id: "profit_loss", name: "Profit & Loss", category: "financial", icon: PieChart, color: "indigo" },
-  { id: "employee_attendance", name: "Attendance Report", category: "hr", icon: Clock, color: "amber" },
+  { id: "daily_sales", name: "Daily Sales", category: "sales", icon: TrendingUp, color: "green", description: "Today's sales performance" },
+  { id: "monthly_revenue", name: "Monthly Revenue", category: "financial", icon: DollarSign, color: "blue", description: "This month's revenue breakdown" },
+  { id: "inventory_status", name: "Inventory Status", category: "inventory", icon: Package, color: "purple", description: "Stock levels overview" },
+  { id: "payroll_summary", name: "Payroll Summary", category: "hr", icon: Users, color: "orange", description: "Payroll costs this period" },
+  { id: "transport_trips", name: "Transport Trips", category: "transport", icon: Truck, color: "cyan", description: "Fleet activity summary" },
+  { id: "expense_report", name: "Expense Report", category: "financial", icon: Briefcase, color: "red", description: "Expenses by category" },
+  { id: "profit_loss", name: "Profit & Loss", category: "financial", icon: PieChart, color: "indigo", description: "Net profit analysis" },
+  { id: "employee_attendance", name: "Attendance", category: "hr", icon: Clock, color: "amber", description: "Staff attendance rates" },
 ];
 
 export default function Reports() {
-  const [activeTab, setActiveTab] = useState("dashboard");
-  const [selectedCategory, setSelectedCategory] = useState("all");
+  const [activeView, setActiveView] = useState("quick");
   const [searchQuery, setSearchQuery] = useState("");
   const [showBuilder, setShowBuilder] = useState(false);
   const [editingReport, setEditingReport] = useState(null);
   const [showConsolidatedPrint, setShowConsolidatedPrint] = useState(false);
-  const [selectedReportsForPrint, setSelectedReportsForPrint] = useState([]);
+  const [selectedReports, setSelectedReports] = useState([]);
   const [dateRange, setDateRange] = useState("this_month");
   const [customDateStart, setCustomDateStart] = useState(format(startOfMonth(new Date()), 'yyyy-MM-dd'));
   const [customDateEnd, setCustomDateEnd] = useState(format(endOfMonth(new Date()), 'yyyy-MM-dd'));
 
   const queryClient = useQueryClient();
 
-  // Fetch user and organization data
   const { data: user } = useQuery({
     queryKey: ['currentUser'],
     queryFn: () => base44.auth.me(),
@@ -87,14 +74,12 @@ export default function Reports() {
 
   const currentOrg = organisation?.[0];
 
-  // Fetch saved reports
-  const { data: savedReports = [], isLoading: reportsLoading } = useQuery({
+  const { data: savedReports = [] } = useQuery({
     queryKey: ['savedReports', orgId],
     queryFn: () => base44.entities.SavedReport.filter({ organisation_id: orgId }),
     enabled: !!orgId,
   });
 
-  // Fetch data for reports
   const { data: allEmployees = [] } = useQuery({
     queryKey: ['allEmployees', orgId],
     queryFn: () => base44.entities.Employee.filter({ organisation_id: orgId }),
@@ -143,7 +128,6 @@ export default function Reports() {
     enabled: !!orgId,
   });
 
-  // Mutations
   const createReportMutation = useMutation({
     mutationFn: (data) => base44.entities.SavedReport.create({
       ...data,
@@ -154,7 +138,7 @@ export default function Reports() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['savedReports'] });
       setShowBuilder(false);
-      toast.success("Report created successfully");
+      toast.success("Report created");
     }
   });
 
@@ -164,7 +148,7 @@ export default function Reports() {
       queryClient.invalidateQueries({ queryKey: ['savedReports'] });
       setShowBuilder(false);
       setEditingReport(null);
-      toast.success("Report updated successfully");
+      toast.success("Report updated");
     }
   });
 
@@ -176,55 +160,50 @@ export default function Reports() {
     }
   });
 
-  // Filter reports
-  const filteredReports = useMemo(() => {
-    return savedReports.filter(report => {
-      const matchesCategory = selectedCategory === "all" || report.report_type === selectedCategory;
-      const matchesSearch = !searchQuery || 
-        report.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        report.description?.toLowerCase().includes(searchQuery.toLowerCase());
-      return matchesCategory && matchesSearch;
-    });
-  }, [savedReports, selectedCategory, searchQuery]);
-
-  const favoriteReports = savedReports.filter(r => r.is_favorite);
-
-  // Calculate summary stats
-  const summaryStats = useMemo(() => {
+  // Stats
+  const stats = useMemo(() => {
     const now = new Date();
     const monthStart = startOfMonth(now);
     const lastMonthStart = startOfMonth(subMonths(now, 1));
-    const yearStart = startOfYear(now);
+    const lastMonthEnd = endOfMonth(subMonths(now, 1));
 
     const thisMonthSales = sales.filter(s => new Date(s.created_date) >= monthStart);
+    const lastMonthSales = sales.filter(s => {
+      const d = new Date(s.created_date);
+      return d >= lastMonthStart && d <= lastMonthEnd;
+    });
     const thisMonthRevenue = thisMonthSales.reduce((sum, s) => sum + (s.total_amount || 0), 0);
-    
+    const lastMonthRevenue = lastMonthSales.reduce((sum, s) => sum + (s.total_amount || 0), 0);
+    const revenueChange = lastMonthRevenue > 0 ? ((thisMonthRevenue - lastMonthRevenue) / lastMonthRevenue * 100) : 0;
+
     const thisMonthExpenses = expenses.filter(e => new Date(e.date || e.created_date) >= monthStart);
     const totalExpenses = thisMonthExpenses.reduce((sum, e) => sum + (e.amount || 0), 0);
 
-    const thisMonthPayrolls = payrolls.filter(p => new Date(p.period_end) >= monthStart && p.status === 'paid');
-    const totalPayroll = thisMonthPayrolls.reduce((sum, p) => sum + (p.net_pay || 0), 0);
-
-    const activeProducts = products.filter(p => p.is_active);
-    const lowStockProducts = products.filter(p => (p.stock_quantity || 0) <= (p.low_stock_threshold || 10));
+    const netProfit = thisMonthRevenue - totalExpenses;
+    const lowStock = products.filter(p => (p.stock_quantity || 0) <= (p.low_stock_threshold || 10)).length;
 
     return {
-      monthlyRevenue: thisMonthRevenue,
-      monthlyExpenses: totalExpenses,
-      monthlyPayroll: totalPayroll,
-      netProfit: thisMonthRevenue - totalExpenses,
-      totalProducts: activeProducts.length,
-      lowStockCount: lowStockProducts.length,
-      totalEmployees: allEmployees.filter(e => e.status === 'active').length,
-      totalTrips: trips.filter(t => new Date(t.date) >= monthStart).length,
+      revenue: thisMonthRevenue,
+      revenueChange,
+      expenses: totalExpenses,
+      netProfit,
+      lowStock,
+      employees: allEmployees.filter(e => e.status === 'active').length,
+      salesCount: thisMonthSales.length,
     };
-  }, [sales, expenses, payrolls, products, allEmployees, trips]);
+  }, [sales, expenses, products, allEmployees]);
 
-  const handleSaveReport = (reportData) => {
+  const filteredReports = useMemo(() => {
+    return savedReports.filter(r => 
+      !searchQuery || r.name?.toLowerCase().includes(searchQuery.toLowerCase())
+    );
+  }, [savedReports, searchQuery]);
+
+  const handleSaveReport = (data) => {
     if (editingReport) {
-      updateReportMutation.mutate({ id: editingReport.id, data: reportData });
+      updateReportMutation.mutate({ id: editingReport.id, data });
     } else {
-      createReportMutation.mutate(reportData);
+      createReportMutation.mutate(data);
     }
   };
 
@@ -234,42 +213,39 @@ export default function Reports() {
   };
 
   const handleDuplicate = async (report) => {
-    const { id, created_date, updated_date, ...reportData } = report;
-    await base44.entities.SavedReport.create({
-      ...reportData,
-      name: `${report.name} (Copy)`,
-      is_favorite: false
-    });
+    const { id, created_date, updated_date, ...data } = report;
+    await base44.entities.SavedReport.create({ ...data, name: `${report.name} (Copy)`, is_favorite: false });
     queryClient.invalidateQueries({ queryKey: ['savedReports'] });
     toast.success("Report duplicated");
   };
 
-  const toggleReportForPrint = (reportId) => {
-    setSelectedReportsForPrint(prev => 
-      prev.includes(reportId) 
-        ? prev.filter(id => id !== reportId)
-        : [...prev, reportId]
-    );
-  };
-
-  const selectAllForPrint = () => {
-    if (selectedReportsForPrint.length === QUICK_REPORTS.length) {
-      setSelectedReportsForPrint([]);
-    } else {
-      setSelectedReportsForPrint(QUICK_REPORTS.map(r => r.id));
+  const handleGenerateQuickReport = async (reportType) => {
+    const reportConfig = generateQuickReportConfig(reportType, { 
+      sales, expenses, payrolls, trips, products, employees: allEmployees, organisation: currentOrg, dateRange
+    });
+    if (reportConfig) {
+      await downloadProfessionalReportAsPDF(reportConfig, reportConfig.title.replace(/\s+/g, '_'));
     }
   };
 
+  const toggleReportSelection = (id) => {
+    setSelectedReports(prev => 
+      prev.includes(id) ? prev.filter(r => r !== id) : [...prev, id]
+    );
+  };
+
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 max-w-7xl mx-auto">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
-            <FileText className="w-7 h-7 text-[#1EB053]" />
+          <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#1EB053] to-[#0072C6] flex items-center justify-center">
+              <BarChart3 className="w-5 h-5 text-white" />
+            </div>
             Reports Center
           </h1>
-          <p className="text-gray-500 text-sm mt-1">Generate, customize, and export business reports</p>
+          <p className="text-gray-500 text-sm mt-1 ml-13">Generate and export business reports</p>
         </div>
         <div className="flex gap-2">
           <Button 
@@ -278,242 +254,149 @@ export default function Reports() {
             className="gap-2"
           >
             <Printer className="w-4 h-4" />
-            <span className="hidden sm:inline">Consolidated Print</span>
+            <span className="hidden sm:inline">Print Bundle</span>
           </Button>
           <Button 
             onClick={() => { setEditingReport(null); setShowBuilder(true); }}
-            className="gap-2 bg-gradient-to-r from-[#1EB053] to-[#0072C6]"
+            className="gap-2 bg-gradient-to-r from-[#1EB053] to-[#0072C6] hover:opacity-90"
           >
             <Plus className="w-4 h-4" />
-            <span className="hidden sm:inline">Create Report</span>
+            Custom Report
           </Button>
         </div>
       </div>
 
-      {/* Quick Stats */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <Card className="border-t-4 border-t-[#1EB053]">
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-xs text-gray-500 uppercase tracking-wide">Monthly Revenue</p>
-                <p className="text-2xl font-bold text-[#1EB053]">SLE {summaryStats.monthlyRevenue.toLocaleString()}</p>
-              </div>
-              <TrendingUp className="w-8 h-8 text-[#1EB053]/20" />
-            </div>
-          </CardContent>
-        </Card>
-        <Card className="border-t-4 border-t-[#0072C6]">
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-xs text-gray-500 uppercase tracking-wide">Net Profit</p>
-                <p className={`text-2xl font-bold ${summaryStats.netProfit >= 0 ? 'text-[#1EB053]' : 'text-red-500'}`}>
-                  SLE {summaryStats.netProfit.toLocaleString()}
-                </p>
-              </div>
-              <DollarSign className="w-8 h-8 text-[#0072C6]/20" />
-            </div>
-          </CardContent>
-        </Card>
-        <Card className="border-t-4 border-t-purple-500">
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-xs text-gray-500 uppercase tracking-wide">Active Employees</p>
-                <p className="text-2xl font-bold text-purple-600">{summaryStats.totalEmployees}</p>
-              </div>
-              <Users className="w-8 h-8 text-purple-500/20" />
-            </div>
-          </CardContent>
-        </Card>
-        <Card className="border-t-4 border-t-orange-500">
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-xs text-gray-500 uppercase tracking-wide">Low Stock Items</p>
-                <p className="text-2xl font-bold text-orange-600">{summaryStats.lowStockCount}</p>
-              </div>
-              <AlertTriangle className="w-8 h-8 text-orange-500/20" />
-            </div>
-          </CardContent>
-        </Card>
+      {/* Quick Stats Row */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        <StatCard 
+          label="Monthly Revenue" 
+          value={`SLE ${stats.revenue.toLocaleString()}`}
+          change={stats.revenueChange}
+          icon={TrendingUp}
+          color="green"
+        />
+        <StatCard 
+          label="Net Profit" 
+          value={`SLE ${stats.netProfit.toLocaleString()}`}
+          icon={DollarSign}
+          color={stats.netProfit >= 0 ? "blue" : "red"}
+        />
+        <StatCard 
+          label="Active Staff" 
+          value={stats.employees}
+          icon={Users}
+          color="purple"
+        />
+        <StatCard 
+          label="Low Stock Items" 
+          value={stats.lowStock}
+          icon={AlertTriangle}
+          color="orange"
+          alert={stats.lowStock > 0}
+        />
       </div>
 
-      {/* Main Content Tabs */}
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
-        <TabsList className="grid grid-cols-4 w-full max-w-lg">
-          <TabsTrigger value="dashboard" className="gap-2">
-            <BarChart3 className="w-4 h-4" />
-            <span className="hidden sm:inline">Dashboard</span>
-          </TabsTrigger>
-          <TabsTrigger value="quick" className="gap-2">
-            <Play className="w-4 h-4" />
-            <span className="hidden sm:inline">Quick</span>
-          </TabsTrigger>
-          <TabsTrigger value="saved" className="gap-2">
-            <FileText className="w-4 h-4" />
-            <span className="hidden sm:inline">Saved</span>
-          </TabsTrigger>
-          <TabsTrigger value="scheduled" className="gap-2">
-            <Clock className="w-4 h-4" />
-            <span className="hidden sm:inline">Scheduled</span>
-          </TabsTrigger>
-        </TabsList>
+      {/* View Switcher */}
+      <div className="flex items-center gap-4 border-b">
+        {[
+          { id: 'quick', label: 'Quick Reports', icon: Play },
+          { id: 'saved', label: 'Saved Reports', icon: FileText, count: savedReports.length },
+          { id: 'scheduled', label: 'Scheduled', icon: Clock, count: savedReports.filter(r => r.schedule?.enabled).length },
+        ].map(tab => (
+          <button
+            key={tab.id}
+            onClick={() => setActiveView(tab.id)}
+            className={`flex items-center gap-2 px-4 py-3 text-sm font-medium border-b-2 transition-colors ${
+              activeView === tab.id 
+                ? 'border-[#1EB053] text-[#1EB053]' 
+                : 'border-transparent text-gray-500 hover:text-gray-700'
+            }`}
+          >
+            <tab.icon className="w-4 h-4" />
+            {tab.label}
+            {tab.count > 0 && (
+              <span className="ml-1 px-2 py-0.5 text-xs rounded-full bg-gray-100">{tab.count}</span>
+            )}
+          </button>
+        ))}
+      </div>
 
-        {/* Dashboard Tab */}
-        <TabsContent value="dashboard" className="space-y-6">
-          {/* Favorite Reports */}
-          {favoriteReports.length > 0 && (
-            <div>
-              <h3 className="text-lg font-semibold mb-3 flex items-center gap-2">
-                <Star className="w-5 h-5 text-yellow-500 fill-yellow-500" />
-                Favorite Reports
-              </h3>
-              <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                {favoriteReports.slice(0, 3).map(report => (
-                  <ReportCard 
-                    key={report.id} 
-                    report={report}
-                    onEdit={() => { setEditingReport(report); setShowBuilder(true); }}
-                    onDelete={() => deleteReportMutation.mutate(report.id)}
-                    onDuplicate={() => handleDuplicate(report)}
-                    onToggleFavorite={() => handleToggleFavorite(report)}
-                  />
-                ))}
+      {/* Quick Reports View */}
+      {activeView === 'quick' && (
+        <div className="space-y-4">
+          {/* Date Filter */}
+          <div className="flex flex-wrap gap-3 items-center">
+            <Select value={dateRange} onValueChange={setDateRange}>
+              <SelectTrigger className="w-44">
+                <Calendar className="w-4 h-4 mr-2 text-gray-400" />
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="today">Today</SelectItem>
+                <SelectItem value="this_week">This Week</SelectItem>
+                <SelectItem value="this_month">This Month</SelectItem>
+                <SelectItem value="last_month">Last Month</SelectItem>
+                <SelectItem value="this_quarter">This Quarter</SelectItem>
+                <SelectItem value="this_year">This Year</SelectItem>
+                <SelectItem value="custom">Custom</SelectItem>
+              </SelectContent>
+            </Select>
+            {dateRange === 'custom' && (
+              <div className="flex gap-2">
+                <Input type="date" value={customDateStart} onChange={e => setCustomDateStart(e.target.value)} className="w-40" />
+                <Input type="date" value={customDateEnd} onChange={e => setCustomDateEnd(e.target.value)} className="w-40" />
               </div>
-            </div>
-          )}
-
-          {/* Quick Report Cards */}
-          <QuickReportCards 
-            organisation={currentOrg}
-            sales={sales}
-            expenses={expenses}
-            payrolls={payrolls}
-            trips={trips}
-            products={products}
-            employees={allEmployees}
-            dateRange={dateRange}
-            customDateStart={customDateStart}
-            customDateEnd={customDateEnd}
-          />
-        </TabsContent>
-
-        {/* Quick Reports Tab */}
-        <TabsContent value="quick" className="space-y-4">
-          <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
-            <div className="flex gap-2 flex-wrap">
-              <Select value={dateRange} onValueChange={setDateRange}>
-                <SelectTrigger className="w-40">
-                  <SelectValue placeholder="Date Range" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="today">Today</SelectItem>
-                  <SelectItem value="this_week">This Week</SelectItem>
-                  <SelectItem value="this_month">This Month</SelectItem>
-                  <SelectItem value="last_month">Last Month</SelectItem>
-                  <SelectItem value="this_quarter">This Quarter</SelectItem>
-                  <SelectItem value="this_year">This Year</SelectItem>
-                  <SelectItem value="custom">Custom Range</SelectItem>
-                </SelectContent>
-              </Select>
-              {dateRange === 'custom' && (
-                <>
-                  <Input 
-                    type="date" 
-                    value={customDateStart}
-                    onChange={(e) => setCustomDateStart(e.target.value)}
-                    className="w-36"
-                  />
-                  <Input 
-                    type="date" 
-                    value={customDateEnd}
-                    onChange={(e) => setCustomDateEnd(e.target.value)}
-                    className="w-36"
-                  />
-                </>
-              )}
-            </div>
-            <div className="flex gap-2">
-              <Button variant="outline" size="sm" onClick={selectAllForPrint}>
-                <Checkbox checked={selectedReportsForPrint.length === QUICK_REPORTS.length} className="mr-2" />
-                Select All
-              </Button>
-              <Button 
-                size="sm" 
-                disabled={selectedReportsForPrint.length === 0}
-                onClick={() => setShowConsolidatedPrint(true)}
-                className="gap-2"
-              >
-                <Printer className="w-4 h-4" />
-                Print Selected ({selectedReportsForPrint.length})
-              </Button>
-            </div>
+            )}
           </div>
 
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+          {/* Quick Report Grid */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             {QUICK_REPORTS.map(report => (
-              <QuickReportItem 
-                key={report.id}
-                report={report}
-                isSelected={selectedReportsForPrint.includes(report.id)}
-                onToggleSelect={() => toggleReportForPrint(report.id)}
-                organisation={currentOrg}
-                sales={sales}
-                expenses={expenses}
-                payrolls={payrolls}
-                trips={trips}
-                products={products}
-                employees={allEmployees}
+              <QuickReportCard 
+                key={report.id} 
+                report={report} 
+                onGenerate={() => handleGenerateQuickReport(report.id)}
+                isSelected={selectedReports.includes(report.id)}
+                onToggle={() => toggleReportSelection(report.id)}
               />
             ))}
           </div>
-        </TabsContent>
 
-        {/* Saved Reports Tab */}
-        <TabsContent value="saved" className="space-y-4">
-          <div className="flex flex-col sm:flex-row gap-4">
-            <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-              <Input 
-                placeholder="Search reports..." 
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-10"
-              />
+          {selectedReports.length > 0 && (
+            <div className="flex justify-end">
+              <Button onClick={() => setShowConsolidatedPrint(true)} className="gap-2">
+                <Printer className="w-4 h-4" />
+                Print {selectedReports.length} Selected
+              </Button>
             </div>
-            <div className="flex gap-2 overflow-x-auto pb-2">
-              {REPORT_CATEGORIES.map(cat => (
-                <Button
-                  key={cat.id}
-                  variant={selectedCategory === cat.id ? "default" : "outline"}
-                  size="sm"
-                  onClick={() => setSelectedCategory(cat.id)}
-                  className="gap-2 whitespace-nowrap"
-                >
-                  <cat.icon className="w-4 h-4" />
-                  {cat.label}
-                </Button>
-              ))}
-            </div>
+          )}
+        </div>
+      )}
+
+      {/* Saved Reports View */}
+      {activeView === 'saved' && (
+        <div className="space-y-4">
+          <div className="relative max-w-md">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+            <Input 
+              placeholder="Search saved reports..." 
+              value={searchQuery}
+              onChange={e => setSearchQuery(e.target.value)}
+              className="pl-10"
+            />
           </div>
 
           {filteredReports.length === 0 ? (
-            <div className="text-center py-12">
-              <FileText className="w-12 h-12 text-gray-300 mx-auto mb-3" />
-              <p className="text-gray-500">No saved reports found</p>
-              <Button 
-                variant="link" 
-                onClick={() => { setEditingReport(null); setShowBuilder(true); }}
-              >
-                Create your first report
-              </Button>
-            </div>
+            <EmptyState 
+              icon={FileText}
+              title="No saved reports"
+              description="Create custom reports to save them here"
+              action={<Button variant="outline" onClick={() => setShowBuilder(true)}>Create Report</Button>}
+            />
           ) : (
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
               {filteredReports.map(report => (
-                <ReportCard 
+                <SavedReportCard 
                   key={report.id} 
                   report={report}
                   onEdit={() => { setEditingReport(report); setShowBuilder(true); }}
@@ -524,20 +407,22 @@ export default function Reports() {
               ))}
             </div>
           )}
-        </TabsContent>
+        </div>
+      )}
 
-        {/* Scheduled Reports Tab */}
-        <TabsContent value="scheduled" className="space-y-4">
+      {/* Scheduled View */}
+      {activeView === 'scheduled' && (
+        <div className="space-y-4">
           {savedReports.filter(r => r.schedule?.enabled).length === 0 ? (
-            <div className="text-center py-12">
-              <Clock className="w-12 h-12 text-gray-300 mx-auto mb-3" />
-              <p className="text-gray-500">No scheduled reports</p>
-              <p className="text-sm text-gray-400">Create a report and enable scheduling to automate delivery</p>
-            </div>
+            <EmptyState 
+              icon={Clock}
+              title="No scheduled reports"
+              description="Set up automatic report delivery by creating a scheduled report"
+            />
           ) : (
             <div className="space-y-3">
               {savedReports.filter(r => r.schedule?.enabled).map(report => (
-                <Card key={report.id}>
+                <Card key={report.id} className="hover:shadow-sm transition-shadow">
                   <CardContent className="p-4 flex items-center justify-between">
                     <div className="flex items-center gap-4">
                       <div className="w-10 h-10 rounded-lg bg-blue-100 flex items-center justify-center">
@@ -546,36 +431,24 @@ export default function Reports() {
                       <div>
                         <h4 className="font-semibold">{report.name}</h4>
                         <p className="text-sm text-gray-500">
-                          {report.schedule.frequency} at {report.schedule.time}
-                          {report.schedule.recipients?.length > 0 && (
-                            <span> • {report.schedule.recipients.length} recipients</span>
-                          )}
+                          {report.schedule.frequency} • {report.schedule.recipients?.length || 0} recipients
                         </p>
                       </div>
                     </div>
-                    <div className="flex items-center gap-2">
-                      <Badge variant="outline" className="capitalize">{report.schedule.frequency}</Badge>
-                      <Button 
-                        variant="ghost" 
-                        size="sm"
-                        onClick={() => { setEditingReport(report); setShowBuilder(true); }}
-                      >
-                        <Edit className="w-4 h-4" />
-                      </Button>
-                    </div>
+                    <Badge variant="outline" className="capitalize">{report.schedule.frequency}</Badge>
                   </CardContent>
                 </Card>
               ))}
             </div>
           )}
-        </TabsContent>
-      </Tabs>
+        </div>
+      )}
 
       {/* Report Builder Sheet */}
       <Sheet open={showBuilder} onOpenChange={setShowBuilder}>
         <SheetContent className="w-full sm:max-w-2xl overflow-y-auto">
           <SheetHeader>
-            <SheetTitle>{editingReport ? "Edit Report" : "Create New Report"}</SheetTitle>
+            <SheetTitle>{editingReport ? "Edit Report" : "Create Report"}</SheetTitle>
           </SheetHeader>
           <div className="mt-6">
             <ReportBuilder
@@ -596,12 +469,12 @@ export default function Reports() {
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Printer className="w-5 h-5" />
-              Consolidated Report Print
+              Print Report Bundle
             </DialogTitle>
           </DialogHeader>
           <ConsolidatedReportPrint
             organisation={currentOrg}
-            selectedReports={selectedReportsForPrint}
+            selectedReports={selectedReports}
             allReports={QUICK_REPORTS}
             sales={sales}
             expenses={expenses}
@@ -620,30 +493,99 @@ export default function Reports() {
   );
 }
 
-// Report Card Component
-function ReportCard({ report, onEdit, onDelete, onDuplicate, onToggleFavorite }) {
-  const typeColors = {
-    sales: "bg-green-100 text-green-800 border-green-200",
-    inventory: "bg-blue-100 text-blue-800 border-blue-200",
-    payroll: "bg-purple-100 text-purple-800 border-purple-200",
-    transport: "bg-orange-100 text-orange-800 border-orange-200",
-    custom: "bg-gray-100 text-gray-800 border-gray-200"
+// Stat Card Component
+function StatCard({ label, value, change, icon: Icon, color, alert }) {
+  const colors = {
+    green: 'from-green-500 to-emerald-600',
+    blue: 'from-blue-500 to-cyan-600',
+    purple: 'from-purple-500 to-indigo-600',
+    orange: 'from-orange-500 to-amber-600',
+    red: 'from-red-500 to-rose-600',
   };
 
   return (
-    <Card className="hover:shadow-md transition-shadow">
+    <Card className={`overflow-hidden ${alert ? 'ring-2 ring-orange-200' : ''}`}>
+      <CardContent className="p-4">
+        <div className="flex items-start justify-between">
+          <div>
+            <p className="text-xs text-gray-500 uppercase tracking-wide font-medium">{label}</p>
+            <p className="text-xl font-bold mt-1">{value}</p>
+            {change !== undefined && (
+              <div className={`flex items-center gap-1 text-xs mt-1 ${change >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                {change >= 0 ? <ArrowUpRight className="w-3 h-3" /> : <ArrowDownRight className="w-3 h-3" />}
+                {Math.abs(change).toFixed(1)}%
+              </div>
+            )}
+          </div>
+          <div className={`w-10 h-10 rounded-xl bg-gradient-to-br ${colors[color]} flex items-center justify-center`}>
+            <Icon className="w-5 h-5 text-white" />
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+// Quick Report Card
+function QuickReportCard({ report, onGenerate, isSelected, onToggle }) {
+  const colors = {
+    green: 'hover:border-green-300 hover:bg-green-50',
+    blue: 'hover:border-blue-300 hover:bg-blue-50',
+    purple: 'hover:border-purple-300 hover:bg-purple-50',
+    orange: 'hover:border-orange-300 hover:bg-orange-50',
+    cyan: 'hover:border-cyan-300 hover:bg-cyan-50',
+    red: 'hover:border-red-300 hover:bg-red-50',
+    indigo: 'hover:border-indigo-300 hover:bg-indigo-50',
+    amber: 'hover:border-amber-300 hover:bg-amber-50',
+  };
+
+  const iconBg = {
+    green: 'bg-green-100 text-green-600',
+    blue: 'bg-blue-100 text-blue-600',
+    purple: 'bg-purple-100 text-purple-600',
+    orange: 'bg-orange-100 text-orange-600',
+    cyan: 'bg-cyan-100 text-cyan-600',
+    red: 'bg-red-100 text-red-600',
+    indigo: 'bg-indigo-100 text-indigo-600',
+    amber: 'bg-amber-100 text-amber-600',
+  };
+
+  const Icon = report.icon;
+
+  return (
+    <Card className={`transition-all cursor-pointer ${colors[report.color]} ${isSelected ? 'ring-2 ring-[#1EB053] bg-green-50' : ''}`}>
       <CardContent className="p-4">
         <div className="flex items-start justify-between mb-3">
-          <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-2 mb-1">
-              <h3 className="font-semibold truncate">{report.name}</h3>
-              {report.is_favorite && (
-                <Star className="w-4 h-4 text-yellow-500 fill-yellow-500 flex-shrink-0" />
-              )}
-            </div>
-            <Badge className={typeColors[report.report_type] || typeColors.custom}>
-              {report.report_type}
-            </Badge>
+          <div className={`w-10 h-10 rounded-lg ${iconBg[report.color]} flex items-center justify-center`}>
+            <Icon className="w-5 h-5" />
+          </div>
+          <Checkbox checked={isSelected} onCheckedChange={onToggle} onClick={e => e.stopPropagation()} />
+        </div>
+        <h4 className="font-semibold text-gray-900">{report.name}</h4>
+        <p className="text-xs text-gray-500 mt-1 line-clamp-2">{report.description}</p>
+        <Button 
+          size="sm" 
+          variant="ghost" 
+          className="mt-3 w-full justify-between text-gray-600 hover:text-[#1EB053]"
+          onClick={e => { e.stopPropagation(); onGenerate(); }}
+        >
+          Generate PDF
+          <Download className="w-4 h-4" />
+        </Button>
+      </CardContent>
+    </Card>
+  );
+}
+
+// Saved Report Card
+function SavedReportCard({ report, onEdit, onDelete, onDuplicate, onToggleFavorite }) {
+  return (
+    <Card className="hover:shadow-md transition-shadow">
+      <CardContent className="p-4">
+        <div className="flex items-start justify-between mb-2">
+          <div className="flex items-center gap-2">
+            <h4 className="font-semibold truncate">{report.name}</h4>
+            {report.is_favorite && <Star className="w-4 h-4 text-yellow-500 fill-yellow-500" />}
           </div>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
@@ -652,90 +594,189 @@ function ReportCard({ report, onEdit, onDelete, onDuplicate, onToggleFavorite })
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-              <DropdownMenuItem onClick={onEdit}>
-                <Edit className="w-4 h-4 mr-2" />
-                Edit
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={onDuplicate}>
-                <Copy className="w-4 h-4 mr-2" />
-                Duplicate
-              </DropdownMenuItem>
+              <DropdownMenuItem onClick={onEdit}><Edit className="w-4 h-4 mr-2" />Edit</DropdownMenuItem>
+              <DropdownMenuItem onClick={onDuplicate}><Copy className="w-4 h-4 mr-2" />Duplicate</DropdownMenuItem>
               <DropdownMenuItem onClick={onToggleFavorite}>
-                {report.is_favorite ? (
-                  <><Star className="w-4 h-4 mr-2" />Remove Favorite</>
-                ) : (
-                  <><Star className="w-4 h-4 mr-2" />Add to Favorites</>
-                )}
+                <Star className="w-4 h-4 mr-2" />{report.is_favorite ? 'Unfavorite' : 'Favorite'}
               </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem onClick={onDelete} className="text-red-600">
-                <Trash2 className="w-4 h-4 mr-2" />
-                Delete
+                <Trash2 className="w-4 h-4 mr-2" />Delete
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
-
-        {report.description && (
-          <p className="text-sm text-gray-500 mb-3 line-clamp-2">{report.description}</p>
-        )}
-
-        <div className="flex items-center gap-2 text-xs text-gray-400">
+        <Badge variant="secondary" className="text-xs capitalize">{report.report_type}</Badge>
+        {report.description && <p className="text-sm text-gray-500 mt-2 line-clamp-2">{report.description}</p>}
+        <div className="flex items-center gap-2 mt-3 text-xs text-gray-400">
           <Calendar className="w-3 h-3" />
           {report.created_date && format(new Date(report.created_date), "MMM d, yyyy")}
-          {report.schedule?.enabled && (
-            <Badge variant="secondary" className="text-xs gap-1">
-              <Clock className="w-3 h-3" />
-              Scheduled
-            </Badge>
-          )}
         </div>
       </CardContent>
     </Card>
   );
 }
 
-// Quick Report Item Component
-function QuickReportItem({ report, isSelected, onToggleSelect, organisation, sales, expenses, payrolls, trips, products, employees }) {
-  const colorClasses = {
-    green: "bg-green-50 border-green-200 hover:bg-green-100",
-    blue: "bg-blue-50 border-blue-200 hover:bg-blue-100",
-    purple: "bg-purple-50 border-purple-200 hover:bg-purple-100",
-    orange: "bg-orange-50 border-orange-200 hover:bg-orange-100",
-    cyan: "bg-cyan-50 border-cyan-200 hover:bg-cyan-100",
-    red: "bg-red-50 border-red-200 hover:bg-red-100",
-    indigo: "bg-indigo-50 border-indigo-200 hover:bg-indigo-100",
-    amber: "bg-amber-50 border-amber-200 hover:bg-amber-100",
-  };
-
-  const iconColors = {
-    green: "text-green-600",
-    blue: "text-blue-600",
-    purple: "text-purple-600",
-    orange: "text-orange-600",
-    cyan: "text-cyan-600",
-    red: "text-red-600",
-    indigo: "text-indigo-600",
-    amber: "text-amber-600",
-  };
-
-  const Icon = report.icon;
-
+// Empty State
+function EmptyState({ icon: Icon, title, description, action }) {
   return (
-    <Card 
-      className={`cursor-pointer transition-all ${colorClasses[report.color]} ${isSelected ? 'ring-2 ring-[#1EB053]' : ''}`}
-      onClick={onToggleSelect}
-    >
-      <CardContent className="p-4">
-        <div className="flex items-center justify-between mb-3">
-          <div className={`w-10 h-10 rounded-lg bg-white flex items-center justify-center ${iconColors[report.color]}`}>
-            <Icon className="w-5 h-5" />
-          </div>
-          <Checkbox checked={isSelected} />
-        </div>
-        <h4 className="font-semibold text-sm">{report.name}</h4>
-        <p className="text-xs text-gray-500 capitalize mt-1">{report.category}</p>
-      </CardContent>
-    </Card>
+    <div className="text-center py-16">
+      <div className="w-16 h-16 rounded-full bg-gray-100 flex items-center justify-center mx-auto mb-4">
+        <Icon className="w-8 h-8 text-gray-400" />
+      </div>
+      <h3 className="text-lg font-medium text-gray-900">{title}</h3>
+      <p className="text-gray-500 mt-1">{description}</p>
+      {action && <div className="mt-4">{action}</div>}
+    </div>
   );
+}
+
+// Generate Quick Report Config
+function generateQuickReportConfig(type, { sales, expenses, payrolls, trips, products, employees, organisation, dateRange }) {
+  const now = new Date();
+  const monthStart = startOfMonth(now);
+
+  const configs = {
+    daily_sales: {
+      title: 'Daily Sales Report',
+      dateRange: format(now, 'MMMM d, yyyy'),
+      organisation,
+      summaryCards: [
+        { label: 'Total Sales', value: sales.filter(s => format(new Date(s.created_date), 'yyyy-MM-dd') === format(now, 'yyyy-MM-dd')).length, highlight: 'blue' },
+        { label: 'Revenue', value: `SLE ${sales.filter(s => format(new Date(s.created_date), 'yyyy-MM-dd') === format(now, 'yyyy-MM-dd')).reduce((sum, s) => sum + (s.total_amount || 0), 0).toLocaleString()}`, highlight: 'green' },
+      ],
+      sections: [{
+        title: 'Sales Today',
+        table: {
+          columns: ['#', 'Customer', 'Items', 'Amount', 'Payment'],
+          rows: sales.filter(s => format(new Date(s.created_date), 'yyyy-MM-dd') === format(now, 'yyyy-MM-dd')).slice(0, 20).map((s, i) => [
+            i + 1, s.customer_name || 'Walk-in', s.items?.length || 0, `SLE ${(s.total_amount || 0).toLocaleString()}`, s.payment_method
+          ])
+        }
+      }]
+    },
+    monthly_revenue: {
+      title: 'Monthly Revenue Report',
+      dateRange: format(now, 'MMMM yyyy'),
+      organisation,
+      summaryCards: [
+        { label: 'Total Revenue', value: `SLE ${sales.filter(s => new Date(s.created_date) >= monthStart).reduce((sum, s) => sum + (s.total_amount || 0), 0).toLocaleString()}`, highlight: 'green' },
+        { label: 'Sales Count', value: sales.filter(s => new Date(s.created_date) >= monthStart).length, highlight: 'blue' },
+      ],
+      sections: [{
+        title: 'Revenue Breakdown',
+        table: {
+          columns: ['Payment Method', 'Count', 'Amount'],
+          rows: ['cash', 'card', 'mobile_money', 'credit'].map(method => {
+            const filtered = sales.filter(s => new Date(s.created_date) >= monthStart && s.payment_method === method);
+            return [method.replace('_', ' ').toUpperCase(), filtered.length, `SLE ${filtered.reduce((sum, s) => sum + (s.total_amount || 0), 0).toLocaleString()}`];
+          })
+        }
+      }]
+    },
+    inventory_status: {
+      title: 'Inventory Status Report',
+      dateRange: format(now, 'MMMM d, yyyy'),
+      organisation,
+      summaryCards: [
+        { label: 'Total Products', value: products.length, highlight: 'blue' },
+        { label: 'Low Stock', value: products.filter(p => (p.stock_quantity || 0) <= (p.low_stock_threshold || 10)).length, highlight: 'red' },
+      ],
+      sections: [{
+        title: 'Low Stock Items',
+        table: {
+          columns: ['Product', 'SKU', 'Current Stock', 'Threshold'],
+          rows: products.filter(p => (p.stock_quantity || 0) <= (p.low_stock_threshold || 10)).slice(0, 15).map(p => [
+            p.name, p.sku || '-', p.stock_quantity || 0, p.low_stock_threshold || 10
+          ])
+        }
+      }]
+    },
+    payroll_summary: {
+      title: 'Payroll Summary',
+      dateRange: format(now, 'MMMM yyyy'),
+      organisation,
+      summaryCards: [
+        { label: 'Total Payroll', value: `SLE ${payrolls.filter(p => new Date(p.period_end) >= monthStart).reduce((sum, p) => sum + (p.net_pay || 0), 0).toLocaleString()}`, highlight: 'green' },
+        { label: 'Employees Paid', value: payrolls.filter(p => new Date(p.period_end) >= monthStart && p.status === 'paid').length, highlight: 'blue' },
+      ],
+      sections: [{
+        title: 'Payroll Records',
+        table: {
+          columns: ['Employee', 'Gross', 'Deductions', 'Net Pay', 'Status'],
+          rows: payrolls.filter(p => new Date(p.period_end) >= monthStart).slice(0, 15).map(p => [
+            p.employee_name || '-', `SLE ${(p.gross_pay || 0).toLocaleString()}`, `SLE ${(p.total_deductions || 0).toLocaleString()}`, `SLE ${(p.net_pay || 0).toLocaleString()}`, p.status
+          ])
+        }
+      }]
+    },
+    transport_trips: {
+      title: 'Transport Trips Report',
+      dateRange: format(now, 'MMMM yyyy'),
+      organisation,
+      summaryCards: [
+        { label: 'Total Trips', value: trips.filter(t => new Date(t.date) >= monthStart).length, highlight: 'blue' },
+        { label: 'Revenue', value: `SLE ${trips.filter(t => new Date(t.date) >= monthStart).reduce((sum, t) => sum + (t.total_revenue || 0), 0).toLocaleString()}`, highlight: 'green' },
+      ],
+      sections: [{
+        title: 'Trip Details',
+        table: {
+          columns: ['Date', 'Driver', 'Route', 'Passengers', 'Revenue'],
+          rows: trips.filter(t => new Date(t.date) >= monthStart).slice(0, 15).map(t => [
+            t.date, t.driver_name || '-', t.route_name || '-', t.passengers_count || 0, `SLE ${(t.total_revenue || 0).toLocaleString()}`
+          ])
+        }
+      }]
+    },
+    expense_report: {
+      title: 'Expense Report',
+      dateRange: format(now, 'MMMM yyyy'),
+      organisation,
+      summaryCards: [
+        { label: 'Total Expenses', value: `SLE ${expenses.filter(e => new Date(e.date || e.created_date) >= monthStart).reduce((sum, e) => sum + (e.amount || 0), 0).toLocaleString()}`, highlight: 'red' },
+      ],
+      sections: [{
+        title: 'Expenses by Category',
+        table: {
+          columns: ['Category', 'Count', 'Amount'],
+          rows: [...new Set(expenses.map(e => e.category))].map(cat => {
+            const filtered = expenses.filter(e => new Date(e.date || e.created_date) >= monthStart && e.category === cat);
+            return [cat, filtered.length, `SLE ${filtered.reduce((sum, e) => sum + (e.amount || 0), 0).toLocaleString()}`];
+          })
+        }
+      }]
+    },
+    profit_loss: {
+      title: 'Profit & Loss Statement',
+      dateRange: format(now, 'MMMM yyyy'),
+      organisation,
+      summaryCards: (() => {
+        const rev = sales.filter(s => new Date(s.created_date) >= monthStart).reduce((sum, s) => sum + (s.total_amount || 0), 0);
+        const exp = expenses.filter(e => new Date(e.date || e.created_date) >= monthStart).reduce((sum, e) => sum + (e.amount || 0), 0);
+        return [
+          { label: 'Revenue', value: `SLE ${rev.toLocaleString()}`, highlight: 'green' },
+          { label: 'Expenses', value: `SLE ${exp.toLocaleString()}`, highlight: 'red' },
+          { label: 'Net Profit', value: `SLE ${(rev - exp).toLocaleString()}`, highlight: rev - exp >= 0 ? 'green' : 'red' },
+        ];
+      })(),
+      sections: []
+    },
+    employee_attendance: {
+      title: 'Attendance Report',
+      dateRange: format(now, 'MMMM yyyy'),
+      organisation,
+      summaryCards: [
+        { label: 'Active Employees', value: employees.filter(e => e.status === 'active').length, highlight: 'blue' },
+      ],
+      sections: [{
+        title: 'Employee List',
+        table: {
+          columns: ['Name', 'Department', 'Role', 'Status'],
+          rows: employees.slice(0, 20).map(e => [e.full_name, e.department || '-', e.role, e.status])
+        }
+      }]
+    },
+  };
+
+  return configs[type];
 }
