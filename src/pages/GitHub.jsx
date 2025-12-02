@@ -42,58 +42,60 @@ export default function GitHub() {
   const [showIssueDialog, setShowIssueDialog] = useState(false);
   const [activeTab, setActiveTab] = useState("issues");
 
-  // Fetch GitHub user
-  const { data: githubUser, isLoading: userLoading } = useQuery({
-    queryKey: ['githubUser'],
+  // Fetch dashboard data (user + repos + projects in one call)
+  const { data: dashboardData, isLoading: dashboardLoading } = useQuery({
+    queryKey: ['githubDashboard'],
     queryFn: async () => {
-      const res = await base44.functions.invoke('github', { action: 'getUser' });
+      const res = await base44.functions.invoke('github', { action: 'getDashboard' });
       return res.data;
     },
+    staleTime: 2 * 60 * 1000,
+    refetchOnWindowFocus: false,
   });
 
-  // Fetch repositories
-  const { data: repos = [], isLoading: reposLoading } = useQuery({
-    queryKey: ['githubRepos'],
-    queryFn: async () => {
-      const res = await base44.functions.invoke('github', { action: 'getRepos' });
-      return res.data;
-    },
-  });
+  const githubUser = dashboardData?.user;
+  const repos = dashboardData?.repos || [];
 
-  // Fetch issues for selected repo
+  // Fetch issues for selected repo - only when tab is active
   const { data: issues = [], isLoading: issuesLoading } = useQuery({
     queryKey: ['githubIssues', selectedRepo?.full_name],
     queryFn: async () => {
       if (!selectedRepo) return [];
       const [owner, repo] = selectedRepo.full_name.split('/');
       const res = await base44.functions.invoke('github', { action: 'getIssues', owner, repo });
-      return res.data;
+      return res.data || [];
     },
-    enabled: !!selectedRepo,
+    enabled: !!selectedRepo && activeTab === 'issues',
+    staleTime: 60 * 1000,
+    refetchOnWindowFocus: false,
   });
 
-  // Fetch commits for selected repo
+  // Fetch commits for selected repo - only when tab is active
   const { data: commits = [], isLoading: commitsLoading } = useQuery({
     queryKey: ['githubCommits', selectedRepo?.full_name],
     queryFn: async () => {
       if (!selectedRepo) return [];
       const [owner, repo] = selectedRepo.full_name.split('/');
       const res = await base44.functions.invoke('github', { action: 'getCommits', owner, repo });
-      return res.data;
+      return res.data || [];
     },
-    enabled: !!selectedRepo,
+    enabled: !!selectedRepo && activeTab === 'commits',
+    staleTime: 60 * 1000,
+    refetchOnWindowFocus: false,
   });
 
-  // Fetch pull requests for selected repo
+  // Fetch pull requests for selected repo - only when tab is active
   const { data: pullRequests = [], isLoading: prsLoading } = useQuery({
     queryKey: ['githubPRs', selectedRepo?.full_name],
     queryFn: async () => {
       if (!selectedRepo) return [];
       const [owner, repo] = selectedRepo.full_name.split('/');
       const res = await base44.functions.invoke('github', { action: 'getPullRequests', owner, repo });
-      return res.data;
+      return res.data || [];
     },
-    enabled: !!selectedRepo,
+    enabled: !!selectedRepo && activeTab === 'prs',
+    staleTime: 60 * 1000,
+    refetchOnWindowFocus: false,
   });
 
   // Create issue mutation
@@ -124,7 +126,7 @@ export default function GitHub() {
     });
   };
 
-  if (userLoading || reposLoading) {
+  if (dashboardLoading) {
     return <LoadingSpinner message="Connecting to GitHub..." />;
   }
 
