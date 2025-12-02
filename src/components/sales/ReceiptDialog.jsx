@@ -161,41 +161,37 @@ export default function ReceiptDialog({ open, onOpenChange, sale, organisation }
   const handleDownloadPDF = async () => {
     setDownloading(true);
     try {
-      const htmlContent = getReceiptHTML();
+      const response = await base44.functions.invoke('generateDocumentPDF', {
+        documentType: 'receipt',
+        data: sale,
+        organisation: organisation
+      });
       
-      // Open a new window with the receipt HTML
-      const printWindow = window.open('', '_blank', 'width=500,height=700');
-      if (printWindow) {
-        printWindow.document.write(htmlContent);
-        printWindow.document.close();
-        
-        // Wait for content to load then trigger print dialog (user can save as PDF)
-        printWindow.onload = () => {
-          setTimeout(() => {
-            printWindow.print();
-          }, 300);
-        };
-        
-        toast.success("Receipt ready", { 
-          description: "Choose 'Save as PDF' in the print dialog to download as PDF" 
-        });
-      } else {
-        // Fallback: download as HTML if popup blocked
-        const blob = new Blob([htmlContent], { type: 'text/html' });
-        const url = URL.createObjectURL(blob);
-        const link = document.createElement('a');
-        link.href = url;
-        link.download = `Receipt-${sale?.sale_number}.html`;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        URL.revokeObjectURL(url);
-        toast.success("Receipt downloaded", { 
-          description: "Open the file in browser and use Print > Save as PDF" 
-        });
-      }
+      // Create blob from response data
+      const blob = new Blob([response.data], { type: 'application/pdf' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `Receipt-${sale?.sale_number}.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+      toast.success("Receipt downloaded");
     } catch (error) {
-      toast.error("Download failed", { description: error.message });
+      console.error('PDF generation error:', error);
+      // Fallback to HTML
+      const htmlContent = getReceiptHTML();
+      const blob = new Blob([htmlContent], { type: 'text/html' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `Receipt-${sale?.sale_number}.html`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+      toast.info("Downloaded as HTML - open in browser to print as PDF");
     }
     setDownloading(false);
   };
