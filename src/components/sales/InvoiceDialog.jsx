@@ -228,7 +228,6 @@ export default function InvoiceDialog({
           customer_name: invoiceData.customer_name,
           customer_phone: invoiceData.customer_phone,
           customer_email: invoiceData.customer_email,
-          customer_address: invoiceData.customer_address,
           payment_terms: invoiceData.payment_terms,
           dueDate: format(dueDate, 'dd MMM yyyy'),
           items: cart,
@@ -252,14 +251,13 @@ export default function InvoiceDialog({
       URL.revokeObjectURL(url);
       toast.success("Invoice downloaded");
     } catch (error) {
-      console.error('PDF generation error:', error);
+      console.error('PDF error:', error);
+      // Fallback
       const printWindow = window.open('', '_blank', 'width=900,height=700');
-      if (printWindow) {
-        printWindow.document.write(getInvoiceHTML());
-        printWindow.document.close();
-        setTimeout(() => printWindow.print(), 300);
-        toast.info("Use 'Save as PDF' in print dialog");
-      }
+      printWindow.document.write(getInvoiceHTML());
+      printWindow.document.close();
+      printWindow.onload = () => setTimeout(() => printWindow.print(), 300);
+      toast.info("Choose 'Save as PDF' in the print dialog");
     }
     setIsDownloading(false);
   };
@@ -508,8 +506,8 @@ export default function InvoiceDialog({
               <Printer className="w-4 h-4 mr-2" />
               Print
             </Button>
-            <Button variant="outline" onClick={handleDownload} disabled={isDownloading}>
-              {isDownloading ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Download className="w-4 h-4 mr-2" />}
+            <Button variant="outline" onClick={handleDownload}>
+              <Download className="w-4 h-4 mr-2" />
               PDF
             </Button>
           </div>
