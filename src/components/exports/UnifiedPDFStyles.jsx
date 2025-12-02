@@ -1,62 +1,88 @@
-// Unified PDF Styles - Matches receipt design but adapts for different document types
-// Uses consistent branding with Sierra Leone theming
+// Unified PDF Styles - Receipt-inspired design for all documents
+// Provides consistent branding across receipts, invoices, payslips, and reports
 
 import { format } from "date-fns";
 
-// Document size configurations
-const DOCUMENT_SIZES = {
-  receipt: { maxWidth: '420px', padding: '20px' },
-  invoice: { maxWidth: '800px', padding: '40px' },
-  payslip: { maxWidth: '800px', padding: '32px' },
-  report: { maxWidth: '210mm', padding: '48px' },
-  letter: { maxWidth: '210mm', padding: '40px' }
-};
-
-// Get base styles that match receipt design
-export function getUnifiedPDFStyles(organisation, documentType = 'report') {
+/**
+ * Get unified PDF styles based on document type
+ * @param {Object} organisation - Organisation data with colors, logo, etc.
+ * @param {string} documentType - 'receipt' | 'invoice' | 'payslip' | 'report'
+ */
+export const getUnifiedPDFStyles = (organisation, documentType = 'receipt') => {
   const primaryColor = organisation?.primary_color || '#1EB053';
   const secondaryColor = organisation?.secondary_color || '#0072C6';
   const navyColor = '#0F1F3C';
-  const size = DOCUMENT_SIZES[documentType] || DOCUMENT_SIZES.report;
   
+  // Size configurations based on document type
+  const sizes = {
+    receipt: { maxWidth: '320px', padding: '16px', fontSize: '12px' },
+    invoice: { maxWidth: '800px', padding: '32px', fontSize: '14px' },
+    payslip: { maxWidth: '800px', padding: '32px', fontSize: '13px' },
+    report: { maxWidth: '210mm', padding: '32px', fontSize: '14px' }
+  };
+  
+  const config = sizes[documentType] || sizes.report;
+
   return `
     @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap');
     
-    * { margin: 0; padding: 0; box-sizing: border-box; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
-    
-    body { 
-      font-family: 'Plus Jakarta Sans', 'Segoe UI', Arial, sans-serif;
-      background: #f5f5f5;
-      padding: 24px;
-      color: #333;
-      line-height: 1.6;
-      -webkit-font-smoothing: antialiased;
+    :root {
+      --primary: ${primaryColor};
+      --secondary: ${secondaryColor};
+      --navy: ${navyColor};
+      --gray-50: #f8fafc;
+      --gray-100: #f1f5f9;
+      --gray-200: #e2e8f0;
+      --gray-300: #cbd5e1;
+      --gray-400: #94a3b8;
+      --gray-500: #64748b;
+      --gray-600: #475569;
+      --gray-700: #334155;
+      --gray-800: #1e293b;
+      --gray-900: #0f172a;
+      --success: #10b981;
+      --warning: #f59e0b;
+      --danger: #ef4444;
+      --info: #3b82f6;
     }
     
-    /* Document Container */
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    
+    body {
+      font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: var(--gray-50);
+      color: var(--gray-800);
+      line-height: 1.6;
+      font-size: ${config.fontSize};
+      -webkit-font-smoothing: antialiased;
+      -webkit-print-color-adjust: exact !important;
+      print-color-adjust: exact !important;
+      padding: 20px;
+    }
+    
     .document {
-      max-width: ${size.maxWidth};
+      max-width: ${config.maxWidth};
       margin: 0 auto;
       background: white;
-      border-radius: 12px;
+      border-radius: 16px;
       overflow: hidden;
-      box-shadow: 0 10px 40px rgba(0,0,0,0.12);
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.15);
     }
     
-    /* Flag Stripe Accent */
+    /* Flag Stripe - Sierra Leone inspired */
     .flag-stripe {
       height: 6px;
       display: flex;
     }
-    .flag-stripe .primary { flex: 1; background-color: ${primaryColor} !important; }
-    .flag-stripe .white { flex: 1; background-color: #FFFFFF !important; border-top: 1px solid #e5e5e5; border-bottom: 1px solid #e5e5e5; }
-    .flag-stripe .secondary { flex: 1; background-color: ${secondaryColor} !important; }
+    .flag-stripe .primary { flex: 1; background: var(--primary) !important; }
+    .flag-stripe .white { flex: 1; background: white !important; border-top: 1px solid #eee; border-bottom: 1px solid #eee; }
+    .flag-stripe .secondary { flex: 1; background: var(--secondary) !important; }
     
-    /* Gradient Header - Receipt Style */
+    /* Header - Gradient style */
     .header {
-      background: linear-gradient(135deg, ${primaryColor} 0%, ${secondaryColor} 100%) !important;
+      background: linear-gradient(135deg, var(--navy) 0%, var(--gray-800) 100%) !important;
       color: white !important;
-      padding: ${documentType === 'receipt' ? '20px' : '32px'} ${size.padding};
+      padding: 24px ${config.padding};
       position: relative;
       overflow: hidden;
     }
@@ -65,452 +91,403 @@ export function getUnifiedPDFStyles(organisation, documentType = 'report') {
       content: '';
       position: absolute;
       top: 0; left: 0; right: 0; bottom: 0;
-      opacity: 0.05;
+      opacity: 0.08;
       background-image: 
-        radial-gradient(circle at 20% 80%, rgba(255,255,255,0.4) 0%, transparent 50%),
-        radial-gradient(circle at 80% 20%, rgba(255,255,255,0.4) 0%, transparent 50%);
+        radial-gradient(circle at 20% 80%, var(--primary) 0%, transparent 50%),
+        radial-gradient(circle at 80% 20%, var(--secondary) 0%, transparent 50%);
     }
     
     .header-content {
       position: relative;
       z-index: 1;
       display: flex;
-      align-items: center;
       justify-content: space-between;
-      gap: 20px;
-      ${documentType === 'receipt' ? 'flex-direction: column; text-align: center;' : ''}
+      align-items: flex-start;
     }
     
-    .logo-section {
+    .brand {
       display: flex;
       align-items: center;
-      gap: 16px;
-      ${documentType === 'receipt' ? 'flex-direction: column;' : ''}
+      gap: 14px;
     }
     
-    .logo-box {
-      width: ${documentType === 'receipt' ? '50px' : '60px'};
-      height: ${documentType === 'receipt' ? '50px' : '60px'};
+    .logo {
+      width: 48px;
+      height: 48px;
       background: white;
       border-radius: 12px;
       display: flex;
       align-items: center;
       justify-content: center;
-      box-shadow: 0 4px 16px rgba(0,0,0,0.15);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.2);
       overflow: hidden;
     }
     
-    .logo-box img {
-      max-width: 85%;
-      max-height: 85%;
+    .logo img {
+      max-width: 100%;
+      max-height: 100%;
       object-fit: contain;
+      padding: 4px;
     }
     
-    .logo-box .initials {
-      font-size: ${documentType === 'receipt' ? '18px' : '22px'};
+    .logo-text {
+      font-size: 18px;
       font-weight: 800;
-      background: linear-gradient(135deg, ${primaryColor}, ${secondaryColor});
+      background: linear-gradient(135deg, var(--primary), var(--secondary));
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
     }
     
     .company-info h1 {
-      font-size: ${documentType === 'receipt' ? '18px' : '24px'};
+      font-size: ${documentType === 'receipt' ? '16px' : '20px'};
       font-weight: 700;
-      color: white !important;
-      margin-bottom: 4px;
       letter-spacing: -0.3px;
+      margin-bottom: 2px;
     }
     
-    .company-info .tagline {
-      font-size: ${documentType === 'receipt' ? '11px' : '13px'};
-      opacity: 0.85;
+    .company-info .address {
+      font-size: 11px;
+      opacity: 0.8;
+      max-width: 200px;
     }
     
-    .doc-info {
+    .doc-badge {
       text-align: right;
-      ${documentType === 'receipt' ? 'text-align: center; margin-top: 12px;' : ''}
     }
     
-    .doc-info .doc-type {
-      font-size: ${documentType === 'receipt' ? '10px' : '11px'};
+    .doc-badge .type {
+      font-size: 10px;
       text-transform: uppercase;
       letter-spacing: 2px;
-      opacity: 0.8;
+      opacity: 0.7;
+      margin-bottom: 4px;
     }
     
-    .doc-info .doc-number {
-      font-size: ${documentType === 'receipt' ? '14px' : '18px'};
+    .doc-badge .number {
+      font-size: ${documentType === 'receipt' ? '14px' : '16px'};
       font-weight: 700;
-      margin-top: 4px;
     }
     
-    .doc-info .doc-date {
-      font-size: ${documentType === 'receipt' ? '11px' : '12px'};
-      opacity: 0.8;
-      margin-top: 2px;
+    .doc-badge .date {
+      font-size: 11px;
+      opacity: 0.7;
+      margin-top: 4px;
     }
     
     /* Info Bar */
     .info-bar {
-      background: ${primaryColor}08 !important;
-      border-bottom: 2px solid ${primaryColor};
-      padding: 16px ${size.padding};
-      font-size: 13px;
+      background: var(--gray-50);
+      padding: 12px ${config.padding};
+      border-bottom: 1px solid var(--gray-200);
+      font-size: 12px;
+      color: var(--gray-600);
     }
     
-    .info-bar p { margin: 4px 0; }
-    .info-bar strong { color: ${primaryColor}; }
-    
-    .info-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-      gap: 12px;
-    }
-    
-    .info-item {
-      padding: 12px 16px;
-      background: white;
-      border-radius: 8px;
-      border: 1px solid ${primaryColor}20;
-    }
-    
-    .info-item .label {
-      font-size: 10px;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-      color: #666;
-      margin-bottom: 4px;
-    }
-    
-    .info-item .value {
-      font-size: 14px;
-      font-weight: 600;
-      color: #1a1a1a;
-    }
-    
-    /* Content Section */
+    /* Content Area */
     .content {
-      padding: ${size.padding};
+      padding: ${config.padding};
     }
     
-    /* Section Headers */
-    .section-title {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      margin: 24px 0 16px 0;
-      padding-bottom: 12px;
-      border-bottom: 2px solid ${primaryColor}20;
-      color: ${navyColor};
-      font-size: 14px;
-      font-weight: 700;
-    }
-    
-    .section-title .icon {
-      width: 28px;
-      height: 28px;
-      background: linear-gradient(135deg, ${primaryColor}15, ${secondaryColor}15);
-      border-radius: 8px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 14px;
-    }
-    
-    /* Summary Cards Grid */
+    /* Summary Cards */
     .summary-cards {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(${documentType === 'receipt' ? '100%' : '160px'}, 1fr));
-      gap: 16px;
+      grid-template-columns: repeat(auto-fit, minmax(${documentType === 'receipt' ? '100px' : '140px'}, 1fr));
+      gap: 12px;
       margin-bottom: 24px;
     }
     
     .summary-card {
-      background: white;
-      border-radius: 12px;
-      padding: 20px;
-      border: 1px solid #eee;
-      position: relative;
-      overflow: hidden;
+      background: var(--gray-50);
+      border-radius: 10px;
+      padding: 14px;
+      text-align: center;
+      border: 1px solid var(--gray-100);
     }
-    
-    .summary-card::before {
-      content: '';
-      position: absolute;
-      top: 0; left: 0; right: 0;
-      height: 4px;
-      background: linear-gradient(90deg, ${primaryColor}, ${secondaryColor});
-    }
-    
-    .summary-card:nth-child(2)::before { background: linear-gradient(90deg, ${secondaryColor}, #8b5cf6); }
-    .summary-card:nth-child(3)::before { background: linear-gradient(90deg, #f59e0b, #ef4444); }
-    .summary-card:nth-child(4)::before { background: linear-gradient(90deg, #8b5cf6, #ec4899); }
-    
-    .summary-card.highlight-green::before { background: ${primaryColor}; }
-    .summary-card.highlight-red::before { background: #ef4444; }
-    .summary-card.highlight-blue::before { background: ${secondaryColor}; }
     
     .summary-card .label {
-      font-size: 11px;
+      font-size: 10px;
       text-transform: uppercase;
       letter-spacing: 0.5px;
-      color: #888;
-      margin-bottom: 8px;
+      color: var(--gray-500);
+      margin-bottom: 4px;
     }
     
     .summary-card .value {
-      font-size: ${documentType === 'receipt' ? '22px' : '28px'};
-      font-weight: 800;
-      color: ${navyColor};
-      letter-spacing: -0.5px;
+      font-size: ${documentType === 'receipt' ? '16px' : '20px'};
+      font-weight: 700;
+      color: var(--gray-800);
     }
-    
-    .summary-card:first-child .value { color: ${primaryColor}; }
-    .summary-card:nth-child(2) .value { color: ${secondaryColor}; }
-    .summary-card:nth-child(3) .value { color: #f59e0b; }
-    .summary-card.highlight-green .value { color: ${primaryColor}; }
-    .summary-card.highlight-red .value { color: #ef4444; }
     
     .summary-card .subtext {
-      font-size: 11px;
-      color: #999;
-      margin-top: 6px;
+      font-size: 10px;
+      color: var(--gray-400);
+      margin-top: 2px;
     }
     
-    /* Tables */
+    .summary-card.highlight-green { border-left: 3px solid var(--success); background: #ecfdf5; }
+    .summary-card.highlight-red { border-left: 3px solid var(--danger); background: #fef2f2; }
+    .summary-card.highlight-blue { border-left: 3px solid var(--info); background: #eff6ff; }
+    .summary-card.highlight-gold { border-left: 3px solid #d4af37; background: #fefce8; }
+    
+    /* Section Title */
+    .section-title {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--gray-700);
+      margin: 20px 0 12px 0;
+      padding-bottom: 8px;
+      border-bottom: 2px solid var(--primary);
+    }
+    
+    .section-title .icon {
+      font-size: 14px;
+    }
+    
+    /* Data Tables */
     .data-table {
       width: 100%;
       border-collapse: collapse;
-      margin: 16px 0;
-      border-radius: 12px;
-      overflow: hidden;
-      border: 1px solid #eee;
+      font-size: ${documentType === 'receipt' ? '11px' : '13px'};
+      margin-bottom: 16px;
     }
     
     .data-table thead {
-      background: ${primaryColor}10 !important;
+      background: linear-gradient(135deg, var(--primary), var(--secondary)) !important;
+      color: white !important;
     }
     
     .data-table th {
-      padding: ${documentType === 'receipt' ? '10px 12px' : '14px 16px'};
+      padding: ${documentType === 'receipt' ? '8px 6px' : '12px 16px'};
       text-align: left;
+      font-weight: 600;
       font-size: ${documentType === 'receipt' ? '10px' : '11px'};
       text-transform: uppercase;
       letter-spacing: 0.5px;
-      color: ${primaryColor} !important;
-      font-weight: 700;
-      border-bottom: 2px solid ${primaryColor};
     }
     
     .data-table th.amount { text-align: right; }
     
     .data-table td {
-      padding: ${documentType === 'receipt' ? '10px 12px' : '14px 16px'};
-      border-bottom: 1px solid #f0f0f0;
-      font-size: ${documentType === 'receipt' ? '13px' : '14px'};
-      color: #444;
+      padding: ${documentType === 'receipt' ? '8px 6px' : '12px 16px'};
+      border-bottom: 1px solid var(--gray-100);
     }
-    
-    .data-table tr:last-child td { border-bottom: none; }
-    .data-table tr:hover td { background: #fafafa; }
     
     .data-table td.amount {
       text-align: right;
-      font-family: 'SF Mono', 'Monaco', 'Consolas', monospace;
       font-weight: 600;
+      font-family: 'SF Mono', Monaco, Consolas, monospace;
     }
     
-    .data-table tr.total-row {
-      background: ${navyColor} !important;
+    .data-table tbody tr:hover {
+      background: var(--gray-50);
     }
     
-    .data-table tr.total-row td {
-      color: white !important;
-      font-weight: 700;
-      font-size: ${documentType === 'receipt' ? '14px' : '15px'};
-      border: none;
-    }
-    
-    /* Status Badges */
-    .badge {
-      display: inline-flex;
-      align-items: center;
-      gap: 4px;
-      padding: 4px 12px;
-      border-radius: 100px;
-      font-size: 11px;
-      font-weight: 600;
-      text-transform: uppercase;
-      letter-spacing: 0.3px;
-    }
-    
-    .badge::before {
-      content: '';
-      width: 6px;
-      height: 6px;
-      border-radius: 50%;
-      background: currentColor;
-    }
-    
-    .badge.success { background: #ecfdf5; color: #059669; }
-    .badge.warning { background: #fffbeb; color: #d97706; }
-    .badge.danger { background: #fef2f2; color: #dc2626; }
-    .badge.info { background: #eff6ff; color: #3b82f6; }
-    .badge.primary { background: ${primaryColor}; color: white; }
-    .badge.primary::before { background: white; }
-    
-    /* Totals Section */
-    .totals-section {
-      background: ${secondaryColor}08 !important;
-      padding: 20px ${size.padding};
-      border-top: 3px solid ${secondaryColor};
-    }
-    
-    .totals-row {
-      display: flex;
-      justify-content: space-between;
-      padding: 10px 0;
-      font-size: 14px;
-    }
-    
-    .totals-row.grand {
-      font-size: ${documentType === 'receipt' ? '20px' : '24px'};
-      font-weight: 800;
-      color: ${primaryColor} !important;
-      padding-top: 16px;
-      margin-top: 12px;
-      border-top: 3px solid ${primaryColor};
-    }
-    
-    .totals-row .amount {
-      font-family: 'SF Mono', 'Monaco', 'Consolas', monospace;
-    }
-    
-    /* Net Pay Box (Payslip) */
-    .net-pay-box {
-      margin: 24px 0;
-      padding: 24px;
-      background: linear-gradient(135deg, ${primaryColor} 0%, ${secondaryColor} 100%) !important;
-      border-radius: 16px;
-      color: white !important;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      font-size: 24px;
-      font-weight: 800;
-      box-shadow: 0 8px 24px ${primaryColor}40;
-    }
-    
-    .net-pay-box .label { display: flex; align-items: center; gap: 8px; }
-    .net-pay-box .amount { font-family: 'SF Mono', 'Monaco', 'Consolas', monospace; }
-    
-    /* Notes/Info Box */
-    .note-box {
-      background: #f8f9fa;
-      padding: 16px;
-      border-radius: 10px;
-      border-left: 4px solid ${secondaryColor};
-      margin: 20px 0;
-    }
-    
-    .note-box h4 {
-      color: ${secondaryColor};
-      font-size: 11px;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-      margin-bottom: 8px;
+    .data-table .total-row {
+      background: var(--gray-100) !important;
       font-weight: 700;
     }
     
-    .note-box p {
-      font-size: 13px;
-      color: #555;
-      line-height: 1.6;
-    }
-    
-    /* Footer */
-    .footer {
-      text-align: center;
-      padding: 24px ${size.padding};
-      background: ${navyColor} !important;
-      color: white !important;
-      border-top: 4px solid ${primaryColor};
-    }
-    
-    .footer .thanks {
-      font-size: ${documentType === 'receipt' ? '14px' : '16px'};
-      font-weight: 600;
-      margin-bottom: 6px;
-    }
-    
-    .footer .tagline {
-      font-size: 13px;
-      opacity: 0.85;
-    }
-    
-    .footer .flag {
-      margin-top: 12px;
-      font-size: ${documentType === 'receipt' ? '20px' : '24px'};
-    }
-    
-    .footer .contact {
-      margin-top: 16px;
-      padding-top: 16px;
-      border-top: 1px solid rgba(255,255,255,0.2);
-      font-size: 11px;
-      opacity: 0.7;
-    }
-    
-    /* Two Column Parties (Invoice) */
-    .parties-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 40px;
-      margin-bottom: 24px;
-    }
-    
-    .party h3 {
-      color: ${primaryColor} !important;
-      font-size: 10px;
-      text-transform: uppercase;
-      letter-spacing: 1px;
-      margin-bottom: 12px;
-      font-weight: 700;
-    }
-    
-    .party p {
-      font-size: 14px;
-      line-height: 1.7;
+    .data-table .total-row td {
+      border-top: 2px solid var(--gray-300);
     }
     
     /* Breakdown Grid */
     .breakdown-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
-      gap: 12px;
-      margin: 16px 0;
+      grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+      gap: 8px;
+      margin-bottom: 16px;
     }
     
     .breakdown-item {
-      background: #f8f9fa;
-      padding: 14px 18px;
-      border-radius: 10px;
       display: flex;
       justify-content: space-between;
       align-items: center;
-      border: 1px solid #eee;
+      padding: 10px 12px;
+      background: var(--gray-50);
+      border-radius: 8px;
+      border: 1px solid var(--gray-100);
     }
     
-    .breakdown-item .label { font-size: 13px; color: #666; }
-    .breakdown-item .value { font-size: 15px; font-weight: 700; color: ${navyColor}; }
+    .breakdown-item .label {
+      font-size: 11px;
+      color: var(--gray-600);
+      text-transform: capitalize;
+    }
+    
+    .breakdown-item .value {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--gray-800);
+    }
+    
+    /* Parties Grid (for invoices) */
+    .parties-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 24px;
+      margin-bottom: 24px;
+      padding: 16px;
+      background: var(--gray-50);
+      border-radius: 10px;
+    }
+    
+    .party h3 {
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: var(--gray-400);
+      margin-bottom: 8px;
+    }
+    
+    .party p {
+      font-size: 13px;
+      color: var(--gray-700);
+      line-height: 1.5;
+    }
+    
+    /* Badges */
+    .badge {
+      display: inline-block;
+      padding: 4px 10px;
+      border-radius: 20px;
+      font-size: 10px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    
+    .badge.success { background: #dcfce7; color: #166534; }
+    .badge.warning { background: #fef3c7; color: #92400e; }
+    .badge.danger { background: #fee2e2; color: #991b1b; }
+    .badge.info { background: #dbeafe; color: #1e40af; }
+    
+    /* Note Box */
+    .note-box {
+      background: #fffbeb;
+      border: 1px solid #fcd34d;
+      border-left: 4px solid #f59e0b;
+      border-radius: 8px;
+      padding: 14px 16px;
+      margin: 16px 0;
+    }
+    
+    .note-box h4 {
+      font-size: 11px;
+      font-weight: 600;
+      color: #92400e;
+      margin-bottom: 4px;
+    }
+    
+    .note-box p {
+      font-size: 12px;
+      color: #a16207;
+      line-height: 1.5;
+    }
+    
+    /* Net Pay Box (for payslips) */
+    .net-pay-box {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 20px;
+      padding: 20px 24px;
+      background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+      border-radius: 14px;
+      color: white;
+      box-shadow: 0 8px 24px rgba(30, 176, 83, 0.3);
+    }
+    
+    .net-pay-box .label {
+      font-size: 14px;
+      font-weight: 600;
+    }
+    
+    .net-pay-box .amount {
+      font-size: 24px;
+      font-weight: 800;
+      font-family: 'SF Mono', Monaco, Consolas, monospace;
+    }
+    
+    /* Totals Box (for receipts/invoices) */
+    .totals-box {
+      background: var(--gray-50);
+      border-radius: 10px;
+      overflow: hidden;
+      margin-top: 16px;
+    }
+    
+    .totals-box .row {
+      display: flex;
+      justify-content: space-between;
+      padding: 10px 16px;
+      font-size: 13px;
+    }
+    
+    .totals-box .row:not(:last-child) {
+      border-bottom: 1px dashed var(--gray-200);
+    }
+    
+    .totals-box .row.grand {
+      background: linear-gradient(135deg, var(--primary), var(--secondary)) !important;
+      color: white !important;
+      font-weight: 700;
+      font-size: 16px;
+    }
+    
+    /* Footer */
+    .footer {
+      background: var(--navy) !important;
+      color: white !important;
+      padding: 20px ${config.padding};
+      text-align: center;
+    }
+    
+    .footer .thanks {
+      font-size: 13px;
+      font-weight: 600;
+      margin-bottom: 4px;
+    }
+    
+    .footer .tagline {
+      font-size: 11px;
+      opacity: 0.8;
+    }
+    
+    .footer .flag {
+      font-size: 20px;
+      margin: 10px 0;
+    }
+    
+    .footer .contact {
+      font-size: 10px;
+      opacity: 0.6;
+      margin-top: 10px;
+      padding-top: 10px;
+      border-top: 1px solid rgba(255,255,255,0.2);
+    }
     
     /* Print Styles */
     @media print {
-      body { background: white; padding: 0; }
-      .document { box-shadow: none; max-width: 100%; }
-      thead { display: table-header-group; }
-      tbody tr { page-break-inside: avoid; }
+      * {
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+      }
+      
+      html, body {
+        padding: 0;
+        margin: 0;
+        background: white !important;
+      }
+      
+      .document {
+        box-shadow: none;
+        border-radius: 0;
+        max-width: 100%;
+      }
     }
     
     @page {
@@ -518,12 +495,15 @@ export function getUnifiedPDFStyles(organisation, documentType = 'report') {
       size: ${documentType === 'receipt' ? '80mm auto' : 'A4 portrait'};
     }
   `;
-}
+};
 
-// Generate document header
-export function getUnifiedHeader(organisation, docType, docNumber, docDate, documentType = 'report') {
-  const orgInitials = (organisation?.name || 'ORG').split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase();
-  const hasLogo = organisation?.logo_url;
+/**
+ * Generate unified header HTML
+ */
+export const getUnifiedHeader = (organisation, docType, docNumber, date, documentType = 'receipt') => {
+  const org = organisation || {};
+  const orgName = org.name || 'Business';
+  const orgInitials = orgName.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase();
   
   return `
     <div class="flag-stripe">
@@ -531,158 +511,68 @@ export function getUnifiedHeader(organisation, docType, docNumber, docDate, docu
       <div class="white"></div>
       <div class="secondary"></div>
     </div>
-    
     <div class="header">
       <div class="header-content">
-        <div class="logo-section">
-          <div class="logo-box">
-            ${hasLogo ? `<img src="${organisation.logo_url}" alt="${organisation.name}" />` : `<span class="initials">${orgInitials}</span>`}
+        <div class="brand">
+          <div class="logo">
+            ${org.logo_url 
+              ? `<img src="${org.logo_url}" alt="${orgName}" />` 
+              : `<span class="logo-text">${orgInitials}</span>`
+            }
           </div>
           <div class="company-info">
-            <h1>${organisation?.name || 'Organisation'}</h1>
-            <div class="tagline">${organisation?.address || ''} ${organisation?.city ? '• ' + organisation.city : ''}, ${organisation?.country || 'Sierra Leone'}</div>
+            <h1>${orgName}</h1>
+            <div class="address">
+              ${org.address || ''}${org.city ? `, ${org.city}` : ''}
+              ${org.phone ? ` • ${org.phone}` : ''}
+            </div>
           </div>
         </div>
-        <div class="doc-info">
-          <div class="doc-type">${docType}</div>
-          <div class="doc-number">${docNumber}</div>
-          <div class="doc-date">${docDate}</div>
+        <div class="doc-badge">
+          <div class="type">${docType}</div>
+          <div class="number">${docNumber}</div>
+          <div class="date">${date}</div>
         </div>
       </div>
     </div>
   `;
-}
+};
 
-// Generate document footer
-export function getUnifiedFooter(organisation) {
+/**
+ * Generate unified footer HTML
+ */
+export const getUnifiedFooter = (organisation) => {
+  const org = organisation || {};
+  
   return `
     <div class="footer">
       <div class="thanks">Thank you for your business!</div>
-      <div class="tagline">Proudly serving ${organisation?.city || 'Sierra Leone'}</div>
+      <div class="tagline">Proudly serving ${org.city || 'Sierra Leone'}</div>
       <div class="flag">🇸🇱</div>
       <div class="contact">
-        ${organisation?.name || ''} ${organisation?.phone ? '• ' + organisation.phone : ''} ${organisation?.email ? '• ' + organisation.email : ''}
+        ${org.name || ''} ${org.phone ? `• ${org.phone}` : ''} ${org.email ? `• ${org.email}` : ''}
       </div>
     </div>
   `;
-}
+};
 
-// Generate summary cards HTML
-export function generateSummaryCards(cards) {
-  return `
-    <div class="summary-cards">
-      ${cards.map(card => `
-        <div class="summary-card ${card.highlight ? `highlight-${card.highlight}` : ''}">
-          <div class="label">${card.label}</div>
-          <div class="value">${card.value}</div>
-          ${card.subtext ? `<div class="subtext">${card.subtext}</div>` : ''}
-        </div>
-      `).join('')}
-    </div>
-  `;
-}
-
-// Generate table HTML
-export function generateTable(columns, rows, showTotal = false) {
-  return `
-    <table class="data-table">
-      <thead>
-        <tr>
-          ${columns.map((col, i) => `<th class="${i === columns.length - 1 ? 'amount' : ''}">${col}</th>`).join('')}
-        </tr>
-      </thead>
-      <tbody>
-        ${rows.map((row, rowIdx) => {
-          const isTotal = showTotal && (row[0]?.toString().toLowerCase().includes('total') || rowIdx === rows.length - 1 && showTotal === 'last');
-          return `
-            <tr class="${isTotal ? 'total-row' : ''}">
-              ${row.map((cell, cellIdx) => `<td class="${cellIdx === row.length - 1 ? 'amount' : ''}">${cell ?? '-'}</td>`).join('')}
-            </tr>
-          `;
-        }).join('')}
-      </tbody>
-    </table>
-  `;
-}
-
-// Generate full document
-export function generateUnifiedPDF({
+/**
+ * Generate complete unified PDF document
+ */
+export const generateUnifiedPDF = ({
   documentType = 'report',
   title,
   docNumber,
-  docDate,
+  date,
   organisation,
   summaryCards = [],
   sections = [],
-  showFooter = true
-}) {
-  const formattedDate = docDate || format(new Date(), 'dd MMMM yyyy, HH:mm');
-  const generatedNumber = docNumber || `DOC-${Date.now().toString(36).toUpperCase()}`;
-  
-  let sectionsHTML = '';
-  
-  sections.forEach(section => {
-    if (section.title) {
-      sectionsHTML += `<div class="section-title"><div class="icon">${section.icon || '📋'}</div>${section.title}</div>`;
-    }
-    
-    if (section.cards) {
-      sectionsHTML += generateSummaryCards(section.cards);
-    }
-    
-    if (section.table) {
-      sectionsHTML += generateTable(section.table.columns, section.table.rows, section.table.showTotal);
-    }
-    
-    if (section.breakdown) {
-      sectionsHTML += `
-        <div class="breakdown-grid">
-          ${Object.entries(section.breakdown).map(([key, val]) => `
-            <div class="breakdown-item">
-              <span class="label">${key}</span>
-              <span class="value">${typeof val === 'number' ? val.toLocaleString() : val}</span>
-            </div>
-          `).join('')}
-        </div>
-      `;
-    }
-    
-    if (section.totals) {
-      sectionsHTML += `
-        <div class="totals-section">
-          ${section.totals.map(t => `
-            <div class="totals-row ${t.isGrand ? 'grand' : ''}">
-              <span>${t.label}</span>
-              <span class="amount">${t.value}</span>
-            </div>
-          `).join('')}
-        </div>
-      `;
-    }
-    
-    if (section.netPay) {
-      sectionsHTML += `
-        <div class="net-pay-box">
-          <span class="label">💵 ${section.netPay.label || 'NET PAY'}</span>
-          <span class="amount">${section.netPay.value}</span>
-        </div>
-      `;
-    }
-    
-    if (section.note) {
-      sectionsHTML += `
-        <div class="note-box">
-          <h4>${section.note.title || 'Note'}</h4>
-          <p>${section.note.content}</p>
-        </div>
-      `;
-    }
-    
-    if (section.html) {
-      sectionsHTML += section.html;
-    }
-  });
-  
+  infoBar = null,
+  footer = true
+}) => {
+  const generatedDate = date || format(new Date(), 'dd MMM yyyy, h:mm a');
+  const reportId = docNumber || `DOC-${Date.now().toString(36).toUpperCase()}`;
+
   return `
     <!DOCTYPE html>
     <html lang="en">
@@ -694,41 +584,101 @@ export function generateUnifiedPDF({
       </head>
       <body>
         <div class="document">
-          ${getUnifiedHeader(organisation, title, generatedNumber, formattedDate, documentType)}
+          ${getUnifiedHeader(organisation, title, reportId, generatedDate, documentType)}
           
-          ${summaryCards.length > 0 ? `<div class="content">${generateSummaryCards(summaryCards)}</div>` : ''}
+          ${infoBar ? `
+            <div class="info-bar">
+              <div style="display: flex; justify-content: space-between; align-items: center;">
+                ${infoBar}
+              </div>
+            </div>
+          ` : ''}
           
           <div class="content">
-            ${sectionsHTML}
+            ${summaryCards.length > 0 ? `
+              <div class="summary-cards">
+                ${summaryCards.map(card => `
+                  <div class="summary-card ${card.highlight ? `highlight-${card.highlight}` : ''}">
+                    <div class="label">${card.label}</div>
+                    <div class="value">${card.value}</div>
+                    ${card.subtext ? `<div class="subtext">${card.subtext}</div>` : ''}
+                  </div>
+                `).join('')}
+              </div>
+            ` : ''}
+            
+            ${sections.map(section => {
+              let html = '';
+              
+              if (section.title) {
+                html += `<div class="section-title"><div class="icon">${section.icon || '📋'}</div>${section.title}</div>`;
+              }
+              
+              if (section.breakdown) {
+                html += `<div class="breakdown-grid">${Object.entries(section.breakdown).map(([k, v]) => `
+                  <div class="breakdown-item">
+                    <span class="label">${k}</span>
+                    <span class="value">${typeof v === 'number' ? `SLE ${v.toLocaleString()}` : v}</span>
+                  </div>
+                `).join('')}</div>`;
+              }
+              
+              if (section.table) {
+                html += `
+                  <table class="data-table">
+                    <thead><tr>${section.table.columns.map((c, i) => `<th class="${i === section.table.columns.length - 1 ? 'amount' : ''}">${c}</th>`).join('')}</tr></thead>
+                    <tbody>${section.table.rows.map(row => `<tr>${row.map((cell, i) => `<td class="${i === row.length - 1 ? 'amount' : ''}">${cell ?? '-'}</td>`).join('')}</tr>`).join('')}</tbody>
+                  </table>
+                `;
+              }
+              
+              if (section.note) {
+                html += `<div class="note-box"><h4>${section.note.title || 'Note'}</h4><p>${section.note.content}</p></div>`;
+              }
+              
+              if (section.html) {
+                html += section.html;
+              }
+              
+              return html;
+            }).join('')}
           </div>
           
-          ${showFooter ? getUnifiedFooter(organisation) : ''}
+          ${footer ? getUnifiedFooter(organisation) : ''}
         </div>
       </body>
     </html>
   `;
-}
+};
 
-// Print utility
-export function printUnifiedPDF(html) {
-  const printWindow = window.open('', '', 'width=900,height=700');
-  if (printWindow) {
-    printWindow.document.write(html);
-    printWindow.document.close();
-    setTimeout(() => printWindow.print(), 300);
+/**
+ * Print unified PDF
+ */
+export const printUnifiedPDF = (html) => {
+  const printWindow = window.open('', '_blank', 'width=900,height=800');
+  if (!printWindow) {
+    alert('Please allow popups to print this document');
+    return;
   }
-}
+  printWindow.document.write(html);
+  printWindow.document.close();
+  setTimeout(() => printWindow.print(), 400);
+};
 
-// Download as PDF utility
-export function downloadUnifiedPDF(html, filename = 'document') {
-  const pdfWindow = window.open('', '_blank', 'width=900,height=700');
-  if (pdfWindow) {
-    pdfWindow.document.write(html);
-    pdfWindow.document.close();
-    pdfWindow.document.title = filename;
-    setTimeout(() => pdfWindow.print(), 400);
-  }
-}
+/**
+ * Download unified PDF as HTML file
+ */
+export const downloadUnifiedPDF = (html, filename = 'document') => {
+  const blob = new Blob([html], { type: 'text/html' });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = `${filename}.html`;
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  URL.revokeObjectURL(url);
+};
 
 export default {
   getStyles: getUnifiedPDFStyles,
@@ -736,5 +686,5 @@ export default {
   getFooter: getUnifiedFooter,
   generate: generateUnifiedPDF,
   print: printUnifiedPDF,
-  downloadPDF: downloadUnifiedPDF
+  download: downloadUnifiedPDF
 };
