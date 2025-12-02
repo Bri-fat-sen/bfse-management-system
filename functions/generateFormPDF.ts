@@ -40,39 +40,38 @@ Deno.serve(async (req) => {
     const secondary = hexToRgb(secondaryColor);
     const navy = { r: 15, g: 31, b: 60 };
 
-    // Sierra Leone Flag Stripe - compact
+    // Sierra Leone Flag Stripe
     doc.setFillColor(30, 176, 83); // Green
-    doc.rect(0, 0, pageWidth / 3, 4, 'F');
+    doc.rect(0, 0, pageWidth / 3, 6, 'F');
     doc.setFillColor(255, 255, 255); // White
-    doc.rect(pageWidth / 3, 0, pageWidth / 3, 4, 'F');
+    doc.rect(pageWidth / 3, 0, pageWidth / 3, 6, 'F');
     doc.setFillColor(0, 114, 198); // Blue
-    doc.rect((pageWidth / 3) * 2, 0, pageWidth / 3, 4, 'F');
+    doc.rect((pageWidth / 3) * 2, 0, pageWidth / 3, 6, 'F');
 
-    // Header Background - compact
+    // Header Background with gradient effect
     doc.setFillColor(primary.r, primary.g, primary.b);
-    doc.rect(0, 4, pageWidth, 28, 'F');
+    doc.rect(0, 6, pageWidth, 35, 'F');
 
     // Organisation Name
     doc.setTextColor(255, 255, 255);
-    doc.setFontSize(14);
+    doc.setFontSize(18);
     doc.setFont('helvetica', 'bold');
-    doc.text(orgName, margin, 16);
+    doc.text(orgName, margin, 22);
 
     // Address
-    doc.setFontSize(8);
+    doc.setFontSize(10);
     doc.setFont('helvetica', 'normal');
     const addressText = [orgAddress, orgCity, organisation?.country || 'Sierra Leone'].filter(Boolean).join(', ');
-    doc.text(addressText, margin, 24);
+    doc.text(addressText, margin, 30);
 
     // Date on right
-    doc.setFontSize(9);
-    doc.text(new Date().toLocaleDateString('en-GB'), pageWidth - margin, 16, { align: 'right' });
+    doc.setFontSize(10);
+    doc.text(new Date().toLocaleDateString('en-GB'), pageWidth - margin, 22, { align: 'right' });
     if (orgPhone) {
-      doc.setFontSize(8);
-      doc.text(orgPhone, pageWidth - margin, 24, { align: 'right' });
+      doc.text(orgPhone, pageWidth - margin, 30, { align: 'right' });
     }
 
-    yPos = 38;
+    yPos = 50;
 
     // Form configurations
     const formConfigs = {
@@ -240,40 +239,40 @@ Deno.serve(async (req) => {
       yPos += 15;
     }
 
-    // Helper to draw a table
+    // Helper to draw a table - compact version
     const drawTable = (tableConfig, startY) => {
-      let y = startY + 5;
+      let y = startY + 3;
       const tableWidth = pageWidth - (margin * 2);
       const colCount = tableConfig.columns.length;
       const colWidth = tableWidth / colCount;
-      const rowHeight = 10;
+      const rowHeight = 8;
       
-      // Section title
+      // Section title - compact
       doc.setFillColor(248, 250, 252);
-      doc.roundedRect(margin, y, tableWidth, 10, 2, 2, 'F');
+      doc.roundedRect(margin, y, tableWidth, 8, 1, 1, 'F');
       doc.setFillColor(primary.r, primary.g, primary.b);
-      doc.rect(margin, y, 3, 10, 'F');
+      doc.rect(margin, y, 2, 8, 'F');
       
-      doc.setFontSize(9);
+      doc.setFontSize(8);
       doc.setTextColor(51, 65, 85);
       doc.setFont('helvetica', 'bold');
-      doc.text(tableConfig.title, margin + 8, y + 7);
-      y += 12;
+      doc.text(tableConfig.title, margin + 6, y + 5.5);
+      y += 10;
 
-      // Table header
+      // Table header - compact
       doc.setFillColor(primary.r, primary.g, primary.b);
-      doc.rect(margin, y, tableWidth, 8, 'F');
+      doc.rect(margin, y, tableWidth, 7, 'F');
       
       doc.setTextColor(255, 255, 255);
-      doc.setFontSize(7);
+      doc.setFontSize(6);
       doc.setFont('helvetica', 'bold');
       
       tableConfig.columns.forEach((col, i) => {
-        doc.text(col.toUpperCase(), margin + (i * colWidth) + 2, y + 5.5);
+        doc.text(col.toUpperCase(), margin + (i * colWidth) + 2, y + 5);
       });
-      y += 8;
+      y += 7;
 
-      // Table rows
+      // Table rows - compact
       for (let i = 0; i < tableConfig.rows; i++) {
         doc.setDrawColor(226, 232, 240);
         doc.setFillColor(255, 255, 255);
@@ -286,10 +285,10 @@ Deno.serve(async (req) => {
         
         // Prefill first column if specified
         if (tableConfig.prefillRows && tableConfig.prefillRows[i]) {
-          doc.setFontSize(8);
+          doc.setFontSize(7);
           doc.setTextColor(71, 85, 105);
           doc.setFont('helvetica', 'normal');
-          doc.text(tableConfig.prefillRows[i], margin + 2, y + 7);
+          doc.text(tableConfig.prefillRows[i], margin + 2, y + 5.5);
         }
         y += rowHeight;
       }
@@ -302,10 +301,10 @@ Deno.serve(async (req) => {
         for (let j = 1; j < colCount; j++) {
           doc.line(margin + (j * colWidth), y, margin + (j * colWidth), y + rowHeight);
         }
-        doc.setFontSize(8);
+        doc.setFontSize(7);
         doc.setTextColor(71, 85, 105);
         doc.setFont('helvetica', 'normal');
-        doc.text('Labour Cost', margin + 2, y + 7);
+        doc.text('Labour Cost', margin + 2, y + 5.5);
         y += rowHeight;
       }
 
@@ -314,14 +313,14 @@ Deno.serve(async (req) => {
         doc.setDrawColor(226, 232, 240);
         doc.setFillColor(248, 250, 252);
         doc.rect(margin, y, tableWidth, rowHeight, 'FD');
-        doc.setFontSize(8);
+        doc.setFontSize(7);
         doc.setTextColor(71, 85, 105);
         doc.setFont('helvetica', 'normal');
-        doc.text('Discount', margin + 2, y + 7);
+        doc.text('Discount', margin + 2, y + 5.5);
         y += rowHeight;
       }
 
-      // Total row
+      // Total row - compact
       if (tableConfig.hasTotal) {
         doc.setFillColor(241, 245, 249);
         doc.rect(margin, y, tableWidth, rowHeight, 'F');
@@ -329,9 +328,9 @@ Deno.serve(async (req) => {
         doc.line(margin, y, margin + tableWidth, y);
         
         doc.setTextColor(30, 41, 59);
-        doc.setFontSize(9);
+        doc.setFontSize(8);
         doc.setFont('helvetica', 'bold');
-        doc.text(tableConfig.totalLabel || 'TOTAL AMOUNT', margin + 3, y + 7);
+        doc.text(tableConfig.totalLabel || 'TOTAL AMOUNT', margin + 3, y + 5.5);
         
         // Last column for total value
         doc.setFillColor(255, 255, 255);
@@ -368,9 +367,16 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Signature section - positioned to fit before footer
+    // Footer height
     const footerHeight = 18;
-    const signatureY = Math.min(yPos + 10, pageHeight - footerHeight - 45);
+    const footerY = pageHeight - footerHeight;
+    
+    // Calculate max content area (leave space for signature + footer)
+    const signatureHeight = 35;
+    const maxContentY = footerY - signatureHeight;
+    
+    // If content exceeds page, we need to constrain - but signature always fits
+    const signatureY = Math.min(yPos + 10, maxContentY);
     const sigWidth = (pageWidth - (margin * 2) - 15) / 2;
     
     doc.setDrawColor(203, 213, 225);
@@ -384,7 +390,6 @@ Deno.serve(async (req) => {
     doc.text('Approved By (Name & Signature)', margin + sigWidth + 15 + (sigWidth / 2), signatureY + 26, { align: 'center' });
 
     // Footer - compact
-    const footerY = pageHeight - footerHeight;
     doc.setFillColor(navy.r, navy.g, navy.b);
     doc.rect(0, footerY, pageWidth, footerHeight, 'F');
 
@@ -402,7 +407,7 @@ Deno.serve(async (req) => {
     doc.roundedRect(barStartX + (barWidth * 2) + 4, barY, barWidth, barHeight, 1, 1, 'F');
 
     doc.setTextColor(255, 255, 255);
-    doc.setFontSize(7);
+    doc.setFontSize(6);
     doc.text('For Manual Record Keeping', pageWidth / 2, footerY + 15, { align: 'center' });
 
     // Generate PDF
