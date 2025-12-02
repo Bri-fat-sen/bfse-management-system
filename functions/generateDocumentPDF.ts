@@ -239,99 +239,105 @@ Deno.serve(async (req) => {
         
         yPos = drawHeader('Invoice', invoice?.invoiceNumber || 'INVOICE', new Date().toLocaleDateString('en-GB'));
         
-        // Bill To / Due Date section
+        // Bill To / Due Date section - compact
         doc.setFillColor(248, 250, 252);
-        doc.rect(0, yPos, pageWidth, 35, 'F');
+        doc.rect(0, yPos, pageWidth, 28, 'F');
         
         doc.setTextColor(100, 116, 139);
-        doc.setFontSize(8);
+        doc.setFontSize(7);
         doc.setFont('helvetica', 'bold');
-        doc.text('BILL TO', margin, yPos + 8);
-        doc.text('PAYMENT TERMS', pageWidth / 2 + 10, yPos + 8);
+        doc.text('BILL TO', margin, yPos + 6);
+        doc.text('PAYMENT TERMS', pageWidth / 2 + 10, yPos + 6);
         
         doc.setTextColor(51, 65, 85);
-        doc.setFontSize(10);
+        doc.setFontSize(9);
         doc.setFont('helvetica', 'normal');
-        let billY = yPos + 15;
+        let billY = yPos + 12;
         if (invoice?.company_name) {
           doc.setFont('helvetica', 'bold');
           doc.text(invoice.company_name, margin, billY);
-          billY += 6;
+          billY += 5;
           doc.setFont('helvetica', 'normal');
         }
         if (invoice?.customer_name) {
           doc.text(invoice.customer_name, margin, billY);
-          billY += 6;
+          billY += 5;
         }
         if (invoice?.customer_phone) {
           doc.text(invoice.customer_phone, margin, billY);
         }
         
         // Due date
-        doc.text(`Net ${invoice?.payment_terms || 30} days`, pageWidth / 2 + 10, yPos + 15);
+        doc.text(`Net ${invoice?.payment_terms || 30} days`, pageWidth / 2 + 10, yPos + 12);
         doc.setFont('helvetica', 'bold');
         doc.setTextColor(secondary.r, secondary.g, secondary.b);
-        doc.text(`Due: ${invoice?.dueDate || 'N/A'}`, pageWidth / 2 + 10, yPos + 24);
+        doc.text(`Due: ${invoice?.dueDate || 'N/A'}`, pageWidth / 2 + 10, yPos + 20);
         
-        yPos += 40;
+        yPos += 32;
         
-        // Items table
+        // Items table - compact
         const items = invoice?.items || [];
         
         doc.setFillColor(primary.r, primary.g, primary.b);
-        doc.rect(margin, yPos, pageWidth - (margin * 2), 10, 'F');
+        doc.rect(margin, yPos, pageWidth - (margin * 2), 8, 'F');
         doc.setTextColor(255, 255, 255);
-        doc.setFontSize(8);
+        doc.setFontSize(7);
         doc.setFont('helvetica', 'bold');
-        doc.text('DESCRIPTION', margin + 3, yPos + 7);
-        doc.text('QTY', margin + 85, yPos + 7);
-        doc.text('UNIT PRICE', margin + 105, yPos + 7);
-        doc.text('AMOUNT', pageWidth - margin - 3, yPos + 7, { align: 'right' });
-        yPos += 12;
+        doc.text('DESCRIPTION', margin + 3, yPos + 5.5);
+        doc.text('QTY', margin + 90, yPos + 5.5);
+        doc.text('UNIT PRICE', margin + 110, yPos + 5.5);
+        doc.text('AMOUNT', pageWidth - margin - 3, yPos + 5.5, { align: 'right' });
+        yPos += 10;
         
         doc.setFont('helvetica', 'normal');
         doc.setTextColor(51, 65, 85);
+        doc.setFontSize(8);
         items.forEach((item, i) => {
           if (i % 2 === 0) {
             doc.setFillColor(248, 250, 252);
-            doc.rect(margin, yPos - 2, pageWidth - (margin * 2), 10, 'F');
+            doc.rect(margin, yPos - 1, pageWidth - (margin * 2), 8, 'F');
           }
-          doc.text(String(item.product_name || 'Item').substring(0, 40), margin + 3, yPos + 4);
-          doc.text(String(item.quantity || 1), margin + 85, yPos + 4);
-          doc.text(formatCurrency(item.unit_price), margin + 105, yPos + 4);
+          doc.text(String(item.product_name || 'Item').substring(0, 35), margin + 3, yPos + 4);
+          doc.text(String(item.quantity || 1), margin + 90, yPos + 4);
+          doc.text(formatCurrency(item.unit_price), margin + 110, yPos + 4);
           doc.text(formatCurrency(item.total), pageWidth - margin - 3, yPos + 4, { align: 'right' });
-          yPos += 10;
+          yPos += 8;
         });
         
-        yPos += 10;
+        // Dashed separator
+        yPos += 3;
+        doc.setDrawColor(203, 213, 225);
+        doc.setLineDashPattern([2, 2], 0);
+        doc.line(margin, yPos, pageWidth - margin, yPos);
+        doc.setLineDashPattern([], 0);
+        yPos += 6;
         
-        // Totals box
-        const totalsX = pageWidth - margin - 80;
-        doc.setDrawColor(226, 232, 240);
-        doc.roundedRect(totalsX - 5, yPos - 3, 85, 45, 2, 2, 'S');
-        
+        // Totals - compact
+        const totalsX = margin + 110;
         doc.setFontSize(9);
         doc.setTextColor(100, 116, 139);
-        doc.text('Subtotal', totalsX, yPos + 5);
+        doc.text('Subtotal', totalsX, yPos);
         doc.setTextColor(51, 65, 85);
-        doc.text(formatCurrency(invoice?.cartTotal), pageWidth - margin - 3, yPos + 5, { align: 'right' });
+        doc.text(formatCurrency(invoice?.cartTotal), pageWidth - margin, yPos, { align: 'right' });
+        yPos += 7;
         
         if (invoice?.include_tax && invoice?.taxAmount > 0) {
-          yPos += 10;
           doc.setTextColor(100, 116, 139);
-          doc.text(`GST (${invoice?.tax_rate || 15}%)`, totalsX, yPos + 5);
+          doc.text(`GST (${invoice?.tax_rate || 15}%)`, totalsX, yPos);
           doc.setTextColor(51, 65, 85);
-          doc.text(formatCurrency(invoice.taxAmount), pageWidth - margin - 3, yPos + 5, { align: 'right' });
+          doc.text(formatCurrency(invoice.taxAmount), pageWidth - margin, yPos, { align: 'right' });
+          yPos += 7;
         }
         
-        yPos += 15;
+        // Total Due box
+        yPos += 3;
         doc.setFillColor(primary.r, primary.g, primary.b);
-        doc.roundedRect(totalsX - 5, yPos, 85, 12, 2, 2, 'F');
+        doc.roundedRect(totalsX - 5, yPos - 2, pageWidth - margin - totalsX + 5, 12, 2, 2, 'F');
         doc.setTextColor(255, 255, 255);
-        doc.setFontSize(10);
+        doc.setFontSize(11);
         doc.setFont('helvetica', 'bold');
-        doc.text('TOTAL DUE', totalsX, yPos + 8);
-        doc.text(formatCurrency(invoice?.totalWithTax), pageWidth - margin - 3, yPos + 8, { align: 'right' });
+        doc.text('TOTAL DUE', totalsX, yPos + 6);
+        doc.text(formatCurrency(invoice?.totalWithTax), pageWidth - margin - 3, yPos + 6, { align: 'right' });
         
         drawFooter();
         break;
