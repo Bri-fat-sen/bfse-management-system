@@ -379,13 +379,13 @@ export default function Reports() {
       {/* Saved Reports View */}
       {activeView === 'saved' && (
         <div className="space-y-4">
-          <div className="relative max-w-md">
+          <div className="relative w-full">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
             <Input 
               placeholder="Search saved reports..." 
               value={searchQuery}
               onChange={e => setSearchQuery(e.target.value)}
-              className="pl-10"
+              className="pl-10 w-full"
             />
           </div>
 
@@ -394,10 +394,10 @@ export default function Reports() {
               icon={FileText}
               title="No saved reports"
               description="Create custom reports to save them here"
-              action={<Button variant="outline" onClick={() => setShowBuilder(true)}>Create Report</Button>}
+              action={<Button variant="outline" size="sm" onClick={() => setShowBuilder(true)}>Create Report</Button>}
             />
           ) : (
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+            <div className="grid gap-3 sm:gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
               {filteredReports.map(report => (
                 <SavedReportCard 
                   key={report.id} 
@@ -415,7 +415,7 @@ export default function Reports() {
 
       {/* Scheduled View */}
       {activeView === 'scheduled' && (
-        <div className="space-y-4">
+        <div className="space-y-3">
           {savedReports.filter(r => r.schedule?.enabled).length === 0 ? (
             <EmptyState 
               icon={Clock}
@@ -423,22 +423,22 @@ export default function Reports() {
               description="Set up automatic report delivery by creating a scheduled report"
             />
           ) : (
-            <div className="space-y-3">
+            <div className="space-y-2 sm:space-y-3">
               {savedReports.filter(r => r.schedule?.enabled).map(report => (
                 <Card key={report.id} className="hover:shadow-sm transition-shadow">
-                  <CardContent className="p-4 flex items-center justify-between">
-                    <div className="flex items-center gap-4">
-                      <div className="w-10 h-10 rounded-lg bg-blue-100 flex items-center justify-center">
-                        <Clock className="w-5 h-5 text-blue-600" />
+                  <CardContent className="p-3 sm:p-4 flex items-center justify-between gap-3">
+                    <div className="flex items-center gap-3 min-w-0 flex-1">
+                      <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg bg-blue-100 flex items-center justify-center flex-shrink-0">
+                        <Clock className="w-4 h-4 sm:w-5 sm:h-5 text-blue-600" />
                       </div>
-                      <div>
-                        <h4 className="font-semibold">{report.name}</h4>
-                        <p className="text-sm text-gray-500">
+                      <div className="min-w-0 flex-1">
+                        <h4 className="font-semibold text-sm sm:text-base truncate">{report.name}</h4>
+                        <p className="text-xs sm:text-sm text-gray-500 truncate">
                           {report.schedule.frequency} • {report.schedule.recipients?.length || 0} recipients
                         </p>
                       </div>
                     </div>
-                    <Badge variant="outline" className="capitalize">{report.schedule.frequency}</Badge>
+                    <Badge variant="outline" className="capitalize text-[10px] sm:text-xs flex-shrink-0">{report.schedule.frequency}</Badge>
                   </CardContent>
                 </Card>
               ))}
@@ -585,15 +585,15 @@ function QuickReportCard({ report, onGenerate, isSelected, onToggle }) {
 function SavedReportCard({ report, onEdit, onDelete, onDuplicate, onToggleFavorite }) {
   return (
     <Card className="hover:shadow-md transition-shadow">
-      <CardContent className="p-4">
-        <div className="flex items-start justify-between mb-2">
-          <div className="flex items-center gap-2">
-            <h4 className="font-semibold truncate">{report.name}</h4>
-            {report.is_favorite && <Star className="w-4 h-4 text-yellow-500 fill-yellow-500" />}
+      <CardContent className="p-3 sm:p-4">
+        <div className="flex items-start justify-between gap-2 mb-2">
+          <div className="flex items-center gap-2 min-w-0 flex-1">
+            <h4 className="font-semibold truncate text-sm sm:text-base">{report.name}</h4>
+            {report.is_favorite && <Star className="w-3 h-3 sm:w-4 sm:h-4 text-yellow-500 fill-yellow-500 flex-shrink-0" />}
           </div>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon" className="h-8 w-8">
+              <Button variant="ghost" size="icon" className="h-7 w-7 sm:h-8 sm:w-8 flex-shrink-0">
                 <MoreVertical className="w-4 h-4" />
               </Button>
             </DropdownMenuTrigger>
@@ -610,9 +610,9 @@ function SavedReportCard({ report, onEdit, onDelete, onDuplicate, onToggleFavori
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
-        <Badge variant="secondary" className="text-xs capitalize">{report.report_type}</Badge>
-        {report.description && <p className="text-sm text-gray-500 mt-2 line-clamp-2">{report.description}</p>}
-        <div className="flex items-center gap-2 mt-3 text-xs text-gray-400">
+        <Badge variant="secondary" className="text-[10px] sm:text-xs capitalize">{report.report_type}</Badge>
+        {report.description && <p className="text-xs sm:text-sm text-gray-500 mt-2 line-clamp-2">{report.description}</p>}
+        <div className="flex items-center gap-2 mt-2 sm:mt-3 text-[10px] sm:text-xs text-gray-400">
           <Calendar className="w-3 h-3" />
           {report.created_date && format(new Date(report.created_date), "MMM d, yyyy")}
         </div>
@@ -624,13 +624,13 @@ function SavedReportCard({ report, onEdit, onDelete, onDuplicate, onToggleFavori
 // Empty State
 function EmptyState({ icon: Icon, title, description, action }) {
   return (
-    <div className="text-center py-16">
-      <div className="w-16 h-16 rounded-full bg-gray-100 flex items-center justify-center mx-auto mb-4">
-        <Icon className="w-8 h-8 text-gray-400" />
+    <div className="text-center py-10 sm:py-16 px-4">
+      <div className="w-12 h-12 sm:w-16 sm:h-16 rounded-full bg-gray-100 flex items-center justify-center mx-auto mb-3 sm:mb-4">
+        <Icon className="w-6 h-6 sm:w-8 sm:h-8 text-gray-400" />
       </div>
-      <h3 className="text-lg font-medium text-gray-900">{title}</h3>
-      <p className="text-gray-500 mt-1">{description}</p>
-      {action && <div className="mt-4">{action}</div>}
+      <h3 className="text-base sm:text-lg font-medium text-gray-900">{title}</h3>
+      <p className="text-sm text-gray-500 mt-1">{description}</p>
+      {action && <div className="mt-3 sm:mt-4">{action}</div>}
     </div>
   );
 }
