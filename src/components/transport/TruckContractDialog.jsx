@@ -141,7 +141,12 @@ export default function TruckContractDialog({
 
   const updateExpense = (index, field, value) => {
     const updated = [...expenses];
-    updated[index] = { ...updated[index], [field]: value };
+    // Ensure amount is stored as a number
+    if (field === 'amount') {
+      updated[index] = { ...updated[index], [field]: parseFloat(value) || 0 };
+    } else {
+      updated[index] = { ...updated[index], [field]: value };
+    }
     setExpenses(updated);
   };
 
