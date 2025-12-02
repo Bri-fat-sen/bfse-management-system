@@ -215,12 +215,53 @@ export default function InvoiceDialog({
     setTimeout(() => printWindow.print(), 250);
   };
 
-  const handleDownload = () => {
-    const printWindow = window.open('', '_blank', 'width=900,height=700');
-    printWindow.document.write(getInvoiceHTML());
-    printWindow.document.close();
-    printWindow.onload = () => setTimeout(() => printWindow.print(), 300);
-    toast.info("Choose 'Save as PDF' in the print dialog");
+  const [isDownloading, setIsDownloading] = useState(false);
+
+  const handleDownload = async () => {
+    setIsDownloading(true);
+    try {
+      const response = await base44.functions.invoke('generateDocumentPDF', {
+        documentType: 'invoice',
+        data: {
+          invoiceNumber,
+          company_name: invoiceData.company_name,
+          customer_name: invoiceData.customer_name,
+          customer_phone: invoiceData.customer_phone,
+          customer_email: invoiceData.customer_email,
+          customer_address: invoiceData.customer_address,
+          payment_terms: invoiceData.payment_terms,
+          dueDate: format(dueDate, 'dd MMM yyyy'),
+          items: cart,
+          cartTotal,
+          include_tax: invoiceData.include_tax,
+          tax_rate: invoiceData.tax_rate,
+          taxAmount,
+          totalWithTax
+        },
+        organisation
+      });
+      
+      const blob = new Blob([response.data], { type: 'application/pdf' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `Invoice-${invoiceNumber}.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+      toast.success("Invoice downloaded");
+    } catch (error) {
+      console.error('PDF generation error:', error);
+      const printWindow = window.open('', '_blank', 'width=900,height=700');
+      if (printWindow) {
+        printWindow.document.write(getInvoiceHTML());
+        printWindow.document.close();
+        setTimeout(() => printWindow.print(), 300);
+        toast.info("Use 'Save as PDF' in print dialog");
+      }
+    }
+    setIsDownloading(false);
   };
 
   const handleSendInvoice = async () => {
@@ -467,8 +508,8 @@ export default function InvoiceDialog({
               <Printer className="w-4 h-4 mr-2" />
               Print
             </Button>
-            <Button variant="outline" onClick={handleDownload}>
-              <Download className="w-4 h-4 mr-2" />
+            <Button variant="outline" onClick={handleDownload} disabled={isDownloading}>
+              {isDownloading ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Download className="w-4 h-4 mr-2" />}
               PDF
             </Button>
           </div>

@@ -1,6 +1,7 @@
 import React from "react";
 import { format } from "date-fns";
 import { getUnifiedPDFStyles, getUnifiedHeader, getUnifiedFooter } from "./UnifiedPDFStyles";
+import { base44 } from "@/api/base44Client";
 
 // Modern Professional Report Generator - Uses unified receipt-style design
 export const generateProfessionalReport = ({
@@ -189,21 +190,42 @@ export const printProfessionalReport = (html, filename = 'report') => {
   }, 400);
 };
 
-export const downloadProfessionalReportAsPDF = async (html, filename = 'report') => {
-  const pdfWindow = window.open('', '_blank', 'width=900,height=800');
-  
-  if (!pdfWindow) {
-    alert('Please allow popups to download the PDF report');
-    return;
+export const downloadProfessionalReportAsPDF = async (reportConfig, organisation) => {
+  try {
+    const response = await base44.functions.invoke('generateDocumentPDF', {
+      documentType: 'report',
+      data: {
+        title: reportConfig.title,
+        reportId: reportConfig.reportId || `RPT-${Date.now().toString(36).toUpperCase()}`,
+        dateRange: reportConfig.dateRange,
+        summaryCards: reportConfig.summaryCards,
+        sections: reportConfig.sections
+      },
+      organisation
+    });
+    
+    const blob = new Blob([response.data], { type: 'application/pdf' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `${(reportConfig.title || 'Report').replace(/\s+/g, '_')}.pdf`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+    return true;
+  } catch (error) {
+    console.error('PDF generation error:', error);
+    // Fallback to print dialog
+    const html = generateProfessionalReport(reportConfig);
+    const pdfWindow = window.open('', '_blank', 'width=900,height=800');
+    if (pdfWindow) {
+      pdfWindow.document.write(html);
+      pdfWindow.document.close();
+      setTimeout(() => pdfWindow.print(), 500);
+    }
+    return false;
   }
-  
-  pdfWindow.document.write(html);
-  pdfWindow.document.close();
-  pdfWindow.document.title = filename;
-  
-  setTimeout(() => {
-    pdfWindow.print();
-  }, 500);
 };
 
 export const downloadProfessionalReport = (html, filename) => {

@@ -1,7 +1,9 @@
 import React, { useState } from "react";
 import { format } from "date-fns";
 import { Button } from "@/components/ui/button";
-import { Printer, Download, Settings2, Eye } from "lucide-react";
+import { Printer, Download, Settings2, Eye, Loader2 } from "lucide-react";
+import { base44 } from "@/api/base44Client";
+import { toast } from "sonner";
 import {
   Dialog,
   DialogContent,
@@ -597,17 +599,42 @@ export default function PayslipGenerator({ payroll, employee, organisation }) {
     }, 250);
   };
 
-  const handleDownload = () => {
-    const html = generatePayslipHTML();
-    const blob = new Blob([html], { type: 'text/html' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = `Payslip-${employee?.full_name}-${format(new Date(payroll?.period_start), 'MMM-yyyy')}.html`;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    URL.revokeObjectURL(url);
+  const [isDownloading, setIsDownloading] = useState(false);
+
+  const handleDownload = async () => {
+    setIsDownloading(true);
+    try {
+      const response = await base44.functions.invoke('generateDocumentPDF', {
+        documentType: 'payslip',
+        data: { payroll, employee },
+        organisation
+      });
+      
+      const blob = new Blob([response.data], { type: 'application/pdf' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `Payslip-${employee?.full_name}-${format(new Date(payroll?.period_start), 'MMM-yyyy')}.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+      toast.success("Payslip downloaded");
+    } catch (error) {
+      console.error('PDF generation error:', error);
+      // Fallback to HTML
+      const html = generatePayslipHTML();
+      const blob = new Blob([html], { type: 'text/html' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `Payslip-${employee?.full_name}-${format(new Date(payroll?.period_start), 'MMM-yyyy')}.html`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+    }
+    setIsDownloading(false);
   };
 
   if (!payroll || !employee) return null;
@@ -618,8 +645,8 @@ export default function PayslipGenerator({ payroll, employee, organisation }) {
         <Printer className="w-4 h-4 mr-1" />
         Print
       </Button>
-      <Button size="sm" variant="outline" onClick={handleDownload}>
-        <Download className="w-4 h-4 mr-1" />
+      <Button size="sm" variant="outline" onClick={handleDownload} disabled={isDownloading}>
+        {isDownloading ? <Loader2 className="w-4 h-4 mr-1 animate-spin" /> : <Download className="w-4 h-4 mr-1" />}
         Download
       </Button>
       

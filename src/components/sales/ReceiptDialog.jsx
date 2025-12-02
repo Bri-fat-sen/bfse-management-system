@@ -167,7 +167,6 @@ export default function ReceiptDialog({ open, onOpenChange, sale, organisation }
         organisation: organisation
       });
       
-      // Create blob from response data
       const blob = new Blob([response.data], { type: 'application/pdf' });
       const url = URL.createObjectURL(blob);
       const link = document.createElement('a');
@@ -180,18 +179,14 @@ export default function ReceiptDialog({ open, onOpenChange, sale, organisation }
       toast.success("Receipt downloaded");
     } catch (error) {
       console.error('PDF generation error:', error);
-      // Fallback to HTML
-      const htmlContent = getReceiptHTML();
-      const blob = new Blob([htmlContent], { type: 'text/html' });
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = `Receipt-${sale?.sale_number}.html`;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      URL.revokeObjectURL(url);
-      toast.info("Downloaded as HTML - open in browser to print as PDF");
+      // Fallback to print dialog
+      const printWindow = window.open('', '_blank', 'width=500,height=700');
+      if (printWindow) {
+        printWindow.document.write(getReceiptHTML());
+        printWindow.document.close();
+        setTimeout(() => printWindow.print(), 300);
+        toast.info("Use 'Save as PDF' in print dialog");
+      }
     }
     setDownloading(false);
   };
