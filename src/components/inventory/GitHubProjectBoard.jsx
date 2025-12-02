@@ -42,16 +42,14 @@ export default function GitHubProjectBoard({ className = "" }) {
   const [selectedProjectId, setSelectedProjectId] = useState("");
 
   // Fetch projects with caching
-  const { data: projects = [], isLoading: projectsLoading, refetch: refetchProjects, isError: projectsError } = useQuery({
+  const { data: projects = [], isLoading: projectsLoading, refetch: refetchProjects } = useQuery({
     queryKey: ['githubProjects'],
     queryFn: async () => {
       const res = await base44.functions.invoke('github', { action: 'getProjects' });
-      const data = res.data;
-      if (data?.error) throw new Error(data.error);
-      return Array.isArray(data) ? data : [];
+      return res.data || [];
     },
-    staleTime: 5 * 60 * 1000, // Cache for 5 minutes
-    retry: 1,
+    staleTime: 2 * 60 * 1000, // 2 minutes
+    refetchOnWindowFocus: false,
   });
 
   // Fetch project items when a project is selected
@@ -63,11 +61,11 @@ export default function GitHubProjectBoard({ className = "" }) {
         action: 'getProjectItems',
         projectId: selectedProjectId 
       });
-      const data = res.data;
-      return Array.isArray(data) ? data : [];
+      return res.data || [];
     },
     enabled: !!selectedProjectId,
-    staleTime: 2 * 60 * 1000, // Cache for 2 minutes
+    staleTime: 60 * 1000, // 1 minute
+    refetchOnWindowFocus: false,
   });
 
   const selectedProject = projects.find(p => p.id === selectedProjectId);
@@ -119,21 +117,6 @@ export default function GitHubProjectBoard({ className = "" }) {
       <Card className={className}>
         <CardContent className="flex items-center justify-center py-8">
           <Loader2 className="w-6 h-6 animate-spin text-gray-400" />
-          <span className="ml-2 text-sm text-gray-500">Loading projects...</span>
-        </CardContent>
-      </Card>
-    );
-  }
-
-  if (projectsError) {
-    return (
-      <Card className={className}>
-        <CardContent className="text-center py-8">
-          <Github className="w-12 h-12 mx-auto text-red-300 mb-3" />
-          <p className="text-gray-500">Failed to load projects</p>
-          <Button variant="outline" size="sm" onClick={() => refetchProjects()} className="mt-3">
-            <RefreshCw className="w-4 h-4 mr-1" /> Retry
-          </Button>
         </CardContent>
       </Card>
     );
