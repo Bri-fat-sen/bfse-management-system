@@ -192,7 +192,7 @@ export default function TruckContractDialog({
   const totalExpenses = expenses.reduce((sum, exp) => sum + (parseFloat(exp.amount) || 0), 0);
   const netRevenue = (parseFloat(formData.contract_amount) || 0) - totalExpenses;
 
-  const isPending = createMutation.isPending || updateMutation.isPending;
+  const isPending = createMutation.isPending || updateMutation.isPending || deleteMutation.isPending;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
