@@ -21,10 +21,9 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
-import { format, formatDistanceToNow } from "date-fns";
+import { format } from "date-fns";
 import { Link } from "react-router-dom";
 import { createPageUrl } from "@/utils";
-import { toast } from "sonner";
 
 const notificationIcons = {
   low_stock: { icon: Package, color: "text-amber-500", bg: "bg-amber-100" },
@@ -90,6 +89,26 @@ export default function NotificationCenter({ orgId, currentEmployee }) {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['notifications'] });
+      toast.success("All notifications marked as read");
+    }
+  });
+
+  const deleteNotificationMutation = useMutation({
+    mutationFn: (id) => base44.entities.Notification.delete(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['notifications'] });
+    }
+  });
+
+  const clearAllMutation = useMutation({
+    mutationFn: async () => {
+      await Promise.all(notifications.map(n => 
+        base44.entities.Notification.delete(n.id)
+      ));
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['notifications'] });
+      toast.success("All notifications cleared");
     }
   });
 
