@@ -646,8 +646,8 @@ export default function PayslipGenerator({ payroll, employee, organisation }) {
         <Printer className="w-4 h-4 mr-1" />
         Print
       </Button>
-      <Button size="sm" variant="outline" onClick={handleDownload}>
-        <Download className="w-4 h-4 mr-1" />
+      <Button size="sm" variant="outline" onClick={handleDownload} disabled={isDownloading}>
+        {isDownloading ? <Loader2 className="w-4 h-4 mr-1 animate-spin" /> : <Download className="w-4 h-4 mr-1" />}
         Download
       </Button>
       
