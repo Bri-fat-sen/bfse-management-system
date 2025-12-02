@@ -440,8 +440,8 @@ const generateFormHTML = (formType, org) => {
 
   const footer = `
     <div class="footer">
-      <div class="thanks">For Manual Record Keeping</div>
-      <div class="tagline">Please enter data into the system when ready</div>
+      <div class="thanks">Thank You For Your Business</div>
+      <div class="tagline">Proudly serving ${orgCity || 'Sierra Leone'}</div>
       <div class="flag-bar">
         <span class="bar-green"></span>
         <span class="bar-white"></span>
