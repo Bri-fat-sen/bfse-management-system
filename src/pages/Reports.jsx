@@ -237,31 +237,33 @@ export default function Reports() {
   return (
     <div className="space-y-6 max-w-7xl mx-auto">
       {/* Header */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#1EB053] to-[#0072C6] flex items-center justify-center">
-              <BarChart3 className="w-5 h-5 text-white" />
-            </div>
-            Reports Center
-          </h1>
-          <p className="text-gray-500 text-sm mt-1 ml-13">Generate and export business reports</p>
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <div className="flex items-center gap-3">
+          <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-gradient-to-br from-[#1EB053] to-[#0072C6] flex items-center justify-center flex-shrink-0">
+            <BarChart3 className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
+          </div>
+          <div>
+            <h1 className="text-xl sm:text-2xl font-bold text-gray-900">Reports</h1>
+            <p className="text-gray-500 text-xs sm:text-sm hidden sm:block">Generate and export business reports</p>
+          </div>
         </div>
         <div className="flex gap-2">
           <Button 
             variant="outline" 
+            size="sm"
             onClick={() => setShowConsolidatedPrint(true)}
-            className="gap-2"
+            className="gap-1.5 sm:gap-2"
           >
             <Printer className="w-4 h-4" />
             <span className="hidden sm:inline">Print Bundle</span>
           </Button>
           <Button 
+            size="sm"
             onClick={() => { setEditingReport(null); setShowBuilder(true); }}
-            className="gap-2 bg-gradient-to-r from-[#1EB053] to-[#0072C6] hover:opacity-90"
+            className="gap-1.5 sm:gap-2 bg-gradient-to-r from-[#1EB053] to-[#0072C6] hover:opacity-90"
           >
             <Plus className="w-4 h-4" />
-            Custom Report
+            <span className="hidden sm:inline">Custom</span>
           </Button>
         </div>
       </div>
@@ -297,25 +299,26 @@ export default function Reports() {
       </div>
 
       {/* View Switcher */}
-      <div className="flex items-center gap-4 border-b">
+      <div className="flex items-center gap-1 sm:gap-4 border-b overflow-x-auto">
         {[
-          { id: 'quick', label: 'Quick Reports', icon: Play },
-          { id: 'saved', label: 'Saved Reports', icon: FileText, count: savedReports.length },
-          { id: 'scheduled', label: 'Scheduled', icon: Clock, count: savedReports.filter(r => r.schedule?.enabled).length },
+          { id: 'quick', label: 'Quick', fullLabel: 'Quick Reports', icon: Play },
+          { id: 'saved', label: 'Saved', fullLabel: 'Saved Reports', icon: FileText, count: savedReports.length },
+          { id: 'scheduled', label: 'Scheduled', fullLabel: 'Scheduled', icon: Clock, count: savedReports.filter(r => r.schedule?.enabled).length },
         ].map(tab => (
           <button
             key={tab.id}
             onClick={() => setActiveView(tab.id)}
-            className={`flex items-center gap-2 px-4 py-3 text-sm font-medium border-b-2 transition-colors ${
+            className={`flex items-center gap-1.5 sm:gap-2 px-2 sm:px-4 py-3 text-xs sm:text-sm font-medium border-b-2 transition-colors whitespace-nowrap ${
               activeView === tab.id 
                 ? 'border-[#1EB053] text-[#1EB053]' 
                 : 'border-transparent text-gray-500 hover:text-gray-700'
             }`}
           >
             <tab.icon className="w-4 h-4" />
-            {tab.label}
+            <span className="hidden sm:inline">{tab.fullLabel}</span>
+            <span className="sm:hidden">{tab.label}</span>
             {tab.count > 0 && (
-              <span className="ml-1 px-2 py-0.5 text-xs rounded-full bg-gray-100">{tab.count}</span>
+              <span className="ml-1 px-1.5 py-0.5 text-xs rounded-full bg-gray-100">{tab.count}</span>
             )}
           </button>
         ))}
@@ -325,9 +328,9 @@ export default function Reports() {
       {activeView === 'quick' && (
         <div className="space-y-4">
           {/* Date Filter */}
-          <div className="flex flex-wrap gap-3 items-center">
+          <div className="flex flex-wrap gap-2 sm:gap-3 items-center">
             <Select value={dateRange} onValueChange={setDateRange}>
-              <SelectTrigger className="w-44">
+              <SelectTrigger className="w-36 sm:w-44">
                 <Calendar className="w-4 h-4 mr-2 text-gray-400" />
                 <SelectValue />
               </SelectTrigger>
@@ -342,15 +345,15 @@ export default function Reports() {
               </SelectContent>
             </Select>
             {dateRange === 'custom' && (
-              <div className="flex gap-2">
-                <Input type="date" value={customDateStart} onChange={e => setCustomDateStart(e.target.value)} className="w-40" />
-                <Input type="date" value={customDateEnd} onChange={e => setCustomDateEnd(e.target.value)} className="w-40" />
+              <div className="flex gap-2 w-full sm:w-auto">
+                <Input type="date" value={customDateStart} onChange={e => setCustomDateStart(e.target.value)} className="flex-1 sm:w-36" />
+                <Input type="date" value={customDateEnd} onChange={e => setCustomDateEnd(e.target.value)} className="flex-1 sm:w-36" />
               </div>
             )}
           </div>
 
           {/* Quick Report Grid */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-4">
             {QUICK_REPORTS.map(report => (
               <QuickReportCard 
                 key={report.id} 
@@ -505,11 +508,11 @@ function StatCard({ label, value, change, icon: Icon, color, alert }) {
 
   return (
     <Card className={`overflow-hidden ${alert ? 'ring-2 ring-orange-200' : ''}`}>
-      <CardContent className="p-4">
-        <div className="flex items-start justify-between">
-          <div>
-            <p className="text-xs text-gray-500 uppercase tracking-wide font-medium">{label}</p>
-            <p className="text-xl font-bold mt-1">{value}</p>
+      <CardContent className="p-3 sm:p-4">
+        <div className="flex items-start justify-between gap-2">
+          <div className="min-w-0 flex-1">
+            <p className="text-[10px] sm:text-xs text-gray-500 uppercase tracking-wide font-medium truncate">{label}</p>
+            <p className="text-base sm:text-xl font-bold mt-1 truncate">{value}</p>
             {change !== undefined && (
               <div className={`flex items-center gap-1 text-xs mt-1 ${change >= 0 ? 'text-green-600' : 'text-red-600'}`}>
                 {change >= 0 ? <ArrowUpRight className="w-3 h-3" /> : <ArrowDownRight className="w-3 h-3" />}
@@ -517,8 +520,8 @@ function StatCard({ label, value, change, icon: Icon, color, alert }) {
               </div>
             )}
           </div>
-          <div className={`w-10 h-10 rounded-xl bg-gradient-to-br ${colors[color]} flex items-center justify-center`}>
-            <Icon className="w-5 h-5 text-white" />
+          <div className={`w-8 h-8 sm:w-10 sm:h-10 rounded-xl bg-gradient-to-br ${colors[color]} flex items-center justify-center flex-shrink-0`}>
+            <Icon className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
           </div>
         </div>
       </CardContent>
@@ -554,22 +557,23 @@ function QuickReportCard({ report, onGenerate, isSelected, onToggle }) {
 
   return (
     <Card className={`transition-all cursor-pointer ${colors[report.color]} ${isSelected ? 'ring-2 ring-[#1EB053] bg-green-50' : ''}`}>
-      <CardContent className="p-4">
-        <div className="flex items-start justify-between mb-3">
-          <div className={`w-10 h-10 rounded-lg ${iconBg[report.color]} flex items-center justify-center`}>
-            <Icon className="w-5 h-5" />
+      <CardContent className="p-3 sm:p-4">
+        <div className="flex items-start justify-between mb-2 sm:mb-3">
+          <div className={`w-8 h-8 sm:w-10 sm:h-10 rounded-lg ${iconBg[report.color]} flex items-center justify-center`}>
+            <Icon className="w-4 h-4 sm:w-5 sm:h-5" />
           </div>
           <Checkbox checked={isSelected} onCheckedChange={onToggle} onClick={e => e.stopPropagation()} />
         </div>
-        <h4 className="font-semibold text-gray-900">{report.name}</h4>
-        <p className="text-xs text-gray-500 mt-1 line-clamp-2">{report.description}</p>
+        <h4 className="font-semibold text-gray-900 text-sm sm:text-base">{report.name}</h4>
+        <p className="text-xs text-gray-500 mt-1 line-clamp-1 sm:line-clamp-2">{report.description}</p>
         <Button 
           size="sm" 
           variant="ghost" 
-          className="mt-3 w-full justify-between text-gray-600 hover:text-[#1EB053]"
+          className="mt-2 sm:mt-3 w-full justify-between text-gray-600 hover:text-[#1EB053] h-8 text-xs sm:text-sm"
           onClick={e => { e.stopPropagation(); onGenerate(); }}
         >
-          Generate PDF
+          <span className="hidden sm:inline">Generate PDF</span>
+          <span className="sm:hidden">PDF</span>
           <Download className="w-4 h-4" />
         </Button>
       </CardContent>
