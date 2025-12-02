@@ -66,6 +66,7 @@ import SerialNumberManager from "@/components/inventory/SerialNumberManager";
 import ReorderSuggestions from "@/components/inventory/ReorderSuggestions";
 import MultiLocationStock from "@/components/inventory/MultiLocationStock";
 import LowStockNotificationBanner from "@/components/inventory/LowStockNotificationBanner";
+import InventoryAuditLog from "@/components/inventory/InventoryAuditLog";
 
 const DEFAULT_CATEGORIES = ["Water", "Beverages", "Food", "Electronics", "Clothing", "Other"];
 
@@ -487,6 +488,9 @@ export default function Inventory() {
               <Badge variant="destructive" className="ml-1 h-4 text-[9px] px-1">{reorderSuggestions.length}</Badge>
             )}
           </TabsTrigger>
+          <TabsTrigger value="audit" className="text-xs sm:text-sm px-2 sm:px-3 data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#1EB053] data-[state=active]:to-[#0072C6] data-[state=active]:text-white">
+            Audit Log
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="products" className="mt-6">
@@ -867,6 +871,11 @@ export default function Inventory() {
             suppliers={suppliers}
             currentEmployee={currentEmployee}
           />
+        </TabsContent>
+
+        {/* Audit Log Tab */}
+        <TabsContent value="audit" className="mt-6">
+          <InventoryAuditLog orgId={orgId} />
         </TabsContent>
       </Tabs>
 
