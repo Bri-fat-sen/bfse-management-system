@@ -67,7 +67,7 @@ import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContaine
 import AIInsightsPanel from "@/components/ai/AIInsightsPanel";
 import AIReportSummary from "@/components/ai/AIReportSummary";
 import AIFormAssistant, { QuickSuggestionChips } from "@/components/ai/AIFormAssistant";
-import BankAccountsSummary from "@/components/finance/BankAccountsSummary";
+import BankAccountsReport from "@/components/finance/BankAccountsReport";
 
 const expenseCategories = [
   "fuel", "maintenance", "utilities", "supplies", "rent", 
@@ -92,6 +92,7 @@ export default function Finance() {
   const [showExpenseDialog, setShowExpenseDialog] = useState(false);
   const [showRevenueDialog, setShowRevenueDialog] = useState(false);
   const [showBankDepositDialog, setShowBankDepositDialog] = useState(false);
+  const [showBankAccountsReport, setShowBankAccountsReport] = useState(false);
   const [categoryFilter, setCategoryFilter] = useState("all");
   const [showFormsDialog, setShowFormsDialog] = useState(false);
   const [dateRange, setDateRange] = useState("this_month");
@@ -1180,7 +1181,7 @@ export default function Finance() {
 
             {/* Bank Deposits List */}
             <Card>
-              <CardHeader className="flex flex-row items-center justify-between">
+              <CardHeader className="flex flex-row items-center justify-between flex-wrap gap-3">
                 <div>
                   <CardTitle className="flex items-center gap-2">
                     <Landmark className="w-5 h-5 text-[#0072C6]" />
@@ -1188,10 +1189,16 @@ export default function Finance() {
                   </CardTitle>
                   <CardDescription>Track money deposited to bank from revenue</CardDescription>
                 </div>
-                <Button onClick={() => setShowBankDepositDialog(true)} className="bg-gradient-to-r from-[#1EB053] to-[#0072C6]">
-                  <Plus className="w-4 h-4 mr-2" />
-                  Record Deposit
-                </Button>
+                <div className="flex gap-2">
+                  <Button variant="outline" onClick={() => setShowBankAccountsReport(true)}>
+                    <FileText className="w-4 h-4 mr-2" />
+                    View by Account
+                  </Button>
+                  <Button onClick={() => setShowBankDepositDialog(true)} className="bg-gradient-to-r from-[#1EB053] to-[#0072C6]">
+                    <Plus className="w-4 h-4 mr-2" />
+                    Record Deposit
+                  </Button>
+                </div>
               </CardHeader>
               <CardContent>
                 <ScrollArea className="h-[400px]">
@@ -1679,6 +1686,20 @@ export default function Finance() {
             </form>
           </DialogContent>
         </Dialog>
+
+        {/* Bank Accounts Report Dialog */}
+        <BankAccountsReport
+          open={showBankAccountsReport}
+          onOpenChange={setShowBankAccountsReport}
+          bankDeposits={bankDeposits}
+          organisation={organisation?.[0]}
+          dateRange={dateRange === 'this_month' ? 'This Month' : 
+                     dateRange === 'last_month' ? 'Last Month' : 
+                     dateRange === 'this_week' ? 'This Week' :
+                     dateRange === 'today' ? 'Today' :
+                     dateRange === 'this_quarter' ? 'This Quarter' :
+                     dateRange === 'this_year' ? 'This Year' : 'All Time'}
+        />
       </div>
     </ProtectedPage>
   );
