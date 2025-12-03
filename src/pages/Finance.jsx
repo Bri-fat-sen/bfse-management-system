@@ -1181,7 +1181,7 @@ export default function Finance() {
 
             {/* Bank Deposits List */}
             <Card>
-              <CardHeader className="flex flex-row items-center justify-between">
+              <CardHeader className="flex flex-row items-center justify-between flex-wrap gap-3">
                 <div>
                   <CardTitle className="flex items-center gap-2">
                     <Landmark className="w-5 h-5 text-[#0072C6]" />
@@ -1189,10 +1189,16 @@ export default function Finance() {
                   </CardTitle>
                   <CardDescription>Track money deposited to bank from revenue</CardDescription>
                 </div>
-                <Button onClick={() => setShowBankDepositDialog(true)} className="bg-gradient-to-r from-[#1EB053] to-[#0072C6]">
-                  <Plus className="w-4 h-4 mr-2" />
-                  Record Deposit
-                </Button>
+                <div className="flex gap-2">
+                  <Button variant="outline" onClick={() => setShowBankAccountsReport(true)}>
+                    <FileText className="w-4 h-4 mr-2" />
+                    View by Account
+                  </Button>
+                  <Button onClick={() => setShowBankDepositDialog(true)} className="bg-gradient-to-r from-[#1EB053] to-[#0072C6]">
+                    <Plus className="w-4 h-4 mr-2" />
+                    Record Deposit
+                  </Button>
+                </div>
               </CardHeader>
               <CardContent>
                 <ScrollArea className="h-[400px]">
