@@ -1,7 +1,6 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useCallback, useRef } from "react";
 import { Button } from "@/components/ui/button";
-import { Lock, Delete, CheckCircle, XCircle, LogOut } from "lucide-react";
-import { base44 } from "@/api/base44Client";
+import { Delete, CheckCircle, XCircle, LogOut } from "lucide-react";
 
 export default function PinLockScreen({ 
   employee, 
@@ -14,10 +13,30 @@ export default function PinLockScreen({
   const [success, setSuccess] = useState(false);
   const [attempts, setAttempts] = useState(0);
   const maxAttempts = 5;
+  const pinRef = useRef("");
 
-  const handleDigit = (digit) => {
-    if (pin.length < 4) {
-      const newPin = pin + digit;
+  const verifyPin = useCallback((enteredPin) => {
+    if (employee?.pin_hash === enteredPin) {
+      setSuccess(true);
+      setTimeout(() => {
+        onUnlock();
+      }, 500);
+    } else {
+      setAttempts(prev => prev + 1);
+      setError("Incorrect PIN. Please try again.");
+      setPin("");
+      pinRef.current = "";
+      
+      if (attempts + 1 >= maxAttempts) {
+        setError("Too many attempts. Please contact your administrator.");
+      }
+    }
+  }, [employee?.pin_hash, onUnlock, attempts, maxAttempts]);
+
+  const handleDigit = useCallback((digit) => {
+    if (pinRef.current.length < 4) {
+      const newPin = pinRef.current + digit;
+      pinRef.current = newPin;
       setPin(newPin);
       setError("");
       
@@ -25,36 +44,13 @@ export default function PinLockScreen({
         verifyPin(newPin);
       }
     }
-  };
+  }, [verifyPin]);
 
-  const handleDelete = () => {
-    setPin(pin.slice(0, -1));
+  const handleDelete = useCallback(() => {
+    pinRef.current = pinRef.current.slice(0, -1);
+    setPin(pinRef.current);
     setError("");
-  };
-
-  const handleClear = () => {
-    setPin("");
-    setError("");
-  };
-
-  const verifyPin = async (enteredPin) => {
-    // Simple PIN verification - compare with stored pin_hash
-    // In production, you'd hash the entered PIN and compare
-    if (employee?.pin_hash === enteredPin) {
-      setSuccess(true);
-      setTimeout(() => {
-        onUnlock();
-      }, 800);
-    } else {
-      setAttempts(prev => prev + 1);
-      setError("Incorrect PIN. Please try again.");
-      setPin("");
-      
-      if (attempts + 1 >= maxAttempts) {
-        setError("Too many attempts. Please contact your administrator.");
-      }
-    }
-  };
+  }, []);
 
   const digits = [1, 2, 3, 4, 5, 6, 7, 8, 9, null, 0, 'delete'];
 
