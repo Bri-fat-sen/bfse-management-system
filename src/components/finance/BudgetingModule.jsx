@@ -35,7 +35,7 @@ import {
 import { 
   Target, Plus, TrendingUp, TrendingDown, AlertTriangle, 
   CheckCircle2, Edit2, Trash2, Calendar, PiggyBank,
-  BarChart3, ArrowUpRight, ArrowDownRight, Minus
+  BarChart3, ArrowUpRight, ArrowDownRight, Minus, MapPin, Users
 } from "lucide-react";
 import { toast } from "sonner";
 import {
@@ -62,7 +62,7 @@ const MONTHS = [
   "July", "August", "September", "October", "November", "December"
 ];
 
-export default function BudgetingModule({ orgId, expenses = [] }) {
+export default function BudgetingModule({ orgId, expenses = [], sales = [], currentEmployee }) {
   const queryClient = useQueryClient();
   const [activeTab, setActiveTab] = useState("overview");
   const [showBudgetDialog, setShowBudgetDialog] = useState(false);
@@ -70,10 +70,13 @@ export default function BudgetingModule({ orgId, expenses = [] }) {
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
   const [selectedPeriodType, setSelectedPeriodType] = useState("monthly");
   const [forecastYears, setForecastYears] = useState(1);
+  const [selectedLocation, setSelectedLocation] = useState("all");
 
   const currentYear = new Date().getFullYear();
   const currentMonth = new Date().getMonth() + 1;
   const currentQuarter = Math.ceil(currentMonth / 3);
+
+  const isAdmin = ['super_admin', 'org_admin'].includes(currentEmployee?.role);
 
   // Fetch budgets
   const { data: budgets = [] } = useQuery({
@@ -82,9 +85,30 @@ export default function BudgetingModule({ orgId, expenses = [] }) {
     enabled: !!orgId
   });
 
+  // Fetch locations (warehouses)
+  const { data: warehouses = [] } = useQuery({
+    queryKey: ['warehouses', orgId],
+    queryFn: () => base44.entities.Warehouse.filter({ organisation_id: orgId }),
+    enabled: !!orgId
+  });
+
+  // Fetch employees (warehouse managers)
+  const { data: employees = [] } = useQuery({
+    queryKey: ['employees', orgId],
+    queryFn: () => base44.entities.Employee.filter({ organisation_id: orgId }),
+    enabled: !!orgId
+  });
+
+  const warehouseManagers = employees.filter(e => e.role === 'warehouse_manager');
+
   // Budget form state
   const [budgetForm, setBudgetForm] = useState({
+    budget_type: "expense",
     category: "",
+    location_id: "",
+    location_name: "",
+    assigned_to_id: "",
+    assigned_to_name: "",
     period_type: "monthly",
     year: currentYear,
     month: currentMonth,
@@ -125,7 +149,12 @@ export default function BudgetingModule({ orgId, expenses = [] }) {
 
   const resetForm = () => {
     setBudgetForm({
+      budget_type: "expense",
       category: "",
+      location_id: "",
+      location_name: "",
+      assigned_to_id: "",
+      assigned_to_name: "",
       period_type: "monthly",
       year: currentYear,
       month: currentMonth,
@@ -176,11 +205,55 @@ export default function BudgetingModule({ orgId, expenses = [] }) {
     return actualSpending[key] || 0;
   };
 
+  // Calculate actual revenue by location
+  const actualRevenue = useMemo(() => {
+    const revenue = {};
+    
+    sales.forEach(sale => {
+      if (!sale.created_date) return;
+      const saleDate = new Date(sale.created_date);
+      const year = saleDate.getFullYear();
+      const month = saleDate.getMonth() + 1;
+      const quarter = Math.ceil(month / 3);
+      const locationId = sale.location_id || 'all';
+      
+      // Monthly key
+      const monthKey = `${year}-${month}-${locationId}`;
+      revenue[monthKey] = (revenue[monthKey] || 0) + (sale.total_amount || 0);
+      
+      // Quarterly key
+      const quarterKey = `${year}-Q${quarter}-${locationId}`;
+      revenue[quarterKey] = (revenue[quarterKey] || 0) + (sale.total_amount || 0);
+      
+      // Yearly key
+      const yearKey = `${year}-${locationId}`;
+      revenue[yearKey] = (revenue[yearKey] || 0) + (sale.total_amount || 0);
+    });
+    
+    return revenue;
+  }, [sales]);
+
+  // Get actual revenue for a budget
+  const getActualRevenue = (budget) => {
+    let key;
+    const locationId = budget.location_id || 'all';
+    if (budget.period_type === 'monthly') {
+      key = `${budget.year}-${budget.month}-${locationId}`;
+    } else if (budget.period_type === 'quarterly') {
+      key = `${budget.year}-Q${budget.quarter}-${locationId}`;
+    } else {
+      key = `${budget.year}-${locationId}`;
+    }
+    return actualRevenue[key] || 0;
+  };
+
   // Budget vs Actual comparison data
   const budgetComparison = useMemo(() => {
     const filteredBudgets = budgets.filter(b => 
       b.year === selectedYear && 
-      b.period_type === selectedPeriodType
+      b.period_type === selectedPeriodType &&
+      b.budget_type === 'expense' &&
+      (selectedLocation === 'all' || b.location_id === selectedLocation || !b.location_id)
     );
 
     return EXPENSE_CATEGORIES.map(cat => {
@@ -209,7 +282,41 @@ export default function BudgetingModule({ orgId, expenses = [] }) {
         status: variance >= 0 ? 'under' : 'over'
       };
     }).filter(item => item.budgeted > 0 || item.actual > 0);
-  }, [budgets, selectedYear, selectedPeriodType, actualSpending]);
+  }, [budgets, selectedYear, selectedPeriodType, actualSpending, selectedLocation]);
+
+  // Revenue targets by location
+  const revenueTargets = useMemo(() => {
+    const filteredBudgets = budgets.filter(b => 
+      b.year === selectedYear && 
+      b.period_type === selectedPeriodType &&
+      b.budget_type === 'revenue_target'
+    );
+
+    return warehouses.map(loc => {
+      const locationBudgets = filteredBudgets.filter(b => b.location_id === loc.id);
+      const totalTarget = locationBudgets.reduce((sum, b) => sum + (b.budgeted_amount || 0), 0);
+      
+      let totalActual = 0;
+      locationBudgets.forEach(b => {
+        totalActual += getActualRevenue(b);
+      });
+
+      const variance = totalActual - totalTarget;
+      const variancePercent = totalTarget > 0 ? ((variance / totalTarget) * 100) : 0;
+      const progress = totalTarget > 0 ? (totalActual / totalTarget) * 100 : 0;
+
+      return {
+        location: loc.name,
+        locationId: loc.id,
+        target: totalTarget,
+        actual: totalActual,
+        variance,
+        variancePercent,
+        progress,
+        status: progress >= 100 ? 'achieved' : progress >= 80 ? 'on_track' : 'behind'
+      };
+    }).filter(item => item.target > 0 || item.actual > 0);
+  }, [budgets, selectedYear, selectedPeriodType, warehouses, actualRevenue]);
 
   // Monthly trend data for charts
   const monthlyTrendData = useMemo(() => {
@@ -320,12 +427,28 @@ export default function BudgetingModule({ orgId, expenses = [] }) {
 
   const handleSubmitBudget = () => {
     const data = {
-      category: budgetForm.category,
+      budget_type: budgetForm.budget_type,
       period_type: budgetForm.period_type,
       year: parseInt(budgetForm.year),
       budgeted_amount: parseFloat(budgetForm.budgeted_amount) || 0,
-      notes: budgetForm.notes
+      notes: budgetForm.notes,
+      created_by_id: currentEmployee?.id,
+      created_by_name: currentEmployee?.full_name
     };
+
+    if (budgetForm.budget_type === 'expense') {
+      data.category = budgetForm.category;
+    }
+
+    if (budgetForm.location_id) {
+      data.location_id = budgetForm.location_id;
+      data.location_name = budgetForm.location_name;
+    }
+
+    if (budgetForm.assigned_to_id) {
+      data.assigned_to_id = budgetForm.assigned_to_id;
+      data.assigned_to_name = budgetForm.assigned_to_name;
+    }
 
     if (budgetForm.period_type === 'monthly') {
       data.month = parseInt(budgetForm.month);
@@ -343,7 +466,12 @@ export default function BudgetingModule({ orgId, expenses = [] }) {
   const handleEditBudget = (budget) => {
     setEditingBudget(budget);
     setBudgetForm({
-      category: budget.category,
+      budget_type: budget.budget_type || 'expense',
+      category: budget.category || '',
+      location_id: budget.location_id || '',
+      location_name: budget.location_name || '',
+      assigned_to_id: budget.assigned_to_id || '',
+      assigned_to_name: budget.assigned_to_name || '',
       period_type: budget.period_type,
       year: budget.year,
       month: budget.month || currentMonth,
@@ -453,8 +581,9 @@ export default function BudgetingModule({ orgId, expenses = [] }) {
 
       {/* Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="grid w-full grid-cols-3">
-          <TabsTrigger value="overview">Budget Overview</TabsTrigger>
+        <TabsList className="grid w-full grid-cols-4">
+          <TabsTrigger value="overview">Expense Budgets</TabsTrigger>
+          <TabsTrigger value="revenue">Revenue Targets</TabsTrigger>
           <TabsTrigger value="tracking">Variance Tracking</TabsTrigger>
           <TabsTrigger value="forecast">Forecasting</TabsTrigger>
         </TabsList>
@@ -480,6 +609,18 @@ export default function BudgetingModule({ orgId, expenses = [] }) {
                 <SelectItem value="monthly">Monthly</SelectItem>
                 <SelectItem value="quarterly">Quarterly</SelectItem>
                 <SelectItem value="yearly">Yearly</SelectItem>
+              </SelectContent>
+            </Select>
+            <Select value={selectedLocation} onValueChange={setSelectedLocation}>
+              <SelectTrigger className="w-[180px]">
+                <MapPin className="w-4 h-4 mr-2" />
+                <SelectValue placeholder="All Locations" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Locations</SelectItem>
+                {warehouses.map(w => (
+                  <SelectItem key={w.id} value={w.id}>{w.name}</SelectItem>
+                ))}
               </SelectContent>
             </Select>
           </div>
@@ -509,8 +650,8 @@ export default function BudgetingModule({ orgId, expenses = [] }) {
           {/* Budget List */}
           <Card>
             <CardHeader>
-              <CardTitle>Active Budgets</CardTitle>
-              <CardDescription>Manage your expense budgets</CardDescription>
+              <CardTitle>Expense Budgets</CardTitle>
+              <CardDescription>Manage expense budgets by category and location</CardDescription>
             </CardHeader>
             <CardContent>
               <ScrollArea className="h-[400px]">
@@ -518,17 +659,19 @@ export default function BudgetingModule({ orgId, expenses = [] }) {
                   <TableHeader>
                     <TableRow>
                       <TableHead>Category</TableHead>
+                      <TableHead>Location</TableHead>
+                      <TableHead>Assigned To</TableHead>
                       <TableHead>Period</TableHead>
                       <TableHead className="text-right">Budgeted</TableHead>
                       <TableHead className="text-right">Actual</TableHead>
-                      <TableHead className="text-right">Variance</TableHead>
                       <TableHead>Progress</TableHead>
                       <TableHead className="text-right">Actions</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {budgets
-                      .filter(b => b.year === selectedYear)
+                      .filter(b => b.year === selectedYear && b.budget_type === 'expense')
+                      .filter(b => selectedLocation === 'all' || b.location_id === selectedLocation || !b.location_id)
                       .map((budget) => {
                         const actual = getActualAmount(budget);
                         const variance = budget.budgeted_amount - actual;
@@ -546,18 +689,31 @@ export default function BudgetingModule({ orgId, expenses = [] }) {
                           <TableRow key={budget.id}>
                             <TableCell className="font-medium">{categoryLabel}</TableCell>
                             <TableCell>
+                              {budget.location_name ? (
+                                <Badge variant="outline" className="gap-1">
+                                  <MapPin className="w-3 h-3" />
+                                  {budget.location_name}
+                                </Badge>
+                              ) : (
+                                <span className="text-gray-400 text-sm">All</span>
+                              )}
+                            </TableCell>
+                            <TableCell>
+                              {budget.assigned_to_name ? (
+                                <span className="text-sm">{budget.assigned_to_name}</span>
+                              ) : (
+                                <span className="text-gray-400 text-sm">-</span>
+                              )}
+                            </TableCell>
+                            <TableCell>
                               <Badge variant="outline">{periodLabel}</Badge>
                             </TableCell>
                             <TableCell className="text-right">Le {budget.budgeted_amount?.toLocaleString()}</TableCell>
-                            <TableCell className="text-right">Le {actual.toLocaleString()}</TableCell>
                             <TableCell className={`text-right ${getVarianceColor(variance)}`}>
-                              <div className="flex items-center justify-end gap-1">
-                                {getVarianceIcon(variance)}
-                                Le {Math.abs(variance).toLocaleString()}
-                              </div>
+                              Le {actual.toLocaleString()}
                             </TableCell>
                             <TableCell>
-                              <div className="w-24">
+                              <div className="w-20">
                                 <Progress 
                                   value={Math.min(progress, 100)} 
                                   className={`h-2 ${progress > 100 ? '[&>div]:bg-red-500' : progress > 80 ? '[&>div]:bg-amber-500' : '[&>div]:bg-green-500'}`}
@@ -566,19 +722,198 @@ export default function BudgetingModule({ orgId, expenses = [] }) {
                               </div>
                             </TableCell>
                             <TableCell className="text-right">
-                              <div className="flex justify-end gap-1">
-                                <Button variant="ghost" size="icon" onClick={() => handleEditBudget(budget)}>
-                                  <Edit2 className="w-4 h-4" />
-                                </Button>
-                                <Button 
-                                  variant="ghost" 
-                                  size="icon" 
-                                  className="text-red-600"
-                                  onClick={() => deleteBudgetMutation.mutate(budget.id)}
-                                >
-                                  <Trash2 className="w-4 h-4" />
-                                </Button>
+                              {isAdmin && (
+                                <div className="flex justify-end gap-1">
+                                  <Button variant="ghost" size="icon" onClick={() => handleEditBudget(budget)}>
+                                    <Edit2 className="w-4 h-4" />
+                                  </Button>
+                                  <Button 
+                                    variant="ghost" 
+                                    size="icon" 
+                                    className="text-red-600"
+                                    onClick={() => deleteBudgetMutation.mutate(budget.id)}
+                                  >
+                                    <Trash2 className="w-4 h-4" />
+                                  </Button>
+                                </div>
+                              )}
+                            </TableCell>
+                          </TableRow>
+                        );
+                      })}
+                  </TableBody>
+                </Table>
+              </ScrollArea>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* Revenue Targets Tab */}
+        <TabsContent value="revenue" className="space-y-4">
+          <div className="flex flex-wrap gap-3 items-center justify-between">
+            <div className="flex gap-3">
+              <Select value={selectedYear.toString()} onValueChange={(v) => setSelectedYear(parseInt(v))}>
+                <SelectTrigger className="w-[120px]">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {[currentYear - 1, currentYear, currentYear + 1].map(year => (
+                    <SelectItem key={year} value={year.toString()}>{year}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <Select value={selectedPeriodType} onValueChange={setSelectedPeriodType}>
+                <SelectTrigger className="w-[140px]">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="monthly">Monthly</SelectItem>
+                  <SelectItem value="quarterly">Quarterly</SelectItem>
+                  <SelectItem value="yearly">Yearly</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            {isAdmin && (
+              <Button 
+                onClick={() => { 
+                  resetForm(); 
+                  setBudgetForm(prev => ({...prev, budget_type: 'revenue_target'}));
+                  setEditingBudget(null); 
+                  setShowBudgetDialog(true); 
+                }}
+                className="bg-gradient-to-r from-[#1EB053] to-[#0072C6]"
+              >
+                <Plus className="w-4 h-4 mr-2" />
+                Set Revenue Target
+              </Button>
+            )}
+          </div>
+
+          {/* Revenue Targets by Location */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {revenueTargets.map((item) => (
+              <Card key={item.locationId} className={`border-l-4 ${
+                item.status === 'achieved' ? 'border-l-green-500' : 
+                item.status === 'on_track' ? 'border-l-amber-500' : 'border-l-red-500'
+              }`}>
+                <CardContent className="p-4">
+                  <div className="flex justify-between items-start mb-3">
+                    <div className="flex items-center gap-2">
+                      <MapPin className="w-4 h-4 text-gray-500" />
+                      <h3 className="font-semibold">{item.location}</h3>
+                    </div>
+                    <Badge className={
+                      item.status === 'achieved' ? 'bg-green-100 text-green-700' : 
+                      item.status === 'on_track' ? 'bg-amber-100 text-amber-700' : 'bg-red-100 text-red-700'
+                    }>
+                      {item.progress.toFixed(0)}%
+                    </Badge>
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <div className="flex justify-between text-sm">
+                      <span className="text-gray-500">Target</span>
+                      <span className="font-medium">Le {item.target.toLocaleString()}</span>
+                    </div>
+                    <div className="flex justify-between text-sm">
+                      <span className="text-gray-500">Actual</span>
+                      <span className={`font-medium ${item.actual >= item.target ? 'text-green-600' : 'text-amber-600'}`}>
+                        Le {item.actual.toLocaleString()}
+                      </span>
+                    </div>
+                    <Progress 
+                      value={Math.min(item.progress, 100)} 
+                      className={`h-3 ${
+                        item.status === 'achieved' ? '[&>div]:bg-green-500' : 
+                        item.status === 'on_track' ? '[&>div]:bg-amber-500' : '[&>div]:bg-red-500'
+                      }`}
+                    />
+                    <div className={`flex justify-between text-sm font-semibold ${item.variance >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                      <span>Variance</span>
+                      <span>{item.variance >= 0 ? '+' : ''}Le {item.variance.toLocaleString()}</span>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+
+          {/* Revenue Targets List */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Target className="w-5 h-5 text-[#1EB053]" />
+                Revenue Targets by Location
+              </CardTitle>
+              <CardDescription>Set and track revenue targets for each location</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <ScrollArea className="h-[300px]">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Location</TableHead>
+                      <TableHead>Period</TableHead>
+                      <TableHead className="text-right">Target</TableHead>
+                      <TableHead className="text-right">Actual</TableHead>
+                      <TableHead>Progress</TableHead>
+                      <TableHead className="text-right">Actions</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {budgets
+                      .filter(b => b.year === selectedYear && b.budget_type === 'revenue_target')
+                      .map((budget) => {
+                        const actual = getActualRevenue(budget);
+                        const progress = budget.budgeted_amount > 0 ? (actual / budget.budgeted_amount) * 100 : 0;
+                        
+                        let periodLabel = budget.year.toString();
+                        if (budget.period_type === 'monthly') {
+                          periodLabel = `${MONTHS[budget.month - 1]} ${budget.year}`;
+                        } else if (budget.period_type === 'quarterly') {
+                          periodLabel = `Q${budget.quarter} ${budget.year}`;
+                        }
+
+                        return (
+                          <TableRow key={budget.id}>
+                            <TableCell className="font-medium">
+                              <div className="flex items-center gap-2">
+                                <MapPin className="w-4 h-4 text-gray-400" />
+                                {budget.location_name || 'All Locations'}
                               </div>
+                            </TableCell>
+                            <TableCell>
+                              <Badge variant="outline">{periodLabel}</Badge>
+                            </TableCell>
+                            <TableCell className="text-right">Le {budget.budgeted_amount?.toLocaleString()}</TableCell>
+                            <TableCell className={`text-right ${actual >= budget.budgeted_amount ? 'text-green-600' : 'text-amber-600'}`}>
+                              Le {actual.toLocaleString()}
+                            </TableCell>
+                            <TableCell>
+                              <div className="w-24">
+                                <Progress 
+                                  value={Math.min(progress, 100)} 
+                                  className={`h-2 ${progress >= 100 ? '[&>div]:bg-green-500' : progress >= 80 ? '[&>div]:bg-amber-500' : '[&>div]:bg-red-500'}`}
+                                />
+                                <p className="text-xs text-gray-500 mt-1">{progress.toFixed(0)}%</p>
+                              </div>
+                            </TableCell>
+                            <TableCell className="text-right">
+                              {isAdmin && (
+                                <div className="flex justify-end gap-1">
+                                  <Button variant="ghost" size="icon" onClick={() => handleEditBudget(budget)}>
+                                    <Edit2 className="w-4 h-4" />
+                                  </Button>
+                                  <Button 
+                                    variant="ghost" 
+                                    size="icon" 
+                                    className="text-red-600"
+                                    onClick={() => deleteBudgetMutation.mutate(budget.id)}
+                                  >
+                                    <Trash2 className="w-4 h-4" />
+                                  </Button>
+                                </div>
+                              )}
                             </TableCell>
                           </TableRow>
                         );
@@ -735,25 +1070,103 @@ export default function BudgetingModule({ orgId, expenses = [] }) {
 
       {/* Budget Dialog */}
       <Dialog open={showBudgetDialog} onOpenChange={setShowBudgetDialog}>
-        <DialogContent>
+        <DialogContent className="max-w-lg">
           <DialogHeader>
-            <DialogTitle>{editingBudget ? 'Edit Budget' : 'Create New Budget'}</DialogTitle>
+            <DialogTitle>
+              {editingBudget ? 'Edit Budget' : budgetForm.budget_type === 'revenue_target' ? 'Set Revenue Target' : 'Create Expense Budget'}
+            </DialogTitle>
           </DialogHeader>
           
           <div className="space-y-4 py-4">
+            {/* Budget Type Selection */}
             <div className="space-y-2">
-              <Label>Expense Category</Label>
-              <Select value={budgetForm.category} onValueChange={(v) => setBudgetForm({...budgetForm, category: v})}>
+              <Label>Budget Type</Label>
+              <Select 
+                value={budgetForm.budget_type} 
+                onValueChange={(v) => setBudgetForm({...budgetForm, budget_type: v, category: ''})}
+              >
                 <SelectTrigger>
-                  <SelectValue placeholder="Select category" />
+                  <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  {EXPENSE_CATEGORIES.map(cat => (
-                    <SelectItem key={cat.value} value={cat.value}>{cat.label}</SelectItem>
+                  <SelectItem value="expense">Expense Budget</SelectItem>
+                  <SelectItem value="revenue_target">Revenue Target</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Expense Category (only for expense budgets) */}
+            {budgetForm.budget_type === 'expense' && (
+              <div className="space-y-2">
+                <Label>Expense Category</Label>
+                <Select value={budgetForm.category} onValueChange={(v) => setBudgetForm({...budgetForm, category: v})}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select category" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {EXPENSE_CATEGORIES.map(cat => (
+                      <SelectItem key={cat.value} value={cat.value}>{cat.label}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+
+            {/* Location Selection */}
+            <div className="space-y-2">
+              <Label>Location (Warehouse/Store)</Label>
+              <Select 
+                value={budgetForm.location_id} 
+                onValueChange={(v) => {
+                  const loc = warehouses.find(w => w.id === v);
+                  setBudgetForm({
+                    ...budgetForm, 
+                    location_id: v, 
+                    location_name: loc?.name || ''
+                  });
+                }}
+              >
+                <SelectTrigger>
+                  <MapPin className="w-4 h-4 mr-2" />
+                  <SelectValue placeholder="All Locations (Optional)" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value={null}>All Locations</SelectItem>
+                  {warehouses.map(w => (
+                    <SelectItem key={w.id} value={w.id}>{w.name}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
             </div>
+
+            {/* Assign to Warehouse Manager (for expense budgets) */}
+            {budgetForm.budget_type === 'expense' && budgetForm.location_id && (
+              <div className="space-y-2">
+                <Label>Assign to Manager</Label>
+                <Select 
+                  value={budgetForm.assigned_to_id} 
+                  onValueChange={(v) => {
+                    const emp = warehouseManagers.find(e => e.id === v);
+                    setBudgetForm({
+                      ...budgetForm, 
+                      assigned_to_id: v, 
+                      assigned_to_name: emp?.full_name || ''
+                    });
+                  }}
+                >
+                  <SelectTrigger>
+                    <Users className="w-4 h-4 mr-2" />
+                    <SelectValue placeholder="Select manager (Optional)" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value={null}>No Assignment</SelectItem>
+                    {warehouseManagers.map(emp => (
+                      <SelectItem key={emp.id} value={emp.id}>{emp.full_name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
 
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
@@ -819,7 +1232,7 @@ export default function BudgetingModule({ orgId, expenses = [] }) {
             )}
 
             <div className="space-y-2">
-              <Label>Budget Amount (Le)</Label>
+              <Label>{budgetForm.budget_type === 'revenue_target' ? 'Revenue Target (Le)' : 'Budget Amount (Le)'}</Label>
               <Input
                 type="number"
                 placeholder="Enter amount"
@@ -842,10 +1255,10 @@ export default function BudgetingModule({ orgId, expenses = [] }) {
             <Button variant="outline" onClick={() => setShowBudgetDialog(false)}>Cancel</Button>
             <Button 
               onClick={handleSubmitBudget}
-              disabled={!budgetForm.category || !budgetForm.budgeted_amount}
+              disabled={(budgetForm.budget_type === 'expense' && !budgetForm.category) || !budgetForm.budgeted_amount}
               className="bg-gradient-to-r from-[#1EB053] to-[#0072C6]"
             >
-              {editingBudget ? 'Update Budget' : 'Create Budget'}
+              {editingBudget ? 'Update' : budgetForm.budget_type === 'revenue_target' ? 'Set Target' : 'Create Budget'}
             </Button>
           </DialogFooter>
         </DialogContent>
