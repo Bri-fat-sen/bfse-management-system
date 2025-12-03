@@ -248,6 +248,13 @@ export default function Finance() {
     });
   }, [revenues, getDateRange]);
 
+  const filteredBankDeposits = useMemo(() => {
+    return bankDeposits.filter(d => {
+      const date = new Date(d.date || d.created_date);
+      return date >= getDateRange.start && date <= getDateRange.end;
+    });
+  }, [bankDeposits, getDateRange]);
+
   // Calculate comprehensive financials
   const financials = useMemo(() => {
     // Revenue streams
