@@ -316,22 +316,43 @@ export function getExpectedWorkingDays(frequency) {
 /**
  * Calculate PAYE Tax based on annual income
  * Uses progressive tax brackets
+ * First Le 6,000 annually is tax-free per Sierra Leone Finance Act 2024
  */
 export function calculatePAYE(annualIncome) {
   const income = safeNum(annualIncome);
+  
+  // Tax-free threshold is Le 6,000 annually
+  const TAX_FREE_THRESHOLD = 6000;
+  
+  // If income is at or below tax-free threshold, no tax is due
+  if (income <= TAX_FREE_THRESHOLD) {
+    return {
+      annualTax: 0,
+      monthlyTax: 0,
+      effectiveRate: "0.00",
+      taxBracket: "0% (Tax-Free)"
+    };
+  }
+  
   let tax = 0;
-  let remainingIncome = income;
   let currentBracket = "0%";
   
+  // Only calculate tax on income ABOVE the tax-free threshold
+  // Apply progressive rates to each bracket
   for (const bracket of SL_TAX_BRACKETS) {
-    if (remainingIncome <= 0) break;
+    // Skip the tax-free bracket
+    if (bracket.rate === 0) continue;
     
+    // Check if income reaches this bracket
     if (income > bracket.min) {
-      const bracketRange = bracket.max === Infinity ? remainingIncome : (bracket.max - bracket.min);
-      const taxableInBracket = Math.min(bracketRange, remainingIncome);
-      tax += taxableInBracket * safeNum(bracket.rate);
-      remainingIncome -= taxableInBracket;
-      currentBracket = bracket.label;
+      // Calculate the taxable amount in this bracket
+      const taxableUpperLimit = bracket.max === Infinity ? income : Math.min(income, bracket.max);
+      const taxableInBracket = taxableUpperLimit - bracket.min;
+      
+      if (taxableInBracket > 0) {
+        tax += taxableInBracket * safeNum(bracket.rate);
+        currentBracket = bracket.label;
+      }
     }
   }
   
