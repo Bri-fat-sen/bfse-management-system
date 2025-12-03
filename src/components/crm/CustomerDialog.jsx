@@ -137,7 +137,7 @@ export default function CustomerDialog({ open, onOpenChange, customer, orgId, em
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-hidden p-0 w-[95vw] sm:w-full">
+      <DialogContent className="max-w-2xl max-h-[90vh] overflow-hidden p-0 w-[95vw] sm:w-full [&>button]:hidden">
         {/* Sierra Leone Flag Header */}
         <div className="h-2 flex">
           <div className="flex-1" style={{ backgroundColor: primaryColor }} />
