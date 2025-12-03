@@ -149,6 +149,13 @@ export default function UserManagement() {
     enabled: !!orgId,
   });
 
+  // Fetch warehouses/locations
+  const { data: warehouses = [] } = useQuery({
+    queryKey: ['warehouses', orgId],
+    queryFn: () => base44.entities.Warehouse.filter({ organisation_id: orgId, is_active: true }),
+    enabled: !!orgId,
+  });
+
   // Update employee mutation
   const updateEmployeeMutation = useMutation({
     mutationFn: ({ id, data }) => base44.entities.Employee.update(id, data),
