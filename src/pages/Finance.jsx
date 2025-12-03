@@ -1305,12 +1305,7 @@ export default function Finance() {
 
           {/* Budgeting & Forecasting Tab */}
           <TabsContent value="budgeting" className="mt-6">
-            <BudgetingModule 
-              orgId={orgId} 
-              expenses={expenses} 
-              sales={sales}
-              currentEmployee={currentEmployee}
-            />
+            <BudgetingModule orgId={orgId} expenses={expenses} sales={sales} currentEmployee={currentEmployee} />
           </TabsContent>
 
           {/* Cash Flow Tab */}
