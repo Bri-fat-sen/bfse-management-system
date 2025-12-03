@@ -37,34 +37,53 @@ export default function TripReportExport({ trips = [], routes = [], vehicles = [
       { label: 'Net Revenue', value: `SLE ${netRevenue.toLocaleString()}`, highlight: netRevenue >= 0 ? 'green' : 'red' }
     ];
 
-    const sections = [{
-      title: 'Trip Records',
-      icon: '🚐',
-      table: {
-        columns: ['Date', 'Route', 'Vehicle', 'Driver', 'Passengers', 'Revenue', 'Fuel', 'Net (SLE)', 'Status'],
-        rows: trips.map(t => [
-          t.date ? format(new Date(t.date), 'dd MMM yyyy') : '-',
-          t.route_name || 'N/A',
-          t.vehicle_registration || 'N/A',
-          t.driver_name || 'N/A',
-          t.passengers_count || 0,
-          `SLE ${(t.total_revenue || 0).toLocaleString()}`,
-          `SLE ${(t.fuel_cost || 0).toLocaleString()}`,
-          `SLE ${(t.net_revenue || 0).toLocaleString()}`,
-          t.status || 'completed'
-        ])
+    // Route breakdown
+    const routeBreakdown = {};
+    trips.forEach(t => {
+      const route = t.route_name || 'Unknown Route';
+      if (!routeBreakdown[route]) routeBreakdown[route] = 0;
+      routeBreakdown[route] += t.total_revenue || 0;
+    });
+
+    const sections = [
+      {
+        title: 'Revenue by Route',
+        icon: '🛣️',
+        breakdown: routeBreakdown
+      },
+      {
+        title: 'Trip Records',
+        icon: '🚐',
+        table: {
+          columns: ['Date', 'Route', 'Vehicle', 'Driver', 'Passengers', 'Revenue', 'Fuel', 'Net (SLE)', 'Status'],
+          rows: [
+            ...trips.map(t => [
+              t.date ? format(new Date(t.date), 'dd MMM yyyy') : '-',
+              t.route_name || 'N/A',
+              t.vehicle_registration || 'N/A',
+              t.driver_name || 'N/A',
+              t.passengers_count || 0,
+              `SLE ${(t.total_revenue || 0).toLocaleString()}`,
+              `SLE ${(t.fuel_cost || 0).toLocaleString()}`,
+              `SLE ${(t.net_revenue || 0).toLocaleString()}`,
+              t.status || 'completed'
+            ]),
+            ['GRAND TOTAL', '', '', '', totalPassengers, `SLE ${totalRevenue.toLocaleString()}`, `SLE ${totalFuelCost.toLocaleString()}`, `SLE ${netRevenue.toLocaleString()}`, '']
+          ]
+        }
       }
-    }];
+    ];
 
     const html = generateUnifiedPDF({
       documentType: 'report',
       title: 'Transport Trip Report',
-      organisation: organisation,
-      summaryCards: summaryCards,
-      sections: sections
+      organisation,
+      infoBar: [{ label: 'Generated', value: format(new Date(), 'MMMM d, yyyy') }],
+      summaryCards,
+      sections
     });
 
-    printUnifiedPDF(html, `trip-report-${format(new Date(), 'yyyy-MM-dd')}.pdf`);
+    printUnifiedPDF(html, 'trip-report.pdf');
   };
 
   return (

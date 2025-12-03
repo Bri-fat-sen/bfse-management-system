@@ -51,7 +51,26 @@ export default function AttendanceReportExport({ attendance = [], employee, empl
       { label: 'Total Hours', value: `${totalHours.toFixed(1)} hrs` }
     ];
 
-    const sections = [{
+    const sections = [];
+    
+    // Department breakdown if multiple employees
+    if (employees) {
+      const deptBreakdown = {};
+      attendance.forEach(a => {
+        const emp = employees.find(e => e.id === a.employee_id);
+        const dept = emp?.department || 'Unassigned';
+        if (!deptBreakdown[dept]) deptBreakdown[dept] = 0;
+        deptBreakdown[dept] += a.total_hours || 0;
+      });
+      
+      sections.push({
+        title: 'Hours by Department',
+        icon: '🏢',
+        breakdown: deptBreakdown
+      });
+    }
+
+    sections.push({
       title: employees ? 'Staff Attendance Records' : 'My Attendance Records',
       icon: '📅',
       table: {
@@ -81,24 +100,33 @@ export default function AttendanceReportExport({ attendance = [], employee, empl
             a.status
           ])
       }
-    }];
+    });
+
+    // Add notes if there are issues
+    let notes = null;
+    if (lateDays > 0 || absentDays > 0) {
+      notes = `${lateDays > 0 ? `${lateDays} late arrival(s) recorded. ` : ''}${absentDays > 0 ? `${absentDays} absence(s) recorded.` : ''}`;
+    }
 
     const reportTitle = employees ? 
       'Staff Attendance Report' : 
       `Attendance Report - ${employee?.full_name || 'Employee'}`;
 
+    const dateRange = attendance.length > 0 
+      ? `${format(new Date(attendance[attendance.length - 1]?.date || new Date()), 'MMM d')} - ${format(new Date(attendance[0]?.date || new Date()), 'MMM d, yyyy')}`
+      : format(new Date(), 'MMMM d, yyyy');
+
     const html = generateUnifiedPDF({
       documentType: 'report',
       title: reportTitle,
-      organisation: organisation,
-      summaryCards: summaryCards,
-      sections: sections,
-      notes: lateDays > 0 || absentDays > 0 
-        ? `Attendance Alerts: ${lateDays > 0 ? `${lateDays} late arrival(s) recorded. ` : ''}${absentDays > 0 ? `${absentDays} absence(s) recorded.` : ''}`
-        : null
+      organisation,
+      infoBar: [{ label: 'Period', value: dateRange }],
+      summaryCards,
+      sections,
+      notes
     });
 
-    printUnifiedPDF(html, `attendance-report-${format(new Date(), 'yyyy-MM-dd')}.pdf`);
+    printUnifiedPDF(html, 'attendance-report.pdf');
   };
 
   return (
