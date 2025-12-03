@@ -148,7 +148,7 @@ export default function PinLockScreen({
           </div>
         )}
 
-        {/* PIN Keypad */}
+        {/* PIN Keypad - Optimized for fast input */}
         <div className="bg-gray-50 rounded-3xl p-4 border border-gray-100">
           <div className="grid grid-cols-3 gap-3">
             {digits.map((digit, index) => {
@@ -158,21 +158,21 @@ export default function PinLockScreen({
               if (digit === 'delete') {
                 return (
                   <button
-                    key={index}
-                    onClick={handleDelete}
+                    key="delete"
+                    onPointerDown={(e) => { e.preventDefault(); handleDelete(); }}
                     disabled={success || attempts >= maxAttempts}
-                    className="h-16 rounded-xl bg-gray-100 hover:bg-gray-200 active:bg-gray-300 transition-all flex items-center justify-center text-gray-600 disabled:opacity-50"
+                    className="h-16 rounded-xl bg-gray-100 hover:bg-gray-200 active:bg-gray-300 flex items-center justify-center text-gray-600 disabled:opacity-50 select-none touch-manipulation"
                   >
-                    <Delete className="w-6 h-6" />
+                    <Delete className="w-6 h-6 pointer-events-none" />
                   </button>
                 );
               }
               return (
                 <button
-                  key={index}
-                  onClick={() => handleDigit(digit.toString())}
+                  key={digit}
+                  onPointerDown={(e) => { e.preventDefault(); handleDigit(digit.toString()); }}
                   disabled={success || attempts >= maxAttempts}
-                  className="h-16 rounded-xl bg-white border border-gray-200 hover:bg-gray-50 active:bg-gray-100 transition-all text-gray-800 text-2xl font-semibold disabled:opacity-50 active:scale-95 shadow-sm"
+                  className="h-16 rounded-xl bg-white border border-gray-200 hover:bg-gray-50 active:bg-gray-100 text-gray-800 text-2xl font-semibold disabled:opacity-50 active:scale-95 shadow-sm select-none touch-manipulation"
                 >
                   {digit}
                 </button>
