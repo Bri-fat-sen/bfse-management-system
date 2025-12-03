@@ -324,6 +324,9 @@ export default function UserManagement() {
       status: formData.get('status'),
       remuneration_package_id: selectedPackage ? packageId : null,
       remuneration_package_name: selectedPackage?.name || null,
+      // Multi-location assignment
+      assigned_location_ids: editingEmployee.assigned_location_ids || [],
+      assigned_location_names: editingEmployee.assigned_location_names || [],
     };
     updateEmployeeMutation.mutate({ id: editingEmployee.id, data });
   };
