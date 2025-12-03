@@ -558,7 +558,7 @@ export function getUnifiedFooter(organisation) {
   return `
     <div class="footer">
       <div class="thanks">Thank you for your business!</div>
-      <div class="tagline">Proudly serving ${organisation?.city || 'Sierra Leone'}</div>
+      <div class="tagline">Proudly serving Sierra Leone</div>
       <div class="flag">🇸🇱</div>
       <div class="contact">
         ${organisation?.name || ''} ${organisation?.phone ? '• ' + organisation.phone : ''} ${organisation?.email ? '• ' + organisation.email : ''}
