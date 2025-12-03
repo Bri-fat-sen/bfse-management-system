@@ -67,7 +67,7 @@ import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContaine
 import AIInsightsPanel from "@/components/ai/AIInsightsPanel";
 import AIReportSummary from "@/components/ai/AIReportSummary";
 import AIFormAssistant, { QuickSuggestionChips } from "@/components/ai/AIFormAssistant";
-import BankAccountsReport from "@/components/finance/BankAccountsReport";
+import BankAccountsSummary from "@/components/finance/BankAccountsSummary";
 
 const expenseCategories = [
   "fuel", "maintenance", "utilities", "supplies", "rent", 
@@ -92,7 +92,6 @@ export default function Finance() {
   const [showExpenseDialog, setShowExpenseDialog] = useState(false);
   const [showRevenueDialog, setShowRevenueDialog] = useState(false);
   const [showBankDepositDialog, setShowBankDepositDialog] = useState(false);
-  const [showBankAccountsReport, setShowBankAccountsReport] = useState(false);
   const [categoryFilter, setCategoryFilter] = useState("all");
   const [showFormsDialog, setShowFormsDialog] = useState(false);
   const [dateRange, setDateRange] = useState("this_month");
@@ -1181,7 +1180,7 @@ export default function Finance() {
 
             {/* Bank Deposits List */}
             <Card>
-              <CardHeader className="flex flex-row items-center justify-between flex-wrap gap-3">
+              <CardHeader className="flex flex-row items-center justify-between">
                 <div>
                   <CardTitle className="flex items-center gap-2">
                     <Landmark className="w-5 h-5 text-[#0072C6]" />
@@ -1189,16 +1188,10 @@ export default function Finance() {
                   </CardTitle>
                   <CardDescription>Track money deposited to bank from revenue</CardDescription>
                 </div>
-                <div className="flex gap-2">
-                  <Button variant="outline" onClick={() => setShowBankAccountsReport(true)}>
-                    <FileText className="w-4 h-4 mr-2" />
-                    View by Account
-                  </Button>
-                  <Button onClick={() => setShowBankDepositDialog(true)} className="bg-gradient-to-r from-[#1EB053] to-[#0072C6]">
-                    <Plus className="w-4 h-4 mr-2" />
-                    Record Deposit
-                  </Button>
-                </div>
+                <Button onClick={() => setShowBankDepositDialog(true)} className="bg-gradient-to-r from-[#1EB053] to-[#0072C6]">
+                  <Plus className="w-4 h-4 mr-2" />
+                  Record Deposit
+                </Button>
               </CardHeader>
               <CardContent>
                 <ScrollArea className="h-[400px]">
