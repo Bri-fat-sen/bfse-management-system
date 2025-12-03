@@ -21,7 +21,7 @@ import {
   Loader2, Receipt, Upload, X, Check, DollarSign, 
   Calendar, CreditCard, FileText, Building2
 } from "lucide-react";
-import AIFormAssistant from "./AIFormAssistant";
+import AIFormAssistant, { QuickSuggestionChips } from "@/components/ai/AIFormAssistant";
 
 const categories = [
   { value: "fuel", label: "Fuel", icon: "⛽" },
@@ -65,10 +65,24 @@ export default function ExpenseDialog({ open, onOpenChange, orgId, currentEmploy
   // Fetch past expenses for AI suggestions
   const { data: pastExpenses = [] } = useQuery({
     queryKey: ['pastExpenses', orgId],
-    queryFn: () => base44.entities.Expense.filter({ organisation_id: orgId }, '-date', 100),
+    queryFn: () => base44.entities.Expense.filter({ organisation_id: orgId }, '-created_date', 50),
     enabled: !!orgId && open,
     staleTime: 5 * 60 * 1000,
   });
+
+  // Handle AI suggestion application
+  const handleAISuggestion = (field, value) => {
+    setFormData(prev => ({ ...prev, [field]: value }));
+  };
+
+  // Handle quick fill selection
+  const handleQuickFill = (item) => {
+    setFormData(prev => ({
+      ...prev,
+      category: item.category || prev.category,
+      description: item.description || prev.description,
+    }));
+  };
 
   const createExpenseMutation = useMutation({
     mutationFn: (data) => base44.entities.Expense.create({
@@ -202,15 +216,11 @@ export default function ExpenseDialog({ open, onOpenChange, orgId, currentEmploy
                   <h3 className="font-semibold text-gray-900">Expense Details</h3>
                 </div>
 
-                {/* AI Form Assistant */}
-                <AIFormAssistant
-                  formType="expense"
-                  formData={formData}
-                  setFormData={setFormData}
-                  pastEntries={pastExpenses}
-                  categories={categories}
-                  organisation={organisation}
-                />
+                {/* Quick Fill Chips */}
+                <div>
+                  <Label className="text-gray-500 text-xs mb-2 block">Quick Fill</Label>
+                  <QuickSuggestionChips type="expense" onSelect={handleQuickFill} />
+                </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
@@ -283,6 +293,16 @@ export default function ExpenseDialog({ open, onOpenChange, orgId, currentEmploy
                     />
                   </div>
                 </div>
+
+                {/* AI Form Assistant */}
+                <AIFormAssistant
+                  formType="expense"
+                  formData={formData}
+                  onSuggestion={handleAISuggestion}
+                  pastEntries={pastExpenses}
+                  categories={categories}
+                  className="mt-4"
+                />
               </div>
             )}
 
