@@ -181,13 +181,32 @@ export const generateProfessionalReport = ({
 };
 
 export const printProfessionalReport = (html, filename = 'report') => {
-  const printWindow = window.open('', '_blank', 'width=900,height=800');
-  printWindow.document.write(html);
-  printWindow.document.close();
+  // Use hidden iframe for cleaner PDF experience
+  const iframe = document.createElement('iframe');
+  iframe.style.position = 'fixed';
+  iframe.style.right = '0';
+  iframe.style.bottom = '0';
+  iframe.style.width = '0';
+  iframe.style.height = '0';
+  iframe.style.border = 'none';
+  document.body.appendChild(iframe);
   
-  setTimeout(() => {
-    printWindow.print();
-  }, 400);
+  const doc = iframe.contentWindow.document;
+  doc.open();
+  doc.write(html);
+  doc.close();
+  
+  iframe.onload = () => {
+    setTimeout(() => {
+      iframe.contentWindow.focus();
+      iframe.contentWindow.print();
+      setTimeout(() => {
+        if (document.body.contains(iframe)) {
+          document.body.removeChild(iframe);
+        }
+      }, 1000);
+    }, 500);
+  };
 };
 
 export const downloadProfessionalReportAsPDF = async (reportConfig, filename = 'report') => {
@@ -240,34 +259,15 @@ export const downloadProfessionalReportAsPDF = async (reportConfig, filename = '
     URL.revokeObjectURL(url);
   } catch (error) {
     console.error('PDF generation error:', error);
-    // Fallback: Open print dialog so user can save as PDF
+    // Fallback: Use hidden iframe for cleaner PDF experience
     const html = generateProfessionalReport(reportConfig);
-    const pdfWindow = window.open('', '_blank', 'width=900,height=800');
-    
-    if (!pdfWindow) {
-      alert('Please allow popups to download the report');
-      return;
-    }
-    
-    pdfWindow.document.write(html);
-    pdfWindow.document.close();
-    pdfWindow.document.title = `${filename}.pdf`;
-    
-    setTimeout(() => {
-      pdfWindow.print();
-    }, 500);
+    printProfessionalReport(html, filename);
   }
 };
 
 export const downloadProfessionalReport = (html, filename) => {
-  // Open print dialog for PDF save instead of HTML download
-  const pdfWindow = window.open('', '_blank', 'width=900,height=800');
-  if (pdfWindow) {
-    pdfWindow.document.write(html);
-    pdfWindow.document.close();
-    pdfWindow.document.title = filename.replace('.html', '.pdf');
-    setTimeout(() => pdfWindow.print(), 500);
-  }
+  // Use hidden iframe for cleaner PDF experience
+  printProfessionalReport(html, filename.replace('.html', ''));
 };
 
 export default {

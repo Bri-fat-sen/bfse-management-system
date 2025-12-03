@@ -680,32 +680,42 @@ export function generateUnifiedPDF({
 }
 
 /**
- * Print a unified PDF document
+ * Print a unified PDF document using hidden iframe for cleaner experience
  */
-export function printUnifiedPDF(html) {
-  const printWindow = window.open('', '', 'width=900,height=700');
-  if (printWindow) {
-    printWindow.document.write(html);
-    printWindow.document.close();
+export function printUnifiedPDF(html, filename = 'document.pdf') {
+  // Create a hidden iframe for better PDF generation
+  const iframe = document.createElement('iframe');
+  iframe.style.position = 'fixed';
+  iframe.style.right = '0';
+  iframe.style.bottom = '0';
+  iframe.style.width = '0';
+  iframe.style.height = '0';
+  iframe.style.border = 'none';
+  document.body.appendChild(iframe);
+  
+  const doc = iframe.contentWindow.document;
+  doc.open();
+  doc.write(html);
+  doc.close();
+  
+  // Wait for content to load then trigger print
+  iframe.onload = () => {
     setTimeout(() => {
-      printWindow.print();
-    }, 300);
-  }
+      iframe.contentWindow.focus();
+      iframe.contentWindow.print();
+      // Remove iframe after print dialog closes
+      setTimeout(() => {
+        if (document.body.contains(iframe)) {
+          document.body.removeChild(iframe);
+        }
+      }, 1000);
+    }, 500);
+  };
 }
 
 /**
- * Download unified PDF (via print dialog)
+ * Download unified PDF (via print dialog) using hidden iframe
  */
 export function downloadUnifiedPDF(html, filename = 'document') {
-  const printWindow = window.open('', '_blank', 'width=900,height=700');
-  if (printWindow) {
-    printWindow.document.write(html);
-    printWindow.document.close();
-    printWindow.document.title = `${filename}.pdf`;
-    setTimeout(() => {
-      printWindow.print();
-    }, 500);
-  } else {
-    alert('Please allow popups to download the document');
-  }
+  printUnifiedPDF(html, `${filename}.pdf`);
 }

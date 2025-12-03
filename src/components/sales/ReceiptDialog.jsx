@@ -150,12 +150,32 @@ export default function ReceiptDialog({ open, onOpenChange, sale, organisation }
   };
 
   const handlePrint = () => {
-    const printWindow = window.open('', '', 'width=500,height=700');
-    printWindow.document.write(getReceiptHTML());
-    printWindow.document.close();
-    setTimeout(() => {
-      printWindow.print();
-    }, 250);
+    // Use hidden iframe for cleaner PDF experience
+    const iframe = document.createElement('iframe');
+    iframe.style.position = 'fixed';
+    iframe.style.right = '0';
+    iframe.style.bottom = '0';
+    iframe.style.width = '0';
+    iframe.style.height = '0';
+    iframe.style.border = 'none';
+    document.body.appendChild(iframe);
+    
+    const doc = iframe.contentWindow.document;
+    doc.open();
+    doc.write(getReceiptHTML());
+    doc.close();
+    
+    iframe.onload = () => {
+      setTimeout(() => {
+        iframe.contentWindow.focus();
+        iframe.contentWindow.print();
+        setTimeout(() => {
+          if (document.body.contains(iframe)) {
+            document.body.removeChild(iframe);
+          }
+        }, 1000);
+      }, 500);
+    };
   };
 
   const handleDownloadPDF = async () => {

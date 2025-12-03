@@ -591,12 +591,32 @@ export default function PayslipGenerator({ payroll, employee, organisation }) {
 
   const handlePrint = () => {
     const html = generatePayslipHTML();
-    const printWindow = window.open('', '', 'width=900,height=700');
-    printWindow.document.write(html);
-    printWindow.document.close();
-    setTimeout(() => {
-      printWindow.print();
-    }, 250);
+    // Use hidden iframe for cleaner PDF experience
+    const iframe = document.createElement('iframe');
+    iframe.style.position = 'fixed';
+    iframe.style.right = '0';
+    iframe.style.bottom = '0';
+    iframe.style.width = '0';
+    iframe.style.height = '0';
+    iframe.style.border = 'none';
+    document.body.appendChild(iframe);
+    
+    const doc = iframe.contentWindow.document;
+    doc.open();
+    doc.write(html);
+    doc.close();
+    
+    iframe.onload = () => {
+      setTimeout(() => {
+        iframe.contentWindow.focus();
+        iframe.contentWindow.print();
+        setTimeout(() => {
+          if (document.body.contains(iframe)) {
+            document.body.removeChild(iframe);
+          }
+        }, 1000);
+      }, 500);
+    };
   };
 
   const [isDownloading, setIsDownloading] = useState(false);
