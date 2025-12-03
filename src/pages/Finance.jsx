@@ -1567,6 +1567,117 @@ export default function Finance() {
           onOpenChange={setShowFormsDialog}
           organisation={organisation?.[0]}
         />
+
+        {/* Bank Deposit Dialog */}
+        <Dialog open={showBankDepositDialog} onOpenChange={setShowBankDepositDialog}>
+          <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto w-[95vw] sm:w-full [&>button]:hidden">
+            <DialogHeader>
+              <div className="flex h-1 w-16 rounded-full overflow-hidden mb-3">
+                <div className="flex-1 bg-[#1EB053]" />
+                <div className="flex-1 bg-white border-y border-gray-200" />
+                <div className="flex-1 bg-[#0072C6]" />
+              </div>
+              <DialogTitle className="flex items-center gap-2">
+                <Landmark className="w-5 h-5 text-[#0072C6]" />
+                Record Bank Deposit
+              </DialogTitle>
+            </DialogHeader>
+            <form onSubmit={(e) => {
+              e.preventDefault();
+              const formData = new FormData(e.target);
+              const depositNum = `DEP-${Date.now().toString(36).toUpperCase()}`;
+              const data = {
+                organisation_id: orgId,
+                deposit_number: depositNum,
+                bank_name: formData.get('bank_name'),
+                account_number: formData.get('account_number'),
+                amount: parseFloat(formData.get('amount')) || 0,
+                date: formData.get('date'),
+                deposit_type: formData.get('deposit_type'),
+                source: formData.get('source'),
+                reference_number: formData.get('reference_number'),
+                deposited_by: currentEmployee?.id,
+                deposited_by_name: currentEmployee?.full_name,
+                notes: formData.get('notes'),
+                status: 'pending'
+              };
+              createBankDepositMutation.mutate(data);
+            }} className="space-y-4">
+              {/* Quick Stats */}
+              <div className="p-3 bg-blue-50 rounded-lg border border-blue-200">
+                <p className="text-xs text-blue-700 mb-2">Available to deposit:</p>
+                <p className="text-lg font-bold text-blue-800">Le {financials.cashOnHand.toLocaleString()}</p>
+                <p className="text-xs text-blue-600 mt-1">
+                  Revenue: Le {financials.totalRevenue.toLocaleString()} - Already in Bank: Le {financials.totalBankDeposits.toLocaleString()}
+                </p>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="col-span-2">
+                  <Label>Bank Name</Label>
+                  <Input name="bank_name" required className="mt-1" placeholder="e.g., Rokel Commercial Bank" />
+                </div>
+                <div>
+                  <Label>Account Number</Label>
+                  <Input name="account_number" className="mt-1" placeholder="Optional" />
+                </div>
+                <div>
+                  <Label>Amount (Le)</Label>
+                  <Input name="amount" type="number" step="0.01" required className="mt-1" />
+                </div>
+                <div>
+                  <Label>Date</Label>
+                  <Input name="date" type="date" defaultValue={format(new Date(), 'yyyy-MM-dd')} required className="mt-1" />
+                </div>
+                <div>
+                  <Label>Deposit Type</Label>
+                  <Select name="deposit_type" defaultValue="cash">
+                    <SelectTrigger className="mt-1">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="cash">Cash Deposit</SelectItem>
+                      <SelectItem value="cheque">Cheque</SelectItem>
+                      <SelectItem value="transfer">Bank Transfer</SelectItem>
+                      <SelectItem value="mobile_money">Mobile Money</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label>Source of Funds</Label>
+                  <Select name="source" defaultValue="sales_revenue">
+                    <SelectTrigger className="mt-1">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="sales_revenue">Sales Revenue</SelectItem>
+                      <SelectItem value="transport_revenue">Transport Revenue</SelectItem>
+                      <SelectItem value="contract_revenue">Contract Revenue</SelectItem>
+                      <SelectItem value="owner_contribution">Owner Contribution</SelectItem>
+                      <SelectItem value="other">Other</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label>Bank Slip / Reference Number</Label>
+                  <Input name="reference_number" className="mt-1" placeholder="Deposit slip number" />
+                </div>
+                <div className="col-span-2">
+                  <Label>Notes</Label>
+                  <Textarea name="notes" className="mt-1" placeholder="Additional details..." />
+                </div>
+              </div>
+              <DialogFooter className="flex-col sm:flex-row gap-2">
+                <Button type="button" variant="outline" onClick={() => setShowBankDepositDialog(false)} className="w-full sm:w-auto">
+                  Cancel
+                </Button>
+                <Button type="submit" className="bg-gradient-to-r from-[#1EB053] to-[#0072C6] w-full sm:w-auto" disabled={createBankDepositMutation.isPending}>
+                  {createBankDepositMutation.isPending ? 'Recording...' : 'Record Deposit'}
+                </Button>
+              </DialogFooter>
+            </form>
+          </DialogContent>
+        </Dialog>
       </div>
     </ProtectedPage>
   );
