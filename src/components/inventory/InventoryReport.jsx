@@ -35,7 +35,8 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { generateExportHTML, printDocument, exportToCSV as exportCSVUtil } from "@/components/exports/SierraLeoneExportStyles";
+import { exportToCSV as exportCSVUtil } from "@/components/exports/SierraLeoneExportStyles";
+import { generateUnifiedPDF, printUnifiedPDF } from "@/components/exports/UnifiedPDFStyles";
 
 const REPORT_TYPES = [
   { value: "stock_summary", label: "Stock Summary", icon: Package },
@@ -170,22 +171,31 @@ export default function InventoryReport({
 
   const printReport = () => {
     // Convert summary object to array format
-    const summaryArray = Object.entries(reportData.summary).map(([key, value]) => ({
+    const summaryCards = Object.entries(reportData.summary).map(([key, value]) => ({
       label: key.replace(/([A-Z])/g, ' $1').trim(),
       value: typeof value === 'number' && key.toLowerCase().includes('value') 
         ? `SLE ${value.toLocaleString()}` 
-        : value.toLocaleString()
+        : value.toLocaleString(),
+      highlight: key.toLowerCase().includes('out') || key.toLowerCase().includes('critical') ? 'red' : 
+                 key.toLowerCase().includes('profit') ? 'green' : undefined
     }));
 
-    const html = generateExportHTML({
+    const html = generateUnifiedPDF({
+      documentType: 'report',
       title: reportData.title,
       organisation: organisation,
-      summary: summaryArray,
-      columns: reportData.columns,
-      rows: reportData.rows.map(row => Object.values(row))
+      summaryCards: summaryCards,
+      sections: [{
+        title: 'Report Details',
+        icon: '📦',
+        table: { 
+          columns: reportData.columns, 
+          rows: reportData.rows.map(row => Object.values(row)) 
+        }
+      }]
     });
     
-    printDocument(html, `${reportType}_${format(new Date(), 'yyyy-MM-dd')}.pdf`);
+    printUnifiedPDF(html, `${reportType}_${format(new Date(), 'yyyy-MM-dd')}.pdf`);
   };
 
   return (
