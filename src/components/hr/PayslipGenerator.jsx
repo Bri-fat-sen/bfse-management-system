@@ -35,7 +35,7 @@ export default function PayslipGenerator({ payroll, employee, organisation }) {
     showBankDetails: true,
     showAttendance: true,
     showTaxBreakdown: true,
-    showEmployerCost: false,
+    showEmployerCost: true,
     colorScheme: 'green', // green, blue, purple
     layout: 'modern' // modern, classic, compact
   });
