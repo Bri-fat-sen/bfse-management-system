@@ -299,6 +299,11 @@ export default function Finance() {
       expensesByCategory[cat] = (expensesByCategory[cat] || 0) + (e.amount || 0);
     });
 
+    // Bank deposits
+    const totalBankDeposits = filteredBankDeposits.filter(d => d.status === 'confirmed').reduce((sum, d) => sum + (d.amount || 0), 0);
+    const pendingBankDeposits = filteredBankDeposits.filter(d => d.status === 'pending').reduce((sum, d) => sum + (d.amount || 0), 0);
+    const cashOnHand = totalRevenue - totalBankDeposits;
+
     return {
       totalRevenue,
       salesRevenue,
@@ -321,9 +326,13 @@ export default function Finance() {
       transactionCount: filteredSales.length,
       tripCount: filteredTrips.length,
       contractCount: filteredContracts.length,
-      revenueCount: filteredRevenues.length
+      revenueCount: filteredRevenues.length,
+      totalBankDeposits,
+      pendingBankDeposits,
+      cashOnHand,
+      depositCount: filteredBankDeposits.length
     };
-  }, [filteredSales, filteredExpenses, filteredTrips, filteredContracts, maintenanceRecords, filteredRevenues, getDateRange]);
+  }, [filteredSales, filteredExpenses, filteredTrips, filteredContracts, maintenanceRecords, filteredRevenues, filteredBankDeposits, getDateRange]);
 
   // Monthly trend data
   const monthlyTrend = useMemo(() => {
