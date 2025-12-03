@@ -228,7 +228,8 @@ export default function Finance() {
     const salesRevenue = filteredSales.reduce((sum, s) => sum + (s.total_amount || 0), 0);
     const transportRevenue = filteredTrips.reduce((sum, t) => sum + (t.total_revenue || 0), 0);
     const contractRevenue = filteredContracts.filter(c => c.status === 'completed').reduce((sum, c) => sum + (c.contract_amount || 0), 0);
-    const ownerContributions = filteredRevenues.filter(r => r.status === 'confirmed').reduce((sum, r) => sum + (r.amount || 0), 0);
+    // Include all revenues (pending and confirmed) in owner contributions
+    const ownerContributions = filteredRevenues.reduce((sum, r) => sum + (r.amount || 0), 0);
     const totalRevenue = salesRevenue + transportRevenue + contractRevenue + ownerContributions;
 
     // Revenue by type
