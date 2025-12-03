@@ -90,6 +90,7 @@ export default function Finance() {
   const [activeTab, setActiveTab] = useState("dashboard");
   const [showExpenseDialog, setShowExpenseDialog] = useState(false);
   const [showRevenueDialog, setShowRevenueDialog] = useState(false);
+  const [showBankDepositDialog, setShowBankDepositDialog] = useState(false);
   const [categoryFilter, setCategoryFilter] = useState("all");
   const [showFormsDialog, setShowFormsDialog] = useState(false);
   const [dateRange, setDateRange] = useState("this_month");
