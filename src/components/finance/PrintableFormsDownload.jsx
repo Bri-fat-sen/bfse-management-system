@@ -62,112 +62,129 @@ const generateFormHTML = (formType, org) => {
   const orgPhone = org?.phone || '';
   const orgEmail = org?.email || '';
   
-  // Get unified styles from the shared module
+  // Use the unified PDF styles
   const unifiedStyles = getUnifiedPDFStyles(org, 'report');
   
-  // Additional form-specific styles
-  const formStyles = `
-    ${unifiedStyles}
-    
-    /* Form-specific overrides */
-    .form-title-bar {
-      background: var(--gray-50);
-      padding: 16px 40px;
-      border-bottom: 1px solid var(--gray-200);
-      display: flex;
-      align-items: center;
-      gap: 12px;
-    }
-    
-    .form-icon {
-      width: 40px;
-      height: 40px;
-      background: linear-gradient(135deg, var(--primary), var(--secondary));
-      border-radius: 10px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 20px;
-    }
-    
-    .form-title-bar h2 {
-      font-size: 16px;
-      font-weight: 700;
-      color: var(--gray-800);
-    }
-    
-    /* Field Styles */
-    .field-row { display: flex; margin-bottom: 16px; gap: 16px; }
-    .field { flex: 1; }
-    .field label { 
-      display: block; 
-      font-weight: 600; 
-      font-size: 10px; 
-      color: var(--gray-500); 
-      margin-bottom: 6px; 
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-    }
-    .field-input { 
-      border: 1px solid var(--gray-200); 
-      border-radius: 8px; 
-      padding: 12px 14px; 
-      min-height: 24px; 
-      background: white;
-    }
-    .field-input.large { min-height: 80px; }
-    
-    /* Checkbox Styles */
-    .checkbox-group { 
-      display: flex; 
-      flex-wrap: wrap; 
-      gap: 12px;
-      padding: 12px;
-      background: var(--gray-50);
-      border-radius: 8px;
-      border: 1px solid var(--gray-200);
-    }
-    .checkbox-item { 
-      display: flex; 
-      align-items: center; 
-      gap: 8px;
-      font-size: 11px;
-      color: var(--gray-700);
-    }
-    .checkbox { 
-      width: 18px; 
-      height: 18px; 
-      border: 2px solid var(--gray-300); 
-      border-radius: 4px;
-      display: inline-block;
-      background: white;
-    }
-    
-    /* Signature Section */
-    .signature-section { 
-      margin-top: 48px; 
-      display: flex; 
-      justify-content: space-between;
-      gap: 40px;
-    }
-    .signature-box { flex: 1; text-align: center; }
-    .signature-line { 
-      border-top: 2px solid var(--gray-300); 
-      margin-top: 60px; 
-      padding-top: 10px; 
-      font-size: 11px;
-      color: var(--gray-500);
-      font-weight: 500;
-    }
-    
-    /* Table row styling for forms */
-    .total-row { background: var(--gray-100) !important; }
-    .total-row td { 
-      font-weight: 700;
-      font-size: 13px;
-      border-top: 2px solid var(--gray-300);
-      background: transparent !important;
-    }
+  const commonStyles = `
+    <style>
+      ${unifiedStyles}
+      
+      /* Form-specific overrides */
+      .form-title {
+        background: var(--gray-50);
+        padding: 16px 40px;
+        border-bottom: 1px solid var(--gray-200);
+        display: flex;
+        align-items: center;
+        gap: 12px;
+      }
+      
+      .form-icon {
+        width: 40px;
+        height: 40px;
+        background: linear-gradient(135deg, var(--primary), var(--secondary));
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 20px;
+      }
+      
+      .form-title h2 {
+        font-size: 16px;
+        font-weight: 700;
+        color: var(--gray-800);
+      }
+      
+      /* Field Styles */
+      .field-row { display: flex; margin-bottom: 16px; gap: 16px; }
+      .field { flex: 1; }
+      .field label { 
+        display: block; 
+        font-weight: 600; 
+        font-size: 10px; 
+        color: var(--gray-500); 
+        margin-bottom: 6px; 
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+      }
+      .field-input { 
+        border: 1px solid var(--gray-200); 
+        border-radius: 8px; 
+        padding: 12px 14px; 
+        min-height: 24px; 
+        background: white;
+      }
+      .field-input.large { min-height: 80px; }
+      
+      /* Section Title Override */
+      .section-title { 
+        font-weight: 700; 
+        color: var(--gray-700);
+        padding: 12px 16px;
+        margin: 24px 0 16px; 
+        font-size: 12px;
+        background: var(--gray-50);
+        border-radius: 8px;
+        border-left: 4px solid var(--primary);
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        border-bottom: none;
+      }
+      
+      /* Checkbox Styles */
+      .checkbox-group { 
+        display: flex; 
+        flex-wrap: wrap; 
+        gap: 12px;
+        padding: 12px;
+        background: var(--gray-50);
+        border-radius: 8px;
+        border: 1px solid var(--gray-200);
+      }
+      .checkbox-item { 
+        display: flex; 
+        align-items: center; 
+        gap: 8px;
+        font-size: 11px;
+        color: var(--gray-700);
+      }
+      .checkbox { 
+        width: 18px; 
+        height: 18px; 
+        border: 2px solid var(--gray-300); 
+        border-radius: 4px;
+        display: inline-block;
+        background: white;
+      }
+      
+      /* Signature Section */
+      .signature-section { 
+        margin-top: 48px; 
+        display: flex; 
+        justify-content: space-between;
+        gap: 40px;
+      }
+      .signature-box { flex: 1; text-align: center; }
+      .signature-line { 
+        border-top: 2px solid var(--gray-300); 
+        margin-top: 60px; 
+        padding-top: 10px; 
+        font-size: 11px;
+        color: var(--gray-500);
+        font-weight: 500;
+      }
+      
+      /* Table total row */
+      .total-row { background: var(--gray-100) !important; }
+      .total-row td { 
+        font-weight: 700;
+        font-size: 13px;
+        border-top: 2px solid var(--gray-300);
+        background: transparent !important;
+      }
+    </style>
   `;
 
   const header = getUnifiedHeader(org, 'Data Entry Form', '', today, 'report');
@@ -186,7 +203,7 @@ const generateFormHTML = (formType, org) => {
 
   const forms = {
     expense_fuel: `
-      <div class="form-title-bar"><div class="form-icon">⛽</div><h2>Fuel Expense Form</h2></div>
+      <div class="form-title"><div class="form-icon">⛽</div><h2>Fuel Expense Form</h2></div>
       <div class="content">
         <div class="field-row">
           <div class="field"><label>Date</label><div class="field-input"></div></div>
@@ -219,7 +236,7 @@ const generateFormHTML = (formType, org) => {
       </div>
     `,
     expense_maintenance: `
-      <div class="form-title-bar"><div class="form-icon">🔧</div><h2>Maintenance Expense Form</h2></div>
+      <div class="form-title"><div class="form-icon">🔧</div><h2>Maintenance Expense Form</h2></div>
       <div class="content">
         <div class="field-row">
           <div class="field"><label>Date</label><div class="field-input"></div></div>
@@ -253,7 +270,7 @@ const generateFormHTML = (formType, org) => {
       </div>
     `,
     expense_utilities: `
-      <div class="form-title-bar"><div class="form-icon">⚡</div><h2>Utilities Expense Form</h2></div>
+      <div class="form-title"><div class="form-icon">⚡</div><h2>Utilities Expense Form</h2></div>
       <div class="content">
         <div class="field-row">
           <div class="field"><label>Date</label><div class="field-input"></div></div>
@@ -280,7 +297,7 @@ const generateFormHTML = (formType, org) => {
       </div>
     `,
     expense_supplies: `
-      <div class="form-title-bar"><div class="form-icon">📦</div><h2>Supplies Expense Form</h2></div>
+      <div class="form-title"><div class="form-icon">📦</div><h2>Supplies Expense Form</h2></div>
       <div class="content">
         <div class="field-row">
           <div class="field"><label>Date</label><div class="field-input"></div></div>
@@ -299,7 +316,7 @@ const generateFormHTML = (formType, org) => {
       </div>
     `,
     expense_rent: `
-      <div class="form-title-bar"><div class="form-icon">🏢</div><h2>Rent Expense Form</h2></div>
+      <div class="form-title"><div class="form-icon">🏢</div><h2>Rent Expense Form</h2></div>
       <div class="content">
         <div class="field-row">
           <div class="field"><label>Date Paid</label><div class="field-input"></div></div>
@@ -325,7 +342,7 @@ const generateFormHTML = (formType, org) => {
       </div>
     `,
     expense_salaries: `
-      <div class="form-title-bar"><div class="form-icon">👥</div><h2>Salary / Wages Form</h2></div>
+      <div class="form-title"><div class="form-icon">👥</div><h2>Salary / Wages Form</h2></div>
       <div class="content">
         <div class="field-row">
           <div class="field"><label>Pay Period</label><div class="field-input"></div></div>
@@ -343,7 +360,7 @@ const generateFormHTML = (formType, org) => {
       </div>
     `,
     expense_transport: `
-      <div class="form-title-bar"><div class="form-icon">🚌</div><h2>Transport Expense Form</h2></div>
+      <div class="form-title"><div class="form-icon">🚌</div><h2>Transport Expense Form</h2></div>
       <div class="content">
         <div class="field-row">
           <div class="field"><label>Date</label><div class="field-input"></div></div>
@@ -360,7 +377,7 @@ const generateFormHTML = (formType, org) => {
       </div>
     `,
     expense_marketing: `
-      <div class="form-title-bar"><div class="form-icon">📢</div><h2>Marketing Expense Form</h2></div>
+      <div class="form-title"><div class="form-icon">📢</div><h2>Marketing Expense Form</h2></div>
       <div class="content">
         <div class="field-row">
           <div class="field"><label>Date</label><div class="field-input"></div></div>
@@ -383,7 +400,7 @@ const generateFormHTML = (formType, org) => {
       </div>
     `,
     expense_insurance: `
-      <div class="form-title-bar"><div class="form-icon">🛡️</div><h2>Insurance Expense Form</h2></div>
+      <div class="form-title"><div class="form-icon">🛡️</div><h2>Insurance Expense Form</h2></div>
       <div class="content">
         <div class="field-row">
           <div class="field"><label>Date Paid</label><div class="field-input"></div></div>
@@ -409,7 +426,7 @@ const generateFormHTML = (formType, org) => {
       </div>
     `,
     expense_petty_cash: `
-      <div class="form-title-bar"><div class="form-icon">💰</div><h2>Petty Cash Form</h2></div>
+      <div class="form-title"><div class="form-icon">💰</div><h2>Petty Cash Form</h2></div>
       <div class="content">
         <div class="field-row">
           <div class="field"><label>Date</label><div class="field-input"></div></div>
@@ -431,7 +448,7 @@ const generateFormHTML = (formType, org) => {
       </div>
     `,
     expense_truck_contract: `
-      <div class="form-title-bar"><div class="form-icon">🚛</div><h2>Truck Contract Expense Form</h2></div>
+      <div class="form-title"><div class="form-icon">🚛</div><h2>Truck Contract Expense Form</h2></div>
       <div class="content">
         <div class="field-row">
           <div class="field"><label>Contract Number</label><div class="field-input"></div></div>
@@ -456,7 +473,7 @@ const generateFormHTML = (formType, org) => {
       </div>
     `,
     expense_general: `
-      <div class="form-title-bar"><div class="form-icon">📋</div><h2>General Expense Form</h2></div>
+      <div class="form-title"><div class="form-icon">📋</div><h2>General Expense Form</h2></div>
       <div class="content">
         <div class="field-row">
           <div class="field"><label>Date</label><div class="field-input"></div></div>
@@ -480,7 +497,7 @@ const generateFormHTML = (formType, org) => {
       </div>
     `,
     revenue_retail_sales: `
-      <div class="form-title-bar"><div class="form-icon">🛒</div><h2>Retail Sales Form</h2></div>
+      <div class="form-title"><div class="form-icon">🛒</div><h2>Retail Sales Form</h2></div>
       <div class="content">
         <div class="field-row">
           <div class="field"><label>Date</label><div class="field-input"></div></div>
@@ -511,7 +528,7 @@ const generateFormHTML = (formType, org) => {
       </div>
     `,
     revenue_warehouse_sales: `
-      <div class="form-title-bar"><div class="form-icon">📦</div><h2>Warehouse/Wholesale Sales Form</h2></div>
+      <div class="form-title"><div class="form-icon">📦</div><h2>Warehouse/Wholesale Sales Form</h2></div>
       <div class="content">
         <div class="field-row">
           <div class="field"><label>Date</label><div class="field-input"></div></div>
@@ -533,7 +550,7 @@ const generateFormHTML = (formType, org) => {
       </div>
     `,
     revenue_vehicle_sales: `
-      <div class="form-title-bar"><div class="form-icon">🚐</div><h2>Vehicle Sales Form</h2></div>
+      <div class="form-title"><div class="form-icon">🚐</div><h2>Vehicle Sales Form</h2></div>
       <div class="content">
         <div class="field-row">
           <div class="field"><label>Date</label><div class="field-input"></div></div>
@@ -555,7 +572,7 @@ const generateFormHTML = (formType, org) => {
       </div>
     `,
     revenue_trip: `
-      <div class="form-title-bar"><div class="form-icon">🗺️</div><h2>Trip Revenue Form</h2></div>
+      <div class="form-title"><div class="form-icon">🗺️</div><h2>Trip Revenue Form</h2></div>
       <div class="content">
         <div class="field-row">
           <div class="field"><label>Date</label><div class="field-input"></div></div>
@@ -584,7 +601,7 @@ const generateFormHTML = (formType, org) => {
       </div>
     `,
     revenue_truck_contract: `
-      <div class="form-title-bar"><div class="form-icon">🚛</div><h2>Truck Contract Revenue Form</h2></div>
+      <div class="form-title"><div class="form-icon">🚛</div><h2>Truck Contract Revenue Form</h2></div>
       <div class="content">
         <div class="field-row">
           <div class="field"><label>Contract No.</label><div class="field-input"></div></div>
@@ -612,7 +629,7 @@ const generateFormHTML = (formType, org) => {
       </div>
     `,
     revenue_other: `
-      <div class="form-title-bar"><div class="form-icon">💵</div><h2>Other Income Form</h2></div>
+      <div class="form-title"><div class="form-icon">💵</div><h2>Other Income Form</h2></div>
       <div class="content">
         <div class="field-row">
           <div class="field"><label>Date</label><div class="field-input"></div></div>
@@ -645,7 +662,7 @@ const generateFormHTML = (formType, org) => {
     <html>
     <head>
       <title>${FORM_TEMPLATES.find(f => f.id === formType)?.name || 'Form'}</title>
-      <style>${formStyles}</style>
+      ${commonStyles}
     </head>
     <body>
       <div class="document">
