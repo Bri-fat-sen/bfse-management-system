@@ -340,7 +340,7 @@ export default function BulkPayrollDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto w-[95vw]">
+      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto w-[95vw] [&>button]:hidden">
         <DialogHeader>
           <div className="flex h-1 w-16 rounded-full overflow-hidden mb-3">
             <div className="flex-1 bg-[#1EB053]" />

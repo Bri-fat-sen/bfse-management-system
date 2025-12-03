@@ -458,7 +458,7 @@ export default function BenefitsDeductionsManager({ orgId, employees = [] }) {
 
       {/* Add/Edit Dialog */}
       <Dialog open={showDialog} onOpenChange={setShowDialog}>
-        <DialogContent className="max-w-lg">
+        <DialogContent className="max-w-lg [&>button]:hidden">
           <DialogHeader>
             <DialogTitle>
               {editingTemplate ? 'Edit Template' : 'Add New Template'}

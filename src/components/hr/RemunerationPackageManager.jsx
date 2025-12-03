@@ -626,7 +626,7 @@ export default function RemunerationPackageManager({ orgId }) {
 
       {/* Add/Edit Package Dialog */}
       <Dialog open={showDialog} onOpenChange={(open) => !open && resetForm()}>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto [&>button]:hidden">
           <DialogHeader>
             <div className="flex h-1 w-16 rounded-full overflow-hidden mb-3">
               <div className="flex-1 bg-[#1EB053]" />
