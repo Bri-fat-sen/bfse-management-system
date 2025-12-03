@@ -31,6 +31,7 @@ import {
   Loader2
 } from "lucide-react";
 import { base44 } from "@/api/base44Client";
+import { getUnifiedPDFStyles, getUnifiedHeader, getUnifiedFooter } from "@/components/exports/UnifiedPDFStyles";
 
 const FORM_TEMPLATES = [
   // EXPENSE FORMS
