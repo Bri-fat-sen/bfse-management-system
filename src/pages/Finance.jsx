@@ -67,7 +67,7 @@ import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContaine
 import AIInsightsPanel from "@/components/ai/AIInsightsPanel";
 import AIReportSummary from "@/components/ai/AIReportSummary";
 import AIFormAssistant, { QuickSuggestionChips } from "@/components/ai/AIFormAssistant";
-import BankAccountsReport from "@/components/finance/BankAccountsReport";
+import BankAccountsSummary from "@/components/finance/BankAccountsSummary";
 
 const expenseCategories = [
   "fuel", "maintenance", "utilities", "supplies", "rent", 
@@ -92,7 +92,6 @@ export default function Finance() {
   const [showExpenseDialog, setShowExpenseDialog] = useState(false);
   const [showRevenueDialog, setShowRevenueDialog] = useState(false);
   const [showBankDepositDialog, setShowBankDepositDialog] = useState(false);
-  const [showBankAccountsReport, setShowBankAccountsReport] = useState(false);
   const [categoryFilter, setCategoryFilter] = useState("all");
   const [showFormsDialog, setShowFormsDialog] = useState(false);
   const [dateRange, setDateRange] = useState("this_month");
@@ -1179,26 +1178,27 @@ export default function Finance() {
               </CardContent>
             </Card>
 
-            {/* Bank Deposits List */}
+            {/* Bank Accounts Summary with Print Reports */}
+            <BankAccountsSummary 
+              bankDeposits={bankDeposits}
+              organisation={organisation?.[0]}
+              dateRange={dateRange}
+            />
+
+            {/* Record New Deposit Button */}
             <Card>
-              <CardHeader className="flex flex-row items-center justify-between flex-wrap gap-3">
+              <CardHeader className="flex flex-row items-center justify-between">
                 <div>
                   <CardTitle className="flex items-center gap-2">
                     <Landmark className="w-5 h-5 text-[#0072C6]" />
-                    Bank Deposits
+                    Recent Deposits
                   </CardTitle>
                   <CardDescription>Track money deposited to bank from revenue</CardDescription>
                 </div>
-                <div className="flex gap-2">
-                  <Button variant="outline" onClick={() => setShowBankAccountsReport(true)}>
-                    <FileText className="w-4 h-4 mr-2" />
-                    View by Account
-                  </Button>
-                  <Button onClick={() => setShowBankDepositDialog(true)} className="bg-gradient-to-r from-[#1EB053] to-[#0072C6]">
-                    <Plus className="w-4 h-4 mr-2" />
-                    Record Deposit
-                  </Button>
-                </div>
+                <Button onClick={() => setShowBankDepositDialog(true)} className="bg-gradient-to-r from-[#1EB053] to-[#0072C6]">
+                  <Plus className="w-4 h-4 mr-2" />
+                  Record Deposit
+                </Button>
               </CardHeader>
               <CardContent>
                 <ScrollArea className="h-[400px]">
@@ -1225,6 +1225,11 @@ export default function Finance() {
                             <div>
                               <p className="font-medium">{deposit.bank_name}</p>
                               <div className="flex items-center gap-2 text-sm text-gray-500">
+                                {deposit.account_number && (
+                                  <Badge variant="secondary" className="text-xs">
+                                    {deposit.account_number}
+                                  </Badge>
+                                )}
                                 <Badge variant="outline" className="text-xs">
                                   {deposit.source?.replace(/_/g, ' ')}
                                 </Badge>
@@ -1686,20 +1691,6 @@ export default function Finance() {
             </form>
           </DialogContent>
         </Dialog>
-
-        {/* Bank Accounts Report Dialog */}
-        <BankAccountsReport
-          open={showBankAccountsReport}
-          onOpenChange={setShowBankAccountsReport}
-          bankDeposits={bankDeposits}
-          organisation={organisation?.[0]}
-          dateRange={dateRange === 'this_month' ? 'This Month' : 
-                     dateRange === 'last_month' ? 'Last Month' : 
-                     dateRange === 'this_week' ? 'This Week' :
-                     dateRange === 'today' ? 'Today' :
-                     dateRange === 'this_quarter' ? 'This Quarter' :
-                     dateRange === 'this_year' ? 'This Year' : 'All Time'}
-        />
       </div>
     </ProtectedPage>
   );
