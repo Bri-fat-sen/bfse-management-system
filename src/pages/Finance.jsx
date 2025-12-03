@@ -68,6 +68,7 @@ import AIInsightsPanel from "@/components/ai/AIInsightsPanel";
 import AIReportSummary from "@/components/ai/AIReportSummary";
 import AIFormAssistant, { QuickSuggestionChips } from "@/components/ai/AIFormAssistant";
 import BankAccountsSummary from "@/components/finance/BankAccountsSummary";
+import BankAccountsReport from "@/components/finance/BankAccountsReport";
 
 const expenseCategories = [
   "fuel", "maintenance", "utilities", "supplies", "rent", 
