@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { base44 } from "@/api/base44Client";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
 import {
   Dialog,
   DialogContent,
@@ -21,6 +21,7 @@ import {
   Loader2, Receipt, Upload, X, Check, DollarSign, 
   Calendar, CreditCard, FileText, Building2
 } from "lucide-react";
+import AIFormAssistant from "./AIFormAssistant";
 
 const categories = [
   { value: "fuel", label: "Fuel", icon: "⛽" },
@@ -59,6 +60,14 @@ export default function ExpenseDialog({ open, onOpenChange, orgId, currentEmploy
     date: new Date().toISOString().split('T')[0],
     receipt_url: '',
     notes: '',
+  });
+
+  // Fetch past expenses for AI suggestions
+  const { data: pastExpenses = [] } = useQuery({
+    queryKey: ['pastExpenses', orgId],
+    queryFn: () => base44.entities.Expense.filter({ organisation_id: orgId }, '-date', 100),
+    enabled: !!orgId && open,
+    staleTime: 5 * 60 * 1000,
   });
 
   const createExpenseMutation = useMutation({
@@ -192,6 +201,16 @@ export default function ExpenseDialog({ open, onOpenChange, orgId, currentEmploy
                   </div>
                   <h3 className="font-semibold text-gray-900">Expense Details</h3>
                 </div>
+
+                {/* AI Form Assistant */}
+                <AIFormAssistant
+                  formType="expense"
+                  formData={formData}
+                  setFormData={setFormData}
+                  pastEntries={pastExpenses}
+                  categories={categories}
+                  organisation={organisation}
+                />
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
