@@ -30,7 +30,11 @@ import {
   Users,
   AlertCircle,
   CheckCircle,
-  Clock
+  Clock,
+  Landmark,
+  Upload,
+  Check,
+  X
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
