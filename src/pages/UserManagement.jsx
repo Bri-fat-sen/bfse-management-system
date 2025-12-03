@@ -18,7 +18,14 @@ import {
   AlertCircle,
   CheckCircle2,
   Link2,
-  Unlink
+  Unlink,
+  Edit,
+  Eye,
+  Trash2,
+  Phone,
+  MapPin,
+  Briefcase,
+  Send
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -64,14 +71,23 @@ import PageHeader from "@/components/ui/PageHeader";
 import LoadingSpinner from "@/components/ui/LoadingSpinner";
 import { PermissionGate } from "@/components/permissions/PermissionGate";
 import { ROLES } from "@/components/permissions/PermissionsContext";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Textarea } from "@/components/ui/textarea";
+import SendInviteEmailDialog from "@/components/email/SendInviteEmailDialog";
 
 export default function UserManagement() {
   const queryClient = useQueryClient();
+  const [activeTab, setActiveTab] = useState("users");
   const [searchTerm, setSearchTerm] = useState("");
   const [filterLinked, setFilterLinked] = useState("all"); // all, linked, unlinked
+  const [filterStatus, setFilterStatus] = useState("all");
   const [createEmployeeDialog, setCreateEmployeeDialog] = useState(null);
   const [linkEmployeeDialog, setLinkEmployeeDialog] = useState(null);
   const [selectedEmployeeId, setSelectedEmployeeId] = useState("");
+  const [editEmployeeDialog, setEditEmployeeDialog] = useState(null);
+  const [viewEmployeeDialog, setViewEmployeeDialog] = useState(null);
+  const [showInviteDialog, setShowInviteDialog] = useState(false);
+  const [showAddEmployeeDialog, setShowAddEmployeeDialog] = useState(false);
 
   // Fetch current user and employee
   const { data: currentUser } = useQuery({
@@ -110,6 +126,60 @@ export default function UserManagement() {
   });
 
   const organisation = orgData?.[0];
+
+  // Update employee mutation
+  const updateEmployeeMutation = useMutation({
+    mutationFn: async ({ id, data }) => {
+      return base44.entities.Employee.update(id, data);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['employees'] });
+      setEditEmployeeDialog(null);
+      toast.success("Employee updated successfully");
+    },
+    onError: (error) => {
+      toast.error("Failed to update employee", { description: error.message });
+    }
+  });
+
+  // Delete employee mutation
+  const deleteEmployeeMutation = useMutation({
+    mutationFn: async (id) => {
+      return base44.entities.Employee.delete(id);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['employees'] });
+      toast.success("Employee deleted successfully");
+    },
+    onError: (error) => {
+      toast.error("Failed to delete employee", { description: error.message });
+    }
+  });
+
+  // Add new employee mutation
+  const addEmployeeMutation = useMutation({
+    mutationFn: async (data) => {
+      const existingEmployees = await base44.entities.Employee.filter({ organisation_id: orgId });
+      const employeeCode = `EMP${String(existingEmployees.length + 1).padStart(4, '0')}`;
+      
+      return base44.entities.Employee.create({
+        organisation_id: orgId,
+        employee_code: employeeCode,
+        ...data,
+        full_name: `${data.first_name} ${data.last_name}`.trim(),
+        status: 'active',
+        hire_date: data.hire_date || new Date().toISOString().split('T')[0],
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['employees'] });
+      setShowAddEmployeeDialog(false);
+      toast.success("Employee added successfully");
+    },
+    onError: (error) => {
+      toast.error("Failed to add employee", { description: error.message });
+    }
+  });
 
   // Create employee mutation
   const createEmployeeMutation = useMutation({
@@ -209,6 +279,21 @@ export default function UserManagement() {
     });
   }, [usersWithEmployeeStatus, searchTerm, filterLinked]);
 
+  // Filter employees
+  const filteredEmployees = useMemo(() => {
+    return employees.filter(emp => {
+      const matchesSearch = 
+        emp.full_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        emp.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        emp.employee_code?.toLowerCase().includes(searchTerm.toLowerCase());
+      
+      const matchesStatus = 
+        filterStatus === 'all' || emp.status === filterStatus;
+      
+      return matchesSearch && matchesStatus;
+    });
+  }, [employees, searchTerm, filterStatus]);
+
   if (currentUser?.role !== 'admin') {
     return (
       <div className="flex flex-col items-center justify-center min-h-[60vh] text-center">
@@ -226,10 +311,21 @@ export default function UserManagement() {
   return (
     <div className="space-y-6">
       <PageHeader
-        title="User Management"
-        subtitle="Manage app users and link them to employee records"
+        title="User & Employee Management"
+        subtitle="Manage app users, employees, and team access"
         actionIcon={Users}
-      />
+      >
+        <div className="flex gap-2">
+          <Button variant="outline" onClick={() => setShowInviteDialog(true)}>
+            <Send className="w-4 h-4 mr-2" />
+            Invite User
+          </Button>
+          <Button onClick={() => setShowAddEmployeeDialog(true)} className="bg-gradient-to-r from-[#1EB053] to-[#0072C6]">
+            <UserPlus className="w-4 h-4 mr-2" />
+            Add Employee
+          </Button>
+        </div>
+      </PageHeader>
 
       {/* Stats */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -287,6 +383,19 @@ export default function UserManagement() {
         </Card>
       </div>
 
+      <Tabs value={activeTab} onValueChange={setActiveTab}>
+        <TabsList className="bg-gray-100 p-1">
+          <TabsTrigger value="users" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#1EB053] data-[state=active]:to-[#0072C6] data-[state=active]:text-white">
+            <Users className="w-4 h-4 mr-2" />
+            App Users ({users.length})
+          </TabsTrigger>
+          <TabsTrigger value="employees" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#1EB053] data-[state=active]:to-[#0072C6] data-[state=active]:text-white">
+            <Briefcase className="w-4 h-4 mr-2" />
+            Employees ({employees.length})
+          </TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="users" className="mt-4">
       {/* Users Table */}
       <Card>
         <CardHeader className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
@@ -437,43 +546,162 @@ export default function UserManagement() {
         </CardContent>
       </Card>
 
-      {/* Unlinked Employees Section */}
+      {/* Unlinked Employees Alert */}
       {unlinkedEmployees.length > 0 && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-amber-600">
-              <AlertCircle className="w-5 h-5" />
-              Unlinked Employee Records ({unlinkedEmployees.length})
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-sm text-gray-500 mb-4">
-              These employee records are not linked to any app user. They can be linked when a user is invited.
-            </p>
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
-              {unlinkedEmployees.map((emp) => (
-                <div key={emp.id} className="p-3 bg-amber-50 border border-amber-200 rounded-lg">
-                  <div className="flex items-center gap-3">
-                    <Avatar className="w-10 h-10">
-                      <AvatarImage src={emp.profile_photo} />
-                      <AvatarFallback className="bg-amber-200 text-amber-700">
-                        {emp.full_name?.charAt(0)}
-                      </AvatarFallback>
-                    </Avatar>
-                    <div className="flex-1 min-w-0">
-                      <p className="font-medium text-sm truncate">{emp.full_name}</p>
-                      <p className="text-xs text-gray-500 truncate">{emp.email || 'No email'}</p>
-                      <Badge variant="outline" className="text-xs mt-1">
-                        {emp.role?.replace('_', ' ')}
-                      </Badge>
-                    </div>
-                  </div>
-                </div>
-              ))}
+        <Card className="border-amber-200 bg-amber-50/50">
+          <CardContent className="p-4">
+            <div className="flex items-center gap-3">
+              <AlertCircle className="w-5 h-5 text-amber-600" />
+              <p className="text-sm text-amber-700">
+                <strong>{unlinkedEmployees.length} employee(s)</strong> not linked to app users. 
+                Use "Link to Existing Employee" from user actions to connect them.
+              </p>
             </div>
           </CardContent>
         </Card>
       )}
+        </TabsContent>
+
+        <TabsContent value="employees" className="mt-4">
+          {/* Employees Table */}
+          <Card>
+            <CardHeader className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+              <CardTitle className="flex items-center gap-2">
+                <Briefcase className="w-5 h-5 text-[#1EB053]" />
+                Employee Directory
+              </CardTitle>
+              <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+                <div className="relative flex-1 sm:w-64">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                  <Input
+                    placeholder="Search employees..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="pl-9"
+                  />
+                </div>
+                <Select value={filterStatus} onValueChange={setFilterStatus}>
+                  <SelectTrigger className="w-full sm:w-36">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Status</SelectItem>
+                    <SelectItem value="active">Active</SelectItem>
+                    <SelectItem value="inactive">Inactive</SelectItem>
+                    <SelectItem value="suspended">Suspended</SelectItem>
+                    <SelectItem value="terminated">Terminated</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="overflow-x-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Employee</TableHead>
+                      <TableHead>Code</TableHead>
+                      <TableHead>Department</TableHead>
+                      <TableHead>Role</TableHead>
+                      <TableHead>Status</TableHead>
+                      <TableHead>App Access</TableHead>
+                      <TableHead className="text-right">Actions</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {filteredEmployees.length === 0 ? (
+                      <TableRow>
+                        <TableCell colSpan={7} className="text-center py-8 text-gray-500">
+                          No employees found
+                        </TableCell>
+                      </TableRow>
+                    ) : (
+                      filteredEmployees.map((emp) => (
+                        <TableRow key={emp.id}>
+                          <TableCell>
+                            <div className="flex items-center gap-3">
+                              <Avatar className="w-8 h-8">
+                                <AvatarImage src={emp.profile_photo} />
+                                <AvatarFallback className="bg-gradient-to-br from-[#1EB053] to-[#0072C6] text-white text-xs">
+                                  {emp.full_name?.charAt(0) || 'E'}
+                                </AvatarFallback>
+                              </Avatar>
+                              <div>
+                                <span className="font-medium">{emp.full_name}</span>
+                                <p className="text-xs text-gray-500">{emp.position || '-'}</p>
+                              </div>
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            <Badge variant="outline">{emp.employee_code}</Badge>
+                          </TableCell>
+                          <TableCell>{emp.department || '-'}</TableCell>
+                          <TableCell>
+                            <Badge variant="secondary">{emp.role?.replace(/_/g, ' ')}</Badge>
+                          </TableCell>
+                          <TableCell>
+                            <Badge variant={
+                              emp.status === 'active' ? 'default' :
+                              emp.status === 'inactive' ? 'secondary' :
+                              'destructive'
+                            } className={emp.status === 'active' ? 'bg-green-100 text-green-700' : ''}>
+                              {emp.status}
+                            </Badge>
+                          </TableCell>
+                          <TableCell>
+                            {emp.user_email ? (
+                              <div className="flex items-center gap-1">
+                                <CheckCircle2 className="w-4 h-4 text-green-500" />
+                                <span className="text-xs text-green-600">Linked</span>
+                              </div>
+                            ) : (
+                              <div className="flex items-center gap-1">
+                                <X className="w-4 h-4 text-gray-400" />
+                                <span className="text-xs text-gray-400">No access</span>
+                              </div>
+                            )}
+                          </TableCell>
+                          <TableCell className="text-right">
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                <Button variant="ghost" size="icon">
+                                  <MoreVertical className="w-4 h-4" />
+                                </Button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent align="end">
+                                <DropdownMenuItem onClick={() => setViewEmployeeDialog(emp)}>
+                                  <Eye className="w-4 h-4 mr-2" />
+                                  View Details
+                                </DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => setEditEmployeeDialog(emp)}>
+                                  <Edit className="w-4 h-4 mr-2" />
+                                  Edit Employee
+                                </DropdownMenuItem>
+                                <DropdownMenuSeparator />
+                                <DropdownMenuItem
+                                  onClick={() => {
+                                    if (confirm('Are you sure you want to delete this employee?')) {
+                                      deleteEmployeeMutation.mutate(emp.id);
+                                    }
+                                  }}
+                                  className="text-red-600"
+                                >
+                                  <Trash2 className="w-4 h-4 mr-2" />
+                                  Delete
+                                </DropdownMenuItem>
+                              </DropdownMenuContent>
+                            </DropdownMenu>
+                          </TableCell>
+                        </TableRow>
+                      ))
+                    )}
+                  </TableBody>
+                </Table>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
 
       {/* Create Employee Dialog */}
       <Dialog open={!!createEmployeeDialog} onOpenChange={() => setCreateEmployeeDialog(null)}>
@@ -500,7 +728,7 @@ export default function UserManagement() {
 
       {/* Link to Existing Employee Dialog */}
       <Dialog open={!!linkEmployeeDialog} onOpenChange={() => setLinkEmployeeDialog(null)}>
-        <DialogContent>
+        <DialogContent className="[&>button]:hidden">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Link2 className="w-5 h-5 text-[#0072C6]" />
@@ -550,7 +778,309 @@ export default function UserManagement() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* View Employee Dialog */}
+      <Dialog open={!!viewEmployeeDialog} onOpenChange={() => setViewEmployeeDialog(null)}>
+        <DialogContent className="max-w-lg [&>button]:hidden">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Eye className="w-5 h-5 text-[#0072C6]" />
+              Employee Details
+            </DialogTitle>
+          </DialogHeader>
+          {viewEmployeeDialog && (
+            <div className="space-y-4">
+              <div className="flex items-center gap-4 p-4 bg-gray-50 rounded-lg">
+                <Avatar className="w-16 h-16">
+                  <AvatarImage src={viewEmployeeDialog.profile_photo} />
+                  <AvatarFallback className="bg-gradient-to-br from-[#1EB053] to-[#0072C6] text-white text-xl">
+                    {viewEmployeeDialog.full_name?.charAt(0)}
+                  </AvatarFallback>
+                </Avatar>
+                <div>
+                  <h3 className="text-lg font-semibold">{viewEmployeeDialog.full_name}</h3>
+                  <p className="text-gray-500">{viewEmployeeDialog.position} • {viewEmployeeDialog.department}</p>
+                  <Badge variant="outline" className="mt-1">{viewEmployeeDialog.employee_code}</Badge>
+                </div>
+              </div>
+              
+              <div className="grid grid-cols-2 gap-4">
+                <div className="flex items-center gap-2 p-3 bg-gray-50 rounded-lg">
+                  <Mail className="w-4 h-4 text-blue-500" />
+                  <div>
+                    <p className="text-xs text-gray-500">Email</p>
+                    <p className="text-sm font-medium">{viewEmployeeDialog.email || '-'}</p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2 p-3 bg-gray-50 rounded-lg">
+                  <Phone className="w-4 h-4 text-green-500" />
+                  <div>
+                    <p className="text-xs text-gray-500">Phone</p>
+                    <p className="text-sm font-medium">{viewEmployeeDialog.phone || '-'}</p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2 p-3 bg-gray-50 rounded-lg">
+                  <Shield className="w-4 h-4 text-purple-500" />
+                  <div>
+                    <p className="text-xs text-gray-500">Role</p>
+                    <p className="text-sm font-medium">{viewEmployeeDialog.role?.replace(/_/g, ' ')}</p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2 p-3 bg-gray-50 rounded-lg">
+                  <Calendar className="w-4 h-4 text-amber-500" />
+                  <div>
+                    <p className="text-xs text-gray-500">Hire Date</p>
+                    <p className="text-sm font-medium">
+                      {viewEmployeeDialog.hire_date ? format(new Date(viewEmployeeDialog.hire_date), 'MMM d, yyyy') : '-'}
+                    </p>
+                  </div>
+                </div>
+              </div>
+              
+              {viewEmployeeDialog.address && (
+                <div className="flex items-start gap-2 p-3 bg-gray-50 rounded-lg">
+                  <MapPin className="w-4 h-4 text-red-500 mt-0.5" />
+                  <div>
+                    <p className="text-xs text-gray-500">Address</p>
+                    <p className="text-sm font-medium">{viewEmployeeDialog.address}</p>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setViewEmployeeDialog(null)}>Close</Button>
+            <Button onClick={() => { setEditEmployeeDialog(viewEmployeeDialog); setViewEmployeeDialog(null); }} className="bg-gradient-to-r from-[#1EB053] to-[#0072C6]">
+              <Edit className="w-4 h-4 mr-2" />
+              Edit
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit Employee Dialog */}
+      <Dialog open={!!editEmployeeDialog} onOpenChange={() => setEditEmployeeDialog(null)}>
+        <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto [&>button]:hidden">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Edit className="w-5 h-5 text-[#1EB053]" />
+              Edit Employee
+            </DialogTitle>
+          </DialogHeader>
+          {editEmployeeDialog && (
+            <EditEmployeeForm
+              employee={editEmployeeDialog}
+              onSubmit={(data) => updateEmployeeMutation.mutate({ id: editEmployeeDialog.id, data })}
+              isLoading={updateEmployeeMutation.isPending}
+              onCancel={() => setEditEmployeeDialog(null)}
+            />
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Add New Employee Dialog */}
+      <Dialog open={showAddEmployeeDialog} onOpenChange={setShowAddEmployeeDialog}>
+        <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto [&>button]:hidden">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <UserPlus className="w-5 h-5 text-[#1EB053]" />
+              Add New Employee
+            </DialogTitle>
+          </DialogHeader>
+          <AddEmployeeForm
+            onSubmit={(data) => addEmployeeMutation.mutate(data)}
+            isLoading={addEmployeeMutation.isPending}
+            onCancel={() => setShowAddEmployeeDialog(false)}
+          />
+        </DialogContent>
+      </Dialog>
+
+      {/* Invite User Dialog */}
+      <SendInviteEmailDialog
+        open={showInviteDialog}
+        onOpenChange={setShowInviteDialog}
+        organisation={organisation}
+      />
     </div>
+  );
+}
+
+// Edit Employee Form Component
+function EditEmployeeForm({ employee, onSubmit, isLoading, onCancel }) {
+  const [formData, setFormData] = useState({
+    first_name: employee?.first_name || '',
+    last_name: employee?.last_name || '',
+    email: employee?.email || '',
+    phone: employee?.phone || '',
+    department: employee?.department || '',
+    position: employee?.position || '',
+    role: employee?.role || 'read_only',
+    status: employee?.status || 'active',
+    address: employee?.address || '',
+    base_salary: employee?.base_salary || 0,
+  });
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    onSubmit({
+      ...formData,
+      full_name: `${formData.first_name} ${formData.last_name}`.trim(),
+    });
+  };
+
+  return (
+    <form onSubmit={handleSubmit} className="space-y-4">
+      <div className="grid grid-cols-2 gap-4">
+        <div>
+          <Label>First Name</Label>
+          <Input value={formData.first_name} onChange={(e) => setFormData({...formData, first_name: e.target.value})} className="mt-1" />
+        </div>
+        <div>
+          <Label>Last Name</Label>
+          <Input value={formData.last_name} onChange={(e) => setFormData({...formData, last_name: e.target.value})} className="mt-1" />
+        </div>
+      </div>
+      <div className="grid grid-cols-2 gap-4">
+        <div>
+          <Label>Email</Label>
+          <Input type="email" value={formData.email} onChange={(e) => setFormData({...formData, email: e.target.value})} className="mt-1" />
+        </div>
+        <div>
+          <Label>Phone</Label>
+          <Input value={formData.phone} onChange={(e) => setFormData({...formData, phone: e.target.value})} className="mt-1" />
+        </div>
+      </div>
+      <div className="grid grid-cols-2 gap-4">
+        <div>
+          <Label>Department</Label>
+          <Input value={formData.department} onChange={(e) => setFormData({...formData, department: e.target.value})} className="mt-1" />
+        </div>
+        <div>
+          <Label>Position</Label>
+          <Input value={formData.position} onChange={(e) => setFormData({...formData, position: e.target.value})} className="mt-1" />
+        </div>
+      </div>
+      <div className="grid grid-cols-2 gap-4">
+        <div>
+          <Label>Role</Label>
+          <Select value={formData.role} onValueChange={(v) => setFormData({...formData, role: v})}>
+            <SelectTrigger className="mt-1"><SelectValue /></SelectTrigger>
+            <SelectContent>
+              {ROLES.map((role) => (
+                <SelectItem key={role.key} value={role.key}>{role.name}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+        <div>
+          <Label>Status</Label>
+          <Select value={formData.status} onValueChange={(v) => setFormData({...formData, status: v})}>
+            <SelectTrigger className="mt-1"><SelectValue /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="active">Active</SelectItem>
+              <SelectItem value="inactive">Inactive</SelectItem>
+              <SelectItem value="suspended">Suspended</SelectItem>
+              <SelectItem value="terminated">Terminated</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+      </div>
+      <div>
+        <Label>Base Salary (Le)</Label>
+        <Input type="number" value={formData.base_salary} onChange={(e) => setFormData({...formData, base_salary: parseFloat(e.target.value) || 0})} className="mt-1" />
+      </div>
+      <div>
+        <Label>Address</Label>
+        <Textarea value={formData.address} onChange={(e) => setFormData({...formData, address: e.target.value})} className="mt-1" rows={2} />
+      </div>
+      <DialogFooter>
+        <Button type="button" variant="outline" onClick={onCancel}>Cancel</Button>
+        <Button type="submit" disabled={isLoading} className="bg-gradient-to-r from-[#1EB053] to-[#0072C6]">
+          {isLoading ? "Saving..." : "Save Changes"}
+        </Button>
+      </DialogFooter>
+    </form>
+  );
+}
+
+// Add Employee Form Component
+function AddEmployeeForm({ onSubmit, isLoading, onCancel }) {
+  const [formData, setFormData] = useState({
+    first_name: '',
+    last_name: '',
+    email: '',
+    phone: '',
+    department: '',
+    position: '',
+    role: 'read_only',
+    hire_date: new Date().toISOString().split('T')[0],
+  });
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    if (!formData.first_name || !formData.last_name) {
+      toast.error("First and last name are required");
+      return;
+    }
+    onSubmit(formData);
+  };
+
+  return (
+    <form onSubmit={handleSubmit} className="space-y-4">
+      <div className="grid grid-cols-2 gap-4">
+        <div>
+          <Label>First Name *</Label>
+          <Input value={formData.first_name} onChange={(e) => setFormData({...formData, first_name: e.target.value})} className="mt-1" required />
+        </div>
+        <div>
+          <Label>Last Name *</Label>
+          <Input value={formData.last_name} onChange={(e) => setFormData({...formData, last_name: e.target.value})} className="mt-1" required />
+        </div>
+      </div>
+      <div className="grid grid-cols-2 gap-4">
+        <div>
+          <Label>Email</Label>
+          <Input type="email" value={formData.email} onChange={(e) => setFormData({...formData, email: e.target.value})} className="mt-1" />
+        </div>
+        <div>
+          <Label>Phone</Label>
+          <Input value={formData.phone} onChange={(e) => setFormData({...formData, phone: e.target.value})} className="mt-1" />
+        </div>
+      </div>
+      <div className="grid grid-cols-2 gap-4">
+        <div>
+          <Label>Department</Label>
+          <Input value={formData.department} onChange={(e) => setFormData({...formData, department: e.target.value})} className="mt-1" placeholder="e.g. Sales" />
+        </div>
+        <div>
+          <Label>Position</Label>
+          <Input value={formData.position} onChange={(e) => setFormData({...formData, position: e.target.value})} className="mt-1" placeholder="e.g. Manager" />
+        </div>
+      </div>
+      <div className="grid grid-cols-2 gap-4">
+        <div>
+          <Label>Role</Label>
+          <Select value={formData.role} onValueChange={(v) => setFormData({...formData, role: v})}>
+            <SelectTrigger className="mt-1"><SelectValue /></SelectTrigger>
+            <SelectContent>
+              {ROLES.map((role) => (
+                <SelectItem key={role.key} value={role.key}>{role.name}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+        <div>
+          <Label>Hire Date</Label>
+          <Input type="date" value={formData.hire_date} onChange={(e) => setFormData({...formData, hire_date: e.target.value})} className="mt-1" />
+        </div>
+      </div>
+      <DialogFooter>
+        <Button type="button" variant="outline" onClick={onCancel}>Cancel</Button>
+        <Button type="submit" disabled={isLoading} className="bg-gradient-to-r from-[#1EB053] to-[#0072C6]">
+          {isLoading ? "Adding..." : "Add Employee"}
+        </Button>
+      </DialogFooter>
+    </form>
   );
 }
 
