@@ -1120,7 +1120,7 @@ export default function Finance() {
 
         {/* Add Expense Dialog */}
         <Dialog open={showExpenseDialog} onOpenChange={setShowExpenseDialog}>
-          <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto w-[95vw] sm:w-full">
+          <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto w-[95vw] sm:w-full [&>button]:hidden">
             <DialogHeader>
               <div className="flex h-1 w-16 rounded-full overflow-hidden mb-3">
                 <div className="flex-1 bg-[#1EB053]" />
@@ -1195,7 +1195,7 @@ export default function Finance() {
 
         {/* Add Revenue Dialog */}
         <Dialog open={showRevenueDialog} onOpenChange={setShowRevenueDialog}>
-          <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto w-[95vw] sm:w-full">
+          <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto w-[95vw] sm:w-full [&>button]:hidden">
             <DialogHeader>
               <div className="flex h-1 w-16 rounded-full overflow-hidden mb-3">
                 <div className="flex-1 bg-[#1EB053]" />
