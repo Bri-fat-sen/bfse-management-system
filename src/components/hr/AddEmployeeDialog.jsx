@@ -4,6 +4,9 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   Dialog,
   DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -43,7 +46,6 @@ const departments = ["Management", "Sales", "Operations", "Finance", "Transport"
 
 export default function AddEmployeeDialog({ open, onOpenChange, orgId, employeeCount, organisation, inviterName }) {
   const queryClient = useQueryClient();
-  const [activeSection, setActiveSection] = useState('personal');
   
   const [formData, setFormData] = useState({
     first_name: '',
@@ -64,12 +66,6 @@ export default function AddEmployeeDialog({ open, onOpenChange, orgId, employeeC
 
   const primaryColor = organisation?.primary_color || '#1EB053';
   const secondaryColor = organisation?.secondary_color || '#0072C6';
-
-  useEffect(() => {
-    if (open) {
-      setActiveSection('personal');
-    }
-  }, [open]);
 
   const { data: packages = [] } = useQuery({
     queryKey: ['remunerationPackages', orgId],
@@ -196,80 +192,33 @@ export default function AddEmployeeDialog({ open, onOpenChange, orgId, employeeC
     createEmployeeMutation.mutate(formData);
   };
 
-  const sections = [
-    { id: 'personal', label: 'Personal', icon: User },
-    { id: 'work', label: 'Work', icon: Briefcase },
-    { id: 'salary', label: 'Salary', icon: DollarSign },
-  ];
-
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-hidden p-0 w-[95vw] sm:w-full [&>button]:hidden">
-        {/* Sierra Leone Flag Header */}
-        <div className="h-2 flex">
-          <div className="flex-1" style={{ backgroundColor: primaryColor }} />
-          <div className="flex-1 bg-white" />
-          <div className="flex-1" style={{ backgroundColor: secondaryColor }} />
-        </div>
-
-        {/* Header with gradient */}
-        <div 
-          className="px-6 py-4 text-white"
-          style={{ background: `linear-gradient(135deg, ${primaryColor} 0%, ${secondaryColor} 100%)` }}
-        >
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="w-12 h-12 rounded-xl bg-white/20 flex items-center justify-center">
-                <User className="w-6 h-6 text-white" />
-              </div>
-              <div>
-                <h2 className="text-xl font-bold">Add New Employee</h2>
-                <p className="text-white/80 text-sm">Create a new team member profile</p>
-              </div>
-            </div>
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => onOpenChange(false)}
-              className="text-white hover:bg-white/20"
-            >
-              <X className="w-5 h-5" />
-            </Button>
+      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto w-[95vw] sm:w-full">
+        <DialogHeader>
+          <div className="flex h-1 w-16 rounded-full overflow-hidden mb-3">
+            <div className="flex-1" style={{ backgroundColor: primaryColor }} />
+            <div className="flex-1 bg-white border-y border-gray-200" />
+            <div className="flex-1" style={{ backgroundColor: secondaryColor }} />
           </div>
-
-          {/* Section Tabs */}
-          <div className="flex gap-1 mt-4 overflow-x-auto pb-1">
-            {sections.map((section) => (
-              <button
-                key={section.id}
-                type="button"
-                onClick={() => setActiveSection(section.id)}
-                className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-all whitespace-nowrap ${
-                  activeSection === section.id
-                    ? 'bg-white text-gray-900'
-                    : 'bg-white/20 text-white hover:bg-white/30'
-                }`}
-              >
-                <section.icon className="w-4 h-4" />
-                {section.label}
-              </button>
-            ))}
-          </div>
-        </div>
+          <DialogTitle className="flex items-center gap-2">
+            <User className="w-5 h-5" style={{ color: primaryColor }} />
+            Add New Employee
+          </DialogTitle>
+        </DialogHeader>
 
         {/* Form Content */}
-        <form onSubmit={handleSubmit} className="overflow-y-auto max-h-[calc(90vh-220px)]">
-          <div className="p-6 space-y-6">
+        <form onSubmit={handleSubmit} className="space-y-6">
+          <div className="space-y-6">
             
             {/* Personal Info Section */}
-            {activeSection === 'personal' && (
-              <div className="space-y-4">
-                <div className="flex items-center gap-2 mb-4">
-                  <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ backgroundColor: `${primaryColor}20` }}>
-                    <User className="w-4 h-4" style={{ color: primaryColor }} />
-                  </div>
-                  <h3 className="font-semibold text-gray-900">Personal Information</h3>
+            <div className="space-y-4">
+              <div className="flex items-center gap-2 mb-4">
+                <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ backgroundColor: `${primaryColor}20` }}>
+                  <User className="w-4 h-4" style={{ color: primaryColor }} />
                 </div>
+                <h3 className="font-semibold text-gray-900">Personal Information</h3>
+              </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
@@ -341,17 +290,16 @@ export default function AddEmployeeDialog({ open, onOpenChange, orgId, employeeC
                   </div>
                 </div>
               </div>
-            )}
+            </div>
 
             {/* Work Info Section */}
-            {activeSection === 'work' && (
-              <div className="space-y-4">
-                <div className="flex items-center gap-2 mb-4">
-                  <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ backgroundColor: `${secondaryColor}20` }}>
-                    <Briefcase className="w-4 h-4" style={{ color: secondaryColor }} />
-                  </div>
-                  <h3 className="font-semibold text-gray-900">Work Information</h3>
+            <div className="space-y-4">
+              <div className="flex items-center gap-2 mb-4">
+                <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ backgroundColor: `${secondaryColor}20` }}>
+                  <Briefcase className="w-4 h-4" style={{ color: secondaryColor }} />
                 </div>
+                <h3 className="font-semibold text-gray-900">Work Information</h3>
+              </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
@@ -420,17 +368,16 @@ export default function AddEmployeeDialog({ open, onOpenChange, orgId, employeeC
                   </AlertDescription>
                 </Alert>
               </div>
-            )}
+            </div>
 
             {/* Salary Section */}
-            {activeSection === 'salary' && (
-              <div className="space-y-4">
-                <div className="flex items-center gap-2 mb-4">
-                  <div className="w-8 h-8 rounded-lg bg-amber-100 flex items-center justify-center">
-                    <DollarSign className="w-4 h-4 text-amber-600" />
-                  </div>
-                  <h3 className="font-semibold text-gray-900">Salary & Compensation</h3>
+            <div className="space-y-4">
+              <div className="flex items-center gap-2 mb-4">
+                <div className="w-8 h-8 rounded-lg bg-amber-100 flex items-center justify-center">
+                  <DollarSign className="w-4 h-4 text-amber-600" />
                 </div>
+                <h3 className="font-semibold text-gray-900">Salary & Compensation</h3>
+              </div>
 
                 {/* Remuneration Package */}
                 {applicablePackages.length > 0 && (
@@ -500,11 +447,11 @@ export default function AddEmployeeDialog({ open, onOpenChange, orgId, employeeC
                   </div>
                 </div>
               </div>
-            )}
+            </div>
           </div>
 
           {/* Footer */}
-          <div className="sticky bottom-0 bg-white border-t p-4 flex flex-col sm:flex-row gap-3">
+          <DialogFooter className="flex-col sm:flex-row gap-3 mt-6">
             <Button 
               type="button" 
               variant="outline" 
@@ -531,15 +478,8 @@ export default function AddEmployeeDialog({ open, onOpenChange, orgId, employeeC
                 </>
               )}
             </Button>
-          </div>
+          </DialogFooter>
         </form>
-
-        {/* Bottom flag stripe */}
-        <div className="h-1 flex">
-          <div className="flex-1" style={{ backgroundColor: primaryColor }} />
-          <div className="flex-1 bg-white" />
-          <div className="flex-1" style={{ backgroundColor: secondaryColor }} />
-        </div>
       </DialogContent>
     </Dialog>
   );
