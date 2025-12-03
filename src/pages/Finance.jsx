@@ -1078,6 +1078,213 @@ export default function Finance() {
             </Card>
           </TabsContent>
 
+          {/* Banking Tab - Bank Deposits Tracking */}
+          <TabsContent value="banking" className="mt-6 space-y-6">
+            {/* Banking Summary Cards */}
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+              <Card className="bg-gradient-to-br from-green-50 to-white border-t-4 border-t-[#1EB053]">
+                <CardContent className="p-4">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-lg bg-green-100 flex items-center justify-center flex-shrink-0">
+                      <DollarSign className="w-5 h-5 text-green-600" />
+                    </div>
+                    <div className="min-w-0">
+                      <p className="text-xs text-gray-500">Total Revenue</p>
+                      <p className="text-lg font-bold text-green-600 truncate">Le {financials.totalRevenue.toLocaleString()}</p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card className="bg-gradient-to-br from-blue-50 to-white border-t-4 border-t-[#0072C6]">
+                <CardContent className="p-4">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-lg bg-blue-100 flex items-center justify-center flex-shrink-0">
+                      <Landmark className="w-5 h-5 text-blue-600" />
+                    </div>
+                    <div className="min-w-0">
+                      <p className="text-xs text-gray-500">In Bank</p>
+                      <p className="text-lg font-bold text-blue-600 truncate">Le {financials.totalBankDeposits.toLocaleString()}</p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card className="bg-gradient-to-br from-amber-50 to-white border-t-4 border-t-amber-500">
+                <CardContent className="p-4">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-lg bg-amber-100 flex items-center justify-center flex-shrink-0">
+                      <Wallet className="w-5 h-5 text-amber-600" />
+                    </div>
+                    <div className="min-w-0">
+                      <p className="text-xs text-gray-500">Cash On Hand</p>
+                      <p className="text-lg font-bold text-amber-600 truncate">Le {financials.cashOnHand.toLocaleString()}</p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card className="bg-gradient-to-br from-purple-50 to-white border-t-4 border-t-purple-500">
+                <CardContent className="p-4">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-lg bg-purple-100 flex items-center justify-center flex-shrink-0">
+                      <Clock className="w-5 h-5 text-purple-600" />
+                    </div>
+                    <div className="min-w-0">
+                      <p className="text-xs text-gray-500">Pending</p>
+                      <p className="text-lg font-bold text-purple-600 truncate">Le {financials.pendingBankDeposits.toLocaleString()}</p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* Visual Breakdown */}
+            <Card>
+              <CardContent className="p-6">
+                <div className="flex flex-col sm:flex-row items-center gap-6">
+                  <div className="flex-1 w-full">
+                    <div className="flex justify-between text-sm mb-2">
+                      <span className="text-gray-600">Revenue to Bank Ratio</span>
+                      <span className="font-medium">
+                        {financials.totalRevenue > 0 
+                          ? ((financials.totalBankDeposits / financials.totalRevenue) * 100).toFixed(1) 
+                          : 0}%
+                      </span>
+                    </div>
+                    <div className="h-4 bg-gray-100 rounded-full overflow-hidden">
+                      <div 
+                        className="h-full bg-gradient-to-r from-[#1EB053] to-[#0072C6] rounded-full transition-all"
+                        style={{ width: `${financials.totalRevenue > 0 ? (financials.totalBankDeposits / financials.totalRevenue) * 100 : 0}%` }}
+                      />
+                    </div>
+                    <div className="flex justify-between text-xs text-gray-500 mt-1">
+                      <span>Le 0</span>
+                      <span>Le {financials.totalRevenue.toLocaleString()}</span>
+                    </div>
+                  </div>
+                  <div className="flex gap-4">
+                    <div className="text-center">
+                      <div className="w-4 h-4 bg-gradient-to-r from-[#1EB053] to-[#0072C6] rounded mx-auto mb-1" />
+                      <p className="text-xs text-gray-500">Deposited</p>
+                    </div>
+                    <div className="text-center">
+                      <div className="w-4 h-4 bg-gray-200 rounded mx-auto mb-1" />
+                      <p className="text-xs text-gray-500">Remaining</p>
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Bank Deposits List */}
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between">
+                <div>
+                  <CardTitle className="flex items-center gap-2">
+                    <Landmark className="w-5 h-5 text-[#0072C6]" />
+                    Bank Deposits
+                  </CardTitle>
+                  <CardDescription>Track money deposited to bank from revenue</CardDescription>
+                </div>
+                <Button onClick={() => setShowBankDepositDialog(true)} className="bg-gradient-to-r from-[#1EB053] to-[#0072C6]">
+                  <Plus className="w-4 h-4 mr-2" />
+                  Record Deposit
+                </Button>
+              </CardHeader>
+              <CardContent>
+                <ScrollArea className="h-[400px]">
+                  <div className="space-y-3">
+                    {bankDeposits.length === 0 ? (
+                      <div className="text-center py-12 text-gray-500">
+                        <Landmark className="w-12 h-12 mx-auto mb-3 text-gray-300" />
+                        <p>No bank deposits recorded yet</p>
+                        <p className="text-sm mt-1">Record deposits to track money going to the bank</p>
+                      </div>
+                    ) : (
+                      bankDeposits.map((deposit) => (
+                        <div key={deposit.id} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
+                          <div className="flex items-center gap-4">
+                            <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
+                              deposit.status === 'confirmed' ? 'bg-green-100' : 
+                              deposit.status === 'rejected' ? 'bg-red-100' : 'bg-amber-100'
+                            }`}>
+                              <Landmark className={`w-5 h-5 ${
+                                deposit.status === 'confirmed' ? 'text-green-600' : 
+                                deposit.status === 'rejected' ? 'text-red-600' : 'text-amber-600'
+                              }`} />
+                            </div>
+                            <div>
+                              <p className="font-medium">{deposit.bank_name}</p>
+                              <div className="flex items-center gap-2 text-sm text-gray-500">
+                                <Badge variant="outline" className="text-xs">
+                                  {deposit.source?.replace(/_/g, ' ')}
+                                </Badge>
+                                <span>•</span>
+                                <span>{deposit.date ? format(new Date(deposit.date), 'MMM d, yyyy') : '-'}</span>
+                                {deposit.reference_number && (
+                                  <>
+                                    <span>•</span>
+                                    <span className="text-xs">Ref: {deposit.reference_number}</span>
+                                  </>
+                                )}
+                              </div>
+                              {deposit.deposited_by_name && (
+                                <p className="text-xs text-gray-400 mt-1">By: {deposit.deposited_by_name}</p>
+                              )}
+                            </div>
+                          </div>
+                          <div className="text-right flex items-center gap-3">
+                            <div>
+                              <p className="font-bold text-[#0072C6]">Le {deposit.amount?.toLocaleString()}</p>
+                              <Badge variant={
+                                deposit.status === 'confirmed' ? 'secondary' :
+                                deposit.status === 'rejected' ? 'destructive' : 'outline'
+                              } className={deposit.status === 'confirmed' ? 'bg-green-100 text-green-700' : ''}>
+                                {deposit.status}
+                              </Badge>
+                            </div>
+                            {deposit.status === 'pending' && ['super_admin', 'org_admin'].includes(currentEmployee?.role) && (
+                              <div className="flex gap-1">
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="h-8 w-8 text-green-600 hover:bg-green-50"
+                                  onClick={() => updateBankDepositMutation.mutate({
+                                    id: deposit.id,
+                                    data: {
+                                      status: 'confirmed',
+                                      confirmed_by: currentEmployee?.id,
+                                      confirmed_by_name: currentEmployee?.full_name,
+                                      confirmed_date: format(new Date(), 'yyyy-MM-dd')
+                                    }
+                                  })}
+                                >
+                                  <Check className="w-4 h-4" />
+                                </Button>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="h-8 w-8 text-red-600 hover:bg-red-50"
+                                  onClick={() => updateBankDepositMutation.mutate({
+                                    id: deposit.id,
+                                    data: { status: 'rejected' }
+                                  })}
+                                >
+                                  <X className="w-4 h-4" />
+                                </Button>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                </ScrollArea>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
           {/* Cash Flow Tab */}
           <TabsContent value="cashflow" className="mt-6 space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
