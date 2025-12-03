@@ -637,24 +637,47 @@ export const generateExportHTML = ({
   `;
 };
 
-export const printDocument = (html) => {
-  const printWindow = window.open('', '_blank', 'width=900,height=700');
-  printWindow.document.write(html);
-  printWindow.document.close();
-  setTimeout(() => {
-    printWindow.print();
-  }, 300);
+export const printDocument = (html, filename = 'report.pdf') => {
+  // Create a hidden iframe for better PDF generation
+  const iframe = document.createElement('iframe');
+  iframe.style.position = 'fixed';
+  iframe.style.right = '0';
+  iframe.style.bottom = '0';
+  iframe.style.width = '0';
+  iframe.style.height = '0';
+  iframe.style.border = 'none';
+  document.body.appendChild(iframe);
+  
+  const doc = iframe.contentWindow.document;
+  doc.open();
+  doc.write(html);
+  doc.close();
+  
+  // Wait for content to load then trigger print
+  iframe.onload = () => {
+    setTimeout(() => {
+      iframe.contentWindow.focus();
+      iframe.contentWindow.print();
+      // Remove iframe after print dialog closes
+      setTimeout(() => {
+        document.body.removeChild(iframe);
+      }, 1000);
+    }, 500);
+  };
+};
+
+export const downloadPDF = (html, filename = 'report.pdf') => {
+  // Same as printDocument but with print-to-PDF intent
+  printDocument(html, filename);
 };
 
 export const downloadHTML = (html, filename) => {
-  // Open print dialog for PDF save instead of HTML download
-  const pdfWindow = window.open('', '_blank', 'width=900,height=700');
-  if (pdfWindow) {
-    pdfWindow.document.write(html);
-    pdfWindow.document.close();
-    pdfWindow.document.title = filename.replace('.html', '.pdf');
-    setTimeout(() => pdfWindow.print(), 500);
-  }
+  // For HTML download (rarely used now)
+  const blob = new Blob([html], { type: 'text/html;charset=utf-8;' });
+  const link = document.createElement('a');
+  link.href = URL.createObjectURL(blob);
+  link.download = filename;
+  link.click();
 };
 
 export const exportToCSV = (columns, rows, filename, organisation = null) => {
