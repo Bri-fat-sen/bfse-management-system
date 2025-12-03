@@ -1,7 +1,6 @@
 import React, { useState, useCallback, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Delete, CheckCircle, XCircle, LogOut } from "lucide-react";
-import { base44 } from "@/api/base44Client";
 
 export default function PinLockScreen({ 
   employee, 
