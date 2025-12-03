@@ -59,400 +59,119 @@ const FORM_TEMPLATES = [
 const generateFormHTML = (formType, org) => {
   const today = new Date().toLocaleDateString('en-GB');
   const orgName = org?.name || 'Organisation Name';
-  const orgInitials = orgName.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase();
-  const orgAddress = org?.address || '';
-  const orgCity = org?.city || '';
   const orgPhone = org?.phone || '';
   const orgEmail = org?.email || '';
-  const primaryColor = org?.primary_color || '#1EB053';
-  const secondaryColor = org?.secondary_color || '#0072C6';
   
-  const commonStyles = `
-    <style>
-      @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap');
-      
-      :root {
-        --primary: ${primaryColor};
-        --secondary: ${secondaryColor};
-        --navy: #0F1F3C;
-        --success: #10b981;
-        --warning: #f59e0b;
-        --danger: #ef4444;
-        --gray-50: #f8fafc;
-        --gray-100: #f1f5f9;
-        --gray-200: #e2e8f0;
-        --gray-300: #cbd5e1;
-        --gray-400: #94a3b8;
-        --gray-500: #64748b;
-        --gray-600: #475569;
-        --gray-700: #334155;
-        --gray-800: #1e293b;
-        --gray-900: #0f172a;
-      }
-      
-      @page { size: A4; margin: 10mm; }
-      * { box-sizing: border-box; margin: 0; padding: 0; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
-      
-      body { 
-        font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
-        font-size: 12px; 
-        line-height: 1.6; 
-        color: var(--gray-800);
-        background: var(--gray-50);
-        padding: 20px;
-        -webkit-font-smoothing: antialiased;
-      }
-      
-      .document {
-        max-width: 210mm;
-        margin: 0 auto;
-        background: white;
-        border-radius: 16px;
-        overflow: hidden;
-        box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.15);
-      }
-      
-      /* Flag Stripe */
-      .flag-stripe {
-        height: 6px;
-        display: flex;
-      }
-      .flag-stripe .green { flex: 1; background: var(--primary) !important; }
-      .flag-stripe .white { flex: 1; background: #fff !important; }
-      .flag-stripe .blue { flex: 1; background: var(--secondary) !important; }
-      
-      /* Header */
-      .header {
-        background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%) !important;
-        color: white !important;
-        padding: 28px 40px;
-        position: relative;
-        overflow: hidden;
-      }
-      
-      .header::before {
-        content: '';
-        position: absolute;
-        top: 0; left: 0; right: 0; bottom: 0;
-        opacity: 0.08;
-        background-image: 
-          radial-gradient(circle at 20% 80%, rgba(255,255,255,0.5) 0%, transparent 50%),
-          radial-gradient(circle at 80% 20%, rgba(255,255,255,0.5) 0%, transparent 50%);
-      }
-      
-      .header-content {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        position: relative;
-        z-index: 1;
-      }
-      
-      .org-brand {
-        display: flex;
-        align-items: center;
-        gap: 16px;
-      }
-      
-      .org-logo {
-        width: 56px;
-        height: 56px;
-        background: white;
-        border-radius: 14px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 20px;
-        font-weight: 800;
-        box-shadow: 0 8px 24px rgba(0,0,0,0.2);
-        overflow: hidden;
-      }
-      
-      .org-logo img {
-        max-width: 44px;
-        max-height: 44px;
-        object-fit: contain;
-      }
-      
-      .org-logo span {
-        background: linear-gradient(135deg, var(--primary), var(--secondary));
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-      }
-      
-      .org-info h1 {
-        font-size: 20px;
-        font-weight: 700;
-        margin-bottom: 2px;
-        letter-spacing: -0.5px;
-      }
-      
-      .org-info .location {
-        font-size: 12px;
-        opacity: 0.85;
-      }
-      
-      .header-meta {
-        text-align: right;
-        font-size: 11px;
-      }
-      
-      .header-meta .form-type {
-        font-size: 10px;
-        text-transform: uppercase;
-        letter-spacing: 2px;
-        opacity: 0.8;
-        margin-bottom: 4px;
-      }
-      
-      .header-meta .form-date {
-        font-size: 14px;
-        font-weight: 600;
-      }
-      
-      /* Form Title */
-      .form-title {
-        background: var(--gray-50);
-        padding: 16px 40px;
-        border-bottom: 1px solid var(--gray-200);
-        display: flex;
-        align-items: center;
-        gap: 12px;
-      }
-      
-      .form-icon {
-        width: 40px;
-        height: 40px;
-        background: linear-gradient(135deg, var(--primary), var(--secondary));
-        border-radius: 10px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 20px;
-      }
-      
-      .form-title h2 {
-        font-size: 16px;
-        font-weight: 700;
-        color: var(--gray-800);
-      }
-      
-      /* Content */
-      .content {
-        padding: 24px 40px;
-      }
-      
-      /* Field Styles */
-      .field-row { display: flex; margin-bottom: 16px; gap: 16px; }
-      .field { flex: 1; }
-      .field label { 
-        display: block; 
-        font-weight: 600; 
-        font-size: 10px; 
-        color: var(--gray-500); 
-        margin-bottom: 6px; 
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
-      }
-      .field-input { 
-        border: 1px solid var(--gray-200); 
-        border-radius: 8px; 
-        padding: 12px 14px; 
-        min-height: 24px; 
-        background: white;
-      }
-      .field-input.large { min-height: 80px; }
-      
-      /* Section Title */
-      .section-title { 
-        font-weight: 700; 
-        color: var(--gray-700);
-        padding: 12px 16px;
-        margin: 24px 0 16px; 
-        font-size: 12px;
-        background: var(--gray-50);
-        border-radius: 8px;
-        border-left: 4px solid var(--primary);
-        display: flex;
-        align-items: center;
-        gap: 8px;
-      }
-      
-      /* Table Styles */
-      table { 
-        width: 100%; 
-        border-collapse: collapse; 
-        margin: 16px 0;
-        border-radius: 12px;
-        overflow: hidden;
-        border: 1px solid var(--gray-200);
-      }
-      thead {
-        background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%) !important;
-        color: white !important;
-      }
-      th { 
-        padding: 12px 14px; 
-        text-align: left; 
-        font-size: 10px; 
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
-        font-weight: 600;
-        color: white !important;
-      }
-      td { 
-        padding: 14px; 
-        border-bottom: 1px solid var(--gray-100); 
-        min-height: 32px;
-        background: white;
-      }
-      tr:last-child td { border-bottom: none; }
-      .total-row { background: var(--gray-100) !important; }
-      .total-row td { 
-        font-weight: 700;
-        font-size: 13px;
-        border-top: 2px solid var(--gray-300);
-        background: transparent !important;
-      }
-      
-      /* Checkbox Styles */
-      .checkbox-group { 
-        display: flex; 
-        flex-wrap: wrap; 
-        gap: 12px;
-        padding: 12px;
-        background: var(--gray-50);
-        border-radius: 8px;
-        border: 1px solid var(--gray-200);
-      }
-      .checkbox-item { 
-        display: flex; 
-        align-items: center; 
-        gap: 8px;
-        font-size: 11px;
-        color: var(--gray-700);
-      }
-      .checkbox { 
-        width: 18px; 
-        height: 18px; 
-        border: 2px solid var(--gray-300); 
-        border-radius: 4px;
-        display: inline-block;
-        background: white;
-      }
-      
-      /* Signature Section */
-      .signature-section { 
-        margin-top: 48px; 
-        display: flex; 
-        justify-content: space-between;
-        gap: 40px;
-      }
-      .signature-box { flex: 1; text-align: center; }
-      .signature-line { 
-        border-top: 2px solid var(--gray-300); 
-        margin-top: 60px; 
-        padding-top: 10px; 
-        font-size: 11px;
-        color: var(--gray-500);
-        font-weight: 500;
-      }
-      
-      /* Footer */
-      .footer {
-        background: var(--navy) !important;
-        color: white !important;
-        padding: 24px 40px;
-        text-align: center;
-      }
-      
-      .footer .thanks {
-        font-size: 14px;
-        font-weight: 600;
-        margin-bottom: 4px;
-      }
-      
-      .footer .tagline {
-        font-size: 12px;
-        opacity: 0.85;
-      }
-      
-      .footer .flag {
-        margin: 12px 0;
-        font-size: 22px;
-      }
-      
-      .footer .flag-bar {
-        display: flex;
-        justify-content: center;
-        gap: 4px;
-        margin: 12px 0;
-      }
-      .footer .flag-bar span {
-        width: 24px;
-        height: 16px;
-        border-radius: 2px;
-      }
-      .footer .bar-green { background: #1EB053 !important; }
-      .footer .bar-white { background: #FFFFFF !important; }
-      .footer .bar-blue { background: #0072C6 !important; }
-      
-      .footer .contact {
-        font-size: 11px;
-        opacity: 0.7;
-        margin-top: 12px;
-        padding-top: 12px;
-        border-top: 1px solid rgba(255,255,255,0.2);
-      }
-      
-      @media print { 
-        html, body { padding: 0; margin: 0; background: white !important; }
-        .document { box-shadow: none; border-radius: 0; max-width: 100%; }
-        .header, .footer, thead { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
-      }
-    </style>
+  // Get unified styles from the shared module
+  const unifiedStyles = getUnifiedPDFStyles(org, 'report');
+  
+  // Additional form-specific styles
+  const formStyles = `
+    ${unifiedStyles}
+    
+    /* Form-specific overrides */
+    .form-title-bar {
+      background: var(--gray-50);
+      padding: 16px 40px;
+      border-bottom: 1px solid var(--gray-200);
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    
+    .form-icon {
+      width: 40px;
+      height: 40px;
+      background: linear-gradient(135deg, var(--primary), var(--secondary));
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+    }
+    
+    .form-title-bar h2 {
+      font-size: 16px;
+      font-weight: 700;
+      color: var(--gray-800);
+    }
+    
+    /* Field Styles */
+    .field-row { display: flex; margin-bottom: 16px; gap: 16px; }
+    .field { flex: 1; }
+    .field label { 
+      display: block; 
+      font-weight: 600; 
+      font-size: 10px; 
+      color: var(--gray-500); 
+      margin-bottom: 6px; 
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .field-input { 
+      border: 1px solid var(--gray-200); 
+      border-radius: 8px; 
+      padding: 12px 14px; 
+      min-height: 24px; 
+      background: white;
+    }
+    .field-input.large { min-height: 80px; }
+    
+    /* Checkbox Styles */
+    .checkbox-group { 
+      display: flex; 
+      flex-wrap: wrap; 
+      gap: 12px;
+      padding: 12px;
+      background: var(--gray-50);
+      border-radius: 8px;
+      border: 1px solid var(--gray-200);
+    }
+    .checkbox-item { 
+      display: flex; 
+      align-items: center; 
+      gap: 8px;
+      font-size: 11px;
+      color: var(--gray-700);
+    }
+    .checkbox { 
+      width: 18px; 
+      height: 18px; 
+      border: 2px solid var(--gray-300); 
+      border-radius: 4px;
+      display: inline-block;
+      background: white;
+    }
+    
+    /* Signature Section */
+    .signature-section { 
+      margin-top: 48px; 
+      display: flex; 
+      justify-content: space-between;
+      gap: 40px;
+    }
+    .signature-box { flex: 1; text-align: center; }
+    .signature-line { 
+      border-top: 2px solid var(--gray-300); 
+      margin-top: 60px; 
+      padding-top: 10px; 
+      font-size: 11px;
+      color: var(--gray-500);
+      font-weight: 500;
+    }
+    
+    /* Table row styling for forms */
+    .total-row { background: var(--gray-100) !important; }
+    .total-row td { 
+      font-weight: 700;
+      font-size: 13px;
+      border-top: 2px solid var(--gray-300);
+      background: transparent !important;
+    }
   `;
 
-  const header = `
-    <div class="flag-stripe">
-      <div class="green"></div>
-      <div class="white"></div>
-      <div class="blue"></div>
-    </div>
-    <div class="header">
-      <div class="header-content">
-        <div class="org-brand">
-          <div class="org-logo">
-            ${org?.logo_url ? `<img src="${org.logo_url}" alt="${orgName}">` : `<span>${orgInitials}</span>`}
-          </div>
-          <div class="org-info">
-            <h1>${orgName}</h1>
-            <div class="location">${orgAddress ? orgAddress + (orgCity ? ', ' + orgCity : '') : ''} ${org?.country || 'Sierra Leone'}</div>
-          </div>
-        </div>
-        <div class="header-meta">
-          <div class="form-type">Data Entry Form</div>
-          <div class="form-date">${today}</div>
-          ${orgPhone ? `<div style="margin-top: 4px; opacity: 0.8;">${orgPhone}</div>` : ''}
-        </div>
-      </div>
-    </div>
-  `;
-
-  const footer = `
-    <div class="footer">
-      <div class="thanks">Thank You For Your Business</div>
-      <div class="tagline">Proudly serving Sierra Leone</div>
-      <div class="flag-bar">
-        <span class="bar-green"></span>
-        <span class="bar-white"></span>
-        <span class="bar-blue"></span>
-      </div>
-      <div class="contact">
-        ${orgName}${orgPhone ? ' • ' + orgPhone : ''}${orgEmail ? ' • ' + orgEmail : ''}
-      </div>
-    </div>
-  `;
+  const header = getUnifiedHeader(org, 'Data Entry Form', '', today, 'report');
+  const footer = getUnifiedFooter(org);
 
   const signatureSection = `
     <div class="signature-section">
@@ -467,7 +186,7 @@ const generateFormHTML = (formType, org) => {
 
   const forms = {
     expense_fuel: `
-      <div class="form-title"><div class="form-icon">⛽</div><h2>Fuel Expense Form</h2></div>
+      <div class="form-title-bar"><div class="form-icon">⛽</div><h2>Fuel Expense Form</h2></div>
       <div class="content">
         <div class="field-row">
           <div class="field"><label>Date</label><div class="field-input"></div></div>
@@ -500,7 +219,7 @@ const generateFormHTML = (formType, org) => {
       </div>
     `,
     expense_maintenance: `
-      <div class="form-title"><div class="form-icon">🔧</div><h2>Maintenance Expense Form</h2></div>
+      <div class="form-title-bar"><div class="form-icon">🔧</div><h2>Maintenance Expense Form</h2></div>
       <div class="content">
         <div class="field-row">
           <div class="field"><label>Date</label><div class="field-input"></div></div>
@@ -534,7 +253,7 @@ const generateFormHTML = (formType, org) => {
       </div>
     `,
     expense_utilities: `
-      <div class="form-title"><div class="form-icon">⚡</div><h2>Utilities Expense Form</h2></div>
+      <div class="form-title-bar"><div class="form-icon">⚡</div><h2>Utilities Expense Form</h2></div>
       <div class="content">
         <div class="field-row">
           <div class="field"><label>Date</label><div class="field-input"></div></div>
@@ -561,7 +280,7 @@ const generateFormHTML = (formType, org) => {
       </div>
     `,
     expense_supplies: `
-      <div class="form-title"><div class="form-icon">📦</div><h2>Supplies Expense Form</h2></div>
+      <div class="form-title-bar"><div class="form-icon">📦</div><h2>Supplies Expense Form</h2></div>
       <div class="content">
         <div class="field-row">
           <div class="field"><label>Date</label><div class="field-input"></div></div>
@@ -580,7 +299,7 @@ const generateFormHTML = (formType, org) => {
       </div>
     `,
     expense_rent: `
-      <div class="form-title"><div class="form-icon">🏢</div><h2>Rent Expense Form</h2></div>
+      <div class="form-title-bar"><div class="form-icon">🏢</div><h2>Rent Expense Form</h2></div>
       <div class="content">
         <div class="field-row">
           <div class="field"><label>Date Paid</label><div class="field-input"></div></div>
@@ -606,7 +325,7 @@ const generateFormHTML = (formType, org) => {
       </div>
     `,
     expense_salaries: `
-      <div class="form-title"><div class="form-icon">👥</div><h2>Salary / Wages Form</h2></div>
+      <div class="form-title-bar"><div class="form-icon">👥</div><h2>Salary / Wages Form</h2></div>
       <div class="content">
         <div class="field-row">
           <div class="field"><label>Pay Period</label><div class="field-input"></div></div>
@@ -624,7 +343,7 @@ const generateFormHTML = (formType, org) => {
       </div>
     `,
     expense_transport: `
-      <div class="form-title"><div class="form-icon">🚌</div><h2>Transport Expense Form</h2></div>
+      <div class="form-title-bar"><div class="form-icon">🚌</div><h2>Transport Expense Form</h2></div>
       <div class="content">
         <div class="field-row">
           <div class="field"><label>Date</label><div class="field-input"></div></div>
@@ -641,7 +360,7 @@ const generateFormHTML = (formType, org) => {
       </div>
     `,
     expense_marketing: `
-      <div class="form-title"><div class="form-icon">📢</div><h2>Marketing Expense Form</h2></div>
+      <div class="form-title-bar"><div class="form-icon">📢</div><h2>Marketing Expense Form</h2></div>
       <div class="content">
         <div class="field-row">
           <div class="field"><label>Date</label><div class="field-input"></div></div>
@@ -664,7 +383,7 @@ const generateFormHTML = (formType, org) => {
       </div>
     `,
     expense_insurance: `
-      <div class="form-title"><div class="form-icon">🛡️</div><h2>Insurance Expense Form</h2></div>
+      <div class="form-title-bar"><div class="form-icon">🛡️</div><h2>Insurance Expense Form</h2></div>
       <div class="content">
         <div class="field-row">
           <div class="field"><label>Date Paid</label><div class="field-input"></div></div>
@@ -690,7 +409,7 @@ const generateFormHTML = (formType, org) => {
       </div>
     `,
     expense_petty_cash: `
-      <div class="form-title"><div class="form-icon">💰</div><h2>Petty Cash Form</h2></div>
+      <div class="form-title-bar"><div class="form-icon">💰</div><h2>Petty Cash Form</h2></div>
       <div class="content">
         <div class="field-row">
           <div class="field"><label>Date</label><div class="field-input"></div></div>
@@ -712,7 +431,7 @@ const generateFormHTML = (formType, org) => {
       </div>
     `,
     expense_truck_contract: `
-      <div class="form-title"><div class="form-icon">🚛</div><h2>Truck Contract Expense Form</h2></div>
+      <div class="form-title-bar"><div class="form-icon">🚛</div><h2>Truck Contract Expense Form</h2></div>
       <div class="content">
         <div class="field-row">
           <div class="field"><label>Contract Number</label><div class="field-input"></div></div>
@@ -737,7 +456,7 @@ const generateFormHTML = (formType, org) => {
       </div>
     `,
     expense_general: `
-      <div class="form-title"><div class="form-icon">📋</div><h2>General Expense Form</h2></div>
+      <div class="form-title-bar"><div class="form-icon">📋</div><h2>General Expense Form</h2></div>
       <div class="content">
         <div class="field-row">
           <div class="field"><label>Date</label><div class="field-input"></div></div>
@@ -761,7 +480,7 @@ const generateFormHTML = (formType, org) => {
       </div>
     `,
     revenue_retail_sales: `
-      <div class="form-title"><div class="form-icon">🛒</div><h2>Retail Sales Form</h2></div>
+      <div class="form-title-bar"><div class="form-icon">🛒</div><h2>Retail Sales Form</h2></div>
       <div class="content">
         <div class="field-row">
           <div class="field"><label>Date</label><div class="field-input"></div></div>
@@ -792,7 +511,7 @@ const generateFormHTML = (formType, org) => {
       </div>
     `,
     revenue_warehouse_sales: `
-      <div class="form-title"><div class="form-icon">📦</div><h2>Warehouse/Wholesale Sales Form</h2></div>
+      <div class="form-title-bar"><div class="form-icon">📦</div><h2>Warehouse/Wholesale Sales Form</h2></div>
       <div class="content">
         <div class="field-row">
           <div class="field"><label>Date</label><div class="field-input"></div></div>
@@ -814,7 +533,7 @@ const generateFormHTML = (formType, org) => {
       </div>
     `,
     revenue_vehicle_sales: `
-      <div class="form-title"><div class="form-icon">🚐</div><h2>Vehicle Sales Form</h2></div>
+      <div class="form-title-bar"><div class="form-icon">🚐</div><h2>Vehicle Sales Form</h2></div>
       <div class="content">
         <div class="field-row">
           <div class="field"><label>Date</label><div class="field-input"></div></div>
@@ -836,7 +555,7 @@ const generateFormHTML = (formType, org) => {
       </div>
     `,
     revenue_trip: `
-      <div class="form-title"><div class="form-icon">🗺️</div><h2>Trip Revenue Form</h2></div>
+      <div class="form-title-bar"><div class="form-icon">🗺️</div><h2>Trip Revenue Form</h2></div>
       <div class="content">
         <div class="field-row">
           <div class="field"><label>Date</label><div class="field-input"></div></div>
@@ -865,7 +584,7 @@ const generateFormHTML = (formType, org) => {
       </div>
     `,
     revenue_truck_contract: `
-      <div class="form-title"><div class="form-icon">🚛</div><h2>Truck Contract Revenue Form</h2></div>
+      <div class="form-title-bar"><div class="form-icon">🚛</div><h2>Truck Contract Revenue Form</h2></div>
       <div class="content">
         <div class="field-row">
           <div class="field"><label>Contract No.</label><div class="field-input"></div></div>
@@ -893,7 +612,7 @@ const generateFormHTML = (formType, org) => {
       </div>
     `,
     revenue_other: `
-      <div class="form-title"><div class="form-icon">💵</div><h2>Other Income Form</h2></div>
+      <div class="form-title-bar"><div class="form-icon">💵</div><h2>Other Income Form</h2></div>
       <div class="content">
         <div class="field-row">
           <div class="field"><label>Date</label><div class="field-input"></div></div>
@@ -926,7 +645,7 @@ const generateFormHTML = (formType, org) => {
     <html>
     <head>
       <title>${FORM_TEMPLATES.find(f => f.id === formType)?.name || 'Form'}</title>
-      ${commonStyles}
+      <style>${formStyles}</style>
     </head>
     <body>
       <div class="document">
