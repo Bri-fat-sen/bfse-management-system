@@ -62,7 +62,7 @@ import PrintableFormsDownload from "@/components/finance/PrintableFormsDownload"
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart as RePieChart, Pie, Cell, LineChart, Line, Area, AreaChart, Legend } from 'recharts';
 import AIInsightsPanel from "@/components/ai/AIInsightsPanel";
 import AIReportSummary from "@/components/ai/AIReportSummary";
-import AIFormAssistant from "@/components/finance/AIFormAssistant";
+import AIFormAssistant, { QuickSuggestionChips } from "@/components/ai/AIFormAssistant";
 
 const expenseCategories = [
   "fuel", "maintenance", "utilities", "supplies", "rent", 
@@ -1205,18 +1205,23 @@ export default function Finance() {
               <DialogTitle>Record Owner/CEO Contribution</DialogTitle>
             </DialogHeader>
             <form onSubmit={handleRevenueSubmit} className="space-y-4">
-              {/* AI Assistant for Revenue */}
-              <AIFormAssistant
-                formType="revenue"
-                formData={{
-                  category: 'owner_contribution',
-                  description: '',
-                  amount: ''
-                }}
-                setFormData={() => {}}
-                pastEntries={revenues}
-                organisation={organisation?.[0]}
-              />
+              {/* Quick Fill Chips */}
+              <div>
+                <Label className="text-gray-500 text-xs mb-2 block">Quick Fill</Label>
+                <QuickSuggestionChips 
+                  type="revenue" 
+                  onSelect={(item) => {
+                    const sourceSelect = document.querySelector('[name="source"]');
+                    if (sourceSelect && item.source) {
+                      // Trigger change on the hidden select
+                      const event = new Event('change', { bubbles: true });
+                      sourceSelect.value = item.source;
+                      sourceSelect.dispatchEvent(event);
+                    }
+                  }} 
+                />
+              </div>
+
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="col-span-2">
                   <Label>Source Type</Label>
@@ -1273,6 +1278,23 @@ export default function Finance() {
                   <Textarea name="notes" className="mt-1" placeholder="Additional details..." />
                 </div>
               </div>
+
+              {/* AI Validation for Revenue */}
+              <AIFormAssistant
+                formType="revenue"
+                formData={{
+                  amount: document.querySelector('[name="amount"]')?.value || '',
+                  date: document.querySelector('[name="date"]')?.value || '',
+                  description: document.querySelector('[name="purpose"]')?.value || ''
+                }}
+                onSuggestion={(field, value) => {
+                  const input = document.querySelector(`[name="${field}"]`);
+                  if (input) input.value = value;
+                }}
+                pastEntries={revenues}
+                categories={revenueSources}
+              />
+
               <DialogFooter className="flex-col sm:flex-row gap-2">
                 <Button type="button" variant="outline" onClick={() => setShowRevenueDialog(false)} className="w-full sm:w-auto">
                   Cancel
