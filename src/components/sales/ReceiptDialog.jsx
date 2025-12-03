@@ -252,7 +252,7 @@ export default function ReceiptDialog({ open, onOpenChange, sale, organisation }
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-md">
+      <DialogContent className="max-w-md [&>button]:hidden">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <div className="flex gap-0.5">

@@ -9,7 +9,7 @@ import {
   Printer, Download, FileText, TrendingUp, DollarSign, Users, 
   Package, Truck, PieChart, Clock, CheckCircle
 } from "lucide-react";
-import { generateProfessionalReport, downloadProfessionalReportAsPDF } from "@/components/exports/ProfessionalReportExport";
+import { generateUnifiedPDF, printUnifiedPDF } from "@/components/exports/UnifiedPDFStyles";
 
 const REPORT_CONFIGS = {
   daily_sales: {
@@ -462,18 +462,12 @@ export default function ConsolidatedReportPrint({
       if (config && config.generate) {
         const result = config.generate(data);
         
-        // Add report title as section header
-        allSections.push({
-          title: config.name,
-          icon: '📊'
-        });
-        
         // Add summary cards for this report
         if (result.summaryCards?.length > 0) {
           allSummaryCards = [...allSummaryCards, ...result.summaryCards.slice(0, 4)];
         }
         
-        // Add sections
+        // Add sections with report name prefix
         if (result.sections?.length > 0) {
           allSections = [...allSections, ...result.sections];
         }
@@ -482,18 +476,16 @@ export default function ConsolidatedReportPrint({
 
     // Take first 4 summary cards for the main summary
     const mainSummaryCards = allSummaryCards.slice(0, 4);
-
-    const orgName = organisation?.name || 'Business Report';
     
-    await downloadProfessionalReportAsPDF({
-      title: `${orgName} - Consolidated Report`,
-      subtitle: `Comprehensive report covering ${reportsToInclude.length} areas`,
-      organisation: organisation || {},
-      dateRange: dateLabel,
+    const html = generateUnifiedPDF({
+      documentType: 'report',
+      title: 'Consolidated Business Report',
+      organisation: organisation,
       summaryCards: mainSummaryCards,
-      sections: allSections,
-      reportType: 'financial'
-    }, 'consolidated-report');
+      sections: allSections
+    });
+
+    printUnifiedPDF(html, `consolidated-report-${format(new Date(), 'yyyy-MM-dd')}.pdf`);
     setIsPrinting(false);
   };
 

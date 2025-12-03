@@ -3,7 +3,7 @@ import { format } from "date-fns";
 import { Button } from "@/components/ui/button";
 import { Download, Printer } from "lucide-react";
 import { exportToCSV } from "@/components/exports/SierraLeoneExportStyles";
-import { generateProfessionalReport, downloadProfessionalReportAsPDF } from "@/components/exports/ProfessionalReportExport";
+import { generateUnifiedPDF, printUnifiedPDF } from "@/components/exports/UnifiedPDFStyles";
 
 export default function TripReportExport({ trips = [], routes = [], vehicles = [], organisation }) {
   // Calculate summary stats
@@ -31,58 +31,40 @@ export default function TripReportExport({ trips = [], routes = [], vehicles = [
 
   const handlePrint = () => {
     const summaryCards = [
-      { label: 'Total Trips', value: trips.length.toString(), subtext: 'Completed trips' },
-      { label: 'Total Passengers', value: totalPassengers.toLocaleString(), subtext: 'Passengers carried' },
-      { label: 'Total Revenue', value: `SLE ${totalRevenue.toLocaleString()}`, subtext: 'Gross income' },
-      { label: 'Net Revenue', value: `SLE ${netRevenue.toLocaleString()}`, subtext: 'After fuel costs', highlight: netRevenue >= 0 ? 'green' : 'red' }
+      { label: 'Total Trips', value: trips.length.toString() },
+      { label: 'Total Passengers', value: totalPassengers.toLocaleString() },
+      { label: 'Total Revenue', value: `SLE ${totalRevenue.toLocaleString()}` },
+      { label: 'Net Revenue', value: `SLE ${netRevenue.toLocaleString()}`, highlight: netRevenue >= 0 ? 'green' : 'red' }
     ];
 
-    // Route breakdown
-    const routeBreakdown = {};
-    trips.forEach(t => {
-      const route = t.route_name || 'Unknown Route';
-      if (!routeBreakdown[route]) routeBreakdown[route] = 0;
-      routeBreakdown[route] += t.total_revenue || 0;
+    const sections = [{
+      title: 'Trip Records',
+      icon: '🚐',
+      table: {
+        columns: ['Date', 'Route', 'Vehicle', 'Driver', 'Passengers', 'Revenue', 'Fuel', 'Net (SLE)', 'Status'],
+        rows: trips.map(t => [
+          t.date ? format(new Date(t.date), 'dd MMM yyyy') : '-',
+          t.route_name || 'N/A',
+          t.vehicle_registration || 'N/A',
+          t.driver_name || 'N/A',
+          t.passengers_count || 0,
+          `SLE ${(t.total_revenue || 0).toLocaleString()}`,
+          `SLE ${(t.fuel_cost || 0).toLocaleString()}`,
+          `SLE ${(t.net_revenue || 0).toLocaleString()}`,
+          t.status || 'completed'
+        ])
+      }
+    }];
+
+    const html = generateUnifiedPDF({
+      documentType: 'report',
+      title: 'Transport Trip Report',
+      organisation: organisation,
+      summaryCards: summaryCards,
+      sections: sections
     });
 
-    const sections = [
-      {
-        title: 'Revenue by Route',
-        icon: '🛣️',
-        breakdown: routeBreakdown
-      },
-      {
-        title: 'Trip Records',
-        icon: '🚐',
-        table: {
-          columns: ['Date', 'Route', 'Vehicle', 'Driver', 'Passengers', 'Revenue', 'Fuel', 'Net (SLE)', 'Status'],
-          rows: [
-            ...trips.map(t => [
-              t.date ? format(new Date(t.date), 'dd MMM yyyy') : '-',
-              t.route_name || 'N/A',
-              t.vehicle_registration || 'N/A',
-              t.driver_name || 'N/A',
-              t.passengers_count || 0,
-              `SLE ${(t.total_revenue || 0).toLocaleString()}`,
-              `SLE ${(t.fuel_cost || 0).toLocaleString()}`,
-              `SLE ${(t.net_revenue || 0).toLocaleString()}`,
-              t.status || 'completed'
-            ]),
-            ['GRAND TOTAL', '', '', '', totalPassengers, `SLE ${totalRevenue.toLocaleString()}`, `SLE ${totalFuelCost.toLocaleString()}`, `SLE ${netRevenue.toLocaleString()}`, '']
-          ]
-        }
-      }
-    ];
-
-    downloadProfessionalReportAsPDF({
-      title: 'Transport Trip Report',
-      subtitle: 'Passenger trips, revenue, and fuel cost analysis',
-      organisation,
-      dateRange: `Generated ${format(new Date(), 'MMMM d, yyyy')}`,
-      summaryCards,
-      sections,
-      reportType: 'standard'
-    }, 'trip-report');
+    printUnifiedPDF(html, `trip-report-${format(new Date(), 'yyyy-MM-dd')}.pdf`);
   };
 
   return (

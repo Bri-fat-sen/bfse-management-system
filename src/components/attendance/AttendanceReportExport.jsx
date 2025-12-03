@@ -3,7 +3,7 @@ import { format } from "date-fns";
 import { Button } from "@/components/ui/button";
 import { Download, Printer } from "lucide-react";
 import { exportToCSV } from "@/components/exports/SierraLeoneExportStyles";
-import { generateProfessionalReport, downloadProfessionalReportAsPDF } from "@/components/exports/ProfessionalReportExport";
+import { generateUnifiedPDF, printUnifiedPDF } from "@/components/exports/UnifiedPDFStyles";
 
 export default function AttendanceReportExport({ attendance = [], employee, employees, organisation }) {
   // Calculate summary stats
@@ -45,32 +45,13 @@ export default function AttendanceReportExport({ attendance = [], employee, empl
 
   const handlePrint = () => {
     const summaryCards = [
-      { label: 'Total Records', value: attendance.length.toString(), subtext: 'Attendance days' },
-      { label: 'Present', value: presentDays.toString(), subtext: 'Days present', highlight: 'green' },
-      { label: 'Late Arrivals', value: lateDays.toString(), subtext: 'Days late', highlight: lateDays > 0 ? 'gold' : 'green' },
-      { label: 'Total Hours', value: `${totalHours.toFixed(1)} hrs`, subtext: 'Hours worked' }
+      { label: 'Total Records', value: attendance.length.toString() },
+      { label: 'Present', value: presentDays.toString(), highlight: 'green' },
+      { label: 'Late Arrivals', value: lateDays.toString(), highlight: lateDays > 0 ? 'gold' : 'green' },
+      { label: 'Total Hours', value: `${totalHours.toFixed(1)} hrs` }
     ];
 
-    const sections = [];
-    
-    // Department breakdown if multiple employees
-    if (employees) {
-      const deptBreakdown = {};
-      attendance.forEach(a => {
-        const emp = employees.find(e => e.id === a.employee_id);
-        const dept = emp?.department || 'Unassigned';
-        if (!deptBreakdown[dept]) deptBreakdown[dept] = 0;
-        deptBreakdown[dept] += a.total_hours || 0;
-      });
-      
-      sections.push({
-        title: 'Hours by Department',
-        icon: '🏢',
-        breakdown: deptBreakdown
-      });
-    }
-
-    sections.push({
+    const sections = [{
       title: employees ? 'Staff Attendance Records' : 'My Attendance Records',
       icon: '📅',
       table: {
@@ -100,32 +81,24 @@ export default function AttendanceReportExport({ attendance = [], employee, empl
             a.status
           ])
       }
-    });
-
-    // Add note if there are late arrivals
-    if (lateDays > 0 || absentDays > 0) {
-      sections.push({
-        infoBox: {
-          type: 'warning',
-          title: '⚠️ Attendance Alerts',
-          content: `<ul>${lateDays > 0 ? `<li>${lateDays} late arrival(s) recorded</li>` : ''}${absentDays > 0 ? `<li>${absentDays} absence(s) recorded</li>` : ''}</ul>`
-        }
-      });
-    }
+    }];
 
     const reportTitle = employees ? 
       'Staff Attendance Report' : 
       `Attendance Report - ${employee?.full_name || 'Employee'}`;
 
-    downloadProfessionalReportAsPDF({
+    const html = generateUnifiedPDF({
+      documentType: 'report',
       title: reportTitle,
-      subtitle: employees ? 'Employee time tracking and attendance summary' : 'Personal attendance history',
-      organisation,
-      dateRange: `Period: ${format(new Date(attendance[attendance.length - 1]?.date || new Date()), 'MMM d')} - ${format(new Date(attendance[0]?.date || new Date()), 'MMM d, yyyy')}`,
-      summaryCards,
-      sections,
-      reportType: 'hr'
-    }, 'attendance-report');
+      organisation: organisation,
+      summaryCards: summaryCards,
+      sections: sections,
+      notes: lateDays > 0 || absentDays > 0 
+        ? `Attendance Alerts: ${lateDays > 0 ? `${lateDays} late arrival(s) recorded. ` : ''}${absentDays > 0 ? `${absentDays} absence(s) recorded.` : ''}`
+        : null
+    });
+
+    printUnifiedPDF(html, `attendance-report-${format(new Date(), 'yyyy-MM-dd')}.pdf`);
   };
 
   return (
