@@ -964,16 +964,35 @@ export default function PrintableFormsDownload({ open, onOpenChange, organisatio
       URL.revokeObjectURL(url);
     } catch (error) {
       console.error('Error generating PDF:', error);
-      // Fallback: Open print dialog so user can save as PDF
+      // Fallback: Use hidden iframe for cleaner PDF experience
       const html = generateFormHTML(formId, organisation);
       const formName = FORM_TEMPLATES.find(f => f.id === formId)?.name || formId;
-      const pdfWindow = window.open('', '_blank', 'width=900,height=800');
-      if (pdfWindow) {
-        pdfWindow.document.write(html);
-        pdfWindow.document.close();
-        pdfWindow.document.title = `${formName.replace(/\s+/g, '_')}.pdf`;
-        setTimeout(() => pdfWindow.print(), 500);
-      }
+      
+      const iframe = document.createElement('iframe');
+      iframe.style.position = 'fixed';
+      iframe.style.right = '0';
+      iframe.style.bottom = '0';
+      iframe.style.width = '0';
+      iframe.style.height = '0';
+      iframe.style.border = 'none';
+      document.body.appendChild(iframe);
+      
+      const doc = iframe.contentWindow.document;
+      doc.open();
+      doc.write(html);
+      doc.close();
+      
+      iframe.onload = () => {
+        setTimeout(() => {
+          iframe.contentWindow.focus();
+          iframe.contentWindow.print();
+          setTimeout(() => {
+            if (document.body.contains(iframe)) {
+              document.body.removeChild(iframe);
+            }
+          }, 1000);
+        }, 500);
+      };
     } finally {
       setLoading(null);
     }
