@@ -5,12 +5,10 @@ import {
   Users,
   UserPlus,
   Search,
-  Check,
-  X,
   Shield,
   Building2,
   Mail,
-  Calendar,
+  Phone,
   MoreVertical,
   UserCheck,
   UserX,
@@ -20,12 +18,12 @@ import {
   Link2,
   Unlink,
   Edit,
-  Eye,
   Trash2,
-  Phone,
-  MapPin,
-  Briefcase,
-  Send
+  Lock,
+  FolderOpen,
+  Star,
+  Filter,
+  Package
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -69,25 +67,43 @@ import { toast } from "sonner";
 import { format } from "date-fns";
 import PageHeader from "@/components/ui/PageHeader";
 import LoadingSpinner from "@/components/ui/LoadingSpinner";
-import { PermissionGate } from "@/components/permissions/PermissionGate";
+import EmptyState from "@/components/ui/EmptyState";
 import { ROLES } from "@/components/permissions/PermissionsContext";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Textarea } from "@/components/ui/textarea";
+import AddEmployeeDialog from "@/components/hr/AddEmployeeDialog";
+import SetPinDialog from "@/components/auth/SetPinDialog";
 import SendInviteEmailDialog from "@/components/email/SendInviteEmailDialog";
+import EmployeeDocuments from "@/components/hr/EmployeeDocuments";
+import PerformanceReviewDialog from "@/components/hr/PerformanceReviewDialog";
+
+const roles = [
+  "super_admin", "org_admin", "hr_admin", "payroll_admin", "warehouse_manager",
+  "retail_cashier", "vehicle_sales", "driver", "accountant", "support_staff", "read_only"
+];
+
+const departments = ["Management", "Sales", "Operations", "Finance", "Transport", "Support"];
 
 export default function UserManagement() {
   const queryClient = useQueryClient();
-  const [activeTab, setActiveTab] = useState("users");
   const [searchTerm, setSearchTerm] = useState("");
-  const [filterLinked, setFilterLinked] = useState("all"); // all, linked, unlinked
-  const [filterStatus, setFilterStatus] = useState("all");
+  const [filterLinked, setFilterLinked] = useState("all");
+  const [roleFilter, setRoleFilter] = useState("all");
+  const [activeTab, setActiveTab] = useState("employees"); // employees, users
   const [createEmployeeDialog, setCreateEmployeeDialog] = useState(null);
   const [linkEmployeeDialog, setLinkEmployeeDialog] = useState(null);
   const [selectedEmployeeId, setSelectedEmployeeId] = useState("");
-  const [editEmployeeDialog, setEditEmployeeDialog] = useState(null);
-  const [viewEmployeeDialog, setViewEmployeeDialog] = useState(null);
-  const [showInviteDialog, setShowInviteDialog] = useState(false);
   const [showAddEmployeeDialog, setShowAddEmployeeDialog] = useState(false);
+  const [showInviteDialog, setShowInviteDialog] = useState(false);
+  const [editingEmployee, setEditingEmployee] = useState(null);
+  const [showEmployeeDialog, setShowEmployeeDialog] = useState(false);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [employeeToDelete, setEmployeeToDelete] = useState(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [showSetPinDialog, setShowSetPinDialog] = useState(false);
+  const [selectedEmployeeForPin, setSelectedEmployeeForPin] = useState(null);
+  const [showDocumentsDialog, setShowDocumentsDialog] = useState(false);
+  const [selectedEmployeeForDocs, setSelectedEmployeeForDocs] = useState(null);
+  const [showPerformanceDialog, setShowPerformanceDialog] = useState(false);
+  const [selectedEmployeeForReview, setSelectedEmployeeForReview] = useState(null);
 
   // Fetch current user and employee
   const { data: currentUser } = useQuery({
@@ -127,59 +143,39 @@ export default function UserManagement() {
 
   const organisation = orgData?.[0];
 
+  const { data: remunerationPackages = [] } = useQuery({
+    queryKey: ['remunerationPackages', orgId],
+    queryFn: () => base44.entities.RemunerationPackage.filter({ organisation_id: orgId, is_active: true }),
+    enabled: !!orgId,
+  });
+
   // Update employee mutation
   const updateEmployeeMutation = useMutation({
-    mutationFn: async ({ id, data }) => {
-      return base44.entities.Employee.update(id, data);
-    },
+    mutationFn: ({ id, data }) => base44.entities.Employee.update(id, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['employees'] });
-      setEditEmployeeDialog(null);
+      setShowEmployeeDialog(false);
+      setEditingEmployee(null);
       toast.success("Employee updated successfully");
     },
-    onError: (error) => {
-      toast.error("Failed to update employee", { description: error.message });
-    }
   });
 
-  // Delete employee mutation
-  const deleteEmployeeMutation = useMutation({
-    mutationFn: async (id) => {
-      return base44.entities.Employee.delete(id);
-    },
-    onSuccess: () => {
+  // Delete employee handler
+  const handleDeleteEmployee = async () => {
+    if (!employeeToDelete) return;
+    setIsDeleting(true);
+    try {
+      await base44.entities.Employee.delete(employeeToDelete.id);
       queryClient.invalidateQueries({ queryKey: ['employees'] });
-      toast.success("Employee deleted successfully");
-    },
-    onError: (error) => {
-      toast.error("Failed to delete employee", { description: error.message });
+      toast.success(`${employeeToDelete.full_name} has been removed`);
+      setShowDeleteDialog(false);
+      setEmployeeToDelete(null);
+    } catch (error) {
+      toast.error("Failed to delete employee: " + error.message);
+    } finally {
+      setIsDeleting(false);
     }
-  });
-
-  // Add new employee mutation
-  const addEmployeeMutation = useMutation({
-    mutationFn: async (data) => {
-      const existingEmployees = await base44.entities.Employee.filter({ organisation_id: orgId });
-      const employeeCode = `EMP${String(existingEmployees.length + 1).padStart(4, '0')}`;
-      
-      return base44.entities.Employee.create({
-        organisation_id: orgId,
-        employee_code: employeeCode,
-        ...data,
-        full_name: `${data.first_name} ${data.last_name}`.trim(),
-        status: 'active',
-        hire_date: data.hire_date || new Date().toISOString().split('T')[0],
-      });
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['employees'] });
-      setShowAddEmployeeDialog(false);
-      toast.success("Employee added successfully");
-    },
-    onError: (error) => {
-      toast.error("Failed to add employee", { description: error.message });
-    }
-  });
+  };
 
   // Create employee mutation
   const createEmployeeMutation = useMutation({
@@ -281,93 +277,86 @@ export default function UserManagement() {
 
   // Filter employees
   const filteredEmployees = useMemo(() => {
-    return employees.filter(emp => {
-      const matchesSearch = 
-        emp.full_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        emp.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        emp.employee_code?.toLowerCase().includes(searchTerm.toLowerCase());
-      
-      const matchesStatus = 
-        filterStatus === 'all' || emp.status === filterStatus;
-      
-      return matchesSearch && matchesStatus;
+    return employees.filter(e => {
+      const matchesSearch = e.full_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                           e.employee_code?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                           e.email?.toLowerCase().includes(searchTerm.toLowerCase());
+      const matchesRole = roleFilter === "all" || e.role === roleFilter;
+      return matchesSearch && matchesRole;
     });
-  }, [employees, searchTerm, filterStatus]);
+  }, [employees, searchTerm, roleFilter]);
 
-  if (currentUser?.role !== 'admin') {
+  const getStatusColor = (status) => {
+    switch(status) {
+      case 'active': return 'bg-green-100 text-green-800';
+      case 'inactive': return 'bg-gray-100 text-gray-800';
+      case 'suspended': return 'bg-red-100 text-red-800';
+      default: return 'bg-gray-100 text-gray-800';
+    }
+  };
+
+  const handleEmployeeSubmit = (e) => {
+    e.preventDefault();
+    const formData = new FormData(e.target);
+    const packageId = formData.get('remuneration_package_id');
+    const selectedPackage = packageId && packageId !== 'null' ? remunerationPackages.find(p => p.id === packageId) : null;
+    const baseSalary = selectedPackage ? selectedPackage.base_salary : (parseFloat(formData.get('base_salary')) || 0);
+    
+    const data = {
+      first_name: formData.get('first_name'),
+      last_name: formData.get('last_name'),
+      full_name: `${formData.get('first_name')} ${formData.get('last_name')}`,
+      role: formData.get('role'),
+      department: formData.get('department'),
+      position: formData.get('position'),
+      email: formData.get('email'),
+      phone: formData.get('phone'),
+      salary_type: selectedPackage?.salary_type || formData.get('salary_type'),
+      base_salary: baseSalary,
+      status: formData.get('status'),
+      remuneration_package_id: selectedPackage ? packageId : null,
+      remuneration_package_name: selectedPackage?.name || null,
+    };
+    updateEmployeeMutation.mutate({ id: editingEmployee.id, data });
+  };
+
+  const isPlatformAdmin = currentUser?.role === 'admin';
+  const isOrgAdmin = ['super_admin', 'org_admin', 'hr_admin'].includes(currentEmployee?.role);
+
+  if (!isPlatformAdmin && !isOrgAdmin) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[60vh] text-center">
         <Shield className="w-16 h-16 text-gray-300 mb-4" />
         <h2 className="text-xl font-semibold text-gray-600">Access Restricted</h2>
-        <p className="text-gray-500 mt-2">Only platform administrators can access user management.</p>
+        <p className="text-gray-500 mt-2">You need admin privileges to access user management.</p>
       </div>
     );
   }
 
-  if (loadingUsers || loadingEmployees) {
-    return <LoadingSpinner message="Loading Users..." subtitle="Fetching user data" fullScreen />;
+  if (loadingEmployees || (isPlatformAdmin && loadingUsers)) {
+    return <LoadingSpinner message="Loading..." subtitle="Fetching data" fullScreen />;
   }
 
   return (
     <div className="space-y-6">
       <PageHeader
-        title="User & Employee Management"
-        subtitle="Manage app users, employees, and team access"
-        actionIcon={Users}
+        title="User Management"
+        subtitle="Manage employees and app user accounts"
+        action={() => setShowAddEmployeeDialog(true)}
+        actionLabel="Add Employee"
       >
-        <div className="flex gap-2">
-          <Button variant="outline" onClick={() => setShowInviteDialog(true)}>
-            <Send className="w-4 h-4 mr-2" />
-            Invite User
-          </Button>
-          <Button onClick={() => setShowAddEmployeeDialog(true)} className="bg-gradient-to-r from-[#1EB053] to-[#0072C6]">
-            <UserPlus className="w-4 h-4 mr-2" />
-            Add Employee
-          </Button>
-        </div>
+        <Button
+          variant="outline"
+          onClick={() => setShowInviteDialog(true)}
+          className="border-[#0072C6]/30 hover:border-[#0072C6] hover:bg-[#0072C6]/10"
+        >
+          <UserPlus className="w-4 h-4 mr-2" />
+          <span className="hidden sm:inline">Send Invite</span>
+        </Button>
       </PageHeader>
 
       {/* Stats */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-lg bg-blue-100 flex items-center justify-center">
-                <Users className="w-5 h-5 text-blue-600" />
-              </div>
-              <div>
-                <p className="text-2xl font-bold">{users.length}</p>
-                <p className="text-xs text-gray-500">Total Users</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-lg bg-green-100 flex items-center justify-center">
-                <UserCheck className="w-5 h-5 text-green-600" />
-              </div>
-              <div>
-                <p className="text-2xl font-bold">{usersWithEmployeeStatus.filter(u => u.isLinked).length}</p>
-                <p className="text-xs text-gray-500">Linked to Employee</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-lg bg-amber-100 flex items-center justify-center">
-                <UserX className="w-5 h-5 text-amber-600" />
-              </div>
-              <div>
-                <p className="text-2xl font-bold">{usersWithEmployeeStatus.filter(u => !u.isLinked).length}</p>
-                <p className="text-xs text-gray-500">Not Linked</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
         <Card>
           <CardContent className="p-4">
             <div className="flex items-center gap-3">
@@ -381,217 +370,276 @@ export default function UserManagement() {
             </div>
           </CardContent>
         </Card>
-      </div>
-
-      <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="bg-gray-100 p-1">
-          <TabsTrigger value="users" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#1EB053] data-[state=active]:to-[#0072C6] data-[state=active]:text-white">
-            <Users className="w-4 h-4 mr-2" />
-            App Users ({users.length})
-          </TabsTrigger>
-          <TabsTrigger value="employees" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#1EB053] data-[state=active]:to-[#0072C6] data-[state=active]:text-white">
-            <Briefcase className="w-4 h-4 mr-2" />
-            Employees ({employees.length})
-          </TabsTrigger>
-        </TabsList>
-
-        <TabsContent value="users" className="mt-4">
-      {/* Users Table */}
-      <Card>
-        <CardHeader className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-          <CardTitle className="flex items-center gap-2">
-            <Users className="w-5 h-5 text-[#0072C6]" />
-            App Users
-          </CardTitle>
-          <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
-            <div className="relative flex-1 sm:w-64">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-              <Input
-                placeholder="Search users..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-9"
-              />
-            </div>
-            <Select value={filterLinked} onValueChange={setFilterLinked}>
-              <SelectTrigger className="w-full sm:w-40">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Users</SelectItem>
-                <SelectItem value="linked">Linked</SelectItem>
-                <SelectItem value="unlinked">Not Linked</SelectItem>
-              </SelectContent>
-            </Select>
-            <Button variant="outline" size="icon" onClick={() => refetchUsers()}>
-              <RefreshCw className="w-4 h-4" />
-            </Button>
-          </div>
-        </CardHeader>
-        <CardContent>
-          <div className="overflow-x-auto">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>User</TableHead>
-                  <TableHead>Email</TableHead>
-                  <TableHead>Platform Role</TableHead>
-                  <TableHead>Employee Status</TableHead>
-                  <TableHead>Employee Role</TableHead>
-                  <TableHead>Joined</TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filteredUsers.length === 0 ? (
-                  <TableRow>
-                    <TableCell colSpan={7} className="text-center py-8 text-gray-500">
-                      No users found
-                    </TableCell>
-                  </TableRow>
-                ) : (
-                  filteredUsers.map((user) => (
-                    <TableRow key={user.id}>
-                      <TableCell>
-                        <div className="flex items-center gap-3">
-                          <Avatar className="w-8 h-8">
-                            <AvatarFallback className="bg-gradient-to-br from-[#1EB053] to-[#0072C6] text-white text-xs">
-                              {user.full_name?.charAt(0) || 'U'}
-                            </AvatarFallback>
-                          </Avatar>
-                          <span className="font-medium">{user.full_name || 'Unknown'}</span>
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <span className="text-sm text-gray-600">{user.email}</span>
-                      </TableCell>
-                      <TableCell>
-                        <Badge variant={user.role === 'admin' ? 'default' : 'secondary'}>
-                          {user.role}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>
-                        {user.isLinked ? (
-                          <div className="flex items-center gap-2">
-                            <CheckCircle2 className="w-4 h-4 text-green-500" />
-                            <span className="text-sm text-green-600">Linked</span>
-                          </div>
-                        ) : (
-                          <div className="flex items-center gap-2">
-                            <AlertCircle className="w-4 h-4 text-amber-500" />
-                            <span className="text-sm text-amber-600">Not Linked</span>
-                          </div>
-                        )}
-                      </TableCell>
-                      <TableCell>
-                        {user.linkedEmployee ? (
-                          <Badge variant="outline">
-                            {user.linkedEmployee.role?.replace('_', ' ')}
-                          </Badge>
-                        ) : (
-                          <span className="text-gray-400">-</span>
-                        )}
-                      </TableCell>
-                      <TableCell>
-                        <span className="text-sm text-gray-500">
-                          {user.created_date ? format(new Date(user.created_date), 'MMM d, yyyy') : '-'}
-                        </span>
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="icon">
-                              <MoreVertical className="w-4 h-4" />
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end">
-                            {user.isLinked ? (
-                              <>
-                                <DropdownMenuItem disabled className="text-gray-500">
-                                  <CheckCircle2 className="w-4 h-4 mr-2 text-green-500" />
-                                  Linked to: {user.linkedEmployee?.full_name}
-                                </DropdownMenuItem>
-                                <DropdownMenuSeparator />
-                                <DropdownMenuItem
-                                  onClick={() => unlinkEmployeeMutation.mutate(user.linkedEmployee.id)}
-                                  className="text-red-600"
-                                >
-                                  <Unlink className="w-4 h-4 mr-2" />
-                                  Unlink from Employee
-                                </DropdownMenuItem>
-                              </>
-                            ) : (
-                              <>
-                                <DropdownMenuItem onClick={() => setCreateEmployeeDialog(user)}>
-                                  <UserPlus className="w-4 h-4 mr-2" />
-                                  Create Employee Record
-                                </DropdownMenuItem>
-                                {unlinkedEmployees.length > 0 && (
-                                  <DropdownMenuItem onClick={() => setLinkEmployeeDialog(user)}>
-                                    <Link2 className="w-4 h-4 mr-2" />
-                                    Link to Existing Employee
-                                  </DropdownMenuItem>
-                                )}
-                              </>
-                            )}
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      </TableCell>
-                    </TableRow>
-                  ))
-                )}
-              </TableBody>
-            </Table>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Unlinked Employees Alert */}
-      {unlinkedEmployees.length > 0 && (
-        <Card className="border-amber-200 bg-amber-50/50">
+        <Card>
           <CardContent className="p-4">
             <div className="flex items-center gap-3">
-              <AlertCircle className="w-5 h-5 text-amber-600" />
-              <p className="text-sm text-amber-700">
-                <strong>{unlinkedEmployees.length} employee(s)</strong> not linked to app users. 
-                Use "Link to Existing Employee" from user actions to connect them.
-              </p>
+              <div className="w-10 h-10 rounded-lg bg-green-100 flex items-center justify-center">
+                <UserCheck className="w-5 h-5 text-green-600" />
+              </div>
+              <div>
+                <p className="text-2xl font-bold">{employees.filter(e => e.status === 'active').length}</p>
+                <p className="text-xs text-gray-500">Active</p>
+              </div>
             </div>
           </CardContent>
         </Card>
-      )}
-        </TabsContent>
-
-        <TabsContent value="employees" className="mt-4">
-          {/* Employees Table */}
+        {isPlatformAdmin && (
+          <>
+            <Card>
+              <CardContent className="p-4">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-lg bg-blue-100 flex items-center justify-center">
+                    <Users className="w-5 h-5 text-blue-600" />
+                  </div>
+                  <div>
+                    <p className="text-2xl font-bold">{users.length}</p>
+                    <p className="text-xs text-gray-500">App Users</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardContent className="p-4">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-lg bg-amber-100 flex items-center justify-center">
+                    <UserX className="w-5 h-5 text-amber-600" />
+                  </div>
+                  <div>
+                    <p className="text-2xl font-bold">{usersWithEmployeeStatus.filter(u => !u.isLinked).length}</p>
+                    <p className="text-xs text-gray-500">Users Not Linked</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </>
+        )}
+        {!isPlatformAdmin && (
           <Card>
-            <CardHeader className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-              <CardTitle className="flex items-center gap-2">
-                <Briefcase className="w-5 h-5 text-[#1EB053]" />
-                Employee Directory
-              </CardTitle>
-              <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
-                <div className="relative flex-1 sm:w-64">
+            <CardContent className="p-4">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-lg bg-amber-100 flex items-center justify-center">
+                  <AlertCircle className="w-5 h-5 text-amber-600" />
+                </div>
+                <div>
+                  <p className="text-2xl font-bold">{unlinkedEmployees.length}</p>
+                  <p className="text-xs text-gray-500">Unlinked Employees</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+      </div>
+
+      {/* Tab Navigation */}
+      <div className="flex gap-2 border-b">
+        <Button
+          variant={activeTab === 'employees' ? 'default' : 'ghost'}
+          onClick={() => setActiveTab('employees')}
+          className={activeTab === 'employees' ? 'bg-[#1EB053]' : ''}
+        >
+          <Building2 className="w-4 h-4 mr-2" />
+          Employees
+        </Button>
+        {isPlatformAdmin && (
+          <Button
+            variant={activeTab === 'users' ? 'default' : 'ghost'}
+            onClick={() => setActiveTab('users')}
+            className={activeTab === 'users' ? 'bg-[#0072C6]' : ''}
+          >
+            <Users className="w-4 h-4 mr-2" />
+            App Users
+          </Button>
+        )}
+      </div>
+
+      {/* Employees Tab */}
+      {activeTab === 'employees' && (
+        <>
+          {/* Filters */}
+          <Card>
+            <CardContent className="p-4">
+              <div className="flex flex-col sm:flex-row gap-4">
+                <div className="relative flex-1">
                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
                   <Input
                     placeholder="Search employees..."
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
+                    className="pl-10"
+                  />
+                </div>
+                <Select value={roleFilter} onValueChange={setRoleFilter}>
+                  <SelectTrigger className="w-48">
+                    <Filter className="w-4 h-4 mr-2" />
+                    <SelectValue placeholder="Filter by role" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Roles</SelectItem>
+                    {roles.map(role => (
+                      <SelectItem key={role} value={role}>
+                        {role.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Employees Grid */}
+          {filteredEmployees.length === 0 ? (
+            <EmptyState
+              icon={Users}
+              title="No Employees Found"
+              description="Add employees to get started"
+            />
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {filteredEmployees.map((emp) => (
+                <Card key={emp.id} className="hover:shadow-lg transition-shadow">
+                  <CardContent className="p-4 sm:p-6">
+                    <div className="flex items-start justify-between mb-4">
+                      <div className="flex items-center gap-3 min-w-0">
+                        <Avatar className="w-12 h-12 flex-shrink-0">
+                          <AvatarImage src={emp.profile_photo} />
+                          <AvatarFallback className="bg-gradient-to-br from-[#1EB053] to-[#0072C6] text-white">
+                            {emp.full_name?.charAt(0) || 'E'}
+                          </AvatarFallback>
+                        </Avatar>
+                        <div className="min-w-0">
+                          <h3 className="font-semibold truncate">{emp.full_name}</h3>
+                          <p className="text-sm text-gray-500 truncate">{emp.employee_code}</p>
+                        </div>
+                      </div>
+                      <Badge className={getStatusColor(emp.status) + " text-xs flex-shrink-0"}>
+                        {emp.status}
+                      </Badge>
+                    </div>
+                    
+                    <div className="space-y-2 text-sm">
+                      <div className="flex items-center gap-2 text-gray-600">
+                        <Building2 className="w-4 h-4 flex-shrink-0" />
+                        <span className="truncate">{emp.department || 'No department'}</span>
+                      </div>
+                      <div className="flex items-center gap-2 text-gray-600">
+                        <Mail className="w-4 h-4 flex-shrink-0" />
+                        <span className="truncate">{emp.email || 'No email'}</span>
+                      </div>
+                      <div className="flex items-center gap-2 text-gray-600">
+                        <Phone className="w-4 h-4 flex-shrink-0" />
+                        <span className="truncate">{emp.phone || 'No phone'}</span>
+                      </div>
+                    </div>
+
+                    <div className="mt-4 pt-4 border-t flex items-center justify-between">
+                      <Badge variant="secondary" className="text-xs truncate max-w-[120px]">
+                        {emp.role?.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                      </Badge>
+                      <div className="flex items-center gap-1">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className={`h-8 w-8 ${!emp.pin_hash ? "text-amber-600" : ""}`}
+                          onClick={() => {
+                            setSelectedEmployeeForPin(emp);
+                            setShowSetPinDialog(true);
+                          }}
+                          title={emp.pin_hash ? "Change PIN" : "Set PIN"}
+                        >
+                          <Lock className="w-4 h-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8"
+                          onClick={() => {
+                            setSelectedEmployeeForDocs(emp);
+                            setShowDocumentsDialog(true);
+                          }}
+                          title="Documents"
+                        >
+                          <FolderOpen className="w-4 h-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8"
+                          onClick={() => {
+                            setSelectedEmployeeForReview(emp);
+                            setShowPerformanceDialog(true);
+                          }}
+                          title="Performance Review"
+                        >
+                          <Star className="w-4 h-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-8"
+                          onClick={() => {
+                            setEditingEmployee(emp);
+                            setShowEmployeeDialog(true);
+                          }}
+                        >
+                          <Edit className="w-4 h-4 sm:mr-1" />
+                          <span className="hidden sm:inline">Edit</span>
+                        </Button>
+                        {emp.id !== currentEmployee?.id && (
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8 text-red-500 hover:text-red-700 hover:bg-red-50"
+                            onClick={() => {
+                              setEmployeeToDelete(emp);
+                              setShowDeleteDialog(true);
+                            }}
+                            title="Delete Employee"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </Button>
+                        )}
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          )}
+        </>
+      )}
+
+      {/* Users Tab - Platform Admin Only */}
+      {activeTab === 'users' && isPlatformAdmin && (
+        <>
+          <Card>
+            <CardHeader className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+              <CardTitle className="flex items-center gap-2">
+                <Users className="w-5 h-5 text-[#0072C6]" />
+                App Users
+              </CardTitle>
+              <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+                <div className="relative flex-1 sm:w-64">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                  <Input
+                    placeholder="Search users..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
                     className="pl-9"
                   />
                 </div>
-                <Select value={filterStatus} onValueChange={setFilterStatus}>
-                  <SelectTrigger className="w-full sm:w-36">
+                <Select value={filterLinked} onValueChange={setFilterLinked}>
+                  <SelectTrigger className="w-full sm:w-40">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="all">All Status</SelectItem>
-                    <SelectItem value="active">Active</SelectItem>
-                    <SelectItem value="inactive">Inactive</SelectItem>
-                    <SelectItem value="suspended">Suspended</SelectItem>
-                    <SelectItem value="terminated">Terminated</SelectItem>
+                    <SelectItem value="all">All Users</SelectItem>
+                    <SelectItem value="linked">Linked</SelectItem>
+                    <SelectItem value="unlinked">Not Linked</SelectItem>
                   </SelectContent>
                 </Select>
+                <Button variant="outline" size="icon" onClick={() => refetchUsers()}>
+                  <RefreshCw className="w-4 h-4" />
+                </Button>
               </div>
             </CardHeader>
             <CardContent>
@@ -599,67 +647,69 @@ export default function UserManagement() {
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead>Employee</TableHead>
-                      <TableHead>Code</TableHead>
-                      <TableHead>Department</TableHead>
-                      <TableHead>Role</TableHead>
-                      <TableHead>Status</TableHead>
-                      <TableHead>App Access</TableHead>
+                      <TableHead>User</TableHead>
+                      <TableHead>Email</TableHead>
+                      <TableHead>Platform Role</TableHead>
+                      <TableHead>Employee Status</TableHead>
+                      <TableHead>Employee Role</TableHead>
+                      <TableHead>Joined</TableHead>
                       <TableHead className="text-right">Actions</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {filteredEmployees.length === 0 ? (
+                    {filteredUsers.length === 0 ? (
                       <TableRow>
                         <TableCell colSpan={7} className="text-center py-8 text-gray-500">
-                          No employees found
+                          No users found
                         </TableCell>
                       </TableRow>
                     ) : (
-                      filteredEmployees.map((emp) => (
-                        <TableRow key={emp.id}>
+                      filteredUsers.map((user) => (
+                        <TableRow key={user.id}>
                           <TableCell>
                             <div className="flex items-center gap-3">
                               <Avatar className="w-8 h-8">
-                                <AvatarImage src={emp.profile_photo} />
                                 <AvatarFallback className="bg-gradient-to-br from-[#1EB053] to-[#0072C6] text-white text-xs">
-                                  {emp.full_name?.charAt(0) || 'E'}
+                                  {user.full_name?.charAt(0) || 'U'}
                                 </AvatarFallback>
                               </Avatar>
-                              <div>
-                                <span className="font-medium">{emp.full_name}</span>
-                                <p className="text-xs text-gray-500">{emp.position || '-'}</p>
-                              </div>
+                              <span className="font-medium">{user.full_name || 'Unknown'}</span>
                             </div>
                           </TableCell>
                           <TableCell>
-                            <Badge variant="outline">{emp.employee_code}</Badge>
-                          </TableCell>
-                          <TableCell>{emp.department || '-'}</TableCell>
-                          <TableCell>
-                            <Badge variant="secondary">{emp.role?.replace(/_/g, ' ')}</Badge>
+                            <span className="text-sm text-gray-600">{user.email}</span>
                           </TableCell>
                           <TableCell>
-                            <Badge variant={
-                              emp.status === 'active' ? 'default' :
-                              emp.status === 'inactive' ? 'secondary' :
-                              'destructive'
-                            } className={emp.status === 'active' ? 'bg-green-100 text-green-700' : ''}>
-                              {emp.status}
+                            <Badge variant={user.role === 'admin' ? 'default' : 'secondary'}>
+                              {user.role}
                             </Badge>
                           </TableCell>
                           <TableCell>
-                            {emp.user_email ? (
-                              <div className="flex items-center gap-1">
+                            {user.isLinked ? (
+                              <div className="flex items-center gap-2">
                                 <CheckCircle2 className="w-4 h-4 text-green-500" />
-                                <span className="text-xs text-green-600">Linked</span>
+                                <span className="text-sm text-green-600">Linked</span>
                               </div>
                             ) : (
-                              <div className="flex items-center gap-1">
-                                <X className="w-4 h-4 text-gray-400" />
-                                <span className="text-xs text-gray-400">No access</span>
+                              <div className="flex items-center gap-2">
+                                <AlertCircle className="w-4 h-4 text-amber-500" />
+                                <span className="text-sm text-amber-600">Not Linked</span>
                               </div>
                             )}
+                          </TableCell>
+                          <TableCell>
+                            {user.linkedEmployee ? (
+                              <Badge variant="outline">
+                                {user.linkedEmployee.role?.replace('_', ' ')}
+                              </Badge>
+                            ) : (
+                              <span className="text-gray-400">-</span>
+                            )}
+                          </TableCell>
+                          <TableCell>
+                            <span className="text-sm text-gray-500">
+                              {user.created_date ? format(new Date(user.created_date), 'MMM d, yyyy') : '-'}
+                            </span>
                           </TableCell>
                           <TableCell className="text-right">
                             <DropdownMenu>
@@ -669,26 +719,35 @@ export default function UserManagement() {
                                 </Button>
                               </DropdownMenuTrigger>
                               <DropdownMenuContent align="end">
-                                <DropdownMenuItem onClick={() => setViewEmployeeDialog(emp)}>
-                                  <Eye className="w-4 h-4 mr-2" />
-                                  View Details
-                                </DropdownMenuItem>
-                                <DropdownMenuItem onClick={() => setEditEmployeeDialog(emp)}>
-                                  <Edit className="w-4 h-4 mr-2" />
-                                  Edit Employee
-                                </DropdownMenuItem>
-                                <DropdownMenuSeparator />
-                                <DropdownMenuItem
-                                  onClick={() => {
-                                    if (confirm('Are you sure you want to delete this employee?')) {
-                                      deleteEmployeeMutation.mutate(emp.id);
-                                    }
-                                  }}
-                                  className="text-red-600"
-                                >
-                                  <Trash2 className="w-4 h-4 mr-2" />
-                                  Delete
-                                </DropdownMenuItem>
+                                {user.isLinked ? (
+                                  <>
+                                    <DropdownMenuItem disabled className="text-gray-500">
+                                      <CheckCircle2 className="w-4 h-4 mr-2 text-green-500" />
+                                      Linked to: {user.linkedEmployee?.full_name}
+                                    </DropdownMenuItem>
+                                    <DropdownMenuSeparator />
+                                    <DropdownMenuItem
+                                      onClick={() => unlinkEmployeeMutation.mutate(user.linkedEmployee.id)}
+                                      className="text-red-600"
+                                    >
+                                      <Unlink className="w-4 h-4 mr-2" />
+                                      Unlink from Employee
+                                    </DropdownMenuItem>
+                                  </>
+                                ) : (
+                                  <>
+                                    <DropdownMenuItem onClick={() => setCreateEmployeeDialog(user)}>
+                                      <UserPlus className="w-4 h-4 mr-2" />
+                                      Create Employee Record
+                                    </DropdownMenuItem>
+                                    {unlinkedEmployees.length > 0 && (
+                                      <DropdownMenuItem onClick={() => setLinkEmployeeDialog(user)}>
+                                        <Link2 className="w-4 h-4 mr-2" />
+                                        Link to Existing Employee
+                                      </DropdownMenuItem>
+                                    )}
+                                  </>
+                                )}
                               </DropdownMenuContent>
                             </DropdownMenu>
                           </TableCell>
@@ -700,8 +759,46 @@ export default function UserManagement() {
               </div>
             </CardContent>
           </Card>
-        </TabsContent>
-      </Tabs>
+
+          {/* Unlinked Employees Section */}
+          {unlinkedEmployees.length > 0 && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2 text-amber-600">
+                  <AlertCircle className="w-5 h-5" />
+                  Unlinked Employee Records ({unlinkedEmployees.length})
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-sm text-gray-500 mb-4">
+                  These employee records are not linked to any app user.
+                </p>
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+                  {unlinkedEmployees.map((emp) => (
+                    <div key={emp.id} className="p-3 bg-amber-50 border border-amber-200 rounded-lg">
+                      <div className="flex items-center gap-3">
+                        <Avatar className="w-10 h-10">
+                          <AvatarImage src={emp.profile_photo} />
+                          <AvatarFallback className="bg-amber-200 text-amber-700">
+                            {emp.full_name?.charAt(0)}
+                          </AvatarFallback>
+                        </Avatar>
+                        <div className="flex-1 min-w-0">
+                          <p className="font-medium text-sm truncate">{emp.full_name}</p>
+                          <p className="text-xs text-gray-500 truncate">{emp.email || 'No email'}</p>
+                          <Badge variant="outline" className="text-xs mt-1">
+                            {emp.role?.replace('_', ' ')}
+                          </Badge>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          )}
+        </>
+      )}
 
       {/* Create Employee Dialog */}
       <Dialog open={!!createEmployeeDialog} onOpenChange={() => setCreateEmployeeDialog(null)}>
@@ -779,308 +876,175 @@ export default function UserManagement() {
         </DialogContent>
       </Dialog>
 
-      {/* View Employee Dialog */}
-      <Dialog open={!!viewEmployeeDialog} onOpenChange={() => setViewEmployeeDialog(null)}>
-        <DialogContent className="max-w-lg [&>button]:hidden">
+      {/* Add Employee Dialog */}
+      <AddEmployeeDialog
+        open={showAddEmployeeDialog}
+        onOpenChange={setShowAddEmployeeDialog}
+        orgId={orgId}
+        employeeCount={employees.length}
+        organisation={organisation}
+        inviterName={currentEmployee?.full_name}
+      />
+
+      {/* Send Invite Email Dialog */}
+      <SendInviteEmailDialog
+        open={showInviteDialog}
+        onOpenChange={setShowInviteDialog}
+        organisation={organisation}
+        inviterName={currentEmployee?.full_name}
+      />
+
+      {/* Edit Employee Dialog */}
+      <Dialog open={showEmployeeDialog} onOpenChange={setShowEmployeeDialog}>
+        <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto [&>button]:hidden">
           <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <Eye className="w-5 h-5 text-[#0072C6]" />
-              Employee Details
+            <DialogTitle>Edit Employee</DialogTitle>
+          </DialogHeader>
+          {editingEmployee && (
+            <form onSubmit={handleEmployeeSubmit} className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label>First Name</Label>
+                  <Input name="first_name" defaultValue={editingEmployee.first_name} required className="mt-1" />
+                </div>
+                <div>
+                  <Label>Last Name</Label>
+                  <Input name="last_name" defaultValue={editingEmployee.last_name} required className="mt-1" />
+                </div>
+                <div>
+                  <Label>Email</Label>
+                  <Input name="email" type="email" defaultValue={editingEmployee.email} className="mt-1" />
+                </div>
+                <div>
+                  <Label>Phone</Label>
+                  <Input name="phone" defaultValue={editingEmployee.phone} className="mt-1" />
+                </div>
+                <div>
+                  <Label>Department</Label>
+                  <Select name="department" defaultValue={editingEmployee.department}>
+                    <SelectTrigger className="mt-1"><SelectValue placeholder="Select" /></SelectTrigger>
+                    <SelectContent>
+                      {departments.map(d => <SelectItem key={d} value={d}>{d}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label>Position</Label>
+                  <Input name="position" defaultValue={editingEmployee.position} className="mt-1" />
+                </div>
+                <div>
+                  <Label>Role</Label>
+                  <Select name="role" defaultValue={editingEmployee.role}>
+                    <SelectTrigger className="mt-1"><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      {roles.map(r => <SelectItem key={r} value={r}>{r.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label>Status</Label>
+                  <Select name="status" defaultValue={editingEmployee.status}>
+                    <SelectTrigger className="mt-1"><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="active">Active</SelectItem>
+                      <SelectItem value="inactive">Inactive</SelectItem>
+                      <SelectItem value="suspended">Suspended</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label>Salary Type</Label>
+                  <Select name="salary_type" defaultValue={editingEmployee.salary_type}>
+                    <SelectTrigger className="mt-1"><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="monthly">Monthly</SelectItem>
+                      <SelectItem value="hourly">Hourly</SelectItem>
+                      <SelectItem value="daily">Daily</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label>Base Salary (Le)</Label>
+                  <Input name="base_salary" type="number" defaultValue={editingEmployee.base_salary} className="mt-1" />
+                </div>
+              </div>
+              <div className="p-3 bg-green-50 rounded-lg border border-green-200">
+                <Label className="text-xs text-green-700 flex items-center gap-1 mb-2">
+                  <Package className="w-3 h-3" /> Remuneration Package
+                </Label>
+                <Select name="remuneration_package_id" defaultValue={editingEmployee.remuneration_package_id || ""}>
+                  <SelectTrigger><SelectValue placeholder="Select package (optional)" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="null">No package</SelectItem>
+                    {remunerationPackages.map(pkg => (
+                      <SelectItem key={pkg.id} value={pkg.id}>{pkg.name} - Le {pkg.base_salary?.toLocaleString()}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <DialogFooter>
+                <Button type="button" variant="outline" onClick={() => setShowEmployeeDialog(false)}>Cancel</Button>
+                <Button type="submit" className="bg-gradient-to-r from-[#1EB053] to-[#0072C6]">Update</Button>
+              </DialogFooter>
+            </form>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete Employee Dialog */}
+      <Dialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+        <DialogContent className="[&>button]:hidden">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-red-600">
+              <AlertCircle className="w-5 h-5" />
+              Delete Employee
             </DialogTitle>
           </DialogHeader>
-          {viewEmployeeDialog && (
-            <div className="space-y-4">
-              <div className="flex items-center gap-4 p-4 bg-gray-50 rounded-lg">
-                <Avatar className="w-16 h-16">
-                  <AvatarImage src={viewEmployeeDialog.profile_photo} />
-                  <AvatarFallback className="bg-gradient-to-br from-[#1EB053] to-[#0072C6] text-white text-xl">
-                    {viewEmployeeDialog.full_name?.charAt(0)}
-                  </AvatarFallback>
-                </Avatar>
-                <div>
-                  <h3 className="text-lg font-semibold">{viewEmployeeDialog.full_name}</h3>
-                  <p className="text-gray-500">{viewEmployeeDialog.position} • {viewEmployeeDialog.department}</p>
-                  <Badge variant="outline" className="mt-1">{viewEmployeeDialog.employee_code}</Badge>
-                </div>
-              </div>
-              
-              <div className="grid grid-cols-2 gap-4">
-                <div className="flex items-center gap-2 p-3 bg-gray-50 rounded-lg">
-                  <Mail className="w-4 h-4 text-blue-500" />
-                  <div>
-                    <p className="text-xs text-gray-500">Email</p>
-                    <p className="text-sm font-medium">{viewEmployeeDialog.email || '-'}</p>
-                  </div>
-                </div>
-                <div className="flex items-center gap-2 p-3 bg-gray-50 rounded-lg">
-                  <Phone className="w-4 h-4 text-green-500" />
-                  <div>
-                    <p className="text-xs text-gray-500">Phone</p>
-                    <p className="text-sm font-medium">{viewEmployeeDialog.phone || '-'}</p>
-                  </div>
-                </div>
-                <div className="flex items-center gap-2 p-3 bg-gray-50 rounded-lg">
-                  <Shield className="w-4 h-4 text-purple-500" />
-                  <div>
-                    <p className="text-xs text-gray-500">Role</p>
-                    <p className="text-sm font-medium">{viewEmployeeDialog.role?.replace(/_/g, ' ')}</p>
-                  </div>
-                </div>
-                <div className="flex items-center gap-2 p-3 bg-gray-50 rounded-lg">
-                  <Calendar className="w-4 h-4 text-amber-500" />
-                  <div>
-                    <p className="text-xs text-gray-500">Hire Date</p>
-                    <p className="text-sm font-medium">
-                      {viewEmployeeDialog.hire_date ? format(new Date(viewEmployeeDialog.hire_date), 'MMM d, yyyy') : '-'}
-                    </p>
-                  </div>
-                </div>
-              </div>
-              
-              {viewEmployeeDialog.address && (
-                <div className="flex items-start gap-2 p-3 bg-gray-50 rounded-lg">
-                  <MapPin className="w-4 h-4 text-red-500 mt-0.5" />
-                  <div>
-                    <p className="text-xs text-gray-500">Address</p>
-                    <p className="text-sm font-medium">{viewEmployeeDialog.address}</p>
-                  </div>
-                </div>
-              )}
-            </div>
-          )}
+          <p className="text-gray-600">Are you sure you want to remove <strong>{employeeToDelete?.full_name}</strong>?</p>
+          <div className="bg-red-50 border border-red-200 rounded-lg p-3 text-sm text-red-800">
+            This will permanently delete the employee record.
+          </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setViewEmployeeDialog(null)}>Close</Button>
-            <Button onClick={() => { setEditEmployeeDialog(viewEmployeeDialog); setViewEmployeeDialog(null); }} className="bg-gradient-to-r from-[#1EB053] to-[#0072C6]">
-              <Edit className="w-4 h-4 mr-2" />
-              Edit
+            <Button variant="outline" onClick={() => setShowDeleteDialog(false)} disabled={isDeleting}>Cancel</Button>
+            <Button variant="destructive" onClick={handleDeleteEmployee} disabled={isDeleting}>
+              {isDeleting ? 'Deleting...' : 'Delete'}
             </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
 
-      {/* Edit Employee Dialog */}
-      <Dialog open={!!editEmployeeDialog} onOpenChange={() => setEditEmployeeDialog(null)}>
-        <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto [&>button]:hidden">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <Edit className="w-5 h-5 text-[#1EB053]" />
-              Edit Employee
-            </DialogTitle>
-          </DialogHeader>
-          {editEmployeeDialog && (
-            <EditEmployeeForm
-              employee={editEmployeeDialog}
-              onSubmit={(data) => updateEmployeeMutation.mutate({ id: editEmployeeDialog.id, data })}
-              isLoading={updateEmployeeMutation.isPending}
-              onCancel={() => setEditEmployeeDialog(null)}
-            />
-          )}
-        </DialogContent>
-      </Dialog>
+      {/* Set PIN Dialog */}
+      {selectedEmployeeForPin && (
+        <SetPinDialog
+          open={showSetPinDialog}
+          onOpenChange={(open) => { setShowSetPinDialog(open); if (!open) setSelectedEmployeeForPin(null); }}
+          employee={selectedEmployeeForPin}
+          isAdmin={true}
+        />
+      )}
 
-      {/* Add New Employee Dialog */}
-      <Dialog open={showAddEmployeeDialog} onOpenChange={setShowAddEmployeeDialog}>
-        <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto [&>button]:hidden">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <UserPlus className="w-5 h-5 text-[#1EB053]" />
-              Add New Employee
-            </DialogTitle>
-          </DialogHeader>
-          <AddEmployeeForm
-            onSubmit={(data) => addEmployeeMutation.mutate(data)}
-            isLoading={addEmployeeMutation.isPending}
-            onCancel={() => setShowAddEmployeeDialog(false)}
-          />
-        </DialogContent>
-      </Dialog>
+      {/* Documents Dialog */}
+      {selectedEmployeeForDocs && (
+        <EmployeeDocuments
+          open={showDocumentsDialog}
+          onOpenChange={(open) => { setShowDocumentsDialog(open); if (!open) setSelectedEmployeeForDocs(null); }}
+          employee={selectedEmployeeForDocs}
+          currentEmployee={currentEmployee}
+          orgId={orgId}
+        />
+      )}
 
-      {/* Invite User Dialog */}
-      <SendInviteEmailDialog
-        open={showInviteDialog}
-        onOpenChange={setShowInviteDialog}
-        organisation={organisation}
-      />
+      {/* Performance Review Dialog */}
+      {selectedEmployeeForReview && (
+        <PerformanceReviewDialog
+          open={showPerformanceDialog}
+          onOpenChange={(open) => { setShowPerformanceDialog(open); if (!open) setSelectedEmployeeForReview(null); }}
+          employee={selectedEmployeeForReview}
+          currentEmployee={currentEmployee}
+          orgId={orgId}
+        />
+      )}
     </div>
-  );
-}
-
-// Edit Employee Form Component
-function EditEmployeeForm({ employee, onSubmit, isLoading, onCancel }) {
-  const [formData, setFormData] = useState({
-    first_name: employee?.first_name || '',
-    last_name: employee?.last_name || '',
-    email: employee?.email || '',
-    phone: employee?.phone || '',
-    department: employee?.department || '',
-    position: employee?.position || '',
-    role: employee?.role || 'read_only',
-    status: employee?.status || 'active',
-    address: employee?.address || '',
-    base_salary: employee?.base_salary || 0,
-  });
-
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    onSubmit({
-      ...formData,
-      full_name: `${formData.first_name} ${formData.last_name}`.trim(),
-    });
-  };
-
-  return (
-    <form onSubmit={handleSubmit} className="space-y-4">
-      <div className="grid grid-cols-2 gap-4">
-        <div>
-          <Label>First Name</Label>
-          <Input value={formData.first_name} onChange={(e) => setFormData({...formData, first_name: e.target.value})} className="mt-1" />
-        </div>
-        <div>
-          <Label>Last Name</Label>
-          <Input value={formData.last_name} onChange={(e) => setFormData({...formData, last_name: e.target.value})} className="mt-1" />
-        </div>
-      </div>
-      <div className="grid grid-cols-2 gap-4">
-        <div>
-          <Label>Email</Label>
-          <Input type="email" value={formData.email} onChange={(e) => setFormData({...formData, email: e.target.value})} className="mt-1" />
-        </div>
-        <div>
-          <Label>Phone</Label>
-          <Input value={formData.phone} onChange={(e) => setFormData({...formData, phone: e.target.value})} className="mt-1" />
-        </div>
-      </div>
-      <div className="grid grid-cols-2 gap-4">
-        <div>
-          <Label>Department</Label>
-          <Input value={formData.department} onChange={(e) => setFormData({...formData, department: e.target.value})} className="mt-1" />
-        </div>
-        <div>
-          <Label>Position</Label>
-          <Input value={formData.position} onChange={(e) => setFormData({...formData, position: e.target.value})} className="mt-1" />
-        </div>
-      </div>
-      <div className="grid grid-cols-2 gap-4">
-        <div>
-          <Label>Role</Label>
-          <Select value={formData.role} onValueChange={(v) => setFormData({...formData, role: v})}>
-            <SelectTrigger className="mt-1"><SelectValue /></SelectTrigger>
-            <SelectContent>
-              {ROLES.map((role) => (
-                <SelectItem key={role.key} value={role.key}>{role.name}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-        <div>
-          <Label>Status</Label>
-          <Select value={formData.status} onValueChange={(v) => setFormData({...formData, status: v})}>
-            <SelectTrigger className="mt-1"><SelectValue /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="active">Active</SelectItem>
-              <SelectItem value="inactive">Inactive</SelectItem>
-              <SelectItem value="suspended">Suspended</SelectItem>
-              <SelectItem value="terminated">Terminated</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-      </div>
-      <div>
-        <Label>Base Salary (Le)</Label>
-        <Input type="number" value={formData.base_salary} onChange={(e) => setFormData({...formData, base_salary: parseFloat(e.target.value) || 0})} className="mt-1" />
-      </div>
-      <div>
-        <Label>Address</Label>
-        <Textarea value={formData.address} onChange={(e) => setFormData({...formData, address: e.target.value})} className="mt-1" rows={2} />
-      </div>
-      <DialogFooter>
-        <Button type="button" variant="outline" onClick={onCancel}>Cancel</Button>
-        <Button type="submit" disabled={isLoading} className="bg-gradient-to-r from-[#1EB053] to-[#0072C6]">
-          {isLoading ? "Saving..." : "Save Changes"}
-        </Button>
-      </DialogFooter>
-    </form>
-  );
-}
-
-// Add Employee Form Component
-function AddEmployeeForm({ onSubmit, isLoading, onCancel }) {
-  const [formData, setFormData] = useState({
-    first_name: '',
-    last_name: '',
-    email: '',
-    phone: '',
-    department: '',
-    position: '',
-    role: 'read_only',
-    hire_date: new Date().toISOString().split('T')[0],
-  });
-
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    if (!formData.first_name || !formData.last_name) {
-      toast.error("First and last name are required");
-      return;
-    }
-    onSubmit(formData);
-  };
-
-  return (
-    <form onSubmit={handleSubmit} className="space-y-4">
-      <div className="grid grid-cols-2 gap-4">
-        <div>
-          <Label>First Name *</Label>
-          <Input value={formData.first_name} onChange={(e) => setFormData({...formData, first_name: e.target.value})} className="mt-1" required />
-        </div>
-        <div>
-          <Label>Last Name *</Label>
-          <Input value={formData.last_name} onChange={(e) => setFormData({...formData, last_name: e.target.value})} className="mt-1" required />
-        </div>
-      </div>
-      <div className="grid grid-cols-2 gap-4">
-        <div>
-          <Label>Email</Label>
-          <Input type="email" value={formData.email} onChange={(e) => setFormData({...formData, email: e.target.value})} className="mt-1" />
-        </div>
-        <div>
-          <Label>Phone</Label>
-          <Input value={formData.phone} onChange={(e) => setFormData({...formData, phone: e.target.value})} className="mt-1" />
-        </div>
-      </div>
-      <div className="grid grid-cols-2 gap-4">
-        <div>
-          <Label>Department</Label>
-          <Input value={formData.department} onChange={(e) => setFormData({...formData, department: e.target.value})} className="mt-1" placeholder="e.g. Sales" />
-        </div>
-        <div>
-          <Label>Position</Label>
-          <Input value={formData.position} onChange={(e) => setFormData({...formData, position: e.target.value})} className="mt-1" placeholder="e.g. Manager" />
-        </div>
-      </div>
-      <div className="grid grid-cols-2 gap-4">
-        <div>
-          <Label>Role</Label>
-          <Select value={formData.role} onValueChange={(v) => setFormData({...formData, role: v})}>
-            <SelectTrigger className="mt-1"><SelectValue /></SelectTrigger>
-            <SelectContent>
-              {ROLES.map((role) => (
-                <SelectItem key={role.key} value={role.key}>{role.name}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-        <div>
-          <Label>Hire Date</Label>
-          <Input type="date" value={formData.hire_date} onChange={(e) => setFormData({...formData, hire_date: e.target.value})} className="mt-1" />
-        </div>
-      </div>
-      <DialogFooter>
-        <Button type="button" variant="outline" onClick={onCancel}>Cancel</Button>
-        <Button type="submit" disabled={isLoading} className="bg-gradient-to-r from-[#1EB053] to-[#0072C6]">
-          {isLoading ? "Adding..." : "Add Employee"}
-        </Button>
-      </DialogFooter>
-    </form>
   );
 }
 
