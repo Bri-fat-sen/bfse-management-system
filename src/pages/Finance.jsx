@@ -67,6 +67,7 @@ import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContaine
 import AIInsightsPanel from "@/components/ai/AIInsightsPanel";
 import AIReportSummary from "@/components/ai/AIReportSummary";
 import AIFormAssistant, { QuickSuggestionChips } from "@/components/ai/AIFormAssistant";
+import BankAccountsReport from "@/components/finance/BankAccountsReport";
 
 const expenseCategories = [
   "fuel", "maintenance", "utilities", "supplies", "rent", 
