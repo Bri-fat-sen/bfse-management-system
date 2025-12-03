@@ -181,6 +181,21 @@ export default function Finance() {
     },
   });
 
+  const createBankDepositMutation = useMutation({
+    mutationFn: (data) => base44.entities.BankDeposit.create(data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['bankDeposits'] });
+      setShowBankDepositDialog(false);
+    },
+  });
+
+  const updateBankDepositMutation = useMutation({
+    mutationFn: ({ id, data }) => base44.entities.BankDeposit.update(id, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['bankDeposits'] });
+    },
+  });
+
   // Date range calculation
   const getDateRange = useMemo(() => {
     const today = new Date();
