@@ -15,7 +15,7 @@ export default function PinLockScreen({
   const maxAttempts = 5;
   const pinRef = useRef("");
 
-  const verifyPin = useCallback((enteredPin) => {
+  const verifyPin = (enteredPin) => {
     if (employee?.pin_hash === enteredPin) {
       setSuccess(true);
       setTimeout(() => {
@@ -31,9 +31,9 @@ export default function PinLockScreen({
         setError("Too many attempts. Please contact your administrator.");
       }
     }
-  }, [employee?.pin_hash, onUnlock, attempts, maxAttempts]);
+  };
 
-  const handleDigit = useCallback((digit) => {
+  const handleDigit = (digit) => {
     if (pinRef.current.length < 4) {
       const newPin = pinRef.current + digit;
       pinRef.current = newPin;
@@ -44,13 +44,13 @@ export default function PinLockScreen({
         verifyPin(newPin);
       }
     }
-  }, [verifyPin]);
+  };
 
-  const handleDelete = useCallback(() => {
+  const handleDelete = () => {
     pinRef.current = pinRef.current.slice(0, -1);
     setPin(pinRef.current);
     setError("");
-  }, []);
+  };
 
   const digits = [1, 2, 3, 4, 5, 6, 7, 8, 9, null, 0, 'delete'];
 
