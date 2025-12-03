@@ -386,7 +386,7 @@ export default function HR() {
                             employee={employees.find(e => e.id === payroll.employee_id)}
                             organisation={organisation?.[0]}
                           />
-                          {['super_admin', 'org_admin', 'payroll_admin'].includes(currentEmployee?.role) && payroll.status !== 'cancelled' && (
+                          {['super_admin', 'org_admin', 'payroll_admin'].includes(currentEmployee?.role) && (
                             <DropdownMenu>
                               <DropdownMenuTrigger asChild>
                                 <Button variant="ghost" size="icon">
@@ -394,19 +394,21 @@ export default function HR() {
                                 </Button>
                               </DropdownMenuTrigger>
                               <DropdownMenuContent align="end">
-                                <DropdownMenuItem
-                                  onClick={() => {
-                                    if (confirm(`Reverse payroll for ${payroll.employee_name}? This will mark it as cancelled.`)) {
-                                      reversePayrollMutation.mutate(payroll);
-                                    }
-                                  }}
-                                  className="text-amber-600"
-                                >
-                                  <RotateCcw className="w-4 h-4 mr-2" />
-                                  Reverse Payroll
-                                </DropdownMenuItem>
-                                <DropdownMenuSeparator />
-                                <DropdownMenuItem
+                                {payroll.status !== 'cancelled' && (
+                                  <DropdownMenuItem
+                                    onClick={() => {
+                                      if (confirm(`Reverse payroll for ${payroll.employee_name}? This will mark it as cancelled.`)) {
+                                        reversePayrollMutation.mutate(payroll);
+                                      }
+                                    }}
+                                    className="text-amber-600"
+                                  >
+                                    <RotateCcw className="w-4 h-4 mr-2" />
+                                    Reverse Payroll
+                                  </DropdownMenuItem>
+                                )}
+                                  <DropdownMenuSeparator />
+                                  <DropdownMenuItem
                                   onClick={() => {
                                     if (confirm(`Delete payroll for ${payroll.employee_name}? This cannot be undone.`)) {
                                       deletePayrollMutation.mutate(payroll);
