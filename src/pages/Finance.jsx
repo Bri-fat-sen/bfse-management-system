@@ -574,6 +574,10 @@ export default function Finance() {
             <TabsTrigger value="cashflow" className="text-xs sm:text-sm data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#1EB053] data-[state=active]:to-[#0072C6] data-[state=active]:text-white">
               Cash Flow
             </TabsTrigger>
+            <TabsTrigger value="banking" className="text-xs sm:text-sm data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#1EB053] data-[state=active]:to-[#0072C6] data-[state=active]:text-white">
+              <Landmark className="w-4 h-4 mr-1" />
+              Banking
+            </TabsTrigger>
           </TabsList>
 
           {/* Dashboard Tab */}
