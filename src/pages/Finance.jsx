@@ -159,6 +159,12 @@ export default function Finance() {
     enabled: !!orgId,
   });
 
+  const { data: bankDeposits = [] } = useQuery({
+    queryKey: ['bankDeposits', orgId],
+    queryFn: () => base44.entities.BankDeposit.filter({ organisation_id: orgId }, '-date', 200),
+    enabled: !!orgId,
+  });
+
   const createExpenseMutation = useMutation({
     mutationFn: (data) => base44.entities.Expense.create(data),
     onSuccess: () => {
