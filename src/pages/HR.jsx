@@ -5,28 +5,18 @@ import ProtectedPage from "@/components/permissions/ProtectedPage";
 import { format } from "date-fns";
 import {
   Users,
-  Search,
   Plus,
-  Edit,
   UserCheck,
-  UserX,
-  Mail,
-  Phone,
   Calendar,
   Clock,
   DollarSign,
   Building2,
-  Filter,
   FileText,
   Star,
-  FolderOpen,
-  Lock,
-  Trash2,
-  AlertTriangle,
   UserPlus,
   RotateCcw,
   MoreVertical,
-  Package
+  Trash2
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -64,14 +54,10 @@ import LoadingSpinner from "@/components/ui/LoadingSpinner";
 
 import PayrollProcessDialog from "@/components/hr/PayrollProcessDialog";
 import PayslipGenerator from "@/components/hr/PayslipGenerator";
-import AddEmployeeDialog from "@/components/hr/AddEmployeeDialog";
 import LeaveRequestDialog from "@/components/hr/LeaveRequestDialog";
 import LeaveManagement from "@/components/hr/LeaveManagement";
 import PerformanceReviewDialog from "@/components/hr/PerformanceReviewDialog";
 import PerformanceOverview from "@/components/hr/PerformanceOverview";
-import EmployeeDocuments from "@/components/hr/EmployeeDocuments";
-import SetPinDialog from "@/components/auth/SetPinDialog";
-import SendInviteEmailDialog from "@/components/email/SendInviteEmailDialog";
 import BulkPayrollDialog from "@/components/hr/BulkPayrollDialog";
 import BenefitsDeductionsManager from "@/components/hr/BenefitsDeductionsManager";
 import PayrollAuditLog from "@/components/hr/PayrollAuditLog";
@@ -80,34 +66,13 @@ import RemunerationPackageManager from "@/components/hr/RemunerationPackageManag
 import PayrollReportingModule from "@/components/hr/PayrollReportingModule";
 import AIReportSummary from "@/components/ai/AIReportSummary";
 
-const roles = [
-  "super_admin", "org_admin", "hr_admin", "payroll_admin", "warehouse_manager",
-  "retail_cashier", "vehicle_sales", "driver", "accountant",
-  "support_staff", "read_only"
-];
-
-const departments = ["Management", "Sales", "Operations", "Finance", "Transport", "Support"];
-
 export default function HR() {
   const queryClient = useQueryClient();
-  const [searchTerm, setSearchTerm] = useState("");
-  const [roleFilter, setRoleFilter] = useState("all");
-  const [showEmployeeDialog, setShowEmployeeDialog] = useState(false);
-  const [editingEmployee, setEditingEmployee] = useState(null);
   const [activeTab, setActiveTab] = useState("attendance");
   const [showPayrollDialog, setShowPayrollDialog] = useState(false);
-  const [showAddEmployeeDialog, setShowAddEmployeeDialog] = useState(false);
   const [showLeaveDialog, setShowLeaveDialog] = useState(false);
   const [showPerformanceDialog, setShowPerformanceDialog] = useState(false);
   const [selectedEmployeeForReview, setSelectedEmployeeForReview] = useState(null);
-  const [showDocumentsDialog, setShowDocumentsDialog] = useState(false);
-  const [selectedEmployeeForDocs, setSelectedEmployeeForDocs] = useState(null);
-  const [showSetPinDialog, setShowSetPinDialog] = useState(false);
-  const [selectedEmployeeForPin, setSelectedEmployeeForPin] = useState(null);
-  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
-  const [employeeToDelete, setEmployeeToDelete] = useState(null);
-  const [isDeleting, setIsDeleting] = useState(false);
-  const [showInviteDialog, setShowInviteDialog] = useState(false);
   const [showBulkPayrollDialog, setShowBulkPayrollDialog] = useState(false);
   const [payrollSubTab, setPayrollSubTab] = useState("records");
 
@@ -160,24 +125,6 @@ export default function HR() {
       date: format(new Date(), 'yyyy-MM-dd')
     }),
     enabled: !!orgId,
-  });
-
-  const { data: remunerationPackages = [] } = useQuery({
-    queryKey: ['remunerationPackages', orgId],
-    queryFn: () => base44.entities.RemunerationPackage.filter({ organisation_id: orgId, is_active: true }),
-    enabled: !!orgId,
-    staleTime: 5 * 60 * 1000,
-    refetchOnWindowFocus: false,
-  });
-
-  const updateEmployeeMutation = useMutation({
-    mutationFn: ({ id, data }) => base44.entities.Employee.update(id, data),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['employees'] });
-      setShowEmployeeDialog(false);
-      setEditingEmployee(null);
-      toast.success("Employee updated successfully");
-    },
   });
 
   const deletePayrollMutation = useMutation({
@@ -233,75 +180,8 @@ export default function HR() {
     },
   });
 
-  const handleDeleteEmployee = async () => {
-    if (!employeeToDelete) return;
-    
-    setIsDeleting(true);
-    try {
-      await base44.entities.Employee.delete(employeeToDelete.id);
-      queryClient.invalidateQueries({ queryKey: ['employees'] });
-      toast.success(`${employeeToDelete.full_name} has been removed`);
-      setShowDeleteDialog(false);
-      setEmployeeToDelete(null);
-    } catch (error) {
-      toast.error("Failed to delete employee: " + error.message);
-    } finally {
-      setIsDeleting(false);
-    }
-  };
-
-  const filteredEmployees = employees.filter(e => {
-    const matchesSearch = e.full_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         e.employee_code?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         e.email?.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesRole = roleFilter === "all" || e.role === roleFilter;
-    return matchesSearch && matchesRole;
-  });
-
   const activeEmployees = employees.filter(e => e.status === 'active');
   const presentToday = attendance.filter(a => a.clock_in_time);
-
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    const formData = new FormData(e.target);
-    const packageId = formData.get('remuneration_package_id');
-    const selectedPackage = packageId && packageId !== 'null' ? remunerationPackages.find(p => p.id === packageId) : null;
-    
-    // If a package is selected, use its base salary; otherwise use the manual input
-    const baseSalary = selectedPackage 
-      ? selectedPackage.base_salary 
-      : (parseFloat(formData.get('base_salary')) || 0);
-    
-    // If a package is selected, also use its salary type if available
-    const salaryType = selectedPackage?.salary_type || formData.get('salary_type');
-    
-    const data = {
-      first_name: formData.get('first_name'),
-      last_name: formData.get('last_name'),
-      full_name: `${formData.get('first_name')} ${formData.get('last_name')}`,
-      role: formData.get('role'),
-      department: formData.get('department'),
-      position: formData.get('position'),
-      email: formData.get('email'),
-      phone: formData.get('phone'),
-      salary_type: salaryType,
-      base_salary: baseSalary,
-      status: formData.get('status'),
-      remuneration_package_id: selectedPackage ? packageId : null,
-      remuneration_package_name: selectedPackage?.name || null,
-    };
-
-    updateEmployeeMutation.mutate({ id: editingEmployee.id, data });
-  };
-
-  const getStatusColor = (status) => {
-    switch(status) {
-      case 'active': return 'bg-green-100 text-green-800';
-      case 'inactive': return 'bg-gray-100 text-gray-800';
-      case 'suspended': return 'bg-red-100 text-red-800';
-      default: return 'bg-gray-100 text-gray-800';
-    }
-  };
 
   if (!user) {
     return <LoadingSpinner message="Loading HR..." subtitle="Fetching employee data" fullScreen={true} />;
@@ -329,19 +209,8 @@ export default function HR() {
     <div className="space-y-6">
       <PageHeader
         title="HR & Payroll"
-        subtitle="Manage employees, attendance, and payroll"
-        action={() => setShowAddEmployeeDialog(true)}
-        actionLabel="Add Employee"
-      >
-        <Button
-          variant="outline"
-          onClick={() => setShowInviteDialog(true)}
-          className="border-[#0072C6]/30 hover:border-[#0072C6] hover:bg-[#0072C6]/10 hover:text-[#0072C6]"
-        >
-          <UserPlus className="w-4 h-4 mr-2" />
-          <span className="hidden sm:inline">Send Invite</span>
-        </Button>
-      </PageHeader>
+        subtitle="Manage attendance, payroll, leave and performance"
+      />
 
       {/* Stats */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
