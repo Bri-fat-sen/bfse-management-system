@@ -185,7 +185,7 @@ export default function InventoryReport({
       rows: reportData.rows.map(row => Object.values(row))
     });
     
-    printDocument(html);
+    printDocument(html, `${reportType}_${format(new Date(), 'yyyy-MM-dd')}.pdf`);
   };
 
   return (
