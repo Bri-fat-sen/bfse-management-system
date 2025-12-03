@@ -990,6 +990,56 @@ export default function UserManagement() {
                   </SelectContent>
                 </Select>
               </div>
+              
+              {/* Multi-Location Assignment for super_admin, org_admin, warehouse_manager */}
+              {['super_admin', 'org_admin', 'warehouse_manager'].includes(editingEmployee.role) && warehouses.length > 0 && (
+                <div className="p-3 bg-blue-50 rounded-lg border border-blue-200">
+                  <Label className="text-xs text-blue-700 flex items-center gap-1 mb-2">
+                    <MapPin className="w-3 h-3" /> Assigned Locations (Multiple)
+                  </Label>
+                  <div className="grid grid-cols-2 gap-2 max-h-40 overflow-y-auto">
+                    {warehouses.map(wh => {
+                      const isSelected = editingEmployee.assigned_location_ids?.includes(wh.id);
+                      return (
+                        <label 
+                          key={wh.id} 
+                          className={`flex items-center gap-2 p-2 rounded border cursor-pointer transition-colors ${
+                            isSelected ? 'bg-blue-100 border-blue-400' : 'bg-white border-gray-200 hover:border-blue-300'
+                          }`}
+                        >
+                          <Checkbox 
+                            checked={isSelected}
+                            onCheckedChange={(checked) => {
+                              const currentIds = editingEmployee.assigned_location_ids || [];
+                              const currentNames = editingEmployee.assigned_location_names || [];
+                              if (checked) {
+                                setEditingEmployee({
+                                  ...editingEmployee,
+                                  assigned_location_ids: [...currentIds, wh.id],
+                                  assigned_location_names: [...currentNames, wh.name]
+                                });
+                              } else {
+                                const idx = currentIds.indexOf(wh.id);
+                                setEditingEmployee({
+                                  ...editingEmployee,
+                                  assigned_location_ids: currentIds.filter(id => id !== wh.id),
+                                  assigned_location_names: currentNames.filter((_, i) => i !== idx)
+                                });
+                              }
+                            }}
+                          />
+                          <span className="text-sm">{wh.name}</span>
+                        </label>
+                      );
+                    })}
+                  </div>
+                  {editingEmployee.assigned_location_ids?.length > 0 && (
+                    <p className="text-xs text-blue-600 mt-2">
+                      {editingEmployee.assigned_location_ids.length} location(s) selected
+                    </p>
+                  )}
+                </div>
+              )}
               <DialogFooter>
                 <Button type="button" variant="outline" onClick={() => setShowEmployeeDialog(false)}>Cancel</Button>
                 <Button type="submit" className="bg-gradient-to-r from-[#1EB053] to-[#0072C6]">Update</Button>
