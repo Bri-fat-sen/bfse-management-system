@@ -69,6 +69,7 @@ import AIReportSummary from "@/components/ai/AIReportSummary";
 import AIFormAssistant, { QuickSuggestionChips } from "@/components/ai/AIFormAssistant";
 import BankAccountsSummary from "@/components/finance/BankAccountsSummary";
 import BankAccountsReport from "@/components/finance/BankAccountsReport";
+import BudgetingModule from "@/components/finance/BudgetingModule";
 
 const expenseCategories = [
   "fuel", "maintenance", "utilities", "supplies", "rent", 
@@ -579,6 +580,9 @@ export default function Finance() {
             <TabsTrigger value="banking" className="text-xs sm:text-sm data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#1EB053] data-[state=active]:to-[#0072C6] data-[state=active]:text-white">
               <Landmark className="w-4 h-4 mr-1" />
               Banking
+            </TabsTrigger>
+            <TabsTrigger value="budgeting" className="text-xs sm:text-sm data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#1EB053] data-[state=active]:to-[#0072C6] data-[state=active]:text-white">
+              Budgeting
             </TabsTrigger>
           </TabsList>
 
@@ -1297,6 +1301,11 @@ export default function Finance() {
                 </ScrollArea>
               </CardContent>
             </Card>
+          </TabsContent>
+
+          {/* Budgeting & Forecasting Tab */}
+          <TabsContent value="budgeting" className="mt-6">
+            <BudgetingModule orgId={orgId} expenses={expenses} />
           </TabsContent>
 
           {/* Cash Flow Tab */}
