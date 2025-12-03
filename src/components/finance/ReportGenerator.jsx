@@ -36,7 +36,8 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { useToast } from "@/components/ui/use-toast";
-import { generateExportHTML, printDocument, downloadHTML, exportToCSV } from "@/components/exports/SierraLeoneExportStyles";
+import { exportToCSV } from "@/components/exports/SierraLeoneExportStyles";
+import { generateUnifiedPDF, printUnifiedPDF } from "@/components/exports/UnifiedPDFStyles";
 
 const reportTypes = [
   { id: "sales", name: "Sales Report", icon: ShoppingCart, color: "green" },
@@ -201,18 +202,46 @@ export default function ReportGenerator({ sales = [], expenses = [], employees =
   const handleExportPDF = () => {
     if (!reportData) return;
     
-    const html = generateExportHTML({
+    // Convert summary to cards format
+    const summaryCards = reportData.summary.map(item => ({
+      label: item.label,
+      value: item.value,
+      highlight: item.highlight === 'green' ? 'green' : item.highlight === 'red' ? 'red' : undefined
+    }));
+
+    // Build sections
+    const sections = [];
+    
+    // Add category breakdown if exists
+    if (reportData.categoryBreakdown && Object.keys(reportData.categoryBreakdown).length > 0) {
+      sections.push({
+        title: 'By Category',
+        icon: '📊',
+        breakdown: reportData.categoryBreakdown
+      });
+    }
+    
+    // Add data table
+    sections.push({
+      title: 'Details',
+      icon: '📋',
+      table: {
+        columns: reportData.columns,
+        rows: reportData.rows
+      }
+    });
+
+    const html = generateUnifiedPDF({
+      documentType: 'report',
       title: reportData.title,
       organisation: organisation,
-      summary: reportData.summary,
-      columns: reportData.columns,
-      rows: reportData.rows,
-      categoryBreakdown: reportData.categoryBreakdown,
-      dateRange: `Period: ${format(parseISO(dateFrom), 'MMMM d, yyyy')} - ${format(parseISO(dateTo), 'MMMM d, yyyy')}`
+      infoBar: [{ label: 'Period', value: `${format(parseISO(dateFrom), 'MMM d, yyyy')} - ${format(parseISO(dateTo), 'MMM d, yyyy')}` }],
+      summaryCards: summaryCards,
+      sections: sections
     });
     
-    printDocument(html);
-    toast({ title: "PDF export ready - use Print dialog to save as PDF" });
+    printUnifiedPDF(html, `${reportType}_report_${format(new Date(), 'yyyy-MM-dd')}.pdf`);
+    toast({ title: "Report printed" });
   };
 
   return (
