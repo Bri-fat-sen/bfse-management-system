@@ -437,22 +437,29 @@ export default function PayComponentManager({ orgId, employees = [] }) {
       {/* Add/Edit Dialog */}
       <Dialog open={showDialog} onOpenChange={setShowDialog}>
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-hidden p-0 [&>button]:hidden">
-          {/* Flag Stripe Header */}
-          <div className="h-1.5 flex">
+          {/* Sierra Leone Flag Header */}
+          <div className="h-2 flex">
             <div className="flex-1 bg-[#1EB053]" />
             <div className="flex-1 bg-white" />
             <div className="flex-1 bg-[#0072C6]" />
           </div>
-          <div className="bg-gradient-to-r from-[#1EB053] to-[#0072C6] px-6 py-4 text-white">
-            <DialogTitle className="text-white flex items-center gap-2">
-              {formData.type === 'earning' ? <TrendingUp className="w-5 h-5" /> : <Minus className="w-5 h-5" />}
-              {editingComponent ? 'Edit' : 'Add'} {formData.type === 'earning' ? 'Earning' : 'Deduction'} Component
-            </DialogTitle>
-            <p className="text-white/80 text-sm mt-1">Configure pay component details</p>
+
+          {/* Header with gradient */}
+          <div className="px-6 py-4 text-white" style={{ background: 'linear-gradient(135deg, #1EB053 0%, #0072C6 100%)' }}>
+            <div className="flex items-center gap-3">
+              <div className="w-12 h-12 rounded-xl bg-white/20 flex items-center justify-center">
+                {formData.type === 'earning' ? <TrendingUp className="w-6 h-6 text-white" /> : <Minus className="w-6 h-6 text-white" />}
+              </div>
+              <div>
+                <h2 className="text-xl font-bold">{editingComponent ? 'Edit' : 'Add'} {formData.type === 'earning' ? 'Earning' : 'Deduction'} Component</h2>
+                <p className="text-white/80 text-sm">Configure pay component details</p>
+              </div>
+            </div>
           </div>
+
           <div className="overflow-y-auto max-h-[calc(90vh-180px)]">
 
-          <form onSubmit={handleSubmit} className="p-6 space-y-4">
+          <form id="pay-component-form" onSubmit={handleSubmit} className="p-6 space-y-4">
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <Label>Component Name *</Label>
@@ -632,14 +639,21 @@ export default function PayComponentManager({ orgId, employees = [] }) {
                 rows={2}
               />
             </div>
-
-            <div className="sticky bottom-0 bg-white border-t p-4 flex gap-2 justify-end">
-              <Button type="button" variant="outline" onClick={resetForm}>Cancel</Button>
-              <Button type="submit" className="bg-gradient-to-r from-[#1EB053] to-[#0072C6] hover:from-[#178f43] hover:to-[#005a9e] text-white">
-                {editingComponent ? 'Update' : 'Create'} Component
-              </Button>
-            </div>
           </form>
+
+          {/* Footer */}
+          <div className="sticky bottom-0 bg-white border-t p-4 flex gap-3">
+            <Button type="button" variant="outline" onClick={resetForm} className="flex-1">Cancel</Button>
+            <Button 
+              type="submit" 
+              form="pay-component-form"
+              className="flex-1 text-white"
+              style={{ background: 'linear-gradient(135deg, #1EB053 0%, #0072C6 100%)' }}
+            >
+              {editingComponent ? 'Update' : 'Create'} Component
+            </Button>
+          </div>
+
           {/* Bottom flag stripe */}
           <div className="h-1 flex">
             <div className="flex-1 bg-[#1EB053]" />
