@@ -132,7 +132,7 @@ export default function Suppliers() {
     mutationFn: (id) => base44.entities.Supplier.delete(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['suppliers'] });
-      toast({ title: "Supplier deleted" });
+      toast.success("Supplier deleted");
     },
   });
 
@@ -140,7 +140,7 @@ export default function Suppliers() {
     mutationFn: ({ id, data }) => base44.entities.PurchaseOrder.update(id, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['purchaseOrders'] });
-      toast({ title: "Purchase order updated" });
+      toast.success("Purchase order updated");
     },
   });
 
