@@ -229,19 +229,32 @@ html, body {
   }
 }
 
-/* Hide scrollbars on html/body and sidebar */
+/* ============================================
+   SCROLLBAR STYLES
+   ============================================ */
+
+/* Hide scrollbars globally on html, body, and sidebar */
+html, body {
+  scrollbar-width: none !important;
+  -ms-overflow-style: none !important;
+}
+
 html::-webkit-scrollbar,
-body::-webkit-scrollbar,
-aside::-webkit-scrollbar,
-aside nav::-webkit-scrollbar {
+body::-webkit-scrollbar {
   display: none !important;
   width: 0 !important;
   height: 0 !important;
 }
 
-html, body, aside, aside nav {
+/* Hide sidebar scrollbars */
+aside {
   scrollbar-width: none !important;
   -ms-overflow-style: none !important;
+}
+
+aside::-webkit-scrollbar {
+  display: none !important;
+  width: 0 !important;
 }
 
 /* Sierra Leone themed scrollbars - only for content areas that need them */
