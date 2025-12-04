@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useCallback, useEffect, useRef } from "react";
+import { createContext, useContext, useState, useCallback, useEffect, useRef } from "react";
 import { X, CheckCircle2, AlertCircle, AlertTriangle, Info, Bell, Loader2, ExternalLink } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
