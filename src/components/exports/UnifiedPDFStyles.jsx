@@ -506,6 +506,12 @@ export function getUnifiedPDFStyles(organisation, documentType = 'receipt') {
       border-top: 1px solid rgba(255,255,255,0.2);
       font-size: 11px;
       opacity: 0.7;
+      line-height: 2;
+    }
+    
+    .footer .contact .org-code-footer {
+      margin-left: 8px;
+      vertical-align: middle;
     }
     
     /* Print Styles */
