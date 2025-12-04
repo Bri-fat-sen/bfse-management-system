@@ -16,30 +16,24 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import {
-  Sparkles, TrendingUp, TrendingDown, DollarSign, PiggyBank,
-  AlertTriangle, Lightbulb, BarChart3, Target, RefreshCw,
-  FileText, Download, ArrowUpRight, ArrowDownRight, Zap,
-  Calendar, Building2, ShoppingCart, Truck, Clock
+  Sparkles, TrendingUp, TrendingDown, AlertTriangle, CheckCircle2,
+  Lightbulb, PiggyBank, BarChart3, FileText, RefreshCw, Download,
+  DollarSign, Target, Zap, ArrowUpRight, ArrowDownRight, Brain,
+  Calendar, Printer
 } from "lucide-react";
 import { toast } from "sonner";
 import {
   LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid,
-  Tooltip, Legend, ResponsiveContainer, Area, AreaChart
+  Tooltip, ResponsiveContainer, Area, AreaChart, Legend
 } from "recharts";
+import { generateUnifiedPDF, printUnifiedPDF } from "@/components/exports/UnifiedPDFStyles";
 
-export default function AIFinancialAnalysis({ 
-  orgId, 
-  expenses = [], 
-  sales = [], 
-  trips = [], 
-  revenues = [],
-  organisation 
-}) {
+export default function AIFinancialAnalysis({ orgId, expenses = [], sales = [], trips = [], organisation }) {
   const [activeTab, setActiveTab] = useState("spending");
-  const [isAnalyzing, setIsAnalyzing] = useState(false);
-  const [forecastMonths, setForecastMonths] = useState(3);
+  const [analysisLoading, setAnalysisLoading] = useState({});
+  const [analysisResults, setAnalysisResults] = useState({});
 
-  // Prepare financial data for AI analysis
+  // Prepare financial data for analysis
   const financialData = useMemo(() => {
     const now = new Date();
     const monthlyData = [];
@@ -58,12 +52,18 @@ export default function AIFinancialAnalysis({
         const d = new Date(s.created_date);
         return d >= monthStart && d <= monthEnd;
       });
-      
+
       const monthTrips = trips.filter(t => {
         const d = new Date(t.date || t.created_date);
         return d >= monthStart && d <= monthEnd;
       });
 
+      const expenseTotal = monthExpenses.reduce((sum, e) => sum + (e.amount || 0), 0);
+      const salesTotal = monthSales.reduce((sum, s) => sum + (s.total_amount || 0), 0);
+      const transportRevenue = monthTrips.reduce((sum, t) => sum + (t.total_revenue || 0), 0);
+      const revenue = salesTotal + transportRevenue;
+
+      // Group expenses by category
       const expensesByCategory = {};
       monthExpenses.forEach(e => {
         const cat = e.category || 'other';
@@ -73,326 +73,437 @@ export default function AIFinancialAnalysis({
       monthlyData.push({
         month: format(date, 'MMM yyyy'),
         monthShort: format(date, 'MMM'),
-        revenue: monthSales.reduce((sum, s) => sum + (s.total_amount || 0), 0) +
-                 monthTrips.reduce((sum, t) => sum + (t.total_revenue || 0), 0),
-        expenses: monthExpenses.reduce((sum, e) => sum + (e.amount || 0), 0),
-        expensesByCategory,
+        revenue,
+        expenses: expenseTotal,
+        profit: revenue - expenseTotal,
         salesCount: monthSales.length,
-        tripCount: monthTrips.length,
-        avgSaleValue: monthSales.length > 0 
-          ? monthSales.reduce((sum, s) => sum + (s.total_amount || 0), 0) / monthSales.length 
-          : 0
+        expensesByCategory
       });
     }
 
-    return monthlyData;
+    return {
+      monthly: monthlyData,
+      totalRevenue: monthlyData.reduce((sum, m) => sum + m.revenue, 0),
+      totalExpenses: monthlyData.reduce((sum, m) => sum + m.expenses, 0),
+      totalProfit: monthlyData.reduce((sum, m) => sum + m.profit, 0),
+      avgMonthlyRevenue: monthlyData.reduce((sum, m) => sum + m.revenue, 0) / 6,
+      avgMonthlyExpenses: monthlyData.reduce((sum, m) => sum + m.expenses, 0) / 6
+    };
   }, [expenses, sales, trips]);
 
-  // AI Spending Analysis
-  const { data: spendingAnalysis, isLoading: loadingSpending, refetch: refetchSpending } = useQuery({
-    queryKey: ['ai-spending-analysis', orgId, expenses.length],
-    queryFn: async () => {
-      const expenseData = expenses.slice(0, 100).map(e => ({
-        category: e.category,
-        amount: e.amount,
-        date: e.date,
-        vendor: e.vendor
-      }));
+  // Run AI Analysis
+  const runAnalysis = async (type) => {
+    setAnalysisLoading(prev => ({ ...prev, [type]: true }));
+    
+    try {
+      let prompt = "";
+      let schema = {};
 
-      const response = await base44.integrations.Core.InvokeLLM({
-        prompt: `Analyze these business expenses and identify cost-saving opportunities:
+      switch (type) {
+        case "spending":
+          prompt = `Analyze this business spending data and identify cost-saving opportunities:
 
-Expenses Data: ${JSON.stringify(expenseData)}
+Monthly Data (last 6 months):
+${JSON.stringify(financialData.monthly.map(m => ({
+  month: m.month,
+  totalExpenses: m.expenses,
+  expensesByCategory: m.expensesByCategory
+})), null, 2)}
 
-Monthly Trends: ${JSON.stringify(financialData)}
+Total Expenses: Le ${financialData.totalExpenses.toLocaleString()}
+Average Monthly: Le ${financialData.avgMonthlyExpenses.toLocaleString()}
 
-Provide:
-1. Top 3 categories with highest spending and potential savings
-2. Unusual spending patterns or anomalies
-3. Specific actionable recommendations to reduce costs
-4. Vendor consolidation opportunities
-5. Seasonal patterns to prepare for`,
-        response_json_schema: {
-          type: "object",
-          properties: {
-            top_spending_categories: {
-              type: "array",
-              items: {
-                type: "object",
-                properties: {
-                  category: { type: "string" },
-                  total_spent: { type: "number" },
-                  percentage_of_total: { type: "number" },
-                  potential_savings: { type: "number" },
-                  saving_strategy: { type: "string" }
+Provide specific, actionable cost-saving recommendations. Consider:
+1. Categories with highest spending
+2. Month-over-month spending trends
+3. Potential areas of waste or inefficiency
+4. Industry benchmarks for Sierra Leone businesses`;
+
+          schema = {
+            type: "object",
+            properties: {
+              summary: { type: "string", description: "Executive summary of spending patterns" },
+              total_potential_savings: { type: "number", description: "Estimated total potential monthly savings in Leones" },
+              cost_saving_opportunities: {
+                type: "array",
+                items: {
+                  type: "object",
+                  properties: {
+                    category: { type: "string" },
+                    current_spending: { type: "number" },
+                    potential_savings: { type: "number" },
+                    recommendation: { type: "string" },
+                    priority: { type: "string", enum: ["high", "medium", "low"] },
+                    implementation_difficulty: { type: "string", enum: ["easy", "moderate", "hard"] }
+                  }
                 }
-              }
-            },
-            anomalies: {
-              type: "array",
-              items: {
-                type: "object",
-                properties: {
-                  description: { type: "string" },
-                  severity: { type: "string" },
-                  amount_involved: { type: "number" }
+              },
+              spending_trends: {
+                type: "array",
+                items: {
+                  type: "object",
+                  properties: {
+                    trend: { type: "string" },
+                    impact: { type: "string", enum: ["positive", "negative", "neutral"] },
+                    action_needed: { type: "string" }
+                  }
                 }
+              },
+              quick_wins: {
+                type: "array",
+                items: { type: "string" }
               }
-            },
-            recommendations: {
-              type: "array",
-              items: {
-                type: "object",
-                properties: {
-                  title: { type: "string" },
-                  description: { type: "string" },
-                  estimated_savings: { type: "number" },
-                  implementation_effort: { type: "string" },
-                  priority: { type: "string" }
+            }
+          };
+          break;
+
+        case "cashflow":
+          prompt = `Forecast cash flow for this Sierra Leone business considering local economic factors:
+
+Historical Data (6 months):
+${JSON.stringify(financialData.monthly.map(m => ({
+  month: m.month,
+  revenue: m.revenue,
+  expenses: m.expenses,
+  profit: m.profit
+})), null, 2)}
+
+Average Monthly Revenue: Le ${financialData.avgMonthlyRevenue.toLocaleString()}
+Average Monthly Expenses: Le ${financialData.avgMonthlyExpenses.toLocaleString()}
+
+Consider Sierra Leone economic factors:
+- Currency (Leone) stability
+- Seasonal business patterns
+- Local market conditions
+- Typical cash flow challenges for businesses
+
+Provide a 6-month cash flow forecast with confidence levels.`;
+
+          schema = {
+            type: "object",
+            properties: {
+              summary: { type: "string" },
+              current_health: { type: "string", enum: ["excellent", "good", "fair", "concerning", "critical"] },
+              forecast: {
+                type: "array",
+                items: {
+                  type: "object",
+                  properties: {
+                    month: { type: "string" },
+                    projected_revenue: { type: "number" },
+                    projected_expenses: { type: "number" },
+                    projected_cash_position: { type: "number" },
+                    confidence: { type: "string", enum: ["high", "medium", "low"] },
+                    key_factors: { type: "array", items: { type: "string" } }
+                  }
                 }
-              }
-            },
-            seasonal_insights: { type: "string" },
-            overall_health_score: { type: "number" }
-          }
-        }
-      });
-      return response;
-    },
-    enabled: !!orgId && expenses.length > 0,
-    staleTime: 10 * 60 * 1000,
-    refetchOnWindowFocus: false
-  });
+              },
+              risks: {
+                type: "array",
+                items: {
+                  type: "object",
+                  properties: {
+                    risk: { type: "string" },
+                    probability: { type: "string", enum: ["high", "medium", "low"] },
+                    impact: { type: "string" },
+                    mitigation: { type: "string" }
+                  }
+                }
+              },
+              recommendations: { type: "array", items: { type: "string" } }
+            }
+          };
+          break;
 
-  // AI Cash Flow Forecast
-  const { data: cashFlowForecast, isLoading: loadingCashFlow, refetch: refetchCashFlow } = useQuery({
-    queryKey: ['ai-cashflow-forecast', orgId, forecastMonths, financialData.length],
-    queryFn: async () => {
-      const response = await base44.integrations.Core.InvokeLLM({
-        prompt: `Based on this historical financial data, forecast cash flow for the next ${forecastMonths} months:
+        case "revenue":
+          prompt = `Analyze revenue data and identify growth opportunities for this Sierra Leone business:
 
-Historical Monthly Data: ${JSON.stringify(financialData)}
+Sales Data (6 months):
+${JSON.stringify(financialData.monthly.map(m => ({
+  month: m.month,
+  revenue: m.revenue,
+  salesCount: m.salesCount,
+  avgTransactionValue: m.salesCount > 0 ? Math.round(m.revenue / m.salesCount) : 0
+})), null, 2)}
+
+Total Revenue: Le ${financialData.totalRevenue.toLocaleString()}
+Total Transactions: ${sales.length}
 
 Consider:
-1. Seasonal trends in the data
-2. Growth patterns
-3. Economic factors for Sierra Leone businesses
-4. Common business cycles
+1. Revenue trends and seasonality
+2. Average transaction value optimization
+3. Customer acquisition opportunities
+4. Product/service mix optimization
+5. Local market opportunities in Sierra Leone`;
 
-Provide month-by-month forecast with confidence levels.`,
-        response_json_schema: {
-          type: "object",
-          properties: {
-            forecast: {
-              type: "array",
-              items: {
-                type: "object",
-                properties: {
-                  month: { type: "string" },
-                  projected_revenue: { type: "number" },
-                  projected_expenses: { type: "number" },
-                  projected_net: { type: "number" },
-                  confidence: { type: "number" },
-                  key_factors: { type: "string" }
+          schema = {
+            type: "object",
+            properties: {
+              summary: { type: "string" },
+              growth_potential: { type: "string", enum: ["high", "moderate", "limited"] },
+              estimated_growth_opportunity: { type: "number", description: "Potential monthly revenue increase in Leones" },
+              opportunities: {
+                type: "array",
+                items: {
+                  type: "object",
+                  properties: {
+                    opportunity: { type: "string" },
+                    potential_impact: { type: "number" },
+                    effort_required: { type: "string", enum: ["low", "medium", "high"] },
+                    timeframe: { type: "string" },
+                    action_steps: { type: "array", items: { type: "string" } }
+                  }
                 }
-              }
-            },
-            overall_trend: { type: "string" },
-            risk_factors: {
-              type: "array",
-              items: { type: "string" }
-            },
-            opportunities: {
-              type: "array",
-              items: { type: "string" }
-            },
-            recommended_cash_reserve: { type: "number" }
-          }
-        },
-        add_context_from_internet: true
+              },
+              quick_revenue_wins: { type: "array", items: { type: "string" } },
+              pricing_insights: { type: "string" },
+              market_recommendations: { type: "array", items: { type: "string" } }
+            }
+          };
+          break;
+
+        case "summary":
+          prompt = `Generate a comprehensive financial summary report for this Sierra Leone business:
+
+Financial Overview (Last 6 Months):
+- Total Revenue: Le ${financialData.totalRevenue.toLocaleString()}
+- Total Expenses: Le ${financialData.totalExpenses.toLocaleString()}
+- Net Profit: Le ${financialData.totalProfit.toLocaleString()}
+- Profit Margin: ${financialData.totalRevenue > 0 ? ((financialData.totalProfit / financialData.totalRevenue) * 100).toFixed(1) : 0}%
+
+Monthly Breakdown:
+${JSON.stringify(financialData.monthly, null, 2)}
+
+Create an executive summary suitable for business owners and stakeholders.`;
+
+          schema = {
+            type: "object",
+            properties: {
+              executive_summary: { type: "string" },
+              financial_health_score: { type: "number", description: "Score from 1-100" },
+              key_metrics: {
+                type: "array",
+                items: {
+                  type: "object",
+                  properties: {
+                    metric: { type: "string" },
+                    value: { type: "string" },
+                    trend: { type: "string", enum: ["up", "down", "stable"] },
+                    assessment: { type: "string" }
+                  }
+                }
+              },
+              strengths: { type: "array", items: { type: "string" } },
+              concerns: { type: "array", items: { type: "string" } },
+              priorities: {
+                type: "array",
+                items: {
+                  type: "object",
+                  properties: {
+                    priority: { type: "string" },
+                    urgency: { type: "string", enum: ["immediate", "short-term", "medium-term"] },
+                    expected_outcome: { type: "string" }
+                  }
+                }
+              },
+              outlook: { type: "string" }
+            }
+          };
+          break;
+      }
+
+      const result = await base44.integrations.Core.InvokeLLM({
+        prompt,
+        response_json_schema: schema,
+        add_context_from_internet: type === "cashflow" || type === "revenue"
       });
-      return response;
-    },
-    enabled: !!orgId && financialData.length > 0,
-    staleTime: 10 * 60 * 1000,
-    refetchOnWindowFocus: false
-  });
 
-  // AI Revenue Insights
-  const { data: revenueInsights, isLoading: loadingRevenue, refetch: refetchRevenue } = useQuery({
-    queryKey: ['ai-revenue-insights', orgId, sales.length],
-    queryFn: async () => {
-      const salesData = sales.slice(0, 100).map(s => ({
-        type: s.sale_type,
-        amount: s.total_amount,
-        items_count: s.items?.length || 0,
-        payment_method: s.payment_method,
-        date: s.created_date
-      }));
+      setAnalysisResults(prev => ({ ...prev, [type]: result }));
+      toast.success("Analysis complete");
+    } catch (error) {
+      console.error("Analysis error:", error);
+      toast.error("Failed to run analysis");
+    } finally {
+      setAnalysisLoading(prev => ({ ...prev, [type]: false }));
+    }
+  };
 
-      const response = await base44.integrations.Core.InvokeLLM({
-        prompt: `Analyze sales data and provide revenue growth opportunities:
+  // Generate and print report
+  const printReport = (type) => {
+    const result = analysisResults[type];
+    if (!result) return;
 
-Sales Data: ${JSON.stringify(salesData)}
-Monthly Trends: ${JSON.stringify(financialData)}
+    let sections = [];
+    let summaryCards = [];
 
-Identify:
-1. Best performing sales channels
-2. Growth opportunities by segment
-3. Pricing optimization suggestions
-4. Customer behavior patterns
-5. Cross-selling/upselling opportunities`,
-        response_json_schema: {
-          type: "object",
-          properties: {
-            channel_performance: {
-              type: "array",
-              items: {
-                type: "object",
-                properties: {
-                  channel: { type: "string" },
-                  revenue: { type: "number" },
-                  growth_rate: { type: "number" },
-                  recommendation: { type: "string" }
-                }
-              }
-            },
-            growth_opportunities: {
-              type: "array",
-              items: {
-                type: "object",
-                properties: {
-                  opportunity: { type: "string" },
-                  potential_revenue: { type: "number" },
-                  implementation: { type: "string" },
-                  timeline: { type: "string" }
-                }
-              }
-            },
-            pricing_insights: { type: "string" },
-            customer_patterns: { type: "string" },
-            top_recommendation: { type: "string" }
+    switch (type) {
+      case "spending":
+        summaryCards = [
+          { label: "Potential Savings", value: `Le ${(result.total_potential_savings || 0).toLocaleString()}`, highlight: "green" },
+          { label: "Opportunities", value: (result.cost_saving_opportunities?.length || 0).toString(), highlight: "blue" },
+          { label: "Quick Wins", value: (result.quick_wins?.length || 0).toString(), highlight: "gold" }
+        ];
+        sections = [
+          { title: "📊 Executive Summary", content: `<p style="font-size: 14px; line-height: 1.6;">${result.summary}</p>` },
+          {
+            title: "💰 Cost-Saving Opportunities",
+            table: {
+              columns: ["Category", "Current Spending", "Potential Savings", "Priority", "Recommendation"],
+              rows: (result.cost_saving_opportunities || []).map(o => [
+                o.category,
+                `Le ${(o.current_spending || 0).toLocaleString()}`,
+                `Le ${(o.potential_savings || 0).toLocaleString()}`,
+                o.priority,
+                o.recommendation
+              ])
+            }
+          },
+          {
+            title: "⚡ Quick Wins",
+            content: `<ul style="margin: 0; padding-left: 20px;">${(result.quick_wins || []).map(w => `<li style="margin: 8px 0;">${w}</li>`).join('')}</ul>`
           }
-        },
-        add_context_from_internet: true
-      });
-      return response;
-    },
-    enabled: !!orgId && sales.length > 0,
-    staleTime: 10 * 60 * 1000,
-    refetchOnWindowFocus: false
-  });
+        ];
+        break;
 
-  // AI Financial Summary Generator
-  const { data: financialSummary, isLoading: loadingSummary, refetch: refetchSummary } = useQuery({
-    queryKey: ['ai-financial-summary', orgId, financialData.length],
-    queryFn: async () => {
-      const totalRevenue = financialData.reduce((sum, m) => sum + m.revenue, 0);
-      const totalExpenses = financialData.reduce((sum, m) => sum + m.expenses, 0);
-      
-      const response = await base44.integrations.Core.InvokeLLM({
-        prompt: `Generate an executive financial summary for this business:
-
-Organisation: ${organisation?.name || 'Business'}
-Period: Last 6 months
-Total Revenue: Le ${totalRevenue.toLocaleString()}
-Total Expenses: Le ${totalExpenses.toLocaleString()}
-Net Profit: Le ${(totalRevenue - totalExpenses).toLocaleString()}
-
-Monthly Breakdown: ${JSON.stringify(financialData)}
-
-Create a professional executive summary suitable for stakeholders.`,
-        response_json_schema: {
-          type: "object",
-          properties: {
-            executive_summary: { type: "string" },
-            key_highlights: {
-              type: "array",
-              items: { type: "string" }
-            },
-            financial_health: {
-              type: "object",
-              properties: {
-                score: { type: "number" },
-                status: { type: "string" },
-                trend: { type: "string" }
-              }
-            },
-            kpis: {
-              type: "array",
-              items: {
-                type: "object",
-                properties: {
-                  name: { type: "string" },
-                  value: { type: "string" },
-                  trend: { type: "string" },
-                  status: { type: "string" }
-                }
-              }
-            },
-            recommendations: {
-              type: "array",
-              items: { type: "string" }
-            },
-            outlook: { type: "string" }
+      case "cashflow":
+        summaryCards = [
+          { label: "Cash Health", value: result.current_health || "N/A", highlight: result.current_health === "excellent" || result.current_health === "good" ? "green" : "gold" },
+          { label: "Forecast Months", value: (result.forecast?.length || 0).toString(), highlight: "blue" },
+          { label: "Risks Identified", value: (result.risks?.length || 0).toString(), highlight: "red" }
+        ];
+        sections = [
+          { title: "📊 Summary", content: `<p style="font-size: 14px; line-height: 1.6;">${result.summary}</p>` },
+          {
+            title: "📈 6-Month Forecast",
+            table: {
+              columns: ["Month", "Projected Revenue", "Projected Expenses", "Cash Position", "Confidence"],
+              rows: (result.forecast || []).map(f => [
+                f.month,
+                `Le ${(f.projected_revenue || 0).toLocaleString()}`,
+                `Le ${(f.projected_expenses || 0).toLocaleString()}`,
+                `Le ${(f.projected_cash_position || 0).toLocaleString()}`,
+                f.confidence
+              ])
+            }
+          },
+          {
+            title: "⚠️ Risks & Mitigation",
+            table: {
+              columns: ["Risk", "Probability", "Impact", "Mitigation"],
+              rows: (result.risks || []).map(r => [r.risk, r.probability, r.impact, r.mitigation])
+            }
           }
-        }
-      });
-      return response;
-    },
-    enabled: !!orgId && financialData.length > 0,
-    staleTime: 10 * 60 * 1000,
-    refetchOnWindowFocus: false
-  });
+        ];
+        break;
 
-  const handleRefreshAll = () => {
-    setIsAnalyzing(true);
-    Promise.all([
-      refetchSpending(),
-      refetchCashFlow(),
-      refetchRevenue(),
-      refetchSummary()
-    ]).finally(() => {
-      setIsAnalyzing(false);
-      toast.success("Analysis refreshed");
+      case "revenue":
+        summaryCards = [
+          { label: "Growth Potential", value: result.growth_potential || "N/A", highlight: "green" },
+          { label: "Est. Monthly Opportunity", value: `Le ${(result.estimated_growth_opportunity || 0).toLocaleString()}`, highlight: "gold" },
+          { label: "Opportunities", value: (result.opportunities?.length || 0).toString(), highlight: "blue" }
+        ];
+        sections = [
+          { title: "📊 Summary", content: `<p style="font-size: 14px; line-height: 1.6;">${result.summary}</p>` },
+          {
+            title: "🚀 Growth Opportunities",
+            table: {
+              columns: ["Opportunity", "Potential Impact", "Effort", "Timeframe"],
+              rows: (result.opportunities || []).map(o => [
+                o.opportunity,
+                `Le ${(o.potential_impact || 0).toLocaleString()}`,
+                o.effort_required,
+                o.timeframe
+              ])
+            }
+          },
+          {
+            title: "💡 Quick Revenue Wins",
+            content: `<ul style="margin: 0; padding-left: 20px;">${(result.quick_revenue_wins || []).map(w => `<li style="margin: 8px 0;">${w}</li>`).join('')}</ul>`
+          }
+        ];
+        break;
+
+      case "summary":
+        summaryCards = [
+          { label: "Health Score", value: `${result.financial_health_score || 0}/100`, highlight: (result.financial_health_score || 0) >= 70 ? "green" : "gold" },
+          { label: "Strengths", value: (result.strengths?.length || 0).toString(), highlight: "green" },
+          { label: "Concerns", value: (result.concerns?.length || 0).toString(), highlight: "red" }
+        ];
+        sections = [
+          { title: "📊 Executive Summary", content: `<p style="font-size: 14px; line-height: 1.6;">${result.executive_summary}</p>` },
+          {
+            title: "📈 Key Metrics",
+            table: {
+              columns: ["Metric", "Value", "Trend", "Assessment"],
+              rows: (result.key_metrics || []).map(m => [m.metric, m.value, m.trend, m.assessment])
+            }
+          },
+          {
+            title: "✅ Strengths",
+            content: `<ul style="margin: 0; padding-left: 20px;">${(result.strengths || []).map(s => `<li style="margin: 8px 0; color: #166534;">${s}</li>`).join('')}</ul>`
+          },
+          {
+            title: "⚠️ Concerns",
+            content: `<ul style="margin: 0; padding-left: 20px;">${(result.concerns || []).map(c => `<li style="margin: 8px 0; color: #991b1b;">${c}</li>`).join('')}</ul>`
+          },
+          {
+            title: "🎯 Priorities",
+            table: {
+              columns: ["Priority", "Urgency", "Expected Outcome"],
+              rows: (result.priorities || []).map(p => [p.priority, p.urgency, p.expected_outcome])
+            }
+          },
+          { title: "🔮 Outlook", content: `<p style="font-size: 14px; line-height: 1.6;">${result.outlook}</p>` }
+        ];
+        break;
+    }
+
+    const titles = {
+      spending: "Cost Savings Analysis",
+      cashflow: "Cash Flow Forecast",
+      revenue: "Revenue Growth Analysis",
+      summary: "Financial Summary Report"
+    };
+
+    const html = generateUnifiedPDF({
+      documentType: 'report',
+      title: titles[type],
+      docNumber: `AI-${type.toUpperCase()}-${Date.now().toString(36).toUpperCase()}`,
+      docDate: format(new Date(), 'MMMM d, yyyy'),
+      organisation,
+      infoBar: [
+        { label: 'Report Type', value: 'AI Analysis' },
+        { label: 'Generated', value: format(new Date(), 'MMM d, yyyy h:mm a') },
+        { label: 'Period', value: 'Last 6 Months' }
+      ],
+      summaryCards,
+      sections,
+      notes: 'This report was generated using AI-powered financial analysis. Recommendations should be reviewed by management before implementation.',
+      showFooter: true
     });
+
+    printUnifiedPDF(html, `ai-${type}-report`);
   };
 
   const getPriorityColor = (priority) => {
-    switch (priority?.toLowerCase()) {
-      case 'high': return 'bg-red-100 text-red-700';
-      case 'medium': return 'bg-amber-100 text-amber-700';
-      case 'low': return 'bg-green-100 text-green-700';
-      default: return 'bg-gray-100 text-gray-700';
+    switch (priority) {
+      case "high": return "bg-red-100 text-red-700";
+      case "medium": return "bg-amber-100 text-amber-700";
+      case "low": return "bg-green-100 text-green-700";
+      default: return "bg-gray-100 text-gray-700";
     }
   };
 
-  const getHealthColor = (score) => {
-    if (score >= 80) return 'text-green-600';
-    if (score >= 60) return 'text-amber-600';
-    return 'text-red-600';
+  const getHealthColor = (health) => {
+    switch (health) {
+      case "excellent": return "text-green-600";
+      case "good": return "text-blue-600";
+      case "fair": return "text-amber-600";
+      case "concerning": return "text-orange-600";
+      case "critical": return "text-red-600";
+      default: return "text-gray-600";
+    }
   };
-
-  // Prepare forecast chart data
-  const forecastChartData = useMemo(() => {
-    const historical = financialData.map(m => ({
-      period: m.monthShort,
-      revenue: m.revenue,
-      expenses: m.expenses,
-      net: m.revenue - m.expenses,
-      type: 'historical'
-    }));
-
-    const forecast = cashFlowForecast?.forecast?.map(f => ({
-      period: f.month?.slice(0, 3) || 'N/A',
-      revenue: f.projected_revenue,
-      expenses: f.projected_expenses,
-      net: f.projected_net,
-      type: 'forecast'
-    })) || [];
-
-    return [...historical, ...forecast];
-  }, [financialData, cashFlowForecast]);
 
   return (
     <div className="space-y-6">
@@ -400,74 +511,111 @@ Create a professional executive summary suitable for stakeholders.`,
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h2 className="text-xl font-bold flex items-center gap-2">
-            <Sparkles className="w-6 h-6 text-[#1EB053]" />
+            <Brain className="w-6 h-6 text-[#0072C6]" />
             AI Financial Analysis
           </h2>
-          <p className="text-sm text-gray-500">Intelligent insights powered by AI</p>
+          <p className="text-sm text-gray-500">Powered by AI to provide actionable financial insights</p>
         </div>
-        <Button 
-          onClick={handleRefreshAll}
-          disabled={isAnalyzing}
-          className="bg-gradient-to-r from-[#1EB053] to-[#0072C6]"
-        >
-          <RefreshCw className={`w-4 h-4 mr-2 ${isAnalyzing ? 'animate-spin' : ''}`} />
-          {isAnalyzing ? 'Analyzing...' : 'Refresh Analysis'}
-        </Button>
       </div>
 
-      {/* Quick Stats from AI Summary */}
-      {financialSummary && (
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-          <Card className="bg-gradient-to-br from-green-50 to-white border-t-4 border-t-[#1EB053]">
-            <CardContent className="p-4">
-              <div className="flex items-center gap-3">
-                <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${
-                  financialSummary.financial_health?.score >= 70 ? 'bg-green-100' : 'bg-amber-100'
-                }`}>
-                  <Target className={`w-6 h-6 ${getHealthColor(financialSummary.financial_health?.score || 0)}`} />
-                </div>
-                <div>
-                  <p className="text-xs text-gray-500">Health Score</p>
-                  <p className={`text-2xl font-bold ${getHealthColor(financialSummary.financial_health?.score || 0)}`}>
-                    {financialSummary.financial_health?.score || 0}/100
-                  </p>
-                </div>
+      {/* Quick Stats */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        <Card className="bg-gradient-to-br from-green-50 to-white border-t-4 border-t-[#1EB053]">
+          <CardContent className="p-4">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-lg bg-green-100 flex items-center justify-center">
+                <TrendingUp className="w-5 h-5 text-green-600" />
               </div>
-            </CardContent>
-          </Card>
+              <div>
+                <p className="text-xs text-gray-500">6-Month Revenue</p>
+                <p className="text-lg font-bold text-green-600">Le {financialData.totalRevenue.toLocaleString()}</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
 
-          {financialSummary.kpis?.slice(0, 3).map((kpi, idx) => (
-            <Card key={idx} className="bg-gradient-to-br from-blue-50 to-white">
-              <CardContent className="p-4">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-xs text-gray-500">{kpi.name}</p>
-                    <p className="text-lg font-bold text-[#0072C6]">{kpi.value}</p>
-                  </div>
-                  {kpi.trend === 'up' ? (
-                    <ArrowUpRight className="w-5 h-5 text-green-500" />
-                  ) : kpi.trend === 'down' ? (
-                    <ArrowDownRight className="w-5 h-5 text-red-500" />
-                  ) : null}
-                </div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-      )}
+        <Card className="bg-gradient-to-br from-red-50 to-white border-t-4 border-t-red-500">
+          <CardContent className="p-4">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-lg bg-red-100 flex items-center justify-center">
+                <TrendingDown className="w-5 h-5 text-red-600" />
+              </div>
+              <div>
+                <p className="text-xs text-gray-500">6-Month Expenses</p>
+                <p className="text-lg font-bold text-red-600">Le {financialData.totalExpenses.toLocaleString()}</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
 
+        <Card className={`bg-gradient-to-br ${financialData.totalProfit >= 0 ? 'from-blue-50 border-t-[#0072C6]' : 'from-orange-50 border-t-orange-500'} to-white border-t-4`}>
+          <CardContent className="p-4">
+            <div className="flex items-center gap-3">
+              <div className={`w-10 h-10 rounded-lg ${financialData.totalProfit >= 0 ? 'bg-blue-100' : 'bg-orange-100'} flex items-center justify-center`}>
+                <DollarSign className={`w-5 h-5 ${financialData.totalProfit >= 0 ? 'text-blue-600' : 'text-orange-600'}`} />
+              </div>
+              <div>
+                <p className="text-xs text-gray-500">Net Profit</p>
+                <p className={`text-lg font-bold ${financialData.totalProfit >= 0 ? 'text-blue-600' : 'text-orange-600'}`}>
+                  Le {financialData.totalProfit.toLocaleString()}
+                </p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="bg-gradient-to-br from-purple-50 to-white border-t-4 border-t-purple-500">
+          <CardContent className="p-4">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-lg bg-purple-100 flex items-center justify-center">
+                <BarChart3 className="w-5 h-5 text-purple-600" />
+              </div>
+              <div>
+                <p className="text-xs text-gray-500">Profit Margin</p>
+                <p className="text-lg font-bold text-purple-600">
+                  {financialData.totalRevenue > 0 ? ((financialData.totalProfit / financialData.totalRevenue) * 100).toFixed(1) : 0}%
+                </p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Trend Chart */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Financial Trend (6 Months)</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="h-[250px]">
+            <ResponsiveContainer width="100%" height="100%">
+              <AreaChart data={financialData.monthly}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="monthShort" />
+                <YAxis tickFormatter={(v) => `Le ${(v/1000).toFixed(0)}k`} />
+                <Tooltip formatter={(value) => `Le ${value.toLocaleString()}`} />
+                <Legend />
+                <Area type="monotone" dataKey="revenue" stackId="1" stroke="#1EB053" fill="#1EB053" fillOpacity={0.6} name="Revenue" />
+                <Area type="monotone" dataKey="expenses" stackId="2" stroke="#ef4444" fill="#ef4444" fillOpacity={0.6} name="Expenses" />
+              </AreaChart>
+            </ResponsiveContainer>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Analysis Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab}>
         <TabsList className="grid w-full grid-cols-4">
           <TabsTrigger value="spending" className="gap-1">
             <PiggyBank className="w-4 h-4" />
-            <span className="hidden sm:inline">Spending</span>
+            <span className="hidden sm:inline">Cost Savings</span>
           </TabsTrigger>
           <TabsTrigger value="cashflow" className="gap-1">
-            <BarChart3 className="w-4 h-4" />
+            <TrendingUp className="w-4 h-4" />
             <span className="hidden sm:inline">Cash Flow</span>
           </TabsTrigger>
           <TabsTrigger value="revenue" className="gap-1">
-            <TrendingUp className="w-4 h-4" />
+            <Target className="w-4 h-4" />
             <span className="hidden sm:inline">Revenue</span>
           </TabsTrigger>
           <TabsTrigger value="summary" className="gap-1">
@@ -477,507 +625,492 @@ Create a professional executive summary suitable for stakeholders.`,
         </TabsList>
 
         {/* Spending Analysis Tab */}
-        <TabsContent value="spending" className="space-y-4 mt-4">
-          {loadingSpending ? (
-            <Card>
-              <CardContent className="p-8 flex items-center justify-center">
-                <div className="text-center">
-                  <Sparkles className="w-8 h-8 text-[#1EB053] mx-auto animate-pulse mb-2" />
-                  <p className="text-gray-500">Analyzing spending patterns...</p>
-                </div>
-              </CardContent>
-            </Card>
-          ) : spendingAnalysis ? (
-            <>
-              {/* Health Score */}
-              <Card className="bg-gradient-to-r from-[#1EB053]/10 to-[#0072C6]/10">
-                <CardContent className="p-4">
-                  <div className="flex items-center justify-between">
+        <TabsContent value="spending" className="space-y-4">
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between">
+              <div>
+                <CardTitle className="flex items-center gap-2">
+                  <Sparkles className="w-5 h-5 text-[#0072C6]" />
+                  AI Cost Savings Analysis
+                </CardTitle>
+                <CardDescription>Identify opportunities to reduce expenses</CardDescription>
+              </div>
+              <div className="flex gap-2">
+                {analysisResults.spending && (
+                  <Button variant="outline" size="sm" onClick={() => printReport("spending")}>
+                    <Printer className="w-4 h-4 mr-1" />
+                    Print
+                  </Button>
+                )}
+                <Button 
+                  onClick={() => runAnalysis("spending")}
+                  disabled={analysisLoading.spending}
+                  className="bg-gradient-to-r from-[#1EB053] to-[#0072C6]"
+                >
+                  {analysisLoading.spending ? (
+                    <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
+                  ) : (
+                    <Zap className="w-4 h-4 mr-2" />
+                  )}
+                  {analysisResults.spending ? 'Re-analyze' : 'Run Analysis'}
+                </Button>
+              </div>
+            </CardHeader>
+            <CardContent>
+              {analysisResults.spending ? (
+                <div className="space-y-6">
+                  {/* Summary */}
+                  <div className="p-4 bg-blue-50 rounded-lg border border-blue-200">
+                    <p className="text-sm text-blue-800">{analysisResults.spending.summary}</p>
+                  </div>
+
+                  {/* Potential Savings */}
+                  <div className="flex items-center gap-4 p-4 bg-green-50 rounded-lg border border-green-200">
+                    <PiggyBank className="w-10 h-10 text-green-600" />
                     <div>
-                      <p className="text-sm font-medium">Spending Health Score</p>
-                      <p className="text-xs text-gray-500">Based on spending patterns and efficiency</p>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Progress value={spendingAnalysis.overall_health_score || 70} className="w-32 h-3" />
-                      <span className="font-bold text-lg">{spendingAnalysis.overall_health_score || 70}%</span>
+                      <p className="text-sm text-green-600">Total Potential Monthly Savings</p>
+                      <p className="text-2xl font-bold text-green-700">
+                        Le {(analysisResults.spending.total_potential_savings || 0).toLocaleString()}
+                      </p>
                     </div>
                   </div>
-                </CardContent>
-              </Card>
 
-              {/* Top Spending Categories */}
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <DollarSign className="w-5 h-5 text-red-500" />
-                    Top Spending Categories
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-4">
-                    {spendingAnalysis.top_spending_categories?.map((cat, idx) => (
-                      <div key={idx} className="p-4 bg-gray-50 rounded-lg">
-                        <div className="flex items-center justify-between mb-2">
-                          <span className="font-semibold capitalize">{cat.category?.replace(/_/g, ' ')}</span>
-                          <span className="text-lg font-bold">Le {cat.total_spent?.toLocaleString()}</span>
-                        </div>
-                        <Progress value={cat.percentage_of_total} className="h-2 mb-2" />
-                        <div className="flex items-center justify-between text-sm">
-                          <span className="text-gray-500">{cat.percentage_of_total?.toFixed(1)}% of total</span>
-                          <Badge className="bg-green-100 text-green-700">
-                            Potential Savings: Le {cat.potential_savings?.toLocaleString()}
-                          </Badge>
-                        </div>
-                        <p className="text-sm text-gray-600 mt-2">{cat.saving_strategy}</p>
-                      </div>
-                    ))}
-                  </div>
-                </CardContent>
-              </Card>
-
-              {/* Recommendations */}
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Lightbulb className="w-5 h-5 text-amber-500" />
-                    Cost-Saving Recommendations
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-3">
-                    {spendingAnalysis.recommendations?.map((rec, idx) => (
-                      <div key={idx} className="p-4 border rounded-lg hover:shadow-md transition-shadow">
-                        <div className="flex items-start justify-between mb-2">
-                          <div className="flex items-center gap-2">
-                            <Zap className="w-4 h-4 text-[#1EB053]" />
-                            <span className="font-semibold">{rec.title}</span>
+                  {/* Opportunities */}
+                  <div>
+                    <h4 className="font-semibold mb-3 flex items-center gap-2">
+                      <Lightbulb className="w-4 h-4 text-amber-500" />
+                      Cost-Saving Opportunities
+                    </h4>
+                    <div className="space-y-3">
+                      {(analysisResults.spending.cost_saving_opportunities || []).map((opp, idx) => (
+                        <div key={idx} className="p-4 bg-gray-50 rounded-lg border">
+                          <div className="flex items-start justify-between mb-2">
+                            <div className="flex items-center gap-2">
+                              <Badge className={getPriorityColor(opp.priority)}>{opp.priority}</Badge>
+                              <span className="font-medium capitalize">{opp.category?.replace(/_/g, ' ')}</span>
+                            </div>
+                            <span className="text-green-600 font-bold">Save Le {(opp.potential_savings || 0).toLocaleString()}</span>
                           </div>
-                          <Badge className={getPriorityColor(rec.priority)}>{rec.priority}</Badge>
-                        </div>
-                        <p className="text-sm text-gray-600 mb-2">{rec.description}</p>
-                        <div className="flex items-center gap-4 text-sm">
-                          <span className="text-green-600 font-medium">
-                            Est. Savings: Le {rec.estimated_savings?.toLocaleString()}
-                          </span>
-                          <span className="text-gray-500">Effort: {rec.implementation_effort}</span>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </CardContent>
-              </Card>
-
-              {/* Anomalies */}
-              {spendingAnalysis.anomalies?.length > 0 && (
-                <Card className="border-l-4 border-l-amber-500">
-                  <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
-                      <AlertTriangle className="w-5 h-5 text-amber-500" />
-                      Spending Anomalies Detected
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-2">
-                      {spendingAnalysis.anomalies.map((anomaly, idx) => (
-                        <div key={idx} className="flex items-center justify-between p-3 bg-amber-50 rounded-lg">
-                          <span className="text-sm">{anomaly.description}</span>
-                          <Badge variant="outline" className="border-amber-500 text-amber-700">
-                            Le {anomaly.amount_involved?.toLocaleString()}
-                          </Badge>
+                          <p className="text-sm text-gray-600">{opp.recommendation}</p>
+                          <div className="flex items-center gap-2 mt-2 text-xs text-gray-500">
+                            <span>Current: Le {(opp.current_spending || 0).toLocaleString()}</span>
+                            <span>•</span>
+                            <span>Difficulty: {opp.implementation_difficulty}</span>
+                          </div>
                         </div>
                       ))}
                     </div>
-                  </CardContent>
-                </Card>
-              )}
-            </>
-          ) : (
-            <Card>
-              <CardContent className="p-8 text-center text-gray-500">
-                No spending data available for analysis
-              </CardContent>
-            </Card>
-          )}
-        </TabsContent>
-
-        {/* Cash Flow Forecast Tab */}
-        <TabsContent value="cashflow" className="space-y-4 mt-4">
-          <div className="flex items-center gap-3 mb-4">
-            <span className="text-sm font-medium">Forecast Period:</span>
-            <Select value={forecastMonths.toString()} onValueChange={(v) => setForecastMonths(parseInt(v))}>
-              <SelectTrigger className="w-32">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="3">3 Months</SelectItem>
-                <SelectItem value="6">6 Months</SelectItem>
-                <SelectItem value="12">12 Months</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-
-          {loadingCashFlow ? (
-            <Card>
-              <CardContent className="p-8 flex items-center justify-center">
-                <div className="text-center">
-                  <Sparkles className="w-8 h-8 text-[#1EB053] mx-auto animate-pulse mb-2" />
-                  <p className="text-gray-500">Forecasting cash flow...</p>
-                </div>
-              </CardContent>
-            </Card>
-          ) : cashFlowForecast ? (
-            <>
-              {/* Forecast Chart */}
-              <Card>
-                <CardHeader>
-                  <CardTitle>Cash Flow Forecast</CardTitle>
-                  <CardDescription>Historical data + AI-powered projections</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="h-[300px]">
-                    <ResponsiveContainer width="100%" height="100%">
-                      <AreaChart data={forecastChartData}>
-                        <CartesianGrid strokeDasharray="3 3" />
-                        <XAxis dataKey="period" />
-                        <YAxis tickFormatter={(v) => `Le ${(v/1000).toFixed(0)}k`} />
-                        <Tooltip formatter={(value) => `Le ${value?.toLocaleString()}`} />
-                        <Legend />
-                        <Area 
-                          type="monotone" 
-                          dataKey="revenue" 
-                          stroke="#1EB053" 
-                          fill="#1EB053" 
-                          fillOpacity={0.3} 
-                          name="Revenue" 
-                        />
-                        <Area 
-                          type="monotone" 
-                          dataKey="expenses" 
-                          stroke="#ef4444" 
-                          fill="#ef4444" 
-                          fillOpacity={0.3} 
-                          name="Expenses" 
-                        />
-                        <Line 
-                          type="monotone" 
-                          dataKey="net" 
-                          stroke="#0072C6" 
-                          strokeWidth={2} 
-                          name="Net Cash Flow" 
-                        />
-                      </AreaChart>
-                    </ResponsiveContainer>
                   </div>
-                </CardContent>
-              </Card>
 
-              {/* Forecast Details */}
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="text-lg">Monthly Projections</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <ScrollArea className="h-[250px]">
-                      <div className="space-y-3">
-                        {cashFlowForecast.forecast?.map((f, idx) => (
-                          <div key={idx} className="p-3 bg-gray-50 rounded-lg">
-                            <div className="flex justify-between items-center mb-2">
-                              <span className="font-medium">{f.month}</span>
-                              <Badge variant="outline">
-                                {f.confidence}% confidence
-                              </Badge>
-                            </div>
-                            <div className="grid grid-cols-3 gap-2 text-sm">
-                              <div>
-                                <p className="text-gray-500">Revenue</p>
-                                <p className="font-semibold text-green-600">Le {f.projected_revenue?.toLocaleString()}</p>
-                              </div>
-                              <div>
-                                <p className="text-gray-500">Expenses</p>
-                                <p className="font-semibold text-red-600">Le {f.projected_expenses?.toLocaleString()}</p>
-                              </div>
-                              <div>
-                                <p className="text-gray-500">Net</p>
-                                <p className={`font-semibold ${f.projected_net >= 0 ? 'text-blue-600' : 'text-orange-600'}`}>
-                                  Le {f.projected_net?.toLocaleString()}
-                                </p>
-                              </div>
-                            </div>
-                            <p className="text-xs text-gray-500 mt-2">{f.key_factors}</p>
+                  {/* Quick Wins */}
+                  {analysisResults.spending.quick_wins?.length > 0 && (
+                    <div>
+                      <h4 className="font-semibold mb-3 flex items-center gap-2">
+                        <Zap className="w-4 h-4 text-amber-500" />
+                        Quick Wins
+                      </h4>
+                      <div className="grid gap-2">
+                        {analysisResults.spending.quick_wins.map((win, idx) => (
+                          <div key={idx} className="flex items-center gap-2 p-3 bg-amber-50 rounded-lg">
+                            <CheckCircle2 className="w-4 h-4 text-amber-600 flex-shrink-0" />
+                            <span className="text-sm">{win}</span>
                           </div>
                         ))}
                       </div>
-                    </ScrollArea>
-                  </CardContent>
-                </Card>
-
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="text-lg">Risk & Opportunities</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-4">
-                      <div>
-                        <h4 className="font-medium text-red-600 mb-2 flex items-center gap-2">
-                          <AlertTriangle className="w-4 h-4" />
-                          Risk Factors
-                        </h4>
-                        <ul className="space-y-1">
-                          {cashFlowForecast.risk_factors?.map((risk, idx) => (
-                            <li key={idx} className="text-sm text-gray-600 flex items-start gap-2">
-                              <span className="text-red-400">•</span>
-                              {risk}
-                            </li>
-                          ))}
-                        </ul>
-                      </div>
-                      <div>
-                        <h4 className="font-medium text-green-600 mb-2 flex items-center gap-2">
-                          <Lightbulb className="w-4 h-4" />
-                          Opportunities
-                        </h4>
-                        <ul className="space-y-1">
-                          {cashFlowForecast.opportunities?.map((opp, idx) => (
-                            <li key={idx} className="text-sm text-gray-600 flex items-start gap-2">
-                              <span className="text-green-400">•</span>
-                              {opp}
-                            </li>
-                          ))}
-                        </ul>
-                      </div>
-                      <div className="p-3 bg-blue-50 rounded-lg">
-                        <p className="text-sm text-blue-800">
-                          <strong>Recommended Cash Reserve:</strong> Le {cashFlowForecast.recommended_cash_reserve?.toLocaleString()}
-                        </p>
-                      </div>
                     </div>
-                  </CardContent>
-                </Card>
-              </div>
-            </>
-          ) : (
-            <Card>
-              <CardContent className="p-8 text-center text-gray-500">
-                No data available for forecasting
-              </CardContent>
-            </Card>
-          )}
+                  )}
+                </div>
+              ) : (
+                <div className="text-center py-12 text-gray-500">
+                  <PiggyBank className="w-16 h-16 mx-auto mb-4 text-gray-300" />
+                  <p>Click "Run Analysis" to identify cost-saving opportunities</p>
+                </div>
+              )}
+            </CardContent>
+          </Card>
         </TabsContent>
 
-        {/* Revenue Insights Tab */}
-        <TabsContent value="revenue" className="space-y-4 mt-4">
-          {loadingRevenue ? (
-            <Card>
-              <CardContent className="p-8 flex items-center justify-center">
-                <div className="text-center">
-                  <Sparkles className="w-8 h-8 text-[#1EB053] mx-auto animate-pulse mb-2" />
-                  <p className="text-gray-500">Analyzing revenue opportunities...</p>
-                </div>
-              </CardContent>
-            </Card>
-          ) : revenueInsights ? (
-            <>
-              {/* Top Recommendation */}
-              <Card className="bg-gradient-to-r from-[#1EB053] to-[#0072C6] text-white">
-                <CardContent className="p-6">
-                  <div className="flex items-start gap-4">
-                    <div className="w-12 h-12 rounded-xl bg-white/20 flex items-center justify-center">
-                      <Zap className="w-6 h-6" />
+        {/* Cash Flow Tab */}
+        <TabsContent value="cashflow" className="space-y-4">
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between">
+              <div>
+                <CardTitle className="flex items-center gap-2">
+                  <Sparkles className="w-5 h-5 text-[#0072C6]" />
+                  AI Cash Flow Forecast
+                </CardTitle>
+                <CardDescription>Predict future cash position with economic factors</CardDescription>
+              </div>
+              <div className="flex gap-2">
+                {analysisResults.cashflow && (
+                  <Button variant="outline" size="sm" onClick={() => printReport("cashflow")}>
+                    <Printer className="w-4 h-4 mr-1" />
+                    Print
+                  </Button>
+                )}
+                <Button 
+                  onClick={() => runAnalysis("cashflow")}
+                  disabled={analysisLoading.cashflow}
+                  className="bg-gradient-to-r from-[#1EB053] to-[#0072C6]"
+                >
+                  {analysisLoading.cashflow ? (
+                    <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
+                  ) : (
+                    <Zap className="w-4 h-4 mr-2" />
+                  )}
+                  {analysisResults.cashflow ? 'Re-forecast' : 'Generate Forecast'}
+                </Button>
+              </div>
+            </CardHeader>
+            <CardContent>
+              {analysisResults.cashflow ? (
+                <div className="space-y-6">
+                  {/* Health Status */}
+                  <div className="flex items-center gap-4 p-4 bg-gray-50 rounded-lg">
+                    <div className={`text-3xl font-bold capitalize ${getHealthColor(analysisResults.cashflow.current_health)}`}>
+                      {analysisResults.cashflow.current_health}
                     </div>
                     <div>
-                      <p className="text-sm opacity-80">Top Revenue Opportunity</p>
-                      <p className="text-lg font-semibold">{revenueInsights.top_recommendation}</p>
+                      <p className="text-sm text-gray-500">Current Cash Health</p>
+                      <p className="text-sm text-gray-600">{analysisResults.cashflow.summary}</p>
                     </div>
                   </div>
-                </CardContent>
-              </Card>
 
-              {/* Channel Performance */}
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <ShoppingCart className="w-5 h-5 text-[#0072C6]" />
-                    Channel Performance
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-4">
-                    {revenueInsights.channel_performance?.map((channel, idx) => (
-                      <div key={idx} className="p-4 bg-gray-50 rounded-lg">
-                        <div className="flex items-center justify-between mb-2">
-                          <span className="font-semibold capitalize">{channel.channel}</span>
-                          <div className="flex items-center gap-2">
-                            <span className="font-bold">Le {channel.revenue?.toLocaleString()}</span>
-                            <Badge className={channel.growth_rate >= 0 ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}>
-                              {channel.growth_rate >= 0 ? '+' : ''}{channel.growth_rate}%
-                            </Badge>
+                  {/* Forecast Chart */}
+                  {analysisResults.cashflow.forecast?.length > 0 && (
+                    <div className="h-[250px]">
+                      <ResponsiveContainer width="100%" height="100%">
+                        <AreaChart data={analysisResults.cashflow.forecast}>
+                          <CartesianGrid strokeDasharray="3 3" />
+                          <XAxis dataKey="month" />
+                          <YAxis tickFormatter={(v) => `Le ${(v/1000).toFixed(0)}k`} />
+                          <Tooltip formatter={(value) => `Le ${value.toLocaleString()}`} />
+                          <Legend />
+                          <Area type="monotone" dataKey="projected_revenue" stroke="#1EB053" fill="#1EB053" fillOpacity={0.3} name="Projected Revenue" />
+                          <Area type="monotone" dataKey="projected_expenses" stroke="#ef4444" fill="#ef4444" fillOpacity={0.3} name="Projected Expenses" />
+                          <Line type="monotone" dataKey="projected_cash_position" stroke="#0072C6" strokeWidth={3} name="Cash Position" />
+                        </AreaChart>
+                      </ResponsiveContainer>
+                    </div>
+                  )}
+
+                  {/* Risks */}
+                  {analysisResults.cashflow.risks?.length > 0 && (
+                    <div>
+                      <h4 className="font-semibold mb-3 flex items-center gap-2">
+                        <AlertTriangle className="w-4 h-4 text-amber-500" />
+                        Identified Risks
+                      </h4>
+                      <div className="space-y-3">
+                        {analysisResults.cashflow.risks.map((risk, idx) => (
+                          <div key={idx} className="p-4 bg-red-50 rounded-lg border border-red-200">
+                            <div className="flex items-start justify-between mb-2">
+                              <span className="font-medium">{risk.risk}</span>
+                              <Badge className={getPriorityColor(risk.probability)}>{risk.probability} probability</Badge>
+                            </div>
+                            <p className="text-sm text-gray-600 mb-2"><strong>Impact:</strong> {risk.impact}</p>
+                            <p className="text-sm text-green-700"><strong>Mitigation:</strong> {risk.mitigation}</p>
                           </div>
-                        </div>
-                        <p className="text-sm text-gray-600">{channel.recommendation}</p>
+                        ))}
                       </div>
-                    ))}
-                  </div>
-                </CardContent>
-              </Card>
+                    </div>
+                  )}
 
-              {/* Growth Opportunities */}
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <TrendingUp className="w-5 h-5 text-[#1EB053]" />
-                    Growth Opportunities
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {revenueInsights.growth_opportunities?.map((opp, idx) => (
-                      <div key={idx} className="p-4 border rounded-lg">
-                        <h4 className="font-semibold mb-2">{opp.opportunity}</h4>
-                        <p className="text-sm text-gray-600 mb-3">{opp.implementation}</p>
-                        <div className="flex items-center justify-between text-sm">
-                          <span className="text-green-600 font-medium">
-                            +Le {opp.potential_revenue?.toLocaleString()}
-                          </span>
-                          <Badge variant="outline">{opp.timeline}</Badge>
-                        </div>
+                  {/* Recommendations */}
+                  {analysisResults.cashflow.recommendations?.length > 0 && (
+                    <div>
+                      <h4 className="font-semibold mb-3">Recommendations</h4>
+                      <div className="grid gap-2">
+                        {analysisResults.cashflow.recommendations.map((rec, idx) => (
+                          <div key={idx} className="flex items-center gap-2 p-3 bg-blue-50 rounded-lg">
+                            <CheckCircle2 className="w-4 h-4 text-blue-600 flex-shrink-0" />
+                            <span className="text-sm">{rec}</span>
+                          </div>
+                        ))}
                       </div>
-                    ))}
-                  </div>
-                </CardContent>
-              </Card>
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <div className="text-center py-12 text-gray-500">
+                  <TrendingUp className="w-16 h-16 mx-auto mb-4 text-gray-300" />
+                  <p>Click "Generate Forecast" to predict future cash flow</p>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
 
-              {/* Customer Patterns */}
-              <Card>
-                <CardContent className="p-6">
-                  <h4 className="font-semibold mb-2">Customer Behavior Patterns</h4>
-                  <p className="text-gray-600">{revenueInsights.customer_patterns}</p>
-                </CardContent>
-              </Card>
-            </>
-          ) : (
-            <Card>
-              <CardContent className="p-8 text-center text-gray-500">
-                No sales data available for analysis
-              </CardContent>
-            </Card>
-          )}
+        {/* Revenue Tab */}
+        <TabsContent value="revenue" className="space-y-4">
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between">
+              <div>
+                <CardTitle className="flex items-center gap-2">
+                  <Sparkles className="w-5 h-5 text-[#0072C6]" />
+                  AI Revenue Growth Analysis
+                </CardTitle>
+                <CardDescription>Discover opportunities to increase revenue</CardDescription>
+              </div>
+              <div className="flex gap-2">
+                {analysisResults.revenue && (
+                  <Button variant="outline" size="sm" onClick={() => printReport("revenue")}>
+                    <Printer className="w-4 h-4 mr-1" />
+                    Print
+                  </Button>
+                )}
+                <Button 
+                  onClick={() => runAnalysis("revenue")}
+                  disabled={analysisLoading.revenue}
+                  className="bg-gradient-to-r from-[#1EB053] to-[#0072C6]"
+                >
+                  {analysisLoading.revenue ? (
+                    <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
+                  ) : (
+                    <Zap className="w-4 h-4 mr-2" />
+                  )}
+                  {analysisResults.revenue ? 'Re-analyze' : 'Find Opportunities'}
+                </Button>
+              </div>
+            </CardHeader>
+            <CardContent>
+              {analysisResults.revenue ? (
+                <div className="space-y-6">
+                  {/* Summary */}
+                  <div className="p-4 bg-green-50 rounded-lg border border-green-200">
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="text-sm text-green-600">Growth Potential</span>
+                      <Badge className="bg-green-100 text-green-700 capitalize">{analysisResults.revenue.growth_potential}</Badge>
+                    </div>
+                    <p className="text-sm text-green-800">{analysisResults.revenue.summary}</p>
+                  </div>
+
+                  {/* Estimated Opportunity */}
+                  <div className="flex items-center gap-4 p-4 bg-amber-50 rounded-lg border border-amber-200">
+                    <Target className="w-10 h-10 text-amber-600" />
+                    <div>
+                      <p className="text-sm text-amber-600">Estimated Monthly Revenue Opportunity</p>
+                      <p className="text-2xl font-bold text-amber-700">
+                        Le {(analysisResults.revenue.estimated_growth_opportunity || 0).toLocaleString()}
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Opportunities */}
+                  {analysisResults.revenue.opportunities?.length > 0 && (
+                    <div>
+                      <h4 className="font-semibold mb-3 flex items-center gap-2">
+                        <ArrowUpRight className="w-4 h-4 text-green-500" />
+                        Growth Opportunities
+                      </h4>
+                      <div className="space-y-3">
+                        {analysisResults.revenue.opportunities.map((opp, idx) => (
+                          <div key={idx} className="p-4 bg-gray-50 rounded-lg border">
+                            <div className="flex items-start justify-between mb-2">
+                              <span className="font-medium">{opp.opportunity}</span>
+                              <span className="text-green-600 font-bold">+Le {(opp.potential_impact || 0).toLocaleString()}</span>
+                            </div>
+                            <div className="flex items-center gap-3 text-xs text-gray-500 mb-3">
+                              <span>Effort: {opp.effort_required}</span>
+                              <span>•</span>
+                              <span>Timeframe: {opp.timeframe}</span>
+                            </div>
+                            {opp.action_steps?.length > 0 && (
+                              <div className="pl-4 border-l-2 border-green-300">
+                                {opp.action_steps.map((step, sIdx) => (
+                                  <p key={sIdx} className="text-sm text-gray-600 mb-1">• {step}</p>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Quick Wins */}
+                  {analysisResults.revenue.quick_revenue_wins?.length > 0 && (
+                    <div>
+                      <h4 className="font-semibold mb-3 flex items-center gap-2">
+                        <Zap className="w-4 h-4 text-amber-500" />
+                        Quick Revenue Wins
+                      </h4>
+                      <div className="grid gap-2">
+                        {analysisResults.revenue.quick_revenue_wins.map((win, idx) => (
+                          <div key={idx} className="flex items-center gap-2 p-3 bg-green-50 rounded-lg">
+                            <CheckCircle2 className="w-4 h-4 text-green-600 flex-shrink-0" />
+                            <span className="text-sm">{win}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Pricing Insights */}
+                  {analysisResults.revenue.pricing_insights && (
+                    <div className="p-4 bg-blue-50 rounded-lg border border-blue-200">
+                      <h4 className="font-semibold mb-2 text-blue-700">Pricing Insights</h4>
+                      <p className="text-sm text-blue-800">{analysisResults.revenue.pricing_insights}</p>
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <div className="text-center py-12 text-gray-500">
+                  <Target className="w-16 h-16 mx-auto mb-4 text-gray-300" />
+                  <p>Click "Find Opportunities" to discover revenue growth potential</p>
+                </div>
+              )}
+            </CardContent>
+          </Card>
         </TabsContent>
 
         {/* Summary Tab */}
-        <TabsContent value="summary" className="space-y-4 mt-4">
-          {loadingSummary ? (
-            <Card>
-              <CardContent className="p-8 flex items-center justify-center">
-                <div className="text-center">
-                  <Sparkles className="w-8 h-8 text-[#1EB053] mx-auto animate-pulse mb-2" />
-                  <p className="text-gray-500">Generating financial summary...</p>
+        <TabsContent value="summary" className="space-y-4">
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between">
+              <div>
+                <CardTitle className="flex items-center gap-2">
+                  <Sparkles className="w-5 h-5 text-[#0072C6]" />
+                  AI Financial Summary
+                </CardTitle>
+                <CardDescription>Comprehensive automated financial report</CardDescription>
+              </div>
+              <div className="flex gap-2">
+                {analysisResults.summary && (
+                  <Button variant="outline" size="sm" onClick={() => printReport("summary")}>
+                    <Printer className="w-4 h-4 mr-1" />
+                    Print Report
+                  </Button>
+                )}
+                <Button 
+                  onClick={() => runAnalysis("summary")}
+                  disabled={analysisLoading.summary}
+                  className="bg-gradient-to-r from-[#1EB053] to-[#0072C6]"
+                >
+                  {analysisLoading.summary ? (
+                    <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
+                  ) : (
+                    <FileText className="w-4 h-4 mr-2" />
+                  )}
+                  {analysisResults.summary ? 'Regenerate' : 'Generate Report'}
+                </Button>
+              </div>
+            </CardHeader>
+            <CardContent>
+              {analysisResults.summary ? (
+                <div className="space-y-6">
+                  {/* Health Score */}
+                  <div className="flex items-center gap-6 p-6 bg-gradient-to-r from-blue-50 to-green-50 rounded-lg">
+                    <div className="relative">
+                      <div className="w-24 h-24 rounded-full border-8 border-gray-200 flex items-center justify-center">
+                        <span className={`text-3xl font-bold ${
+                          (analysisResults.summary.financial_health_score || 0) >= 70 ? 'text-green-600' :
+                          (analysisResults.summary.financial_health_score || 0) >= 50 ? 'text-amber-600' : 'text-red-600'
+                        }`}>
+                          {analysisResults.summary.financial_health_score || 0}
+                        </span>
+                      </div>
+                    </div>
+                    <div>
+                      <p className="text-sm text-gray-500">Financial Health Score</p>
+                      <p className="font-semibold text-lg">
+                        {(analysisResults.summary.financial_health_score || 0) >= 70 ? 'Healthy' :
+                         (analysisResults.summary.financial_health_score || 0) >= 50 ? 'Fair' : 'Needs Attention'}
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Executive Summary */}
+                  <div className="p-4 bg-gray-50 rounded-lg">
+                    <h4 className="font-semibold mb-2">Executive Summary</h4>
+                    <p className="text-sm text-gray-700">{analysisResults.summary.executive_summary}</p>
+                  </div>
+
+                  {/* Key Metrics */}
+                  {analysisResults.summary.key_metrics?.length > 0 && (
+                    <div>
+                      <h4 className="font-semibold mb-3">Key Metrics</h4>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                        {analysisResults.summary.key_metrics.map((metric, idx) => (
+                          <div key={idx} className="p-3 bg-gray-50 rounded-lg flex items-center justify-between">
+                            <div>
+                              <p className="text-sm text-gray-500">{metric.metric}</p>
+                              <p className="font-semibold">{metric.value}</p>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              {metric.trend === 'up' && <ArrowUpRight className="w-4 h-4 text-green-500" />}
+                              {metric.trend === 'down' && <ArrowDownRight className="w-4 h-4 text-red-500" />}
+                              {metric.trend === 'stable' && <span className="w-4 h-0.5 bg-gray-400" />}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Strengths & Concerns */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <h4 className="font-semibold mb-3 flex items-center gap-2 text-green-700">
+                        <CheckCircle2 className="w-4 h-4" />
+                        Strengths
+                      </h4>
+                      <div className="space-y-2">
+                        {(analysisResults.summary.strengths || []).map((s, idx) => (
+                          <div key={idx} className="p-2 bg-green-50 rounded text-sm text-green-800">{s}</div>
+                        ))}
+                      </div>
+                    </div>
+                    <div>
+                      <h4 className="font-semibold mb-3 flex items-center gap-2 text-red-700">
+                        <AlertTriangle className="w-4 h-4" />
+                        Concerns
+                      </h4>
+                      <div className="space-y-2">
+                        {(analysisResults.summary.concerns || []).map((c, idx) => (
+                          <div key={idx} className="p-2 bg-red-50 rounded text-sm text-red-800">{c}</div>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Priorities */}
+                  {analysisResults.summary.priorities?.length > 0 && (
+                    <div>
+                      <h4 className="font-semibold mb-3">Action Priorities</h4>
+                      <div className="space-y-3">
+                        {analysisResults.summary.priorities.map((p, idx) => (
+                          <div key={idx} className="p-3 bg-amber-50 rounded-lg border border-amber-200">
+                            <div className="flex items-center justify-between mb-1">
+                              <span className="font-medium">{p.priority}</span>
+                              <Badge className={
+                                p.urgency === 'immediate' ? 'bg-red-100 text-red-700' :
+                                p.urgency === 'short-term' ? 'bg-amber-100 text-amber-700' : 'bg-blue-100 text-blue-700'
+                              }>{p.urgency}</Badge>
+                            </div>
+                            <p className="text-sm text-gray-600">{p.expected_outcome}</p>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Outlook */}
+                  {analysisResults.summary.outlook && (
+                    <div className="p-4 bg-blue-50 rounded-lg border border-blue-200">
+                      <h4 className="font-semibold mb-2 text-blue-700">Business Outlook</h4>
+                      <p className="text-sm text-blue-800">{analysisResults.summary.outlook}</p>
+                    </div>
+                  )}
                 </div>
-              </CardContent>
-            </Card>
-          ) : financialSummary ? (
-            <>
-              {/* Executive Summary */}
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <FileText className="w-5 h-5 text-[#0072C6]" />
-                    Executive Summary
-                  </CardTitle>
-                  <CardDescription>AI-generated overview of your financial performance</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-gray-700 leading-relaxed">{financialSummary.executive_summary}</p>
-                </CardContent>
-              </Card>
-
-              {/* Key Highlights */}
-              <Card>
-                <CardHeader>
-                  <CardTitle>Key Highlights</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                    {financialSummary.key_highlights?.map((highlight, idx) => (
-                      <div key={idx} className="flex items-start gap-3 p-3 bg-green-50 rounded-lg">
-                        <div className="w-6 h-6 rounded-full bg-green-100 flex items-center justify-center flex-shrink-0">
-                          <span className="text-green-600 text-sm font-bold">{idx + 1}</span>
-                        </div>
-                        <p className="text-sm text-gray-700">{highlight}</p>
-                      </div>
-                    ))}
-                  </div>
-                </CardContent>
-              </Card>
-
-              {/* KPIs */}
-              <Card>
-                <CardHeader>
-                  <CardTitle>Key Performance Indicators</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                    {financialSummary.kpis?.map((kpi, idx) => (
-                      <div key={idx} className="p-4 bg-gray-50 rounded-lg text-center">
-                        <p className="text-xs text-gray-500 mb-1">{kpi.name}</p>
-                        <p className="text-xl font-bold text-[#0072C6]">{kpi.value}</p>
-                        <div className="flex items-center justify-center gap-1 mt-1">
-                          {kpi.trend === 'up' ? (
-                            <ArrowUpRight className="w-4 h-4 text-green-500" />
-                          ) : kpi.trend === 'down' ? (
-                            <ArrowDownRight className="w-4 h-4 text-red-500" />
-                          ) : null}
-                          <Badge variant="outline" className={
-                            kpi.status === 'good' ? 'text-green-600' : 
-                            kpi.status === 'warning' ? 'text-amber-600' : 'text-gray-600'
-                          }>
-                            {kpi.status}
-                          </Badge>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </CardContent>
-              </Card>
-
-              {/* Recommendations */}
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Lightbulb className="w-5 h-5 text-amber-500" />
-                    Strategic Recommendations
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <ul className="space-y-2">
-                    {financialSummary.recommendations?.map((rec, idx) => (
-                      <li key={idx} className="flex items-start gap-3 p-3 bg-amber-50 rounded-lg">
-                        <Zap className="w-4 h-4 text-amber-600 mt-0.5" />
-                        <span className="text-sm text-gray-700">{rec}</span>
-                      </li>
-                    ))}
-                  </ul>
-                </CardContent>
-              </Card>
-
-              {/* Outlook */}
-              <Card className="bg-gradient-to-r from-blue-50 to-green-50">
-                <CardContent className="p-6">
-                  <h4 className="font-semibold mb-2 flex items-center gap-2">
-                    <Calendar className="w-5 h-5 text-[#0072C6]" />
-                    Financial Outlook
-                  </h4>
-                  <p className="text-gray-700">{financialSummary.outlook}</p>
-                </CardContent>
-              </Card>
-            </>
-          ) : (
-            <Card>
-              <CardContent className="p-8 text-center text-gray-500">
-                No data available for summary generation
-              </CardContent>
-            </Card>
-          )}
+              ) : (
+                <div className="text-center py-12 text-gray-500">
+                  <FileText className="w-16 h-16 mx-auto mb-4 text-gray-300" />
+                  <p>Click "Generate Report" to create a comprehensive financial summary</p>
+                </div>
+              )}
+            </CardContent>
+          </Card>
         </TabsContent>
       </Tabs>
     </div>

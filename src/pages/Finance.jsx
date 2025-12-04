@@ -34,7 +34,8 @@ import {
   Landmark,
   Upload,
   Check,
-  X
+  X,
+  Sparkles
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -586,6 +587,7 @@ export default function Finance() {
               Budgeting
             </TabsTrigger>
             <TabsTrigger value="ai-analysis" className="text-xs sm:text-sm data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#1EB053] data-[state=active]:to-[#0072C6] data-[state=active]:text-white">
+              <Sparkles className="w-4 h-4 mr-1" />
               AI Analysis
             </TabsTrigger>
           </TabsList>
@@ -1312,14 +1314,13 @@ export default function Finance() {
             <BudgetingModule orgId={orgId} expenses={expenses} sales={sales} currentEmployee={currentEmployee} />
           </TabsContent>
 
-          {/* AI Financial Analysis Tab */}
+          {/* AI Analysis Tab */}
           <TabsContent value="ai-analysis" className="mt-6">
-            <AIFinancialAnalysis
-              orgId={orgId}
-              expenses={expenses}
+            <AIFinancialAnalysis 
+              orgId={orgId} 
+              expenses={expenses} 
               sales={sales}
               trips={trips}
-              revenues={revenues}
               organisation={organisation?.[0]}
             />
           </TabsContent>
