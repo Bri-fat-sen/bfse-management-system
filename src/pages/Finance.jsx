@@ -70,6 +70,7 @@ import AIFormAssistant, { QuickSuggestionChips } from "@/components/ai/AIFormAss
 import BankAccountsSummary from "@/components/finance/BankAccountsSummary";
 import BankAccountsReport from "@/components/finance/BankAccountsReport";
 import BudgetingModule from "@/components/finance/BudgetingModule";
+import AIFinancialAnalysis from "@/components/finance/AIFinancialAnalysis";
 
 const expenseCategories = [
   "fuel", "maintenance", "utilities", "supplies", "rent", 
@@ -583,6 +584,9 @@ export default function Finance() {
             </TabsTrigger>
             <TabsTrigger value="budgeting" className="text-xs sm:text-sm data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#1EB053] data-[state=active]:to-[#0072C6] data-[state=active]:text-white">
               Budgeting
+            </TabsTrigger>
+            <TabsTrigger value="ai-analysis" className="text-xs sm:text-sm data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#1EB053] data-[state=active]:to-[#0072C6] data-[state=active]:text-white">
+              AI Analysis
             </TabsTrigger>
           </TabsList>
 
