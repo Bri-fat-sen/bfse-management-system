@@ -678,6 +678,9 @@ const generateFormHTML = (formType, org) => {
 export default function PrintableFormsDownload({ open, onOpenChange, organisation }) {
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [loading, setLoading] = useState(null);
+  
+  const primaryColor = organisation?.primary_color || '#1EB053';
+  const secondaryColor = organisation?.secondary_color || '#0072C6';
 
   const handleDownload = async (formId) => {
     setLoading(formId);
