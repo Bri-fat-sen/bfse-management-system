@@ -313,9 +313,8 @@ export default function Sales() {
   };
 
   const handleDeleteSale = (sale) => {
-    if (window.confirm(`Are you sure you want to delete sale ${sale.sale_number}? This action cannot be undone.`)) {
-      deleteSaleMutation.mutate(sale.id);
-    }
+    setSaleToDelete(sale);
+    setShowDeleteConfirm(true);
   };
 
   // Filter products and add location-specific stock
@@ -1128,6 +1127,23 @@ export default function Sales() {
           </div>
         </DialogContent>
       </Dialog>
+      {/* Delete Confirmation Dialog */}
+      <ConfirmDialog
+        open={showDeleteConfirm}
+        onOpenChange={setShowDeleteConfirm}
+        title="Delete Sale"
+        description={`Are you sure you want to delete sale ${saleToDelete?.sale_number}? This action cannot be undone.`}
+        confirmLabel="Delete"
+        cancelLabel="Cancel"
+        variant="danger"
+        onConfirm={() => {
+          if (saleToDelete) {
+            deleteSaleMutation.mutate(saleToDelete.id);
+            setSaleToDelete(null);
+          }
+        }}
+        isLoading={deleteSaleMutation.isPending}
+      />
     </div>
   );
 }
