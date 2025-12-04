@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import {
   Dialog,
   DialogContent,
@@ -89,7 +89,7 @@ export default function ProductFormDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-hidden p-0 w-[95vw] sm:w-full [&>button]:hidden">
+      <DialogContent className="max-w-2xl max-h-[85vh] sm:max-h-[90vh] overflow-hidden p-0 w-[95vw] sm:w-full [&>button]:hidden">
         {/* Sierra Leone Flag Header */}
         <div className="h-2 flex">
           <div className="flex-1" style={{ backgroundColor: primaryColor }} />
@@ -99,20 +99,20 @@ export default function ProductFormDialog({
 
         {/* Header with gradient */}
         <div 
-          className="px-6 py-4 text-white"
+          className="px-4 sm:px-6 py-3 sm:py-4 text-white"
           style={{ background: `linear-gradient(135deg, ${primaryColor} 0%, ${secondaryColor} 100%)` }}
         >
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="w-12 h-12 rounded-xl bg-white/20 flex items-center justify-center">
-                <Package className="w-6 h-6 text-white" />
+            <div className="flex items-center gap-2 sm:gap-3">
+              <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-white/20 flex items-center justify-center flex-shrink-0">
+                <Package className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
               </div>
-              <div>
-                <h2 className="text-xl font-bold">
+              <div className="min-w-0">
+                <h2 className="text-lg sm:text-xl font-bold truncate">
                   {editingProduct ? 'Edit Product' : 'New Product'}
                 </h2>
-                <p className="text-white/80 text-sm">
-                  {editingProduct ? `Updating: ${editingProduct.name}` : 'Add a new product to inventory'}
+                <p className="text-white/80 text-xs sm:text-sm truncate">
+                  {editingProduct ? `Updating: ${editingProduct.name}` : 'Add a new product'}
                 </p>
               </div>
             </div>
@@ -120,35 +120,36 @@ export default function ProductFormDialog({
               variant="ghost"
               size="icon"
               onClick={() => onOpenChange(false)}
-              className="text-white hover:bg-white/20"
+              className="text-white hover:bg-white/20 flex-shrink-0"
             >
               <X className="w-5 h-5" />
             </Button>
           </div>
 
           {/* Section Tabs */}
-          <div className="flex gap-1 mt-4 overflow-x-auto pb-1">
+          <div className="flex gap-1 mt-3 sm:mt-4 overflow-x-auto pb-1 -mx-2 px-2">
             {sections.map((section) => (
               <button
                 key={section.id}
                 type="button"
                 onClick={() => setActiveSection(section.id)}
-                className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-all whitespace-nowrap ${
+                className={`flex items-center gap-1.5 sm:gap-2 px-2 sm:px-3 py-1.5 sm:py-2 rounded-lg text-xs sm:text-sm font-medium transition-all whitespace-nowrap ${
                   activeSection === section.id
                     ? 'bg-white text-gray-900'
                     : 'bg-white/20 text-white hover:bg-white/30'
                 }`}
               >
-                <section.icon className="w-4 h-4" />
-                {section.label}
+                <section.icon className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                <span className="hidden xs:inline">{section.label}</span>
+                <span className="xs:hidden">{section.label.split(' ')[0]}</span>
               </button>
             ))}
           </div>
         </div>
 
         {/* Form Content */}
-        <form onSubmit={handleSubmit} className="overflow-y-auto max-h-[calc(90vh-220px)]">
-          <div className="p-6 space-y-6">
+        <form onSubmit={handleSubmit} className="overflow-y-auto max-h-[calc(85vh-200px)] sm:max-h-[calc(90vh-220px)]">
+          <div className="p-4 sm:p-6 space-y-4 sm:space-y-6">
             
             {/* Basic Info Section */}
             {activeSection === 'basic' && (
@@ -276,17 +277,17 @@ export default function ProductFormDialog({
                   <h3 className="font-semibold text-gray-900">Pricing Information</h3>
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                  <div className="p-4 rounded-xl border-2 border-[#1EB053]/30 bg-[#1EB053]/5">
+                <div className="grid grid-cols-1 gap-3 sm:gap-4">
+                  <div className="p-3 sm:p-4 rounded-xl border-2 border-[#1EB053]/30 bg-[#1EB053]/5">
                     <Label className="text-[#1EB053] font-medium text-sm">Retail Price (SLE) *</Label>
                     <div className="relative mt-2">
-                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[#1EB053] font-bold">Le</span>
+                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[#1EB053] font-bold text-sm">Le</span>
                       <Input 
                         name="unit_price" 
                         type="number" 
                         defaultValue={editingProduct?.unit_price} 
                         required 
-                        className="pl-10 text-lg font-semibold border-[#1EB053]/30 focus:border-[#1EB053]"
+                        className="pl-10 text-base sm:text-lg font-semibold border-[#1EB053]/30 focus:border-[#1EB053]"
                         min="0"
                         step="0.01"
                       />
@@ -294,15 +295,15 @@ export default function ProductFormDialog({
                     <p className="text-xs text-gray-500 mt-1">Standard selling price</p>
                   </div>
 
-                  <div className="p-4 rounded-xl border-2 border-[#0072C6]/30 bg-[#0072C6]/5">
+                  <div className="p-3 sm:p-4 rounded-xl border-2 border-[#0072C6]/30 bg-[#0072C6]/5">
                     <Label className="text-[#0072C6] font-medium text-sm">Wholesale Price (SLE)</Label>
                     <div className="relative mt-2">
-                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[#0072C6] font-bold">Le</span>
+                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[#0072C6] font-bold text-sm">Le</span>
                       <Input 
                         name="wholesale_price" 
                         type="number" 
                         defaultValue={editingProduct?.wholesale_price} 
-                        className="pl-10 text-lg font-semibold border-[#0072C6]/30 focus:border-[#0072C6]"
+                        className="pl-10 text-base sm:text-lg font-semibold border-[#0072C6]/30 focus:border-[#0072C6]"
                         min="0"
                         step="0.01"
                       />
@@ -310,15 +311,15 @@ export default function ProductFormDialog({
                     <p className="text-xs text-gray-500 mt-1">Bulk/wholesale price</p>
                   </div>
 
-                  <div className="p-4 rounded-xl border-2 border-gray-200 bg-gray-50">
+                  <div className="p-3 sm:p-4 rounded-xl border-2 border-gray-200 bg-gray-50">
                     <Label className="text-gray-600 font-medium text-sm">Cost Price (SLE)</Label>
                     <div className="relative mt-2">
-                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 font-bold">Le</span>
+                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 font-bold text-sm">Le</span>
                       <Input 
                         name="cost_price" 
                         type="number" 
                         defaultValue={editingProduct?.cost_price} 
-                        className="pl-10 text-lg font-semibold border-gray-200"
+                        className="pl-10 text-base sm:text-lg font-semibold border-gray-200"
                         min="0"
                         step="0.01"
                       />
@@ -498,7 +499,7 @@ export default function ProductFormDialog({
           </div>
 
           {/* Footer */}
-          <div className="sticky bottom-0 bg-white border-t p-4 flex flex-col sm:flex-row gap-3">
+          <div className="sticky bottom-0 bg-white border-t p-3 sm:p-4 flex flex-col sm:flex-row gap-2 sm:gap-3">
             <Button 
               type="button" 
               variant="outline" 
