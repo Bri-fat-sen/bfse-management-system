@@ -576,10 +576,12 @@ export function getUnifiedPDFStyles(organisation, documentType = 'receipt') {
  */
 export function getUnifiedHeader(organisation, docType, docNumber, docDate, documentType = 'receipt') {
   const orgInitials = (organisation?.name || 'ORG').split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase();
+  const logoUrl = organisation?.logo_url;
   
   // Use crossorigin attribute for logo to help with CORS in print contexts
-  const logoHtml = organisation?.logo_url 
-    ? `<img src="${organisation.logo_url}" alt="${organisation.name}" crossorigin="anonymous" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
+  // Also add referrerpolicy to help with external images
+  const logoHtml = logoUrl 
+    ? `<img src="${logoUrl}" alt="${organisation?.name || 'Logo'}" crossorigin="anonymous" referrerpolicy="no-referrer" style="max-width:44px;max-height:44px;object-fit:contain;" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
        <span class="initials" style="display:none;">${orgInitials}</span>` 
     : `<span class="initials">${orgInitials}</span>`;
   
