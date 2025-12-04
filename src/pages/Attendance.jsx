@@ -655,45 +655,61 @@ export default function Attendance() {
                           <TableHead>Clock In</TableHead>
                           <TableHead>Clock Out</TableHead>
                           <TableHead>Hours</TableHead>
+                          <TableHead>Overtime</TableHead>
                           <TableHead>Location</TableHead>
                           <TableHead>Status</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {filteredAttendance.slice(0, 50).map((record) => {
+                          </TableRow>
+                          </TableHeader>
+                          <TableBody>
+                          {filteredAttendance.slice(0, 50).map((record) => {
                           const emp = employees.find(e => e.id === record.employee_id);
+                          const hasOvertime = (record.overtime_hours || 0) > 0;
                           return (
-                            <TableRow key={record.id}>
-                              <TableCell>
-                                <div className="flex items-center gap-2">
-                                  <Avatar className="w-8 h-8">
-                                    <AvatarImage src={emp?.profile_photo} />
-                                    <AvatarFallback className="text-xs bg-gray-200">
-                                      {record.employee_name?.charAt(0) || 'E'}
-                                    </AvatarFallback>
-                                  </Avatar>
-                                  <div>
-                                    <p className="font-medium text-sm">{record.employee_name}</p>
-                                    <p className="text-xs text-gray-500">{emp?.department}</p>
-                                  </div>
-                                </div>
-                              </TableCell>
-                              <TableCell>{format(parseISO(record.date), 'MMM d, yyyy')}</TableCell>
-                              <TableCell>{record.clock_in_time || '-'}</TableCell>
-                              <TableCell>{record.clock_out_time || '-'}</TableCell>
-                              <TableCell>{record.total_hours?.toFixed(1) || '-'}</TableCell>
-                              <TableCell className="max-w-32 truncate">{record.clock_in_location || '-'}</TableCell>
-                              <TableCell>
-                                <Badge variant={
-                                  record.status === 'present' ? 'secondary' :
-                                  record.status === 'late' ? 'outline' : 'destructive'
-                                }>
-                                  {record.status}
-                                </Badge>
-                              </TableCell>
-                            </TableRow>
+                           <TableRow key={record.id}>
+                             <TableCell>
+                               <div className="flex items-center gap-2">
+                                 <Avatar className="w-8 h-8">
+                                   <AvatarImage src={emp?.profile_photo} />
+                                   <AvatarFallback className="text-xs bg-gray-200">
+                                     {record.employee_name?.charAt(0) || 'E'}
+                                   </AvatarFallback>
+                                 </Avatar>
+                                 <div>
+                                   <p className="font-medium text-sm">{record.employee_name}</p>
+                                   <p className="text-xs text-gray-500">{emp?.department}</p>
+                                 </div>
+                               </div>
+                             </TableCell>
+                             <TableCell>{format(parseISO(record.date), 'MMM d, yyyy')}</TableCell>
+                             <TableCell>{record.clock_in_time || '-'}</TableCell>
+                             <TableCell>{record.clock_out_time || '-'}</TableCell>
+                             <TableCell>{record.total_hours?.toFixed(1) || '-'}</TableCell>
+                             <TableCell>
+                               {hasOvertime ? (
+                                 <div className="flex flex-col">
+                                   <span className="text-sm font-medium">{record.overtime_hours.toFixed(1)} hrs</span>
+                                   {record.overtime_approved ? (
+                                     <Badge className="bg-green-100 text-green-700 text-xs">Approved</Badge>
+                                   ) : (
+                                     <Badge className="bg-amber-100 text-amber-700 text-xs">Pending</Badge>
+                                   )}
+                                 </div>
+                               ) : (
+                                 <span className="text-gray-400">-</span>
+                               )}
+                             </TableCell>
+                             <TableCell className="max-w-32 truncate">{record.clock_in_location || '-'}</TableCell>
+                             <TableCell>
+                               <Badge variant={
+                                 record.status === 'present' ? 'secondary' :
+                                 record.status === 'late' ? 'outline' : 'destructive'
+                               }>
+                                 {record.status}
+                               </Badge>
+                             </TableCell>
+                           </TableRow>
                           );
-                        })}
+                          })}
                       </TableBody>
                     </Table>
                     {filteredAttendance.length > 50 && (
