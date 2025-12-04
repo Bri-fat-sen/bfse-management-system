@@ -384,7 +384,7 @@ export default function HR() {
                           <PayslipGenerator 
                             payroll={payroll} 
                             employee={employees.find(e => e.id === payroll.employee_id)}
-                            organisation={organisation?.[0]}
+                            organisation={organisation}
                           />
                           {['super_admin', 'org_admin', 'payroll_admin'].includes(currentEmployee?.role) && (
                             <DropdownMenu>
