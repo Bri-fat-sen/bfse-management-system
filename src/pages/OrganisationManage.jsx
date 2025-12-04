@@ -130,6 +130,7 @@ export default function OrganisationManage() {
         country: organisation.country || 'Sierra Leone',
         phone: organisation.phone || '',
         email: organisation.email || '',
+        additional_emails: organisation.additional_emails || [],
         website: organisation.website || '',
         owner_name: organisation.owner_name || '',
         primary_color: organisation.primary_color || '#1EB053',
@@ -502,7 +503,7 @@ export default function OrganisationManage() {
                 <div className="space-y-2">
                   <Label className="text-sm font-medium text-gray-700 flex items-center gap-2">
                     <Mail className="w-4 h-4 text-gray-400" />
-                    Email Address
+                    Primary Email
                   </Label>
                   <Input
                     type="email"
@@ -512,6 +513,59 @@ export default function OrganisationManage() {
                     className="h-11"
                     placeholder="contact@company.com"
                   />
+                </div>
+                
+                {/* Additional Emails */}
+                <div className="space-y-2">
+                  <Label className="text-sm font-medium text-gray-700 flex items-center gap-2">
+                    <Mail className="w-4 h-4 text-gray-400" />
+                    Additional Emails
+                  </Label>
+                  <div className="space-y-2">
+                    {(formData.additional_emails || []).map((email, index) => (
+                      <div key={index} className="flex gap-2">
+                        <Input
+                          type="email"
+                          value={email}
+                          onChange={(e) => {
+                            const newEmails = [...formData.additional_emails];
+                            newEmails[index] = e.target.value;
+                            setFormData(prev => ({ ...prev, additional_emails: newEmails }));
+                          }}
+                          disabled={!isAdmin}
+                          className="h-10 flex-1"
+                          placeholder="other@company.com"
+                        />
+                        {isAdmin && (
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-10 w-10 text-red-500 hover:text-red-600 hover:bg-red-50"
+                            onClick={() => {
+                              const newEmails = formData.additional_emails.filter((_, i) => i !== index);
+                              setFormData(prev => ({ ...prev, additional_emails: newEmails }));
+                            }}
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </Button>
+                        )}
+                      </div>
+                    ))}
+                    {isAdmin && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="w-full"
+                        onClick={() => setFormData(prev => ({ 
+                          ...prev, 
+                          additional_emails: [...(prev.additional_emails || []), ''] 
+                        }))}
+                      >
+                        <Plus className="w-4 h-4 mr-2" />
+                        Add Email
+                      </Button>
+                    )}
+                  </div>
                 </div>
                 <div className="space-y-2">
                   <Label className="text-sm font-medium text-gray-700 flex items-center gap-2">
