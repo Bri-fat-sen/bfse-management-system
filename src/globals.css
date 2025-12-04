@@ -229,16 +229,72 @@ html, body {
   }
 }
 
+/* Sierra Leone themed scrollbars */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: linear-gradient(to bottom, 
+    rgba(30, 176, 83, 0.1) 0%, 
+    rgba(255, 255, 255, 0.1) 50%, 
+    rgba(0, 114, 198, 0.1) 100%
+  );
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: linear-gradient(to bottom, 
+    #1EB053 0%, 
+    #1EB053 33%, 
+    #FFFFFF 33%, 
+    #FFFFFF 66%, 
+    #0072C6 66%, 
+    #0072C6 100%
+  );
+  border-radius: 4px;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(to bottom, 
+    #178f43 0%, 
+    #178f43 33%, 
+    #f0f0f0 33%, 
+    #f0f0f0 66%, 
+    #005a9e 66%, 
+    #005a9e 100%
+  );
+}
+
+::-webkit-scrollbar-corner {
+  background: transparent;
+}
+
+/* Firefox scrollbar */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #1EB053 rgba(30, 176, 83, 0.1);
+}
+
 /* Mobile-friendly scrollbars */
 @media (max-width: 768px) {
   ::-webkit-scrollbar {
-    width: 4px;
-    height: 4px;
+    width: 6px;
+    height: 6px;
   }
   
   ::-webkit-scrollbar-thumb {
-    background: rgba(0, 0, 0, 0.2);
-    border-radius: 4px;
+    background: linear-gradient(to bottom, 
+      #1EB053 0%, 
+      #1EB053 33%, 
+      #FFFFFF 33%, 
+      #FFFFFF 66%, 
+      #0072C6 66%, 
+      #0072C6 100%
+    );
+    border-radius: 3px;
   }
 }
 
