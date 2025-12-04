@@ -65,6 +65,10 @@ import TaxCalculatorInfo from "@/components/hr/TaxCalculatorInfo";
 import RemunerationPackageManager from "@/components/hr/RemunerationPackageManager";
 import PayrollReportingModule from "@/components/hr/PayrollReportingModule";
 import AIReportSummary from "@/components/ai/AIReportSummary";
+import PayComponentsManager from "@/components/hr/PayComponentsManager";
+import PayrollApprovalWorkflow from "@/components/hr/PayrollApprovalWorkflow";
+import OvertimeEstimator from "@/components/hr/OvertimeEstimator";
+import StatutoryRatesManager from "@/components/hr/StatutoryRatesManager";
 
 export default function HR() {
   const queryClient = useQueryClient();
@@ -306,6 +310,10 @@ export default function HR() {
           <div className="flex flex-wrap gap-1 sm:gap-2 mb-6">
             {[
               { id: 'records', label: 'Records', fullLabel: 'Payroll Records', icon: FileText },
+              { id: 'approval', label: 'Approval', fullLabel: 'Approval Workflow', icon: Users },
+              { id: 'components', label: 'Components', fullLabel: 'Pay Components', icon: DollarSign },
+              { id: 'statutory', label: 'Statutory', fullLabel: 'Statutory Rates', icon: Building2 },
+              { id: 'overtime', label: 'Overtime', fullLabel: 'Overtime Estimator', icon: Clock },
               { id: 'packages', label: 'Packages', fullLabel: 'Packages', icon: Users },
               { id: 'benefits', label: 'Benefits', fullLabel: 'Benefits & Deductions', icon: DollarSign },
               { id: 'reports', label: 'Reports', fullLabel: 'Reports', icon: FileText },
@@ -431,6 +439,22 @@ export default function HR() {
                 )}
               </CardContent>
             </Card>
+          )}
+
+          {payrollSubTab === 'approval' && (
+            <PayrollApprovalWorkflow orgId={orgId} currentEmployee={currentEmployee} />
+          )}
+
+          {payrollSubTab === 'components' && (
+            <PayComponentsManager orgId={orgId} employees={employees} />
+          )}
+
+          {payrollSubTab === 'statutory' && (
+            <StatutoryRatesManager orgId={orgId} />
+          )}
+
+          {payrollSubTab === 'overtime' && (
+            <OvertimeEstimator orgId={orgId} employees={employees} />
           )}
 
           {payrollSubTab === 'packages' && (
