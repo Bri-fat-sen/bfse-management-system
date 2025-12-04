@@ -64,7 +64,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { toast } from "sonner";
+import { useToast } from "@/components/ui/Toast";
 import { format } from "date-fns";
 import PageHeader from "@/components/ui/PageHeader";
 import LoadingSpinner from "@/components/ui/LoadingSpinner";
@@ -75,6 +75,7 @@ import SetPinDialog from "@/components/auth/SetPinDialog";
 import SendInviteEmailDialog from "@/components/email/SendInviteEmailDialog";
 import EmployeeDocuments from "@/components/hr/EmployeeDocuments";
 import PerformanceReviewDialog from "@/components/hr/PerformanceReviewDialog";
+import ConfirmDialog from "@/components/ui/ConfirmDialog";
 
 const roles = [
   "super_admin", "org_admin", "hr_admin", "payroll_admin", "warehouse_manager",
