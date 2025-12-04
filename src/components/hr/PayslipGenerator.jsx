@@ -340,7 +340,6 @@ export default function PayslipGenerator({ payroll, employee, organisation: orgP
         <body>
           <div class="document">
             ${organisation?.code ? `<div class="watermark">${organisation.code}</div>` : ''}
-            ${organisation?.code ? `<div class="org-code-badge">CODE: ${organisation.code}</div>` : ''}
             ${getUnifiedHeader(organisation, 'Payslip', format(new Date(payroll?.period_start), 'MMMM yyyy'), `${frequency.charAt(0).toUpperCase() + frequency.slice(1)} Pay`, 'payslip')}
             
             <div class="employee-info">
