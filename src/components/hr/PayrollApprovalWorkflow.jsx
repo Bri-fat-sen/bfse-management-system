@@ -522,7 +522,7 @@ export default function PayrollApprovalWorkflow({ orgId, currentEmployee }) {
               </div>
             </div>
           )}
-          <DialogFooter>
+          <DialogFooter className="gap-2">
             <Button variant="outline" onClick={() => setShowDetailsDialog(false)}>Close</Button>
           </DialogFooter>
         </DialogContent>

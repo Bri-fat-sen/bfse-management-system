@@ -424,8 +424,8 @@ export default function BulkPayrollDialog({
                 ))}
               </div>
             </ScrollArea>
-            <DialogFooter>
-              <Button onClick={() => { setShowResults(false); onOpenChange(false); }}>
+            <DialogFooter className="gap-2">
+              <Button onClick={() => { setShowResults(false); onOpenChange(false); }} className="bg-gradient-to-r from-[#1EB053] to-[#0072C6] hover:from-[#178f43] hover:to-[#005a9e] text-white">
                 Done
               </Button>
             </DialogFooter>
@@ -630,13 +630,13 @@ export default function BulkPayrollDialog({
               </div>
             )}
 
-            <DialogFooter className="flex-col sm:flex-row gap-2">
+            <DialogFooter className="gap-2">
               <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
                 Cancel
               </Button>
               <Button 
                 onClick={processBulkPayroll}
-                className="bg-gradient-to-r from-[#1EB053] to-[#0072C6] text-white"
+                className="bg-gradient-to-r from-[#1EB053] to-[#0072C6] hover:from-[#178f43] hover:to-[#005a9e] text-white"
                 disabled={selectedEmployees.length === 0 || processing}
               >
                 {processing ? (

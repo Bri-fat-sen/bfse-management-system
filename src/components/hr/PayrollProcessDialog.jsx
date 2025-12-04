@@ -844,17 +844,17 @@ export default function PayrollProcessDialog({
             </>
           )}
 
-          <DialogFooter className="flex-col sm:flex-row gap-2">
-            <Button type="button" variant="outline" onClick={() => onOpenChange(false)} className="w-full sm:w-auto">
-              Cancel
-            </Button>
-            <Button 
-              type="submit" 
-              className="bg-gradient-to-r from-[#1EB053] to-[#0072C6] hover:from-[#178f43] hover:to-[#005a9e] text-white shadow-lg w-full sm:w-auto"
-              disabled={!selectedEmployeeId || !payrollData || createPayrollMutation.isPending}
-            >
-              {createPayrollMutation.isPending ? "Processing..." : "Process Payroll"}
-            </Button>
+          <DialogFooter className="gap-2">
+          <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+            Cancel
+          </Button>
+          <Button 
+            type="submit" 
+            className="bg-gradient-to-r from-[#1EB053] to-[#0072C6] hover:from-[#178f43] hover:to-[#005a9e] text-white"
+            disabled={!selectedEmployeeId || !payrollData || createPayrollMutation.isPending}
+          >
+            {createPayrollMutation.isPending ? "Processing..." : "Process Payroll"}
+          </Button>
           </DialogFooter>
         </form>
       </DialogContent>

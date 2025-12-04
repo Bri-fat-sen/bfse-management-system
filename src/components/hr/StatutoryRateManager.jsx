@@ -549,9 +549,9 @@ export default function StatutoryRateManager({ orgId }) {
               <Switch checked={formData.is_active} onCheckedChange={(v) => setFormData({ ...formData, is_active: v })} />
             </div>
 
-            <DialogFooter>
+            <DialogFooter className="gap-2">
               <Button type="button" variant="outline" onClick={resetForm}>Cancel</Button>
-              <Button type="submit" className="bg-[#0072C6] hover:bg-[#005a9e]">
+              <Button type="submit" className="bg-gradient-to-r from-[#1EB053] to-[#0072C6] hover:from-[#178f43] hover:to-[#005a9e] text-white">
                 {editingRate ? 'Update' : 'Create'}
               </Button>
             </DialogFooter>
