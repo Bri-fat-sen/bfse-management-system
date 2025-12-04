@@ -70,22 +70,73 @@ css
 }
 
 /* ============================================
-   HIDE ALL SCROLLBARS GLOBALLY
+   SIERRA LEONE FLAG STRIPE SCROLLBARS
    ============================================ */
 
-/* Hide scrollbars everywhere */
-*,
-*::before,
-*::after {
+/* Custom scrollbar with Sierra Leone flag colors */
+*::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+*::-webkit-scrollbar-track {
+  background: #f1f5f9;
+  border-radius: 4px;
+}
+
+*::-webkit-scrollbar-thumb {
+  background: linear-gradient(to bottom, #1EB053 33.33%, #FFFFFF 33.33%, #FFFFFF 66.66%, #0072C6 66.66%);
+  border-radius: 4px;
+  border: 1px solid #e2e8f0;
+}
+
+*::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(to bottom, #178f43 33.33%, #f8fafc 33.33%, #f8fafc 66.66%, #005a9e 66.66%);
+}
+
+/* Firefox scrollbar */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #1EB053 #f1f5f9;
+}
+
+/* Hide scrollbars on sidebar navigation only */
+aside nav,
+aside > nav {
   scrollbar-width: none !important;
   -ms-overflow-style: none !important;
 }
 
-*::-webkit-scrollbar {
+aside nav::-webkit-scrollbar,
+aside > nav::-webkit-scrollbar {
   display: none !important;
-  width: 0 !important;
-  height: 0 !important;
-  background: transparent !important;
+}
+
+/* ============================================
+   DIALOG/MODAL SIERRA LEONE STRIPE STYLING
+   ============================================ */
+
+/* Add flag stripe to dialogs */
+[role="dialog"] > div,
+[data-radix-dialog-content],
+[data-radix-alert-dialog-content] {
+  border-top: 4px solid transparent !important;
+  border-image: linear-gradient(to right, #1EB053 33.33%, #FFFFFF 33.33%, #FFFFFF 66.66%, #0072C6 66.66%) 1 !important;
+  border-radius: 12px !important;
+  overflow: hidden;
+}
+
+/* Dialog content wrapper stripe at top */
+.DialogContent::before,
+[role="dialog"]::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: linear-gradient(to right, #1EB053 33.33%, #FFFFFF 33.33%, #FFFFFF 66.66%, #0072C6 66.66%);
+  z-index: 50;
 }
 
 /* Mobile viewport fixes */
