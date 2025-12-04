@@ -231,70 +231,68 @@ html, body {
 
 /* Sierra Leone themed scrollbars */
 ::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
+  width: 12px;
+  height: 12px;
 }
 
 ::-webkit-scrollbar-track {
-  background: linear-gradient(to bottom, 
-    rgba(30, 176, 83, 0.1) 0%, 
-    rgba(255, 255, 255, 0.1) 50%, 
-    rgba(0, 114, 198, 0.1) 100%
-  );
-  border-radius: 4px;
+  background: #f1f5f9;
+  border-radius: 6px;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: linear-gradient(to bottom, 
+  background: linear-gradient(180deg, 
     #1EB053 0%, 
-    #1EB053 33%, 
-    #FFFFFF 33%, 
-    #FFFFFF 66%, 
-    #0072C6 66%, 
+    #1EB053 30%, 
+    #FFFFFF 30%, 
+    #FFFFFF 70%, 
+    #0072C6 70%, 
     #0072C6 100%
   );
-  border-radius: 4px;
-  border: 1px solid rgba(0, 0, 0, 0.1);
+  border-radius: 6px;
+  border: 2px solid #f1f5f9;
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.1);
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: linear-gradient(to bottom, 
+  background: linear-gradient(180deg, 
     #178f43 0%, 
-    #178f43 33%, 
-    #f0f0f0 33%, 
-    #f0f0f0 66%, 
-    #005a9e 66%, 
+    #178f43 30%, 
+    #e5e5e5 30%, 
+    #e5e5e5 70%, 
+    #005a9e 70%, 
     #005a9e 100%
   );
 }
 
 ::-webkit-scrollbar-corner {
-  background: transparent;
+  background: #f1f5f9;
 }
 
 /* Firefox scrollbar */
 * {
-  scrollbar-width: thin;
-  scrollbar-color: #1EB053 rgba(30, 176, 83, 0.1);
+  scrollbar-width: auto;
+  scrollbar-color: #1EB053 #f1f5f9;
 }
 
 /* Mobile-friendly scrollbars */
 @media (max-width: 768px) {
   ::-webkit-scrollbar {
-    width: 6px;
-    height: 6px;
+    width: 8px;
+    height: 8px;
   }
   
   ::-webkit-scrollbar-thumb {
-    background: linear-gradient(to bottom, 
+    background: linear-gradient(180deg, 
       #1EB053 0%, 
-      #1EB053 33%, 
-      #FFFFFF 33%, 
-      #FFFFFF 66%, 
-      #0072C6 66%, 
+      #1EB053 30%, 
+      #FFFFFF 30%, 
+      #FFFFFF 70%, 
+      #0072C6 70%, 
       #0072C6 100%
     );
-    border-radius: 3px;
+    border-radius: 4px;
+    border: 1px solid #f1f5f9;
   }
 }
 
