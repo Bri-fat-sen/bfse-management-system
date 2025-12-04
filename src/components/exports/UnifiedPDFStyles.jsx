@@ -71,38 +71,7 @@ export function getUnifiedPDFStyles(organisation, documentType = 'receipt') {
         position: relative;
       }
 
-      /* Organisation Code Watermark */
-      .watermark {
-        position: fixed;
-        top: 50%;
-        left: 50%;
-        transform: translate(-50%, -50%) rotate(-45deg);
-        font-size: clamp(60px, 15vw, 120px);
-        font-weight: 800;
-        color: rgba(0, 0, 0, 0.03);
-        white-space: nowrap;
-        pointer-events: none;
-        z-index: 0;
-        letter-spacing: clamp(10px, 2vw, 20px);
-        font-family: 'Plus Jakarta Sans', sans-serif;
-      }
-
-      .org-code-badge {
-        position: absolute;
-        top: 12px;
-        right: 12px;
-        background: rgba(255, 255, 255, 0.95);
-        border: 2px solid var(--primary);
-        border-radius: 8px;
-        padding: 4px 12px;
-        font-size: 11px;
-        font-weight: 700;
-        color: var(--navy);
-        letter-spacing: 1px;
-        z-index: 10;
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-      }
-
+      /* Organisation Code styles removed from header - only shown in footer */
       .org-code-footer {
         display: inline-block;
         background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
@@ -664,9 +633,7 @@ export function generateUnifiedPDF({
         <style>${styles}</style>
       </head>
       <body>
-        ${orgCode ? `<div class="watermark">${orgCode}</div>` : ''}
         <div class="document">
-          ${orgCode ? `<div class="org-code-badge">CODE: ${orgCode}</div>` : ''}
           ${getUnifiedHeader(organisation, title, finalDocNumber, finalDocDate, documentType)}
           
           ${infoBar.length > 0 ? `
