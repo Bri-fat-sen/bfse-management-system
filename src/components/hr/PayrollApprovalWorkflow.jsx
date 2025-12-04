@@ -530,26 +530,41 @@ export default function PayrollApprovalWorkflow({ orgId, currentEmployee }) {
 
       {/* Action Dialog */}
       <Dialog open={showActionDialog} onOpenChange={setShowActionDialog}>
-        <DialogContent className="max-w-md p-0 overflow-hidden [&>button]:hidden">
-          {/* Flag Stripe Header */}
-          <div className="h-1.5 flex">
+        <DialogContent className="max-w-md overflow-hidden p-0 [&>button]:hidden">
+          {/* Sierra Leone Flag Header */}
+          <div className="h-2 flex">
             <div className="flex-1 bg-[#1EB053]" />
             <div className="flex-1 bg-white" />
             <div className="flex-1 bg-[#0072C6]" />
           </div>
-          <div className="bg-gradient-to-r from-[#1EB053] to-[#0072C6] px-6 py-4 text-white">
-            <DialogTitle className="text-white flex items-center gap-2">
-              {actionType === 'approve' && <><CheckCircle2 className="w-5 h-5" /> Approve Payroll Run</>}
-              {actionType === 'reject' && <><XCircle className="w-5 h-5" /> Reject Payroll Run</>}
-              {actionType === 'review' && <><Eye className="w-5 h-5" /> Complete Review</>}
-              {actionType === 'submit_review' && <><Send className="w-5 h-5" /> Submit for Review</>}
-              {actionType === 'process' && <><Clock className="w-5 h-5" /> Start Processing</>}
-              {actionType === 'mark_paid' && <><CheckCircle2 className="w-5 h-5" /> Mark as Paid</>}
-              {actionType === 'cancel' && <><XCircle className="w-5 h-5" /> Cancel Payroll Run</>}
-            </DialogTitle>
+
+          {/* Header with gradient */}
+          <div className="px-6 py-4 text-white" style={{ background: 'linear-gradient(135deg, #1EB053 0%, #0072C6 100%)' }}>
+            <div className="flex items-center gap-3">
+              <div className="w-12 h-12 rounded-xl bg-white/20 flex items-center justify-center">
+                {actionType === 'approve' && <ThumbsUp className="w-6 h-6 text-white" />}
+                {actionType === 'reject' && <ThumbsDown className="w-6 h-6 text-white" />}
+                {actionType === 'review' && <Eye className="w-6 h-6 text-white" />}
+                {actionType === 'submit_review' && <Send className="w-6 h-6 text-white" />}
+                {actionType === 'process' && <Clock className="w-6 h-6 text-white" />}
+                {actionType === 'mark_paid' && <CheckCircle2 className="w-6 h-6 text-white" />}
+                {actionType === 'cancel' && <XCircle className="w-6 h-6 text-white" />}
+              </div>
+              <div>
+                <h2 className="text-xl font-bold">
+                  {actionType === 'approve' && 'Approve Payroll Run'}
+                  {actionType === 'reject' && 'Reject Payroll Run'}
+                  {actionType === 'review' && 'Complete Review'}
+                  {actionType === 'submit_review' && 'Submit for Review'}
+                  {actionType === 'process' && 'Start Processing'}
+                  {actionType === 'mark_paid' && 'Mark as Paid'}
+                  {actionType === 'cancel' && 'Cancel Payroll Run'}
+                </h2>
+                <p className="text-white/80 text-sm">Payroll workflow action</p>
+              </div>
+            </div>
           </div>
-          <div className="p-6">
-          <div className="space-y-4">
+          <div className="p-6 space-y-4">
             {selectedRun && (
               <div className="p-3 bg-gray-50 rounded-lg">
                 <p className="font-medium">{selectedRun.run_number || `PR-${selectedRun.id?.slice(-6)}`}</p>
@@ -583,22 +598,24 @@ export default function PayrollApprovalWorkflow({ orgId, currentEmployee }) {
                 This will return the payroll run to draft status for corrections.
               </div>
             )}
-            </div>
           </div>
-          <div className="px-6 pb-6 flex gap-2 justify-end">
-            <Button variant="outline" onClick={() => setShowActionDialog(false)}>Cancel</Button>
+          {/* Footer */}
+          <div className="sticky bottom-0 bg-white border-t p-4 flex gap-3">
+            <Button variant="outline" onClick={() => setShowActionDialog(false)} className="flex-1">Cancel</Button>
             <Button 
               onClick={() => handleAction(actionType)}
               disabled={actionType === 'reject' && !actionNotes.trim()}
-              className={
+              className={`flex-1 text-white ${
                 actionType === 'reject' || actionType === 'cancel'
-                  ? 'bg-red-600 hover:bg-red-700 text-white'
-                  : 'bg-gradient-to-r from-[#1EB053] to-[#0072C6] hover:from-[#178f43] hover:to-[#005a9e] text-white'
-              }
+                  ? 'bg-red-600 hover:bg-red-700'
+                  : ''
+              }`}
+              style={actionType !== 'reject' && actionType !== 'cancel' ? { background: 'linear-gradient(135deg, #1EB053 0%, #0072C6 100%)' } : {}}
             >
               Confirm
             </Button>
           </div>
+
           {/* Bottom flag stripe */}
           <div className="h-1 flex">
             <div className="flex-1 bg-[#1EB053]" />

@@ -411,21 +411,27 @@ export default function StatutoryRateManager({ orgId }) {
       {/* Add/Edit Dialog */}
       <Dialog open={showDialog} onOpenChange={setShowDialog}>
         <DialogContent className="max-w-lg max-h-[90vh] overflow-hidden p-0 [&>button]:hidden">
-          {/* Flag Stripe Header */}
-          <div className="h-1.5 flex">
+          {/* Sierra Leone Flag Header */}
+          <div className="h-2 flex">
             <div className="flex-1 bg-[#1EB053]" />
             <div className="flex-1 bg-white" />
             <div className="flex-1 bg-[#0072C6]" />
           </div>
-          <div className="bg-gradient-to-r from-[#1EB053] to-[#0072C6] px-6 py-4 text-white">
-            <DialogTitle className="text-white flex items-center gap-2">
-              <Shield className="w-5 h-5" />
-              {editingRate ? 'Edit' : 'Add'} Statutory Rate
-            </DialogTitle>
-            <p className="text-white/80 text-sm mt-1">Configure statutory deduction rates</p>
+
+          {/* Header with gradient */}
+          <div className="px-6 py-4 text-white" style={{ background: 'linear-gradient(135deg, #1EB053 0%, #0072C6 100%)' }}>
+            <div className="flex items-center gap-3">
+              <div className="w-12 h-12 rounded-xl bg-white/20 flex items-center justify-center">
+                <Scale className="w-6 h-6 text-white" />
+              </div>
+              <div>
+                <h2 className="text-xl font-bold">{editingRate ? 'Edit' : 'Add'} Statutory Rate</h2>
+                <p className="text-white/80 text-sm">Configure statutory deduction rate</p>
+              </div>
+            </div>
           </div>
-          <div className="overflow-y-auto max-h-[calc(90vh-180px)]">
-          <form onSubmit={handleSubmit} className="p-6 space-y-4">
+
+          <form id="statutory-rate-form" onSubmit={handleSubmit} className="overflow-y-auto max-h-[calc(90vh-200px)] p-6 space-y-4">
             <div>
               <Label>Name *</Label>
               <Input
@@ -560,14 +566,21 @@ export default function StatutoryRateManager({ orgId }) {
               <Switch checked={formData.is_active} onCheckedChange={(v) => setFormData({ ...formData, is_active: v })} />
             </div>
 
-            <div className="sticky bottom-0 bg-white border-t p-4 flex gap-2 justify-end">
-              <Button type="button" variant="outline" onClick={resetForm}>Cancel</Button>
-              <Button type="submit" className="bg-gradient-to-r from-[#1EB053] to-[#0072C6] hover:from-[#178f43] hover:to-[#005a9e] text-white">
-                {editingRate ? 'Update' : 'Create'}
-              </Button>
-            </div>
           </form>
+
+          {/* Footer */}
+          <div className="sticky bottom-0 bg-white border-t p-4 flex gap-3">
+            <Button type="button" variant="outline" onClick={resetForm} className="flex-1">Cancel</Button>
+            <Button 
+              type="submit" 
+              form="statutory-rate-form"
+              className="flex-1 text-white"
+              style={{ background: 'linear-gradient(135deg, #1EB053 0%, #0072C6 100%)' }}
+            >
+              {editingRate ? 'Update' : 'Create'}
+            </Button>
           </div>
+
           {/* Bottom flag stripe */}
           <div className="h-1 flex">
             <div className="flex-1 bg-[#1EB053]" />
