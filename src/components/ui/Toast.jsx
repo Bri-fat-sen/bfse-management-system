@@ -89,7 +89,7 @@ export function ToastProvider({ children }) {
 
 function ToastContainer({ toasts, onRemove, onClearAll }) {
   return (
-    <div className="fixed top-4 right-4 z-[100] flex flex-col gap-2 max-w-md w-full pointer-events-none px-4 sm:px-0">
+    <div className="fixed top-4 right-4 z-[100] flex flex-col gap-3 max-w-sm w-full pointer-events-none px-4 sm:px-0">
       <AnimatePresence mode="popLayout">
         {toasts.length > 2 && (
           <motion.button
@@ -97,7 +97,7 @@ function ToastContainer({ toasts, onRemove, onClearAll }) {
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -10 }}
             onClick={onClearAll}
-            className="pointer-events-auto self-end text-xs text-gray-500 hover:text-gray-700 bg-white/90 backdrop-blur-sm px-3 py-1.5 rounded-full shadow-sm border border-gray-200 transition-colors"
+            className="pointer-events-auto self-end text-xs text-white bg-[#0F1F3C] hover:bg-[#1a2d52] px-3 py-1.5 rounded-full shadow-lg transition-colors"
           >
             Clear all ({toasts.length})
           </motion.button>
