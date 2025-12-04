@@ -294,20 +294,28 @@ export default function PayrollProcessDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto w-[95vw] sm:w-full [&>button]:hidden">
-        <DialogHeader>
-          <div className="flex h-1 w-16 rounded-full overflow-hidden mb-3">
-            <div className="flex-1 bg-[#1EB053]" />
-            <div className="flex-1 bg-white border-y border-gray-200" />
-            <div className="flex-1 bg-[#0072C6]" />
-          </div>
-          <DialogTitle className="flex items-center gap-2">
-            <Calculator className="w-5 h-5 text-[#1EB053]" />
-            Process Payroll - Auto Calculator
-          </DialogTitle>
-        </DialogHeader>
+      <DialogContent className="max-w-3xl max-h-[90vh] overflow-hidden p-0 w-[95vw] sm:w-full [&>button]:hidden">
+        {/* Sierra Leone Flag Header */}
+        <div className="h-2 flex">
+          <div className="flex-1 bg-[#1EB053]" />
+          <div className="flex-1 bg-white" />
+          <div className="flex-1 bg-[#0072C6]" />
+        </div>
 
-        <form onSubmit={handleSubmit} className="space-y-6">
+        {/* Header with gradient */}
+        <div className="px-6 py-4 text-white" style={{ background: 'linear-gradient(135deg, #1EB053 0%, #0072C6 100%)' }}>
+          <div className="flex items-center gap-3">
+            <div className="w-12 h-12 rounded-xl bg-white/20 flex items-center justify-center">
+              <Calculator className="w-6 h-6 text-white" />
+            </div>
+            <div>
+              <h2 className="text-xl font-bold">Process Payroll</h2>
+              <p className="text-white/80 text-sm">Auto Calculator with NASSIT & PAYE</p>
+            </div>
+          </div>
+        </div>
+
+        <form onSubmit={handleSubmit} className="overflow-y-auto max-h-[calc(90vh-180px)] p-6 space-y-6">
           {/* Employee & Period Selection */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
@@ -844,19 +852,31 @@ export default function PayrollProcessDialog({
             </>
           )}
 
-          <DialogFooter className="gap-2">
-          <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+        </form>
+
+        {/* Footer */}
+        <div className="sticky bottom-0 bg-white border-t p-4 flex gap-3">
+          <Button type="button" variant="outline" onClick={() => onOpenChange(false)} className="flex-1">
             Cancel
           </Button>
           <Button 
             type="submit" 
-            className="bg-gradient-to-r from-[#1EB053] to-[#0072C6] hover:from-[#178f43] hover:to-[#005a9e] text-white"
+            form="payroll-process-form"
+            onClick={handleSubmit}
+            className="flex-1 text-white"
+            style={{ background: 'linear-gradient(135deg, #1EB053 0%, #0072C6 100%)' }}
             disabled={!selectedEmployeeId || !payrollData || createPayrollMutation.isPending}
           >
             {createPayrollMutation.isPending ? "Processing..." : "Process Payroll"}
           </Button>
-          </DialogFooter>
-        </form>
+        </div>
+
+        {/* Bottom flag stripe */}
+        <div className="h-1 flex">
+          <div className="flex-1 bg-[#1EB053]" />
+          <div className="flex-1 bg-white" />
+          <div className="flex-1 bg-[#0072C6]" />
+        </div>
       </DialogContent>
     </Dialog>
   );

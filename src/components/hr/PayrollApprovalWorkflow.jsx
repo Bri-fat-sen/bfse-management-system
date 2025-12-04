@@ -412,10 +412,27 @@ export default function PayrollApprovalWorkflow({ orgId, currentEmployee }) {
 
       {/* Details Dialog */}
       <Dialog open={showDetailsDialog} onOpenChange={setShowDetailsDialog}>
-        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto [&>button]:hidden">
-          <DialogHeader>
-            <DialogTitle>Payroll Run Details</DialogTitle>
-          </DialogHeader>
+        <DialogContent className="max-w-3xl max-h-[90vh] overflow-hidden p-0 [&>button]:hidden">
+          {/* Sierra Leone Flag Header */}
+          <div className="h-2 flex">
+            <div className="flex-1 bg-[#1EB053]" />
+            <div className="flex-1 bg-white" />
+            <div className="flex-1 bg-[#0072C6]" />
+          </div>
+
+          {/* Header with gradient */}
+          <div className="px-6 py-4 text-white" style={{ background: 'linear-gradient(135deg, #1EB053 0%, #0072C6 100%)' }}>
+            <div className="flex items-center gap-3">
+              <div className="w-12 h-12 rounded-xl bg-white/20 flex items-center justify-center">
+                <Eye className="w-6 h-6 text-white" />
+              </div>
+              <div>
+                <h2 className="text-xl font-bold">Payroll Run Details</h2>
+                <p className="text-white/80 text-sm">{selectedRun?.run_number || 'View payroll information'}</p>
+              </div>
+            </div>
+          </div>
+          <div className="overflow-y-auto max-h-[calc(90vh-180px)] p-6">
           {selectedRun && (
             <div className="space-y-4">
               <div className="grid grid-cols-3 gap-4">
@@ -522,9 +539,19 @@ export default function PayrollApprovalWorkflow({ orgId, currentEmployee }) {
               </div>
             </div>
           )}
-          <DialogFooter className="gap-2">
-            <Button variant="outline" onClick={() => setShowDetailsDialog(false)}>Close</Button>
-          </DialogFooter>
+          </div>
+
+          {/* Footer */}
+          <div className="sticky bottom-0 bg-white border-t p-4 flex gap-3">
+            <Button variant="outline" onClick={() => setShowDetailsDialog(false)} className="flex-1">Close</Button>
+          </div>
+
+          {/* Bottom flag stripe */}
+          <div className="h-1 flex">
+            <div className="flex-1 bg-[#1EB053]" />
+            <div className="flex-1 bg-white" />
+            <div className="flex-1 bg-[#0072C6]" />
+          </div>
         </DialogContent>
       </Dialog>
 

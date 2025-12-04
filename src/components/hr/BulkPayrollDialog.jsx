@@ -375,21 +375,30 @@ export default function BulkPayrollDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto w-[95vw] [&>button]:hidden">
-        <DialogHeader>
-          <div className="flex h-1 w-16 rounded-full overflow-hidden mb-3">
-            <div className="flex-1 bg-[#1EB053]" />
-            <div className="flex-1 bg-white border-y border-gray-200" />
-            <div className="flex-1 bg-[#0072C6]" />
-          </div>
-          <DialogTitle className="flex items-center gap-2">
-            <Users className="w-5 h-5 text-[#1EB053]" />
-            Bulk Payroll Processing
-          </DialogTitle>
-        </DialogHeader>
+      <DialogContent className="max-w-4xl max-h-[90vh] overflow-hidden p-0 w-[95vw] [&>button]:hidden">
+        {/* Sierra Leone Flag Header */}
+        <div className="h-2 flex">
+          <div className="flex-1 bg-[#1EB053]" />
+          <div className="flex-1 bg-white" />
+          <div className="flex-1 bg-[#0072C6]" />
+        </div>
 
+        {/* Header with gradient */}
+        <div className="px-6 py-4 text-white" style={{ background: 'linear-gradient(135deg, #1EB053 0%, #0072C6 100%)' }}>
+          <div className="flex items-center gap-3">
+            <div className="w-12 h-12 rounded-xl bg-white/20 flex items-center justify-center">
+              <Users className="w-6 h-6 text-white" />
+            </div>
+            <div>
+              <h2 className="text-xl font-bold">Bulk Payroll Processing</h2>
+              <p className="text-white/80 text-sm">Process multiple employees at once</p>
+            </div>
+          </div>
+        </div>
+
+        <div className="overflow-y-auto max-h-[calc(90vh-180px)]">
         {showResults ? (
-          <div className="space-y-4">
+          <div className="p-6 space-y-4">
             <div className="flex items-center justify-between">
               <h3 className="font-semibold">Processing Results</h3>
               <Badge variant={results.every(r => r.status === 'success') ? 'default' : 'destructive'}>
@@ -424,14 +433,9 @@ export default function BulkPayrollDialog({
                 ))}
               </div>
             </ScrollArea>
-            <DialogFooter className="gap-2">
-              <Button onClick={() => { setShowResults(false); onOpenChange(false); }} className="bg-gradient-to-r from-[#1EB053] to-[#0072C6] hover:from-[#178f43] hover:to-[#005a9e] text-white">
-                Done
-              </Button>
-            </DialogFooter>
           </div>
         ) : (
-          <div className="space-y-6">
+          <div className="p-6 space-y-6">
             {/* Period & Frequency Selection */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div>
@@ -630,13 +634,25 @@ export default function BulkPayrollDialog({
               </div>
             )}
 
-            <DialogFooter className="gap-2">
-              <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+          </div>
+        )}
+        </div>
+
+        {/* Footer */}
+        <div className="sticky bottom-0 bg-white border-t p-4 flex gap-3">
+          {showResults ? (
+            <Button onClick={() => { setShowResults(false); onOpenChange(false); }} className="flex-1 text-white" style={{ background: 'linear-gradient(135deg, #1EB053 0%, #0072C6 100%)' }}>
+              Done
+            </Button>
+          ) : (
+            <>
+              <Button type="button" variant="outline" onClick={() => onOpenChange(false)} className="flex-1">
                 Cancel
               </Button>
               <Button 
                 onClick={processBulkPayroll}
-                className="bg-gradient-to-r from-[#1EB053] to-[#0072C6] hover:from-[#178f43] hover:to-[#005a9e] text-white"
+                className="flex-1 text-white"
+                style={{ background: 'linear-gradient(135deg, #1EB053 0%, #0072C6 100%)' }}
                 disabled={selectedEmployees.length === 0 || processing}
               >
                 {processing ? (
@@ -651,9 +667,16 @@ export default function BulkPayrollDialog({
                   </>
                 )}
               </Button>
-            </DialogFooter>
-          </div>
-        )}
+            </>
+          )}
+        </div>
+
+        {/* Bottom flag stripe */}
+        <div className="h-1 flex">
+          <div className="flex-1 bg-[#1EB053]" />
+          <div className="flex-1 bg-white" />
+          <div className="flex-1 bg-[#0072C6]" />
+        </div>
       </DialogContent>
     </Dialog>
   );

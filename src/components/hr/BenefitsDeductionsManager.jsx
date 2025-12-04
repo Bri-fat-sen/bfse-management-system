@@ -458,13 +458,28 @@ export default function BenefitsDeductionsManager({ orgId, employees = [] }) {
 
       {/* Add/Edit Dialog */}
       <Dialog open={showDialog} onOpenChange={setShowDialog}>
-        <DialogContent className="max-w-lg [&>button]:hidden">
-          <DialogHeader>
-            <DialogTitle>
-              {editingTemplate ? 'Edit Template' : 'Add New Template'}
-            </DialogTitle>
-          </DialogHeader>
-          <form onSubmit={handleSubmit} className="space-y-4">
+        <DialogContent className="max-w-lg max-h-[90vh] overflow-hidden p-0 [&>button]:hidden">
+          {/* Sierra Leone Flag Header */}
+          <div className="h-2 flex">
+            <div className="flex-1 bg-[#1EB053]" />
+            <div className="flex-1 bg-white" />
+            <div className="flex-1 bg-[#0072C6]" />
+          </div>
+
+          {/* Header with gradient */}
+          <div className="px-6 py-4 text-white" style={{ background: 'linear-gradient(135deg, #1EB053 0%, #0072C6 100%)' }}>
+            <div className="flex items-center gap-3">
+              <div className="w-12 h-12 rounded-xl bg-white/20 flex items-center justify-center">
+                {formData.type === 'benefit' ? <Gift className="w-6 h-6 text-white" /> : <Minus className="w-6 h-6 text-white" />}
+              </div>
+              <div>
+                <h2 className="text-xl font-bold">{editingTemplate ? 'Edit' : 'Add'} {formData.type === 'benefit' ? 'Benefit' : 'Deduction'} Template</h2>
+                <p className="text-white/80 text-sm">Configure payroll template</p>
+              </div>
+            </div>
+          </div>
+
+          <form id="benefit-deduction-form" onSubmit={handleSubmit} className="overflow-y-auto max-h-[calc(90vh-200px)] p-6 space-y-4">
             <div>
               <Label>Name</Label>
               <Input
@@ -657,13 +672,27 @@ export default function BenefitsDeductionsManager({ orgId, employees = [] }) {
               />
             </div>
 
-            <DialogFooter className="gap-2">
-              <Button type="button" variant="outline" onClick={resetForm}>Cancel</Button>
-              <Button type="submit" className="bg-gradient-to-r from-[#1EB053] to-[#0072C6] hover:from-[#178f43] hover:to-[#005a9e] text-white">
-                {editingTemplate ? 'Update' : 'Create'} Template
-              </Button>
-            </DialogFooter>
           </form>
+
+          {/* Footer */}
+          <div className="sticky bottom-0 bg-white border-t p-4 flex gap-3">
+            <Button type="button" variant="outline" onClick={resetForm} className="flex-1">Cancel</Button>
+            <Button 
+              type="submit" 
+              form="benefit-deduction-form"
+              className="flex-1 text-white"
+              style={{ background: 'linear-gradient(135deg, #1EB053 0%, #0072C6 100%)' }}
+            >
+              {editingTemplate ? 'Update' : 'Create'} Template
+            </Button>
+          </div>
+
+          {/* Bottom flag stripe */}
+          <div className="h-1 flex">
+            <div className="flex-1 bg-[#1EB053]" />
+            <div className="flex-1 bg-white" />
+            <div className="flex-1 bg-[#0072C6]" />
+          </div>
         </DialogContent>
       </Dialog>
     </div>
