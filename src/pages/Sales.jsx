@@ -59,7 +59,10 @@ import ReceiptDialog from "@/components/sales/ReceiptDialog";
 import InvoiceDialog from "@/components/sales/InvoiceDialog";
 
 export default function Sales() {
+  const toast = useToast();
   const queryClient = useQueryClient();
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [saleToDelete, setSaleToDelete] = useState(null);
   const [cart, setCart] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [saleType, setSaleType] = useState(null); // Will be set based on role

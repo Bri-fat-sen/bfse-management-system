@@ -64,6 +64,7 @@ import EmptyState from "@/components/ui/EmptyState";
 import LoadingSpinner from "@/components/ui/LoadingSpinner";
 
 export default function Locations() {
+  const toast = useToast();
   const queryClient = useQueryClient();
   const [activeTab, setActiveTab] = useState("warehouses");
   const [showLocationDialog, setShowLocationDialog] = useState(false);

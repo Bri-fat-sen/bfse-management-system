@@ -57,7 +57,10 @@ const STATUS_CONFIG = {
 };
 
 export default function Documents() {
+  const toast = useToast();
   const queryClient = useQueryClient();
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [docToDelete, setDocToDelete] = useState(null);
   const [mainView, setMainView] = useState("documents"); // "documents" or "templates"
   const [activeTab, setActiveTab] = useState("all");
   const [searchTerm, setSearchTerm] = useState("");
