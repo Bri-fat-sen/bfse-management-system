@@ -567,6 +567,7 @@ export default function StatutoryRateManager({ orgId }) {
               </Button>
             </div>
           </form>
+          </div>
           {/* Bottom flag stripe */}
           <div className="h-1 flex">
             <div className="flex-1 bg-[#1EB053]" />
