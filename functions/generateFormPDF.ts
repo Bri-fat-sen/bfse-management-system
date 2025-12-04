@@ -23,6 +23,7 @@ Deno.serve(async (req) => {
     const orgCity = organisation?.city || '';
     const orgPhone = organisation?.phone || '';
     const orgEmail = organisation?.email || '';
+    const orgCode = organisation?.code || '';
     const primaryColor = organisation?.primary_color || '#1EB053';
     const secondaryColor = organisation?.secondary_color || '#0072C6';
 
@@ -47,6 +48,21 @@ Deno.serve(async (req) => {
     doc.rect(pageWidth / 3, 0, pageWidth / 3, 6, 'F');
     doc.setFillColor(0, 114, 198); // Blue
     doc.rect((pageWidth / 3) * 2, 0, pageWidth / 3, 6, 'F');
+    
+    // Add watermark
+    if (orgCode) {
+      doc.setTextColor(0, 0, 0);
+      const watermarkSize = Math.max(60, Math.min(100, 800 / orgCode.length));
+      doc.setFontSize(watermarkSize);
+      doc.setFont('helvetica', 'bold');
+      doc.saveGraphicsState();
+      doc.setGState(new doc.GState({ opacity: 0.03 }));
+      doc.text(orgCode, pageWidth / 2, pageHeight / 2, { 
+        align: 'center', 
+        angle: 45 
+      });
+      doc.restoreGraphicsState();
+    }
 
     // Header Background with gradient effect
     doc.setFillColor(primary.r, primary.g, primary.b);
@@ -69,6 +85,19 @@ Deno.serve(async (req) => {
     doc.text(new Date().toLocaleDateString('en-GB'), pageWidth - margin, 22, { align: 'right' });
     if (orgPhone) {
       doc.text(orgPhone, pageWidth - margin, 30, { align: 'right' });
+    }
+    
+    // Org code badge in top right
+    if (orgCode) {
+      const badgeWidth = Math.max(30, orgCode.length * 3.5 + 10);
+      doc.setFillColor(255, 255, 255);
+      doc.setDrawColor(30, 176, 83);
+      doc.setLineWidth(0.5);
+      doc.roundedRect(pageWidth - badgeWidth - 5, 8, badgeWidth, 8, 2, 2, 'FD');
+      doc.setTextColor(15, 31, 60);
+      doc.setFontSize(7);
+      doc.setFont('helvetica', 'bold');
+      doc.text(orgCode, pageWidth - (badgeWidth / 2) - 5, 13.5, { align: 'center' });
     }
 
     yPos = 50;
@@ -409,6 +438,16 @@ Deno.serve(async (req) => {
     doc.setTextColor(255, 255, 255);
     doc.setFontSize(6);
     doc.text('Thank You For Your Business', pageWidth / 2, footerY + 15, { align: 'center' });
+    
+    // Add org code to footer if available
+    if (orgCode) {
+      const footerBadgeWidth = Math.max(25, orgCode.length * 3 + 8);
+      doc.setFillColor(30, 176, 83);
+      doc.roundedRect(pageWidth / 2 - (footerBadgeWidth / 2), footerY + 2, footerBadgeWidth, 5, 1, 1, 'F');
+      doc.setFontSize(6);
+      doc.setFont('helvetica', 'bold');
+      doc.text(orgCode, pageWidth / 2, footerY + 5.5, { align: 'center' });
+    }
 
     // Generate PDF
     const pdfBytes = doc.output('arraybuffer');

@@ -24,6 +24,7 @@ Deno.serve(async (req) => {
     const orgCountry = organisation?.country || 'Sierra Leone';
     const orgPhone = organisation?.phone || '';
     const orgEmail = organisation?.email || '';
+    const orgCode = organisation?.code || '';
     const primaryColor = organisation?.primary_color || '#1EB053';
     const secondaryColor = organisation?.secondary_color || '#0072C6';
 
@@ -50,10 +51,38 @@ Deno.serve(async (req) => {
       doc.setFillColor(0, 114, 198);
       doc.rect((pageWidth / 3) * 2, y, pageWidth / 3, height, 'F');
     };
+    
+    // Add watermark
+    if (orgCode) {
+      doc.setTextColor(0, 0, 0);
+      const watermarkSize = Math.max(80, Math.min(120, 1000 / orgCode.length));
+      doc.setFontSize(watermarkSize);
+      doc.setFont('helvetica', 'bold');
+      doc.saveGraphicsState();
+      doc.setGState(new doc.GState({ opacity: 0.03 }));
+      doc.text(orgCode, pageWidth / 2, pageHeight / 2, { 
+        align: 'center', 
+        angle: 45 
+      });
+      doc.restoreGraphicsState();
+    }
 
     // Draw Header - Receipt-style gradient design (compact for A4)
     const drawHeader = (title, docNumber, docDate) => {
       drawFlagStripe(0, 4);
+      
+      // Org code badge
+      if (orgCode) {
+        const badgeWidth = Math.max(28, orgCode.length * 3 + 10);
+        doc.setFillColor(255, 255, 255);
+        doc.setDrawColor(primary.r, primary.g, primary.b);
+        doc.setLineWidth(0.5);
+        doc.roundedRect(pageWidth - badgeWidth - 5, 6, badgeWidth, 7, 2, 2, 'FD');
+        doc.setTextColor(navy.r, navy.g, navy.b);
+        doc.setFontSize(7);
+        doc.setFont('helvetica', 'bold');
+        doc.text(orgCode, pageWidth - (badgeWidth / 2) - 5, 11, { align: 'center' });
+      }
       
       // Gradient header background
       doc.setFillColor(primary.r, primary.g, primary.b);
@@ -106,6 +135,16 @@ Deno.serve(async (req) => {
       doc.setTextColor(255, 255, 255);
       doc.setFontSize(7);
       doc.text('Thank You For Your Business', pageWidth / 2, footerY + 12, { align: 'center' });
+      
+      // Add org code to footer
+      if (orgCode) {
+        const footerBadgeWidth = Math.max(30, orgCode.length * 2.8 + 8);
+        doc.setFillColor(30, 176, 83);
+        doc.roundedRect(pageWidth / 2 - (footerBadgeWidth / 2), footerY + 1.5, footerBadgeWidth, 5, 1.5, 1.5, 'F');
+        doc.setFontSize(6);
+        doc.setFont('helvetica', 'bold');
+        doc.text(orgCode, pageWidth / 2, footerY + 5, { align: 'center' });
+      }
     };
 
     // Format currency
