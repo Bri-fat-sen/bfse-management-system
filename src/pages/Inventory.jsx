@@ -71,7 +71,10 @@ import ProductFormDialog from "@/components/inventory/ProductFormDialog";
 const DEFAULT_CATEGORIES = ["Water", "Beverages", "Food", "Electronics", "Clothing", "Other"];
 
 export default function Inventory() {
+  const toast = useToast();
   const queryClient = useQueryClient();
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [productToDelete, setProductToDelete] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("all");
   const [showProductDialog, setShowProductDialog] = useState(false);

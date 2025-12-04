@@ -68,8 +68,10 @@ const STATUS_CONFIG = {
 };
 
 export default function Suppliers() {
-  const { toast } = useToast();
+  const toast = useToast();
   const queryClient = useQueryClient();
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [supplierToDelete, setSupplierToDelete] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [activeTab, setActiveTab] = useState("suppliers");

@@ -73,7 +73,12 @@ import PayrollApprovalWorkflow from "@/components/hr/PayrollApprovalWorkflow";
 import OvertimePrediction from "@/components/hr/OvertimePrediction";
 
 export default function HR() {
+  const toast = useToast();
   const queryClient = useQueryClient();
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [payrollToDelete, setPayrollToDelete] = useState(null);
+  const [showReverseConfirm, setShowReverseConfirm] = useState(false);
+  const [payrollToReverse, setPayrollToReverse] = useState(null);
   const [activeTab, setActiveTab] = useState("attendance");
   const [showPayrollDialog, setShowPayrollDialog] = useState(false);
   const [showLeaveDialog, setShowLeaveDialog] = useState(false);
