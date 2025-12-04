@@ -58,7 +58,6 @@ const PERMISSION_TYPES = [
 ];
 
 export default function RolePermissions() {
-  const { toast } = useToast();
   const queryClient = useQueryClient();
   const [selectedRole, setSelectedRole] = useState('retail_cashier');
   const [editedPermissions, setEditedPermissions] = useState({});
