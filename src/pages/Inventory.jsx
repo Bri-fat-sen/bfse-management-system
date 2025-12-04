@@ -578,7 +578,10 @@ export default function Inventory() {
                                 variant="ghost"
                                 size="icon"
                                 className="h-8 w-8 text-red-500"
-                                onClick={() => deleteProductMutation.mutate(product.id)}
+                                onClick={() => {
+                                  setProductToDelete(product);
+                                  setShowDeleteConfirm(true);
+                                }}
                               >
                                 <Trash2 className="w-4 h-4" />
                               </Button>
@@ -685,7 +688,10 @@ export default function Inventory() {
                                   variant="ghost"
                                   size="icon"
                                   className="text-red-500"
-                                  onClick={() => deleteProductMutation.mutate(product.id)}
+                                  onClick={() => {
+                                    setProductToDelete(product);
+                                    setShowDeleteConfirm(true);
+                                  }}
                                 >
                                   <Trash2 className="w-4 h-4" />
                                 </Button>
@@ -914,6 +920,24 @@ export default function Inventory() {
         vehicles={vehicles}
         stockLevels={stockLevels}
         orgId={orgId}
+      />
+
+      {/* Delete Confirmation Dialog */}
+      <ConfirmDialog
+        open={showDeleteConfirm}
+        onOpenChange={setShowDeleteConfirm}
+        title="Delete Product"
+        description={`Are you sure you want to delete "${productToDelete?.name}"? This action cannot be undone.`}
+        confirmLabel="Delete"
+        cancelLabel="Cancel"
+        variant="danger"
+        onConfirm={() => {
+          if (productToDelete) {
+            deleteProductMutation.mutate(productToDelete.id);
+            setProductToDelete(null);
+          }
+        }}
+        isLoading={deleteProductMutation.isPending}
       />
 
       {/* Product Dialog */}
