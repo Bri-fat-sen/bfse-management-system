@@ -184,7 +184,7 @@ export default function Locations() {
     mutationFn: (id) => base44.entities.Warehouse.delete(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['warehouses'] });
-      toast.success("Location deleted");
+      toast.success("Location deleted successfully");
     },
   });
 
@@ -212,7 +212,7 @@ export default function Locations() {
     mutationFn: (id) => base44.entities.Vehicle.delete(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['vehicles'] });
-      toast.success("Vehicle deleted");
+      toast.success("Vehicle deleted successfully");
     },
   });
 
@@ -220,7 +220,7 @@ export default function Locations() {
     mutationFn: ({ id, data }) => base44.entities.Employee.update(id, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['employees'] });
-      toast.success("Staff assignment updated");
+      toast.success("Staff assignment updated successfully");
     },
   });
 

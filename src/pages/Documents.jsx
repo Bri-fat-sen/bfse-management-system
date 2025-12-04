@@ -205,7 +205,7 @@ export default function Documents() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['employeeDocuments'] });
-      toast.success("Reminder sent");
+      toast.success("Reminder sent successfully");
     }
   });
 
@@ -213,7 +213,7 @@ export default function Documents() {
     mutationFn: (docId) => base44.entities.EmployeeDocument.delete(docId),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['employeeDocuments'] });
-      toast.success("Document deleted");
+      toast.success("Document deleted successfully");
     }
   });
 
