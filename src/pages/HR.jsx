@@ -411,9 +411,8 @@ export default function HR() {
                                   <DropdownMenuItem
                                     onSelect={(e) => {
                                       e.preventDefault();
-                                      if (window.confirm(`Reverse payroll for ${payroll.employee_name}? This will mark it as cancelled.`)) {
-                                        reversePayrollMutation.mutate(payroll);
-                                      }
+                                      setPayrollToReverse(payroll);
+                                      setShowReverseConfirm(true);
                                     }}
                                     className="text-amber-600 cursor-pointer"
                                   >
@@ -425,9 +424,8 @@ export default function HR() {
                                 <DropdownMenuItem
                                   onSelect={(e) => {
                                     e.preventDefault();
-                                    if (window.confirm(`Delete payroll for ${payroll.employee_name}? This cannot be undone.`)) {
-                                      deletePayrollMutation.mutate(payroll);
-                                    }
+                                    setPayrollToDelete(payroll);
+                                    setShowDeleteConfirm(true);
                                   }}
                                   className="text-red-600 cursor-pointer"
                                 >
@@ -557,6 +555,41 @@ export default function HR() {
         />
       )}
 
+      {/* Delete Payroll Confirmation */}
+      <ConfirmDialog
+        open={showDeleteConfirm}
+        onOpenChange={setShowDeleteConfirm}
+        title="Delete Payroll"
+        description={`Are you sure you want to delete the payroll for ${payrollToDelete?.employee_name}? This action cannot be undone.`}
+        confirmLabel="Delete"
+        cancelLabel="Cancel"
+        variant="danger"
+        onConfirm={() => {
+          if (payrollToDelete) {
+            deletePayrollMutation.mutate(payrollToDelete);
+            setPayrollToDelete(null);
+          }
+        }}
+        isLoading={deletePayrollMutation.isPending}
+      />
+
+      {/* Reverse Payroll Confirmation */}
+      <ConfirmDialog
+        open={showReverseConfirm}
+        onOpenChange={setShowReverseConfirm}
+        title="Reverse Payroll"
+        description={`Are you sure you want to reverse the payroll for ${payrollToReverse?.employee_name}? This will mark it as cancelled.`}
+        confirmLabel="Reverse"
+        cancelLabel="Cancel"
+        variant="warning"
+        onConfirm={() => {
+          if (payrollToReverse) {
+            reversePayrollMutation.mutate(payrollToReverse);
+            setPayrollToReverse(null);
+          }
+        }}
+        isLoading={reversePayrollMutation.isPending}
+      />
     </div>
     </ProtectedPage>
   );
