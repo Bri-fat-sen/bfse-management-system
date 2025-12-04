@@ -73,18 +73,15 @@ export function getUnifiedPDFStyles(organisation, documentType = 'receipt') {
 
       /* Organisation Code styles removed from header - only shown in footer */
       .org-code-footer {
-        display: block;
+        display: inline-block;
         background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
         color: white;
-        padding: 6px 20px;
-        border-radius: 20px;
-        font-size: 12px;
-        font-weight: 700;
-        letter-spacing: 2px;
-        margin-top: 16px;
-        width: fit-content;
-        margin-left: auto;
-        margin-right: auto;
+        padding: 4px 14px;
+        border-radius: 12px;
+        font-size: 10px;
+        font-weight: 600;
+        letter-spacing: 1.5px;
+        margin-top: 12px;
       }
     
     /* Flag Stripe - Sierra Leone inspired */
