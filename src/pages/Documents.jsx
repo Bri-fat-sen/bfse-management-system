@@ -523,7 +523,10 @@ export default function Documents() {
                             
                             {isAdmin && doc.status === 'draft' && (
                               <DropdownMenuItem 
-                                onClick={() => deleteDocumentMutation.mutate(doc.id)}
+                                onClick={() => {
+                                  setDocToDelete(doc);
+                                  setShowDeleteConfirm(true);
+                                }}
                                 className="text-red-600"
                               >
                                 <Trash2 className="w-4 h-4 mr-2" />
@@ -533,7 +536,10 @@ export default function Documents() {
                             
                             {currentEmployee?.role === 'super_admin' && doc.status === 'rejected' && (
                               <DropdownMenuItem 
-                                onClick={() => deleteDocumentMutation.mutate(doc.id)}
+                                onClick={() => {
+                                  setDocToDelete(doc);
+                                  setShowDeleteConfirm(true);
+                                }}
                                 className="text-red-600"
                               >
                                 <Trash2 className="w-4 h-4 mr-2" />
@@ -657,7 +663,10 @@ export default function Documents() {
                                 
                                 {isAdmin && doc.status === 'draft' && (
                                   <DropdownMenuItem 
-                                    onClick={() => deleteDocumentMutation.mutate(doc.id)}
+                                    onClick={() => {
+                                      setDocToDelete(doc);
+                                      setShowDeleteConfirm(true);
+                                    }}
                                     className="text-red-600"
                                   >
                                     <Trash2 className="w-4 h-4 mr-2" />
@@ -667,7 +676,10 @@ export default function Documents() {
                                 
                                 {currentEmployee?.role === 'super_admin' && doc.status === 'rejected' && (
                                   <DropdownMenuItem 
-                                    onClick={() => deleteDocumentMutation.mutate(doc.id)}
+                                    onClick={() => {
+                                      setDocToDelete(doc);
+                                      setShowDeleteConfirm(true);
+                                    }}
                                     className="text-red-600"
                                   >
                                     <Trash2 className="w-4 h-4 mr-2" />
@@ -689,6 +701,24 @@ export default function Documents() {
       </Card>
       </>
       )}
+
+      {/* Delete Confirmation */}
+      <ConfirmDialog
+        open={showDeleteConfirm}
+        onOpenChange={setShowDeleteConfirm}
+        title="Delete Document"
+        description={`Are you sure you want to delete "${docToDelete?.title}"? This action cannot be undone.`}
+        confirmLabel="Delete"
+        cancelLabel="Cancel"
+        variant="danger"
+        onConfirm={() => {
+          if (docToDelete) {
+            deleteDocumentMutation.mutate(docToDelete.id);
+            setDocToDelete(null);
+          }
+        }}
+        isLoading={deleteDocumentMutation.isPending}
+      />
 
       {/* Dialogs */}
       <CreateDocumentDialog

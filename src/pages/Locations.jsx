@@ -874,26 +874,17 @@ export default function Locations() {
       </Dialog>
 
       {/* Delete Confirmation */}
-      <AlertDialog open={!!locationToDelete} onOpenChange={(open) => !open && setLocationToDelete(null)}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Delete Location</AlertDialogTitle>
-            <AlertDialogDescription>
-              Are you sure you want to delete "{locationToDelete?.name || locationToDelete?.registration_number}"? 
-              This will remove all stock records and staff assignments for this location.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction 
-              onClick={handleDeleteLocation}
-              className="bg-red-600 hover:bg-red-700"
-            >
-              Delete
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      <ConfirmDialog
+        open={!!locationToDelete}
+        onOpenChange={(open) => !open && setLocationToDelete(null)}
+        title="Delete Location"
+        description={`Are you sure you want to delete "${locationToDelete?.name || locationToDelete?.registration_number}"? This will remove all stock records and staff assignments for this location.`}
+        confirmLabel="Delete"
+        cancelLabel="Cancel"
+        variant="danger"
+        onConfirm={handleDeleteLocation}
+        isLoading={deleteWarehouseMutation.isPending || deleteVehicleMutation.isPending}
+      />
     </div>
   );
 }
