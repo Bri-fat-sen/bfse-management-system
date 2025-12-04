@@ -682,15 +682,50 @@ export default function PayslipGenerator({ payroll, employee, organisation: orgP
             Preview
           </Button>
         </DialogTrigger>
-        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>Payslip Preview</DialogTitle>
-          </DialogHeader>
-          <iframe
-            srcDoc={generatePayslipHTML()}
-            className="w-full h-[600px] border rounded-lg"
-            title="Payslip Preview"
-          />
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-hidden p-0 [&>button]:hidden">
+          {/* Sierra Leone Flag Header */}
+          <div className="h-2 flex">
+            <div className="flex-1 bg-[#1EB053]" />
+            <div className="flex-1 bg-white" />
+            <div className="flex-1 bg-[#0072C6]" />
+          </div>
+
+          {/* Header with gradient */}
+          <div className="px-6 py-4 text-white" style={{ background: 'linear-gradient(135deg, #1EB053 0%, #0072C6 100%)' }}>
+            <div className="flex items-center gap-3">
+              <div className="w-12 h-12 rounded-xl bg-white/20 flex items-center justify-center">
+                <Eye className="w-6 h-6 text-white" />
+              </div>
+              <div>
+                <h2 className="text-xl font-bold">Payslip Preview</h2>
+                <p className="text-white/80 text-sm">{employee?.full_name} - {format(new Date(payroll?.period_start), 'MMMM yyyy')}</p>
+              </div>
+            </div>
+          </div>
+
+          <div className="overflow-y-auto max-h-[calc(90vh-180px)] p-4">
+            <iframe
+              srcDoc={generatePayslipHTML()}
+              className="w-full h-[500px] border rounded-lg"
+              title="Payslip Preview"
+            />
+          </div>
+
+          {/* Footer */}
+          <div className="sticky bottom-0 bg-white border-t p-4 flex gap-3">
+            <Button variant="outline" onClick={() => setShowPreview(false)} className="flex-1">Close</Button>
+            <Button onClick={handlePrint} className="flex-1 text-white" style={{ background: 'linear-gradient(135deg, #1EB053 0%, #0072C6 100%)' }}>
+              <Printer className="w-4 h-4 mr-2" />
+              Print
+            </Button>
+          </div>
+
+          {/* Bottom flag stripe */}
+          <div className="h-1 flex">
+            <div className="flex-1 bg-[#1EB053]" />
+            <div className="flex-1 bg-white" />
+            <div className="flex-1 bg-[#0072C6]" />
+          </div>
         </DialogContent>
       </Dialog>
 
@@ -700,14 +735,29 @@ export default function PayslipGenerator({ payroll, employee, organisation: orgP
             <Settings2 className="w-4 h-4" />
           </Button>
         </DialogTrigger>
-        <DialogContent className="max-w-md">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <Settings2 className="w-5 h-5" />
-              Payslip Options
-            </DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4 py-4">
+        <DialogContent className="max-w-md max-h-[90vh] overflow-hidden p-0 [&>button]:hidden">
+          {/* Sierra Leone Flag Header */}
+          <div className="h-2 flex">
+            <div className="flex-1 bg-[#1EB053]" />
+            <div className="flex-1 bg-white" />
+            <div className="flex-1 bg-[#0072C6]" />
+          </div>
+
+          {/* Header with gradient */}
+          <div className="px-6 py-4 text-white" style={{ background: 'linear-gradient(135deg, #1EB053 0%, #0072C6 100%)' }}>
+            <div className="flex items-center gap-3">
+              <div className="w-12 h-12 rounded-xl bg-white/20 flex items-center justify-center">
+                <Settings2 className="w-6 h-6 text-white" />
+              </div>
+              <div>
+                <h2 className="text-xl font-bold">Payslip Options</h2>
+                <p className="text-white/80 text-sm">Customize appearance</p>
+              </div>
+            </div>
+          </div>
+
+          <div className="overflow-y-auto max-h-[calc(90vh-160px)] p-6">
+          <div className="space-y-4">
             <div className="space-y-3">
               <Label className="text-sm font-medium">Color Scheme</Label>
               <Select 
@@ -787,6 +837,14 @@ export default function PayslipGenerator({ payroll, employee, organisation: orgP
                 />
               </div>
             </div>
+          </div>
+          </div>
+
+          {/* Bottom flag stripe */}
+          <div className="h-1 flex">
+            <div className="flex-1 bg-[#1EB053]" />
+            <div className="flex-1 bg-white" />
+            <div className="flex-1 bg-[#0072C6]" />
           </div>
         </DialogContent>
       </Dialog>
