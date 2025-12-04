@@ -4,24 +4,22 @@ import { motion, AnimatePresence } from "framer-motion";
 
 const ToastContext = createContext(null);
 
+const noopToast = {
+  success: () => {},
+  error: () => {},
+  warning: () => {},
+  info: () => {},
+  notify: () => {},
+  loading: () => {},
+  promise: async (p) => p,
+  update: () => {},
+  dismiss: () => {},
+  clearAll: () => {},
+};
+
 export function useToast() {
   const context = useContext(ToastContext);
-  // Return a no-op toast object if context is not available (during initial render)
-  if (!context) {
-    return {
-      success: () => {},
-      error: () => {},
-      warning: () => {},
-      info: () => {},
-      notify: () => {},
-      loading: () => {},
-      promise: async (p) => p,
-      update: () => {},
-      dismiss: () => {},
-      clearAll: () => {},
-    };
-  }
-  return context;
+  return context || noopToast;
 }
 
 export function ToastProvider({ children }) {
