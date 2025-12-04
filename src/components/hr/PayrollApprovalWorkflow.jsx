@@ -7,7 +7,6 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Textarea } from "@/components/ui/textarea";
 import {
   Dialog,
   DialogContent,
@@ -23,592 +22,575 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
-import {
-  CheckCircle2, XCircle, Clock, AlertTriangle, Eye, FileText,
-  Send, Users, DollarSign, Calendar, Loader2, ChevronRight,
-  Shield, History, Printer
+import { 
+  CheckCircle2, XCircle, Clock, AlertTriangle, Eye, FileText, 
+  Send, ThumbsUp, ThumbsDown, Users, DollarSign, Calendar,
+  ChevronRight, MoreHorizontal, History
 } from "lucide-react";
 import { formatSLE } from "./PayrollCalculator";
-import EmptyState from "@/components/ui/EmptyState";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 const STATUS_CONFIG = {
   draft: { label: 'Draft', color: 'bg-gray-500', icon: FileText },
   pending_review: { label: 'Pending Review', color: 'bg-yellow-500', icon: Clock },
   pending_approval: { label: 'Pending Approval', color: 'bg-orange-500', icon: AlertTriangle },
   approved: { label: 'Approved', color: 'bg-green-500', icon: CheckCircle2 },
-  processing: { label: 'Processing', color: 'bg-blue-500', icon: Loader2 },
-  paid: { label: 'Paid', color: 'bg-emerald-600', icon: CheckCircle2 },
+  processing: { label: 'Processing', color: 'bg-blue-500', icon: Clock },
+  paid: { label: 'Paid', color: 'bg-[#1EB053]', icon: CheckCircle2 },
   cancelled: { label: 'Cancelled', color: 'bg-red-500', icon: XCircle }
 };
 
 export default function PayrollApprovalWorkflow({ orgId, currentEmployee }) {
   const queryClient = useQueryClient();
   const [selectedRun, setSelectedRun] = useState(null);
-  const [showApprovalDialog, setShowApprovalDialog] = useState(false);
   const [showDetailsDialog, setShowDetailsDialog] = useState(false);
-  const [approvalNotes, setApprovalNotes] = useState('');
-  const [approvalAction, setApprovalAction] = useState('approve');
-  const [statusFilter, setStatusFilter] = useState('all');
-
-  const userRole = currentEmployee?.role;
-  const canReview = ['super_admin', 'org_admin', 'hr_admin'].includes(userRole);
-  const canApprove = ['super_admin', 'org_admin'].includes(userRole);
-  const canProcess = ['super_admin', 'org_admin', 'payroll_admin'].includes(userRole);
+  const [showActionDialog, setShowActionDialog] = useState(false);
+  const [actionType, setActionType] = useState(null);
+  const [actionNotes, setActionNotes] = useState("");
+  const [activeTab, setActiveTab] = useState("pending");
 
   const { data: payrollRuns = [], isLoading } = useQuery({
     queryKey: ['payrollRuns', orgId],
-    queryFn: () => base44.entities.PayrollRun.filter({ organisation_id: orgId }, '-created_date', 50),
+    queryFn: () => base44.entities.PayrollRun.filter({ organisation_id: orgId }),
     enabled: !!orgId,
   });
 
-  const { data: pendingPayrolls = [] } = useQuery({
-    queryKey: ['pendingPayrolls', orgId],
-    queryFn: () => base44.entities.Payroll.filter({ 
-      organisation_id: orgId, 
-      status: 'pending_approval' 
-    }),
+  const { data: payrolls = [] } = useQuery({
+    queryKey: ['payrolls', orgId],
+    queryFn: () => base44.entities.Payroll.filter({ organisation_id: orgId }),
     enabled: !!orgId,
   });
+
+  // Get payrolls for a specific run
+  const getRunPayrolls = (runId) => {
+    const run = payrollRuns.find(r => r.id === runId);
+    if (!run?.payroll_ids?.length) return [];
+    return payrolls.filter(p => run.payroll_ids.includes(p.id));
+  };
 
   const updateRunMutation = useMutation({
-    mutationFn: async ({ runId, data, payrollIds, payrollStatus }) => {
-      // Update the payroll run
-      await base44.entities.PayrollRun.update(runId, data);
-      
-      // Update all payrolls in the run if needed
-      if (payrollIds?.length && payrollStatus) {
-        await Promise.all(payrollIds.map(id => 
-          base44.entities.Payroll.update(id, { status: payrollStatus })
-        ));
-      }
-
-      // Create audit log
-      await base44.entities.PayrollAudit.create({
-        organisation_id: orgId,
-        payroll_id: runId,
-        action: data.status === 'approved' ? 'approved' : data.status === 'cancelled' ? 'cancelled' : 'updated',
-        changed_by_id: currentEmployee?.id,
-        changed_by_name: currentEmployee?.full_name,
-        new_values: data,
-        reason: data.approval_notes || data.rejection_reason || 'Status update'
-      });
-    },
+    mutationFn: ({ id, data }) => base44.entities.PayrollRun.update(id, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['payrollRuns'] });
       queryClient.invalidateQueries({ queryKey: ['payrolls'] });
-      queryClient.invalidateQueries({ queryKey: ['pendingPayrolls'] });
+      setShowActionDialog(false);
+      setActionNotes("");
       toast.success('Payroll run updated');
-      setShowApprovalDialog(false);
-      setApprovalNotes('');
-    },
-    onError: (error) => {
-      toast.error('Failed to update payroll run', { description: error.message });
     }
   });
 
-  const handleApprovalAction = () => {
+  const updatePayrollsMutation = useMutation({
+    mutationFn: async ({ runId, status }) => {
+      const run = payrollRuns.find(r => r.id === runId);
+      if (!run?.payroll_ids?.length) return;
+      
+      // Update all payrolls in this run
+      await Promise.all(run.payroll_ids.map(id => 
+        base44.entities.Payroll.update(id, { status })
+      ));
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['payrolls'] });
+    }
+  });
+
+  const handleAction = async (action) => {
     if (!selectedRun) return;
 
+    const now = new Date().toISOString();
     let updateData = {};
-    let payrollStatus = null;
+    let newPayrollStatus = null;
 
-    if (approvalAction === 'approve') {
-      updateData = {
-        status: 'approved',
-        approved_by_id: currentEmployee?.id,
-        approved_by_name: currentEmployee?.full_name,
-        approved_date: new Date().toISOString(),
-        approval_notes: approvalNotes
-      };
-      payrollStatus = 'approved';
-    } else if (approvalAction === 'reject') {
-      updateData = {
-        status: 'cancelled',
-        rejected_by_id: currentEmployee?.id,
-        rejected_by_name: currentEmployee?.full_name,
-        rejection_reason: approvalNotes
-      };
-      payrollStatus = 'cancelled';
-    } else if (approvalAction === 'review') {
-      updateData = {
-        status: 'pending_approval',
-        reviewed_by_id: currentEmployee?.id,
-        reviewed_by_name: currentEmployee?.full_name,
-        reviewed_date: new Date().toISOString(),
-        review_notes: approvalNotes
-      };
-    } else if (approvalAction === 'pay') {
-      updateData = {
-        status: 'paid',
-        payment_date: new Date().toISOString().split('T')[0]
-      };
-      payrollStatus = 'paid';
+    switch (action) {
+      case 'submit_review':
+        updateData = {
+          status: 'pending_review',
+          submitted_by_id: currentEmployee?.id,
+          submitted_by_name: currentEmployee?.full_name,
+          submitted_date: now
+        };
+        newPayrollStatus = 'pending_approval';
+        break;
+      case 'review':
+        updateData = {
+          status: 'pending_approval',
+          reviewed_by_id: currentEmployee?.id,
+          reviewed_by_name: currentEmployee?.full_name,
+          reviewed_date: now,
+          review_notes: actionNotes
+        };
+        break;
+      case 'approve':
+        updateData = {
+          status: 'approved',
+          approved_by_id: currentEmployee?.id,
+          approved_by_name: currentEmployee?.full_name,
+          approved_date: now,
+          approval_notes: actionNotes
+        };
+        newPayrollStatus = 'approved';
+        break;
+      case 'reject':
+        updateData = {
+          status: 'draft',
+          rejected_by_id: currentEmployee?.id,
+          rejected_by_name: currentEmployee?.full_name,
+          rejection_reason: actionNotes
+        };
+        newPayrollStatus = 'draft';
+        break;
+      case 'process':
+        updateData = { status: 'processing' };
+        break;
+      case 'mark_paid':
+        updateData = { status: 'paid' };
+        newPayrollStatus = 'paid';
+        break;
+      case 'cancel':
+        updateData = { status: 'cancelled' };
+        newPayrollStatus = 'cancelled';
+        break;
     }
 
-    updateRunMutation.mutate({
-      runId: selectedRun.id,
-      data: updateData,
-      payrollIds: selectedRun.payroll_ids,
-      payrollStatus
+    await updateRunMutation.mutateAsync({ id: selectedRun.id, data: updateData });
+    
+    if (newPayrollStatus) {
+      await updatePayrollsMutation.mutateAsync({ runId: selectedRun.id, status: newPayrollStatus });
+    }
+
+    // Create audit log
+    await base44.entities.PayrollAudit.create({
+      organisation_id: orgId,
+      payroll_id: selectedRun.id,
+      action: action,
+      changed_by_id: currentEmployee?.id,
+      changed_by_name: currentEmployee?.full_name,
+      new_values: updateData,
+      reason: actionNotes || `Payroll run ${action.replace('_', ' ')}`
     });
   };
 
-  const submitForReviewMutation = useMutation({
-    mutationFn: async (run) => {
-      await base44.entities.PayrollRun.update(run.id, {
-        status: 'pending_review',
-        submitted_by_id: currentEmployee?.id,
-        submitted_by_name: currentEmployee?.full_name,
-        submitted_date: new Date().toISOString()
-      });
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['payrollRuns'] });
-      toast.success('Submitted for review');
-    }
-  });
+  const openActionDialog = (run, action) => {
+    setSelectedRun(run);
+    setActionType(action);
+    setActionNotes("");
+    setShowActionDialog(true);
+  };
 
   const filteredRuns = useMemo(() => {
-    if (statusFilter === 'all') return payrollRuns;
-    return payrollRuns.filter(r => r.status === statusFilter);
-  }, [payrollRuns, statusFilter]);
+    switch (activeTab) {
+      case 'pending':
+        return payrollRuns.filter(r => ['pending_review', 'pending_approval'].includes(r.status));
+      case 'approved':
+        return payrollRuns.filter(r => ['approved', 'processing', 'paid'].includes(r.status));
+      case 'draft':
+        return payrollRuns.filter(r => r.status === 'draft');
+      default:
+        return payrollRuns;
+    }
+  }, [payrollRuns, activeTab]);
 
-  const stats = useMemo(() => ({
-    pending_review: payrollRuns.filter(r => r.status === 'pending_review').length,
-    pending_approval: payrollRuns.filter(r => r.status === 'pending_approval').length,
-    approved: payrollRuns.filter(r => r.status === 'approved').length,
-    paid: payrollRuns.filter(r => r.status === 'paid').length,
-  }), [payrollRuns]);
+  const pendingCount = payrollRuns.filter(r => ['pending_review', 'pending_approval'].includes(r.status)).length;
 
-  const openApprovalDialog = (run, action) => {
-    setSelectedRun(run);
-    setApprovalAction(action);
-    setApprovalNotes('');
-    setShowApprovalDialog(true);
+  const canPerformAction = (action, run) => {
+    const role = currentEmployee?.role;
+    const isAdmin = ['super_admin', 'org_admin'].includes(role);
+    const isPayrollAdmin = role === 'payroll_admin';
+    const isAccountant = role === 'accountant';
+
+    switch (action) {
+      case 'submit_review':
+        return (isAdmin || isPayrollAdmin) && run.status === 'draft';
+      case 'review':
+        return (isAdmin || isAccountant) && run.status === 'pending_review';
+      case 'approve':
+        return isAdmin && run.status === 'pending_approval';
+      case 'reject':
+        return isAdmin && ['pending_review', 'pending_approval'].includes(run.status);
+      case 'process':
+        return (isAdmin || isPayrollAdmin) && run.status === 'approved';
+      case 'mark_paid':
+        return (isAdmin || isAccountant) && run.status === 'processing';
+      case 'cancel':
+        return isAdmin && !['paid', 'cancelled'].includes(run.status);
+      default:
+        return false;
+    }
+  };
+
+  const StatusBadge = ({ status }) => {
+    const config = STATUS_CONFIG[status] || STATUS_CONFIG.draft;
+    return (
+      <Badge className={`${config.color} text-white gap-1`}>
+        <config.icon className="w-3 h-3" />
+        {config.label}
+      </Badge>
+    );
   };
 
   return (
     <div className="space-y-6">
-      {/* Stats */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <Card className="border-l-4 border-l-yellow-500">
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-gray-500">Pending Review</p>
-                <p className="text-2xl font-bold">{stats.pending_review}</p>
-              </div>
-              <Clock className="w-8 h-8 text-yellow-500" />
-            </div>
-          </CardContent>
-        </Card>
-        <Card className="border-l-4 border-l-orange-500">
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-gray-500">Pending Approval</p>
-                <p className="text-2xl font-bold">{stats.pending_approval}</p>
-              </div>
-              <AlertTriangle className="w-8 h-8 text-orange-500" />
-            </div>
-          </CardContent>
-        </Card>
-        <Card className="border-l-4 border-l-green-500">
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-gray-500">Approved</p>
-                <p className="text-2xl font-bold">{stats.approved}</p>
-              </div>
-              <CheckCircle2 className="w-8 h-8 text-green-500" />
-            </div>
-          </CardContent>
-        </Card>
-        <Card className="border-l-4 border-l-emerald-600">
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-gray-500">Paid</p>
-                <p className="text-2xl font-bold">{stats.paid}</p>
-              </div>
-              <DollarSign className="w-8 h-8 text-emerald-600" />
-            </div>
-          </CardContent>
-        </Card>
+      <div className="flex items-center justify-between">
+        <div>
+          <h3 className="text-lg font-semibold">Payroll Approval Workflow</h3>
+          <p className="text-sm text-gray-500">Review, approve and process payroll runs</p>
+        </div>
+        {pendingCount > 0 && (
+          <Badge variant="destructive" className="gap-1">
+            <AlertTriangle className="w-4 h-4" />
+            {pendingCount} Pending Approval
+          </Badge>
+        )}
       </div>
 
-      {/* Pending Individual Payrolls Alert */}
-      {pendingPayrolls.length > 0 && (
-        <Card className="border-orange-200 bg-orange-50">
-          <CardContent className="p-4">
-            <div className="flex items-center gap-3">
-              <AlertTriangle className="w-5 h-5 text-orange-600" />
-              <div>
-                <p className="font-medium text-orange-800">
-                  {pendingPayrolls.length} individual payroll(s) pending approval
-                </p>
-                <p className="text-sm text-orange-600">
-                  These are not part of a payroll run. Consider creating a bulk payroll run for better tracking.
-                </p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      )}
+      {/* Workflow Steps */}
+      <Card className="bg-gradient-to-r from-[#1EB053]/5 to-[#0072C6]/5">
+        <CardContent className="py-4">
+          <div className="flex items-center justify-between">
+            {['Draft', 'Review', 'Approval', 'Processing', 'Paid'].map((step, i) => (
+              <React.Fragment key={step}>
+                <div className="flex flex-col items-center">
+                  <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
+                    i === 0 ? 'bg-gray-200' : i === 4 ? 'bg-[#1EB053]' : 'bg-[#0072C6]'
+                  } text-white font-bold`}>
+                    {i + 1}
+                  </div>
+                  <span className="text-xs mt-1 text-gray-600">{step}</span>
+                </div>
+                {i < 4 && <ChevronRight className="w-5 h-5 text-gray-300" />}
+              </React.Fragment>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
 
-      {/* Filter */}
-      <div className="flex items-center gap-4">
-        <Label>Filter by Status:</Label>
-        <Select value={statusFilter} onValueChange={setStatusFilter}>
-          <SelectTrigger className="w-48">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All Status</SelectItem>
-            <SelectItem value="draft">Draft</SelectItem>
-            <SelectItem value="pending_review">Pending Review</SelectItem>
-            <SelectItem value="pending_approval">Pending Approval</SelectItem>
-            <SelectItem value="approved">Approved</SelectItem>
-            <SelectItem value="paid">Paid</SelectItem>
-            <SelectItem value="cancelled">Cancelled</SelectItem>
-          </SelectContent>
-        </Select>
-      </div>
+      <Tabs value={activeTab} onValueChange={setActiveTab}>
+        <TabsList>
+          <TabsTrigger value="pending" className="gap-2">
+            <Clock className="w-4 h-4" />
+            Pending ({pendingCount})
+          </TabsTrigger>
+          <TabsTrigger value="approved" className="gap-2">
+            <CheckCircle2 className="w-4 h-4" />
+            Approved/Paid
+          </TabsTrigger>
+          <TabsTrigger value="draft" className="gap-2">
+            <FileText className="w-4 h-4" />
+            Drafts
+          </TabsTrigger>
+          <TabsTrigger value="all">All Runs</TabsTrigger>
+        </TabsList>
 
-      {/* Payroll Runs Table */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Shield className="w-5 h-5 text-[#0072C6]" />
-            Payroll Runs & Approvals
-          </CardTitle>
-          <CardDescription>
-            Manage payroll approval workflow - review, approve, or reject payroll runs
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          {isLoading ? (
-            <div className="flex items-center justify-center py-8">
-              <Loader2 className="w-6 h-6 animate-spin text-gray-400" />
-            </div>
-          ) : filteredRuns.length === 0 ? (
-            <EmptyState
-              icon={FileText}
-              title="No Payroll Runs"
-              description="Create a bulk payroll run to see it here for approval"
-            />
-          ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Run</TableHead>
-                  <TableHead>Period</TableHead>
-                  <TableHead>Employees</TableHead>
-                  <TableHead>Total Net</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filteredRuns.map((run) => {
-                  const config = STATUS_CONFIG[run.status] || STATUS_CONFIG.draft;
-                  const StatusIcon = config.icon;
-                  
-                  return (
-                    <TableRow key={run.id}>
+        <TabsContent value={activeTab} className="mt-4">
+          <Card>
+            <CardContent className="p-0">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Run #</TableHead>
+                    <TableHead>Period</TableHead>
+                    <TableHead>Employees</TableHead>
+                    <TableHead>Total Net Pay</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead>Last Action</TableHead>
+                    <TableHead></TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {filteredRuns.map(run => (
+                    <TableRow key={run.id} className={['pending_review', 'pending_approval'].includes(run.status) ? 'bg-yellow-50' : ''}>
                       <TableCell>
                         <div>
-                          <p className="font-medium">{run.run_number || run.name || 'Payroll Run'}</p>
-                          <p className="text-xs text-gray-500">
-                            Created {run.created_date ? format(new Date(run.created_date), 'MMM d, yyyy') : ''}
-                          </p>
+                          <p className="font-medium">{run.run_number || `PR-${run.id?.slice(-6)}`}</p>
+                          <p className="text-xs text-gray-500">{run.name}</p>
                         </div>
                       </TableCell>
                       <TableCell>
                         <div className="flex items-center gap-1 text-sm">
-                          <Calendar className="w-3 h-3 text-gray-400" />
-                          {run.period_start && run.period_end ? (
-                            `${format(new Date(run.period_start), 'MMM d')} - ${format(new Date(run.period_end), 'MMM d, yyyy')}`
-                          ) : 'N/A'}
+                          <Calendar className="w-4 h-4 text-gray-400" />
+                          {run.period_start && format(new Date(run.period_start), 'MMM d')} - {run.period_end && format(new Date(run.period_end), 'MMM d, yyyy')}
                         </div>
                       </TableCell>
                       <TableCell>
                         <div className="flex items-center gap-1">
                           <Users className="w-4 h-4 text-gray-400" />
-                          {run.employee_count || run.payroll_ids?.length || 0}
+                          <span>{run.employee_count || run.payroll_ids?.length || 0}</span>
                         </div>
                       </TableCell>
                       <TableCell>
-                        <span className="font-medium text-[#1EB053]">
-                          {formatSLE(run.total_net || 0)}
-                        </span>
+                        <span className="font-medium text-[#1EB053]">{formatSLE(run.total_net || 0)}</span>
                       </TableCell>
                       <TableCell>
-                        <Badge className={`${config.color} text-white`}>
-                          <StatusIcon className="w-3 h-3 mr-1" />
-                          {config.label}
-                        </Badge>
-                        {run.approved_by_name && (
-                          <p className="text-xs text-gray-500 mt-1">
-                            by {run.approved_by_name}
-                          </p>
-                        )}
+                        <StatusBadge status={run.status} />
+                      </TableCell>
+                      <TableCell>
+                        <div className="text-xs text-gray-500">
+                          {run.approved_by_name && <p>Approved: {run.approved_by_name}</p>}
+                          {run.reviewed_by_name && !run.approved_by_name && <p>Reviewed: {run.reviewed_by_name}</p>}
+                          {run.submitted_by_name && !run.reviewed_by_name && <p>Submitted: {run.submitted_by_name}</p>}
+                          {run.created_by_name && !run.submitted_by_name && <p>Created: {run.created_by_name}</p>}
+                        </div>
                       </TableCell>
                       <TableCell>
                         <div className="flex gap-1">
-                          <Button size="sm" variant="ghost" onClick={() => {
-                            setSelectedRun(run);
-                            setShowDetailsDialog(true);
-                          }}>
+                          <Button 
+                            size="sm" 
+                            variant="outline"
+                            onClick={() => { setSelectedRun(run); setShowDetailsDialog(true); }}
+                          >
                             <Eye className="w-4 h-4" />
                           </Button>
-                          
-                          {run.status === 'draft' && canProcess && (
-                            <Button size="sm" variant="outline" onClick={() => submitForReviewMutation.mutate(run)}>
-                              <Send className="w-4 h-4 mr-1" />
-                              Submit
-                            </Button>
-                          )}
-                          
-                          {run.status === 'pending_review' && canReview && (
-                            <Button size="sm" variant="outline" className="text-blue-600"
-                              onClick={() => openApprovalDialog(run, 'review')}>
-                              <CheckCircle2 className="w-4 h-4 mr-1" />
-                              Review
-                            </Button>
-                          )}
-                          
-                          {run.status === 'pending_approval' && canApprove && (
-                            <>
-                              <Button size="sm" className="bg-green-600 hover:bg-green-700"
-                                onClick={() => openApprovalDialog(run, 'approve')}>
-                                <CheckCircle2 className="w-4 h-4 mr-1" />
-                                Approve
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button size="sm" variant="outline">
+                                <MoreHorizontal className="w-4 h-4" />
                               </Button>
-                              <Button size="sm" variant="destructive"
-                                onClick={() => openApprovalDialog(run, 'reject')}>
-                                <XCircle className="w-4 h-4 mr-1" />
-                                Reject
-                              </Button>
-                            </>
-                          )}
-                          
-                          {run.status === 'approved' && canProcess && (
-                            <Button size="sm" className="bg-[#1EB053] hover:bg-[#178f43]"
-                              onClick={() => openApprovalDialog(run, 'pay')}>
-                              <DollarSign className="w-4 h-4 mr-1" />
-                              Mark Paid
-                            </Button>
-                          )}
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                              {canPerformAction('submit_review', run) && (
+                                <DropdownMenuItem onClick={() => openActionDialog(run, 'submit_review')}>
+                                  <Send className="w-4 h-4 mr-2" /> Submit for Review
+                                </DropdownMenuItem>
+                              )}
+                              {canPerformAction('review', run) && (
+                                <DropdownMenuItem onClick={() => openActionDialog(run, 'review')}>
+                                  <Eye className="w-4 h-4 mr-2" /> Complete Review
+                                </DropdownMenuItem>
+                              )}
+                              {canPerformAction('approve', run) && (
+                                <DropdownMenuItem onClick={() => openActionDialog(run, 'approve')} className="text-green-600">
+                                  <ThumbsUp className="w-4 h-4 mr-2" /> Approve
+                                </DropdownMenuItem>
+                              )}
+                              {canPerformAction('reject', run) && (
+                                <DropdownMenuItem onClick={() => openActionDialog(run, 'reject')} className="text-red-600">
+                                  <ThumbsDown className="w-4 h-4 mr-2" /> Reject
+                                </DropdownMenuItem>
+                              )}
+                              {canPerformAction('process', run) && (
+                                <DropdownMenuItem onClick={() => openActionDialog(run, 'process')}>
+                                  <Clock className="w-4 h-4 mr-2" /> Start Processing
+                                </DropdownMenuItem>
+                              )}
+                              {canPerformAction('mark_paid', run) && (
+                                <DropdownMenuItem onClick={() => openActionDialog(run, 'mark_paid')} className="text-green-600">
+                                  <CheckCircle2 className="w-4 h-4 mr-2" /> Mark as Paid
+                                </DropdownMenuItem>
+                              )}
+                              {canPerformAction('cancel', run) && (
+                                <DropdownMenuItem onClick={() => openActionDialog(run, 'cancel')} className="text-red-600">
+                                  <XCircle className="w-4 h-4 mr-2" /> Cancel Run
+                                </DropdownMenuItem>
+                              )}
+                            </DropdownMenuContent>
+                          </DropdownMenu>
                         </div>
                       </TableCell>
                     </TableRow>
-                  );
-                })}
-              </TableBody>
-            </Table>
-          )}
-        </CardContent>
-      </Card>
-
-      {/* Approval Dialog */}
-      <Dialog open={showApprovalDialog} onOpenChange={setShowApprovalDialog}>
-        <DialogContent className="max-w-md [&>button]:hidden">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              {approvalAction === 'approve' && <CheckCircle2 className="w-5 h-5 text-green-600" />}
-              {approvalAction === 'reject' && <XCircle className="w-5 h-5 text-red-600" />}
-              {approvalAction === 'review' && <Eye className="w-5 h-5 text-blue-600" />}
-              {approvalAction === 'pay' && <DollarSign className="w-5 h-5 text-emerald-600" />}
-              {approvalAction === 'approve' && 'Approve Payroll Run'}
-              {approvalAction === 'reject' && 'Reject Payroll Run'}
-              {approvalAction === 'review' && 'Complete Review'}
-              {approvalAction === 'pay' && 'Mark as Paid'}
-            </DialogTitle>
-          </DialogHeader>
-          
-          {selectedRun && (
-            <div className="space-y-4">
-              <div className="p-4 bg-gray-50 rounded-lg">
-                <p className="font-medium">{selectedRun.name || selectedRun.run_number}</p>
-                <p className="text-sm text-gray-500">
-                  {selectedRun.employee_count || selectedRun.payroll_ids?.length || 0} employees
-                </p>
-                <p className="text-lg font-bold text-[#1EB053] mt-2">
-                  Total: {formatSLE(selectedRun.total_net || 0)}
-                </p>
-              </div>
-
-              {approvalAction !== 'pay' && (
-                <div>
-                  <Label>
-                    {approvalAction === 'reject' ? 'Rejection Reason *' : 'Notes (optional)'}
-                  </Label>
-                  <Textarea
-                    value={approvalNotes}
-                    onChange={(e) => setApprovalNotes(e.target.value)}
-                    placeholder={approvalAction === 'reject' 
-                      ? 'Please provide a reason for rejection...' 
-                      : 'Add any notes...'}
-                    rows={3}
-                    required={approvalAction === 'reject'}
-                  />
-                </div>
-              )}
-
-              {approvalAction === 'pay' && (
-                <div className="p-4 bg-green-50 border border-green-200 rounded-lg">
-                  <p className="text-sm text-green-800">
-                    This will mark all payrolls in this run as paid. 
-                    Make sure payment has been processed.
-                  </p>
-                </div>
-              )}
-            </div>
-          )}
-
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setShowApprovalDialog(false)}>
-              Cancel
-            </Button>
-            <Button
-              onClick={handleApprovalAction}
-              disabled={updateRunMutation.isPending || (approvalAction === 'reject' && !approvalNotes)}
-              className={
-                approvalAction === 'approve' || approvalAction === 'pay' 
-                  ? 'bg-green-600 hover:bg-green-700' 
-                  : approvalAction === 'reject'
-                  ? 'bg-red-600 hover:bg-red-700'
-                  : 'bg-blue-600 hover:bg-blue-700'
-              }
-            >
-              {updateRunMutation.isPending ? (
-                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-              ) : null}
-              {approvalAction === 'approve' && 'Approve'}
-              {approvalAction === 'reject' && 'Reject'}
-              {approvalAction === 'review' && 'Complete Review'}
-              {approvalAction === 'pay' && 'Confirm Paid'}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+                  ))}
+                  {filteredRuns.length === 0 && (
+                    <TableRow>
+                      <TableCell colSpan={7} className="text-center py-8 text-gray-500">
+                        No payroll runs found
+                      </TableCell>
+                    </TableRow>
+                  )}
+                </TableBody>
+              </Table>
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
 
       {/* Details Dialog */}
       <Dialog open={showDetailsDialog} onOpenChange={setShowDetailsDialog}>
-        <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto [&>button]:hidden">
+        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto [&>button]:hidden">
           <DialogHeader>
             <DialogTitle>Payroll Run Details</DialogTitle>
           </DialogHeader>
-          
           {selectedRun && (
             <div className="space-y-4">
+              <div className="grid grid-cols-3 gap-4">
+                <Card>
+                  <CardContent className="pt-4">
+                    <p className="text-sm text-gray-500">Total Gross</p>
+                    <p className="text-xl font-bold">{formatSLE(selectedRun.total_gross || 0)}</p>
+                  </CardContent>
+                </Card>
+                <Card>
+                  <CardContent className="pt-4">
+                    <p className="text-sm text-gray-500">Total Deductions</p>
+                    <p className="text-xl font-bold text-red-600">{formatSLE(selectedRun.total_deductions || 0)}</p>
+                  </CardContent>
+                </Card>
+                <Card className="bg-gradient-to-r from-[#1EB053]/10 to-[#0072C6]/10">
+                  <CardContent className="pt-4">
+                    <p className="text-sm text-gray-500">Total Net Pay</p>
+                    <p className="text-xl font-bold text-[#1EB053]">{formatSLE(selectedRun.total_net || 0)}</p>
+                  </CardContent>
+                </Card>
+              </div>
+
               <div className="grid grid-cols-2 gap-4">
-                <div className="p-4 bg-gray-50 rounded-lg">
-                  <p className="text-sm text-gray-500">Run Number</p>
-                  <p className="font-medium">{selectedRun.run_number || 'N/A'}</p>
-                </div>
-                <div className="p-4 bg-gray-50 rounded-lg">
-                  <p className="text-sm text-gray-500">Status</p>
-                  <Badge className={`${STATUS_CONFIG[selectedRun.status]?.color} text-white mt-1`}>
-                    {STATUS_CONFIG[selectedRun.status]?.label}
-                  </Badge>
-                </div>
-                <div className="p-4 bg-gray-50 rounded-lg">
-                  <p className="text-sm text-gray-500">Period</p>
-                  <p className="font-medium">
-                    {selectedRun.period_start && selectedRun.period_end
-                      ? `${format(new Date(selectedRun.period_start), 'MMM d')} - ${format(new Date(selectedRun.period_end), 'MMM d, yyyy')}`
-                      : 'N/A'}
-                  </p>
-                </div>
-                <div className="p-4 bg-gray-50 rounded-lg">
-                  <p className="text-sm text-gray-500">Employees</p>
-                  <p className="font-medium">{selectedRun.employee_count || selectedRun.payroll_ids?.length || 0}</p>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                <div className="p-4 border rounded-lg">
-                  <p className="text-xs text-gray-500">Total Gross</p>
-                  <p className="font-bold">{formatSLE(selectedRun.total_gross || 0)}</p>
-                </div>
-                <div className="p-4 border rounded-lg">
-                  <p className="text-xs text-gray-500">Total Deductions</p>
-                  <p className="font-bold text-red-600">{formatSLE(selectedRun.total_deductions || 0)}</p>
-                </div>
-                <div className="p-4 border rounded-lg">
-                  <p className="text-xs text-gray-500">Total Net</p>
-                  <p className="font-bold text-[#1EB053]">{formatSLE(selectedRun.total_net || 0)}</p>
-                </div>
-                <div className="p-4 border rounded-lg">
-                  <p className="text-xs text-gray-500">Employer Cost</p>
-                  <p className="font-bold">{formatSLE(selectedRun.total_employer_cost || 0)}</p>
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <h4 className="font-medium flex items-center gap-2">
-                  <History className="w-4 h-4" />
-                  Workflow History
-                </h4>
-                <div className="border rounded-lg divide-y">
-                  {selectedRun.created_by_name && (
-                    <div className="p-3 flex justify-between text-sm">
-                      <span>Created by {selectedRun.created_by_name}</span>
-                      <span className="text-gray-500">{selectedRun.created_date ? format(new Date(selectedRun.created_date), 'MMM d, yyyy h:mm a') : ''}</span>
+                <div>
+                  <h4 className="font-medium mb-2">Statutory Totals</h4>
+                  <div className="space-y-1 text-sm">
+                    <div className="flex justify-between">
+                      <span>NASSIT (Employee)</span>
+                      <span>{formatSLE(selectedRun.total_nassit_employee || 0)}</span>
                     </div>
-                  )}
-                  {selectedRun.submitted_by_name && (
-                    <div className="p-3 flex justify-between text-sm">
-                      <span>Submitted by {selectedRun.submitted_by_name}</span>
-                      <span className="text-gray-500">{selectedRun.submitted_date ? format(new Date(selectedRun.submitted_date), 'MMM d, yyyy h:mm a') : ''}</span>
+                    <div className="flex justify-between">
+                      <span>NASSIT (Employer)</span>
+                      <span>{formatSLE(selectedRun.total_nassit_employer || 0)}</span>
                     </div>
-                  )}
-                  {selectedRun.reviewed_by_name && (
-                    <div className="p-3 flex justify-between text-sm">
-                      <span>Reviewed by {selectedRun.reviewed_by_name}</span>
-                      <span className="text-gray-500">{selectedRun.reviewed_date ? format(new Date(selectedRun.reviewed_date), 'MMM d, yyyy h:mm a') : ''}</span>
+                    <div className="flex justify-between">
+                      <span>PAYE Tax</span>
+                      <span>{formatSLE(selectedRun.total_paye || 0)}</span>
                     </div>
-                  )}
-                  {selectedRun.approved_by_name && (
-                    <div className="p-3 flex justify-between text-sm bg-green-50">
-                      <span className="text-green-700">Approved by {selectedRun.approved_by_name}</span>
-                      <span className="text-green-600">{selectedRun.approved_date ? format(new Date(selectedRun.approved_date), 'MMM d, yyyy h:mm a') : ''}</span>
-                    </div>
-                  )}
-                  {selectedRun.rejected_by_name && (
-                    <div className="p-3 bg-red-50">
-                      <div className="flex justify-between text-sm">
-                        <span className="text-red-700">Rejected by {selectedRun.rejected_by_name}</span>
+                  </div>
+                </div>
+                <div>
+                  <h4 className="font-medium mb-2">Approval History</h4>
+                  <div className="space-y-2 text-sm">
+                    {selectedRun.created_by_name && (
+                      <div className="flex items-center gap-2">
+                        <FileText className="w-4 h-4 text-gray-400" />
+                        <span>Created by {selectedRun.created_by_name}</span>
                       </div>
-                      {selectedRun.rejection_reason && (
-                        <p className="text-sm text-red-600 mt-1">Reason: {selectedRun.rejection_reason}</p>
-                      )}
-                    </div>
-                  )}
+                    )}
+                    {selectedRun.submitted_by_name && (
+                      <div className="flex items-center gap-2">
+                        <Send className="w-4 h-4 text-blue-500" />
+                        <span>Submitted by {selectedRun.submitted_by_name}</span>
+                      </div>
+                    )}
+                    {selectedRun.reviewed_by_name && (
+                      <div className="flex items-center gap-2">
+                        <Eye className="w-4 h-4 text-yellow-500" />
+                        <span>Reviewed by {selectedRun.reviewed_by_name}</span>
+                      </div>
+                    )}
+                    {selectedRun.approved_by_name && (
+                      <div className="flex items-center gap-2">
+                        <CheckCircle2 className="w-4 h-4 text-green-500" />
+                        <span>Approved by {selectedRun.approved_by_name}</span>
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
 
               {selectedRun.notes && (
-                <div className="p-4 bg-yellow-50 rounded-lg">
-                  <p className="text-sm text-yellow-800">{selectedRun.notes}</p>
+                <div>
+                  <h4 className="font-medium mb-2">Notes</h4>
+                  <p className="text-sm text-gray-600 bg-gray-50 p-3 rounded">{selectedRun.notes}</p>
                 </div>
               )}
+
+              <div>
+                <h4 className="font-medium mb-2">Included Payrolls ({selectedRun.payroll_ids?.length || 0})</h4>
+                <div className="max-h-48 overflow-y-auto border rounded">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Employee</TableHead>
+                        <TableHead>Role</TableHead>
+                        <TableHead>Gross</TableHead>
+                        <TableHead>Net</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {getRunPayrolls(selectedRun.id).map(p => (
+                        <TableRow key={p.id}>
+                          <TableCell>{p.employee_name}</TableCell>
+                          <TableCell><Badge variant="outline">{p.employee_role?.replace('_', ' ')}</Badge></TableCell>
+                          <TableCell>{formatSLE(p.gross_pay)}</TableCell>
+                          <TableCell className="font-medium text-[#1EB053]">{formatSLE(p.net_pay)}</TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+              </div>
             </div>
           )}
-
           <DialogFooter>
-            <Button variant="outline" onClick={() => setShowDetailsDialog(false)}>
-              Close
+            <Button variant="outline" onClick={() => setShowDetailsDialog(false)}>Close</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Action Dialog */}
+      <Dialog open={showActionDialog} onOpenChange={setShowActionDialog}>
+        <DialogContent className="max-w-md [&>button]:hidden">
+          <DialogHeader>
+            <DialogTitle>
+              {actionType === 'approve' && 'Approve Payroll Run'}
+              {actionType === 'reject' && 'Reject Payroll Run'}
+              {actionType === 'review' && 'Complete Review'}
+              {actionType === 'submit_review' && 'Submit for Review'}
+              {actionType === 'process' && 'Start Processing'}
+              {actionType === 'mark_paid' && 'Mark as Paid'}
+              {actionType === 'cancel' && 'Cancel Payroll Run'}
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            {selectedRun && (
+              <div className="p-3 bg-gray-50 rounded-lg">
+                <p className="font-medium">{selectedRun.run_number || `PR-${selectedRun.id?.slice(-6)}`}</p>
+                <p className="text-sm text-gray-500">
+                  {selectedRun.employee_count || selectedRun.payroll_ids?.length} employees • {formatSLE(selectedRun.total_net || 0)}
+                </p>
+              </div>
+            )}
+            
+            <div>
+              <Label>{actionType === 'reject' ? 'Rejection Reason *' : 'Notes (optional)'}</Label>
+              <Textarea
+                value={actionNotes}
+                onChange={(e) => setActionNotes(e.target.value)}
+                placeholder={actionType === 'reject' ? 'Please provide a reason for rejection...' : 'Add any notes...'}
+                rows={3}
+                required={actionType === 'reject'}
+              />
+            </div>
+
+            {actionType === 'approve' && (
+              <div className="p-3 bg-green-50 border border-green-200 rounded-lg text-sm text-green-800">
+                <CheckCircle2 className="w-4 h-4 inline mr-2" />
+                This will approve the payroll run and allow it to be processed for payment.
+              </div>
+            )}
+
+            {actionType === 'reject' && (
+              <div className="p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-800">
+                <AlertTriangle className="w-4 h-4 inline mr-2" />
+                This will return the payroll run to draft status for corrections.
+              </div>
+            )}
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowActionDialog(false)}>Cancel</Button>
+            <Button 
+              onClick={() => handleAction(actionType)}
+              disabled={actionType === 'reject' && !actionNotes.trim()}
+              className={
+                actionType === 'approve' || actionType === 'mark_paid' 
+                  ? 'bg-[#1EB053] hover:bg-[#178f43]' 
+                  : actionType === 'reject' || actionType === 'cancel'
+                    ? 'bg-red-600 hover:bg-red-700'
+                    : 'bg-[#0072C6] hover:bg-[#005a9e]'
+              }
+            >
+              Confirm
             </Button>
           </DialogFooter>
         </DialogContent>
