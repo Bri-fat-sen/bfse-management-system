@@ -42,7 +42,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { useToast } from "@/components/ui/use-toast";
+import { toast } from "sonner";
 import PageHeader from "@/components/ui/PageHeader";
 import LoadingSpinner from "@/components/ui/LoadingSpinner";
 import { MODULES, ROLES, DEFAULT_ROLE_PERMISSIONS } from "@/components/permissions/PermissionsContext";
