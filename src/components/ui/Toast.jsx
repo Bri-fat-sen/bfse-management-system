@@ -89,7 +89,7 @@ export function ToastProvider({ children }) {
 
 function ToastContainer({ toasts, onRemove, onClearAll }) {
   return (
-    <div className="fixed top-4 right-4 z-[100] flex flex-col gap-2 max-w-md w-full pointer-events-none px-4 sm:px-0">
+    <div className="fixed top-4 right-4 z-[100] flex flex-col gap-3 max-w-sm w-full pointer-events-none px-4 sm:px-0">
       <AnimatePresence mode="popLayout">
         {toasts.length > 2 && (
           <motion.button
@@ -97,7 +97,7 @@ function ToastContainer({ toasts, onRemove, onClearAll }) {
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -10 }}
             onClick={onClearAll}
-            className="pointer-events-auto self-end text-xs text-gray-500 hover:text-gray-700 bg-white/90 backdrop-blur-sm px-3 py-1.5 rounded-full shadow-sm border border-gray-200 transition-colors"
+            className="pointer-events-auto self-end text-xs text-white bg-[#0F1F3C] hover:bg-[#1a2d52] px-3 py-1.5 rounded-full shadow-lg transition-colors"
           >
             Clear all ({toasts.length})
           </motion.button>
@@ -142,153 +142,163 @@ function ToastItem({ toast, onRemove, index, total }) {
   const config = {
     success: {
       icon: CheckCircle2,
+      borderColor: "border-l-[#1EB053]",
       iconColor: "text-[#1EB053]",
       iconBg: "bg-[#1EB053]/10",
-      accentColor: "#1EB053",
+      progressColor: "bg-gradient-to-r from-[#1EB053] to-[#16803d]",
+      gradient: "from-[#1EB053]/8 via-[#1EB053]/3 to-transparent",
+      ring: "ring-[#1EB053]/20",
     },
     error: {
       icon: AlertCircle,
+      borderColor: "border-l-red-500",
       iconColor: "text-red-500",
       iconBg: "bg-red-500/10",
-      accentColor: "#ef4444",
+      progressColor: "bg-gradient-to-r from-red-500 to-red-600",
+      gradient: "from-red-500/8 via-red-500/3 to-transparent",
+      ring: "ring-red-500/20",
     },
     warning: {
       icon: AlertTriangle,
+      borderColor: "border-l-amber-500",
       iconColor: "text-amber-500",
       iconBg: "bg-amber-500/10",
-      accentColor: "#f59e0b",
+      progressColor: "bg-gradient-to-r from-amber-500 to-amber-600",
+      gradient: "from-amber-500/8 via-amber-500/3 to-transparent",
+      ring: "ring-amber-500/20",
     },
     info: {
       icon: Info,
+      borderColor: "border-l-[#0072C6]",
       iconColor: "text-[#0072C6]",
       iconBg: "bg-[#0072C6]/10",
-      accentColor: "#0072C6",
+      progressColor: "bg-gradient-to-r from-[#0072C6] to-[#005a9e]",
+      gradient: "from-[#0072C6]/8 via-[#0072C6]/3 to-transparent",
+      ring: "ring-[#0072C6]/20",
     },
     notify: {
       icon: Bell,
+      borderColor: "border-l-[#0F1F3C]",
       iconColor: "text-[#0F1F3C]",
       iconBg: "bg-[#0F1F3C]/10",
-      accentColor: "#0F1F3C",
+      progressColor: "bg-gradient-to-r from-[#0F1F3C] to-[#1a2d52]",
+      gradient: "from-[#0F1F3C]/8 via-[#0F1F3C]/3 to-transparent",
+      ring: "ring-[#0F1F3C]/20",
     },
     loading: {
       icon: Loader2,
+      borderColor: "border-l-[#0072C6]",
       iconColor: "text-[#0072C6]",
       iconBg: "bg-[#0072C6]/10",
-      accentColor: "#0072C6",
+      progressColor: "bg-gradient-to-r from-[#0072C6] to-[#1EB053]",
+      gradient: "from-[#0072C6]/8 via-[#1EB053]/3 to-transparent",
+      ring: "ring-[#0072C6]/20",
       spin: true,
     },
   };
 
   const toastConfig = config[toast.type] || config.info;
   const Icon = toast.icon || toastConfig.icon;
-  const { iconColor, iconBg, accentColor, spin } = toastConfig;
+  const { borderColor, iconColor, iconBg, progressColor, gradient, ring, spin } = toastConfig;
 
   return (
     <motion.div
       layout
-      initial={{ opacity: 0, x: 100, scale: 0.8 }}
+      initial={{ opacity: 0, x: 50, scale: 0.95 }}
       animate={{ 
         opacity: 1, 
         x: 0, 
-        scale: 1 - (total - 1 - index) * 0.02,
+        scale: 1,
       }}
-      exit={{ opacity: 0, x: 100, scale: 0.8 }}
-      transition={{ type: "spring", stiffness: 400, damping: 30 }}
+      exit={{ opacity: 0, x: 50, scale: 0.95 }}
+      transition={{ type: "spring", stiffness: 500, damping: 35 }}
       onMouseEnter={() => setIsPaused(true)}
       onMouseLeave={() => setIsPaused(false)}
-      className="pointer-events-auto overflow-hidden rounded-xl shadow-[0_8px_30px_rgba(15,31,60,0.15)] hover:shadow-[0_12px_40px_rgba(15,31,60,0.2)] transition-shadow duration-300"
+      className="pointer-events-auto overflow-hidden rounded-xl shadow-xl"
     >
       {/* Sierra Leone Flag Stripe - Top */}
-      <div className="h-1.5 flex">
+      <div className="h-1 flex">
         <div className="flex-1 bg-[#1EB053]" />
         <div className="flex-1 bg-white" />
         <div className="flex-1 bg-[#0072C6]" />
       </div>
       
-      {/* Main Content */}
-      <div className="bg-white p-4">
-        <div className="flex items-start gap-3">
-          <motion.div 
-            initial={{ scale: 0, rotate: -180 }}
-            animate={{ scale: 1, rotate: 0 }}
-            transition={{ type: "spring", stiffness: 500, damping: 25, delay: 0.1 }}
-            className={`flex-shrink-0 p-2.5 rounded-xl ${iconBg} shadow-sm`}
-          >
-            <Icon className={`w-5 h-5 ${iconColor} ${spin ? 'animate-spin' : ''}`} />
-          </motion.div>
-          <div className="flex-1 min-w-0 pt-0.5">
-            <p className="text-sm font-bold text-[#0F1F3C] leading-tight">{toast.title}</p>
-            {toast.description && (
-              <p className="text-[13px] text-gray-500 mt-1 leading-relaxed">{toast.description}</p>
-            )}
-            <div className="flex items-center gap-3 mt-2 empty:mt-0">
-              {toast.action && toast.actionLabel && (
-                <button
-                  onClick={() => {
-                    toast.action();
-                    onRemove(toast.id);
-                  }}
-                  className={`text-sm font-semibold ${iconColor} hover:underline underline-offset-2`}
-                >
-                  {toast.actionLabel}
-                </button>
+      <div className={`bg-white border-l-4 ${borderColor}`}>
+        <div className="p-4">
+          <div className="flex items-start gap-3">
+            <motion.div 
+              initial={{ scale: 0 }}
+              animate={{ scale: 1 }}
+              transition={{ type: "spring", stiffness: 500, damping: 25, delay: 0.1 }}
+              className={`flex-shrink-0 p-2 rounded-lg ${iconBg}`}
+            >
+              <Icon className={`w-5 h-5 ${iconColor} ${spin ? 'animate-spin' : ''}`} />
+            </motion.div>
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-bold text-[#0F1F3C]">{toast.title}</p>
+              {toast.description && (
+                <p className="text-sm text-gray-600 mt-0.5">{toast.description}</p>
               )}
-              {toast.link && (
-                <a
-                  href={toast.link}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className={`text-sm font-medium ${iconColor} hover:underline underline-offset-2 flex items-center gap-1`}
-                >
-                  {toast.linkLabel || "View"} <ExternalLink className="w-3 h-3" />
-                </a>
+              {(toast.action || toast.link) && (
+                <div className="flex items-center gap-3 mt-2">
+                  {toast.action && toast.actionLabel && (
+                    <button
+                      onClick={() => {
+                        toast.action();
+                        onRemove(toast.id);
+                      }}
+                      className={`text-sm font-semibold ${iconColor} hover:underline`}
+                    >
+                      {toast.actionLabel}
+                    </button>
+                  )}
+                  {toast.link && (
+                    <a
+                      href={toast.link}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className={`text-sm font-medium ${iconColor} hover:underline flex items-center gap-1`}
+                    >
+                      {toast.linkLabel || "View"} <ExternalLink className="w-3 h-3" />
+                    </a>
+                  )}
+                </div>
               )}
             </div>
+            <button
+              type="button"
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                onRemove(toast.id);
+              }}
+              className="flex-shrink-0 text-gray-400 hover:text-gray-600 hover:bg-gray-100 p-1.5 rounded-lg transition-colors"
+            >
+              <X className="w-4 h-4" />
+            </button>
           </div>
-          <button
-            type="button"
-            onClick={(e) => {
-              e.preventDefault();
-              e.stopPropagation();
-              onRemove(toast.id);
-            }}
-            className="flex-shrink-0 text-gray-400 hover:text-[#0F1F3C] hover:bg-gray-100 transition-colors p-1.5 rounded-lg cursor-pointer"
-          >
-            <X className="w-4 h-4" />
-          </button>
         </div>
-      </div>
-      
-      {/* Progress bar with accent color */}
-      {!toast.persistent && toast.type !== "loading" && (
-        <div className="h-1 bg-gray-100">
-          <motion.div
-            className="h-full origin-left"
-            style={{ 
-              width: `${progress}%`,
-              background: `linear-gradient(90deg, ${accentColor}, ${accentColor}dd)`
-            }}
-          />
-        </div>
-      )}
-      
-      {/* Loading indicator - Sierra Leone gradient */}
-      {toast.type === "loading" && (
-        <div className="h-1 bg-gray-100 overflow-hidden">
-          <motion.div
-            className="h-full w-1/3"
-            style={{ background: "linear-gradient(90deg, #1EB053, #FFFFFF, #0072C6)" }}
-            animate={{ x: ["-100%", "400%"] }}
-            transition={{ duration: 1.5, repeat: Infinity, ease: "easeInOut" }}
-          />
-        </div>
-      )}
-      
-      {/* Bottom Sierra Leone Flag Stripe */}
-      <div className="h-1 flex">
-        <div className="flex-1 bg-[#1EB053]" />
-        <div className="flex-1 bg-white border-t border-gray-100" />
-        <div className="flex-1 bg-[#0072C6]" />
+        
+        {/* Progress bar */}
+        {!toast.persistent && toast.type !== "loading" && (
+          <div className="h-1 bg-gray-100">
+            <motion.div
+              className={`h-full ${progressColor}`}
+              style={{ width: `${progress}%` }}
+            />
+          </div>
+        )}
+        
+        {/* Loading indicator */}
+        {toast.type === "loading" && (
+          <div className="h-1 bg-gray-100 overflow-hidden">
+            <motion.div
+              className="h-full w-1/3 bg-gradient-to-r from-[#1EB053] via-white to-[#0072C6]"
+              animate={{ x: ["-100%", "400%"] }}
+              transition={{ duration: 1.2, repeat: Infinity, ease: "linear" }}
+            />
+          </div>
+        )}
       </div>
     </motion.div>
   );
