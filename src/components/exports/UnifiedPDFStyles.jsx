@@ -173,6 +173,11 @@ export function getUnifiedPDFStyles(organisation, documentType = 'receipt') {
       max-width: 44px;
       max-height: 44px;
       object-fit: contain;
+      display: block;
+    }
+    
+    .logo-box img[src=""], .logo-box img:not([src]) {
+      display: none;
     }
     
     .logo-box .initials {
