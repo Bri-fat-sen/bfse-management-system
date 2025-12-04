@@ -593,8 +593,8 @@ export function getUnifiedFooter(organisation) {
       <div class="flag">🇸🇱</div>
       <div class="contact">
         ${organisation?.name || ''} ${organisation?.phone ? '• ' + organisation.phone : ''} ${organisation?.email ? '• ' + organisation.email : ''}
+        ${orgCode ? `<span class="org-code-footer">${orgCode}</span>` : ''}
       </div>
-      ${orgCode ? `<div class="org-code-footer">${orgCode}</div>` : ''}
     </div>
   `;
 }
