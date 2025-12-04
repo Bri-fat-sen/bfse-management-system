@@ -1,6 +1,7 @@
 import React, { useState, useMemo } from "react";
 import { base44 } from "@/api/base44Client";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useToast } from "@/components/ui/Toast";
 import { format, subDays, startOfMonth, endOfMonth, parseISO } from "date-fns";
 import {
   Clock,
@@ -64,6 +65,7 @@ import AIInsightsPanel from "@/components/ai/AIInsightsPanel";
 const COLORS = ['#1EB053', '#0072C6', '#D4AF37', '#EF4444', '#9333EA', '#F59E0B'];
 
 export default function Attendance() {
+  const toast = useToast();
   const queryClient = useQueryClient();
   const [activeTab, setActiveTab] = useState("overview");
   const [dateRange, setDateRange] = useState("month");
