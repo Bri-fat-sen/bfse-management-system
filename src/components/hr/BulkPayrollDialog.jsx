@@ -377,6 +377,7 @@ export default function BulkPayrollDialog({
       toast.success("Bulk payroll completed", `Successfully processed ${successCount} payrolls`);
     } else {
       toast.warning("Bulk payroll completed with errors", `${successCount} succeeded, ${failureCount} failed`);
+    }
   };
 
   return (
