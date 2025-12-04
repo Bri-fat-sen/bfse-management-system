@@ -10,6 +10,7 @@ export function getUnifiedPDFStyles(organisation, documentType = 'receipt') {
   const primaryColor = organisation?.primary_color || '#1EB053';
   const secondaryColor = organisation?.secondary_color || '#0072C6';
   const navyColor = '#0F1F3C';
+  const orgCode = organisation?.code || '';
   
   // Size adjustments based on document type
   const sizes = {
@@ -61,13 +62,58 @@ export function getUnifiedPDFStyles(organisation, documentType = 'receipt') {
     }
     
     .document {
-      max-width: ${size.maxWidth};
-      margin: 0 auto;
-      background: white;
-      border-radius: 16px;
-      overflow: hidden;
-      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.15);
-    }
+        max-width: ${size.maxWidth};
+        margin: 0 auto;
+        background: white;
+        border-radius: 16px;
+        overflow: hidden;
+        box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.15);
+        position: relative;
+      }
+
+      /* Organisation Code Watermark */
+      .watermark {
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%) rotate(-45deg);
+        font-size: 120px;
+        font-weight: 800;
+        color: rgba(0, 0, 0, 0.03);
+        white-space: nowrap;
+        pointer-events: none;
+        z-index: 0;
+        letter-spacing: 20px;
+        font-family: 'Plus Jakarta Sans', sans-serif;
+      }
+
+      .org-code-badge {
+        position: absolute;
+        top: 12px;
+        right: 12px;
+        background: rgba(255, 255, 255, 0.95);
+        border: 2px solid var(--primary);
+        border-radius: 8px;
+        padding: 4px 12px;
+        font-size: 11px;
+        font-weight: 700;
+        color: var(--navy);
+        letter-spacing: 1px;
+        z-index: 10;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+      }
+
+      .org-code-footer {
+        display: inline-block;
+        background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+        color: white;
+        padding: 4px 16px;
+        border-radius: 20px;
+        font-size: 12px;
+        font-weight: 700;
+        letter-spacing: 2px;
+        margin-top: 8px;
+      }
     
     /* Flag Stripe - Sierra Leone inspired */
     .flag-stripe {
@@ -555,11 +601,13 @@ export function getUnifiedHeader(organisation, docType, docNumber, docDate, docu
  * Generate unified footer HTML
  */
 export function getUnifiedFooter(organisation) {
+  const orgCode = organisation?.code || '';
   return `
     <div class="footer">
       <div class="thanks">Thank you for your business!</div>
       <div class="tagline">Proudly serving Sierra Leone</div>
       <div class="flag">🇸🇱</div>
+      ${orgCode ? `<div class="org-code-footer">${orgCode}</div>` : ''}
       <div class="contact">
         ${organisation?.name || ''} ${organisation?.phone ? '• ' + organisation.phone : ''} ${organisation?.email ? '• ' + organisation.email : ''}
       </div>
@@ -589,6 +637,7 @@ export function generateUnifiedPDF({
   });
   const finalDocNumber = docNumber || `${documentType.toUpperCase().slice(0,3)}-${Date.now().toString(36).toUpperCase()}`;
   const finalDocDate = docDate || generatedDate;
+  const orgCode = organisation?.code || '';
 
   return `
     <!DOCTYPE html>
@@ -600,7 +649,9 @@ export function generateUnifiedPDF({
         <style>${styles}</style>
       </head>
       <body>
+        ${orgCode ? `<div class="watermark">${orgCode}</div>` : ''}
         <div class="document">
+          ${orgCode ? `<div class="org-code-badge">CODE: ${orgCode}</div>` : ''}
           ${getUnifiedHeader(organisation, title, finalDocNumber, finalDocDate, documentType)}
           
           ${infoBar.length > 0 ? `
