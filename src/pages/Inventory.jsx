@@ -276,8 +276,12 @@ export default function Inventory() {
     mutationFn: (id) => base44.entities.Product.delete(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['products'] });
-      toast.success("Product deleted successfully");
+      toast.success("Product deleted", "Product has been removed from inventory");
     },
+    onError: (error) => {
+      console.error('Delete product error:', error);
+      toast.error("Failed to delete product", error.message);
+    }
   });
 
   const filteredProducts = products.filter(p => {
