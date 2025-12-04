@@ -21,7 +21,7 @@ import {
   DialogTitle,
   DialogFooter,
 } from "@/components/ui/dialog";
-import { useToast } from "@/components/ui/Toast";
+
 import {
   Package,
   Calendar,
@@ -47,7 +47,6 @@ const STATUS_COLORS = {
 };
 
 export default function BatchManagement({ products = [], warehouses = [], vehicles = [], stockLevels = [], orgId, currentEmployee }) {
-  const toast = useToast();
   const queryClient = useQueryClient();
   const [searchTerm, setSearchTerm] = useState("");
   const [productFilter, setProductFilter] = useState("all");
@@ -84,11 +83,9 @@ export default function BatchManagement({ products = [], warehouses = [], vehicl
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['inventoryBatches'] });
       setShowBatchDialog(false);
-      toast.success("Batch created", "Batch has been added to inventory");
     },
     onError: (error) => {
       console.error('Create batch error:', error);
-      toast.error("Failed to create batch", error.message);
     }
   });
 
@@ -113,11 +110,9 @@ export default function BatchManagement({ products = [], warehouses = [], vehicl
       queryClient.invalidateQueries({ queryKey: ['inventoryBatches'] });
       setShowBatchDialog(false);
       setEditingBatch(null);
-      toast.success("Batch updated", "Changes have been saved");
     },
     onError: (error) => {
       console.error('Update batch error:', error);
-      toast.error("Failed to update batch", error.message);
     }
   });
 
@@ -165,11 +160,9 @@ export default function BatchManagement({ products = [], warehouses = [], vehicl
       queryClient.invalidateQueries({ queryKey: ['inventoryBatches'] });
       queryClient.invalidateQueries({ queryKey: ['stockLevels'] });
       queryClient.invalidateQueries({ queryKey: ['stockMovements'] });
-      toast.success("Batch deleted", "Batch and related allocations removed");
     },
     onError: (error) => {
       console.error('Delete batch error:', error);
-      toast.error("Failed to delete batch", error.message);
     }
   });
 
