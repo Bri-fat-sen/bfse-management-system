@@ -20,7 +20,7 @@ import {
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { format } from "date-fns";
-import { toast } from "sonner";
+import { useToast } from "@/components/ui/Toast";
 
 const LEAVE_TYPES = [
   { value: "annual", label: "Annual Leave", icon: "🏖️" },
@@ -40,6 +40,7 @@ export default function LeaveRequestDialog({
   editingRequest = null,
   organisation
 }) {
+  const toast = useToast();
   const queryClient = useQueryClient();
   const [activeSection, setActiveSection] = useState('type');
   const [leaveType, setLeaveType] = useState(editingRequest?.leave_type || "annual");
@@ -60,20 +61,28 @@ export default function LeaveRequestDialog({
     mutationFn: (data) => base44.entities.LeaveRequest.create(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['leaveRequests'] });
-      toast.success("Leave request submitted successfully");
+      toast.success("Leave request submitted", "Your leave request has been submitted for approval");
       onOpenChange(false);
       resetForm();
     },
+    onError: (error) => {
+      console.error('Create leave request error:', error);
+      toast.error("Failed to submit leave request", error.message);
+    }
   });
 
   const updateMutation = useMutation({
     mutationFn: ({ id, data }) => base44.entities.LeaveRequest.update(id, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['leaveRequests'] });
-      toast.success("Leave request updated successfully");
+      toast.success("Leave request updated", "Your leave request has been updated");
       onOpenChange(false);
       resetForm();
     },
+    onError: (error) => {
+      console.error('Update leave request error:', error);
+      toast.error("Failed to update leave request", error.message);
+    }
   });
 
   const resetForm = () => {
@@ -93,9 +102,9 @@ export default function LeaveRequestDialog({
     try {
       const { file_url } = await base44.integrations.Core.UploadFile({ file });
       setAttachmentUrl(file_url);
-      toast.success("File uploaded successfully");
+      toast.success("File uploaded", "Document has been attached to your request");
     } catch (error) {
-      toast.error("Failed to upload file");
+      toast.error("Failed to upload file", error.message);
     }
     setUploading(false);
   };

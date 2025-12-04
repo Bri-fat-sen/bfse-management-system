@@ -13,7 +13,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
-import { useToast } from "@/components/ui/use-toast";
+import { useToast } from "@/components/ui/Toast";
 import { Package, Check, AlertTriangle } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { format } from "date-fns";
@@ -26,7 +26,7 @@ export default function ReceiveStockDialog({
   orgId,
   currentEmployee
 }) {
-  const { toast } = useToast();
+  const toast = useToast();
   const queryClient = useQueryClient();
   const [receivedItems, setReceivedItems] = useState([]);
   const [notes, setNotes] = useState("");
@@ -156,8 +156,12 @@ export default function ReceiveStockDialog({
       queryClient.invalidateQueries({ queryKey: ['suppliers'] });
       queryClient.invalidateQueries({ queryKey: ['supplierPriceHistory'] });
       onOpenChange(false);
-      toast({ title: "Stock received successfully" });
+      toast.success("Stock received", "Inventory has been updated successfully");
     },
+    onError: (error) => {
+      console.error('Receive stock error:', error);
+      toast.error("Failed to receive stock", error.message);
+    }
   });
 
   const updateReceivingQty = (productId, qty) => {

@@ -21,7 +21,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
-import { toast } from "sonner";
+import { useToast } from "@/components/ui/Toast";
 import { Calendar, Clock, Video, Phone, Users, MapPin } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -35,6 +35,7 @@ export default function MeetingDialog({
   orgId,
   currentEmployee 
 }) {
+  const toast = useToast();
   const queryClient = useQueryClient();
   const [selectedAttendees, setSelectedAttendees] = useState([]);
   const [meetingType, setMeetingType] = useState("in_person");
@@ -48,8 +49,12 @@ export default function MeetingDialog({
       queryClient.invalidateQueries({ queryKey: ['meetings'] });
       onOpenChange(false);
       setSelectedAttendees([]);
-      toast.success("Meeting scheduled successfully");
+      toast.success("Meeting scheduled", "Meeting has been scheduled and attendees notified");
     },
+    onError: (error) => {
+      console.error('Create meeting error:', error);
+      toast.error("Failed to schedule meeting", error.message);
+    }
   });
 
   const toggleAttendee = (empId) => {

@@ -20,7 +20,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { format } from "date-fns";
-import { toast } from "sonner";
+import { useToast } from "@/components/ui/Toast";
 
 const RATING_CATEGORIES = [
   { key: "productivity", label: "Productivity" },
@@ -58,6 +58,7 @@ export default function PerformanceReviewDialog({
   orgId,
   editingReview = null 
 }) {
+  const toast = useToast();
   const queryClient = useQueryClient();
   
   const [reviewPeriod, setReviewPeriod] = useState(editingReview?.review_period || "");
@@ -79,18 +80,26 @@ export default function PerformanceReviewDialog({
     mutationFn: (data) => base44.entities.PerformanceReview.create(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['performanceReviews'] });
-      toast.success("Performance review saved successfully");
+      toast.success("Review saved", "Performance review has been saved successfully");
       onOpenChange(false);
     },
+    onError: (error) => {
+      console.error('Create review error:', error);
+      toast.error("Failed to save review", error.message);
+    }
   });
 
   const updateMutation = useMutation({
     mutationFn: ({ id, data }) => base44.entities.PerformanceReview.update(id, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['performanceReviews'] });
-      toast.success("Performance review updated successfully");
+      toast.success("Review updated", "Performance review has been updated successfully");
       onOpenChange(false);
     },
+    onError: (error) => {
+      console.error('Update review error:', error);
+      toast.error("Failed to update review", error.message);
+    }
   });
 
   const handleRatingChange = (key, value) => {

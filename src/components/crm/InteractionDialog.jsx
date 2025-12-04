@@ -7,7 +7,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
-import { toast } from "sonner";
+import { useToast } from "@/components/ui/Toast";
 import { format } from "date-fns";
 import { 
   X, Check, Loader2, MessageSquare, Phone, Mail, Calendar,
@@ -35,6 +35,7 @@ const outcomes = [
 ];
 
 export default function InteractionDialog({ open, onOpenChange, customer, currentEmployee, orgId, organisation }) {
+  const toast = useToast();
   const queryClient = useQueryClient();
   const [activeSection, setActiveSection] = useState('type');
   const [formData, setFormData] = useState({
@@ -67,8 +68,12 @@ export default function InteractionDialog({ open, onOpenChange, customer, curren
     mutationFn: (data) => base44.entities.CustomerInteraction.create(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['interactions'] });
-      toast.success("Interaction logged successfully");
+      toast.success("Interaction logged", "Customer interaction has been recorded");
       onOpenChange(false);
+    },
+    onError: (error) => {
+      console.error('Create interaction error:', error);
+      toast.error("Failed to log interaction", error.message);
     }
   });
 
