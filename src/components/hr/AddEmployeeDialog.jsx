@@ -55,6 +55,7 @@ export default function AddEmployeeDialog({ open, onOpenChange, orgId, employeeC
     role: 'support_staff',
     salary_type: 'monthly',
     base_salary: '',
+    hourly_rate: '',
     hire_date: new Date().toISOString().split('T')[0],
     remuneration_package_id: '',
   });
@@ -88,6 +89,7 @@ export default function AddEmployeeDialog({ open, onOpenChange, orgId, employeeC
         setFormData(prev => ({
           ...prev,
           base_salary: pkg.base_salary || prev.base_salary,
+          hourly_rate: pkg.hourly_rate || prev.hourly_rate,
           salary_type: pkg.salary_type || prev.salary_type,
         }));
       }
@@ -123,6 +125,7 @@ export default function AddEmployeeDialog({ open, onOpenChange, orgId, employeeC
         full_name: `${data.first_name} ${data.last_name}`,
         status: 'active',
         base_salary: parseFloat(data.base_salary) || 0,
+        hourly_rate: parseFloat(data.hourly_rate) || 0,
         remuneration_package_id: data.remuneration_package_id || null,
         remuneration_package_name: selectedPackage?.name || null,
         email: data.email || null,
@@ -177,6 +180,7 @@ export default function AddEmployeeDialog({ open, onOpenChange, orgId, employeeC
         role: 'support_staff',
         salary_type: 'monthly',
         base_salary: '',
+        hourly_rate: '',
         hire_date: new Date().toISOString().split('T')[0],
         remuneration_package_id: '',
       });
@@ -498,6 +502,22 @@ export default function AddEmployeeDialog({ open, onOpenChange, orgId, employeeC
                       />
                     </div>
                   </div>
+                  {formData.salary_type === 'hourly' && (
+                    <div className="p-4 rounded-xl border-2 border-amber-300 bg-amber-50 sm:col-span-2">
+                      <Label className="text-amber-700 font-medium">Hourly Rate (SLE)</Label>
+                      <div className="relative mt-2">
+                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-amber-600 font-bold">Le</span>
+                        <Input
+                          type="number"
+                          value={formData.hourly_rate}
+                          onChange={(e) => setFormData(prev => ({ ...prev, hourly_rate: e.target.value }))}
+                          placeholder="0"
+                          className="pl-10 border-amber-300 bg-white"
+                        />
+                      </div>
+                      <p className="text-xs text-amber-600 mt-1">Rate per hour for payroll calculation</p>
+                    </div>
+                  )}
                 </div>
               </div>
             )}

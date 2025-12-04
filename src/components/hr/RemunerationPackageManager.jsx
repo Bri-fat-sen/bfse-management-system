@@ -257,6 +257,7 @@ export default function RemunerationPackageManager({ orgId }) {
     description: "",
     applicable_roles: [],
     base_salary: 0,
+    hourly_rate: 0,
     salary_type: "monthly",
     allowances: [],
     benefits: [],
@@ -310,6 +311,7 @@ export default function RemunerationPackageManager({ orgId }) {
       description: "",
       applicable_roles: [],
       base_salary: 0,
+      hourly_rate: 0,
       salary_type: "monthly",
       allowances: [],
       benefits: [],
@@ -335,6 +337,7 @@ export default function RemunerationPackageManager({ orgId }) {
       description: pkg.description || "",
       applicable_roles: pkg.applicable_roles || [],
       base_salary: pkg.base_salary || 0,
+      hourly_rate: pkg.hourly_rate || 0,
       salary_type: pkg.salary_type || "monthly",
       allowances: pkg.allowances || [],
       benefits: pkg.benefits || [],
@@ -455,6 +458,7 @@ export default function RemunerationPackageManager({ orgId }) {
       description: pkg.description || "",
       applicable_roles: pkg.applicable_roles || [],
       base_salary: pkg.base_salary || 0,
+      hourly_rate: pkg.hourly_rate || 0,
       salary_type: pkg.salary_type || "monthly",
       allowances: pkg.allowances || [],
       benefits: pkg.benefits || [],
@@ -694,6 +698,20 @@ export default function RemunerationPackageManager({ orgId }) {
                     </SelectContent>
                   </Select>
                 </div>
+                {formData.salary_type === 'hourly' && (
+                  <div className="col-span-2">
+                    <Label>Hourly Rate (Le)</Label>
+                    <Input
+                      type="number"
+                      value={formData.hourly_rate || ""}
+                      onChange={(e) => setFormData({ ...formData, hourly_rate: safeNumber(e.target.value) })}
+                      onWheel={(e) => e.target.blur()}
+                      placeholder="0"
+                      className="mt-1"
+                    />
+                    <p className="text-xs text-green-600 mt-1">Rate per hour for payroll calculation</p>
+                  </div>
+                )}
               </div>
             </div>
 
