@@ -24,7 +24,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
-import { toast } from "sonner";
+import { useToast } from "@/components/ui/Toast";
 import { 
   Users, Calculator, CheckCircle2, AlertCircle, Loader2, 
   ChevronDown, ChevronUp, DollarSign, Package, Clock, Calendar,
@@ -55,6 +55,7 @@ export default function BulkPayrollDialog({
   orgId,
   currentEmployee 
 }) {
+  const toast = useToast();
   const queryClient = useQueryClient();
   const lastMonth = subMonths(new Date(), 1);
   const [periodStart, setPeriodStart] = useState(format(startOfMonth(lastMonth), 'yyyy-MM-dd'));
@@ -370,7 +371,12 @@ export default function BulkPayrollDialog({
     queryClient.invalidateQueries({ queryKey: ['payrollAudit'] });
     
     const successCount = processedResults.filter(r => r.status === 'success').length;
-    toast.success(`Processed ${successCount} of ${processedResults.length} payrolls`);
+    const failureCount = processedResults.length - successCount;
+    
+    if (failureCount === 0) {
+      toast.success("Bulk payroll completed", `Successfully processed ${successCount} payrolls`);
+    } else {
+      toast.warning("Bulk payroll completed with errors", `${successCount} succeeded, ${failureCount} failed`);
   };
 
   return (

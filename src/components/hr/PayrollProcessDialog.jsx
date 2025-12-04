@@ -20,7 +20,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
-import { toast } from "sonner";
+import { useToast } from "@/components/ui/Toast";
 import { 
   DollarSign, Plus, Minus, Calculator, Info, Clock, 
   TrendingUp, Users, Briefcase, Calendar, ChevronDown, ChevronUp,
@@ -60,6 +60,7 @@ export default function PayrollProcessDialog({
   orgId,
   currentEmployee 
 }) {
+  const toast = useToast();
   const queryClient = useQueryClient();
   const [selectedEmployeeId, setSelectedEmployeeId] = useState("");
   const [customAllowances, setCustomAllowances] = useState([]);
@@ -237,10 +238,11 @@ export default function PayrollProcessDialog({
       queryClient.invalidateQueries({ queryKey: ['payrollAudit'] });
       onOpenChange(false);
       resetForm();
-      toast.success("Payroll processed successfully");
+      toast.success("Payroll processed", "Payroll has been created successfully");
     },
     onError: (error) => {
-      toast.error("Failed to process payroll", { description: error.message });
+      console.error('Create payroll error:', error);
+      toast.error("Failed to process payroll", error.message);
     }
   });
 
