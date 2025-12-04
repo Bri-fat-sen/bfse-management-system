@@ -8,7 +8,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { toast } from "sonner";
+import { useToast } from "@/components/ui/Toast";
 import { 
   MapPin, Plus, Minus, Route, X, Check, Loader2, 
   Navigation, Clock, DollarSign
@@ -21,6 +21,7 @@ export default function RouteDialog({
   editingRoute = null,
   organisation
 }) {
+  const toast = useToast();
   const queryClient = useQueryClient();
   const [stops, setStops] = useState(editingRoute?.stops || []);
   const [activeSection, setActiveSection] = useState('route');
@@ -43,8 +44,12 @@ export default function RouteDialog({
       queryClient.invalidateQueries({ queryKey: ['routes'] });
       onOpenChange(false);
       setStops([]);
-      toast.success(editingRoute ? "Route updated" : "Route created successfully");
+      toast.success(editingRoute ? "Route updated" : "Route created", editingRoute ? "Route has been updated successfully" : "Route has been created successfully");
     },
+    onError: (error) => {
+      console.error('Route mutation error:', error);
+      toast.error(editingRoute ? "Failed to update route" : "Failed to create route", error.message);
+    }
   });
 
   const addStop = () => {

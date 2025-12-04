@@ -12,9 +12,10 @@ import {
 } from "lucide-react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
-import { toast } from "sonner";
+import { useToast } from "@/components/ui/Toast";
 
 export default function CustomerDialog({ open, onOpenChange, customer, orgId, employees = [], organisation }) {
+  const toast = useToast();
   const queryClient = useQueryClient();
   const [tagInput, setTagInput] = useState("");
   const [activeSection, setActiveSection] = useState('basic');
@@ -82,8 +83,12 @@ export default function CustomerDialog({ open, onOpenChange, customer, orgId, em
     mutationFn: (data) => base44.entities.Customer.create(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['customers'] });
-      toast.success("Customer created successfully");
+      toast.success("Customer created", "Customer record has been added successfully");
       onOpenChange(false);
+    },
+    onError: (error) => {
+      console.error('Create customer error:', error);
+      toast.error("Failed to create customer", error.message);
     }
   });
 
@@ -91,8 +96,12 @@ export default function CustomerDialog({ open, onOpenChange, customer, orgId, em
     mutationFn: ({ id, data }) => base44.entities.Customer.update(id, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['customers'] });
-      toast.success("Customer updated successfully");
+      toast.success("Customer updated", "Customer information has been updated");
       onOpenChange(false);
+    },
+    onError: (error) => {
+      console.error('Update customer error:', error);
+      toast.error("Failed to update customer", error.message);
     }
   });
 

@@ -17,7 +17,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Loader2, Wrench, X, Check, Car, Calendar, DollarSign, Clock } from "lucide-react";
-import { toast } from "sonner";
+import { useToast } from "@/components/ui/Toast";
 import { format } from "date-fns";
 
 const maintenanceTypes = [
@@ -48,6 +48,7 @@ export default function MaintenanceDialog({
   preselectedVehicleId,
   organisation
 }) {
+  const toast = useToast();
   const queryClient = useQueryClient();
   const isEditing = !!maintenance;
   const [activeSection, setActiveSection] = useState('vehicle');
@@ -116,8 +117,12 @@ export default function MaintenanceDialog({
       queryClient.invalidateQueries({ queryKey: ['vehicleMaintenance'] });
       queryClient.invalidateQueries({ queryKey: ['vehicles'] });
       onOpenChange(false);
-      toast.success("Maintenance record created");
+      toast.success("Maintenance logged", "Maintenance record has been created");
     },
+    onError: (error) => {
+      console.error('Create maintenance error:', error);
+      toast.error("Failed to log maintenance", error.message);
+    }
   });
 
   const updateMutation = useMutation({
@@ -126,8 +131,12 @@ export default function MaintenanceDialog({
       queryClient.invalidateQueries({ queryKey: ['vehicleMaintenance'] });
       queryClient.invalidateQueries({ queryKey: ['vehicles'] });
       onOpenChange(false);
-      toast.success("Maintenance record updated");
+      toast.success("Maintenance updated", "Maintenance record has been updated");
     },
+    onError: (error) => {
+      console.error('Update maintenance error:', error);
+      toast.error("Failed to update maintenance", error.message);
+    }
   });
 
   const handleSubmit = async (e) => {

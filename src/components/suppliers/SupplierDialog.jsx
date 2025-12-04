@@ -16,7 +16,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { toast } from "sonner";
+import { useToast } from "@/components/ui/Toast";
 import { 
   Star, Truck, X, Check, Building2, Phone, Mail, MapPin, 
   CreditCard, Clock, FileText, Loader2
@@ -38,6 +38,7 @@ export default function SupplierDialog({
   orgId,
   organisation
 }) {
+  const toast = useToast();
   const queryClient = useQueryClient();
   const [rating, setRating] = useState(supplier?.rating || 0);
   const [cashOnly, setCashOnly] = useState(supplier?.cash_only || false);
@@ -59,8 +60,12 @@ export default function SupplierDialog({
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['suppliers'] });
       onOpenChange(false);
-      toast.success("Supplier created successfully");
+      toast.success("Supplier created", "Supplier has been added successfully");
     },
+    onError: (error) => {
+      console.error('Create supplier error:', error);
+      toast.error("Failed to create supplier", error.message);
+    }
   });
 
   const updateMutation = useMutation({
@@ -68,8 +73,12 @@ export default function SupplierDialog({
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['suppliers'] });
       onOpenChange(false);
-      toast.success("Supplier updated successfully");
+      toast.success("Supplier updated", "Supplier information has been updated");
     },
+    onError: (error) => {
+      console.error('Update supplier error:', error);
+      toast.error("Failed to update supplier", error.message);
+    }
   });
 
   const handleSubmit = (e) => {

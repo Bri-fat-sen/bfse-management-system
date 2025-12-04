@@ -20,7 +20,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Plus, Trash2, Loader2 } from "lucide-react";
-import { toast } from "sonner";
+import { useToast } from "@/components/ui/Toast";
 import { format } from "date-fns";
 
 const expenseCategories = ["fuel", "tolls", "loading", "unloading", "repairs", "food", "accommodation", "other"];
@@ -33,6 +33,7 @@ export default function TruckContractDialog({
   employees = [], 
   orgId 
 }) {
+  const toast = useToast();
   const queryClient = useQueryClient();
   const isEditing = !!contract;
   
@@ -103,8 +104,12 @@ export default function TruckContractDialog({
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['truckContracts'] });
       onOpenChange(false);
-      toast.success("Contract created successfully");
+      toast.success("Contract created", "Truck contract has been created successfully");
     },
+    onError: (error) => {
+      console.error('Create contract error:', error);
+      toast.error("Failed to create contract", error.message);
+    }
   });
 
   const updateMutation = useMutation({
@@ -112,8 +117,12 @@ export default function TruckContractDialog({
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['truckContracts'] });
       onOpenChange(false);
-      toast.success("Contract updated successfully");
+      toast.success("Contract updated", "Contract has been updated successfully");
     },
+    onError: (error) => {
+      console.error('Update contract error:', error);
+      toast.error("Failed to update contract", error.message);
+    }
   });
 
   const deleteMutation = useMutation({
@@ -121,8 +130,12 @@ export default function TruckContractDialog({
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['truckContracts'] });
       onOpenChange(false);
-      toast.success("Contract deleted successfully");
+      toast.success("Contract deleted", "Contract has been deleted successfully");
     },
+    onError: (error) => {
+      console.error('Delete contract error:', error);
+      toast.error("Failed to delete contract", error.message);
+    }
   });
 
   const handleDelete = () => {

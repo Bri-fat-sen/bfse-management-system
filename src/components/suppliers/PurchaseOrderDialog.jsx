@@ -16,7 +16,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { toast } from "sonner";
+import { useToast } from "@/components/ui/Toast";
 import { 
   Plus, Trash2, Package, Calculator, X, Check, Loader2,
   Building2, Calendar, Warehouse, CreditCard, Truck, FileText
@@ -35,6 +35,7 @@ export default function PurchaseOrderDialog({
   currentEmployee,
   organisation
 }) {
+  const toast = useToast();
   const queryClient = useQueryClient();
   const [selectedSupplier, setSelectedSupplier] = useState(purchaseOrder?.supplier_id || "");
   const [items, setItems] = useState(purchaseOrder?.items || []);
@@ -85,8 +86,12 @@ export default function PurchaseOrderDialog({
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['purchaseOrders'] });
       onOpenChange(false);
-      toast.success("Purchase order created");
+      toast.success("Purchase order created", "Order has been created successfully");
     },
+    onError: (error) => {
+      console.error('Create PO error:', error);
+      toast.error("Failed to create purchase order", error.message);
+    }
   });
 
   const updateMutation = useMutation({
@@ -94,8 +99,12 @@ export default function PurchaseOrderDialog({
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['purchaseOrders'] });
       onOpenChange(false);
-      toast.success("Purchase order updated");
+      toast.success("Purchase order updated", "Order has been updated successfully");
     },
+    onError: (error) => {
+      console.error('Update PO error:', error);
+      toast.error("Failed to update purchase order", error.message);
+    }
   });
 
   const addItem = () => {
