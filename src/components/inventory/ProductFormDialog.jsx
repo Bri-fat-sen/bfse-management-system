@@ -42,6 +42,10 @@ export default function ProductFormDialog({
 }) {
   const [selectedLocations, setSelectedLocations] = useState([]);
   const [activeSection, setActiveSection] = useState('basic');
+  const [category, setCategory] = useState('Other');
+  const [unit, setUnit] = useState('piece');
+  const [isSerialized, setIsSerialized] = useState(false);
+  const [trackBatches, setTrackBatches] = useState(false);
 
   const primaryColor = organisation?.primary_color || '#1EB053';
   const secondaryColor = organisation?.secondary_color || '#0072C6';
@@ -50,8 +54,16 @@ export default function ProductFormDialog({
     if (open) {
       setSelectedLocations(editingProduct?.location_ids || []);
       setActiveSection('basic');
+      setCategory(editingProduct?.category || 'Other');
+      setUnit(editingProduct?.unit || 'piece');
+      setIsSerialized(editingProduct?.is_serialized || false);
+      setTrackBatches(editingProduct?.track_batches || false);
     } else {
       setSelectedLocations([]);
+      setCategory('Other');
+      setUnit('piece');
+      setIsSerialized(false);
+      setTrackBatches(false);
     }
   }, [open, editingProduct]);
 
@@ -61,7 +73,7 @@ export default function ProductFormDialog({
     const data = {
       name: formData.get('name'),
       sku: formData.get('sku'),
-      category: formData.get('category'),
+      category: category,
       description: formData.get('description'),
       unit_price: parseFloat(formData.get('unit_price')) || 0,
       cost_price: parseFloat(formData.get('cost_price')) || 0,
@@ -71,9 +83,9 @@ export default function ProductFormDialog({
       reorder_point: parseInt(formData.get('reorder_point')) || 10,
       reorder_quantity: parseInt(formData.get('reorder_quantity')) || 50,
       lead_time_days: parseInt(formData.get('lead_time_days')) || 7,
-      is_serialized: formData.get('is_serialized') === 'on',
-      track_batches: formData.get('track_batches') === 'on',
-      unit: formData.get('unit'),
+      is_serialized: isSerialized,
+      track_batches: trackBatches,
+      unit: unit,
       location_ids: selectedLocations,
       is_active: true,
     };
@@ -188,7 +200,7 @@ export default function ProductFormDialog({
                   
                   <div>
                     <Label className="text-gray-700 font-medium">Category</Label>
-                    <Select name="category" defaultValue={editingProduct?.category || "Other"}>
+                    <Select value={category} onValueChange={setCategory}>
                       <SelectTrigger className="mt-1.5 border-gray-200">
                         <SelectValue />
                       </SelectTrigger>
@@ -202,7 +214,7 @@ export default function ProductFormDialog({
 
                   <div>
                     <Label className="text-gray-700 font-medium">Unit of Measure</Label>
-                    <Select name="unit" defaultValue={editingProduct?.unit || "piece"}>
+                    <Select value={unit} onValueChange={setUnit}>
                       <SelectTrigger className="mt-1.5 border-gray-200">
                         <SelectValue />
                       </SelectTrigger>
@@ -247,16 +259,16 @@ export default function ProductFormDialog({
                     <div className="flex flex-wrap gap-4">
                       <label className="flex items-center gap-2 cursor-pointer">
                         <Checkbox 
-                          name="is_serialized"
-                          defaultChecked={editingProduct?.is_serialized}
+                          checked={isSerialized}
+                          onCheckedChange={setIsSerialized}
                           className="data-[state=checked]:bg-[#1EB053] data-[state=checked]:border-[#1EB053]"
                         />
                         <span className="text-sm text-gray-600">Track Serial Numbers</span>
                       </label>
                       <label className="flex items-center gap-2 cursor-pointer">
                         <Checkbox 
-                          name="track_batches"
-                          defaultChecked={editingProduct?.track_batches}
+                          checked={trackBatches}
+                          onCheckedChange={setTrackBatches}
                           className="data-[state=checked]:bg-[#0072C6] data-[state=checked]:border-[#0072C6]"
                         />
                         <span className="text-sm text-gray-600">Track Batches/Lots</span>
