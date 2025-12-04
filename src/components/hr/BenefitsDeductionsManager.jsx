@@ -657,9 +657,9 @@ export default function BenefitsDeductionsManager({ orgId, employees = [] }) {
               />
             </div>
 
-            <DialogFooter>
+            <DialogFooter className="gap-2">
               <Button type="button" variant="outline" onClick={resetForm}>Cancel</Button>
-              <Button type="submit" className="bg-[#1EB053] hover:bg-[#178f43]">
+              <Button type="submit" className="bg-gradient-to-r from-[#1EB053] to-[#0072C6] hover:from-[#178f43] hover:to-[#005a9e] text-white">
                 {editingTemplate ? 'Update' : 'Create'} Template
               </Button>
             </DialogFooter>
