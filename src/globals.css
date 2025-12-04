@@ -229,43 +229,46 @@ html, body {
   }
 }
 
-/* Sierra Leone themed scrollbars - applies to ALL scrollbars */
-::-webkit-scrollbar,
-*::-webkit-scrollbar,
+/* Hide scrollbars on html/body and sidebar */
 html::-webkit-scrollbar,
 body::-webkit-scrollbar,
-div::-webkit-scrollbar,
-nav::-webkit-scrollbar,
 aside::-webkit-scrollbar,
-main::-webkit-scrollbar,
-[data-radix-scroll-area-viewport]::-webkit-scrollbar {
-  width: 12px !important;
-  height: 12px !important;
+aside nav::-webkit-scrollbar {
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
 }
 
-::-webkit-scrollbar-track,
-*::-webkit-scrollbar-track,
-html::-webkit-scrollbar-track,
-body::-webkit-scrollbar-track,
-div::-webkit-scrollbar-track,
-nav::-webkit-scrollbar-track,
-aside::-webkit-scrollbar-track,
-main::-webkit-scrollbar-track,
+html, body, aside, aside nav {
+  scrollbar-width: none !important;
+  -ms-overflow-style: none !important;
+}
+
+/* Sierra Leone themed scrollbars - only for content areas that need them */
+main .overflow-auto::-webkit-scrollbar,
+main .overflow-y-auto::-webkit-scrollbar,
+main .overflow-x-auto::-webkit-scrollbar,
+.table-mobile-scroll::-webkit-scrollbar,
+[data-radix-scroll-area-viewport]::-webkit-scrollbar {
+  width: 10px !important;
+  height: 10px !important;
+}
+
+main .overflow-auto::-webkit-scrollbar-track,
+main .overflow-y-auto::-webkit-scrollbar-track,
+main .overflow-x-auto::-webkit-scrollbar-track,
+.table-mobile-scroll::-webkit-scrollbar-track,
 [data-radix-scroll-area-viewport]::-webkit-scrollbar-track {
   background: #e2e8f0 !important;
-  border-radius: 6px !important;
+  border-radius: 5px !important;
 }
 
-::-webkit-scrollbar-thumb,
-*::-webkit-scrollbar-thumb,
-html::-webkit-scrollbar-thumb,
-body::-webkit-scrollbar-thumb,
-div::-webkit-scrollbar-thumb,
-nav::-webkit-scrollbar-thumb,
-aside::-webkit-scrollbar-thumb,
-main::-webkit-scrollbar-thumb,
+main .overflow-auto::-webkit-scrollbar-thumb,
+main .overflow-y-auto::-webkit-scrollbar-thumb,
+main .overflow-x-auto::-webkit-scrollbar-thumb,
+.table-mobile-scroll::-webkit-scrollbar-thumb,
 [data-radix-scroll-area-viewport]::-webkit-scrollbar-thumb {
-  border-radius: 6px !important;
+  border-radius: 5px !important;
   border: 2px solid #e2e8f0 !important;
   background: linear-gradient(to bottom, 
     #1EB053 0%, 
@@ -277,14 +280,10 @@ main::-webkit-scrollbar-thumb,
   ) !important;
 }
 
-::-webkit-scrollbar-thumb:hover,
-*::-webkit-scrollbar-thumb:hover,
-html::-webkit-scrollbar-thumb:hover,
-body::-webkit-scrollbar-thumb:hover,
-div::-webkit-scrollbar-thumb:hover,
-nav::-webkit-scrollbar-thumb:hover,
-aside::-webkit-scrollbar-thumb:hover,
-main::-webkit-scrollbar-thumb:hover,
+main .overflow-auto::-webkit-scrollbar-thumb:hover,
+main .overflow-y-auto::-webkit-scrollbar-thumb:hover,
+main .overflow-x-auto::-webkit-scrollbar-thumb:hover,
+.table-mobile-scroll::-webkit-scrollbar-thumb:hover,
 [data-radix-scroll-area-viewport]::-webkit-scrollbar-thumb:hover {
   background: linear-gradient(to bottom, 
     #178f43 0%, 
@@ -296,19 +295,14 @@ main::-webkit-scrollbar-thumb:hover,
   ) !important;
 }
 
-::-webkit-scrollbar-corner,
-*::-webkit-scrollbar-corner {
-  background: #e2e8f0 !important;
+/* Horizontal scrollbars for content */
+main .overflow-x-auto::-webkit-scrollbar:horizontal,
+.table-mobile-scroll::-webkit-scrollbar:horizontal {
+  height: 10px !important;
 }
 
-/* Horizontal scrollbars - stripe goes left to right */
-::-webkit-scrollbar:horizontal,
-*::-webkit-scrollbar:horizontal {
-  height: 12px !important;
-}
-
-::-webkit-scrollbar-thumb:horizontal,
-*::-webkit-scrollbar-thumb:horizontal {
+main .overflow-x-auto::-webkit-scrollbar-thumb:horizontal,
+.table-mobile-scroll::-webkit-scrollbar-thumb:horizontal {
   background: linear-gradient(to right, 
     #1EB053 0%, 
     #1EB053 33.33%, 
@@ -319,23 +313,18 @@ main::-webkit-scrollbar-thumb:hover,
   ) !important;
 }
 
-/* Firefox scrollbar */
-html, body, *, div, nav, aside, main {
-  scrollbar-width: auto !important;
+/* Firefox scrollbar for content areas */
+main .overflow-auto, main .overflow-y-auto, main .overflow-x-auto, .table-mobile-scroll {
+  scrollbar-width: thin !important;
   scrollbar-color: #1EB053 #e2e8f0 !important;
 }
 
 /* Mobile scrollbars */
 @media (max-width: 768px) {
-  ::-webkit-scrollbar,
-  *::-webkit-scrollbar {
-    width: 8px !important;
-    height: 8px !important;
-  }
-  
-  ::-webkit-scrollbar-thumb,
-  *::-webkit-scrollbar-thumb {
-    border: 1px solid #e2e8f0 !important;
+  main .overflow-auto::-webkit-scrollbar,
+  main .overflow-y-auto::-webkit-scrollbar {
+    width: 6px !important;
+    height: 6px !important;
   }
 }
 
