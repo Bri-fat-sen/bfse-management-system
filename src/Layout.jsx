@@ -404,7 +404,7 @@ export default function Layout({ children, currentPageName }) {
           </Button>
         </div>
 
-        <nav className="p-3 space-y-4 overflow-y-auto h-[calc(100%-8rem)]" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
+        <nav className="p-3 space-y-4 overflow-y-auto h-[calc(100%-8rem)]">
           {filteredMenuSections.map((section, sectionIndex) => (
             <div key={section.title}>
               {sidebarOpen ? (
