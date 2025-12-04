@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { format, differenceInDays, addDays } from "date-fns";
@@ -21,7 +21,7 @@ import {
   DialogTitle,
   DialogFooter,
 } from "@/components/ui/dialog";
-import { useToast } from "@/components/ui/use-toast";
+import { useToast } from "@/components/ui/Toast";
 import {
   Package,
   Calendar,
@@ -47,7 +47,7 @@ const STATUS_COLORS = {
 };
 
 export default function BatchManagement({ products = [], warehouses = [], vehicles = [], stockLevels = [], orgId, currentEmployee }) {
-  const { toast } = useToast();
+  const toast = useToast();
   const queryClient = useQueryClient();
   const [searchTerm, setSearchTerm] = useState("");
   const [productFilter, setProductFilter] = useState("all");
@@ -84,8 +84,12 @@ export default function BatchManagement({ products = [], warehouses = [], vehicl
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['inventoryBatches'] });
       setShowBatchDialog(false);
-      toast({ title: "Batch created successfully" });
+      toast.success("Batch created", "Batch has been added to inventory");
     },
+    onError: (error) => {
+      console.error('Create batch error:', error);
+      toast.error("Failed to create batch", error.message);
+    }
   });
 
   const updateMutation = useMutation({
@@ -109,8 +113,12 @@ export default function BatchManagement({ products = [], warehouses = [], vehicl
       queryClient.invalidateQueries({ queryKey: ['inventoryBatches'] });
       setShowBatchDialog(false);
       setEditingBatch(null);
-      toast({ title: "Batch updated successfully" });
+      toast.success("Batch updated", "Changes have been saved");
     },
+    onError: (error) => {
+      console.error('Update batch error:', error);
+      toast.error("Failed to update batch", error.message);
+    }
   });
 
   const deleteMutation = useMutation({
@@ -157,8 +165,12 @@ export default function BatchManagement({ products = [], warehouses = [], vehicl
       queryClient.invalidateQueries({ queryKey: ['inventoryBatches'] });
       queryClient.invalidateQueries({ queryKey: ['stockLevels'] });
       queryClient.invalidateQueries({ queryKey: ['stockMovements'] });
-      toast({ title: "Batch, allocations and movements deleted" });
+      toast.success("Batch deleted", "Batch and related allocations removed");
     },
+    onError: (error) => {
+      console.error('Delete batch error:', error);
+      toast.error("Failed to delete batch", error.message);
+    }
   });
 
   const filteredBatches = batches.filter(batch => {
