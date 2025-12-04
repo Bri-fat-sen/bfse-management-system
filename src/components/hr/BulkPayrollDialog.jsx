@@ -277,7 +277,9 @@ export default function BulkPayrollDialog({
     setProgress(0);
     setResults([]);
     const processedResults = [];
+    const createdPayrollIds = [];
 
+    // Create individual payrolls
     for (let i = 0; i < payrollPreviews.length; i++) {
       const payroll = payrollPreviews[i];
       const employee = employees.find(e => e.id === payroll.employee_id);
@@ -287,9 +289,11 @@ export default function BulkPayrollDialog({
         const created = await base44.entities.Payroll.create({
           ...payroll,
           organisation_id: orgId,
-          status: 'pending_approval',
+          status: 'draft', // Start as draft, will be updated with PayrollRun
           payroll_frequency: payrollFrequency
         });
+
+        createdPayrollIds.push(created.id);
 
         // Create audit log with detailed information
         await base44.entities.PayrollAudit.create({
@@ -316,7 +320,8 @@ export default function BulkPayrollDialog({
           employee: payroll.employee_name, 
           status: 'success',
           netPay: payroll.net_pay,
-          package: pkg?.name
+          package: pkg?.name,
+          payrollId: created.id
         });
       } catch (error) {
         processedResults.push({ 
@@ -328,10 +333,40 @@ export default function BulkPayrollDialog({
       setProgress(((i + 1) / payrollPreviews.length) * 100);
     }
 
+    // Create PayrollRun record to group all payrolls for approval workflow
+    if (createdPayrollIds.length > 0) {
+      try {
+        const runNumber = `PR-${format(new Date(), 'yyyyMMdd')}-${Date.now().toString(36).toUpperCase().slice(-4)}`;
+        await base44.entities.PayrollRun.create({
+          organisation_id: orgId,
+          run_number: runNumber,
+          name: `${format(new Date(periodStart), 'MMMM yyyy')} Payroll Run`,
+          payroll_frequency: payrollFrequency,
+          period_start: periodStart,
+          period_end: periodEnd,
+          status: 'draft',
+          employee_count: createdPayrollIds.length,
+          total_gross: totals.gross,
+          total_deductions: totals.deductions,
+          total_net: totals.net,
+          total_employer_cost: totals.employerCost,
+          total_nassit_employee: payrollPreviews.reduce((sum, p) => sum + safeNumber(p.nassit_employee), 0),
+          total_nassit_employer: payrollPreviews.reduce((sum, p) => sum + safeNumber(p.nassit_employer), 0),
+          total_paye: payrollPreviews.reduce((sum, p) => sum + safeNumber(p.paye_tax), 0),
+          payroll_ids: createdPayrollIds,
+          created_by_id: currentEmployee?.id,
+          created_by_name: currentEmployee?.full_name
+        });
+      } catch (error) {
+        console.error('Failed to create PayrollRun:', error);
+      }
+    }
+
     setResults(processedResults);
     setShowResults(true);
     setProcessing(false);
     queryClient.invalidateQueries({ queryKey: ['payrolls'] });
+    queryClient.invalidateQueries({ queryKey: ['payrollRuns'] });
     queryClient.invalidateQueries({ queryKey: ['payrollAudit'] });
     
     const successCount = processedResults.filter(r => r.status === 'success').length;
