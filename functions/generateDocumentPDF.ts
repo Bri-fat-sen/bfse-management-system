@@ -42,6 +42,23 @@ Deno.serve(async (req) => {
     const secondary = hexToRgb(secondaryColor);
     const navy = { r: 15, g: 31, b: 60 };
 
+    // Fetch and embed logo if available
+    let logoData = null;
+    if (organisation?.logo_url) {
+      try {
+        const logoResponse = await fetch(organisation.logo_url);
+        if (logoResponse.ok) {
+          const logoBuffer = await logoResponse.arrayBuffer();
+          const logoBase64 = btoa(String.fromCharCode(...new Uint8Array(logoBuffer)));
+          const contentType = logoResponse.headers.get('content-type') || 'image/png';
+          const format = contentType.includes('jpeg') || contentType.includes('jpg') ? 'JPEG' : 'PNG';
+          logoData = { base64: logoBase64, format };
+        }
+      } catch (e) {
+        console.log('Could not load logo:', e);
+      }
+    }
+
     // Draw Sierra Leone Flag Stripe - compact
     const drawFlagStripe = (y, height = 4) => {
       doc.setFillColor(30, 176, 83);
@@ -88,17 +105,28 @@ Deno.serve(async (req) => {
       doc.setFillColor(primary.r, primary.g, primary.b);
       doc.rect(0, 4, pageWidth, 26, 'F');
       
+      // Add logo if available
+      let textStartX = margin;
+      if (logoData) {
+        try {
+          doc.addImage(logoData.base64, logoData.format, margin, 7, 18, 18);
+          textStartX = margin + 22;
+        } catch (e) {
+          console.log('Could not add logo to PDF:', e);
+        }
+      }
+      
       // Organisation name - left
       doc.setTextColor(255, 255, 255);
       doc.setFontSize(14);
       doc.setFont('helvetica', 'bold');
-      doc.text(orgName, margin, 14);
+      doc.text(orgName, textStartX, 14);
       
       // Address - left
       doc.setFontSize(8);
       doc.setFont('helvetica', 'normal');
       const addressParts = [orgAddress, orgCity, orgCountry].filter(Boolean);
-      doc.text(addressParts.join(', '), margin, 22);
+      doc.text(addressParts.join(', '), textStartX, 22);
       
       // Doc type and info - right
       doc.setFontSize(8);

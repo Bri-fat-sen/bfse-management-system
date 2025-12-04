@@ -41,6 +41,23 @@ Deno.serve(async (req) => {
     const secondary = hexToRgb(secondaryColor);
     const navy = { r: 15, g: 31, b: 60 };
 
+    // Fetch and embed logo if available
+    let logoData = null;
+    if (organisation?.logo_url) {
+      try {
+        const logoResponse = await fetch(organisation.logo_url);
+        if (logoResponse.ok) {
+          const logoBuffer = await logoResponse.arrayBuffer();
+          const logoBase64 = btoa(String.fromCharCode(...new Uint8Array(logoBuffer)));
+          const contentType = logoResponse.headers.get('content-type') || 'image/png';
+          const format = contentType.includes('jpeg') || contentType.includes('jpg') ? 'JPEG' : 'PNG';
+          logoData = { base64: logoBase64, format };
+        }
+      } catch (e) {
+        console.log('Could not load logo:', e);
+      }
+    }
+
     // Sierra Leone Flag Stripe
     doc.setFillColor(30, 176, 83); // Green
     doc.rect(0, 0, pageWidth / 3, 6, 'F');
@@ -68,17 +85,28 @@ Deno.serve(async (req) => {
     doc.setFillColor(primary.r, primary.g, primary.b);
     doc.rect(0, 6, pageWidth, 35, 'F');
 
+    // Add logo if available
+    let textStartX = margin;
+    if (logoData) {
+      try {
+        doc.addImage(logoData.base64, logoData.format, margin, 10, 22, 22);
+        textStartX = margin + 26;
+      } catch (e) {
+        console.log('Could not add logo to PDF:', e);
+      }
+    }
+
     // Organisation Name
     doc.setTextColor(255, 255, 255);
     doc.setFontSize(18);
     doc.setFont('helvetica', 'bold');
-    doc.text(orgName, margin, 22);
+    doc.text(orgName, textStartX, 22);
 
     // Address
     doc.setFontSize(10);
     doc.setFont('helvetica', 'normal');
     const addressText = [orgAddress, orgCity, organisation?.country || 'Sierra Leone'].filter(Boolean).join(', ');
-    doc.text(addressText, margin, 30);
+    doc.text(addressText, textStartX, 30);
 
     // Date on right
     doc.setFontSize(10);
