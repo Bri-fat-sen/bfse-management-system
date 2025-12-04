@@ -28,7 +28,9 @@ const safeNum = (val) => {
   return isNaN(num) ? 0 : num;
 };
 
-export default function PayslipGenerator({ payroll, employee, organisation }) {
+export default function PayslipGenerator({ payroll, employee, organisation: orgProp }) {
+  // Handle both array and single object for organisation
+  const organisation = Array.isArray(orgProp) ? orgProp[0] : orgProp;
   const [showPreview, setShowPreview] = useState(false);
   const [options, setOptions] = useState({
     showLogo: true,
