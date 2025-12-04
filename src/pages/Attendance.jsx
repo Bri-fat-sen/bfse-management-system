@@ -64,6 +64,7 @@ import AIInsightsPanel from "@/components/ai/AIInsightsPanel";
 const COLORS = ['#1EB053', '#0072C6', '#D4AF37', '#EF4444', '#9333EA', '#F59E0B'];
 
 export default function Attendance() {
+  const queryClient = useQueryClient();
   const [activeTab, setActiveTab] = useState("overview");
   const [dateRange, setDateRange] = useState("month");
   const [startDate, setStartDate] = useState(format(startOfMonth(new Date()), 'yyyy-MM-dd'));
@@ -89,6 +90,8 @@ export default function Attendance() {
 
   const currentEmployee = employee?.[0];
   const orgId = currentEmployee?.organisation_id;
+  const userRole = currentEmployee?.role || (user?.role === 'admin' ? 'super_admin' : 'read_only');
+  const canApproveOvertime = ['super_admin', 'org_admin'].includes(userRole);
 
   const { data: organisation } = useQuery({
     queryKey: ['organisation', orgId],
@@ -136,6 +139,23 @@ export default function Attendance() {
     const locs = [...new Set(allAttendance.map(a => a.clock_in_location).filter(Boolean))];
     return locs.slice(0, 20); // Limit to 20 unique locations
   }, [allAttendance]);
+
+  const approveOvertimeMutation = useMutation({
+    mutationFn: ({ recordId }) => base44.entities.Attendance.update(recordId, {
+      overtime_approved: true,
+      overtime_approved_by: currentEmployee?.id,
+      overtime_approved_by_name: currentEmployee?.full_name,
+      overtime_approval_date: format(new Date(), 'yyyy-MM-dd')
+    }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['allAttendance'] });
+      toast.success("Overtime approved", "Overtime hours have been approved for payroll");
+    },
+    onError: (error) => {
+      console.error('Approve overtime error:', error);
+      toast.error("Failed to approve overtime", error.message);
+    }
+  });
 
   // Handle date range changes
   const handleDateRangeChange = (range) => {
@@ -686,12 +706,25 @@ export default function Attendance() {
                              <TableCell>{record.total_hours?.toFixed(1) || '-'}</TableCell>
                              <TableCell>
                                {hasOvertime ? (
-                                 <div className="flex flex-col">
-                                   <span className="text-sm font-medium">{record.overtime_hours.toFixed(1)} hrs</span>
-                                   {record.overtime_approved ? (
-                                     <Badge className="bg-green-100 text-green-700 text-xs">Approved</Badge>
-                                   ) : (
-                                     <Badge className="bg-amber-100 text-amber-700 text-xs">Pending</Badge>
+                                 <div className="flex items-center gap-2">
+                                   <div className="flex flex-col">
+                                     <span className="text-sm font-medium">{record.overtime_hours.toFixed(1)} hrs</span>
+                                     {record.overtime_approved ? (
+                                       <Badge className="bg-green-100 text-green-700 text-xs">Approved</Badge>
+                                     ) : (
+                                       <Badge className="bg-amber-100 text-amber-700 text-xs">Pending</Badge>
+                                     )}
+                                   </div>
+                                   {!record.overtime_approved && canApproveOvertime && (
+                                     <Button
+                                       size="sm"
+                                       variant="ghost"
+                                       className="text-green-600 hover:text-green-700 hover:bg-green-50 h-7 px-2"
+                                       onClick={() => approveOvertimeMutation.mutate({ recordId: record.id })}
+                                       disabled={approveOvertimeMutation.isPending}
+                                     >
+                                       Approve
+                                     </Button>
                                    )}
                                  </div>
                                ) : (

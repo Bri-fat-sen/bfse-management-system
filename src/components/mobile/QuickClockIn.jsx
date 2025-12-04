@@ -5,9 +5,10 @@ import { format } from "date-fns";
 import { Clock, MapPin, CheckCircle, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { toast } from "sonner";
+import { useToast } from "@/components/ui/Toast";
 
 export default function QuickClockIn({ currentEmployee, orgId, todayAttendance }) {
+  const toast = useToast();
   const queryClient = useQueryClient();
   const [location, setLocation] = useState(null);
   const [isLocating, setIsLocating] = useState(false);
@@ -54,10 +55,11 @@ export default function QuickClockIn({ currentEmployee, orgId, todayAttendance }
       queryClient.invalidateQueries({ queryKey: ['myAttendance'] });
       queryClient.invalidateQueries({ queryKey: ['attendance'] });
       queryClient.invalidateQueries({ queryKey: ['allAttendance'] });
-      toast.success(`Clocked In! Welcome, ${currentEmployee?.first_name}!`);
+      toast.success("Clocked In", `Welcome, ${currentEmployee?.first_name}!`);
     },
     onError: (error) => {
-      toast.error(error.message || "Clock In Failed. Please try again.");
+      console.error('Clock in error:', error);
+      toast.error("Clock in failed", error.message || "Please try again");
     }
   });
 
@@ -69,12 +71,18 @@ export default function QuickClockIn({ currentEmployee, orgId, todayAttendance }
       const clockInDate = new Date();
       clockInDate.setHours(inHours, inMins, 0);
       const totalHours = (now - clockInDate) / (1000 * 60 * 60);
+      
+      // Calculate overtime (over 8 hours is considered overtime)
+      const regularHours = 8;
+      const overtimeHours = Math.max(0, totalHours - regularHours);
 
       return base44.entities.Attendance.update(todayAttendance?.id, {
         clock_out_time: format(now, 'HH:mm'),
         clock_out_location: location || 'Unknown',
         clock_out_device: navigator.userAgent.includes('Mobile') ? 'Mobile' : 'Desktop',
-        total_hours: Math.round(totalHours * 100) / 100
+        total_hours: Math.round(totalHours * 100) / 100,
+        overtime_hours: Math.round(overtimeHours * 100) / 100,
+        overtime_approved: false
       });
     },
     onSuccess: () => {
@@ -82,10 +90,11 @@ export default function QuickClockIn({ currentEmployee, orgId, todayAttendance }
       queryClient.invalidateQueries({ queryKey: ['myAttendance'] });
       queryClient.invalidateQueries({ queryKey: ['attendance'] });
       queryClient.invalidateQueries({ queryKey: ['allAttendance'] });
-      toast.success("Clocked Out! Have a great day!");
+      toast.success("Clocked Out", "Have a great day!");
     },
     onError: (error) => {
-      toast.error(error.message || "Clock Out Failed. Please try again.");
+      console.error('Clock out error:', error);
+      toast.error("Clock out failed", error.message || "Please try again");
     }
   });
 
