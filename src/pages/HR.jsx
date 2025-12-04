@@ -396,25 +396,27 @@ export default function HR() {
                               <DropdownMenuContent align="end">
                                 {payroll.status !== 'cancelled' && (
                                   <DropdownMenuItem
-                                    onClick={() => {
-                                      if (confirm(`Reverse payroll for ${payroll.employee_name}? This will mark it as cancelled.`)) {
+                                    onSelect={(e) => {
+                                      e.preventDefault();
+                                      if (window.confirm(`Reverse payroll for ${payroll.employee_name}? This will mark it as cancelled.`)) {
                                         reversePayrollMutation.mutate(payroll);
                                       }
                                     }}
-                                    className="text-amber-600"
+                                    className="text-amber-600 cursor-pointer"
                                   >
                                     <RotateCcw className="w-4 h-4 mr-2" />
                                     Reverse Payroll
                                   </DropdownMenuItem>
                                 )}
-                                  <DropdownMenuSeparator />
-                                  <DropdownMenuItem
-                                  onClick={() => {
-                                    if (confirm(`Delete payroll for ${payroll.employee_name}? This cannot be undone.`)) {
+                                <DropdownMenuSeparator />
+                                <DropdownMenuItem
+                                  onSelect={(e) => {
+                                    e.preventDefault();
+                                    if (window.confirm(`Delete payroll for ${payroll.employee_name}? This cannot be undone.`)) {
                                       deletePayrollMutation.mutate(payroll);
                                     }
                                   }}
-                                  className="text-red-600"
+                                  className="text-red-600 cursor-pointer"
                                 >
                                   <Trash2 className="w-4 h-4 mr-2" />
                                   Delete Payroll
