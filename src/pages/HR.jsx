@@ -65,10 +65,10 @@ import TaxCalculatorInfo from "@/components/hr/TaxCalculatorInfo";
 import RemunerationPackageManager from "@/components/hr/RemunerationPackageManager";
 import PayrollReportingModule from "@/components/hr/PayrollReportingModule";
 import AIReportSummary from "@/components/ai/AIReportSummary";
-import PayComponentsManager from "@/components/hr/PayComponentsManager";
+import PayComponentManager from "@/components/hr/PayComponentManager";
+import StatutoryRateManager from "@/components/hr/StatutoryRateManager";
 import PayrollApprovalWorkflow from "@/components/hr/PayrollApprovalWorkflow";
-import OvertimeEstimator from "@/components/hr/OvertimeEstimator";
-import StatutoryRatesManager from "@/components/hr/StatutoryRatesManager";
+import OvertimePrediction from "@/components/hr/OvertimePrediction";
 
 export default function HR() {
   const queryClient = useQueryClient();
@@ -310,15 +310,13 @@ export default function HR() {
           <div className="flex flex-wrap gap-1 sm:gap-2 mb-6">
             {[
               { id: 'records', label: 'Records', fullLabel: 'Payroll Records', icon: FileText },
-              { id: 'approval', label: 'Approval', fullLabel: 'Approval Workflow', icon: Users },
+              { id: 'approval', label: 'Approval', fullLabel: 'Approval Workflow', icon: UserCheck },
               { id: 'components', label: 'Components', fullLabel: 'Pay Components', icon: DollarSign },
-              { id: 'statutory', label: 'Statutory', fullLabel: 'Statutory Rates', icon: Building2 },
-              { id: 'overtime', label: 'Overtime', fullLabel: 'Overtime Estimator', icon: Clock },
               { id: 'packages', label: 'Packages', fullLabel: 'Packages', icon: Users },
-              { id: 'benefits', label: 'Benefits', fullLabel: 'Benefits & Deductions', icon: DollarSign },
+              { id: 'statutory', label: 'Statutory', fullLabel: 'Statutory Rates', icon: Building2 },
+              { id: 'overtime', label: 'Overtime', fullLabel: 'Overtime Analysis', icon: Clock },
               { id: 'reports', label: 'Reports', fullLabel: 'Reports', icon: FileText },
-              { id: 'audit', label: 'Audit', fullLabel: 'Audit Trail', icon: Clock },
-              { id: 'tax', label: 'Tax', fullLabel: 'Tax Info', icon: Building2 }
+              { id: 'audit', label: 'Audit', fullLabel: 'Audit Trail', icon: Clock }
             ].map(tab => (
               <Button
                 key={tab.id}
@@ -446,23 +444,19 @@ export default function HR() {
           )}
 
           {payrollSubTab === 'components' && (
-            <PayComponentsManager orgId={orgId} employees={employees} />
-          )}
-
-          {payrollSubTab === 'statutory' && (
-            <StatutoryRatesManager orgId={orgId} />
-          )}
-
-          {payrollSubTab === 'overtime' && (
-            <OvertimeEstimator orgId={orgId} employees={employees} />
+            <PayComponentManager orgId={orgId} employees={employees} />
           )}
 
           {payrollSubTab === 'packages' && (
             <RemunerationPackageManager orgId={orgId} />
           )}
 
-          {payrollSubTab === 'benefits' && (
-            <BenefitsDeductionsManager orgId={orgId} employees={employees} />
+          {payrollSubTab === 'statutory' && (
+            <StatutoryRateManager orgId={orgId} />
+          )}
+
+          {payrollSubTab === 'overtime' && (
+            <OvertimePrediction orgId={orgId} employees={employees} />
           )}
 
           {payrollSubTab === 'reports' && (
@@ -475,10 +469,6 @@ export default function HR() {
 
           {payrollSubTab === 'audit' && (
             <PayrollAuditLog orgId={orgId} />
-          )}
-
-          {payrollSubTab === 'tax' && (
-            <TaxCalculatorInfo />
           )}
         </TabsContent>
 
