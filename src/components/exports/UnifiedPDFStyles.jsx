@@ -557,6 +557,11 @@ export function getUnifiedPDFStyles(organisation, documentType = 'receipt') {
         -webkit-print-color-adjust: exact !important;
         print-color-adjust: exact !important;
       }
+      
+      .logo-box img {
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+      }
     }
     
     @page {
