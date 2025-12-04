@@ -758,7 +758,8 @@ export default function PrintableFormsDownload({ open, onOpenChange, organisatio
           </p>
         </DialogHeader>
 
-        <div className="space-y-6 mt-4">
+        <div className="overflow-y-auto max-h-[calc(85vh-160px)] p-6">
+        <div className="space-y-6">
           <div className="flex flex-wrap gap-2">
             <Button 
               variant="outline" 
@@ -847,6 +848,14 @@ export default function PrintableFormsDownload({ open, onOpenChange, organisatio
               })}
             </div>
           </div>
+        </div>
+        </div>
+
+        {/* Bottom flag stripe */}
+        <div className="h-1 flex">
+          <div className="flex-1" style={{ backgroundColor: primaryColor }} />
+          <div className="flex-1 bg-white" />
+          <div className="flex-1" style={{ backgroundColor: secondaryColor }} />
         </div>
       </DialogContent>
     </Dialog>

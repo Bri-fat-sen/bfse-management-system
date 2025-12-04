@@ -198,16 +198,33 @@ export default function InventoryReport({
     printUnifiedPDF(html, `${reportType}_${format(new Date(), 'yyyy-MM-dd')}.pdf`);
   };
 
+  const primaryColor = organisation?.primary_color || '#1EB053';
+  const secondaryColor = organisation?.secondary_color || '#0072C6';
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto [&>button]:hidden">
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <FileText className="w-5 h-5 text-[#1EB053]" />
-            Inventory Reports
-          </DialogTitle>
-        </DialogHeader>
+      <DialogContent className="max-w-5xl max-h-[90vh] overflow-hidden p-0 [&>button]:hidden">
+        {/* Sierra Leone Flag Header */}
+        <div className="h-2 flex">
+          <div className="flex-1" style={{ backgroundColor: primaryColor }} />
+          <div className="flex-1 bg-white" />
+          <div className="flex-1" style={{ backgroundColor: secondaryColor }} />
+        </div>
 
+        {/* Header with gradient */}
+        <div className="px-6 py-4 text-white" style={{ background: `linear-gradient(135deg, ${primaryColor} 0%, ${secondaryColor} 100%)` }}>
+          <div className="flex items-center gap-3">
+            <div className="w-12 h-12 rounded-xl bg-white/20 flex items-center justify-center">
+              <Package className="w-6 h-6 text-white" />
+            </div>
+            <div>
+              <h2 className="text-xl font-bold">Inventory Reports</h2>
+              <p className="text-white/80 text-sm">Stock analysis and summaries</p>
+            </div>
+          </div>
+        </div>
+
+        <div className="overflow-y-auto max-h-[calc(90vh-180px)] p-6">
         {/* Filters */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
           <div>
@@ -336,6 +353,14 @@ export default function InventoryReport({
             </div>
           </CardContent>
         </Card>
+        </div>
+
+        {/* Bottom flag stripe */}
+        <div className="h-1 flex">
+          <div className="flex-1" style={{ backgroundColor: primaryColor }} />
+          <div className="flex-1 bg-white" />
+          <div className="flex-1" style={{ backgroundColor: secondaryColor }} />
+        </div>
       </DialogContent>
     </Dialog>
   );
