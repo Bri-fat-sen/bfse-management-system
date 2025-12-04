@@ -436,20 +436,23 @@ export default function PayComponentManager({ orgId, employees = [] }) {
 
       {/* Add/Edit Dialog */}
       <Dialog open={showDialog} onOpenChange={setShowDialog}>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto [&>button]:hidden">
-          <DialogHeader>
-            <div className="flex h-1 w-16 rounded-full overflow-hidden mb-3">
-              <div className="flex-1 bg-[#1EB053]" />
-              <div className="flex-1 bg-white border-y border-gray-200" />
-              <div className="flex-1 bg-[#0072C6]" />
-            </div>
-            <DialogTitle className="flex items-center gap-2">
-              {formData.type === 'earning' ? <TrendingUp className="w-5 h-5 text-green-600" /> : <Minus className="w-5 h-5 text-red-600" />}
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-hidden p-0 [&>button]:hidden">
+          {/* Flag Stripe Header */}
+          <div className="h-1.5 flex">
+            <div className="flex-1 bg-[#1EB053]" />
+            <div className="flex-1 bg-white" />
+            <div className="flex-1 bg-[#0072C6]" />
+          </div>
+          <div className="bg-gradient-to-r from-[#1EB053] to-[#0072C6] px-6 py-4 text-white">
+            <DialogTitle className="text-white flex items-center gap-2">
+              {formData.type === 'earning' ? <TrendingUp className="w-5 h-5" /> : <Minus className="w-5 h-5" />}
               {editingComponent ? 'Edit' : 'Add'} {formData.type === 'earning' ? 'Earning' : 'Deduction'} Component
             </DialogTitle>
-          </DialogHeader>
+            <p className="text-white/80 text-sm mt-1">Configure pay component details</p>
+          </div>
+          <div className="overflow-y-auto max-h-[calc(90vh-180px)]">
 
-          <form onSubmit={handleSubmit} className="space-y-4">
+          <form onSubmit={handleSubmit} className="p-6 space-y-4">
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <Label>Component Name *</Label>
@@ -630,13 +633,19 @@ export default function PayComponentManager({ orgId, employees = [] }) {
               />
             </div>
 
-            <DialogFooter className="gap-2">
+            <div className="sticky bottom-0 bg-white border-t p-4 flex gap-2 justify-end">
               <Button type="button" variant="outline" onClick={resetForm}>Cancel</Button>
               <Button type="submit" className="bg-gradient-to-r from-[#1EB053] to-[#0072C6] hover:from-[#178f43] hover:to-[#005a9e] text-white">
                 {editingComponent ? 'Update' : 'Create'} Component
               </Button>
-            </DialogFooter>
+            </div>
           </form>
+          {/* Bottom flag stripe */}
+          <div className="h-1 flex">
+            <div className="flex-1 bg-[#1EB053]" />
+            <div className="flex-1 bg-white" />
+            <div className="flex-1 bg-[#0072C6]" />
+          </div>
         </DialogContent>
       </Dialog>
     </div>

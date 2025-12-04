@@ -530,18 +530,25 @@ export default function PayrollApprovalWorkflow({ orgId, currentEmployee }) {
 
       {/* Action Dialog */}
       <Dialog open={showActionDialog} onOpenChange={setShowActionDialog}>
-        <DialogContent className="max-w-md [&>button]:hidden">
-          <DialogHeader>
-            <DialogTitle>
-              {actionType === 'approve' && 'Approve Payroll Run'}
-              {actionType === 'reject' && 'Reject Payroll Run'}
-              {actionType === 'review' && 'Complete Review'}
-              {actionType === 'submit_review' && 'Submit for Review'}
-              {actionType === 'process' && 'Start Processing'}
-              {actionType === 'mark_paid' && 'Mark as Paid'}
-              {actionType === 'cancel' && 'Cancel Payroll Run'}
+        <DialogContent className="max-w-md p-0 overflow-hidden [&>button]:hidden">
+          {/* Flag Stripe Header */}
+          <div className="h-1.5 flex">
+            <div className="flex-1 bg-[#1EB053]" />
+            <div className="flex-1 bg-white" />
+            <div className="flex-1 bg-[#0072C6]" />
+          </div>
+          <div className="bg-gradient-to-r from-[#1EB053] to-[#0072C6] px-6 py-4 text-white">
+            <DialogTitle className="text-white flex items-center gap-2">
+              {actionType === 'approve' && <><CheckCircle2 className="w-5 h-5" /> Approve Payroll Run</>}
+              {actionType === 'reject' && <><XCircle className="w-5 h-5" /> Reject Payroll Run</>}
+              {actionType === 'review' && <><Eye className="w-5 h-5" /> Complete Review</>}
+              {actionType === 'submit_review' && <><Send className="w-5 h-5" /> Submit for Review</>}
+              {actionType === 'process' && <><Clock className="w-5 h-5" /> Start Processing</>}
+              {actionType === 'mark_paid' && <><CheckCircle2 className="w-5 h-5" /> Mark as Paid</>}
+              {actionType === 'cancel' && <><XCircle className="w-5 h-5" /> Cancel Payroll Run</>}
             </DialogTitle>
-          </DialogHeader>
+          </div>
+          <div className="p-6">
           <div className="space-y-4">
             {selectedRun && (
               <div className="p-3 bg-gray-50 rounded-lg">
@@ -576,23 +583,28 @@ export default function PayrollApprovalWorkflow({ orgId, currentEmployee }) {
                 This will return the payroll run to draft status for corrections.
               </div>
             )}
+            </div>
           </div>
-          <DialogFooter>
+          <div className="px-6 pb-6 flex gap-2 justify-end">
             <Button variant="outline" onClick={() => setShowActionDialog(false)}>Cancel</Button>
             <Button 
               onClick={() => handleAction(actionType)}
               disabled={actionType === 'reject' && !actionNotes.trim()}
               className={
-                actionType === 'approve' || actionType === 'mark_paid' 
-                  ? 'bg-[#1EB053] hover:bg-[#178f43]' 
-                  : actionType === 'reject' || actionType === 'cancel'
-                    ? 'bg-red-600 hover:bg-red-700'
-                    : 'bg-[#0072C6] hover:bg-[#005a9e]'
+                actionType === 'reject' || actionType === 'cancel'
+                  ? 'bg-red-600 hover:bg-red-700 text-white'
+                  : 'bg-gradient-to-r from-[#1EB053] to-[#0072C6] hover:from-[#178f43] hover:to-[#005a9e] text-white'
               }
             >
               Confirm
             </Button>
-          </DialogFooter>
+          </div>
+          {/* Bottom flag stripe */}
+          <div className="h-1 flex">
+            <div className="flex-1 bg-[#1EB053]" />
+            <div className="flex-1 bg-white" />
+            <div className="flex-1 bg-[#0072C6]" />
+          </div>
         </DialogContent>
       </Dialog>
     </div>
