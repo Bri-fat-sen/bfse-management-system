@@ -106,7 +106,7 @@ export default function RolePermissions() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['allPermissions'] });
       queryClient.invalidateQueries({ queryKey: ['permissions'] });
-      toast({ title: "Permissions saved successfully" });
+      toast.success("Permissions saved successfully");
     },
   });
 
