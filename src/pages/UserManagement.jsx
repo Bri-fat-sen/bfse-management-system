@@ -85,6 +85,7 @@ const roles = [
 const departments = ["Management", "Sales", "Operations", "Finance", "Transport", "Support"];
 
 export default function UserManagement() {
+  const toast = useToast();
   const queryClient = useQueryClient();
   const [searchTerm, setSearchTerm] = useState("");
   const [filterLinked, setFilterLinked] = useState("all");
