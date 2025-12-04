@@ -250,8 +250,12 @@ export default function Inventory() {
       queryClient.invalidateQueries({ queryKey: ['products'] });
       setShowProductDialog(false);
       setEditingProduct(null);
-      toast.success("Product created successfully");
+      toast.success("Product created", "Product has been added to inventory");
     },
+    onError: (error) => {
+      console.error('Create product error:', error);
+      toast.error("Failed to create product", error.message);
+    }
   });
 
   const updateProductMutation = useMutation({
@@ -260,8 +264,12 @@ export default function Inventory() {
       queryClient.invalidateQueries({ queryKey: ['products'] });
       setShowProductDialog(false);
       setEditingProduct(null);
-      toast.success("Product updated successfully");
+      toast.success("Product updated", "Changes have been saved");
     },
+    onError: (error) => {
+      console.error('Update product error:', error);
+      toast.error("Failed to update product", error.message);
+    }
   });
 
   const deleteProductMutation = useMutation({
@@ -285,16 +293,21 @@ export default function Inventory() {
   const activeAlerts = stockAlerts.filter(a => a.status === 'active');
   const categoryList = categories.length > 0 ? categories.map(c => c.name) : DEFAULT_CATEGORIES;
 
-  const handleProductSubmit = (data) => {
+  const handleProductSubmit = async (data) => {
     const productData = {
       organisation_id: orgId,
       ...data
     };
 
-    if (editingProduct) {
-      updateProductMutation.mutate({ id: editingProduct.id, data: productData });
-    } else {
-      createProductMutation.mutate(productData);
+    try {
+      if (editingProduct) {
+        await updateProductMutation.mutateAsync({ id: editingProduct.id, data: productData });
+      } else {
+        await createProductMutation.mutateAsync(productData);
+      }
+    } catch (error) {
+      console.error('Product save error:', error);
+      toast.error("Failed to save product", error.message);
     }
   };
 
