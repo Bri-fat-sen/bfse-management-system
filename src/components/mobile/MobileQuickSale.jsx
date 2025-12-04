@@ -2,7 +2,6 @@ import React, { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery } from "@tanstack/react-query";
 import { format } from "date-fns";
-import { safeNumber, safeInt, formatNumber } from "@/components/utils/calculations";
 import {
   Sheet,
   SheetContent,
@@ -63,22 +62,18 @@ export default function MobileQuickSale({
 
   const addToCart = (product) => {
     const existing = cart.find(item => item.product_id === product.id);
-    const stockQty = safeInt(product.stock_quantity);
-    const unitPrice = safeNumber(product.unit_price);
-    
     if (existing) {
-      if (existing.quantity >= stockQty) {
+      if (existing.quantity >= product.stock_quantity) {
         toast.error("Stock limit reached");
         return;
       }
-      const newQty = existing.quantity + 1;
       setCart(cart.map(item =>
         item.product_id === product.id
-          ? { ...item, quantity: newQty, total: newQty * safeNumber(item.unit_price) }
+          ? { ...item, quantity: item.quantity + 1, total: (item.quantity + 1) * item.unit_price }
           : item
       ));
     } else {
-      if (stockQty < 1) {
+      if (product.stock_quantity < 1) {
         toast.error("Out of stock");
         return;
       }
@@ -86,8 +81,8 @@ export default function MobileQuickSale({
         product_id: product.id,
         product_name: product.name,
         quantity: 1,
-        unit_price: unitPrice,
-        total: unitPrice
+        unit_price: product.unit_price,
+        total: product.unit_price
       }]);
     }
     setSearchTerm("");
@@ -96,13 +91,13 @@ export default function MobileQuickSale({
   const updateQuantity = (productId, delta) => {
     setCart(cart.map(item => {
       if (item.product_id === productId) {
-        const newQty = Math.max(1, safeInt(item.quantity) + delta);
+        const newQty = Math.max(1, item.quantity + delta);
         const product = products.find(p => p.id === productId);
-        if (newQty > safeInt(product?.stock_quantity)) {
+        if (newQty > (product?.stock_quantity || 0)) {
           toast.error("Stock limit reached");
           return item;
         }
-        return { ...item, quantity: newQty, total: newQty * safeNumber(item.unit_price) };
+        return { ...item, quantity: newQty, total: newQty * item.unit_price };
       }
       return item;
     }));
@@ -112,7 +107,7 @@ export default function MobileQuickSale({
     setCart(cart.filter(item => item.product_id !== productId));
   };
 
-  const cartTotal = cart.reduce((sum, item) => sum + safeNumber(item.total), 0);
+  const cartTotal = cart.reduce((sum, item) => sum + item.total, 0);
 
   const completeSale = async () => {
     if (cart.length === 0) return;
@@ -141,7 +136,7 @@ export default function MobileQuickSale({
           const product = products.find(p => p.id === item.product_id);
           if (product) {
             await base44.entities.Product.update(item.product_id, {
-              stock_quantity: Math.max(0, safeInt(product.stock_quantity) - safeInt(item.quantity))
+              stock_quantity: Math.max(0, product.stock_quantity - item.quantity)
             });
           }
         }
@@ -215,11 +210,11 @@ export default function MobileQuickSale({
                       )}
                       <div className="text-left">
                         <p className="font-medium text-sm">{product.name}</p>
-                        <p className="text-xs text-gray-500">Stock: {formatNumber(safeInt(product.stock_quantity))}</p>
+                        <p className="text-xs text-gray-500">Stock: {product.stock_quantity}</p>
                       </div>
                     </div>
                     <div className="text-right">
-                      <p className="font-bold text-[#1EB053]">Le {formatNumber(safeNumber(product.unit_price))}</p>
+                      <p className="font-bold text-[#1EB053]">Le {product.unit_price?.toLocaleString()}</p>
                       <Plus className="w-5 h-5 text-[#0072C6] ml-auto" />
                     </div>
                   </button>
@@ -240,7 +235,7 @@ export default function MobileQuickSale({
                 <div key={item.product_id} className="flex items-center gap-3 p-3 bg-gray-50 rounded-xl">
                   <div className="flex-1 min-w-0">
                     <p className="font-medium text-sm truncate">{item.product_name}</p>
-                    <p className="text-xs text-gray-500">Le {formatNumber(safeNumber(item.unit_price))} each</p>
+                    <p className="text-xs text-gray-500">Le {item.unit_price?.toLocaleString()} each</p>
                   </div>
                   <div className="flex items-center gap-2">
                     <Button
@@ -262,7 +257,7 @@ export default function MobileQuickSale({
                     </Button>
                   </div>
                   <div className="text-right min-w-[70px]">
-                    <p className="font-bold text-sm">Le {formatNumber(safeNumber(item.total))}</p>
+                    <p className="font-bold text-sm">Le {item.total?.toLocaleString()}</p>
                   </div>
                   <Button
                     variant="ghost"
@@ -303,7 +298,7 @@ export default function MobileQuickSale({
               <div className="flex items-center justify-between p-4 bg-gradient-to-r from-[#1EB053]/10 to-[#0072C6]/10 rounded-xl">
                 <div>
                   <p className="text-sm text-gray-500">Total</p>
-                  <p className="text-2xl font-bold text-[#1EB053]">Le {formatNumber(cartTotal)}</p>
+                  <p className="text-2xl font-bold text-[#1EB053]">Le {cartTotal.toLocaleString()}</p>
                 </div>
                 <Button
                   size="lg"

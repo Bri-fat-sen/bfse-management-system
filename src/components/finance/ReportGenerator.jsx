@@ -36,8 +36,8 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { useToast } from "@/components/ui/use-toast";
-import { generateUnifiedPDF, printUnifiedPDF } from "@/components/exports/UnifiedPDFStyles";
 import { exportToCSV } from "@/components/exports/SierraLeoneExportStyles";
+import { generateUnifiedPDF, printUnifiedPDF } from "@/components/exports/UnifiedPDFStyles";
 
 const reportTypes = [
   { id: "sales", name: "Sales Report", icon: ShoppingCart, color: "green" },
@@ -202,31 +202,46 @@ export default function ReportGenerator({ sales = [], expenses = [], employees =
   const handleExportPDF = () => {
     if (!reportData) return;
     
-    const summaryCards = reportData.summary.map(s => ({
-      label: s.label,
-      value: s.value,
-      highlight: s.highlight
+    // Convert summary to cards format
+    const summaryCards = reportData.summary.map(item => ({
+      label: item.label,
+      value: item.value,
+      highlight: item.highlight === 'green' ? 'green' : item.highlight === 'red' ? 'red' : undefined
     }));
 
-    const sections = [{
-      title: 'Report Details',
-      icon: '📊',
+    // Build sections
+    const sections = [];
+    
+    // Add category breakdown if exists
+    if (reportData.categoryBreakdown && Object.keys(reportData.categoryBreakdown).length > 0) {
+      sections.push({
+        title: 'By Category',
+        icon: '📊',
+        breakdown: reportData.categoryBreakdown
+      });
+    }
+    
+    // Add data table
+    sections.push({
+      title: 'Details',
+      icon: '📋',
       table: {
         columns: reportData.columns,
         rows: reportData.rows
       }
-    }];
+    });
 
     const html = generateUnifiedPDF({
       documentType: 'report',
       title: reportData.title,
       organisation: organisation,
+      infoBar: [{ label: 'Period', value: `${format(parseISO(dateFrom), 'MMM d, yyyy')} - ${format(parseISO(dateTo), 'MMM d, yyyy')}` }],
       summaryCards: summaryCards,
       sections: sections
     });
     
     printUnifiedPDF(html, `${reportType}_report_${format(new Date(), 'yyyy-MM-dd')}.pdf`);
-    toast({ title: "PDF export ready" });
+    toast({ title: "Report printed" });
   };
 
   return (

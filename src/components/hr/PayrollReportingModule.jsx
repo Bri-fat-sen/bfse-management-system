@@ -32,7 +32,7 @@ import {
   Building2, Calendar, Printer, Mail, BarChart3
 } from "lucide-react";
 import { formatSLE } from "./PayrollCalculator";
-import { generateUnifiedPDF, printUnifiedPDF } from "@/components/exports/UnifiedPDFStyles";
+import { generateProfessionalReport, downloadProfessionalReportAsPDF } from "@/components/exports/ProfessionalReportExport";
 
 const COLORS = ['#1EB053', '#0072C6', '#D4AF37', '#0F1F3C', '#ef4444', '#8b5cf6'];
 
@@ -159,10 +159,10 @@ export default function PayrollReportingModule({ orgId, employees = [], organisa
     const reportTitle = REPORT_TYPES.find(r => r.value === reportType)?.label || 'Payroll Report';
     
     const summaryCards = [
-      { label: 'Total Gross Pay', value: formatSLE(summaryStats.totalGross) },
-      { label: 'Total Net Pay', value: formatSLE(summaryStats.totalNet) },
-      { label: 'NASSIT Total', value: formatSLE(summaryStats.totalNASSITEmployee + summaryStats.totalNASSITEmployer) },
-      { label: 'PAYE Tax', value: formatSLE(summaryStats.totalPAYE), highlight: 'red' }
+      { label: 'Total Gross Pay', value: formatSLE(summaryStats.totalGross), subtext: `${summaryStats.employeeCount} employees` },
+      { label: 'Total Net Pay', value: formatSLE(summaryStats.totalNet), subtext: `${summaryStats.payrollCount} payrolls` },
+      { label: 'NASSIT Total', value: formatSLE(summaryStats.totalNASSITEmployee + summaryStats.totalNASSITEmployer), subtext: 'Employee + Employer' },
+      { label: 'PAYE Tax', value: formatSLE(summaryStats.totalPAYE), subtext: 'Tax withheld', highlight: 'red' }
     ];
     
     const sections = [];
@@ -174,19 +174,33 @@ export default function PayrollReportingModule({ orgId, employees = [], organisa
         icon: '🏢',
         table: {
           columns: ['Department', 'Employees', 'Gross Pay', 'NASSIT', 'PAYE', 'Net Pay'],
-          rows: departmentData.map(d => [
-            d.department,
-            d.count,
-            formatSLE(d.gross),
-            formatSLE(d.nassit),
-            formatSLE(d.paye),
-            formatSLE(d.net)
-          ])
+          rows: [
+            ...departmentData.map(d => [
+              d.department,
+              d.count,
+              formatSLE(d.gross),
+              formatSLE(d.nassit),
+              formatSLE(d.paye),
+              formatSLE(d.net)
+            ]),
+            ['TOTAL', summaryStats.employeeCount, formatSLE(summaryStats.totalGross), 
+             formatSLE(summaryStats.totalNASSITEmployee + summaryStats.totalNASSITEmployer),
+             formatSLE(summaryStats.totalPAYE), formatSLE(summaryStats.totalNet)]
+          ]
         }
       });
     }
     
     if (reportType === 'nassit') {
+      sections.push({
+        title: 'NASSIT Contributions',
+        icon: '🏛️',
+        breakdown: {
+          'Employee Contribution (5%)': summaryStats.totalNASSITEmployee,
+          'Employer Contribution (10%)': summaryStats.totalNASSITEmployer,
+          'Total Payable': summaryStats.totalNASSITEmployee + summaryStats.totalNASSITEmployer
+        }
+      });
       sections.push({
         title: 'Employee NASSIT Details',
         icon: '👥',
@@ -201,9 +215,25 @@ export default function PayrollReportingModule({ orgId, employees = [], organisa
           ])
         }
       });
+      sections.push({
+        infoBox: {
+          type: 'warning',
+          title: '⚠️ NASSIT Compliance Reminder',
+          content: '<p>NASSIT contributions must be remitted by the 14th of the following month. Late payments incur penalties.</p>'
+        }
+      });
     }
     
     if (reportType === 'paye') {
+      sections.push({
+        title: 'PAYE Tax Summary',
+        icon: '💰',
+        breakdown: {
+          'Total PAYE Withheld': summaryStats.totalPAYE,
+          'Taxable Employees': taxBracketData.filter(b => b.bracket !== '0%').reduce((s, b) => s + b.count, 0),
+          'Tax-Exempt Employees': taxBracketData.find(b => b.bracket === '0%')?.count || 0
+        }
+      });
       sections.push({
         title: 'Employee PAYE Details',
         icon: '📋',
@@ -216,6 +246,13 @@ export default function PayrollReportingModule({ orgId, employees = [], organisa
             `${p.calculation_details?.effective_tax_rate || 0}%`,
             formatSLE(p.paye_tax)
           ])
+        }
+      });
+      sections.push({
+        infoBox: {
+          type: 'info',
+          title: '📜 Sierra Leone PAYE Tax Brackets (Finance Act 2024)',
+          content: '<ul><li>First SLE 500,000/month: 0%</li><li>SLE 500,001 - 1,000,000: 15%</li><li>SLE 1,000,001 - 1,500,000: 20%</li><li>SLE 1,500,001 - 2,000,000: 25%</li><li>Above SLE 2,000,000: 30%</li></ul>'
         }
       });
     }
@@ -244,44 +281,44 @@ export default function PayrollReportingModule({ orgId, employees = [], organisa
       sections.push({
         title: 'NASSIT Compliance',
         icon: '🏛️',
-        table: {
-          columns: ['Detail', 'Value'],
-          rows: [
-            ['Organisation', organisation?.name || 'N/A'],
-            ['NASSIT Number', organisation?.nassit_number || 'Not set'],
-            ['Employee Contributions (5%)', formatSLE(summaryStats.totalNASSITEmployee)],
-            ['Employer Contributions (10%)', formatSLE(summaryStats.totalNASSITEmployer)],
-            ['Total Payable to NASSIT', formatSLE(summaryStats.totalNASSITEmployee + summaryStats.totalNASSITEmployer)]
-          ]
+        breakdown: {
+          'Organisation': organisation?.name || 'N/A',
+          'NASSIT Number': organisation?.nassit_number || 'Not set',
+          'Employee Contributions (5%)': summaryStats.totalNASSITEmployee,
+          'Employer Contributions (10%)': summaryStats.totalNASSITEmployer,
+          'Total Payable to NASSIT': summaryStats.totalNASSITEmployee + summaryStats.totalNASSITEmployer
         }
       });
       sections.push({
         title: 'NRA Tax Compliance',
         icon: '💼',
-        table: {
-          columns: ['Detail', 'Value'],
-          rows: [
-            ['TIN Number', organisation?.tin_number || 'Not set'],
-            ['Total PAYE Withheld', formatSLE(summaryStats.totalPAYE)],
-            ['Employees Taxed', taxBracketData.filter(b => b.bracket !== '0%').reduce((s, b) => s + b.count, 0)],
-            ['Tax-Exempt Employees', taxBracketData.find(b => b.bracket === '0%')?.count || 0]
-          ]
+        breakdown: {
+          'TIN Number': organisation?.tin_number || 'Not set',
+          'Total PAYE Withheld': summaryStats.totalPAYE,
+          'Employees Taxed': taxBracketData.filter(b => b.bracket !== '0%').reduce((s, b) => s + b.count, 0),
+          'Tax-Exempt Employees': taxBracketData.find(b => b.bracket === '0%')?.count || 0
+        }
+      });
+      sections.push({
+        infoBox: {
+          type: 'warning',
+          title: '📋 Compliance Checklist',
+          content: '<ul><li>✓ NASSIT contributions calculated at 5% (employee) + 10% (employer)</li><li>✓ PAYE tax calculated per Finance Act 2024 brackets</li><li>✓ First SLE 500,000/month tax-free threshold applied</li><li>⚠️ Remit NASSIT contributions by 14th of following month</li><li>⚠️ Submit PAYE returns to NRA monthly</li></ul>'
         }
       });
     }
     
-    const html = generateUnifiedPDF({
-      documentType: 'report',
+    const html = generateProfessionalReport({
       title: reportTitle,
-      organisation: organisation,
-      summaryCards: summaryCards,
-      sections: sections,
-      notes: reportType === 'compliance' 
-        ? 'NASSIT contributions must be remitted by 14th of following month. Submit PAYE returns to NRA monthly.'
-        : null
+      subtitle: 'Payroll Financial Summary and Compliance Report',
+      organisation,
+      dateRange: `${format(dateRange.start, 'MMM d, yyyy')} - ${format(dateRange.end, 'MMM d, yyyy')}`,
+      summaryCards,
+      sections,
+      reportType: 'financial'
     });
     
-    printUnifiedPDF(html, `payroll-${reportType}-${format(new Date(), 'yyyy-MM-dd')}.pdf`);
+    downloadProfessionalReportAsPDF(html);
   };
 
   const handleExportCSV = () => {

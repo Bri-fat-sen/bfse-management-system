@@ -56,36 +56,16 @@ export default function StockAudit() {
   const { data: user } = useQuery({
     queryKey: ['currentUser'],
     queryFn: () => base44.auth.me(),
-    staleTime: 5 * 60 * 1000,
-    refetchOnWindowFocus: false,
   });
 
   const { data: employee } = useQuery({
     queryKey: ['currentEmployee', user?.email],
     queryFn: () => base44.entities.Employee.filter({ user_email: user?.email }),
     enabled: !!user?.email,
-    staleTime: 5 * 60 * 1000,
-    refetchOnWindowFocus: false,
   });
 
   const currentEmployee = employee?.[0];
   const orgId = currentEmployee?.organisation_id;
-
-  if (!user) {
-    return <LoadingSpinner message="Loading Stock Audit..." subtitle="Preparing audit interface" fullScreen={true} />;
-  }
-
-  if (!currentEmployee || !orgId) {
-    return (
-      <div className="flex flex-col items-center justify-center min-h-[60vh] text-center p-4">
-        <ClipboardCheck className="w-16 h-16 text-gray-300 mb-4" />
-        <h2 className="text-xl font-semibold text-gray-600">No Employee Record</h2>
-        <p className="text-gray-500 mt-2 max-w-md">
-          Your account is not linked to an employee record yet. Please contact your administrator.
-        </p>
-      </div>
-    );
-  }
 
   const { data: products = [] } = useQuery({
     queryKey: ['products', orgId],
