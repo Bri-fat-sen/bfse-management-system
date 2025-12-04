@@ -1312,6 +1312,18 @@ export default function Finance() {
             <BudgetingModule orgId={orgId} expenses={expenses} sales={sales} currentEmployee={currentEmployee} />
           </TabsContent>
 
+          {/* AI Financial Analysis Tab */}
+          <TabsContent value="ai-analysis" className="mt-6">
+            <AIFinancialAnalysis
+              orgId={orgId}
+              expenses={expenses}
+              sales={sales}
+              trips={trips}
+              revenues={revenues}
+              organisation={organisation?.[0]}
+            />
+          </TabsContent>
+
           {/* Cash Flow Tab */}
           <TabsContent value="cashflow" className="mt-6 space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
