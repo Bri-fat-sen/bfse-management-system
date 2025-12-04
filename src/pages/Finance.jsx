@@ -61,6 +61,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import PageHeader from "@/components/ui/PageHeader";
+import { useToast } from "@/components/ui/Toast";
 import StatCard from "@/components/ui/StatCard";
 import LoadingSpinner from "@/components/ui/LoadingSpinner";
 import PrintableFormsDownload from "@/components/finance/PrintableFormsDownload";
@@ -91,6 +92,7 @@ const revenueSources = [
 const COLORS = ['#1EB053', '#0072C6', '#D4AF37', '#0F1F3C', '#9333ea', '#f59e0b', '#ef4444', '#10b981', '#6366f1', '#ec4899'];
 
 export default function Finance() {
+  const toast = useToast();
   const queryClient = useQueryClient();
   const [activeTab, setActiveTab] = useState("dashboard");
   const [showExpenseDialog, setShowExpenseDialog] = useState(false);
@@ -175,7 +177,12 @@ export default function Finance() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['expenses'] });
       setShowExpenseDialog(false);
+      toast.success("Expense recorded", "Expense has been added");
     },
+    onError: (error) => {
+      console.error('Create expense error:', error);
+      toast.error("Failed to record expense", error.message);
+    }
   });
 
   const createRevenueMutation = useMutation({
@@ -183,7 +190,12 @@ export default function Finance() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['revenues'] });
       setShowRevenueDialog(false);
+      toast.success("Revenue recorded", "Contribution has been added");
     },
+    onError: (error) => {
+      console.error('Create revenue error:', error);
+      toast.error("Failed to record revenue", error.message);
+    }
   });
 
   const createBankDepositMutation = useMutation({
@@ -191,14 +203,24 @@ export default function Finance() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['bankDeposits'] });
       setShowBankDepositDialog(false);
+      toast.success("Deposit recorded", "Bank deposit has been added");
     },
+    onError: (error) => {
+      console.error('Create bank deposit error:', error);
+      toast.error("Failed to record deposit", error.message);
+    }
   });
 
   const updateBankDepositMutation = useMutation({
     mutationFn: ({ id, data }) => base44.entities.BankDeposit.update(id, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['bankDeposits'] });
+      toast.success("Deposit updated");
     },
+    onError: (error) => {
+      console.error('Update bank deposit error:', error);
+      toast.error("Failed to update deposit", error.message);
+    }
   });
 
   // Date range calculation

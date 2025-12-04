@@ -159,8 +159,9 @@ export default function HR() {
       queryClient.invalidateQueries({ queryKey: ['payrolls'] });
       toast.success("Payroll deleted successfully");
     },
-    onError: () => {
-      toast.error("Failed to delete payroll");
+    onError: (error) => {
+      console.error('Delete payroll error:', error);
+      toast.error("Failed to delete payroll", error.message);
     },
   });
 
@@ -186,8 +187,9 @@ export default function HR() {
       queryClient.invalidateQueries({ queryKey: ['payrolls'] });
       toast.success("Payroll reversed successfully");
     },
-    onError: () => {
-      toast.error("Failed to reverse payroll");
+    onError: (error) => {
+      console.error('Reverse payroll error:', error);
+      toast.error("Failed to reverse payroll", error.message);
     },
   });
 

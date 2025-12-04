@@ -134,6 +134,10 @@ export default function Suppliers() {
       queryClient.invalidateQueries({ queryKey: ['suppliers'] });
       toast.success("Supplier deleted");
     },
+    onError: (error) => {
+      console.error('Delete supplier error:', error);
+      toast.error("Failed to delete supplier", error.message);
+    }
   });
 
   const updatePOMutation = useMutation({
@@ -142,6 +146,10 @@ export default function Suppliers() {
       queryClient.invalidateQueries({ queryKey: ['purchaseOrders'] });
       toast.success("Purchase order updated");
     },
+    onError: (error) => {
+      console.error('Update PO error:', error);
+      toast.error("Failed to update purchase order", error.message);
+    }
   });
 
   // Stats

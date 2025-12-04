@@ -297,6 +297,10 @@ export default function Sales() {
         console.log('Sale report notification skipped:', error.message);
       }
     },
+    onError: (error) => {
+      console.error('Create sale error:', error);
+      toast.error("Failed to complete sale", error.message);
+    }
   });
 
   const deleteSaleMutation = useMutation({
@@ -305,6 +309,10 @@ export default function Sales() {
       queryClient.invalidateQueries({ queryKey: ['sales'] });
       toast.success("Sale deleted successfully");
     },
+    onError: (error) => {
+      console.error('Delete sale error:', error);
+      toast.error("Failed to delete sale", error.message);
+    }
   });
 
   const handleViewReceipt = (sale) => {

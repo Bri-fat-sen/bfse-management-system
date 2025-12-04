@@ -148,6 +148,10 @@ export default function Transport() {
       setShowTripDialog(false);
       toast.success("Trip recorded successfully");
     },
+    onError: (error) => {
+      console.error('Create trip error:', error);
+      toast.error("Failed to record trip", error.message);
+    }
   });
 
   const createVehicleMutation = useMutation({
@@ -157,6 +161,10 @@ export default function Transport() {
       setShowVehicleDialog(false);
       toast.success("Vehicle added successfully");
     },
+    onError: (error) => {
+      console.error('Create vehicle error:', error);
+      toast.error("Failed to add vehicle", error.message);
+    }
   });
 
   const updateTripMutation = useMutation({
@@ -165,6 +173,10 @@ export default function Transport() {
       queryClient.invalidateQueries({ queryKey: ['trips'] });
       toast.success("Trip updated successfully");
     },
+    onError: (error) => {
+      console.error('Update trip error:', error);
+      toast.error("Failed to update trip", error.message);
+    }
   });
 
   const todayTrips = trips.filter(t => t.date === format(new Date(), 'yyyy-MM-dd'));
