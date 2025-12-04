@@ -229,22 +229,45 @@ html, body {
   }
 }
 
-/* Sierra Leone themed scrollbars */
-*::-webkit-scrollbar {
-  width: 14px !important;
-  height: 14px !important;
+/* Sierra Leone themed scrollbars - applies to ALL scrollbars */
+::-webkit-scrollbar,
+*::-webkit-scrollbar,
+html::-webkit-scrollbar,
+body::-webkit-scrollbar,
+div::-webkit-scrollbar,
+nav::-webkit-scrollbar,
+aside::-webkit-scrollbar,
+main::-webkit-scrollbar,
+[data-radix-scroll-area-viewport]::-webkit-scrollbar {
+  width: 12px !important;
+  height: 12px !important;
 }
 
-*::-webkit-scrollbar-track {
+::-webkit-scrollbar-track,
+*::-webkit-scrollbar-track,
+html::-webkit-scrollbar-track,
+body::-webkit-scrollbar-track,
+div::-webkit-scrollbar-track,
+nav::-webkit-scrollbar-track,
+aside::-webkit-scrollbar-track,
+main::-webkit-scrollbar-track,
+[data-radix-scroll-area-viewport]::-webkit-scrollbar-track {
   background: #e2e8f0 !important;
-  border-radius: 7px !important;
+  border-radius: 6px !important;
 }
 
-*::-webkit-scrollbar-thumb {
-  border-radius: 7px !important;
-  border: 3px solid #e2e8f0 !important;
-  background: #1EB053 !important;
-  background-image: linear-gradient(to bottom, 
+::-webkit-scrollbar-thumb,
+*::-webkit-scrollbar-thumb,
+html::-webkit-scrollbar-thumb,
+body::-webkit-scrollbar-thumb,
+div::-webkit-scrollbar-thumb,
+nav::-webkit-scrollbar-thumb,
+aside::-webkit-scrollbar-thumb,
+main::-webkit-scrollbar-thumb,
+[data-radix-scroll-area-viewport]::-webkit-scrollbar-thumb {
+  border-radius: 6px !important;
+  border: 2px solid #e2e8f0 !important;
+  background: linear-gradient(to bottom, 
     #1EB053 0%, 
     #1EB053 33.33%, 
     #FFFFFF 33.33%, 
@@ -254,9 +277,16 @@ html, body {
   ) !important;
 }
 
-*::-webkit-scrollbar-thumb:hover {
-  background: #178f43 !important;
-  background-image: linear-gradient(to bottom, 
+::-webkit-scrollbar-thumb:hover,
+*::-webkit-scrollbar-thumb:hover,
+html::-webkit-scrollbar-thumb:hover,
+body::-webkit-scrollbar-thumb:hover,
+div::-webkit-scrollbar-thumb:hover,
+nav::-webkit-scrollbar-thumb:hover,
+aside::-webkit-scrollbar-thumb:hover,
+main::-webkit-scrollbar-thumb:hover,
+[data-radix-scroll-area-viewport]::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(to bottom, 
     #178f43 0%, 
     #178f43 33.33%, 
     #f0f0f0 33.33%, 
@@ -266,17 +296,20 @@ html, body {
   ) !important;
 }
 
+::-webkit-scrollbar-corner,
 *::-webkit-scrollbar-corner {
   background: #e2e8f0 !important;
 }
 
 /* Horizontal scrollbars - stripe goes left to right */
+::-webkit-scrollbar:horizontal,
 *::-webkit-scrollbar:horizontal {
-  height: 14px !important;
+  height: 12px !important;
 }
 
+::-webkit-scrollbar-thumb:horizontal,
 *::-webkit-scrollbar-thumb:horizontal {
-  background-image: linear-gradient(to right, 
+  background: linear-gradient(to right, 
     #1EB053 0%, 
     #1EB053 33.33%, 
     #FFFFFF 33.33%, 
@@ -287,20 +320,22 @@ html, body {
 }
 
 /* Firefox scrollbar */
-* {
+html, body, *, div, nav, aside, main {
   scrollbar-width: auto !important;
   scrollbar-color: #1EB053 #e2e8f0 !important;
 }
 
 /* Mobile scrollbars */
 @media (max-width: 768px) {
+  ::-webkit-scrollbar,
   *::-webkit-scrollbar {
-    width: 10px !important;
-    height: 10px !important;
+    width: 8px !important;
+    height: 8px !important;
   }
   
+  ::-webkit-scrollbar-thumb,
   *::-webkit-scrollbar-thumb {
-    border: 2px solid #e2e8f0 !important;
+    border: 1px solid #e2e8f0 !important;
   }
 }
 
