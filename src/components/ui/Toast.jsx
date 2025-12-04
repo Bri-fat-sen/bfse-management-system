@@ -6,8 +6,20 @@ const ToastContext = createContext(null);
 
 export function useToast() {
   const context = useContext(ToastContext);
+  // Return a no-op toast object if context is not available (during initial render)
   if (!context) {
-    throw new Error("useToast must be used within a ToastProvider");
+    return {
+      success: () => {},
+      error: () => {},
+      warning: () => {},
+      info: () => {},
+      notify: () => {},
+      loading: () => {},
+      promise: async (p) => p,
+      update: () => {},
+      dismiss: () => {},
+      clearAll: () => {},
+    };
   }
   return context;
 }
