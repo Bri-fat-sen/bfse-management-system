@@ -1054,27 +1054,18 @@ export default function UserManagement() {
         </DialogContent>
       </Dialog>
 
-      {/* Delete Employee Dialog */}
-      <Dialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
-        <DialogContent className="[&>button]:hidden">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2 text-red-600">
-              <AlertCircle className="w-5 h-5" />
-              Delete Employee
-            </DialogTitle>
-          </DialogHeader>
-          <p className="text-gray-600">Are you sure you want to remove <strong>{employeeToDelete?.full_name}</strong>?</p>
-          <div className="bg-red-50 border border-red-200 rounded-lg p-3 text-sm text-red-800">
-            This will permanently delete the employee record.
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setShowDeleteDialog(false)} disabled={isDeleting}>Cancel</Button>
-            <Button variant="destructive" onClick={handleDeleteEmployee} disabled={isDeleting}>
-              {isDeleting ? 'Deleting...' : 'Delete'}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      {/* Delete Employee Dialog - Sierra Leone Theme */}
+      <ConfirmDialog
+        open={showDeleteDialog}
+        onOpenChange={setShowDeleteDialog}
+        title="Delete Employee"
+        description={`Are you sure you want to remove ${employeeToDelete?.full_name}? This will permanently delete the employee record and cannot be undone.`}
+        confirmLabel="Delete"
+        cancelLabel="Cancel"
+        variant="danger"
+        onConfirm={handleDeleteEmployee}
+        isLoading={isDeleting}
+      />
 
       {/* Set PIN Dialog */}
       {selectedEmployeeForPin && (
