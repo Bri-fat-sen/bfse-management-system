@@ -77,13 +77,13 @@ export function getUnifiedPDFStyles(organisation, documentType = 'receipt') {
         top: 50%;
         left: 50%;
         transform: translate(-50%, -50%) rotate(-45deg);
-        font-size: 120px;
+        font-size: clamp(60px, 15vw, 120px);
         font-weight: 800;
         color: rgba(0, 0, 0, 0.03);
         white-space: nowrap;
         pointer-events: none;
         z-index: 0;
-        letter-spacing: 20px;
+        letter-spacing: clamp(10px, 2vw, 20px);
         font-family: 'Plus Jakarta Sans', sans-serif;
       }
 
