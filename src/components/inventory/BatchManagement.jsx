@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { base44 } from "@/api/base44Client";
+import { useToast } from "@/components/ui/Toast";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { format, differenceInDays, addDays } from "date-fns";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -47,6 +48,7 @@ const STATUS_COLORS = {
 };
 
 export default function BatchManagement({ products = [], warehouses = [], vehicles = [], stockLevels = [], orgId, currentEmployee }) {
+  const toast = useToast();
   const queryClient = useQueryClient();
   const [searchTerm, setSearchTerm] = useState("");
   const [productFilter, setProductFilter] = useState("all");
@@ -83,9 +85,11 @@ export default function BatchManagement({ products = [], warehouses = [], vehicl
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['inventoryBatches'] });
       setShowBatchDialog(false);
+      toast.success("Batch created", "Batch has been added to inventory");
     },
     onError: (error) => {
       console.error('Create batch error:', error);
+      toast.error("Failed to create batch", error.message);
     }
   });
 
@@ -110,9 +114,11 @@ export default function BatchManagement({ products = [], warehouses = [], vehicl
       queryClient.invalidateQueries({ queryKey: ['inventoryBatches'] });
       setShowBatchDialog(false);
       setEditingBatch(null);
+      toast.success("Batch updated", "Changes have been saved");
     },
     onError: (error) => {
       console.error('Update batch error:', error);
+      toast.error("Failed to update batch", error.message);
     }
   });
 
@@ -160,9 +166,11 @@ export default function BatchManagement({ products = [], warehouses = [], vehicl
       queryClient.invalidateQueries({ queryKey: ['inventoryBatches'] });
       queryClient.invalidateQueries({ queryKey: ['stockLevels'] });
       queryClient.invalidateQueries({ queryKey: ['stockMovements'] });
+      toast.success("Batch deleted", "Batch and related data removed");
     },
     onError: (error) => {
       console.error('Delete batch error:', error);
+      toast.error("Failed to delete batch", error.message);
     }
   });
 

@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
+import { useToast } from "@/components/ui/Toast";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   Package,
@@ -71,6 +72,7 @@ import ProductFormDialog from "@/components/inventory/ProductFormDialog";
 const DEFAULT_CATEGORIES = ["Water", "Beverages", "Food", "Electronics", "Clothing", "Other"];
 
 export default function Inventory() {
+  const toast = useToast();
   const queryClient = useQueryClient();
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [productToDelete, setProductToDelete] = useState(null);
@@ -249,9 +251,11 @@ export default function Inventory() {
       queryClient.invalidateQueries({ queryKey: ['products'] });
       setShowProductDialog(false);
       setEditingProduct(null);
+      toast.success("Product created", "Product has been added to inventory");
     },
     onError: (error) => {
       console.error('Create product error:', error);
+      toast.error("Failed to create product", error.message);
     }
   });
 
@@ -261,9 +265,11 @@ export default function Inventory() {
       queryClient.invalidateQueries({ queryKey: ['products'] });
       setShowProductDialog(false);
       setEditingProduct(null);
+      toast.success("Product updated", "Changes have been saved");
     },
     onError: (error) => {
       console.error('Update product error:', error);
+      toast.error("Failed to update product", error.message);
     }
   });
 
@@ -271,9 +277,11 @@ export default function Inventory() {
     mutationFn: (id) => base44.entities.Product.delete(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['products'] });
+      toast.success("Product deleted", "Product has been removed");
     },
     onError: (error) => {
       console.error('Delete product error:', error);
+      toast.error("Failed to delete product", error.message);
     }
   });
 
@@ -304,6 +312,7 @@ export default function Inventory() {
       }
     } catch (error) {
       console.error('Product save error:', error);
+      toast.error("Failed to save product", error.message);
     }
   };
 
