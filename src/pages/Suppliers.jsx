@@ -396,7 +396,10 @@ export default function Suppliers() {
                            </DropdownMenuItem>
                            <DropdownMenuItem 
                              className="text-red-600"
-                             onClick={() => deleteMutation.mutate(supplier.id)}
+                             onClick={() => {
+                               setSupplierToDelete(supplier);
+                               setShowDeleteConfirm(true);
+                             }}
                            >
                              <Trash2 className="w-4 h-4 mr-2" />
                              Delete
@@ -669,6 +672,24 @@ export default function Suppliers() {
             )}
           </TabsContent>
         </Tabs>
+
+        {/* Delete Supplier Confirmation */}
+        <ConfirmDialog
+          open={showDeleteConfirm}
+          onOpenChange={setShowDeleteConfirm}
+          title="Delete Supplier"
+          description={`Are you sure you want to delete "${supplierToDelete?.name}"? This action cannot be undone.`}
+          confirmLabel="Delete"
+          cancelLabel="Cancel"
+          variant="danger"
+          onConfirm={() => {
+            if (supplierToDelete) {
+              deleteMutation.mutate(supplierToDelete.id);
+              setSupplierToDelete(null);
+            }
+          }}
+          isLoading={deleteMutation.isPending}
+        />
 
         {/* Dialogs */}
         <SupplierDialog
