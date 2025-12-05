@@ -736,7 +736,7 @@ Return every row - do not summarize or skip any data.`,
                               className="h-7 text-xs w-24 text-right font-medium"
                             />
                           </TableCell>
-                          {isRevenue ? (
+                          {isRevenue && (
                             <TableCell>
                               <Input
                                 value={item.contributor_name || ''}
@@ -744,7 +744,8 @@ Return every row - do not summarize or skip any data.`,
                                 className="h-7 text-xs w-28"
                               />
                             </TableCell>
-                          ) : (
+                          )}
+                          {!isRevenue && !isProduction && (
                             <TableCell>
                               <Input
                                 value={item.vendor || ''}
@@ -753,21 +754,23 @@ Return every row - do not summarize or skip any data.`,
                               />
                             </TableCell>
                           )}
-                          <TableCell>
-                            <Select
-                              value={item.category}
-                              onValueChange={(v) => updateItem(item.id, 'category', v)}
-                            >
-                              <SelectTrigger className="h-7 text-xs w-32">
-                                <SelectValue />
-                              </SelectTrigger>
-                              <SelectContent>
-                                {categories.map(cat => (
-                                  <SelectItem key={cat.value} value={cat.value}>{cat.label}</SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
-                          </TableCell>
+                          {!isProduction && (
+                            <TableCell>
+                              <Select
+                                value={item.category}
+                                onValueChange={(v) => updateItem(item.id, 'category', v)}
+                              >
+                                <SelectTrigger className="h-7 text-xs w-32">
+                                  <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  {categories.map(cat => (
+                                    <SelectItem key={cat.value} value={cat.value}>{cat.label}</SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                            </TableCell>
+                          )}
                           <TableCell>
                             <Input
                               type="date"
@@ -776,6 +779,16 @@ Return every row - do not summarize or skip any data.`,
                               className="h-7 text-xs w-32"
                             />
                           </TableCell>
+                          {isProduction && (
+                            <TableCell>
+                              <Input
+                                type="date"
+                                value={item.expiry_date || ''}
+                                onChange={(e) => updateItem(item.id, 'expiry_date', e.target.value)}
+                                className="h-7 text-xs w-32"
+                              />
+                            </TableCell>
+                          )}
                           {item.extra_columns && Object.keys(item.extra_columns).length > 0 && (
                             Object.entries(item.extra_columns).map(([key, value]) => (
                               <TableCell key={key} className="bg-purple-50/50 text-xs">
