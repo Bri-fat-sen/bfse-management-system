@@ -548,7 +548,10 @@ Return every row - do not summarize or skip any data.`,
                           />
                         </TableHead>
                         <TableHead className="text-xs">NO</TableHead>
-                        <TableHead className="text-xs">{isRevenue ? 'DESCRIPTION/PRODUCT' : 'DETAILS'}</TableHead>
+                        {isProduction && <TableHead className="text-xs">SKU</TableHead>}
+                        {isProduction && <TableHead className="text-xs">PRODUCT</TableHead>}
+                        {isProduction && <TableHead className="text-xs">BATCH #</TableHead>}
+                        <TableHead className="text-xs">{isProduction ? 'DESCRIPTION' : isRevenue ? 'DESCRIPTION/PRODUCT' : 'DETAILS'}</TableHead>
                         {isRevenue && (
                           <>
                             <TableHead className="text-xs text-center bg-blue-50">Qty</TableHead>
