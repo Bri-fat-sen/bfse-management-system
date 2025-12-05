@@ -557,33 +557,47 @@ Focus: ${typeSpecificPrompt}
 
         <div className="p-6 space-y-4 overflow-y-auto max-h-[calc(95vh-140px)]">
           {extractedData.length === 0 && (
-            <div className="border-2 border-dashed border-gray-300 rounded-xl p-8 text-center hover:border-[#0072C6] transition-colors">
-              <input
-                type="file"
-                accept=".pdf,.csv,.png,.jpg,.jpeg"
-                onChange={handleFileUpload}
-                className="hidden"
-                id="doc-upload-finance"
-                disabled={uploadLoading}
-              />
-              <label htmlFor="doc-upload-finance" className="cursor-pointer">
-                {uploadLoading ? (
-                  <div className="flex flex-col items-center gap-3">
-                    <Loader2 className="w-12 h-12 text-[#0072C6] animate-spin" />
-                    <p className="text-gray-600">Extracting data from document...</p>
-                    <p className="text-sm text-gray-400">This may take a moment</p>
-                  </div>
-                ) : (
-                  <div className="flex flex-col items-center gap-3">
-                    <div className="w-16 h-16 rounded-full bg-[#0072C6]/10 flex items-center justify-center">
-                      <Upload className="w-8 h-8 text-[#0072C6]" />
+            <div className="space-y-4">
+              <div className="border-2 border-dashed border-gray-300 rounded-xl p-8 text-center hover:border-[#0072C6] transition-colors">
+                <input
+                  type="file"
+                  accept=".pdf,.csv,.png,.jpg,.jpeg"
+                  onChange={handleFileUpload}
+                  className="hidden"
+                  id="doc-upload-finance"
+                  disabled={uploadLoading}
+                />
+                <label htmlFor="doc-upload-finance" className="cursor-pointer">
+                  {uploadLoading ? (
+                    <div className="flex flex-col items-center gap-3">
+                      <Loader2 className="w-12 h-12 text-[#0072C6] animate-spin" />
+                      <p className="text-gray-600">Analyzing document & extracting data...</p>
+                      <p className="text-sm text-gray-400">AI is detecting the record type automatically</p>
                     </div>
-                    <p className="text-gray-600 font-medium">Click to upload document</p>
-                    <p className="text-sm text-gray-400">Supports PDF, CSV, and images (PNG, JPG)</p>
-                    <p className="text-xs text-gray-400 mt-1">Tip: Save Word docs as PDF before uploading</p>
-                  </div>
-                )}
-              </label>
+                  ) : (
+                    <div className="flex flex-col items-center gap-3">
+                      <div className="w-16 h-16 rounded-full bg-[#0072C6]/10 flex items-center justify-center">
+                        <Upload className="w-8 h-8 text-[#0072C6]" />
+                      </div>
+                      <p className="text-gray-600 font-medium">Click to upload document</p>
+                      <p className="text-sm text-gray-400">AI will automatically detect what records to create</p>
+                      <p className="text-xs text-gray-400 mt-1">Supports PDF, CSV, and images (PNG, JPG)</p>
+                    </div>
+                  )}
+                </label>
+              </div>
+              
+              {/* Record type hints */}
+              {!uploadLoading && (
+                <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
+                  {RECORD_TYPES.map(rt => (
+                    <div key={rt.value} className="p-2 bg-gray-50 rounded-lg text-center">
+                      <span className="text-xl">{rt.icon}</span>
+                      <p className="text-xs font-medium text-gray-700">{rt.label}</p>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           )}
 
