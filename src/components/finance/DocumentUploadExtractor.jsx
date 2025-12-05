@@ -928,9 +928,10 @@ Focus: ${typeSpecificPrompt}
                             <TableHead className="text-xs text-center bg-blue-50">Est Amount</TableHead>
                             <TableHead className="text-xs text-center bg-green-50">Actual Qty</TableHead>
                             <TableHead className="text-xs text-center bg-green-50">Actual Unit Cost</TableHead>
-                          </>
-                        )}
-                        <TableHead className="text-xs text-center bg-green-50">Amount</TableHead>
+                            <TableHead className="text-xs text-center bg-green-50">Actual Total</TableHead>
+                            </>
+                            )}
+                            <TableHead className="text-xs text-center bg-green-50 font-bold">Final Amount</TableHead>
                         {!isRevenue && !isProduction && <TableHead className="text-xs">Vendor</TableHead>}
                         {!isProduction && <TableHead className="text-xs">{isRevenue ? 'Revenue Type' : 'Category'}</TableHead>}
                         <TableHead className="text-xs">{isProduction ? 'Production Date' : 'Date'}</TableHead>
