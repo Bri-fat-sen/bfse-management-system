@@ -444,14 +444,14 @@ Focus: ${typeSpecificPrompt}
             notes: `Imported from document. ${item.description || ''}`
           });
           inventoryCount++;
-        } else if (isProduction && item.product_id && item.is_production) {
+        } else if (isProduction) {
           const batchNum = item.batch_number || `BATCH-${format(new Date(), 'yyyyMMdd')}-${String(batchCount + 1).padStart(3, '0')}`;
           
           await base44.entities.ProductionBatch.create({
             organisation_id: orgId,
             batch_number: batchNum,
-            product_id: item.product_id,
-            product_name: item.product_name || item.description,
+            product_id: item.product_id || '',
+            product_name: item.product_name || item.description || 'Unknown Product',
             production_date: item.date || format(new Date(), 'yyyy-MM-dd'),
             expiry_date: item.expiry_date || '',
             quantity_produced: item.quantity || item.actual_qty || 0,
