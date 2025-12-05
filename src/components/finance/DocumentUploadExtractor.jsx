@@ -428,7 +428,8 @@ Return every row - do not summarize or skip any data.`,
     ));
   };
 
-  const isRevenue = type === "revenue";
+  const isRevenue = detectedType === "revenue";
+  const isProduction = detectedType === "production";
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
