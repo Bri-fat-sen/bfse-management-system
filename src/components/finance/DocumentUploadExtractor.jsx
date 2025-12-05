@@ -447,6 +447,25 @@ Focus: ${typeSpecificPrompt}
         } else if (isProduction) {
           const batchNum = item.batch_number || `BATCH-${format(new Date(), 'yyyyMMdd')}-${String(batchCount + 1).padStart(3, '0')}`;
           
+          // Find warehouse by name if not already matched
+          let warehouseId = item.warehouse_id;
+          let warehouseName = item.warehouse_name;
+          if (!warehouseId && warehouseName) {
+            const matchedWarehouse = warehouses.find(w => 
+              w.name?.toLowerCase().includes(warehouseName.toLowerCase()) ||
+              warehouseName.toLowerCase().includes(w.name?.toLowerCase())
+            );
+            if (matchedWarehouse) {
+              warehouseId = matchedWarehouse.id;
+              warehouseName = matchedWarehouse.name;
+            }
+          }
+          // Use first warehouse as default if none matched
+          if (!warehouseId && warehouses.length > 0) {
+            warehouseId = warehouses[0].id;
+            warehouseName = warehouses[0].name;
+          }
+          
           await base44.entities.ProductionBatch.create({
             organisation_id: orgId,
             batch_number: batchNum,
