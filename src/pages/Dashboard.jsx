@@ -165,6 +165,27 @@ export default function Dashboard() {
     refetchOnWindowFocus: false,
   });
 
+  const { data: truckContracts = [] } = useQuery({
+    queryKey: ['truckContracts', orgId],
+    queryFn: () => base44.entities.TruckContract.filter({ organisation_id: orgId }),
+    enabled: !!orgId && !isDriver && !isSalesStaff && !isManager,
+    ...queryConfig,
+  });
+
+  const { data: revenues = [] } = useQuery({
+    queryKey: ['revenues', orgId],
+    queryFn: () => base44.entities.Revenue.filter({ organisation_id: orgId }),
+    enabled: !!orgId && !isDriver && !isSalesStaff && !isManager,
+    ...queryConfig,
+  });
+
+  const { data: maintenanceRecords = [] } = useQuery({
+    queryKey: ['maintenanceRecords', orgId],
+    queryFn: () => base44.entities.VehicleMaintenance.filter({ organisation_id: orgId }),
+    enabled: !!orgId && !isDriver && !isSalesStaff && !isManager,
+    ...queryConfig,
+  });
+
   // Allow super admins to see dashboard even without employee record
   if (!user) {
     return <LoadingSpinner message="Loading Dashboard..." subtitle="Preparing your overview" fullScreen={true} />;
@@ -513,7 +534,7 @@ export default function Dashboard() {
         <TodayAttendance attendance={attendance} employees={employees} />
         <UpcomingMeetings meetings={meetings} />
         <TransportSummary trips={trips} vehicles={vehicles} routes={routes} />
-        <FinanceSummary sales={sales} expenses={expenses} trips={trips} />
+        <FinanceSummary sales={sales} expenses={expenses} trips={trips} truckContracts={truckContracts} revenues={revenues} maintenanceRecords={maintenanceRecords} />
       </div>
 
       {/* Footer with Sierra Leone Pride */}
