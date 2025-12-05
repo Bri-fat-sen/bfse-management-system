@@ -314,15 +314,29 @@ export default function ConstructionExpense() {
 
       // Use InvokeLLM with file_urls for better extraction
       const result = await base44.integrations.Core.InvokeLLM({
-        prompt: `Extract all construction expense items from this document. 
-For each expense found, identify:
-- description: what the expense is for
-- category: classify as one of: materials, labor, equipment, permits, foundation, roofing, electrical, plumbing, finishing, landscaping, transport, other
-- amount: the cost/amount (number only, no currency symbols)
-- date: date if mentioned (format as YYYY-MM-DD)
-- vendor: supplier/vendor name if mentioned
+        prompt: `Extract all construction expense line items from this document. 
+The document contains a table with columns:
+- NO (item number)
+- DETAILS (description of the expense item)
+- Estimated Qty (estimated quantity)
+- Estimated unit cost (estimated cost per unit)
+- Estimated Amount (total estimated cost)
+- ACTUAL QTY (actual quantity used)
+- ACTUAL UNIT COST (actual cost per unit)
+- ACTUAL AMOUNT (total actual cost)
 
-Extract ALL expense items you can find in the document.`,
+For each row/line item found, extract:
+- item_no: the NO/item number
+- description: the DETAILS field
+- estimated_qty: Estimated Qty value
+- estimated_unit_cost: Estimated unit cost value
+- estimated_amount: Estimated Amount value
+- actual_qty: ACTUAL QTY value
+- actual_unit_cost: ACTUAL UNIT COST value
+- actual_amount: ACTUAL AMOUNT value (this is the main expense amount)
+- category: classify based on description as one of: materials, labor, equipment, permits, foundation, roofing, electrical, plumbing, finishing, landscaping, transport, other
+
+Extract ALL line items from the document table.`,
         file_urls: [file_url],
         response_json_schema: {
           type: "object",
@@ -332,15 +346,18 @@ Extract ALL expense items you can find in the document.`,
               items: {
                 type: "object",
                 properties: {
+                  item_no: { type: "string" },
                   description: { type: "string" },
+                  estimated_qty: { type: "number" },
+                  estimated_unit_cost: { type: "number" },
+                  estimated_amount: { type: "number" },
+                  actual_qty: { type: "number" },
+                  actual_unit_cost: { type: "number" },
+                  actual_amount: { type: "number" },
                   category: { 
                     type: "string", 
                     enum: ["materials", "labor", "equipment", "permits", "foundation", "roofing", "electrical", "plumbing", "finishing", "landscaping", "transport", "other"]
-                  },
-                  amount: { type: "number" },
-                  date: { type: "string" },
-                  vendor: { type: "string" },
-                  notes: { type: "string" }
+                  }
                 }
               }
             }
@@ -351,12 +368,20 @@ Extract ALL expense items you can find in the document.`,
       const expenses = result.expenses || [];
       if (expenses.length > 0) {
         setExtractedExpenses(expenses.map((exp, idx) => ({
-          ...exp,
           id: `temp-${idx}`,
           selected: true,
+          item_no: exp.item_no || '',
+          description: exp.description || '',
+          estimated_qty: exp.estimated_qty || 0,
+          estimated_unit_cost: exp.estimated_unit_cost || 0,
+          estimated_amount: exp.estimated_amount || 0,
+          actual_qty: exp.actual_qty || 0,
+          actual_unit_cost: exp.actual_unit_cost || 0,
+          amount: exp.actual_amount || 0,
           category: exp.category || 'other',
-          date: exp.date || format(new Date(), 'yyyy-MM-dd'),
-          status: 'pending'
+          date: format(new Date(), 'yyyy-MM-dd'),
+          status: 'pending',
+          notes: `Est: ${exp.estimated_qty || 0} x Le${(exp.estimated_unit_cost || 0).toLocaleString()} = Le${(exp.estimated_amount || 0).toLocaleString()}`
         })));
         toast.success("Data extracted", `Found ${expenses.length} expense(s) in document`);
       } else {
