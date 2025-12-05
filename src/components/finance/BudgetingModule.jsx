@@ -1122,14 +1122,22 @@ export default function BudgetingModule({ orgId, expenses = [], sales = [], curr
             <div className="space-y-2">
               <Label>Location (Warehouse/Store)</Label>
               <Select 
-                value={budgetForm.location_id} 
+                value={budgetForm.location_id || "all_locations"} 
                 onValueChange={(v) => {
-                  const loc = warehouses.find(w => w.id === v);
-                  setBudgetForm({
-                    ...budgetForm, 
-                    location_id: v, 
-                    location_name: loc?.name || ''
-                  });
+                  if (v === "all_locations") {
+                    setBudgetForm({
+                      ...budgetForm, 
+                      location_id: '', 
+                      location_name: ''
+                    });
+                  } else {
+                    const loc = warehouses.find(w => w.id === v);
+                    setBudgetForm({
+                      ...budgetForm, 
+                      location_id: v, 
+                      location_name: loc?.name || ''
+                    });
+                  }
                 }}
               >
                 <SelectTrigger>
@@ -1137,7 +1145,7 @@ export default function BudgetingModule({ orgId, expenses = [], sales = [], curr
                   <SelectValue placeholder="All Locations (Optional)" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value={null}>All Locations</SelectItem>
+                  <SelectItem value="all_locations">All Locations</SelectItem>
                   {warehouses.map(w => (
                     <SelectItem key={w.id} value={w.id}>{w.name}</SelectItem>
                   ))}
@@ -1150,14 +1158,22 @@ export default function BudgetingModule({ orgId, expenses = [], sales = [], curr
               <div className="space-y-2">
                 <Label>Assign to Manager</Label>
                 <Select 
-                  value={budgetForm.assigned_to_id} 
+                  value={budgetForm.assigned_to_id || "no_assignment"} 
                   onValueChange={(v) => {
-                    const emp = warehouseManagers.find(e => e.id === v);
-                    setBudgetForm({
-                      ...budgetForm, 
-                      assigned_to_id: v, 
-                      assigned_to_name: emp?.full_name || ''
-                    });
+                    if (v === "no_assignment") {
+                      setBudgetForm({
+                        ...budgetForm, 
+                        assigned_to_id: '', 
+                        assigned_to_name: ''
+                      });
+                    } else {
+                      const emp = warehouseManagers.find(e => e.id === v);
+                      setBudgetForm({
+                        ...budgetForm, 
+                        assigned_to_id: v, 
+                        assigned_to_name: emp?.full_name || ''
+                      });
+                    }
                   }}
                 >
                   <SelectTrigger>
@@ -1165,7 +1181,7 @@ export default function BudgetingModule({ orgId, expenses = [], sales = [], curr
                     <SelectValue placeholder="Select manager (Optional)" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value={null}>No Assignment</SelectItem>
+                    <SelectItem value="no_assignment">No Assignment</SelectItem>
                     {warehouseManagers.map(emp => (
                       <SelectItem key={emp.id} value={emp.id}>{emp.full_name}</SelectItem>
                     ))}
