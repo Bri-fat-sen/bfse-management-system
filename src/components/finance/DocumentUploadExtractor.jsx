@@ -174,54 +174,61 @@ IMPORTANT:
         ? {
             type: "object",
             properties: {
-              document_date: { type: "string", description: "Date found in document in YYYY-MM-DD format" },
-              document_type: { type: "string", description: "Type: sales, transport, contract, or contribution" },
-              column_headers: { type: "array", items: { type: "string" } },
+              document_date: { type: "string", description: "Date in YYYY-MM-DD format" },
+              document_type: { type: "string", description: "sales, transport, contract, or contribution" },
+              column_headers: { type: "array", items: { type: "string" }, description: "All column names found" },
               items: {
                 type: "array",
+                description: "ALL line items from document - extract every row",
                 items: {
                   type: "object",
                   properties: {
-                    item_no: { type: "string" },
-                    description: { type: "string" },
-                    quantity: { type: "number" },
-                    unit_price: { type: "number" },
-                    amount: { type: "number" },
-                    source: { type: "string", description: "retail_sales, wholesale_sales, vehicle_sales, transport_revenue, contract_revenue, service_income, owner_contribution, ceo_contribution, investor_funding, loan, grant, or other" },
-                    customer_name: { type: "string" },
-                    reference_number: { type: "string" },
-                    extra_columns: { type: "object", additionalProperties: true }
-                  }
+                    item_no: { type: "string", description: "Row/item number" },
+                    description: { type: "string", description: "Exact text from description/product column" },
+                    quantity: { type: "number", description: "Quantity or count" },
+                    unit_price: { type: "number", description: "Price per unit" },
+                    amount: { type: "number", description: "Total amount for this line" },
+                    source: { type: "string", description: "Revenue type classification" },
+                    customer_name: { type: "string", description: "Customer or contributor" },
+                    reference_number: { type: "string", description: "Invoice/receipt number" },
+                    extra_columns: { type: "object", additionalProperties: true, description: "Other columns" }
+                  },
+                  required: ["description", "amount"]
                 }
               }
-            }
+            },
+            required: ["items"]
           }
         : {
             type: "object",
             properties: {
-              document_date: { type: "string", description: "Date found in document in YYYY-MM-DD format" },
-              column_headers: { type: "array", items: { type: "string" } },
+              document_date: { type: "string", description: "Date in YYYY-MM-DD format" },
+              document_type: { type: "string", description: "Type of expense document" },
+              column_headers: { type: "array", items: { type: "string" }, description: "All column names found" },
               items: {
                 type: "array",
+                description: "ALL line items from document - extract every row",
                 items: {
                   type: "object",
                   properties: {
-                    item_no: { type: "string" },
-                    description: { type: "string" },
-                    estimated_qty: { type: "number" },
-                    estimated_unit_cost: { type: "number" },
-                    estimated_amount: { type: "number" },
-                    actual_qty: { type: "number" },
-                    actual_unit_cost: { type: "number" },
-                    actual_amount: { type: "number" },
-                    unit: { type: "string" },
-                    vendor: { type: "string" },
-                    extra_columns: { type: "object", additionalProperties: true },
-                    category: { type: "string" }
-                  }
+                    item_no: { type: "string", description: "Row/item/NO number" },
+                    description: { type: "string", description: "Exact text from DETAILS/description column" },
+                    estimated_qty: { type: "number", description: "Estimated quantity" },
+                    estimated_unit_cost: { type: "number", description: "Estimated unit cost" },
+                    estimated_amount: { type: "number", description: "Estimated total" },
+                    actual_qty: { type: "number", description: "Actual quantity" },
+                    actual_unit_cost: { type: "number", description: "Actual unit cost" },
+                    actual_amount: { type: "number", description: "Actual total - main expense amount" },
+                    unit: { type: "string", description: "Unit of measurement" },
+                    vendor: { type: "string", description: "Supplier/vendor name" },
+                    category: { type: "string", description: "Expense category" },
+                    extra_columns: { type: "object", additionalProperties: true, description: "Other columns" }
+                  },
+                  required: ["description"]
                 }
               }
-            }
+            },
+            required: ["items"]
           };
 
       const result = await base44.integrations.Core.InvokeLLM({
