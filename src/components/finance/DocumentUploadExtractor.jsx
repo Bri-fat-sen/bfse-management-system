@@ -813,9 +813,6 @@ Focus: ${typeSpecificPrompt}
                         {isProduction && <TableHead className="text-xs">PRODUCT</TableHead>}
                         {isProduction && <TableHead className="text-xs">BATCH #</TableHead>}
                         <TableHead className="text-xs">{isProduction ? 'DESCRIPTION' : isRevenue ? 'DESCRIPTION' : 'DETAILS'}</TableHead>
-                        {isRevenue && <TableHead className="text-xs">CUSTOMER</TableHead>}
-                        {isRevenue && <TableHead className="text-xs">PRODUCT</TableHead>}
-                        {isRevenue && <TableHead className="text-xs">LOCATION</TableHead>}
                         {isRevenue && (
                           <>
                             <TableHead className="text-xs text-center bg-blue-50">Qty</TableHead>
@@ -833,7 +830,9 @@ Focus: ${typeSpecificPrompt}
                           </>
                         )}
                         <TableHead className="text-xs text-center bg-green-50">Amount</TableHead>
-                        {isRevenue && <TableHead className="text-xs">Customer/Contributor</TableHead>}
+                        {isRevenue && <TableHead className="text-xs">CUSTOMER</TableHead>}
+                        {isRevenue && <TableHead className="text-xs">PRODUCT</TableHead>}
+                        {isRevenue && <TableHead className="text-xs">LOCATION</TableHead>}
                         {!isRevenue && !isProduction && <TableHead className="text-xs">Vendor</TableHead>}
                         {!isProduction && <TableHead className="text-xs">{isRevenue ? 'Revenue Type' : 'Category'}</TableHead>}
                         <TableHead className="text-xs">{isProduction ? 'Production Date' : 'Date'}</TableHead>
