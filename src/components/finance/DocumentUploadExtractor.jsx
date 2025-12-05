@@ -812,7 +812,10 @@ Focus: ${typeSpecificPrompt}
                         {isProduction && <TableHead className="text-xs">SKU</TableHead>}
                         {isProduction && <TableHead className="text-xs">PRODUCT</TableHead>}
                         {isProduction && <TableHead className="text-xs">BATCH #</TableHead>}
-                        <TableHead className="text-xs">{isProduction ? 'DESCRIPTION' : isRevenue ? 'DESCRIPTION/PRODUCT' : 'DETAILS'}</TableHead>
+                        <TableHead className="text-xs">{isProduction ? 'DESCRIPTION' : isRevenue ? 'DESCRIPTION' : 'DETAILS'}</TableHead>
+                        {isRevenue && <TableHead className="text-xs">CUSTOMER</TableHead>}
+                        {isRevenue && <TableHead className="text-xs">PRODUCT</TableHead>}
+                        {isRevenue && <TableHead className="text-xs">LOCATION</TableHead>}
                         {isRevenue && (
                           <>
                             <TableHead className="text-xs text-center bg-blue-50">Qty</TableHead>
