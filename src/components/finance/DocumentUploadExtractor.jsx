@@ -506,6 +506,8 @@ Focus: ${typeSpecificPrompt}
       if (batchCount > 0) messages.push(`${batchCount} production batch(es)`);
       if (expenseCount > 0) messages.push(`${expenseCount} expense(s)`);
       if (revenueCount > 0) messages.push(`${revenueCount} revenue(s)`);
+      if (inventoryCount > 0) messages.push(`${inventoryCount} stock movement(s)`);
+      if (payrollCount > 0) messages.push(`${payrollCount} payroll item(s)`);
       
       toast.success("Records created", messages.join(', ') + ' added');
       
