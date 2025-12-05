@@ -230,26 +230,31 @@ Be specific about WHY you chose that record type.`,
           result = extractResult.output;
           items = result.rows || [];
           docDate = result.document_info?.date || docDate;
-          columnHeaders = result.table_columns || [];
-          docType = result.document_info?.type || '';
+          columnHeaders = result.table_columns || columnHeaders;
         } else {
           throw new Error('Primary extraction failed');
         }
       } catch (primaryError) {
         console.log("ExtractDataFromUploadedFile failed, trying InvokeLLM:", primaryError);
 
+        const typeSpecificPrompt = {
+          expense: "Extract expense/purchase items with amounts, vendors, categories",
+          revenue: "Extract revenue/income items with amounts, customers, sources",
+          production: "Extract production batch data with SKUs, quantities, batch numbers",
+          inventory: "Extract inventory/stock data with product names, quantities, warehouses",
+          payroll: "Extract payroll data with employee names, salaries, bonuses, deductions"
+        }[docType] || "Extract all tabular data";
+
         const fallbackResult = await base44.integrations.Core.InvokeLLM({
           prompt: `Read this document and extract tabular data.
 
+Document type detected: ${docType}
+Focus: ${typeSpecificPrompt}
+
 1. Find the document date (format as YYYY-MM-DD)
 2. List ALL column headers from the table
-3. For EACH row, extract:
-   - no: the row number
-   - details: the description/details text (copy exactly)
-   - All numeric values from each column (qty, unit cost, amount, etc.)
-   - vendor or customer name if present
-
-Return every row - do not summarize or skip any data.`,
+3. For EACH row, extract all relevant fields based on the document type
+4. Return every row - do not summarize or skip any data.`,
           file_urls: [file_url],
           response_json_schema: extractionSchema
         });
@@ -257,23 +262,10 @@ Return every row - do not summarize or skip any data.`,
         result = fallbackResult;
         items = result.rows || [];
         docDate = result.document_info?.date || docDate;
-        columnHeaders = result.table_columns || [];
-        docType = result.document_info?.type || '';
+        columnHeaders = result.table_columns || columnHeaders;
       }
 
       setExtractedColumns(columnHeaders);
-
-      const hasProductionData = items.some(item => 
-        item.sku || item.batch_number || item.product_name || 
-        (item.details && products.some(p => 
-          p.sku && item.details.toLowerCase().includes(p.sku.toLowerCase())
-        ))
-      );
-
-      if (hasProductionData && products.length > 0) {
-        setDetectedType('production');
-        toast.info("Production data detected", "SKU/batch information found - will create production batches");
-      }
 
       if (items.length > 0) {
         const categorizeItem = (description) => {
