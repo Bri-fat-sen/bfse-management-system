@@ -338,7 +338,7 @@ Focus: ${typeSpecificPrompt}
             extra_columns: {},
             category: category,
             document_type: docType,
-            date: docDate,
+            date: extractedDocDate,
             status: 'pending',
             sku: item.sku || matchedProduct?.sku || '',
             product_id: matchedProduct?.id || '',
