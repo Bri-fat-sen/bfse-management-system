@@ -369,7 +369,7 @@ Extract ALL line items from the document.`;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-hidden p-0 w-[95vw] [&>button]:hidden">
+      <DialogContent className="max-w-5xl max-h-[95vh] overflow-hidden p-0 w-[98vw] [&>button]:hidden">
         {/* Sierra Leone Flag Header */}
         <div className="h-2 flex">
           <div className="flex-1 bg-[#1EB053]" />
@@ -390,7 +390,7 @@ Extract ALL line items from the document.`;
           </div>
         </div>
 
-        <div className="p-6 space-y-4 overflow-y-auto max-h-[calc(90vh-200px)]">
+        <div className="p-6 space-y-4 overflow-y-auto max-h-[calc(95vh-140px)]">
           {/* Upload Area */}
           {extractedData.length === 0 && (
             <div className="border-2 border-dashed border-gray-300 rounded-xl p-8 text-center hover:border-[#0072C6] transition-colors">
@@ -449,8 +449,8 @@ Extract ALL line items from the document.`;
                 </div>
               )}
 
-              <ScrollArea className="h-[400px] border rounded-lg">
-                <div className={isRevenue ? "min-w-[700px]" : "min-w-[1100px]"}>
+              <ScrollArea className="h-[calc(95vh-380px)] min-h-[300px] border rounded-lg">
+                <div className={isRevenue ? "min-w-[900px]" : "min-w-[1200px]"}>
                   <Table>
                     <TableHeader>
                       <TableRow className="bg-gray-50">
