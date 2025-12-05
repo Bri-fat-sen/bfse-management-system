@@ -581,12 +581,20 @@ export default function BudgetingModule({ orgId, expenses = [], sales = [], curr
 
       {/* Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="grid w-full grid-cols-4">
-          <TabsTrigger value="overview">Expense Budgets</TabsTrigger>
-          <TabsTrigger value="revenue">Revenue Targets</TabsTrigger>
-          <TabsTrigger value="tracking">Variance Tracking</TabsTrigger>
-          <TabsTrigger value="forecast">Forecasting</TabsTrigger>
-        </TabsList>
+        <div className="rounded-lg overflow-hidden border">
+          {/* Sierra Leone Flag Stripe */}
+          <div className="h-1 flex">
+            <div className="flex-1 bg-[#1EB053]" />
+            <div className="flex-1 bg-white" />
+            <div className="flex-1 bg-[#0072C6]" />
+          </div>
+          <TabsList className="grid w-full grid-cols-4 rounded-none">
+            <TabsTrigger value="overview">Expense Budgets</TabsTrigger>
+            <TabsTrigger value="revenue">Revenue Targets</TabsTrigger>
+            <TabsTrigger value="tracking">Variance Tracking</TabsTrigger>
+            <TabsTrigger value="forecast">Forecasting</TabsTrigger>
+          </TabsList>
+        </div>
 
         {/* Overview Tab */}
         <TabsContent value="overview" className="space-y-4">
