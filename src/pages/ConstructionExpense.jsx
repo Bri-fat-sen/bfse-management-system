@@ -122,14 +122,9 @@ export default function ConstructionExpense() {
     queryKey: ['constructionExpenses', orgId],
     queryFn: async () => {
       const allExpenses = await base44.entities.Expense.filter({ organisation_id: orgId }, '-date', 500);
-      // Filter for construction-related categories
-      return allExpenses.filter(e => 
-        CONSTRUCTION_CATEGORIES.some(cat => cat.value === e.category) ||
-        e.category === 'construction' ||
-        e.notes?.toLowerCase().includes('construction') ||
-        e.description?.toLowerCase().includes('construction') ||
-        e.description?.toLowerCase().includes('building')
-      );
+      // Only show expenses with construction-specific categories
+      const constructionCategoryValues = CONSTRUCTION_CATEGORIES.map(c => c.value);
+      return allExpenses.filter(e => constructionCategoryValues.includes(e.category));
     },
     enabled: !!orgId && isAdmin,
   });
