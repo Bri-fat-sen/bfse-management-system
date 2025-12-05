@@ -513,7 +513,7 @@ export default function Dashboard() {
         <TodayAttendance attendance={attendance} employees={employees} />
         <UpcomingMeetings meetings={meetings} />
         <TransportSummary trips={trips} vehicles={vehicles} routes={routes} />
-        <FinanceSummary sales={sales} expenses={expenses} />
+        <FinanceSummary sales={sales} expenses={expenses} trips={trips} />
       </div>
 
       {/* Footer with Sierra Leone Pride */}
