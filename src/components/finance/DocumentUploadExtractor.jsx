@@ -197,7 +197,18 @@ Be specific about WHY you chose that record type.`,
                 product_name: { type: "string", description: "Product name if this is production data" },
                 batch_number: { type: "string", description: "Batch number or lot number if shown" },
                 expiry_date: { type: "string", description: "Expiry date in YYYY-MM-DD format if shown" },
-                notes: { type: "string", description: "Any notes or remarks" }
+                notes: { type: "string", description: "Any notes or remarks" },
+                // Payroll specific
+                employee_name: { type: "string", description: "Employee name" },
+                employee_code: { type: "string", description: "Employee ID/code" },
+                base_salary: { type: "number", description: "Base salary amount" },
+                bonus: { type: "number", description: "Bonus amount" },
+                deduction: { type: "number", description: "Deduction amount" },
+                net_pay: { type: "number", description: "Net pay amount" },
+                // Inventory specific
+                warehouse: { type: "string", description: "Warehouse or location name" },
+                stock_in: { type: "number", description: "Quantity received/added" },
+                stock_out: { type: "number", description: "Quantity issued/removed" }
               }
             }
           }
@@ -206,9 +217,8 @@ Be specific about WHY you chose that record type.`,
 
       let result;
       let items = [];
-      let docDate = format(new Date(), 'yyyy-MM-dd');
-      let columnHeaders = [];
-      let docType = '';
+      let docDate = analysisResult.document_date || format(new Date(), 'yyyy-MM-dd');
+      let columnHeaders = analysisResult.key_columns || [];
 
       try {
         const extractResult = await base44.integrations.Core.ExtractDataFromUploadedFile({
