@@ -103,10 +103,59 @@ export default function DocumentUploadExtractor({
     setUploadLoading(true);
     setExtractedData([]);
     setExtractedColumns([]);
+    setDocumentSummary(null);
+    setDetectedType(type === "auto" ? null : type);
 
     try {
       const { file_url } = await base44.integrations.Core.UploadFile({ file });
 
+      // First, analyze document to detect what type of records to create
+      const analysisResult = await base44.integrations.Core.InvokeLLM({
+        prompt: `Analyze this document and determine what type of business records should be created from it.
+
+Available record types:
+1. EXPENSE - Operating costs, purchases, bills, invoices for things bought, petty cash, maintenance costs
+2. REVENUE - Sales receipts, income records, contributions, funding received, customer payments
+3. PRODUCTION - Manufacturing records, production batches, batch numbers, product runs with quantities
+4. INVENTORY - Stock receipts, goods received notes, inventory counts, stock adjustments
+5. PAYROLL - Salary sheets, payroll records, employee payments, bonus lists, deduction schedules
+
+Analyze the document content, headers, columns, and data to determine:
+- What type of record this document represents
+- A brief summary of what the document contains
+- Key fields/columns detected
+- Confidence level (high/medium/low)
+
+Be specific about WHY you chose that record type.`,
+        file_urls: [file_url],
+        response_json_schema: {
+          type: "object",
+          properties: {
+            detected_type: { 
+              type: "string", 
+              enum: ["expense", "revenue", "production", "inventory", "payroll"],
+              description: "The most appropriate record type for this document"
+            },
+            confidence: { type: "string", enum: ["high", "medium", "low"] },
+            summary: { type: "string", description: "Brief summary of document content" },
+            reasoning: { type: "string", description: "Why this record type was chosen" },
+            key_columns: { type: "array", items: { type: "string" }, description: "Important columns/fields detected" },
+            document_date: { type: "string", description: "Document date in YYYY-MM-DD format if found" },
+            total_rows_estimate: { type: "number", description: "Estimated number of data rows" }
+          }
+        }
+      });
+
+      setDocumentSummary(analysisResult);
+      const docType = type === "auto" ? analysisResult.detected_type : type;
+      setDetectedType(docType);
+      
+      toast.info(
+        `${RECORD_TYPES.find(r => r.value === docType)?.icon || '📄'} ${RECORD_TYPES.find(r => r.value === docType)?.label || docType} detected`,
+        analysisResult.summary
+      );
+
+      // Now extract the actual data based on detected type
       const extractionSchema = {
         type: "object",
         properties: {
