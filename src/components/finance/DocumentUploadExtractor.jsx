@@ -231,7 +231,20 @@ Return every row - do not summarize or skip any data.`,
         const existingCategoryValues = categories.map(c => c.value);
         const newCategories = [];
 
+        // Try to match SKU to products
+        const matchProductBySku = (sku, description) => {
+          if (!sku && !description) return null;
+          const searchText = (sku || description || '').toLowerCase();
+          return products.find(p => 
+            (p.sku && searchText.includes(p.sku.toLowerCase())) ||
+            (p.name && searchText.includes(p.name.toLowerCase())) ||
+            (p.sku && p.sku.toLowerCase() === searchText)
+          );
+        };
+
         const mappedData = items.map((item, idx) => {
+          // Try to match product by SKU
+          const matchedProduct = matchProductBySku(item.sku, item.product_name || item.details);
           // Smart amount calculation - check multiple possible fields
           const estAmount = parseFloat(item.est_total) || parseFloat(item.estimated_amount) || 0;
           const actAmount = parseFloat(item.actual_total) || parseFloat(item.actual_amount) || 0;
