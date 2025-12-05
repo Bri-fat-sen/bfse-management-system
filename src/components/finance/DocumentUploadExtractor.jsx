@@ -331,16 +331,16 @@ Focus: ${typeSpecificPrompt}
         const matchedProduct = matchProductBySku(item.sku, item.product_name || item.details);
         const matchedCustomer = matchCustomer(item.customer);
 
-        // Convert from old SLL to new SLE (divide by 10)
-        const estAmount = (parseFloat(item.est_total) || parseFloat(item.estimated_amount) || 0) / 10;
-        const actAmount = (parseFloat(item.actual_total) || parseFloat(item.actual_amount) || 0) / 10;
-        const singleAmount = (parseFloat(item.amount) || 0) / 10;
+        // Convert from old SLL to new SLE (divide by 1000, redenomination July 2022: 1000 SLL = 1 SLE)
+        const estAmount = (parseFloat(item.est_total) || parseFloat(item.estimated_amount) || 0) / 1000;
+        const actAmount = (parseFloat(item.actual_total) || parseFloat(item.actual_amount) || 0) / 1000;
+        const singleAmount = (parseFloat(item.amount) || 0) / 1000;
         const finalAmount = actAmount || singleAmount || estAmount || 0;
 
         const estQty = parseFloat(item.est_qty) || 0;
         const actQty = parseFloat(item.actual_qty) || parseFloat(item.qty) || 0;
-        const estUnitCost = (parseFloat(item.est_unit_cost) || 0) / 10;
-        const actUnitCost = (parseFloat(item.actual_unit_cost) || parseFloat(item.price) || 0) / 10;
+        const estUnitCost = (parseFloat(item.est_unit_cost) || 0) / 1000;
+        const actUnitCost = (parseFloat(item.actual_unit_cost) || parseFloat(item.price) || 0) / 1000;
 
         const description = item.details || item.description || '';
         const category = categorizeItem(description);
