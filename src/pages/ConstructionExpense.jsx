@@ -312,32 +312,44 @@ export default function ConstructionExpense() {
       // Upload file first
       const { file_url } = await base44.integrations.Core.UploadFile({ file });
 
-      // Extract data using AI
-      const result = await base44.integrations.Core.ExtractDataFromUploadedFile({
-        file_url,
-        json_schema: {
-          type: "array",
-          items: {
-            type: "object",
-            properties: {
-              description: { type: "string", description: "Description of the expense item" },
-              category: { 
-                type: "string", 
-                enum: ["materials", "labor", "equipment", "permits", "foundation", "roofing", "electrical", "plumbing", "finishing", "landscaping", "transport", "other"],
-                description: "Category of construction expense"
-              },
-              amount: { type: "number", description: "Amount in Leones" },
-              date: { type: "string", description: "Date in YYYY-MM-DD format" },
-              vendor: { type: "string", description: "Vendor or supplier name" },
-              notes: { type: "string", description: "Additional notes" }
-            },
-            required: ["description", "amount"]
+      // Use InvokeLLM with file_urls for better extraction
+      const result = await base44.integrations.Core.InvokeLLM({
+        prompt: `Extract all construction expense items from this document. 
+For each expense found, identify:
+- description: what the expense is for
+- category: classify as one of: materials, labor, equipment, permits, foundation, roofing, electrical, plumbing, finishing, landscaping, transport, other
+- amount: the cost/amount (number only, no currency symbols)
+- date: date if mentioned (format as YYYY-MM-DD)
+- vendor: supplier/vendor name if mentioned
+
+Extract ALL expense items you can find in the document.`,
+        file_urls: [file_url],
+        response_json_schema: {
+          type: "object",
+          properties: {
+            expenses: {
+              type: "array",
+              items: {
+                type: "object",
+                properties: {
+                  description: { type: "string" },
+                  category: { 
+                    type: "string", 
+                    enum: ["materials", "labor", "equipment", "permits", "foundation", "roofing", "electrical", "plumbing", "finishing", "landscaping", "transport", "other"]
+                  },
+                  amount: { type: "number" },
+                  date: { type: "string" },
+                  vendor: { type: "string" },
+                  notes: { type: "string" }
+                }
+              }
+            }
           }
         }
       });
 
-      if (result.status === 'success' && result.output) {
-        const expenses = Array.isArray(result.output) ? result.output : [result.output];
+      const expenses = result.expenses || [];
+      if (expenses.length > 0) {
         setExtractedExpenses(expenses.map((exp, idx) => ({
           ...exp,
           id: `temp-${idx}`,
@@ -348,7 +360,7 @@ export default function ConstructionExpense() {
         })));
         toast.success("Data extracted", `Found ${expenses.length} expense(s) in document`);
       } else {
-        toast.error("Extraction failed", result.details || "Could not extract data from document");
+        toast.warning("No expenses found", "Could not find expense data in the document");
       }
     } catch (error) {
       console.error("Upload error:", error);
