@@ -797,6 +797,16 @@ export default function Finance() {
 
           {/* Revenue Tab */}
           <TabsContent value="revenue" className="mt-6 space-y-4 sm:space-y-6">
+            <div className="flex justify-end mb-4">
+              <Button 
+                variant="outline"
+                onClick={() => setShowRevenueUploadDialog(true)} 
+                className="border-[#0072C6] text-[#0072C6] hover:bg-[#0072C6]/10"
+              >
+                <Upload className="w-4 h-4 mr-2" />
+                Upload Revenue Document
+              </Button>
+            </div>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
               <Card className="bg-gradient-to-br from-green-50 to-white">
                 <CardContent className="p-4 sm:p-5">
