@@ -85,8 +85,8 @@ export default function DocumentUploadExtractor({
   customers = [],
   vehicles = [],
   saleTypes = [],
-  selectedLocation = null,
-  selectedSaleType = null
+  selectedLocation: propSelectedLocation = null,
+  selectedSaleType: propSelectedSaleType = null
 }) {
   const toast = useToast();
   const [uploadLoading, setUploadLoading] = useState(false);
@@ -95,6 +95,8 @@ export default function DocumentUploadExtractor({
   const [dynamicCategories, setDynamicCategories] = useState([]);
   const [detectedType, setDetectedType] = useState(type === "auto" ? null : type);
   const [documentSummary, setDocumentSummary] = useState(null);
+  const [selectedLocation, setSelectedLocation] = useState(propSelectedLocation);
+  const [selectedSaleType, setSelectedSaleType] = useState(propSelectedSaleType);
 
   const baseCategories = type === "expense" ? DEFAULT_EXPENSE_CATEGORIES : DEFAULT_REVENUE_SOURCES;
   const categories = useMemo(() => {
@@ -327,7 +329,10 @@ Focus: ${typeSpecificPrompt}
         const mappedData = items.map((item, idx) => {
           const matchedProduct = matchProductBySku(item.sku, item.product_name || item.details);
           const matchedCustomer = matchCustomer(item.customer);
-          const matchedLocation = matchLocation(item.warehouse || item.location);
+          // For sales, use the selected location from the Sales page
+          const matchedLocation = selectedLocation ? 
+            [...warehouses, ...vehicles].find(loc => loc.id === selectedLocation) : 
+            matchLocation(item.warehouse || item.location);
 
           const estAmount = parseFloat(item.est_total) || parseFloat(item.estimated_amount) || 0;
           const actAmount = parseFloat(item.actual_total) || parseFloat(item.actual_amount) || 0;
@@ -377,7 +382,7 @@ Focus: ${typeSpecificPrompt}
             product_id: matchedProduct?.id || '',
             product_name: item.product_name || matchedProduct?.name || '',
             needs_product_selection: !matchedProduct && (item.product_name || item.details),
-            location_id: matchedLocation?.id || selectedLocation || '',
+            location_id: matchedLocation?.id || '',
             location_name: matchedLocation?.name || matchedLocation?.registration_number || '',
             sale_type: selectedSaleType || (matchedLocation?.registration_number ? 'vehicle' : 'retail'),
             batch_number: item.batch_number || '',
@@ -444,9 +449,8 @@ Focus: ${typeSpecificPrompt}
         toast.error("Missing Products", "Please select products for all items or deselect them");
         return;
       }
-      
-      const hasNoLocation = selectedItems.some(i => !i.location_id);
-      if (hasNoLocation && !selectedLocation) {
+
+      if (!selectedLocation) {
         toast.error("Missing Location", "Please select a location for all sales items");
         return;
       }
@@ -774,6 +778,27 @@ Focus: ${typeSpecificPrompt}
                       ))}
                     </SelectContent>
                   </Select>
+
+                  {/* Location selector for sales */}
+                  {(detectedType === 'revenue' || detectedType === 'auto') && (
+                    <Select value={selectedLocation || ''} onValueChange={setSelectedLocation}>
+                      <SelectTrigger className={`w-[200px] h-8 text-xs ${!selectedLocation ? 'border-amber-400 bg-amber-50' : ''}`}>
+                        <SelectValue placeholder="Select location for sales" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {warehouses.map(w => (
+                          <SelectItem key={w.id} value={w.id}>
+                            📦 {w.name}
+                          </SelectItem>
+                        ))}
+                        {vehicles.map(v => (
+                          <SelectItem key={v.id} value={v.id}>
+                            🚚 {v.registration_number}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  )}
                 </div>
                 <Button
                   variant="outline"
