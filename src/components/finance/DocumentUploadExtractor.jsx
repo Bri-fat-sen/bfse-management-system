@@ -217,7 +217,7 @@ Be specific about WHY you chose that record type.`,
 
       let result;
       let items = [];
-      let docDate = analysisResult.document_date || format(new Date(), 'yyyy-MM-dd');
+      let extractedDocDate = analysisResult.document_date || format(new Date(), 'yyyy-MM-dd');
       let columnHeaders = analysisResult.key_columns || [];
 
       try {
@@ -229,7 +229,7 @@ Be specific about WHY you chose that record type.`,
         if (extractResult.status === 'success' && extractResult.output) {
           result = extractResult.output;
           items = result.rows || [];
-          docDate = result.document_info?.date || docDate;
+          extractedDocDate = result.document_info?.date || extractedDocDate;
           columnHeaders = result.table_columns || columnHeaders;
         } else {
           throw new Error('Primary extraction failed');
