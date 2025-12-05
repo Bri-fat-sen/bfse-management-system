@@ -162,7 +162,12 @@ Look for:
   };
 
   return (
-    <Card className="border-l-4 border-l-purple-500">
+    <Card className="border-l-4 border-l-purple-500 overflow-hidden">
+      <div className="h-1 flex">
+        <div className="flex-1 bg-[#1EB053]" />
+        <div className="flex-1 bg-white" />
+        <div className="flex-1 bg-[#0072C6]" />
+      </div>
       <CardHeader>
         <div className="flex items-center justify-between">
           <CardTitle className="flex items-center gap-2 text-base">

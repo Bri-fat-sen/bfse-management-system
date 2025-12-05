@@ -582,7 +582,12 @@ Create an executive summary suitable for business owners and stakeholders.`;
       </div>
 
       {/* Trend Chart */}
-      <Card>
+      <Card className="overflow-hidden">
+        <div className="h-1 flex">
+          <div className="flex-1 bg-[#1EB053]" />
+          <div className="flex-1 bg-white" />
+          <div className="flex-1 bg-[#0072C6]" />
+        </div>
         <CardHeader>
           <CardTitle>Financial Trend (6 Months)</CardTitle>
         </CardHeader>
@@ -605,7 +610,13 @@ Create an executive summary suitable for business owners and stakeholders.`;
 
       {/* Analysis Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="grid w-full grid-cols-4">
+        <div className="rounded-lg overflow-hidden border">
+          <div className="h-1 flex">
+            <div className="flex-1 bg-[#1EB053]" />
+            <div className="flex-1 bg-white" />
+            <div className="flex-1 bg-[#0072C6]" />
+          </div>
+          <TabsList className="grid w-full grid-cols-4 rounded-none">
           <TabsTrigger value="spending" className="gap-1">
             <PiggyBank className="w-4 h-4" />
             <span className="hidden sm:inline">Cost Savings</span>
@@ -623,10 +634,16 @@ Create an executive summary suitable for business owners and stakeholders.`;
             <span className="hidden sm:inline">Summary</span>
           </TabsTrigger>
         </TabsList>
+        </div>
 
         {/* Spending Analysis Tab */}
         <TabsContent value="spending" className="space-y-4">
-          <Card>
+          <Card className="overflow-hidden">
+            <div className="h-1 flex">
+              <div className="flex-1 bg-[#1EB053]" />
+              <div className="flex-1 bg-white" />
+              <div className="flex-1 bg-[#0072C6]" />
+            </div>
             <CardHeader className="flex flex-row items-center justify-between">
               <div>
                 <CardTitle className="flex items-center gap-2">
@@ -732,7 +749,12 @@ Create an executive summary suitable for business owners and stakeholders.`;
 
         {/* Cash Flow Tab */}
         <TabsContent value="cashflow" className="space-y-4">
-          <Card>
+          <Card className="overflow-hidden">
+            <div className="h-1 flex">
+              <div className="flex-1 bg-[#1EB053]" />
+              <div className="flex-1 bg-white" />
+              <div className="flex-1 bg-[#0072C6]" />
+            </div>
             <CardHeader className="flex flex-row items-center justify-between">
               <div>
                 <CardTitle className="flex items-center gap-2">
@@ -843,7 +865,12 @@ Create an executive summary suitable for business owners and stakeholders.`;
 
         {/* Revenue Tab */}
         <TabsContent value="revenue" className="space-y-4">
-          <Card>
+          <Card className="overflow-hidden">
+            <div className="h-1 flex">
+              <div className="flex-1 bg-[#1EB053]" />
+              <div className="flex-1 bg-white" />
+              <div className="flex-1 bg-[#0072C6]" />
+            </div>
             <CardHeader className="flex flex-row items-center justify-between">
               <div>
                 <CardTitle className="flex items-center gap-2">
@@ -966,7 +993,12 @@ Create an executive summary suitable for business owners and stakeholders.`;
 
         {/* Summary Tab */}
         <TabsContent value="summary" className="space-y-4">
-          <Card>
+          <Card className="overflow-hidden">
+            <div className="h-1 flex">
+              <div className="flex-1 bg-[#1EB053]" />
+              <div className="flex-1 bg-white" />
+              <div className="flex-1 bg-[#0072C6]" />
+            </div>
             <CardHeader className="flex flex-row items-center justify-between">
               <div>
                 <CardTitle className="flex items-center gap-2">
