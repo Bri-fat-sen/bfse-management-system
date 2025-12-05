@@ -490,8 +490,29 @@ Return every row - do not summarize or skip any data.`,
           {/* Extracted Data Preview */}
           {extractedData.length > 0 && (
             <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <h3 className="font-semibold text-gray-700">Extracted {isRevenue ? 'Revenue' : 'Expenses'} ({extractedData.length})</h3>
+              <div className="flex items-center justify-between flex-wrap gap-2">
+                <div className="flex items-center gap-3">
+                  <h3 className="font-semibold text-gray-700">Extracted Data ({extractedData.length})</h3>
+                  {detectedType !== type && (
+                    <Badge className="bg-purple-100 text-purple-700">
+                      {isProduction ? '🏭 Production Batches Detected' : isRevenue ? 'Revenue' : 'Expenses'}
+                    </Badge>
+                  )}
+                </div>
+                <div className="flex gap-2">
+                  {extractedData.some(e => e.is_production) && (
+                    <Select value={detectedType} onValueChange={setDetectedType}>
+                      <SelectTrigger className="w-[180px] h-8 text-xs">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="expense">Create as Expenses</SelectItem>
+                        <SelectItem value="revenue">Create as Revenue</SelectItem>
+                        <SelectItem value="production">Create as Production Batches</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  )}
+                </div>
                 <Button
                   variant="outline"
                   size="sm"
