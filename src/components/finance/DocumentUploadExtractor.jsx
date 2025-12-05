@@ -490,13 +490,15 @@ Focus: ${typeSpecificPrompt}
       }
 
       for (const item of selectedItems) {
-        if ((isRevenue || detectedType === 'auto') && item.product_id && item.location_id) {
+        if ((isRevenue || detectedType === 'auto') && item.product_id && selectedLocation) {
           // Create sales record from revenue document
           const saleNumber = `SL-${format(new Date(), 'yyyyMMdd')}-${Math.floor(1000 + Math.random() * 9000)}`;
+          const locationData = [...warehouses, ...vehicles].find(l => l.id === selectedLocation);
+          
           await base44.entities.Sale.create({
             organisation_id: orgId,
             sale_number: saleNumber,
-            sale_type: item.sale_type || 'retail',
+            sale_type: selectedSaleType || 'retail',
             employee_id: currentEmployee?.id,
             employee_name: currentEmployee?.full_name,
             customer_name: item.customer_name || 'Walk-in Customer',
@@ -513,15 +515,47 @@ Focus: ${typeSpecificPrompt}
             total_amount: item.amount,
             payment_method: 'cash',
             payment_status: 'paid',
-            location: item.location_name,
-            vehicle_id: item.sale_type === 'vehicle' ? item.location_id : null
+            location: locationData?.name || locationData?.registration_number || '',
+            vehicle_id: selectedSaleType === 'vehicle' ? selectedLocation : null
           });
 
-          // Update stock - allow negative stock
+          // Update stock at the selected location
           const product = products.find(p => p.id === item.product_id);
           if (product) {
+            // Update product total stock
             await base44.entities.Product.update(item.product_id, {
               stock_quantity: (product.stock_quantity || 0) - (item.quantity || 1)
+            });
+            
+            // Update location-specific stock level
+            const stockLevels = await base44.entities.StockLevel.filter({
+              organisation_id: orgId,
+              warehouse_id: selectedLocation,
+              product_id: item.product_id
+            });
+            
+            if (stockLevels.length > 0) {
+              const stockLevel = stockLevels[0];
+              await base44.entities.StockLevel.update(stockLevel.id, {
+                quantity: Math.max(0, (stockLevel.quantity || 0) - (item.quantity || 1)),
+                available_quantity: Math.max(0, (stockLevel.available_quantity || stockLevel.quantity || 0) - (item.quantity || 1))
+              });
+            }
+            
+            // Create stock movement record
+            await base44.entities.StockMovement.create({
+              organisation_id: orgId,
+              product_id: item.product_id,
+              product_name: item.product_name,
+              warehouse_id: selectedLocation,
+              warehouse_name: locationData?.name || locationData?.registration_number || '',
+              movement_type: "out",
+              quantity: item.quantity || 1,
+              reference_type: "sale",
+              reference_id: saleNumber,
+              recorded_by: currentEmployee?.id,
+              recorded_by_name: currentEmployee?.full_name,
+              notes: `Sale from uploaded document at ${locationData?.name || 'location'}`
             });
           }
 
