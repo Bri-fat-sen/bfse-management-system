@@ -603,28 +603,44 @@ Focus: ${typeSpecificPrompt}
 
           {extractedData.length > 0 && (
             <div className="space-y-4">
+              {/* Document Analysis Summary */}
+              {documentSummary && (
+                <div className="p-4 bg-gradient-to-r from-blue-50 to-purple-50 rounded-xl border border-blue-100">
+                  <div className="flex items-start gap-3">
+                    <span className="text-2xl">{RECORD_TYPES.find(r => r.value === detectedType)?.icon || '📄'}</span>
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2 mb-1">
+                        <h4 className="font-semibold text-gray-800">
+                          {RECORD_TYPES.find(r => r.value === detectedType)?.label || detectedType}
+                        </h4>
+                        <Badge className={documentSummary.confidence === 'high' ? 'bg-green-100 text-green-700' : documentSummary.confidence === 'medium' ? 'bg-yellow-100 text-yellow-700' : 'bg-red-100 text-red-700'}>
+                          {documentSummary.confidence} confidence
+                        </Badge>
+                      </div>
+                      <p className="text-sm text-gray-600">{documentSummary.summary}</p>
+                      <p className="text-xs text-gray-500 mt-1">Reason: {documentSummary.reasoning}</p>
+                    </div>
+                  </div>
+                </div>
+              )}
+
               <div className="flex items-center justify-between flex-wrap gap-2">
                 <div className="flex items-center gap-3">
                   <h3 className="font-semibold text-gray-700">Extracted Data ({extractedData.length})</h3>
-                  {detectedType !== type && (
-                    <Badge className="bg-purple-100 text-purple-700">
-                      {isProduction ? '🏭 Production Batches Detected' : isRevenue ? 'Revenue' : 'Expenses'}
-                    </Badge>
-                  )}
                 </div>
                 <div className="flex gap-2">
-                  {extractedData.some(e => e.is_production) && (
-                    <Select value={detectedType} onValueChange={setDetectedType}>
-                      <SelectTrigger className="w-[180px] h-8 text-xs">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="expense">Create as Expenses</SelectItem>
-                        <SelectItem value="revenue">Create as Revenue</SelectItem>
-                        <SelectItem value="production">Create as Production Batches</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  )}
+                  <Select value={detectedType} onValueChange={setDetectedType}>
+                    <SelectTrigger className="w-[200px] h-8 text-xs">
+                      <SelectValue placeholder="Select record type" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {RECORD_TYPES.map(rt => (
+                        <SelectItem key={rt.value} value={rt.value}>
+                          {rt.icon} {rt.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
                 <Button
                   variant="outline"
