@@ -535,7 +535,7 @@ Return every row - do not summarize or skip any data.`,
               )}
 
               <div className="h-[calc(95vh-380px)] min-h-[300px] border rounded-lg overflow-auto">
-                <div className={isRevenue ? "min-w-[900px]" : "min-w-[1400px]"}>
+                <div className={isProduction ? "min-w-[1200px]" : isRevenue ? "min-w-[900px]" : "min-w-[1400px]"}>
                   <Table>
                     <TableHeader>
                       <TableRow className="bg-gray-50">
