@@ -109,6 +109,7 @@ const menuSections = [
     title: "Admin",
     items: [
       { name: "User Management", icon: Users, page: "UserManagement", module: "settings", adminOnly: true },
+      { name: "Expense Management", icon: Shield, page: "ExpenseManagement", module: "finance", adminOnly: true },
       { name: "Locations", icon: MapPin, page: "Locations", module: "settings", adminOnly: true },
       { name: "Construction Expenses", icon: Building2, page: "ConstructionExpense", module: "finance", adminOnly: true },
       { name: "Stock Audit", icon: Package, page: "StockAudit", module: "inventory", adminOnly: true },
