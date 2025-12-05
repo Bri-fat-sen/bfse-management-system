@@ -197,6 +197,19 @@ Return every row - do not summarize or skip any data.`,
 
       setExtractedColumns(columnHeaders);
 
+      // Check if this looks like production batch data (has SKUs, batch numbers, or product names)
+      const hasProductionData = items.some(item => 
+        item.sku || item.batch_number || item.product_name || 
+        (item.details && products.some(p => 
+          p.sku && item.details.toLowerCase().includes(p.sku.toLowerCase())
+        ))
+      );
+
+      if (hasProductionData && products.length > 0) {
+        setDetectedType('production');
+        toast.info("Production data detected", "SKU/batch information found - will create production batches");
+      }
+
       if (items.length > 0) {
         // Determine category based on description
         const categorizeItem = (description) => {
