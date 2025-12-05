@@ -81,7 +81,12 @@ export default function DocumentUploadExtractor({
   categories: customCategories,
   products = [],
   employees = [],
-  warehouses = []
+  warehouses = [],
+  customers = [],
+  vehicles = [],
+  saleTypes = [],
+  selectedLocation = null,
+  selectedSaleType = null
 }) {
   const toast = useToast();
   const [uploadLoading, setUploadLoading] = useState(false);
@@ -300,8 +305,30 @@ Focus: ${typeSpecificPrompt}
           );
         };
 
+        const matchCustomer = (customerName) => {
+          if (!customerName) return null;
+          const searchText = customerName.toLowerCase();
+          return customers.find(c => 
+            c.name?.toLowerCase().includes(searchText) ||
+            searchText.includes(c.name?.toLowerCase())
+          );
+        };
+
+        const matchLocation = (locationName) => {
+          if (!locationName) return null;
+          const searchText = locationName.toLowerCase();
+          return [...warehouses, ...vehicles].find(loc => 
+            loc.name?.toLowerCase().includes(searchText) ||
+            loc.registration_number?.toLowerCase().includes(searchText) ||
+            searchText.includes(loc.name?.toLowerCase())
+          );
+        };
+
         const mappedData = items.map((item, idx) => {
           const matchedProduct = matchProductBySku(item.sku, item.product_name || item.details);
+          const matchedCustomer = matchCustomer(item.customer);
+          const matchedLocation = matchLocation(item.warehouse || item.location);
+
           const estAmount = parseFloat(item.est_total) || parseFloat(item.estimated_amount) || 0;
           const actAmount = parseFloat(item.actual_total) || parseFloat(item.actual_amount) || 0;
           const singleAmount = parseFloat(item.amount) || 0;
@@ -337,6 +364,9 @@ Focus: ${typeSpecificPrompt}
             vendor: item.vendor || '',
             contributor_name: item.customer || '',
             customer_name: item.customer || '',
+            customer_id: matchedCustomer?.id || '',
+            customer_phone: matchedCustomer?.phone || '',
+            needs_customer_creation: !matchedCustomer && item.customer,
             reference_number: result.document_info?.reference || '',
             extra_columns: {},
             category: category,
@@ -346,6 +376,10 @@ Focus: ${typeSpecificPrompt}
             sku: item.sku || matchedProduct?.sku || '',
             product_id: matchedProduct?.id || '',
             product_name: item.product_name || matchedProduct?.name || '',
+            needs_product_selection: !matchedProduct && (item.product_name || item.details),
+            location_id: matchedLocation?.id || selectedLocation || '',
+            location_name: matchedLocation?.name || matchedLocation?.registration_number || '',
+            sale_type: selectedSaleType || (matchedLocation?.registration_number ? 'vehicle' : 'retail'),
             batch_number: item.batch_number || '',
             expiry_date: item.expiry_date || '',
             is_production: !!(item.sku || item.batch_number || matchedProduct),
@@ -403,6 +437,21 @@ Focus: ${typeSpecificPrompt}
       return;
     }
 
+    // Validate sales-specific data
+    if (detectedType === 'revenue' || detectedType === 'auto') {
+      const hasUnselectedProducts = selectedItems.some(i => i.needs_product_selection && !i.product_id);
+      if (hasUnselectedProducts) {
+        toast.error("Missing Products", "Please select products for all items or deselect them");
+        return;
+      }
+      
+      const hasNoLocation = selectedItems.some(i => !i.location_id);
+      if (hasNoLocation && !selectedLocation) {
+        toast.error("Missing Location", "Please select a location for all sales items");
+        return;
+      }
+    }
+
     setUploadLoading(true);
     try {
       const isRevenue = detectedType === "revenue";
@@ -411,14 +460,69 @@ Focus: ${typeSpecificPrompt}
       let batchCount = 0;
       let expenseCount = 0;
       let revenueCount = 0;
+      let salesCount = 0;
 
       const isInventory = detectedType === "inventory";
       const isPayroll = detectedType === "payroll";
       let inventoryCount = 0;
       let payrollCount = 0;
 
+      // Create missing customers first
+      const customerCache = {};
       for (const item of selectedItems) {
-        if (isPayroll && item.employee_id) {
+        if (item.needs_customer_creation && item.customer_name && !customerCache[item.customer_name]) {
+          const newCustomer = await base44.entities.Customer.create({
+            organisation_id: orgId,
+            name: item.customer_name,
+            phone: item.customer_phone || '',
+            status: 'active',
+            segment: 'regular',
+            source: 'sales_upload'
+          });
+          customerCache[item.customer_name] = newCustomer.id;
+          item.customer_id = newCustomer.id;
+          toast.success("Customer Created", `Added ${item.customer_name}`);
+        }
+      }
+
+      for (const item of selectedItems) {
+        if ((isRevenue || detectedType === 'auto') && item.product_id && item.location_id) {
+          // Create sales record from revenue document
+          const saleNumber = `SL-${format(new Date(), 'yyyyMMdd')}-${Math.floor(1000 + Math.random() * 9000)}`;
+          await base44.entities.Sale.create({
+            organisation_id: orgId,
+            sale_number: saleNumber,
+            sale_type: item.sale_type || 'retail',
+            employee_id: currentEmployee?.id,
+            employee_name: currentEmployee?.full_name,
+            customer_name: item.customer_name || 'Walk-in Customer',
+            customer_id: item.customer_id || null,
+            customer_phone: item.customer_phone || null,
+            items: [{
+              product_id: item.product_id,
+              product_name: item.product_name,
+              quantity: item.quantity || 1,
+              unit_price: item.unit_price || item.amount,
+              total: item.amount
+            }],
+            subtotal: item.amount,
+            total_amount: item.amount,
+            payment_method: 'cash',
+            payment_status: 'paid',
+            location: item.location_name,
+            vehicle_id: item.sale_type === 'vehicle' ? item.location_id : null
+          });
+
+          // Update stock
+          const product = products.find(p => p.id === item.product_id);
+          if (product) {
+            await base44.entities.Product.update(item.product_id, {
+              stock_quantity: Math.max(0, (product.stock_quantity || 0) - (item.quantity || 1))
+            });
+          }
+
+          salesCount++;
+        } else if (isPayroll && item.employee_id) {
           // Create payroll-related record or just log for now
           // This would typically feed into the payroll processing system
           await base44.entities.Expense.create({
@@ -531,12 +635,13 @@ Focus: ${typeSpecificPrompt}
       setDetectedType(type);
       
       const messages = [];
+      if (salesCount > 0) messages.push(`${salesCount} sale(s)`);
       if (batchCount > 0) messages.push(`${batchCount} production batch(es)`);
       if (expenseCount > 0) messages.push(`${expenseCount} expense(s)`);
       if (revenueCount > 0) messages.push(`${revenueCount} revenue(s)`);
       if (inventoryCount > 0) messages.push(`${inventoryCount} stock movement(s)`);
       if (payrollCount > 0) messages.push(`${payrollCount} payroll item(s)`);
-      
+
       toast.success("Records created", messages.join(', ') + ' added');
       
       if (onSuccess) onSuccess();
@@ -776,9 +881,10 @@ Focus: ${typeSpecificPrompt}
                                   updateItem(item.id, 'product_id', v);
                                   updateItem(item.id, 'product_name', prod?.name || '');
                                   updateItem(item.id, 'sku', prod?.sku || '');
+                                  updateItem(item.id, 'needs_product_selection', false);
                                 }}
                               >
-                                <SelectTrigger className="h-7 text-xs w-36">
+                                <SelectTrigger className={`h-7 text-xs w-36 ${item.needs_product_selection ? 'border-amber-400 bg-amber-50' : ''}`}>
                                   <SelectValue placeholder="Select product" />
                                 </SelectTrigger>
                                 <SelectContent>
@@ -893,13 +999,78 @@ Focus: ${typeSpecificPrompt}
                             />
                           </TableCell>
                           {isRevenue && (
-                            <TableCell>
-                              <Input
-                                value={item.contributor_name || ''}
-                                onChange={(e) => updateItem(item.id, 'contributor_name', e.target.value)}
-                                className="h-7 text-xs w-28"
-                              />
-                            </TableCell>
+                            <>
+                              <TableCell>
+                                <Select
+                                  value={item.customer_id || ''}
+                                  onValueChange={(v) => {
+                                    const cust = customers.find(c => c.id === v);
+                                    updateItem(item.id, 'customer_id', v);
+                                    updateItem(item.id, 'customer_name', cust?.name || '');
+                                    updateItem(item.id, 'needs_customer_creation', false);
+                                  }}
+                                >
+                                  <SelectTrigger className={`h-7 text-xs w-32 ${item.needs_customer_creation ? 'border-amber-400 bg-amber-50' : ''}`}>
+                                    <SelectValue placeholder={item.customer_name || "Select customer"} />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    {customers.map(c => (
+                                      <SelectItem key={c.id} value={c.id}>
+                                        {c.name}
+                                      </SelectItem>
+                                    ))}
+                                  </SelectContent>
+                                </Select>
+                              </TableCell>
+                              <TableCell>
+                                <Select
+                                  value={item.product_id || ''}
+                                  onValueChange={(v) => {
+                                    const prod = products.find(p => p.id === v);
+                                    updateItem(item.id, 'product_id', v);
+                                    updateItem(item.id, 'product_name', prod?.name || '');
+                                    updateItem(item.id, 'needs_product_selection', false);
+                                  }}
+                                >
+                                  <SelectTrigger className={`h-7 text-xs w-32 ${item.needs_product_selection ? 'border-amber-400 bg-amber-50' : ''}`}>
+                                    <SelectValue placeholder={item.product_name || "Product"} />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    {products.map(p => (
+                                      <SelectItem key={p.id} value={p.id}>
+                                        {p.name}
+                                      </SelectItem>
+                                    ))}
+                                  </SelectContent>
+                                </Select>
+                              </TableCell>
+                              <TableCell>
+                                <Select
+                                  value={item.location_id || ''}
+                                  onValueChange={(v) => {
+                                    const loc = [...warehouses, ...vehicles].find(l => l.id === v);
+                                    updateItem(item.id, 'location_id', v);
+                                    updateItem(item.id, 'location_name', loc?.name || loc?.registration_number || '');
+                                  }}
+                                >
+                                  <SelectTrigger className={`h-7 text-xs w-32 ${!item.location_id ? 'border-amber-400 bg-amber-50' : ''}`}>
+                                    <SelectValue placeholder={item.location_name || "Location"} />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    {warehouses.map(w => (
+                                      <SelectItem key={w.id} value={w.id}>
+                                        📦 {w.name}
+                                      </SelectItem>
+                                    ))}
+                                    {vehicles.map(v => (
+                                      <SelectItem key={v.id} value={v.id}>
+                                        🚚 {v.registration_number}
+                                      </SelectItem>
+                                    ))}
+                                  </SelectContent>
+                                </Select>
+                              </TableCell>
+                            </>
                           )}
                           {!isRevenue && !isProduction && (
                             <TableCell>

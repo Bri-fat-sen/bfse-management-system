@@ -1170,8 +1170,15 @@ export default function Sales() {
         orgId={orgId}
         currentEmployee={currentEmployee}
         products={products}
+        customers={customers}
+        warehouses={warehouses}
+        vehicles={vehicles}
+        saleTypes={['retail', 'warehouse', 'vehicle']}
+        selectedLocation={selectedLocation}
+        selectedSaleType={saleType}
         onSuccess={() => {
           queryClient.invalidateQueries({ queryKey: ['sales'] });
+          queryClient.invalidateQueries({ queryKey: ['customers'] });
         }}
       />
     </div>
