@@ -208,7 +208,10 @@ Be specific about WHY you chose that record type.`,
                 // Inventory specific
                 warehouse: { type: "string", description: "Warehouse or location name" },
                 stock_in: { type: "number", description: "Quantity received/added" },
-                stock_out: { type: "number", description: "Quantity issued/removed" }
+                stock_out: { type: "number", description: "Quantity issued/removed" },
+                // Production batch specific
+                rolls: { type: "number", description: "Number of rolls" },
+                weight_kg: { type: "number", description: "Weight in kilograms (kg)" }
               }
             }
           }
@@ -363,8 +366,11 @@ Focus: ${typeSpecificPrompt}
               w.name?.toLowerCase().includes((item.warehouse || '').toLowerCase())
             )?.id || '',
             stock_in: parseFloat(item.stock_in) || actQty,
-            stock_out: parseFloat(item.stock_out) || 0
-          };
+            stock_out: parseFloat(item.stock_out) || 0,
+            // Production batch specific
+            rolls: parseFloat(item.rolls) || 0,
+            weight_kg: parseFloat(item.weight_kg) || 0
+            };
         });
 
         const validData = mappedData.filter(item => 
@@ -475,6 +481,8 @@ Focus: ${typeSpecificPrompt}
             warehouse_id: warehouseId || '',
             warehouse_name: warehouseName || '',
             quantity: item.quantity || item.actual_qty || 0,
+            rolls: item.rolls || 0,
+            weight_kg: item.weight_kg || 0,
             manufacturing_date: item.date || format(new Date(), 'yyyy-MM-dd'),
             expiry_date: item.expiry_date || '',
             cost_price: item.unit_price || item.actual_unit_cost || 0,
