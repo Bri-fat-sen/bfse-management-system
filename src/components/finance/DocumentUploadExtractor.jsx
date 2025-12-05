@@ -290,7 +290,14 @@ Return every row - do not summarize or skip any data.`,
             category: category,
             document_type: docType,
             date: docDate,
-            status: 'pending'
+            status: 'pending',
+            // Production batch fields
+            sku: item.sku || matchedProduct?.sku || '',
+            product_id: matchedProduct?.id || '',
+            product_name: item.product_name || matchedProduct?.name || '',
+            batch_number: item.batch_number || '',
+            expiry_date: item.expiry_date || '',
+            is_production: !!(item.sku || item.batch_number || matchedProduct)
           };
         });
 
