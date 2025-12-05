@@ -73,6 +73,7 @@ import BankAccountsSummary from "@/components/finance/BankAccountsSummary";
 import BankAccountsReport from "@/components/finance/BankAccountsReport";
 import BudgetingModule from "@/components/finance/BudgetingModule";
 import AIFinancialAnalysis from "@/components/finance/AIFinancialAnalysis";
+import DocumentUploadExtractor from "@/components/finance/DocumentUploadExtractor";
 
 const expenseCategories = [
   "fuel", "maintenance", "utilities", "supplies", "rent", 
@@ -101,6 +102,8 @@ export default function Finance() {
   const [categoryFilter, setCategoryFilter] = useState("all");
   const [showFormsDialog, setShowFormsDialog] = useState(false);
   const [dateRange, setDateRange] = useState("this_month");
+  const [showExpenseUploadDialog, setShowExpenseUploadDialog] = useState(false);
+  const [showRevenueUploadDialog, setShowRevenueUploadDialog] = useState(false);
 
   const { data: user } = useQuery({
     queryKey: ['currentUser'],
@@ -970,9 +973,9 @@ export default function Finance() {
             </div>
 
             <Card>
-              <CardHeader className="flex flex-row items-center justify-between">
+              <CardHeader className="flex flex-row items-center justify-between flex-wrap gap-2">
                 <CardTitle>Expense Records</CardTitle>
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 flex-wrap">
                   <Select value={categoryFilter} onValueChange={setCategoryFilter}>
                     <SelectTrigger className="w-40">
                       <Filter className="w-4 h-4 mr-2" />
@@ -987,6 +990,14 @@ export default function Finance() {
                       ))}
                     </SelectContent>
                   </Select>
+                  <Button 
+                    variant="outline"
+                    onClick={() => setShowExpenseUploadDialog(true)} 
+                    className="border-[#0072C6] text-[#0072C6] hover:bg-[#0072C6]/10"
+                  >
+                    <Upload className="w-4 h-4 mr-2" />
+                    Upload
+                  </Button>
                   <Button onClick={() => setShowExpenseDialog(true)} className="bg-gradient-to-r from-[#1EB053] to-[#0072C6]">
                     <Plus className="w-4 h-4 mr-2" />
                     Add
@@ -1089,15 +1100,25 @@ export default function Finance() {
             </div>
 
             <Card>
-              <CardHeader className="flex flex-row items-center justify-between">
+              <CardHeader className="flex flex-row items-center justify-between flex-wrap gap-2">
                 <CardTitle className="flex items-center gap-2">
                   <DollarSign className="w-5 h-5 text-[#1EB053]" />
                   Revenue from Owners & CEO
                 </CardTitle>
-                <Button onClick={() => setShowRevenueDialog(true)} className="bg-gradient-to-r from-[#1EB053] to-[#0072C6]">
-                  <Plus className="w-4 h-4 mr-2" />
-                  Add Contribution
-                </Button>
+                <div className="flex items-center gap-2">
+                  <Button 
+                    variant="outline"
+                    onClick={() => setShowRevenueUploadDialog(true)} 
+                    className="border-[#0072C6] text-[#0072C6] hover:bg-[#0072C6]/10"
+                  >
+                    <Upload className="w-4 h-4 mr-2" />
+                    Upload
+                  </Button>
+                  <Button onClick={() => setShowRevenueDialog(true)} className="bg-gradient-to-r from-[#1EB053] to-[#0072C6]">
+                    <Plus className="w-4 h-4 mr-2" />
+                    Add Contribution
+                  </Button>
+                </div>
               </CardHeader>
               <CardContent>
                 <ScrollArea className="h-[400px]">
@@ -1665,6 +1686,26 @@ export default function Finance() {
           open={showFormsDialog}
           onOpenChange={setShowFormsDialog}
           organisation={organisation?.[0]}
+        />
+
+        {/* Expense Upload Dialog */}
+        <DocumentUploadExtractor
+          open={showExpenseUploadDialog}
+          onOpenChange={setShowExpenseUploadDialog}
+          type="expense"
+          orgId={orgId}
+          currentEmployee={currentEmployee}
+          onSuccess={() => queryClient.invalidateQueries({ queryKey: ['expenses'] })}
+        />
+
+        {/* Revenue Upload Dialog */}
+        <DocumentUploadExtractor
+          open={showRevenueUploadDialog}
+          onOpenChange={setShowRevenueUploadDialog}
+          type="revenue"
+          orgId={orgId}
+          currentEmployee={currentEmployee}
+          onSuccess={() => queryClient.invalidateQueries({ queryKey: ['revenues'] })}
         />
 
         {/* Bank Deposit Dialog */}
