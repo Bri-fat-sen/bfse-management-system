@@ -1008,7 +1008,7 @@ Extract ALL line items from the document table.`,
 
       {/* Upload Document Dialog */}
       <Dialog open={showUploadDialog} onOpenChange={setShowUploadDialog}>
-        <DialogContent className="max-w-3xl max-h-[90vh] overflow-hidden p-0 w-[95vw] [&>button]:hidden">
+        <DialogContent className="max-w-6xl max-h-[95vh] overflow-hidden p-0 w-[98vw] [&>button]:hidden">
           {/* Sierra Leone Flag Header */}
           <div className="h-2 flex">
             <div className="flex-1 bg-[#1EB053]" />
@@ -1029,7 +1029,7 @@ Extract ALL line items from the document table.`,
             </div>
           </div>
 
-          <div className="p-6 space-y-4 overflow-y-auto max-h-[calc(90vh-200px)]">
+          <div className="p-6 space-y-4 overflow-y-auto max-h-[calc(95vh-180px)]">
             {/* Upload Area */}
             {extractedExpenses.length === 0 && (
               <div className="border-2 border-dashed border-gray-300 rounded-xl p-8 text-center hover:border-[#0072C6] transition-colors">
@@ -1088,152 +1088,172 @@ Extract ALL line items from the document table.`,
                   </div>
                 )}
 
-                <ScrollArea className="h-[400px] border rounded-lg">
-                  <div className="min-w-[1100px]">
-                    <Table>
-                      <TableHeader>
-                        <TableRow className="bg-gray-50">
-                          <TableHead className="w-10">
+                <div className="border rounded-lg overflow-auto max-h-[calc(95vh-420px)]">
+                  <Table>
+                    <TableHeader className="sticky top-0 bg-gray-50 z-10">
+                      <TableRow>
+                        <TableHead className="w-10 sticky left-0 bg-gray-50 z-20">
+                          <input
+                            type="checkbox"
+                            checked={extractedExpenses.every(e => e.selected)}
+                            onChange={(e) => setExtractedExpenses(prev => prev.map(exp => ({ ...exp, selected: e.target.checked })))}
+                            className="w-4 h-4"
+                          />
+                        </TableHead>
+                        <TableHead className="text-xs w-12">NO</TableHead>
+                        <TableHead className="text-xs min-w-[200px]">DETAILS</TableHead>
+                        <TableHead className="text-xs w-16">Unit</TableHead>
+                        <TableHead className="text-xs w-20 text-center bg-blue-50">Est Qty</TableHead>
+                        <TableHead className="text-xs w-24 text-center bg-blue-50">Est Unit</TableHead>
+                        <TableHead className="text-xs w-28 text-center bg-blue-50">Est Total</TableHead>
+                        <TableHead className="text-xs w-20 text-center bg-green-50">Act Qty</TableHead>
+                        <TableHead className="text-xs w-24 text-center bg-green-50">Act Unit</TableHead>
+                        <TableHead className="text-xs w-28 text-center bg-green-50">Act Total</TableHead>
+                        <TableHead className="text-xs w-32">Supplier</TableHead>
+                        <TableHead className="text-xs w-36">Category</TableHead>
+                        <TableHead className="text-xs w-32">Date</TableHead>
+                        {extractedExpenses.length > 0 && extractedExpenses[0].extra_columns && Object.keys(extractedExpenses[0].extra_columns).length > 0 && (
+                          Object.keys(extractedExpenses[0].extra_columns).map(key => (
+                            <TableHead key={key} className="text-xs bg-purple-50 w-24">{key}</TableHead>
+                          ))
+                        )}
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {extractedExpenses.map((exp) => (
+                        <TableRow key={exp.id} className={!exp.selected ? 'opacity-50' : ''}>
+                          <TableCell className="sticky left-0 bg-white z-10">
                             <input
                               type="checkbox"
-                              checked={extractedExpenses.every(e => e.selected)}
-                              onChange={(e) => setExtractedExpenses(prev => prev.map(exp => ({ ...exp, selected: e.target.checked })))}
+                              checked={exp.selected}
+                              onChange={() => toggleExpenseSelection(exp.id)}
                               className="w-4 h-4"
                             />
-                          </TableHead>
-                          <TableHead className="text-xs">NO</TableHead>
-                          <TableHead className="text-xs">DETAILS</TableHead>
-                          <TableHead className="text-xs">Unit</TableHead>
-                          <TableHead className="text-xs text-center bg-blue-50">Est Qty</TableHead>
-                          <TableHead className="text-xs text-center bg-blue-50">Est Unit Cost</TableHead>
-                          <TableHead className="text-xs text-center bg-blue-50">Est Amount</TableHead>
-                          <TableHead className="text-xs text-center bg-green-50">Actual Qty</TableHead>
-                          <TableHead className="text-xs text-center bg-green-50">Actual Unit Cost</TableHead>
-                          <TableHead className="text-xs text-center bg-green-50">Actual Amount</TableHead>
-                          <TableHead className="text-xs">Supplier</TableHead>
-                          <TableHead className="text-xs">Category</TableHead>
-                          <TableHead className="text-xs">Date</TableHead>
-                          {/* Dynamic extra columns */}
-                          {extractedExpenses.length > 0 && extractedExpenses[0].extra_columns && Object.keys(extractedExpenses[0].extra_columns).length > 0 && (
-                            Object.keys(extractedExpenses[0].extra_columns).map(key => (
-                              <TableHead key={key} className="text-xs bg-purple-50">{key}</TableHead>
+                          </TableCell>
+                          <TableCell className="text-xs font-medium">{exp.item_no || '-'}</TableCell>
+                          <TableCell>
+                            <Input
+                              value={exp.description || ''}
+                              onChange={(e) => updateExtractedExpense(exp.id, 'description', e.target.value)}
+                              className="h-8 text-xs"
+                            />
+                          </TableCell>
+                          <TableCell>
+                            <Input
+                              value={exp.unit || ''}
+                              onChange={(e) => updateExtractedExpense(exp.id, 'unit', e.target.value)}
+                              className="h-8 text-xs w-full"
+                            />
+                          </TableCell>
+                          <TableCell className="bg-blue-50/50">
+                            <Input
+                              type="number"
+                              value={exp.estimated_qty || ''}
+                              onChange={(e) => {
+                                const newQty = parseFloat(e.target.value) || 0;
+                                updateExtractedExpense(exp.id, 'estimated_qty', newQty);
+                                // Auto-calculate estimated amount
+                                const newEstAmount = newQty * (exp.estimated_unit_cost || 0);
+                                updateExtractedExpense(exp.id, 'estimated_amount', newEstAmount);
+                              }}
+                              className="h-8 text-xs w-full text-center"
+                            />
+                          </TableCell>
+                          <TableCell className="bg-blue-50/50">
+                            <Input
+                              type="number"
+                              value={exp.estimated_unit_cost || ''}
+                              onChange={(e) => {
+                                const newCost = parseFloat(e.target.value) || 0;
+                                updateExtractedExpense(exp.id, 'estimated_unit_cost', newCost);
+                                // Auto-calculate estimated amount
+                                const newEstAmount = (exp.estimated_qty || 0) * newCost;
+                                updateExtractedExpense(exp.id, 'estimated_amount', newEstAmount);
+                              }}
+                              className="h-8 text-xs w-full text-right"
+                            />
+                          </TableCell>
+                          <TableCell className="bg-blue-50/50 text-xs text-right font-medium text-blue-700">
+                            Le {(exp.estimated_amount || 0).toLocaleString()}
+                          </TableCell>
+                          <TableCell className="bg-green-50/50">
+                            <Input
+                              type="number"
+                              value={exp.actual_qty || ''}
+                              onChange={(e) => {
+                                const newQty = parseFloat(e.target.value) || 0;
+                                updateExtractedExpense(exp.id, 'actual_qty', newQty);
+                                // Auto-calculate actual amount
+                                const newAmount = newQty * (exp.actual_unit_cost || 0);
+                                updateExtractedExpense(exp.id, 'amount', newAmount);
+                              }}
+                              className="h-8 text-xs w-full text-center"
+                            />
+                          </TableCell>
+                          <TableCell className="bg-green-50/50">
+                            <Input
+                              type="number"
+                              value={exp.actual_unit_cost || ''}
+                              onChange={(e) => {
+                                const newCost = parseFloat(e.target.value) || 0;
+                                updateExtractedExpense(exp.id, 'actual_unit_cost', newCost);
+                                // Auto-calculate actual amount
+                                const newAmount = (exp.actual_qty || 0) * newCost;
+                                updateExtractedExpense(exp.id, 'amount', newAmount);
+                              }}
+                              className="h-8 text-xs w-full text-right"
+                            />
+                          </TableCell>
+                          <TableCell className="bg-green-50/50">
+                            <Input
+                              type="number"
+                              value={exp.amount || ''}
+                              onChange={(e) => updateExtractedExpense(exp.id, 'amount', parseFloat(e.target.value) || 0)}
+                              className="h-8 text-xs w-full text-right font-bold text-green-700"
+                            />
+                          </TableCell>
+                          <TableCell>
+                            <Input
+                              value={exp.supplier || ''}
+                              onChange={(e) => updateExtractedExpense(exp.id, 'supplier', e.target.value)}
+                              className="h-8 text-xs w-full"
+                            />
+                          </TableCell>
+                          <TableCell>
+                            <Select
+                              value={exp.category}
+                              onValueChange={(v) => updateExtractedExpense(exp.id, 'category', v)}
+                            >
+                              <SelectTrigger className="h-8 text-xs w-full">
+                                <SelectValue />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {CONSTRUCTION_CATEGORIES.map(cat => (
+                                  <SelectItem key={cat.value} value={cat.value}>{cat.label}</SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          </TableCell>
+                          <TableCell>
+                            <Input
+                              type="date"
+                              value={exp.date || ''}
+                              onChange={(e) => updateExtractedExpense(exp.id, 'date', e.target.value)}
+                              className="h-8 text-xs w-full"
+                            />
+                          </TableCell>
+                          {exp.extra_columns && Object.keys(exp.extra_columns).length > 0 && (
+                            Object.entries(exp.extra_columns).map(([key, value]) => (
+                              <TableCell key={key} className="bg-purple-50/50 text-xs w-24">
+                                {value?.toString() || '-'}
+                              </TableCell>
                             ))
                           )}
                         </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {extractedExpenses.map((exp) => (
-                          <TableRow key={exp.id} className={!exp.selected ? 'opacity-50' : ''}>
-                            <TableCell>
-                              <input
-                                type="checkbox"
-                                checked={exp.selected}
-                                onChange={() => toggleExpenseSelection(exp.id)}
-                                className="w-4 h-4"
-                              />
-                            </TableCell>
-                            <TableCell className="text-xs font-medium">{exp.item_no || '-'}</TableCell>
-                            <TableCell>
-                              <Input
-                                value={exp.description || ''}
-                                onChange={(e) => updateExtractedExpense(exp.id, 'description', e.target.value)}
-                                className="h-7 text-xs min-w-[150px]"
-                              />
-                            </TableCell>
-                            <TableCell>
-                              <Input
-                                value={exp.unit || ''}
-                                onChange={(e) => updateExtractedExpense(exp.id, 'unit', e.target.value)}
-                                className="h-7 text-xs w-16"
-                              />
-                            </TableCell>
-                            <TableCell className="bg-blue-50/50">
-                              <Input
-                                type="number"
-                                value={exp.estimated_qty || ''}
-                                onChange={(e) => updateExtractedExpense(exp.id, 'estimated_qty', parseFloat(e.target.value) || 0)}
-                                className="h-7 text-xs w-16 text-center"
-                              />
-                            </TableCell>
-                            <TableCell className="bg-blue-50/50">
-                              <Input
-                                type="number"
-                                value={exp.estimated_unit_cost || ''}
-                                onChange={(e) => updateExtractedExpense(exp.id, 'estimated_unit_cost', parseFloat(e.target.value) || 0)}
-                                className="h-7 text-xs w-24 text-right"
-                              />
-                            </TableCell>
-                            <TableCell className="bg-blue-50/50 text-xs text-right font-medium text-blue-700">
-                              Le {(exp.estimated_amount || 0).toLocaleString()}
-                            </TableCell>
-                            <TableCell className="bg-green-50/50">
-                              <Input
-                                type="number"
-                                value={exp.actual_qty || ''}
-                                onChange={(e) => updateExtractedExpense(exp.id, 'actual_qty', parseFloat(e.target.value) || 0)}
-                                className="h-7 text-xs w-16 text-center"
-                              />
-                            </TableCell>
-                            <TableCell className="bg-green-50/50">
-                              <Input
-                                type="number"
-                                value={exp.actual_unit_cost || ''}
-                                onChange={(e) => updateExtractedExpense(exp.id, 'actual_unit_cost', parseFloat(e.target.value) || 0)}
-                                className="h-7 text-xs w-24 text-right"
-                              />
-                            </TableCell>
-                            <TableCell className="bg-green-50/50">
-                              <Input
-                                type="number"
-                                value={exp.amount || ''}
-                                onChange={(e) => updateExtractedExpense(exp.id, 'amount', parseFloat(e.target.value) || 0)}
-                                className="h-7 text-xs w-24 text-right font-medium"
-                              />
-                            </TableCell>
-                            <TableCell>
-                              <Input
-                                value={exp.supplier || ''}
-                                onChange={(e) => updateExtractedExpense(exp.id, 'supplier', e.target.value)}
-                                className="h-7 text-xs w-24"
-                              />
-                            </TableCell>
-                            <TableCell>
-                              <Select
-                                value={exp.category}
-                                onValueChange={(v) => updateExtractedExpense(exp.id, 'category', v)}
-                              >
-                                <SelectTrigger className="h-7 text-xs w-28">
-                                  <SelectValue />
-                                </SelectTrigger>
-                                <SelectContent>
-                                  {CONSTRUCTION_CATEGORIES.map(cat => (
-                                    <SelectItem key={cat.value} value={cat.value}>{cat.label}</SelectItem>
-                                  ))}
-                                </SelectContent>
-                              </Select>
-                            </TableCell>
-                            <TableCell>
-                              <Input
-                                type="date"
-                                value={exp.date || ''}
-                                onChange={(e) => updateExtractedExpense(exp.id, 'date', e.target.value)}
-                                className="h-7 text-xs w-32"
-                              />
-                            </TableCell>
-                            {/* Dynamic extra columns values */}
-                            {exp.extra_columns && Object.keys(exp.extra_columns).length > 0 && (
-                              Object.entries(exp.extra_columns).map(([key, value]) => (
-                                <TableCell key={key} className="bg-purple-50/50 text-xs">
-                                  {value?.toString() || '-'}
-                                </TableCell>
-                              ))
-                            )}
-                          </TableRow>
-                        ))}
-                      </TableBody>
-                    </Table>
-                  </div>
-                </ScrollArea>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
 
                 <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
                   <div>
