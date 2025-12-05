@@ -94,6 +94,7 @@ export default function ConstructionExpense() {
   const [uploadLoading, setUploadLoading] = useState(false);
   const [extractedExpenses, setExtractedExpenses] = useState([]);
   const [customCategories, setCustomCategories] = useState([]);
+  const [extractedColumns, setExtractedColumns] = useState([]);
 
   // Combined categories (default + custom from uploaded docs)
   const CONSTRUCTION_CATEGORIES = useMemo(() => {
@@ -321,30 +322,31 @@ export default function ConstructionExpense() {
       // Use InvokeLLM with file_urls for better extraction
       const result = await base44.integrations.Core.InvokeLLM({
         prompt: `Extract all construction expense line items from this document. 
-The document contains a table with columns:
-- NO (item number)
-- DETAILS (description of the expense item)
-- Estimated Qty (estimated quantity)
-- Estimated unit cost (estimated cost per unit)
-- Estimated Amount (total estimated cost)
-- ACTUAL QTY (actual quantity used)
-- ACTUAL UNIT COST (actual cost per unit)
-- ACTUAL AMOUNT (total actual cost)
+
+First, identify ALL columns present in the table. Common columns include but are not limited to:
+- NO/Item Number
+- DETAILS/Description
+- Estimated Qty, Estimated Unit Cost, Estimated Amount
+- Actual Qty, Actual Unit Cost, Actual Amount
+- Any other columns present (unit, supplier, notes, etc.)
 
 Also look for a DATE in the document header or anywhere else (could be labeled as Date, Invoice Date, Document Date, etc).
 
-For each row/line item found, extract:
+For each row/line item found, extract ALL available data including:
 - item_no: the NO/item number
-- description: the DETAILS field
-- estimated_qty: Estimated Qty value
-- estimated_unit_cost: Estimated unit cost value
-- estimated_amount: Estimated Amount value
-- actual_qty: ACTUAL QTY value
-- actual_unit_cost: ACTUAL UNIT COST value
-- actual_amount: ACTUAL AMOUNT value (this is the main expense amount)
+- description: the DETAILS/description field
+- estimated_qty: Estimated Qty value (if present)
+- estimated_unit_cost: Estimated unit cost value (if present)
+- estimated_amount: Estimated Amount/total (if present)
+- actual_qty: ACTUAL QTY value (if present)
+- actual_unit_cost: ACTUAL UNIT COST value (if present)
+- actual_amount: ACTUAL AMOUNT/total (if present) - this is the main expense amount
+- unit: unit of measurement (if present)
+- supplier: supplier/vendor name (if present)
+- extra_columns: any other columns found as key-value pairs
 - category: classify based on description. Use existing categories if they match: materials, labor, equipment, permits, foundation, roofing, electrical, plumbing, finishing, landscaping, transport. If no existing category fits well, create a new descriptive category name (lowercase, use underscores for spaces, e.g. "concrete_works", "steel_structures", "windows_doors").
 
-Also extract the document date if found.
+Also list all column headers found in the document.
 
 Extract ALL line items from the document table.`,
         file_urls: [file_url],
@@ -352,6 +354,11 @@ Extract ALL line items from the document table.`,
           type: "object",
           properties: {
             document_date: { type: "string", description: "Date found in document in YYYY-MM-DD format" },
+            column_headers: { 
+              type: "array", 
+              items: { type: "string" },
+              description: "List of all column headers found in the document"
+            },
             expenses: {
               type: "array",
               items: {
@@ -365,6 +372,13 @@ Extract ALL line items from the document table.`,
                   actual_qty: { type: "number" },
                   actual_unit_cost: { type: "number" },
                   actual_amount: { type: "number" },
+                  unit: { type: "string" },
+                  supplier: { type: "string" },
+                  extra_columns: { 
+                    type: "object",
+                    additionalProperties: true,
+                    description: "Any additional columns found as key-value pairs"
+                  },
                   category: { type: "string", description: "Category name - use existing or create new if needed" }
                 }
               }
@@ -375,6 +389,11 @@ Extract ALL line items from the document table.`,
 
       const expenses = result.expenses || [];
       const docDate = result.document_date || format(new Date(), 'yyyy-MM-dd');
+      const columnHeaders = result.column_headers || [];
+      
+      // Store extracted columns for dynamic display
+      setExtractedColumns(columnHeaders);
+      
       if (expenses.length > 0) {
         // Find new categories from extracted expenses
         const existingCategoryValues = CONSTRUCTION_CATEGORIES.map(c => c.value);
@@ -406,12 +425,15 @@ Extract ALL line items from the document table.`,
           actual_qty: exp.actual_qty || 0,
           actual_unit_cost: exp.actual_unit_cost || 0,
           amount: exp.actual_amount || 0,
+          unit: exp.unit || '',
+          supplier: exp.supplier || '',
+          extra_columns: exp.extra_columns || {},
           category: (exp.category || 'other').toLowerCase().replace(/\s+/g, '_'),
           date: docDate,
           status: 'pending',
           notes: `Est: ${exp.estimated_qty || 0} x Le${(exp.estimated_unit_cost || 0).toLocaleString()} = Le${(exp.estimated_amount || 0).toLocaleString()}`
         })));
-        toast.success("Data extracted", `Found ${expenses.length} expense(s) in document${docDate !== format(new Date(), 'yyyy-MM-dd') ? ` (Date: ${docDate})` : ''}`);
+        toast.success("Data extracted", `Found ${expenses.length} expense(s) in document${columnHeaders.length > 0 ? ` with ${columnHeaders.length} columns` : ''}${docDate !== format(new Date(), 'yyyy-MM-dd') ? ` (Date: ${docDate})` : ''}`);
       } else {
         toast.warning("No expenses found", "Could not find expense data in the document");
       }
@@ -1054,8 +1076,20 @@ Extract ALL line items from the document table.`,
                   </Button>
                 </div>
 
+                {/* Show extracted columns info */}
+                {extractedColumns.length > 0 && (
+                  <div className="p-3 bg-blue-50 rounded-lg mb-3">
+                    <p className="text-xs text-blue-700 font-medium mb-1">Columns detected from document:</p>
+                    <div className="flex flex-wrap gap-1">
+                      {extractedColumns.map((col, idx) => (
+                        <Badge key={idx} variant="outline" className="text-xs bg-white">{col}</Badge>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
                 <ScrollArea className="h-[400px] border rounded-lg">
-                  <div className="min-w-[900px]">
+                  <div className="min-w-[1100px]">
                     <Table>
                       <TableHeader>
                         <TableRow className="bg-gray-50">
@@ -1069,13 +1103,22 @@ Extract ALL line items from the document table.`,
                           </TableHead>
                           <TableHead className="text-xs">NO</TableHead>
                           <TableHead className="text-xs">DETAILS</TableHead>
+                          <TableHead className="text-xs">Unit</TableHead>
                           <TableHead className="text-xs text-center bg-blue-50">Est Qty</TableHead>
                           <TableHead className="text-xs text-center bg-blue-50">Est Unit Cost</TableHead>
                           <TableHead className="text-xs text-center bg-blue-50">Est Amount</TableHead>
                           <TableHead className="text-xs text-center bg-green-50">Actual Qty</TableHead>
                           <TableHead className="text-xs text-center bg-green-50">Actual Unit Cost</TableHead>
                           <TableHead className="text-xs text-center bg-green-50">Actual Amount</TableHead>
+                          <TableHead className="text-xs">Supplier</TableHead>
                           <TableHead className="text-xs">Category</TableHead>
+                          <TableHead className="text-xs">Date</TableHead>
+                          {/* Dynamic extra columns */}
+                          {extractedExpenses.length > 0 && extractedExpenses[0].extra_columns && Object.keys(extractedExpenses[0].extra_columns).length > 0 && (
+                            Object.keys(extractedExpenses[0].extra_columns).map(key => (
+                              <TableHead key={key} className="text-xs bg-purple-50">{key}</TableHead>
+                            ))
+                          )}
                         </TableRow>
                       </TableHeader>
                       <TableBody>
@@ -1095,6 +1138,13 @@ Extract ALL line items from the document table.`,
                                 value={exp.description || ''}
                                 onChange={(e) => updateExtractedExpense(exp.id, 'description', e.target.value)}
                                 className="h-7 text-xs min-w-[150px]"
+                              />
+                            </TableCell>
+                            <TableCell>
+                              <Input
+                                value={exp.unit || ''}
+                                onChange={(e) => updateExtractedExpense(exp.id, 'unit', e.target.value)}
+                                className="h-7 text-xs w-16"
                               />
                             </TableCell>
                             <TableCell className="bg-blue-50/50">
@@ -1141,6 +1191,13 @@ Extract ALL line items from the document table.`,
                               />
                             </TableCell>
                             <TableCell>
+                              <Input
+                                value={exp.supplier || ''}
+                                onChange={(e) => updateExtractedExpense(exp.id, 'supplier', e.target.value)}
+                                className="h-7 text-xs w-24"
+                              />
+                            </TableCell>
+                            <TableCell>
                               <Select
                                 value={exp.category}
                                 onValueChange={(v) => updateExtractedExpense(exp.id, 'category', v)}
@@ -1155,6 +1212,22 @@ Extract ALL line items from the document table.`,
                                 </SelectContent>
                               </Select>
                             </TableCell>
+                            <TableCell>
+                              <Input
+                                type="date"
+                                value={exp.date || ''}
+                                onChange={(e) => updateExtractedExpense(exp.id, 'date', e.target.value)}
+                                className="h-7 text-xs w-32"
+                              />
+                            </TableCell>
+                            {/* Dynamic extra columns values */}
+                            {exp.extra_columns && Object.keys(exp.extra_columns).length > 0 && (
+                              Object.entries(exp.extra_columns).map(([key, value]) => (
+                                <TableCell key={key} className="bg-purple-50/50 text-xs">
+                                  {value?.toString() || '-'}
+                                </TableCell>
+                              ))
+                            )}
                           </TableRow>
                         ))}
                       </TableBody>
