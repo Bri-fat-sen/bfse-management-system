@@ -65,7 +65,7 @@ import {
   PieChart, Pie, Cell, Legend, LineChart, Line
 } from 'recharts';
 
-const CONSTRUCTION_CATEGORIES = [
+const DEFAULT_CONSTRUCTION_CATEGORIES = [
   { value: "materials", label: "Building Materials", icon: Package },
   { value: "labor", label: "Labor & Wages", icon: Users },
   { value: "equipment", label: "Equipment Rental", icon: Truck },
@@ -93,6 +93,12 @@ export default function ConstructionExpense() {
   const [dateRange, setDateRange] = useState("this_month");
   const [uploadLoading, setUploadLoading] = useState(false);
   const [extractedExpenses, setExtractedExpenses] = useState([]);
+  const [customCategories, setCustomCategories] = useState([]);
+
+  // Combined categories (default + custom from uploaded docs)
+  const CONSTRUCTION_CATEGORIES = useMemo(() => {
+    return [...DEFAULT_CONSTRUCTION_CATEGORIES, ...customCategories];
+  }, [customCategories]);
 
   const { data: user } = useQuery({
     queryKey: ['currentUser'],
@@ -336,7 +342,7 @@ For each row/line item found, extract:
 - actual_qty: ACTUAL QTY value
 - actual_unit_cost: ACTUAL UNIT COST value
 - actual_amount: ACTUAL AMOUNT value (this is the main expense amount)
-- category: classify based on description as one of: materials, labor, equipment, permits, foundation, roofing, electrical, plumbing, finishing, landscaping, transport, other
+- category: classify based on description. Use existing categories if they match: materials, labor, equipment, permits, foundation, roofing, electrical, plumbing, finishing, landscaping, transport. If no existing category fits well, create a new descriptive category name (lowercase, use underscores for spaces, e.g. "concrete_works", "steel_structures", "windows_doors").
 
 Also extract the document date if found.
 
@@ -359,10 +365,7 @@ Extract ALL line items from the document table.`,
                   actual_qty: { type: "number" },
                   actual_unit_cost: { type: "number" },
                   actual_amount: { type: "number" },
-                  category: { 
-                    type: "string", 
-                    enum: ["materials", "labor", "equipment", "permits", "foundation", "roofing", "electrical", "plumbing", "finishing", "landscaping", "transport", "other"]
-                  }
+                  category: { type: "string", description: "Category name - use existing or create new if needed" }
                 }
               }
             }
@@ -373,6 +376,25 @@ Extract ALL line items from the document table.`,
       const expenses = result.expenses || [];
       const docDate = result.document_date || format(new Date(), 'yyyy-MM-dd');
       if (expenses.length > 0) {
+        // Find new categories from extracted expenses
+        const existingCategoryValues = CONSTRUCTION_CATEGORIES.map(c => c.value);
+        const newCategories = [];
+        
+        expenses.forEach(exp => {
+          const catValue = (exp.category || 'other').toLowerCase().replace(/\s+/g, '_');
+          if (!existingCategoryValues.includes(catValue) && !newCategories.find(c => c.value === catValue)) {
+            // Create a readable label from the category value
+            const label = catValue.split('_').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
+            newCategories.push({ value: catValue, label, icon: Hammer });
+          }
+        });
+
+        // Add new categories to state
+        if (newCategories.length > 0) {
+          setCustomCategories(prev => [...prev, ...newCategories]);
+          toast.info("New categories added", `${newCategories.map(c => c.label).join(', ')}`);
+        }
+
         setExtractedExpenses(expenses.map((exp, idx) => ({
           id: `temp-${idx}`,
           selected: true,
@@ -384,7 +406,7 @@ Extract ALL line items from the document table.`,
           actual_qty: exp.actual_qty || 0,
           actual_unit_cost: exp.actual_unit_cost || 0,
           amount: exp.actual_amount || 0,
-          category: exp.category || 'other',
+          category: (exp.category || 'other').toLowerCase().replace(/\s+/g, '_'),
           date: docDate,
           status: 'pending',
           notes: `Est: ${exp.estimated_qty || 0} x Le${(exp.estimated_unit_cost || 0).toLocaleString()} = Le${(exp.estimated_amount || 0).toLocaleString()}`
