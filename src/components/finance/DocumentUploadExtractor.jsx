@@ -85,8 +85,8 @@ export default function DocumentUploadExtractor({
   customers = [],
   vehicles = [],
   saleTypes = [],
-  selectedLocation: propSelectedLocation = null,
-  selectedSaleType: propSelectedSaleType = null
+  selectedLocation = null,
+  selectedSaleType = null
 }) {
   const toast = useToast();
   const [uploadLoading, setUploadLoading] = useState(false);
@@ -95,8 +95,8 @@ export default function DocumentUploadExtractor({
   const [dynamicCategories, setDynamicCategories] = useState([]);
   const [detectedType, setDetectedType] = useState(type === "auto" ? null : type);
   const [documentSummary, setDocumentSummary] = useState(null);
-  const [selectedLocation, setSelectedLocation] = useState(propSelectedLocation);
-  const [selectedSaleType, setSelectedSaleType] = useState(propSelectedSaleType);
+  const [uploadLocation, setUploadLocation] = useState(selectedLocation || '');
+  const [uploadSaleType, setUploadSaleType] = useState(selectedSaleType || 'retail');
 
   const baseCategories = type === "expense" ? DEFAULT_EXPENSE_CATEGORIES : DEFAULT_REVENUE_SOURCES;
   const categories = useMemo(() => {
@@ -327,64 +327,57 @@ Focus: ${typeSpecificPrompt}
         };
 
         const mappedData = items.map((item, idx) => {
-          const matchedProduct = matchProductBySku(item.sku, item.product_name || item.details);
-          const matchedCustomer = matchCustomer(item.customer);
-          // For sales, use the selected location from the Sales page
-          const matchedLocation = selectedLocation ? 
-            [...warehouses, ...vehicles].find(loc => loc.id === selectedLocation) : 
-            matchLocation(item.warehouse || item.location);
+        const matchedProduct = matchProductBySku(item.sku, item.product_name || item.details);
+        const matchedCustomer = matchCustomer(item.customer);
 
-          const estAmount = parseFloat(item.est_total) || parseFloat(item.estimated_amount) || 0;
-          const actAmount = parseFloat(item.actual_total) || parseFloat(item.actual_amount) || 0;
-          const singleAmount = parseFloat(item.amount) || 0;
-          const finalAmount = actAmount || singleAmount || estAmount || 0;
+        const estAmount = parseFloat(item.est_total) || parseFloat(item.estimated_amount) || 0;
+        const actAmount = parseFloat(item.actual_total) || parseFloat(item.actual_amount) || 0;
+        const singleAmount = parseFloat(item.amount) || 0;
+        const finalAmount = actAmount || singleAmount || estAmount || 0;
 
-          const estQty = parseFloat(item.est_qty) || 0;
-          const actQty = parseFloat(item.actual_qty) || parseFloat(item.qty) || 0;
-          const estUnitCost = parseFloat(item.est_unit_cost) || 0;
-          const actUnitCost = parseFloat(item.actual_unit_cost) || parseFloat(item.price) || 0;
+        const estQty = parseFloat(item.est_qty) || 0;
+        const actQty = parseFloat(item.actual_qty) || parseFloat(item.qty) || 0;
+        const estUnitCost = parseFloat(item.est_unit_cost) || 0;
+        const actUnitCost = parseFloat(item.actual_unit_cost) || parseFloat(item.price) || 0;
 
-          const description = item.details || item.description || '';
-          const category = categorizeItem(description);
+        const description = item.details || item.description || '';
+        const category = categorizeItem(description);
 
-          if (!existingCategoryValues.includes(category) && !newCategories.find(c => c.value === category)) {
-            const label = category.split('_').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
-            newCategories.push({ value: category, label, icon: Hammer });
-          }
+        if (!existingCategoryValues.includes(category) && !newCategories.find(c => c.value === category)) {
+          const label = category.split('_').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
+          newCategories.push({ value: category, label, icon: Hammer });
+        }
 
-          return {
-            id: `temp-${idx}`,
-            selected: true,
-            item_no: item.no || String(idx + 1),
-            description: description,
-            estimated_qty: estQty,
-            estimated_unit_cost: estUnitCost,
-            estimated_amount: estAmount,
-            actual_qty: actQty,
-            actual_unit_cost: actUnitCost,
-            quantity: actQty || estQty,
-            unit_price: actUnitCost || estUnitCost,
-            amount: finalAmount,
-            unit: item.unit || '',
-            vendor: item.vendor || '',
-            contributor_name: item.customer || '',
-            customer_name: item.customer || '',
-            customer_id: matchedCustomer?.id || '',
-            customer_phone: matchedCustomer?.phone || '',
-            needs_customer_creation: !matchedCustomer && item.customer,
-            reference_number: result.document_info?.reference || '',
-            extra_columns: {},
-            category: category,
-            document_type: docType,
-            date: extractedDocDate,
-            status: 'pending',
-            sku: item.sku || matchedProduct?.sku || '',
-            product_id: matchedProduct?.id || '',
-            product_name: item.product_name || matchedProduct?.name || '',
-            needs_product_selection: !matchedProduct && (item.product_name || item.details),
-            location_id: matchedLocation?.id || '',
-            location_name: matchedLocation?.name || matchedLocation?.registration_number || '',
-            sale_type: selectedSaleType || (matchedLocation?.registration_number ? 'vehicle' : 'retail'),
+        return {
+          id: `temp-${idx}`,
+          selected: true,
+          item_no: item.no || String(idx + 1),
+          description: description,
+          estimated_qty: estQty,
+          estimated_unit_cost: estUnitCost,
+          estimated_amount: estAmount,
+          actual_qty: actQty,
+          actual_unit_cost: actUnitCost,
+          quantity: actQty || estQty,
+          unit_price: actUnitCost || estUnitCost,
+          amount: finalAmount,
+          unit: item.unit || '',
+          vendor: item.vendor || '',
+          contributor_name: item.customer || '',
+          customer_name: item.customer || '',
+          customer_id: matchedCustomer?.id || '',
+          customer_phone: matchedCustomer?.phone || '',
+          needs_customer_creation: !matchedCustomer && item.customer,
+          reference_number: result.document_info?.reference || '',
+          extra_columns: {},
+          category: category,
+          document_type: docType,
+          date: extractedDocDate,
+          status: 'pending',
+          sku: item.sku || matchedProduct?.sku || '',
+          product_id: matchedProduct?.id || '',
+          product_name: item.product_name || matchedProduct?.name || '',
+          needs_product_selection: !matchedProduct && (item.product_name || item.details),
             batch_number: item.batch_number || '',
             expiry_date: item.expiry_date || '',
             is_production: !!(item.sku || item.batch_number || matchedProduct),
@@ -449,8 +442,8 @@ Focus: ${typeSpecificPrompt}
         toast.error("Missing Products", "Please select products for all items or deselect them");
         return;
       }
-
-      if (!selectedLocation) {
+      
+      if (!uploadLocation) {
         toast.error("Missing Location", "Please select a location for all sales items");
         return;
       }
@@ -489,16 +482,32 @@ Focus: ${typeSpecificPrompt}
         }
       }
 
+      // Fetch stock levels for the upload location
+      const stockLevels = uploadLocation ? await base44.entities.StockLevel.filter({
+        organisation_id: orgId,
+        warehouse_id: uploadLocation
+      }) : [];
+
+      const locationStockMap = {};
+      stockLevels.forEach(sl => {
+        locationStockMap[sl.product_id] = {
+          id: sl.id,
+          quantity: sl.quantity || 0,
+          available_quantity: sl.available_quantity || sl.quantity || 0
+        };
+      });
+
       for (const item of selectedItems) {
-        if ((isRevenue || detectedType === 'auto') && item.product_id && selectedLocation) {
+        if ((isRevenue || detectedType === 'auto') && item.product_id && uploadLocation) {
           // Create sales record from revenue document
           const saleNumber = `SL-${format(new Date(), 'yyyyMMdd')}-${Math.floor(1000 + Math.random() * 9000)}`;
-          const locationData = [...warehouses, ...vehicles].find(l => l.id === selectedLocation);
-          
+
+          const locationInfo = [...warehouses, ...vehicles].find(l => l.id === uploadLocation);
+
           await base44.entities.Sale.create({
             organisation_id: orgId,
             sale_number: saleNumber,
-            sale_type: selectedSaleType || 'retail',
+            sale_type: uploadSaleType,
             employee_id: currentEmployee?.id,
             employee_name: currentEmployee?.full_name,
             customer_name: item.customer_name || 'Walk-in Customer',
@@ -515,47 +524,45 @@ Focus: ${typeSpecificPrompt}
             total_amount: item.amount,
             payment_method: 'cash',
             payment_status: 'paid',
-            location: locationData?.name || locationData?.registration_number || '',
-            vehicle_id: selectedSaleType === 'vehicle' ? selectedLocation : null
+            location: locationInfo?.name || locationInfo?.registration_number || '',
+            vehicle_id: uploadSaleType === 'vehicle' ? uploadLocation : null
           });
 
-          // Update stock at the selected location
+          // Update allocated stock at the location
           const product = products.find(p => p.id === item.product_id);
-          if (product) {
-            // Update product total stock
-            await base44.entities.Product.update(item.product_id, {
-              stock_quantity: (product.stock_quantity || 0) - (item.quantity || 1)
+          const stockLevel = locationStockMap[item.product_id];
+
+          if (stockLevel) {
+            // Update the stock level at this location
+            const newLocationStock = Math.max(0, stockLevel.available_quantity - (item.quantity || 1));
+            await base44.entities.StockLevel.update(stockLevel.id, {
+              quantity: newLocationStock,
+              available_quantity: newLocationStock
             });
-            
-            // Update location-specific stock level
-            const stockLevels = await base44.entities.StockLevel.filter({
-              organisation_id: orgId,
-              warehouse_id: selectedLocation,
-              product_id: item.product_id
-            });
-            
-            if (stockLevels.length > 0) {
-              const stockLevel = stockLevels[0];
-              await base44.entities.StockLevel.update(stockLevel.id, {
-                quantity: Math.max(0, (stockLevel.quantity || 0) - (item.quantity || 1)),
-                available_quantity: Math.max(0, (stockLevel.available_quantity || stockLevel.quantity || 0) - (item.quantity || 1))
-              });
-            }
-            
-            // Create stock movement record
+
+            // Create stock movement
             await base44.entities.StockMovement.create({
               organisation_id: orgId,
               product_id: item.product_id,
               product_name: item.product_name,
-              warehouse_id: selectedLocation,
-              warehouse_name: locationData?.name || locationData?.registration_number || '',
-              movement_type: "out",
+              warehouse_id: uploadLocation,
+              warehouse_name: locationInfo?.name || locationInfo?.registration_number || '',
+              movement_type: 'out',
               quantity: item.quantity || 1,
-              reference_type: "sale",
+              previous_stock: stockLevel.available_quantity,
+              new_stock: newLocationStock,
+              reference_type: 'sale',
               reference_id: saleNumber,
               recorded_by: currentEmployee?.id,
               recorded_by_name: currentEmployee?.full_name,
-              notes: `Sale from uploaded document at ${locationData?.name || 'location'}`
+              notes: `Uploaded ${uploadSaleType} sale from document`
+            });
+          }
+
+          // Update product total stock
+          if (product) {
+            await base44.entities.Product.update(item.product_id, {
+              stock_quantity: (product.stock_quantity || 0) - (item.quantity || 1)
             });
           }
 
@@ -719,14 +726,67 @@ Focus: ${typeSpecificPrompt}
             <div className="w-12 h-12 rounded-xl bg-white/20 flex items-center justify-center">
               <FileUp className="w-6 h-6 text-white" />
             </div>
-            <div>
-              <h2 className="text-xl font-bold">Import {isProduction ? 'Production Batches' : isRevenue ? 'Revenue' : 'Expenses'} from Document</h2>
+            <div className="flex-1">
+              <h2 className="text-xl font-bold">Import {isProduction ? 'Production Batches' : isRevenue ? 'Revenue/Sales' : 'Expenses'} from Document</h2>
               <p className="text-white/80 text-sm">Upload PDF, CSV, or images to extract {isProduction ? 'production batch' : isRevenue ? 'revenue' : 'expense'} data</p>
             </div>
           </div>
         </div>
 
         <div className="p-6 space-y-4 overflow-y-auto max-h-[calc(95vh-140px)]">
+          {/* Location & Sale Type Selection for Revenue/Sales */}
+          {(detectedType === 'revenue' || isRevenue) && (
+            <div className="p-4 bg-blue-50 rounded-xl border border-blue-200">
+              <h3 className="font-semibold text-blue-900 mb-3 flex items-center gap-2">
+                <MapPin className="w-5 h-5" />
+                Sales Location & Type
+              </h3>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label className="text-xs font-medium text-blue-800 uppercase mb-1 block">Sale Type</label>
+                  <Select value={uploadSaleType} onValueChange={setUploadSaleType}>
+                    <SelectTrigger className="bg-white">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="retail">🏪 Retail (Store)</SelectItem>
+                      <SelectItem value="warehouse">📦 Warehouse Sales</SelectItem>
+                      <SelectItem value="vehicle">🚚 Vehicle Sales</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <label className="text-xs font-medium text-blue-800 uppercase mb-1 block">
+                    {uploadSaleType === 'vehicle' ? 'Select Vehicle' : 'Select Warehouse/Store'}
+                  </label>
+                  <Select value={uploadLocation} onValueChange={setUploadLocation}>
+                    <SelectTrigger className={!uploadLocation ? "border-amber-400 bg-amber-50" : "bg-white"}>
+                      <SelectValue placeholder="Select location..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {uploadSaleType === 'vehicle' ? (
+                        vehicles.map(v => (
+                          <SelectItem key={v.id} value={v.id}>
+                            🚚 {v.registration_number} - {v.brand} {v.model}
+                          </SelectItem>
+                        ))
+                      ) : (
+                        warehouses.map(w => (
+                          <SelectItem key={w.id} value={w.id}>
+                            📦 {w.name}
+                          </SelectItem>
+                        ))
+                      )}
+                    </SelectContent>
+                  </Select>
+                  {!uploadLocation && (
+                    <p className="text-xs text-amber-700 mt-1">⚠️ Location required for sales import</p>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
+
           {extractedData.length === 0 && (
             <div className="space-y-4">
               <div className="border-2 border-dashed border-gray-300 rounded-xl p-8 text-center hover:border-[#0072C6] transition-colors">
@@ -812,27 +872,6 @@ Focus: ${typeSpecificPrompt}
                       ))}
                     </SelectContent>
                   </Select>
-
-                  {/* Location selector for sales */}
-                  {(detectedType === 'revenue' || detectedType === 'auto') && (
-                    <Select value={selectedLocation || ''} onValueChange={setSelectedLocation}>
-                      <SelectTrigger className={`w-[200px] h-8 text-xs ${!selectedLocation ? 'border-amber-400 bg-amber-50' : ''}`}>
-                        <SelectValue placeholder="Select location for sales" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {warehouses.map(w => (
-                          <SelectItem key={w.id} value={w.id}>
-                            📦 {w.name}
-                          </SelectItem>
-                        ))}
-                        {vehicles.map(v => (
-                          <SelectItem key={v.id} value={v.id}>
-                            🚚 {v.registration_number}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  )}
                 </div>
                 <Button
                   variant="outline"
@@ -874,6 +913,8 @@ Focus: ${typeSpecificPrompt}
                         <TableHead className="text-xs">{isProduction ? 'DESCRIPTION' : isRevenue ? 'DESCRIPTION' : 'DETAILS'}</TableHead>
                         {isRevenue && (
                           <>
+                            <TableHead className="text-xs">CUSTOMER</TableHead>
+                            <TableHead className="text-xs">PRODUCT</TableHead>
                             <TableHead className="text-xs text-center bg-blue-50">Qty</TableHead>
                             <TableHead className="text-xs text-center bg-blue-50">Unit Price</TableHead>
                           </>
@@ -889,9 +930,6 @@ Focus: ${typeSpecificPrompt}
                           </>
                         )}
                         <TableHead className="text-xs text-center bg-green-50">Amount</TableHead>
-                        {isRevenue && <TableHead className="text-xs">CUSTOMER</TableHead>}
-                        {isRevenue && <TableHead className="text-xs">PRODUCT</TableHead>}
-                        {isRevenue && <TableHead className="text-xs">LOCATION</TableHead>}
                         {!isRevenue && !isProduction && <TableHead className="text-xs">Vendor</TableHead>}
                         {!isProduction && <TableHead className="text-xs">{isRevenue ? 'Revenue Type' : 'Category'}</TableHead>}
                         <TableHead className="text-xs">{isProduction ? 'Production Date' : 'Date'}</TableHead>
@@ -974,9 +1012,53 @@ Focus: ${typeSpecificPrompt}
                               onChange={(e) => updateItem(item.id, 'description', e.target.value)}
                               className="h-7 text-xs min-w-[150px]"
                             />
-                          </TableCell>
-                          {isRevenue && (
+                            </TableCell>
+                            {isRevenue && (
                             <>
+                              <TableCell>
+                                <Select
+                                  value={item.customer_id || ''}
+                                  onValueChange={(v) => {
+                                    const cust = customers.find(c => c.id === v);
+                                    updateItem(item.id, 'customer_id', v);
+                                    updateItem(item.id, 'customer_name', cust?.name || '');
+                                    updateItem(item.id, 'needs_customer_creation', false);
+                                  }}
+                                >
+                                  <SelectTrigger className={`h-7 text-xs w-32 ${item.needs_customer_creation ? 'border-amber-400 bg-amber-50' : ''}`}>
+                                    <SelectValue placeholder={item.customer_name || "Select customer"} />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    {customers.map(c => (
+                                      <SelectItem key={c.id} value={c.id}>
+                                        {c.name}
+                                      </SelectItem>
+                                    ))}
+                                  </SelectContent>
+                                </Select>
+                              </TableCell>
+                              <TableCell>
+                                <Select
+                                  value={item.product_id || ''}
+                                  onValueChange={(v) => {
+                                    const prod = products.find(p => p.id === v);
+                                    updateItem(item.id, 'product_id', v);
+                                    updateItem(item.id, 'product_name', prod?.name || '');
+                                    updateItem(item.id, 'needs_product_selection', false);
+                                  }}
+                                >
+                                  <SelectTrigger className={`h-7 text-xs w-32 ${item.needs_product_selection ? 'border-amber-400 bg-amber-50' : ''}`}>
+                                    <SelectValue placeholder={item.product_name || "Product"} />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    {products.map(p => (
+                                      <SelectItem key={p.id} value={p.id}>
+                                        {p.name}
+                                      </SelectItem>
+                                    ))}
+                                  </SelectContent>
+                                </Select>
+                              </TableCell>
                               <TableCell className="bg-blue-50/50">
                                 <Input
                                   type="number"
@@ -994,7 +1076,7 @@ Focus: ${typeSpecificPrompt}
                                 />
                               </TableCell>
                             </>
-                          )}
+                            )}
                           {!isRevenue && (
                             <>
                               <TableCell>
@@ -1057,82 +1139,8 @@ Focus: ${typeSpecificPrompt}
                               value={item.amount || ''}
                               onChange={(e) => updateItem(item.id, 'amount', parseFloat(e.target.value) || 0)}
                               className="h-7 text-xs w-24 text-right font-medium"
-                            />
-                          </TableCell>
-                          {isRevenue && (
-                            <>
-                              <TableCell>
-                                <Select
-                                  value={item.customer_id || ''}
-                                  onValueChange={(v) => {
-                                    const cust = customers.find(c => c.id === v);
-                                    updateItem(item.id, 'customer_id', v);
-                                    updateItem(item.id, 'customer_name', cust?.name || '');
-                                    updateItem(item.id, 'needs_customer_creation', false);
-                                  }}
-                                >
-                                  <SelectTrigger className={`h-7 text-xs w-32 ${item.needs_customer_creation ? 'border-amber-400 bg-amber-50' : ''}`}>
-                                    <SelectValue placeholder={item.customer_name || "Select customer"} />
-                                  </SelectTrigger>
-                                  <SelectContent>
-                                    {customers.map(c => (
-                                      <SelectItem key={c.id} value={c.id}>
-                                        {c.name}
-                                      </SelectItem>
-                                    ))}
-                                  </SelectContent>
-                                </Select>
+                              />
                               </TableCell>
-                              <TableCell>
-                                <Select
-                                  value={item.product_id || ''}
-                                  onValueChange={(v) => {
-                                    const prod = products.find(p => p.id === v);
-                                    updateItem(item.id, 'product_id', v);
-                                    updateItem(item.id, 'product_name', prod?.name || '');
-                                    updateItem(item.id, 'needs_product_selection', false);
-                                  }}
-                                >
-                                  <SelectTrigger className={`h-7 text-xs w-32 ${item.needs_product_selection ? 'border-amber-400 bg-amber-50' : ''}`}>
-                                    <SelectValue placeholder={item.product_name || "Product"} />
-                                  </SelectTrigger>
-                                  <SelectContent>
-                                    {products.map(p => (
-                                      <SelectItem key={p.id} value={p.id}>
-                                        {p.name}
-                                      </SelectItem>
-                                    ))}
-                                  </SelectContent>
-                                </Select>
-                              </TableCell>
-                              <TableCell>
-                                <Select
-                                  value={item.location_id || ''}
-                                  onValueChange={(v) => {
-                                    const loc = [...warehouses, ...vehicles].find(l => l.id === v);
-                                    updateItem(item.id, 'location_id', v);
-                                    updateItem(item.id, 'location_name', loc?.name || loc?.registration_number || '');
-                                  }}
-                                >
-                                  <SelectTrigger className={`h-7 text-xs w-32 ${!item.location_id ? 'border-amber-400 bg-amber-50' : ''}`}>
-                                    <SelectValue placeholder={item.location_name || "Location"} />
-                                  </SelectTrigger>
-                                  <SelectContent>
-                                    {warehouses.map(w => (
-                                      <SelectItem key={w.id} value={w.id}>
-                                        📦 {w.name}
-                                      </SelectItem>
-                                    ))}
-                                    {vehicles.map(v => (
-                                      <SelectItem key={v.id} value={v.id}>
-                                        🚚 {v.registration_number}
-                                      </SelectItem>
-                                    ))}
-                                  </SelectContent>
-                                </Select>
-                              </TableCell>
-                            </>
-                          )}
                           {!isRevenue && !isProduction && (
                             <TableCell>
                               <Input
