@@ -115,6 +115,12 @@ export default function ManagerDashboard({ currentEmployee, orgId: propOrgId, us
     enabled: !!orgId,
   });
 
+  const { data: revenues = [] } = useQuery({
+    queryKey: ['revenues', orgId],
+    queryFn: () => base44.entities.Revenue.filter({ organisation_id: orgId }, '-created_date', 500),
+    enabled: !!orgId,
+  });
+
   // Calculate metrics
   const todaySales = (sales || []).filter(s => s?.created_date?.startsWith(today));
   const todaySalesRevenue = todaySales.reduce((sum, s) => sum + (s?.total_amount || 0), 0);
@@ -125,8 +131,14 @@ export default function ManagerDashboard({ currentEmployee, orgId: propOrgId, us
   const todayContracts = (truckContracts || []).filter(c => c?.contract_date === today && c?.status === 'completed');
   const todayContractRevenue = todayContracts.reduce((sum, c) => sum + (c?.contract_amount || 0), 0);
   
+  // Today's other revenue (from Revenue entity)
+  const todayOtherRevenue = (revenues || []).filter(r => {
+    const revDate = r.date || r.created_date?.split('T')[0];
+    return revDate === today;
+  }).reduce((sum, r) => sum + (r.amount || 0), 0);
+  
   // Total today's revenue from all sources
-  const todayTotalRevenue = todaySalesRevenue + todayTransportRevenue + todayContractRevenue;
+  const todayTotalRevenue = todaySalesRevenue + todayTransportRevenue + todayContractRevenue + todayOtherRevenue;
   
   const activeEmployees = employees.filter(e => e.status === 'active');
   const clockedIn = attendance.filter(a => a.clock_in_time && !a.clock_out_time);
@@ -161,7 +173,13 @@ export default function ManagerDashboard({ currentEmployee, orgId: propOrgId, us
     return contractDate.getMonth() === now.getMonth() && contractDate.getFullYear() === now.getFullYear() && c.status === 'completed';
   }).reduce((sum, c) => sum + (c.contract_amount || 0), 0);
 
-  const monthTotalRevenue = monthSalesRevenue + monthTransportRevenue + monthContractRevenue;
+  // Revenue entity (contributions, funding, other income)
+  const monthOtherRevenue = revenues.filter(r => {
+    const revDate = new Date(r.date || r.created_date);
+    return revDate.getMonth() === now.getMonth() && revDate.getFullYear() === now.getFullYear();
+  }).reduce((sum, r) => sum + (r.amount || 0), 0);
+
+  const monthTotalRevenue = monthSalesRevenue + monthTransportRevenue + monthContractRevenue + monthOtherRevenue;
 
   // Monthly calculations - ALL EXPENSE SOURCES
   const monthRecordedExpenses = expenses.filter(e => {
@@ -296,7 +314,7 @@ export default function ManagerDashboard({ currentEmployee, orgId: propOrgId, us
           </CardTitle>
         </CardHeader>
         <CardContent className="p-3 sm:p-6">
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-4">
+          <div className="grid grid-cols-2 lg:grid-cols-5 gap-2 sm:gap-4">
             <div className="p-2 sm:p-4 bg-green-50 rounded-lg">
               <div className="flex items-center gap-1.5 sm:gap-2 mb-1 sm:mb-2">
                 <ShoppingCart className="w-4 h-4 sm:w-5 sm:h-5 text-green-600" />
@@ -321,13 +339,13 @@ export default function ManagerDashboard({ currentEmployee, orgId: propOrgId, us
               <p className="text-base sm:text-2xl font-bold text-teal-700 truncate">Le {todayContractRevenue.toLocaleString()}</p>
               <p className="text-[10px] sm:text-sm text-teal-600">{todayContracts.length} completed</p>
             </div>
-            <div className="p-2 sm:p-4 bg-gray-100 rounded-lg">
+            <div className="p-2 sm:p-4 bg-purple-50 rounded-lg">
               <div className="flex items-center gap-1.5 sm:gap-2 mb-1 sm:mb-2">
-                <TrendingUp className="w-4 h-4 sm:w-5 sm:h-5 text-gray-600" />
-                <span className="font-medium text-gray-800 text-xs sm:text-base">Total</span>
+                <DollarSign className="w-4 h-4 sm:w-5 sm:h-5 text-purple-600" />
+                <span className="font-medium text-purple-800 text-xs sm:text-base">Other</span>
               </div>
-              <p className="text-base sm:text-2xl font-bold text-gray-900 truncate">Le {todayTotalRevenue.toLocaleString()}</p>
-              <p className="text-[10px] sm:text-sm text-gray-600">All sources</p>
+              <p className="text-base sm:text-2xl font-bold text-purple-700 truncate">Le {todayOtherRevenue.toLocaleString()}</p>
+              <p className="text-[10px] sm:text-sm text-purple-600">Contributions etc</p>
             </div>
           </div>
         </CardContent>
