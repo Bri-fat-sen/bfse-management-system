@@ -35,7 +35,7 @@ import {
 import { 
   Target, Plus, TrendingUp, TrendingDown, AlertTriangle, 
   CheckCircle2, Edit2, Trash2, Calendar, PiggyBank,
-  BarChart3, ArrowUpRight, ArrowDownRight, Minus, MapPin, Users, X
+  BarChart3, ArrowUpRight, ArrowDownRight, Minus, MapPin, Users
 } from "lucide-react";
 import { toast } from "sonner";
 import {
@@ -1094,7 +1094,7 @@ export default function BudgetingModule({ orgId, expenses = [], sales = [], curr
                     {editingBudget ? 'Edit Budget' : budgetForm.budget_type === 'revenue_target' ? 'Set Revenue Target' : 'Create Expense Budget'}
                   </h2>
                   <p className="text-white/80 text-sm">
-                    {budgetForm.budget_type === 'revenue_target' ? 'Set sales targets for your locations' : 'Plan and track your spending'}
+                    {budgetForm.budget_type === 'revenue_target' ? 'Set sales targets by location' : 'Set spending limits by category'}
                   </p>
                 </div>
               </div>
@@ -1112,6 +1112,7 @@ export default function BudgetingModule({ orgId, expenses = [], sales = [], curr
           {/* Form Content */}
           <div className="overflow-y-auto max-h-[calc(90vh-180px)]">
             <div className="p-6 space-y-4">
+              
               {/* Budget Type Selection */}
               <div className="space-y-2">
                 <Label className="text-gray-700 font-medium">Budget Type</Label>
@@ -1149,7 +1150,7 @@ export default function BudgetingModule({ orgId, expenses = [], sales = [], curr
               {/* Location Selection */}
               <div className="space-y-2">
                 <Label className="text-gray-700 font-medium flex items-center gap-2">
-                  <MapPin className="w-3 h-3" /> Location (Optional)
+                  <MapPin className="w-3 h-3" /> Location (Warehouse/Store)
                 </Label>
                 <Select 
                   value={budgetForm.location_id || "all_locations"} 
@@ -1171,7 +1172,7 @@ export default function BudgetingModule({ orgId, expenses = [], sales = [], curr
                   }}
                 >
                   <SelectTrigger className="border-gray-200">
-                    <SelectValue placeholder="All Locations" />
+                    <SelectValue placeholder="All Locations (Optional)" />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all_locations">All Locations</SelectItem>
@@ -1285,10 +1286,10 @@ export default function BudgetingModule({ orgId, expenses = [], sales = [], curr
                 </div>
               )}
 
-              {/* Amount Field with styling */}
+              {/* Amount Field with styled border */}
               <div className="p-4 rounded-xl border-2 border-[#0072C6]/30 bg-[#0072C6]/5">
                 <Label className="text-[#0072C6] font-medium">
-                  {budgetForm.budget_type === 'revenue_target' ? 'Revenue Target (Le)' : 'Budget Amount (Le)'}
+                  {budgetForm.budget_type === 'revenue_target' ? 'Revenue Target' : 'Budget Amount'}
                 </Label>
                 <div className="relative mt-2">
                   <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[#0072C6] font-bold">Le</span>
@@ -1312,25 +1313,24 @@ export default function BudgetingModule({ orgId, expenses = [], sales = [], curr
                 />
               </div>
             </div>
-          </div>
 
-          {/* Footer */}
-          <div className="sticky bottom-0 bg-white border-t p-4 flex flex-col sm:flex-row gap-3">
-            <Button 
-              type="button"
-              variant="outline" 
-              onClick={() => setShowBudgetDialog(false)}
-              className="w-full sm:w-auto"
-            >
-              Cancel
-            </Button>
-            <Button 
-              onClick={handleSubmitBudget}
-              disabled={(budgetForm.budget_type === 'expense' && !budgetForm.category) || !budgetForm.budgeted_amount}
-              className="w-full sm:flex-1 text-white bg-gradient-to-r from-[#1EB053] to-[#0072C6]"
-            >
-              {editingBudget ? 'Update Budget' : budgetForm.budget_type === 'revenue_target' ? 'Set Target' : 'Create Budget'}
-            </Button>
+            {/* Footer */}
+            <div className="sticky bottom-0 bg-white border-t p-4 flex flex-col sm:flex-row gap-3">
+              <Button 
+                variant="outline" 
+                onClick={() => setShowBudgetDialog(false)}
+                className="w-full sm:w-auto"
+              >
+                Cancel
+              </Button>
+              <Button 
+                onClick={handleSubmitBudget}
+                disabled={(budgetForm.budget_type === 'expense' && !budgetForm.category) || !budgetForm.budgeted_amount}
+                className="w-full sm:flex-1 text-white bg-gradient-to-r from-[#1EB053] to-[#0072C6]"
+              >
+                {editingBudget ? 'Update Budget' : budgetForm.budget_type === 'revenue_target' ? 'Set Target' : 'Create Budget'}
+              </Button>
+            </div>
           </div>
 
           {/* Bottom flag stripe */}
