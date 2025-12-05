@@ -30,6 +30,7 @@ import Documents from './pages/Documents';
 import UserManagement from './pages/UserManagement';
 import InventoryFix from './pages/InventoryFix';
 import OrphanedData from './pages/OrphanedData';
+import ConstructionExpense from './pages/ConstructionExpense';
 import __Layout from './Layout.jsx';
 
 
@@ -66,6 +67,7 @@ export const PAGES = {
     "UserManagement": UserManagement,
     "InventoryFix": InventoryFix,
     "OrphanedData": OrphanedData,
+    "ConstructionExpense": ConstructionExpense,
 }
 
 export const pagesConfig = {
