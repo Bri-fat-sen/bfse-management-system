@@ -585,7 +585,13 @@ export default function Finance() {
         </div>
 
         <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList className="bg-gray-100 p-1 flex flex-wrap h-auto gap-1">
+          <div className="rounded-lg overflow-hidden border">
+            <div className="h-1 flex">
+              <div className="flex-1 bg-[#1EB053]" />
+              <div className="flex-1 bg-white" />
+              <div className="flex-1 bg-[#0072C6]" />
+            </div>
+            <TabsList className="bg-gray-100 p-1 flex flex-wrap h-auto gap-1 rounded-none">
             <TabsTrigger value="dashboard" className="text-xs sm:text-sm data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#1EB053] data-[state=active]:to-[#0072C6] data-[state=active]:text-white">
               Dashboard
             </TabsTrigger>
@@ -613,6 +619,7 @@ export default function Finance() {
               AI Analysis
             </TabsTrigger>
           </TabsList>
+          </div>
 
           {/* Dashboard Tab */}
           <TabsContent value="dashboard" className="mt-6">
