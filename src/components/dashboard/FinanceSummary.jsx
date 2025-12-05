@@ -9,48 +9,38 @@ export default function FinanceSummary({ sales = [], expenses = [], trips = [], 
   const monthStart = startOfMonth(today);
   const monthEnd = endOfMonth(today);
 
-  // This month's data - ALL REVENUE SOURCES
-  const monthSales = sales.filter(s => {
-    const date = new Date(s.created_date);
+  // Helper to safely check if date is in month
+  const isInMonth = (dateStr) => {
+    if (!dateStr) return false;
+    const date = new Date(dateStr);
+    if (isNaN(date.getTime())) return false;
     return isWithinInterval(date, { start: monthStart, end: monthEnd });
-  });
+  };
+
+  // This month's data - ALL REVENUE SOURCES
+  const monthSales = sales.filter(s => isInMonth(s.created_date));
   const salesRevenue = monthSales.reduce((sum, s) => sum + (s.total_amount || 0), 0);
   
-  const monthTrips = trips.filter(t => {
-    const date = new Date(t.date);
-    return isWithinInterval(date, { start: monthStart, end: monthEnd });
-  });
+  const monthTrips = trips.filter(t => isInMonth(t.date));
   const tripRevenue = monthTrips.reduce((sum, t) => sum + (t.total_revenue || 0), 0);
   
-  const monthContracts = truckContracts.filter(c => {
-    const date = new Date(c.contract_date);
-    return isWithinInterval(date, { start: monthStart, end: monthEnd }) && c.status === 'completed';
-  });
+  const monthContracts = truckContracts.filter(c => isInMonth(c.contract_date) && c.status === 'completed');
   const contractRevenue = monthContracts.reduce((sum, c) => sum + (c.contract_amount || 0), 0);
   
-  const monthRevenues = revenues.filter(r => {
-    const date = new Date(r.date || r.created_date);
-    return isWithinInterval(date, { start: monthStart, end: monthEnd });
-  });
+  const monthRevenues = revenues.filter(r => isInMonth(r.date || r.created_date));
   const otherRevenue = monthRevenues.reduce((sum, r) => sum + (r.amount || 0), 0);
   
   const totalRevenue = salesRevenue + tripRevenue + contractRevenue + otherRevenue;
 
   // This month's data - ALL EXPENSE SOURCES
-  const monthExpenses = expenses.filter(e => {
-    const date = new Date(e.date || e.created_date);
-    return isWithinInterval(date, { start: monthStart, end: monthEnd });
-  });
+  const monthExpenses = expenses.filter(e => isInMonth(e.date || e.created_date));
   const recordedExpenses = monthExpenses.reduce((sum, e) => sum + (e.amount || 0), 0);
   
   const tripExpenses = monthTrips.reduce((sum, t) => sum + (t.fuel_cost || 0) + (t.other_expenses || 0), 0);
   
   const contractExpenses = monthContracts.reduce((sum, c) => sum + (c.total_expenses || 0), 0);
   
-  const monthMaintenance = maintenanceRecords.filter(m => {
-    const date = new Date(m.date_performed);
-    return isWithinInterval(date, { start: monthStart, end: monthEnd });
-  });
+  const monthMaintenance = maintenanceRecords.filter(m => isInMonth(m.date_performed));
   const maintenanceExpenses = monthMaintenance.reduce((sum, m) => sum + (m.cost || 0), 0);
   
   const totalExpenses = recordedExpenses + tripExpenses + contractExpenses + maintenanceExpenses;
