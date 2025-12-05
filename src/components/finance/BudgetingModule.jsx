@@ -1070,22 +1070,22 @@ export default function BudgetingModule({ orgId, expenses = [], sales = [], curr
 
       {/* Budget Dialog */}
       <Dialog open={showBudgetDialog} onOpenChange={setShowBudgetDialog}>
-        <DialogContent className="max-w-lg [&>button]:hidden overflow-hidden p-0">
+        <DialogContent className="max-w-md w-[95vw] max-h-[90vh] overflow-hidden p-0 flex flex-col">
           {/* Sierra Leone Flag Stripe - Top */}
-          <div className="h-2 flex w-full">
+          <div className="h-2 flex w-full flex-shrink-0">
             <div className="flex-1 bg-[#1EB053]" />
             <div className="flex-1 bg-white" />
             <div className="flex-1 bg-[#0072C6]" />
           </div>
           
-          <div className="p-6">
-            <DialogHeader>
-              <DialogTitle>
+          <div className="p-4 sm:p-6 overflow-y-auto flex-1">
+            <DialogHeader className="mb-4">
+              <DialogTitle className="text-lg">
                 {editingBudget ? 'Edit Budget' : budgetForm.budget_type === 'revenue_target' ? 'Set Revenue Target' : 'Create Expense Budget'}
               </DialogTitle>
             </DialogHeader>
           
-          <div className="space-y-4 py-4">
+          <div className="space-y-3">
             {/* Budget Type Selection */}
             <div className="space-y-2">
               <Label>Budget Type</Label>
@@ -1275,7 +1275,7 @@ export default function BudgetingModule({ orgId, expenses = [], sales = [], curr
             </div>
           </div>
 
-            <DialogFooter>
+            <DialogFooter className="mt-4 gap-2 sm:gap-0">
               <Button variant="outline" onClick={() => setShowBudgetDialog(false)}>Cancel</Button>
               <Button 
                 onClick={handleSubmitBudget}
@@ -1288,7 +1288,7 @@ export default function BudgetingModule({ orgId, expenses = [], sales = [], curr
           </div>
           
           {/* Sierra Leone Flag Stripe - Bottom */}
-          <div className="h-2 flex w-full">
+          <div className="h-2 flex w-full flex-shrink-0">
             <div className="flex-1 bg-[#1EB053]" />
             <div className="flex-1 bg-white" />
             <div className="flex-1 bg-[#0072C6]" />
