@@ -187,7 +187,9 @@ export default function BatchManagement({ products = [], warehouses = [], vehicl
 
   const getExpiryStatus = (expiryDate) => {
     if (!expiryDate) return null;
-    const days = differenceInDays(new Date(expiryDate), new Date());
+    const date = new Date(expiryDate);
+    if (isNaN(date.getTime())) return null;
+    const days = differenceInDays(date, new Date());
     if (days < 0) return { label: "Expired", color: "bg-red-500 text-white", days };
     if (days <= 7) return { label: `${days}d left`, color: "bg-red-100 text-red-700", days };
     if (days <= 30) return { label: `${days}d left`, color: "bg-orange-100 text-orange-700", days };
@@ -328,7 +330,7 @@ export default function BatchManagement({ products = [], warehouses = [], vehicl
                           {batch.weight_kg > 0 && <span>• {batch.weight_kg}kg</span>}
                           {batch.warehouse_name && <span>• {batch.warehouse_name}</span>}
                         </div>
-                        {batch.expiry_date && (
+                        {batch.expiry_date && !isNaN(new Date(batch.expiry_date).getTime()) && (
                           <div className="flex items-center gap-2 mt-1">
                             <span className="text-xs text-gray-500">Exp: {format(new Date(batch.expiry_date), 'dd MMM yy')}</span>
                             {expiryStatus && <Badge className={expiryStatus.color + " text-[10px]"}>{expiryStatus.label}</Badge>}
@@ -399,10 +401,10 @@ export default function BatchManagement({ products = [], warehouses = [], vehicl
                             </div>
                           </td>
                           <td className="p-4 text-gray-600">
-                            {batch.manufacturing_date && format(new Date(batch.manufacturing_date), 'dd MMM yyyy')}
+                            {batch.manufacturing_date && !isNaN(new Date(batch.manufacturing_date).getTime()) && format(new Date(batch.manufacturing_date), 'dd MMM yyyy')}
                           </td>
                           <td className="p-4">
-                            {batch.expiry_date && (
+                            {batch.expiry_date && !isNaN(new Date(batch.expiry_date).getTime()) && (
                               <div className="flex items-center gap-2">
                                 <span className="text-gray-600">{format(new Date(batch.expiry_date), 'dd MMM yyyy')}</span>
                                 {expiryStatus && (
