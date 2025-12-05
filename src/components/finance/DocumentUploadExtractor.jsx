@@ -466,18 +466,19 @@ Focus: ${typeSpecificPrompt}
             warehouseName = warehouses[0].name;
           }
           
-          await base44.entities.ProductionBatch.create({
+          // Create InventoryBatch (used by BatchManagement)
+          await base44.entities.InventoryBatch.create({
             organisation_id: orgId,
             batch_number: batchNum,
             product_id: item.product_id || '',
             product_name: item.product_name || item.description || 'Unknown Product',
-            production_date: item.date || format(new Date(), 'yyyy-MM-dd'),
+            warehouse_id: warehouseId || '',
+            warehouse_name: warehouseName || '',
+            quantity: item.quantity || item.actual_qty || 0,
+            manufacturing_date: item.date || format(new Date(), 'yyyy-MM-dd'),
             expiry_date: item.expiry_date || '',
-            quantity_produced: item.quantity || item.actual_qty || 0,
-            quality_status: 'pending',
-            supervisor_id: currentEmployee?.id,
-            supervisor_name: currentEmployee?.full_name,
-            status: 'completed',
+            cost_price: item.unit_price || item.actual_unit_cost || 0,
+            status: 'active',
             notes: `Imported from document. ${item.description || ''}`
           });
           batchCount++;
