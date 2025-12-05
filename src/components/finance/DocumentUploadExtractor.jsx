@@ -822,7 +822,7 @@ Return every row - do not summarize or skip any data.`,
                   ) : (
                     <CheckCircle className="w-4 h-4 mr-2" />
                   )}
-                  Create {extractedData.filter(e => e.selected).length} {isRevenue ? 'Revenue' : 'Expense'}(s)
+                  Create {extractedData.filter(e => e.selected).length} {isProduction ? 'Batch(es)' : isRevenue ? 'Revenue' : 'Expense'}(s)
                 </Button>
               </div>
             </div>
