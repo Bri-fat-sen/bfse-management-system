@@ -1065,7 +1065,12 @@ Focus: ${typeSpecificPrompt}
                                 <Input
                                   type="number"
                                   value={item.quantity || ''}
-                                  onChange={(e) => updateItem(item.id, 'quantity', parseFloat(e.target.value) || 0)}
+                                  onChange={(e) => {
+                                    const newQty = parseFloat(e.target.value) || 0;
+                                    const newAmount = newQty * (item.unit_price || 0);
+                                    updateItem(item.id, 'quantity', newQty);
+                                    updateItem(item.id, 'amount', newAmount);
+                                  }}
                                   className="h-7 text-xs w-16 text-center"
                                 />
                               </TableCell>
@@ -1073,7 +1078,12 @@ Focus: ${typeSpecificPrompt}
                                 <Input
                                   type="number"
                                   value={item.unit_price || ''}
-                                  onChange={(e) => updateItem(item.id, 'unit_price', parseFloat(e.target.value) || 0)}
+                                  onChange={(e) => {
+                                    const newPrice = parseFloat(e.target.value) || 0;
+                                    const newAmount = (item.quantity || 0) * newPrice;
+                                    updateItem(item.id, 'unit_price', newPrice);
+                                    updateItem(item.id, 'amount', newAmount);
+                                  }}
                                   className="h-7 text-xs w-24 text-right"
                                 />
                               </TableCell>
@@ -1092,7 +1102,12 @@ Focus: ${typeSpecificPrompt}
                                 <Input
                                   type="number"
                                   value={item.estimated_qty || ''}
-                                  onChange={(e) => updateItem(item.id, 'estimated_qty', parseFloat(e.target.value) || 0)}
+                                  onChange={(e) => {
+                                    const newQty = parseFloat(e.target.value) || 0;
+                                    const newEstAmount = newQty * (item.estimated_unit_cost || 0);
+                                    updateItem(item.id, 'estimated_qty', newQty);
+                                    updateItem(item.id, 'estimated_amount', newEstAmount);
+                                  }}
                                   className="h-7 text-xs w-16 text-center"
                                 />
                               </TableCell>
@@ -1100,12 +1115,24 @@ Focus: ${typeSpecificPrompt}
                                 <Input
                                   type="number"
                                   value={item.estimated_unit_cost || ''}
-                                  onChange={(e) => updateItem(item.id, 'estimated_unit_cost', parseFloat(e.target.value) || 0)}
+                                  onChange={(e) => {
+                                    const newCost = parseFloat(e.target.value) || 0;
+                                    const newEstAmount = (item.estimated_qty || 0) * newCost;
+                                    updateItem(item.id, 'estimated_unit_cost', newCost);
+                                    updateItem(item.id, 'estimated_amount', newEstAmount);
+                                  }}
                                   className="h-7 text-xs w-24 text-right"
                                 />
                               </TableCell>
-                              <TableCell className="bg-blue-50/50 text-xs text-right font-medium text-blue-700">
-                                Le {(item.estimated_amount || 0).toLocaleString()}
+                              <TableCell className="bg-blue-50/50">
+                                <Input
+                                  type="number"
+                                  value={item.estimated_amount || ''}
+                                  onChange={(e) => updateItem(item.id, 'estimated_amount', parseFloat(e.target.value) || 0)}
+                                  className="h-7 text-xs w-24 text-right"
+                                  disabled
+                                  title="Calculated: Qty × Unit Cost"
+                                />
                               </TableCell>
                               <TableCell className="bg-green-50/50">
                                 <Input
@@ -1140,13 +1167,9 @@ Focus: ${typeSpecificPrompt}
                             </>
                           )}
                           <TableCell className="bg-green-50/50">
-                            <Input
-                              type="number"
-                              step="0.01"
-                              value={item.amount || ''}
-                              onChange={(e) => updateItem(item.id, 'amount', parseFloat(e.target.value) || 0)}
-                              className="h-7 text-xs w-28 text-right font-bold border-2 border-green-400"
-                              />
+                            <div className="text-xs text-right font-bold text-green-700 px-2">
+                              Le {(item.amount || 0).toLocaleString()}
+                            </div>
                               </TableCell>
                           {!isRevenue && !isProduction && (
                             <TableCell>
