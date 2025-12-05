@@ -1070,8 +1070,14 @@ export default function BudgetingModule({ orgId, expenses = [], sales = [], curr
 
       {/* Budget Dialog */}
       <Dialog open={showBudgetDialog} onOpenChange={setShowBudgetDialog}>
-        <DialogContent className="max-w-lg">
+        <DialogContent className="max-w-lg [&>button]:hidden">
           <DialogHeader>
+            {/* Sierra Leone Flag Stripe */}
+            <div className="flex h-1 w-16 rounded-full overflow-hidden mb-3">
+              <div className="flex-1 bg-[#1EB053]" />
+              <div className="flex-1 bg-white border-y border-gray-200" />
+              <div className="flex-1 bg-[#0072C6]" />
+            </div>
             <DialogTitle>
               {editingBudget ? 'Edit Budget' : budgetForm.budget_type === 'revenue_target' ? 'Set Revenue Target' : 'Create Expense Budget'}
             </DialogTitle>
