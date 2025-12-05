@@ -440,7 +440,7 @@ Return every row - do not summarize or skip any data.`,
                 </div>
               )}
 
-              <ScrollArea className="h-[calc(95vh-380px)] min-h-[300px] border rounded-lg">
+              <ScrollArea className="h-[calc(95vh-380px)] min-h-[300px] border rounded-lg" orientation="both">
                 <div className={isRevenue ? "min-w-[900px]" : "min-w-[1200px]"}>
                   <Table>
                     <TableHeader>
