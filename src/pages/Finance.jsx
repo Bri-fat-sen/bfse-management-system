@@ -646,7 +646,12 @@ export default function Finance() {
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">
               {/* Revenue Trend */}
-              <Card>
+              <Card className="overflow-hidden">
+                <div className="h-1 flex">
+                  <div className="flex-1 bg-[#1EB053]" />
+                  <div className="flex-1 bg-white" />
+                  <div className="flex-1 bg-[#0072C6]" />
+                </div>
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
                     <BarChart3 className="w-5 h-5 text-[#1EB053]" />
@@ -669,7 +674,12 @@ export default function Finance() {
               </Card>
 
               {/* Profit Trend */}
-              <Card>
+              <Card className="overflow-hidden">
+                <div className="h-1 flex">
+                  <div className="flex-1 bg-[#1EB053]" />
+                  <div className="flex-1 bg-white" />
+                  <div className="flex-1 bg-[#0072C6]" />
+                </div>
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
                     <TrendingUp className="w-5 h-5 text-[#0072C6]" />
@@ -690,7 +700,12 @@ export default function Finance() {
               </Card>
 
               {/* Revenue Sources */}
-              <Card>
+              <Card className="overflow-hidden">
+                <div className="h-1 flex">
+                  <div className="flex-1 bg-[#1EB053]" />
+                  <div className="flex-1 bg-white" />
+                  <div className="flex-1 bg-[#0072C6]" />
+                </div>
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
                     <PieChart className="w-5 h-5 text-[#1EB053]" />
@@ -727,7 +742,12 @@ export default function Finance() {
               </Card>
 
               {/* Expense Breakdown */}
-              <Card>
+              <Card className="overflow-hidden">
+                <div className="h-1 flex">
+                  <div className="flex-1 bg-[#1EB053]" />
+                  <div className="flex-1 bg-white" />
+                  <div className="flex-1 bg-[#0072C6]" />
+                </div>
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
                     <PieChart className="w-5 h-5 text-red-500" />
@@ -844,7 +864,12 @@ export default function Finance() {
             </div>
 
             {/* Payment Methods */}
-            <Card>
+            <Card className="overflow-hidden">
+              <div className="h-1 flex">
+                <div className="flex-1 bg-[#1EB053]" />
+                <div className="flex-1 bg-white" />
+                <div className="flex-1 bg-[#0072C6]" />
+              </div>
               <CardHeader>
                 <CardTitle>Payment Methods</CardTitle>
               </CardHeader>
@@ -1389,7 +1414,12 @@ export default function Finance() {
               </Card>
             </div>
 
-            <Card>
+            <Card className="overflow-hidden">
+              <div className="h-1 flex">
+                <div className="flex-1 bg-[#1EB053]" />
+                <div className="flex-1 bg-white" />
+                <div className="flex-1 bg-[#0072C6]" />
+              </div>
               <CardHeader>
                 <CardTitle>Monthly Cash Flow</CardTitle>
               </CardHeader>
