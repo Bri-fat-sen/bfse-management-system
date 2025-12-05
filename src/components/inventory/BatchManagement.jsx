@@ -216,12 +216,14 @@ export default function BatchManagement({ products = [], warehouses = [], vehicl
       warehouse_id: formData.get('warehouse_id'),
       warehouse_name: warehouse?.name,
       quantity: parseInt(formData.get('quantity')) || 0,
+      rolls: parseInt(formData.get('rolls')) || 0,
+      weight_kg: parseFloat(formData.get('weight_kg')) || 0,
       manufacturing_date: formData.get('manufacturing_date'),
       expiry_date: formData.get('expiry_date'),
       cost_price: parseFloat(formData.get('cost_price')) || 0,
       status: formData.get('status') || 'active',
       notes: formData.get('notes'),
-    };
+      };
 
     if (editingBatch) {
       updateMutation.mutate({ 
@@ -322,6 +324,8 @@ export default function BatchManagement({ products = [], warehouses = [], vehicl
                         </div>
                         <div className="flex flex-wrap items-center gap-2 mt-2 text-xs text-gray-600">
                           <span>Qty: <strong>{batch.quantity}</strong></span>
+                          {batch.rolls > 0 && <span>• {batch.rolls} rolls</span>}
+                          {batch.weight_kg > 0 && <span>• {batch.weight_kg}kg</span>}
                           {batch.warehouse_name && <span>• {batch.warehouse_name}</span>}
                         </div>
                         {batch.expiry_date && (
@@ -385,8 +389,10 @@ export default function BatchManagement({ products = [], warehouses = [], vehicl
                           <td className="p-4 text-right">
                             <div>
                               <span className="font-medium">{batch.quantity}</span>
+                              {batch.rolls > 0 && <p className="text-xs text-gray-500">{batch.rolls} rolls</p>}
+                              {batch.weight_kg > 0 && <p className="text-xs text-gray-500">{batch.weight_kg} kg</p>}
                               {(batch.allocated_quantity || 0) > 0 && (
-                                <p className="text-xs text-gray-500">
+                                <p className="text-xs text-blue-500">
                                   {batch.allocated_quantity} allocated
                                 </p>
                               )}
@@ -507,6 +513,14 @@ export default function BatchManagement({ products = [], warehouses = [], vehicl
               <div>
                 <Label>Quantity</Label>
                 <Input name="quantity" type="number" defaultValue={editingBatch?.quantity || 0} className="mt-1" />
+              </div>
+              <div>
+                <Label>Rolls</Label>
+                <Input name="rolls" type="number" defaultValue={editingBatch?.rolls || 0} className="mt-1" />
+              </div>
+              <div>
+                <Label>Weight (kg)</Label>
+                <Input name="weight_kg" type="number" step="0.01" defaultValue={editingBatch?.weight_kg || 0} className="mt-1" />
               </div>
               <div>
                 <Label>Manufacturing Date</Label>
