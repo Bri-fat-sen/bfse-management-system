@@ -1115,7 +1115,7 @@ Focus: ${typeSpecificPrompt}
                                     const newQty = parseFloat(e.target.value) || 0;
                                     const newAmount = newQty * (item.actual_unit_cost || 0);
                                     updateItem(item.id, 'actual_qty', newQty);
-                                    if (item.actual_unit_cost > 0) updateItem(item.id, 'amount', newAmount);
+                                    updateItem(item.id, 'amount', newAmount);
                                   }}
                                   className="h-7 text-xs w-16 text-center"
                                 />
@@ -1123,15 +1123,19 @@ Focus: ${typeSpecificPrompt}
                               <TableCell className="bg-green-50/50">
                                 <Input
                                   type="number"
+                                  step="0.01"
                                   value={item.actual_unit_cost || ''}
                                   onChange={(e) => {
                                     const newCost = parseFloat(e.target.value) || 0;
                                     const newAmount = (item.actual_qty || 0) * newCost;
                                     updateItem(item.id, 'actual_unit_cost', newCost);
-                                    if (item.actual_qty > 0) updateItem(item.id, 'amount', newAmount);
+                                    updateItem(item.id, 'amount', newAmount);
                                   }}
                                   className="h-7 text-xs w-24 text-right"
                                 />
+                              </TableCell>
+                              <TableCell className="bg-green-50/50 text-xs text-right font-medium text-green-700">
+                                Le {((item.actual_qty || 0) * (item.actual_unit_cost || 0)).toLocaleString()}
                               </TableCell>
                             </>
                           )}
@@ -1141,7 +1145,7 @@ Focus: ${typeSpecificPrompt}
                               step="0.01"
                               value={item.amount || ''}
                               onChange={(e) => updateItem(item.id, 'amount', parseFloat(e.target.value) || 0)}
-                              className="h-7 text-xs w-28 text-right font-medium"
+                              className="h-7 text-xs w-28 text-right font-bold border-2 border-green-400"
                               />
                               </TableCell>
                           {!isRevenue && !isProduction && (
