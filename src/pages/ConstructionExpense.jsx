@@ -1026,86 +1026,112 @@ Extract ALL line items from the document table.`,
                   </Button>
                 </div>
 
-                <ScrollArea className="h-[350px] border rounded-lg">
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead className="w-10">
-                          <input
-                            type="checkbox"
-                            checked={extractedExpenses.every(e => e.selected)}
-                            onChange={(e) => setExtractedExpenses(prev => prev.map(exp => ({ ...exp, selected: e.target.checked })))}
-                            className="w-4 h-4"
-                          />
-                        </TableHead>
-                        <TableHead>Description</TableHead>
-                        <TableHead>Category</TableHead>
-                        <TableHead>Amount</TableHead>
-                        <TableHead>Date</TableHead>
-                        <TableHead>Vendor</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {extractedExpenses.map((exp) => (
-                        <TableRow key={exp.id} className={!exp.selected ? 'opacity-50' : ''}>
-                          <TableCell>
+                <ScrollArea className="h-[400px] border rounded-lg">
+                  <div className="min-w-[900px]">
+                    <Table>
+                      <TableHeader>
+                        <TableRow className="bg-gray-50">
+                          <TableHead className="w-10">
                             <input
                               type="checkbox"
-                              checked={exp.selected}
-                              onChange={() => toggleExpenseSelection(exp.id)}
+                              checked={extractedExpenses.every(e => e.selected)}
+                              onChange={(e) => setExtractedExpenses(prev => prev.map(exp => ({ ...exp, selected: e.target.checked })))}
                               className="w-4 h-4"
                             />
-                          </TableCell>
-                          <TableCell>
-                            <Input
-                              value={exp.description || ''}
-                              onChange={(e) => updateExtractedExpense(exp.id, 'description', e.target.value)}
-                              className="h-8 text-sm"
-                            />
-                          </TableCell>
-                          <TableCell>
-                            <Select
-                              value={exp.category}
-                              onValueChange={(v) => updateExtractedExpense(exp.id, 'category', v)}
-                            >
-                              <SelectTrigger className="h-8 text-sm w-32">
-                                <SelectValue />
-                              </SelectTrigger>
-                              <SelectContent>
-                                {CONSTRUCTION_CATEGORIES.map(cat => (
-                                  <SelectItem key={cat.value} value={cat.value}>{cat.label}</SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
-                          </TableCell>
-                          <TableCell>
-                            <Input
-                              type="number"
-                              value={exp.amount || ''}
-                              onChange={(e) => updateExtractedExpense(exp.id, 'amount', parseFloat(e.target.value) || 0)}
-                              className="h-8 text-sm w-28"
-                            />
-                          </TableCell>
-                          <TableCell>
-                            <Input
-                              type="date"
-                              value={exp.date || ''}
-                              onChange={(e) => updateExtractedExpense(exp.id, 'date', e.target.value)}
-                              className="h-8 text-sm w-36"
-                            />
-                          </TableCell>
-                          <TableCell>
-                            <Input
-                              value={exp.vendor || ''}
-                              onChange={(e) => updateExtractedExpense(exp.id, 'vendor', e.target.value)}
-                              className="h-8 text-sm"
-                              placeholder="Vendor"
-                            />
-                          </TableCell>
+                          </TableHead>
+                          <TableHead className="text-xs">NO</TableHead>
+                          <TableHead className="text-xs">DETAILS</TableHead>
+                          <TableHead className="text-xs text-center bg-blue-50">Est Qty</TableHead>
+                          <TableHead className="text-xs text-center bg-blue-50">Est Unit Cost</TableHead>
+                          <TableHead className="text-xs text-center bg-blue-50">Est Amount</TableHead>
+                          <TableHead className="text-xs text-center bg-green-50">Actual Qty</TableHead>
+                          <TableHead className="text-xs text-center bg-green-50">Actual Unit Cost</TableHead>
+                          <TableHead className="text-xs text-center bg-green-50">Actual Amount</TableHead>
+                          <TableHead className="text-xs">Category</TableHead>
                         </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
+                      </TableHeader>
+                      <TableBody>
+                        {extractedExpenses.map((exp) => (
+                          <TableRow key={exp.id} className={!exp.selected ? 'opacity-50' : ''}>
+                            <TableCell>
+                              <input
+                                type="checkbox"
+                                checked={exp.selected}
+                                onChange={() => toggleExpenseSelection(exp.id)}
+                                className="w-4 h-4"
+                              />
+                            </TableCell>
+                            <TableCell className="text-xs font-medium">{exp.item_no || '-'}</TableCell>
+                            <TableCell>
+                              <Input
+                                value={exp.description || ''}
+                                onChange={(e) => updateExtractedExpense(exp.id, 'description', e.target.value)}
+                                className="h-7 text-xs min-w-[150px]"
+                              />
+                            </TableCell>
+                            <TableCell className="bg-blue-50/50">
+                              <Input
+                                type="number"
+                                value={exp.estimated_qty || ''}
+                                onChange={(e) => updateExtractedExpense(exp.id, 'estimated_qty', parseFloat(e.target.value) || 0)}
+                                className="h-7 text-xs w-16 text-center"
+                              />
+                            </TableCell>
+                            <TableCell className="bg-blue-50/50">
+                              <Input
+                                type="number"
+                                value={exp.estimated_unit_cost || ''}
+                                onChange={(e) => updateExtractedExpense(exp.id, 'estimated_unit_cost', parseFloat(e.target.value) || 0)}
+                                className="h-7 text-xs w-24 text-right"
+                              />
+                            </TableCell>
+                            <TableCell className="bg-blue-50/50 text-xs text-right font-medium text-blue-700">
+                              Le {(exp.estimated_amount || 0).toLocaleString()}
+                            </TableCell>
+                            <TableCell className="bg-green-50/50">
+                              <Input
+                                type="number"
+                                value={exp.actual_qty || ''}
+                                onChange={(e) => updateExtractedExpense(exp.id, 'actual_qty', parseFloat(e.target.value) || 0)}
+                                className="h-7 text-xs w-16 text-center"
+                              />
+                            </TableCell>
+                            <TableCell className="bg-green-50/50">
+                              <Input
+                                type="number"
+                                value={exp.actual_unit_cost || ''}
+                                onChange={(e) => updateExtractedExpense(exp.id, 'actual_unit_cost', parseFloat(e.target.value) || 0)}
+                                className="h-7 text-xs w-24 text-right"
+                              />
+                            </TableCell>
+                            <TableCell className="bg-green-50/50">
+                              <Input
+                                type="number"
+                                value={exp.amount || ''}
+                                onChange={(e) => updateExtractedExpense(exp.id, 'amount', parseFloat(e.target.value) || 0)}
+                                className="h-7 text-xs w-24 text-right font-medium"
+                              />
+                            </TableCell>
+                            <TableCell>
+                              <Select
+                                value={exp.category}
+                                onValueChange={(v) => updateExtractedExpense(exp.id, 'category', v)}
+                              >
+                                <SelectTrigger className="h-7 text-xs w-28">
+                                  <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  {CONSTRUCTION_CATEGORIES.map(cat => (
+                                    <SelectItem key={cat.value} value={cat.value}>{cat.label}</SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </div>
                 </ScrollArea>
 
                 <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
