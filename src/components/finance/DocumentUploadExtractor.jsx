@@ -592,6 +592,58 @@ Return every row - do not summarize or skip any data.`,
                             />
                           </TableCell>
                           <TableCell className="text-xs font-medium">{item.item_no || '-'}</TableCell>
+                          {isProduction && (
+                            <TableCell>
+                              <Input
+                                value={item.sku || ''}
+                                onChange={(e) => {
+                                  const sku = e.target.value;
+                                  const matchedProduct = products.find(p => p.sku?.toLowerCase() === sku.toLowerCase());
+                                  updateItem(item.id, 'sku', sku);
+                                  if (matchedProduct) {
+                                    updateItem(item.id, 'product_id', matchedProduct.id);
+                                    updateItem(item.id, 'product_name', matchedProduct.name);
+                                  }
+                                }}
+                                className="h-7 text-xs w-24"
+                                placeholder="SKU"
+                              />
+                            </TableCell>
+                          )}
+                          {isProduction && (
+                            <TableCell>
+                              <Select
+                                value={item.product_id || ''}
+                                onValueChange={(v) => {
+                                  const prod = products.find(p => p.id === v);
+                                  updateItem(item.id, 'product_id', v);
+                                  updateItem(item.id, 'product_name', prod?.name || '');
+                                  updateItem(item.id, 'sku', prod?.sku || '');
+                                }}
+                              >
+                                <SelectTrigger className="h-7 text-xs w-36">
+                                  <SelectValue placeholder="Select product" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  {products.map(p => (
+                                    <SelectItem key={p.id} value={p.id}>
+                                      {p.sku ? `${p.sku} - ` : ''}{p.name}
+                                    </SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                            </TableCell>
+                          )}
+                          {isProduction && (
+                            <TableCell>
+                              <Input
+                                value={item.batch_number || ''}
+                                onChange={(e) => updateItem(item.id, 'batch_number', e.target.value)}
+                                className="h-7 text-xs w-28"
+                                placeholder="Batch #"
+                              />
+                            </TableCell>
+                          )}
                           <TableCell>
                             <Input
                               value={item.description || ''}
