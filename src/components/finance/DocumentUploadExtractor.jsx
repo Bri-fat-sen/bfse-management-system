@@ -209,7 +209,7 @@ RULES:
           };
 
       const result = await base44.integrations.Core.InvokeLLM({
-        prompt,
+        prompt: prompt + "\n\nRespond with a JSON object containing document_date, document_type, column_headers (array of exact column names), and items (array with one object per row).",
         file_urls: [file_url],
         response_json_schema: schema
       });
