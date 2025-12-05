@@ -31,7 +31,8 @@ import {
   AlertTriangle,
   FileText,
   Shield,
-  Eye
+  Eye,
+  Upload
 } from "lucide-react";
 import { useToast } from "@/components/ui/Toast";
 import LoadingSpinner from "@/components/ui/LoadingSpinner";
@@ -43,6 +44,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import DocumentUploadExtractor from "@/components/finance/DocumentUploadExtractor";
 
 const EXPENSE_CATEGORIES = [
   { value: "fuel", label: "Fuel" },
@@ -76,6 +78,7 @@ export default function ExpenseManagement() {
   const [dateRange, setDateRange] = useState("this_month");
   const [selectedExpense, setSelectedExpense] = useState(null);
   const [showDetailDialog, setShowDetailDialog] = useState(false);
+  const [showUploadDialog, setShowUploadDialog] = useState(false);
 
   const { data: user } = useQuery({
     queryKey: ['currentUser'],
@@ -196,11 +199,20 @@ export default function ExpenseManagement() {
 
   return (
     <div className="space-y-6">
-      <PageHeader
-        title="Expense Management"
-        subtitle="Review and approve all expense submissions"
-        icon={Shield}
-      />
+      <div className="flex items-center justify-between">
+        <PageHeader
+          title="Expense Management"
+          subtitle="Review and approve all expense submissions"
+          icon={Shield}
+        />
+        <Button
+          onClick={() => setShowUploadDialog(true)}
+          className="bg-gradient-to-r from-[#1EB053] to-[#0072C6]"
+        >
+          <Upload className="w-4 h-4 mr-2" />
+          Upload Documents
+        </Button>
+      </div>
 
       {/* Sierra Leone Flag Stripe */}
       <div className="h-1.5 flex rounded-full overflow-hidden">
@@ -496,6 +508,19 @@ export default function ExpenseManagement() {
           )}
         </DialogContent>
       </Dialog>
+
+      {/* Upload Document Dialog */}
+      <DocumentUploadExtractor
+        open={showUploadDialog}
+        onOpenChange={setShowUploadDialog}
+        type="auto"
+        orgId={orgId}
+        currentEmployee={currentEmployee}
+        onSuccess={() => {
+          queryClient.invalidateQueries({ queryKey: ['allExpenses'] });
+          queryClient.invalidateQueries({ queryKey: ['expenses'] });
+        }}
+      />
     </div>
   );
 }

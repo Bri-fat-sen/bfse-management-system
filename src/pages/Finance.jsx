@@ -102,8 +102,6 @@ export default function Finance() {
   const [categoryFilter, setCategoryFilter] = useState("all");
   const [showFormsDialog, setShowFormsDialog] = useState(false);
   const [dateRange, setDateRange] = useState("this_month");
-  const [showExpenseUploadDialog, setShowExpenseUploadDialog] = useState(false);
-  const [showRevenueUploadDialog, setShowRevenueUploadDialog] = useState(false);
 
   const { data: user } = useQuery({
     queryKey: ['currentUser'],
@@ -797,16 +795,6 @@ export default function Finance() {
 
           {/* Revenue Tab */}
           <TabsContent value="revenue" className="mt-6 space-y-4 sm:space-y-6">
-            <div className="flex justify-end mb-4">
-              <Button 
-                variant="outline"
-                onClick={() => setShowRevenueUploadDialog(true)} 
-                className="border-[#0072C6] text-[#0072C6] hover:bg-[#0072C6]/10"
-              >
-                <Upload className="w-4 h-4 mr-2" />
-                Upload Revenue Document
-              </Button>
-            </div>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
               <Card className="bg-gradient-to-br from-green-50 to-white">
                 <CardContent className="p-4 sm:p-5">
@@ -1000,14 +988,6 @@ export default function Finance() {
                       ))}
                     </SelectContent>
                   </Select>
-                  <Button 
-                    variant="outline"
-                    onClick={() => setShowExpenseUploadDialog(true)} 
-                    className="border-[#0072C6] text-[#0072C6] hover:bg-[#0072C6]/10"
-                  >
-                    <Upload className="w-4 h-4 mr-2" />
-                    Upload
-                  </Button>
                   <Button onClick={() => setShowExpenseDialog(true)} className="bg-gradient-to-r from-[#1EB053] to-[#0072C6]">
                     <Plus className="w-4 h-4 mr-2" />
                     Add
@@ -1115,20 +1095,10 @@ export default function Finance() {
                   <DollarSign className="w-5 h-5 text-[#1EB053]" />
                   Revenue from Owners & CEO
                 </CardTitle>
-                <div className="flex items-center gap-2">
-                  <Button 
-                    variant="outline"
-                    onClick={() => setShowRevenueUploadDialog(true)} 
-                    className="border-[#0072C6] text-[#0072C6] hover:bg-[#0072C6]/10"
-                  >
-                    <Upload className="w-4 h-4 mr-2" />
-                    Upload
-                  </Button>
-                  <Button onClick={() => setShowRevenueDialog(true)} className="bg-gradient-to-r from-[#1EB053] to-[#0072C6]">
-                    <Plus className="w-4 h-4 mr-2" />
-                    Add Contribution
-                  </Button>
-                </div>
+                <Button onClick={() => setShowRevenueDialog(true)} className="bg-gradient-to-r from-[#1EB053] to-[#0072C6]">
+                  <Plus className="w-4 h-4 mr-2" />
+                  Add Contribution
+                </Button>
               </CardHeader>
               <CardContent>
                 <ScrollArea className="h-[400px]">
@@ -1696,26 +1666,6 @@ export default function Finance() {
           open={showFormsDialog}
           onOpenChange={setShowFormsDialog}
           organisation={organisation?.[0]}
-        />
-
-        {/* Expense Upload Dialog */}
-        <DocumentUploadExtractor
-          open={showExpenseUploadDialog}
-          onOpenChange={setShowExpenseUploadDialog}
-          type="expense"
-          orgId={orgId}
-          currentEmployee={currentEmployee}
-          onSuccess={() => queryClient.invalidateQueries({ queryKey: ['expenses'] })}
-        />
-
-        {/* Revenue Upload Dialog */}
-        <DocumentUploadExtractor
-          open={showRevenueUploadDialog}
-          onOpenChange={setShowRevenueUploadDialog}
-          type="revenue"
-          orgId={orgId}
-          currentEmployee={currentEmployee}
-          onSuccess={() => queryClient.invalidateQueries({ queryKey: ['revenues'] })}
         />
 
         {/* Bank Deposit Dialog */}
