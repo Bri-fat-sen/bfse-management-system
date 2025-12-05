@@ -513,11 +513,11 @@ Focus: ${typeSpecificPrompt}
             vehicle_id: item.sale_type === 'vehicle' ? item.location_id : null
           });
 
-          // Update stock
+          // Update stock - allow negative stock
           const product = products.find(p => p.id === item.product_id);
           if (product) {
             await base44.entities.Product.update(item.product_id, {
-              stock_quantity: Math.max(0, (product.stock_quantity || 0) - (item.quantity || 1))
+              stock_quantity: (product.stock_quantity || 0) - (item.quantity || 1)
             });
           }
 
