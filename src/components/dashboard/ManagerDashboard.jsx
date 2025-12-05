@@ -347,6 +347,14 @@ export default function ManagerDashboard({ currentEmployee, orgId: propOrgId, us
               <p className="text-base sm:text-2xl font-bold text-purple-700 truncate">Le {todayOtherRevenue.toLocaleString()}</p>
               <p className="text-[10px] sm:text-sm text-purple-600">Contributions etc</p>
             </div>
+            <div className="p-2 sm:p-4 bg-gray-100 rounded-lg">
+              <div className="flex items-center gap-1.5 sm:gap-2 mb-1 sm:mb-2">
+                <TrendingUp className="w-4 h-4 sm:w-5 sm:h-5 text-gray-600" />
+                <span className="font-medium text-gray-800 text-xs sm:text-base">Total</span>
+              </div>
+              <p className="text-base sm:text-2xl font-bold text-gray-900 truncate">Le {todayTotalRevenue.toLocaleString()}</p>
+              <p className="text-[10px] sm:text-sm text-gray-600">All sources</p>
+            </div>
           </div>
         </CardContent>
       </Card>
