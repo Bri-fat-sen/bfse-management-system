@@ -261,7 +261,7 @@ Focus: ${typeSpecificPrompt}
 
         result = fallbackResult;
         items = result.rows || [];
-        docDate = result.document_info?.date || docDate;
+        extractedDocDate = result.document_info?.date || extractedDocDate;
         columnHeaders = result.table_columns || columnHeaders;
       }
 
