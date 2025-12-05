@@ -93,209 +93,190 @@ export default function DocumentUploadExtractor({
 
     try {
       const { file_url } = await base44.integrations.Core.UploadFile({ file });
-
       const isRevenue = type === "revenue";
-      const prompt = isRevenue 
-        ? `TASK: Extract revenue/income data from the uploaded document.
 
-READ THE DOCUMENT CAREFULLY. Look at:
-1. The document title and header for the DATE (convert to YYYY-MM-DD format)
-2. Any tables with line items, products, or transactions
-3. ALL column headers - write them exactly as shown
-
-FOR EACH LINE ITEM IN THE TABLE, extract these fields by reading the corresponding column:
-- item_no: The row number or "NO" column value
-- description: The exact text from the "Description", "Product", "Item", or "Details" column - copy word for word
-- quantity: The number from "Qty", "Quantity", or count column
-- unit_price: The number from "Unit Price", "Rate", "Price" column
-- amount: The number from "Amount", "Total", "Subtotal" column (this is the money value)
-- customer_name: Customer name if shown
-- reference_number: Invoice number, receipt number if shown
-- source: Choose the best match: retail_sales, wholesale_sales, transport_revenue, contract_revenue, service_income, owner_contribution, loan, grant, other
-
-RULES:
-- Extract EVERY row that has data - do not skip any
-- Copy text exactly as written in the document
-- If a cell is empty, leave that field empty
-- Numbers should be extracted as numbers (remove currency symbols)
-- The "amount" is usually in the rightmost numeric column`
-        : `TASK: Extract expense data from the uploaded document.
-
-READ THE DOCUMENT CAREFULLY. Look at:
-1. The document title and header for the DATE (convert to YYYY-MM-DD format)
-2. The main table with expense line items
-3. ALL column headers - write them exactly as they appear in the document
-
-COLUMN MAPPING - Match document columns to these fields:
-- "NO" or "#" or row number → item_no
-- "DETAILS" or "Description" or "Item" → description (COPY EXACT TEXT)
-- "ESTIMATED QTY" or "Est. Qty" → estimated_qty
-- "ESTIMATED UNIT COST" or "Est. Unit Price" → estimated_unit_cost  
-- "ESTIMATED AMOUNT" or "Est. Total" → estimated_amount
-- "ACTUAL QTY" or "Act. Qty" → actual_qty
-- "ACTUAL UNIT COST" or "Act. Unit Price" → actual_unit_cost
-- "ACTUAL AMOUNT" or "Act. Total" or rightmost amount column → actual_amount
-- "UNIT" → unit (bags, pieces, kg, etc.)
-- Any supplier or vendor name → vendor
-
-FOR EACH ROW in the table:
-1. Read the item number from the first column
-2. Read the description/details text EXACTLY as written
-3. Read each numeric value from its corresponding column
-4. The main expense amount is usually in "ACTUAL AMOUNT" or the rightmost total column
-
-CATEGORY: Based on the description, assign one of: fuel, maintenance, utilities, supplies, rent, materials, labor, equipment, transport, construction, or create a fitting category name.
-
-RULES:
-- Extract ALL rows with data - every single line item
-- Copy the description text exactly as it appears
-- Numbers only (no currency symbols like "Le" or commas)
-- Empty cells = leave field empty or 0 for numbers
-- Do NOT summarize or combine rows`;
-
-      const schema = isRevenue 
-        ? {
+      // Use ExtractDataFromUploadedFile for better structured extraction
+      const extractionSchema = {
+        type: "object",
+        properties: {
+          document_info: {
             type: "object",
             properties: {
-              document_date: { type: "string", description: "Document date in YYYY-MM-DD format" },
-              document_type: { type: "string", enum: ["sales_invoice", "receipt", "transport_log", "contract", "contribution", "other"] },
-              column_headers: { type: "array", items: { type: "string" }, description: "Exact column headers from document" },
-              items: {
-                type: "array",
-                description: "One object per table row",
-                items: {
-                  type: "object",
-                  properties: {
-                    item_no: { type: "string" },
-                    description: { type: "string", description: "Exact text from description column" },
-                    quantity: { type: "number" },
-                    unit_price: { type: "number" },
-                    amount: { type: "number", description: "The total/amount value for this line" },
-                    source: { type: "string", enum: ["retail_sales", "wholesale_sales", "vehicle_sales", "transport_revenue", "contract_revenue", "service_income", "owner_contribution", "ceo_contribution", "investor_funding", "loan", "grant", "other"] },
-                    customer_name: { type: "string" },
-                    reference_number: { type: "string" }
-                  }
-                }
+              date: { type: "string", description: "Document date in YYYY-MM-DD format" },
+              title: { type: "string", description: "Document title or header" },
+              type: { type: "string", description: "invoice, receipt, budget, expense_report, sales_report" },
+              reference: { type: "string", description: "Document number or reference" }
+            }
+          },
+          table_columns: {
+            type: "array",
+            items: { type: "string" },
+            description: "List all column headers exactly as they appear in the table"
+          },
+          rows: {
+            type: "array",
+            description: "Extract every single row from the table - do not skip any",
+            items: {
+              type: "object",
+              properties: {
+                no: { type: "string", description: "Row number from NO or # column" },
+                details: { type: "string", description: "Text from DETAILS, Description, or Item column - copy exactly" },
+                unit: { type: "string", description: "Unit of measure (bags, pcs, kg, etc)" },
+                est_qty: { type: "number", description: "Estimated quantity number" },
+                est_unit_cost: { type: "number", description: "Estimated unit cost number" },
+                est_total: { type: "number", description: "Estimated total/amount" },
+                actual_qty: { type: "number", description: "Actual quantity number" },
+                actual_unit_cost: { type: "number", description: "Actual unit cost number" },
+                actual_total: { type: "number", description: "Actual total/amount - main value" },
+                qty: { type: "number", description: "Quantity if only one qty column" },
+                price: { type: "number", description: "Unit price if only one price column" },
+                amount: { type: "number", description: "Amount/Total if only one amount column" },
+                vendor: { type: "string", description: "Supplier or vendor name if shown" },
+                customer: { type: "string", description: "Customer name if shown" },
+                notes: { type: "string", description: "Any notes or remarks" }
               }
             }
           }
-        : {
-            type: "object",
-            properties: {
-              document_date: { type: "string", description: "Document date in YYYY-MM-DD format" },
-              document_type: { type: "string", enum: ["invoice", "bill", "purchase_order", "expense_report", "budget", "quotation", "other"] },
-              column_headers: { type: "array", items: { type: "string" }, description: "Exact column headers from document table" },
-              items: {
-                type: "array",
-                description: "One object per table row - extract every row",
-                items: {
-                  type: "object",
-                  properties: {
-                    item_no: { type: "string", description: "Value from NO or # column" },
-                    description: { type: "string", description: "Exact text from DETAILS or Description column" },
-                    unit: { type: "string", description: "Unit of measurement" },
-                    estimated_qty: { type: "number" },
-                    estimated_unit_cost: { type: "number" },
-                    estimated_amount: { type: "number" },
-                    actual_qty: { type: "number" },
-                    actual_unit_cost: { type: "number" },
-                    actual_amount: { type: "number", description: "Main expense amount from rightmost amount column" },
-                    vendor: { type: "string" },
-                    category: { type: "string", description: "Expense category based on description" }
-                  }
-                }
-              }
-            }
-          };
+        }
+      };
 
-      const result = await base44.integrations.Core.InvokeLLM({
-        prompt: prompt + "\n\nRespond with a JSON object containing document_date, document_type, column_headers (array of exact column names), and items (array with one object per row).",
-        file_urls: [file_url],
-        response_json_schema: schema
-      });
+      let result;
+      let items = [];
+      let docDate = format(new Date(), 'yyyy-MM-dd');
+      let columnHeaders = [];
+      let docType = '';
 
-      const items = result.items || result.expenses || [];
-      const docDate = result.document_date || format(new Date(), 'yyyy-MM-dd');
-      const columnHeaders = result.column_headers || [];
-      
-      setExtractedColumns(columnHeaders);
-      
-      if (items.length > 0) {
-        const existingCategoryValues = categories.map(c => c.value);
-        const newCategories = [];
-        
-        items.forEach(item => {
-          const catValue = (item.category || item.source || 'other').toLowerCase().replace(/\s+/g, '_');
-          if (!existingCategoryValues.includes(catValue) && !newCategories.find(c => c.value === catValue)) {
-            const label = catValue.split('_').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
-            newCategories.push({ value: catValue, label, icon: Hammer });
-          }
+      // Try ExtractDataFromUploadedFile first (better for tables)
+      try {
+        const extractResult = await base44.integrations.Core.ExtractDataFromUploadedFile({
+          file_url: file_url,
+          json_schema: extractionSchema
         });
 
-        if (newCategories.length > 0) {
-          setDynamicCategories(prev => [...prev, ...newCategories]);
-          toast.info("New categories added", `${newCategories.map(c => c.label).join(', ')}`);
+        if (extractResult.status === 'success' && extractResult.output) {
+          result = extractResult.output;
+          items = result.rows || [];
+          docDate = result.document_info?.date || docDate;
+          columnHeaders = result.table_columns || [];
+          docType = result.document_info?.type || '';
+        } else {
+          throw new Error('Primary extraction failed');
         }
+      } catch (primaryError) {
+        console.log("ExtractDataFromUploadedFile failed, trying InvokeLLM:", primaryError);
 
-        const docType = result.document_type || '';
-        
+        // Fallback to InvokeLLM
+        const fallbackResult = await base44.integrations.Core.InvokeLLM({
+          prompt: `Read this document and extract tabular data.
+
+1. Find the document date (format as YYYY-MM-DD)
+2. List ALL column headers from the table
+3. For EACH row, extract:
+   - no: the row number
+   - details: the description/details text (copy exactly)
+   - All numeric values from each column (qty, unit cost, amount, etc.)
+   - vendor or customer name if present
+
+Return every row - do not summarize or skip any data.`,
+          file_urls: [file_url],
+          response_json_schema: extractionSchema
+        });
+
+        result = fallbackResult;
+        items = result.rows || [];
+        docDate = result.document_info?.date || docDate;
+        columnHeaders = result.table_columns || [];
+        docType = result.document_info?.type || '';
+      }
+
+      setExtractedColumns(columnHeaders);
+
+      if (items.length > 0) {
+        // Determine category based on description
+        const categorizeItem = (description) => {
+          const desc = (description || '').toLowerCase();
+          if (desc.includes('fuel') || desc.includes('diesel') || desc.includes('petrol')) return 'fuel';
+          if (desc.includes('cement') || desc.includes('sand') || desc.includes('gravel') || desc.includes('block')) return 'materials';
+          if (desc.includes('labor') || desc.includes('labour') || desc.includes('worker') || desc.includes('mason')) return 'labor';
+          if (desc.includes('transport') || desc.includes('delivery') || desc.includes('hauling')) return 'transport';
+          if (desc.includes('food') || desc.includes('meal') || desc.includes('lunch')) return 'supplies';
+          if (desc.includes('rent')) return 'rent';
+          if (desc.includes('water') || desc.includes('electric') || desc.includes('power')) return 'utilities';
+          if (desc.includes('repair') || desc.includes('maintenance') || desc.includes('fix')) return 'maintenance';
+          if (desc.includes('equipment') || desc.includes('tool') || desc.includes('machine')) return 'equipment';
+          if (desc.includes('iron') || desc.includes('steel') || desc.includes('rod') || desc.includes('nail')) return 'materials';
+          if (desc.includes('paint') || desc.includes('finish')) return 'materials';
+          return 'other';
+        };
+
+        const existingCategoryValues = categories.map(c => c.value);
+        const newCategories = [];
+
         const mappedData = items.map((item, idx) => {
-          // Parse numbers - handle strings with commas or currency symbols
-          const parseNum = (val) => {
-            if (typeof val === 'number') return val;
-            if (!val) return 0;
-            const cleaned = String(val).replace(/[^0-9.-]/g, '');
-            return parseFloat(cleaned) || 0;
-          };
-
-          const estQty = parseNum(item.estimated_qty);
-          const estUnitCost = parseNum(item.estimated_unit_cost);
-          const estAmount = parseNum(item.estimated_amount);
-          const actQty = parseNum(item.actual_qty);
-          const actUnitCost = parseNum(item.actual_unit_cost);
-          const actAmount = parseNum(item.actual_amount);
-          const qty = parseNum(item.quantity);
-          const unitPrice = parseNum(item.unit_price);
-          const rawAmount = parseNum(item.amount);
-
-          // Calculate estimated amount if not provided but qty and cost exist
-          const calculatedEstAmount = estAmount || (estQty && estUnitCost ? estQty * estUnitCost : 0);
-          // Calculate actual amount if not provided
-          const calculatedActAmount = actAmount || (actQty && actUnitCost ? actQty * actUnitCost : 0);
-          // Final amount priority: actual_amount > amount > calculated actual > estimated
-          const finalAmount = calculatedActAmount || rawAmount || (qty && unitPrice ? qty * unitPrice : 0) || calculatedEstAmount;
+          // Smart amount calculation - check multiple possible fields
+          const estAmount = parseFloat(item.est_total) || parseFloat(item.estimated_amount) || 0;
+          const actAmount = parseFloat(item.actual_total) || parseFloat(item.actual_amount) || 0;
+          const singleAmount = parseFloat(item.amount) || 0;
           
+          // Use actual if available, otherwise estimated, otherwise single amount
+          const finalAmount = actAmount || singleAmount || estAmount || 0;
+
+          // Smart qty/price extraction
+          const estQty = parseFloat(item.est_qty) || 0;
+          const actQty = parseFloat(item.actual_qty) || parseFloat(item.qty) || 0;
+          const estUnitCost = parseFloat(item.est_unit_cost) || 0;
+          const actUnitCost = parseFloat(item.actual_unit_cost) || parseFloat(item.price) || 0;
+
+          const description = item.details || item.description || '';
+          const category = categorizeItem(description);
+
+          // Track new categories
+          if (!existingCategoryValues.includes(category) && !newCategories.find(c => c.value === category)) {
+            const label = category.split('_').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
+            newCategories.push({ value: category, label, icon: Hammer });
+          }
+
           return {
             id: `temp-${idx}`,
-            selected: finalAmount > 0 || item.description, // Only select if has amount or description
-            item_no: item.item_no || String(idx + 1),
-            description: (item.description || '').trim(),
+            selected: true,
+            item_no: item.no || String(idx + 1),
+            description: description,
             estimated_qty: estQty,
             estimated_unit_cost: estUnitCost,
-            estimated_amount: calculatedEstAmount,
-            actual_qty: actQty || qty,
-            actual_unit_cost: actUnitCost || unitPrice,
-            quantity: qty || actQty,
-            unit_price: unitPrice || actUnitCost,
+            estimated_amount: estAmount,
+            actual_qty: actQty,
+            actual_unit_cost: actUnitCost,
+            quantity: actQty || estQty,
+            unit_price: actUnitCost || estUnitCost,
             amount: finalAmount,
-            unit: (item.unit || '').trim(),
-            vendor: (item.vendor || '').trim(),
-            contributor_name: (item.contributor_name || item.customer_name || '').trim(),
-            customer_name: (item.customer_name || '').trim(),
-            reference_number: (item.reference_number || '').trim(),
-            extra_columns: item.extra_columns || {},
-            category: (item.category || item.source || 'other').toLowerCase().replace(/\s+/g, '_'),
+            unit: item.unit || '',
+            vendor: item.vendor || '',
+            contributor_name: item.customer || '',
+            customer_name: item.customer || '',
+            reference_number: result.document_info?.reference || '',
+            extra_columns: {},
+            category: category,
             document_type: docType,
             date: docDate,
             status: 'pending'
           };
-        }).filter(item => item.description || item.amount > 0); // Filter out empty rows
+        });
 
-        setExtractedData(mappedData);
-        const typeLabel = docType ? ` (${docType})` : '';
-        toast.success("Data extracted", `Found ${items.length} item(s)${typeLabel}${columnHeaders.length > 0 ? ` with ${columnHeaders.length} columns` : ''}`);
+        // Filter out rows with no meaningful data
+        const validData = mappedData.filter(item => 
+          item.description.trim() !== '' || item.amount > 0
+        );
+
+        if (newCategories.length > 0) {
+          setDynamicCategories(prev => [...prev, ...newCategories]);
+          toast.info("New categories detected", `${newCategories.map(c => c.label).join(', ')}`);
+        }
+
+        setExtractedData(validData);
+        const colInfo = columnHeaders.length > 0 ? ` (${columnHeaders.length} columns)` : '';
+        toast.success("Data extracted", `Found ${validData.length} items${colInfo}`);
       } else {
-        toast.warning("No data found", "Could not find data in the document");
+        toast.warning("No data found", "Could not find table data in the document");
       }
     } catch (error) {
       console.error("Upload error:", error);
