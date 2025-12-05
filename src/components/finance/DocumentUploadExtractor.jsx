@@ -345,7 +345,25 @@ Focus: ${typeSpecificPrompt}
             product_name: item.product_name || matchedProduct?.name || '',
             batch_number: item.batch_number || '',
             expiry_date: item.expiry_date || '',
-            is_production: !!(item.sku || item.batch_number || matchedProduct)
+            is_production: !!(item.sku || item.batch_number || matchedProduct),
+            // Payroll fields
+            employee_name: item.employee_name || '',
+            employee_code: item.employee_code || '',
+            employee_id: employees.find(emp => 
+              emp.employee_code === item.employee_code || 
+              emp.full_name?.toLowerCase() === item.employee_name?.toLowerCase()
+            )?.id || '',
+            base_salary: parseFloat(item.base_salary) || 0,
+            bonus: parseFloat(item.bonus) || 0,
+            deduction: parseFloat(item.deduction) || 0,
+            net_pay: parseFloat(item.net_pay) || finalAmount,
+            // Inventory fields
+            warehouse_name: item.warehouse || '',
+            warehouse_id: warehouses.find(w => 
+              w.name?.toLowerCase().includes((item.warehouse || '').toLowerCase())
+            )?.id || '',
+            stock_in: parseFloat(item.stock_in) || actQty,
+            stock_out: parseFloat(item.stock_out) || 0
           };
         });
 
