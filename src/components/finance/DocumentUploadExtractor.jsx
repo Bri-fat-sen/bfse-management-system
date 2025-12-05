@@ -570,9 +570,10 @@ Return every row - do not summarize or skip any data.`,
                         )}
                         <TableHead className="text-xs text-center bg-green-50">Amount</TableHead>
                         {isRevenue && <TableHead className="text-xs">Customer/Contributor</TableHead>}
-                        {!isRevenue && <TableHead className="text-xs">Vendor</TableHead>}
-                        <TableHead className="text-xs">{isRevenue ? 'Revenue Type' : 'Category'}</TableHead>
-                        <TableHead className="text-xs">Date</TableHead>
+                        {!isRevenue && !isProduction && <TableHead className="text-xs">Vendor</TableHead>}
+                        {!isProduction && <TableHead className="text-xs">{isRevenue ? 'Revenue Type' : 'Category'}</TableHead>}
+                        <TableHead className="text-xs">{isProduction ? 'Production Date' : 'Date'}</TableHead>
+                        {isProduction && <TableHead className="text-xs">Expiry Date</TableHead>}
                         {extractedData.length > 0 && extractedData[0].extra_columns && Object.keys(extractedData[0].extra_columns).length > 0 && (
                           Object.keys(extractedData[0].extra_columns).map(key => (
                             <TableHead key={key} className="text-xs bg-purple-50">{key}</TableHead>
