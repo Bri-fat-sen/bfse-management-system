@@ -1070,225 +1070,271 @@ export default function BudgetingModule({ orgId, expenses = [], sales = [], curr
 
       {/* Budget Dialog */}
       <Dialog open={showBudgetDialog} onOpenChange={setShowBudgetDialog}>
-        <DialogContent className="max-w-md w-[95vw] max-h-[90vh] overflow-hidden p-0 flex flex-col">
-          {/* Sierra Leone Flag Stripe - Top */}
-          <div className="h-2 flex w-full flex-shrink-0">
+        <DialogContent className="max-w-lg max-h-[90vh] overflow-hidden p-0 w-[95vw] sm:w-full [&>button]:hidden">
+          {/* Sierra Leone Flag Header */}
+          <div className="h-2 flex">
             <div className="flex-1 bg-[#1EB053]" />
             <div className="flex-1 bg-white" />
             <div className="flex-1 bg-[#0072C6]" />
           </div>
-          
-          <div className="p-4 sm:p-6 overflow-y-auto flex-1">
-            <DialogHeader className="mb-4">
-              <DialogTitle className="text-lg">
-                {editingBudget ? 'Edit Budget' : budgetForm.budget_type === 'revenue_target' ? 'Set Revenue Target' : 'Create Expense Budget'}
-              </DialogTitle>
-            </DialogHeader>
-          
-          <div className="space-y-3">
-            {/* Budget Type Selection */}
-            <div className="space-y-2">
-              <Label>Budget Type</Label>
-              <Select 
-                value={budgetForm.budget_type} 
-                onValueChange={(v) => setBudgetForm({...budgetForm, budget_type: v, category: ''})}
-              >
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="expense">Expense Budget</SelectItem>
-                  <SelectItem value="revenue_target">Revenue Target</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
 
-            {/* Expense Category (only for expense budgets) */}
-            {budgetForm.budget_type === 'expense' && (
+          {/* Header with gradient */}
+          <div className="px-6 py-4 text-white bg-gradient-to-r from-[#1EB053] to-[#0072C6]">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="w-12 h-12 rounded-xl bg-white/20 flex items-center justify-center">
+                  {budgetForm.budget_type === 'revenue_target' ? (
+                    <TrendingUp className="w-6 h-6 text-white" />
+                  ) : (
+                    <Target className="w-6 h-6 text-white" />
+                  )}
+                </div>
+                <div>
+                  <h2 className="text-xl font-bold">
+                    {editingBudget ? 'Edit Budget' : budgetForm.budget_type === 'revenue_target' ? 'Set Revenue Target' : 'Create Expense Budget'}
+                  </h2>
+                  <p className="text-white/80 text-sm">
+                    {budgetForm.budget_type === 'revenue_target' ? 'Set sales targets for your locations' : 'Plan and track your spending'}
+                  </p>
+                </div>
+              </div>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => setShowBudgetDialog(false)}
+                className="text-white hover:bg-white/20"
+              >
+                <X className="w-5 h-5" />
+              </Button>
+            </div>
+          </div>
+
+          {/* Form Content */}
+          <div className="overflow-y-auto max-h-[calc(90vh-180px)]">
+            <div className="p-6 space-y-4">
+              {/* Budget Type Selection */}
               <div className="space-y-2">
-                <Label>Expense Category</Label>
-                <Select value={budgetForm.category} onValueChange={(v) => setBudgetForm({...budgetForm, category: v})}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select category" />
+                <Label className="text-gray-700 font-medium">Budget Type</Label>
+                <Select 
+                  value={budgetForm.budget_type} 
+                  onValueChange={(v) => setBudgetForm({...budgetForm, budget_type: v, category: ''})}
+                >
+                  <SelectTrigger className="border-gray-200">
+                    <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    {EXPENSE_CATEGORIES.map(cat => (
-                      <SelectItem key={cat.value} value={cat.value}>{cat.label}</SelectItem>
-                    ))}
+                    <SelectItem value="expense">Expense Budget</SelectItem>
+                    <SelectItem value="revenue_target">Revenue Target</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
-            )}
 
-            {/* Location Selection */}
-            <div className="space-y-2">
-              <Label>Location (Warehouse/Store)</Label>
-              <Select 
-                value={budgetForm.location_id || "all_locations"} 
-                onValueChange={(v) => {
-                  if (v === "all_locations") {
-                    setBudgetForm({
-                      ...budgetForm, 
-                      location_id: '', 
-                      location_name: ''
-                    });
-                  } else {
-                    const loc = warehouses.find(w => w.id === v);
-                    setBudgetForm({
-                      ...budgetForm, 
-                      location_id: v, 
-                      location_name: loc?.name || ''
-                    });
-                  }
-                }}
-              >
-                <SelectTrigger>
-                  <MapPin className="w-4 h-4 mr-2" />
-                  <SelectValue placeholder="All Locations (Optional)" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all_locations">All Locations</SelectItem>
-                  {warehouses.map(w => (
-                    <SelectItem key={w.id} value={w.id}>{w.name}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+              {/* Expense Category (only for expense budgets) */}
+              {budgetForm.budget_type === 'expense' && (
+                <div className="space-y-2">
+                  <Label className="text-gray-700 font-medium">Expense Category</Label>
+                  <Select value={budgetForm.category} onValueChange={(v) => setBudgetForm({...budgetForm, category: v})}>
+                    <SelectTrigger className="border-gray-200">
+                      <SelectValue placeholder="Select category" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {EXPENSE_CATEGORIES.map(cat => (
+                        <SelectItem key={cat.value} value={cat.value}>{cat.label}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
 
-            {/* Assign to Warehouse Manager (for expense budgets) */}
-            {budgetForm.budget_type === 'expense' && budgetForm.location_id && (
+              {/* Location Selection */}
               <div className="space-y-2">
-                <Label>Assign to Manager</Label>
+                <Label className="text-gray-700 font-medium flex items-center gap-2">
+                  <MapPin className="w-3 h-3" /> Location (Optional)
+                </Label>
                 <Select 
-                  value={budgetForm.assigned_to_id || "no_assignment"} 
+                  value={budgetForm.location_id || "all_locations"} 
                   onValueChange={(v) => {
-                    if (v === "no_assignment") {
+                    if (v === "all_locations") {
                       setBudgetForm({
                         ...budgetForm, 
-                        assigned_to_id: '', 
-                        assigned_to_name: ''
+                        location_id: '', 
+                        location_name: ''
                       });
                     } else {
-                      const emp = warehouseManagers.find(e => e.id === v);
+                      const loc = warehouses.find(w => w.id === v);
                       setBudgetForm({
                         ...budgetForm, 
-                        assigned_to_id: v, 
-                        assigned_to_name: emp?.full_name || ''
+                        location_id: v, 
+                        location_name: loc?.name || ''
                       });
                     }
                   }}
                 >
-                  <SelectTrigger>
-                    <Users className="w-4 h-4 mr-2" />
-                    <SelectValue placeholder="Select manager (Optional)" />
+                  <SelectTrigger className="border-gray-200">
+                    <SelectValue placeholder="All Locations" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="no_assignment">No Assignment</SelectItem>
-                    {warehouseManagers.map(emp => (
-                      <SelectItem key={emp.id} value={emp.id}>{emp.full_name}</SelectItem>
+                    <SelectItem value="all_locations">All Locations</SelectItem>
+                    {warehouses.map(w => (
+                      <SelectItem key={w.id} value={w.id}>{w.name}</SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
               </div>
-            )}
 
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label>Period Type</Label>
-                <Select value={budgetForm.period_type} onValueChange={(v) => setBudgetForm({...budgetForm, period_type: v})}>
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="monthly">Monthly</SelectItem>
-                    <SelectItem value="quarterly">Quarterly</SelectItem>
-                    <SelectItem value="yearly">Yearly</SelectItem>
-                  </SelectContent>
-                </Select>
+              {/* Assign to Warehouse Manager (for expense budgets) */}
+              {budgetForm.budget_type === 'expense' && budgetForm.location_id && (
+                <div className="space-y-2">
+                  <Label className="text-gray-700 font-medium flex items-center gap-2">
+                    <Users className="w-3 h-3" /> Assign to Manager
+                  </Label>
+                  <Select 
+                    value={budgetForm.assigned_to_id || "no_assignment"} 
+                    onValueChange={(v) => {
+                      if (v === "no_assignment") {
+                        setBudgetForm({
+                          ...budgetForm, 
+                          assigned_to_id: '', 
+                          assigned_to_name: ''
+                        });
+                      } else {
+                        const emp = warehouseManagers.find(e => e.id === v);
+                        setBudgetForm({
+                          ...budgetForm, 
+                          assigned_to_id: v, 
+                          assigned_to_name: emp?.full_name || ''
+                        });
+                      }
+                    }}
+                  >
+                    <SelectTrigger className="border-gray-200">
+                      <SelectValue placeholder="Select manager (Optional)" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="no_assignment">No Assignment</SelectItem>
+                      {warehouseManagers.map(emp => (
+                        <SelectItem key={emp.id} value={emp.id}>{emp.full_name}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
+
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label className="text-gray-700 font-medium flex items-center gap-2">
+                    <Calendar className="w-3 h-3" /> Period Type
+                  </Label>
+                  <Select value={budgetForm.period_type} onValueChange={(v) => setBudgetForm({...budgetForm, period_type: v})}>
+                    <SelectTrigger className="border-gray-200">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="monthly">Monthly</SelectItem>
+                      <SelectItem value="quarterly">Quarterly</SelectItem>
+                      <SelectItem value="yearly">Yearly</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-2">
+                  <Label className="text-gray-700 font-medium">Year</Label>
+                  <Select value={budgetForm.year.toString()} onValueChange={(v) => setBudgetForm({...budgetForm, year: parseInt(v)})}>
+                    <SelectTrigger className="border-gray-200">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {[currentYear - 1, currentYear, currentYear + 1, currentYear + 2].map(year => (
+                        <SelectItem key={year} value={year.toString()}>{year}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+
+              {budgetForm.period_type === 'monthly' && (
+                <div className="space-y-2">
+                  <Label className="text-gray-700 font-medium">Month</Label>
+                  <Select value={budgetForm.month.toString()} onValueChange={(v) => setBudgetForm({...budgetForm, month: parseInt(v)})}>
+                    <SelectTrigger className="border-gray-200">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {MONTHS.map((month, idx) => (
+                        <SelectItem key={idx} value={(idx + 1).toString()}>{month}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
+
+              {budgetForm.period_type === 'quarterly' && (
+                <div className="space-y-2">
+                  <Label className="text-gray-700 font-medium">Quarter</Label>
+                  <Select value={budgetForm.quarter.toString()} onValueChange={(v) => setBudgetForm({...budgetForm, quarter: parseInt(v)})}>
+                    <SelectTrigger className="border-gray-200">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="1">Q1 (Jan-Mar)</SelectItem>
+                      <SelectItem value="2">Q2 (Apr-Jun)</SelectItem>
+                      <SelectItem value="3">Q3 (Jul-Sep)</SelectItem>
+                      <SelectItem value="4">Q4 (Oct-Dec)</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
+
+              {/* Amount Field with styling */}
+              <div className="p-4 rounded-xl border-2 border-[#0072C6]/30 bg-[#0072C6]/5">
+                <Label className="text-[#0072C6] font-medium">
+                  {budgetForm.budget_type === 'revenue_target' ? 'Revenue Target (Le)' : 'Budget Amount (Le)'}
+                </Label>
+                <div className="relative mt-2">
+                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[#0072C6] font-bold">Le</span>
+                  <Input
+                    type="number"
+                    placeholder="0"
+                    value={budgetForm.budgeted_amount}
+                    onChange={(e) => setBudgetForm({...budgetForm, budgeted_amount: e.target.value})}
+                    className="pl-10 border-[#0072C6]/30 bg-white"
+                  />
+                </div>
               </div>
 
               <div className="space-y-2">
-                <Label>Year</Label>
-                <Select value={budgetForm.year.toString()} onValueChange={(v) => setBudgetForm({...budgetForm, year: parseInt(v)})}>
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {[currentYear - 1, currentYear, currentYear + 1, currentYear + 2].map(year => (
-                      <SelectItem key={year} value={year.toString()}>{year}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <Label className="text-gray-700 font-medium">Notes (Optional)</Label>
+                <Input
+                  placeholder="Add any notes..."
+                  value={budgetForm.notes}
+                  onChange={(e) => setBudgetForm({...budgetForm, notes: e.target.value})}
+                  className="border-gray-200"
+                />
               </div>
-            </div>
-
-            {budgetForm.period_type === 'monthly' && (
-              <div className="space-y-2">
-                <Label>Month</Label>
-                <Select value={budgetForm.month.toString()} onValueChange={(v) => setBudgetForm({...budgetForm, month: parseInt(v)})}>
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {MONTHS.map((month, idx) => (
-                      <SelectItem key={idx} value={(idx + 1).toString()}>{month}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            )}
-
-            {budgetForm.period_type === 'quarterly' && (
-              <div className="space-y-2">
-                <Label>Quarter</Label>
-                <Select value={budgetForm.quarter.toString()} onValueChange={(v) => setBudgetForm({...budgetForm, quarter: parseInt(v)})}>
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="1">Q1 (Jan-Mar)</SelectItem>
-                    <SelectItem value="2">Q2 (Apr-Jun)</SelectItem>
-                    <SelectItem value="3">Q3 (Jul-Sep)</SelectItem>
-                    <SelectItem value="4">Q4 (Oct-Dec)</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            )}
-
-            <div className="space-y-2">
-              <Label>{budgetForm.budget_type === 'revenue_target' ? 'Revenue Target (Le)' : 'Budget Amount (Le)'}</Label>
-              <Input
-                type="number"
-                placeholder="Enter amount"
-                value={budgetForm.budgeted_amount}
-                onChange={(e) => setBudgetForm({...budgetForm, budgeted_amount: e.target.value})}
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label>Notes (Optional)</Label>
-              <Input
-                placeholder="Add any notes..."
-                value={budgetForm.notes}
-                onChange={(e) => setBudgetForm({...budgetForm, notes: e.target.value})}
-              />
             </div>
           </div>
 
-            <DialogFooter className="mt-4 gap-2 sm:gap-0">
-              <Button variant="outline" onClick={() => setShowBudgetDialog(false)}>Cancel</Button>
-              <Button 
-                onClick={handleSubmitBudget}
-                disabled={(budgetForm.budget_type === 'expense' && !budgetForm.category) || !budgetForm.budgeted_amount}
-                className="bg-gradient-to-r from-[#1EB053] to-[#0072C6]"
-              >
-                {editingBudget ? 'Update' : budgetForm.budget_type === 'revenue_target' ? 'Set Target' : 'Create Budget'}
-              </Button>
-            </DialogFooter>
+          {/* Footer */}
+          <div className="sticky bottom-0 bg-white border-t p-4 flex flex-col sm:flex-row gap-3">
+            <Button 
+              type="button"
+              variant="outline" 
+              onClick={() => setShowBudgetDialog(false)}
+              className="w-full sm:w-auto"
+            >
+              Cancel
+            </Button>
+            <Button 
+              onClick={handleSubmitBudget}
+              disabled={(budgetForm.budget_type === 'expense' && !budgetForm.category) || !budgetForm.budgeted_amount}
+              className="w-full sm:flex-1 text-white bg-gradient-to-r from-[#1EB053] to-[#0072C6]"
+            >
+              {editingBudget ? 'Update Budget' : budgetForm.budget_type === 'revenue_target' ? 'Set Target' : 'Create Budget'}
+            </Button>
           </div>
-          
-          {/* Sierra Leone Flag Stripe - Bottom */}
-          <div className="h-2 flex w-full flex-shrink-0">
+
+          {/* Bottom flag stripe */}
+          <div className="h-1 flex">
             <div className="flex-1 bg-[#1EB053]" />
             <div className="flex-1 bg-white" />
             <div className="flex-1 bg-[#0072C6]" />
