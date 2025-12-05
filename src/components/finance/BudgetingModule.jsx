@@ -634,7 +634,12 @@ export default function BudgetingModule({ orgId, expenses = [], sales = [], curr
           </div>
 
           {/* Budget vs Actual Chart */}
-          <Card>
+          <Card className="overflow-hidden">
+            <div className="h-1 flex">
+              <div className="flex-1 bg-[#1EB053]" />
+              <div className="flex-1 bg-white" />
+              <div className="flex-1 bg-[#0072C6]" />
+            </div>
             <CardHeader>
               <CardTitle>Budget vs Actual by Category</CardTitle>
             </CardHeader>
@@ -656,7 +661,12 @@ export default function BudgetingModule({ orgId, expenses = [], sales = [], curr
           </Card>
 
           {/* Budget List */}
-          <Card>
+          <Card className="overflow-hidden">
+            <div className="h-1 flex">
+              <div className="flex-1 bg-[#1EB053]" />
+              <div className="flex-1 bg-white" />
+              <div className="flex-1 bg-[#0072C6]" />
+            </div>
             <CardHeader>
               <CardTitle>Expense Budgets</CardTitle>
               <CardDescription>Manage expense budgets by category and location</CardDescription>
@@ -847,7 +857,12 @@ export default function BudgetingModule({ orgId, expenses = [], sales = [], curr
           </div>
 
           {/* Revenue Targets List */}
-          <Card>
+          <Card className="overflow-hidden">
+            <div className="h-1 flex">
+              <div className="flex-1 bg-[#1EB053]" />
+              <div className="flex-1 bg-white" />
+              <div className="flex-1 bg-[#0072C6]" />
+            </div>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Target className="w-5 h-5 text-[#1EB053]" />
@@ -935,7 +950,12 @@ export default function BudgetingModule({ orgId, expenses = [], sales = [], curr
 
         {/* Variance Tracking Tab */}
         <TabsContent value="tracking" className="space-y-4">
-          <Card>
+          <Card className="overflow-hidden">
+            <div className="h-1 flex">
+              <div className="flex-1 bg-[#1EB053]" />
+              <div className="flex-1 bg-white" />
+              <div className="flex-1 bg-[#0072C6]" />
+            </div>
             <CardHeader>
               <CardTitle>Monthly Trend: Budget vs Actual</CardTitle>
               <CardDescription>Track spending patterns throughout {selectedYear}</CardDescription>
@@ -1017,7 +1037,12 @@ export default function BudgetingModule({ orgId, expenses = [], sales = [], curr
             </Select>
           </div>
 
-          <Card>
+          <Card className="overflow-hidden">
+            <div className="h-1 flex">
+              <div className="flex-1 bg-[#1EB053]" />
+              <div className="flex-1 bg-white" />
+              <div className="flex-1 bg-[#0072C6]" />
+            </div>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <BarChart3 className="w-5 h-5 text-[#0072C6]" />
