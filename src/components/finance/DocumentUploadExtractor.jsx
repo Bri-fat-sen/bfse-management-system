@@ -66,19 +66,19 @@ const DEFAULT_REVENUE_SOURCES = [
 export default function DocumentUploadExtractor({ 
   open, 
   onOpenChange, 
-  type = "expense", // "expense", "revenue", or "production"
+  type = "expense",
   orgId,
   currentEmployee,
   onSuccess,
   categories: customCategories,
-  products = [] // Pass products list for SKU matching
+  products = []
 }) {
   const toast = useToast();
   const [uploadLoading, setUploadLoading] = useState(false);
   const [extractedData, setExtractedData] = useState([]);
   const [extractedColumns, setExtractedColumns] = useState([]);
   const [dynamicCategories, setDynamicCategories] = useState([]);
-  const [detectedType, setDetectedType] = useState(type); // Can auto-detect production batches
+  const [detectedType, setDetectedType] = useState(type);
 
   const baseCategories = type === "expense" ? DEFAULT_EXPENSE_CATEGORIES : DEFAULT_REVENUE_SOURCES;
   const categories = useMemo(() => {
@@ -95,9 +95,7 @@ export default function DocumentUploadExtractor({
 
     try {
       const { file_url } = await base44.integrations.Core.UploadFile({ file });
-      const isRevenue = type === "revenue";
 
-      // Use ExtractDataFromUploadedFile for better structured extraction
       const extractionSchema = {
         type: "object",
         properties: {
@@ -152,7 +150,6 @@ export default function DocumentUploadExtractor({
       let columnHeaders = [];
       let docType = '';
 
-      // Try ExtractDataFromUploadedFile first (better for tables)
       try {
         const extractResult = await base44.integrations.Core.ExtractDataFromUploadedFile({
           file_url: file_url,
@@ -171,7 +168,6 @@ export default function DocumentUploadExtractor({
       } catch (primaryError) {
         console.log("ExtractDataFromUploadedFile failed, trying InvokeLLM:", primaryError);
 
-        // Fallback to InvokeLLM
         const fallbackResult = await base44.integrations.Core.InvokeLLM({
           prompt: `Read this document and extract tabular data.
 
@@ -197,7 +193,6 @@ Return every row - do not summarize or skip any data.`,
 
       setExtractedColumns(columnHeaders);
 
-      // Check if this looks like production batch data (has SKUs, batch numbers, or product names)
       const hasProductionData = items.some(item => 
         item.sku || item.batch_number || item.product_name || 
         (item.details && products.some(p => 
@@ -211,7 +206,6 @@ Return every row - do not summarize or skip any data.`,
       }
 
       if (items.length > 0) {
-        // Determine category based on description
         const categorizeItem = (description) => {
           const desc = (description || '').toLowerCase();
           if (desc.includes('fuel') || desc.includes('diesel') || desc.includes('petrol')) return 'fuel';
@@ -231,7 +225,6 @@ Return every row - do not summarize or skip any data.`,
         const existingCategoryValues = categories.map(c => c.value);
         const newCategories = [];
 
-        // Try to match SKU to products
         const matchProductBySku = (sku, description) => {
           if (!sku && !description) return null;
           const searchText = (sku || description || '').toLowerCase();
@@ -243,17 +236,12 @@ Return every row - do not summarize or skip any data.`,
         };
 
         const mappedData = items.map((item, idx) => {
-          // Try to match product by SKU
           const matchedProduct = matchProductBySku(item.sku, item.product_name || item.details);
-          // Smart amount calculation - check multiple possible fields
           const estAmount = parseFloat(item.est_total) || parseFloat(item.estimated_amount) || 0;
           const actAmount = parseFloat(item.actual_total) || parseFloat(item.actual_amount) || 0;
           const singleAmount = parseFloat(item.amount) || 0;
-          
-          // Use actual if available, otherwise estimated, otherwise single amount
           const finalAmount = actAmount || singleAmount || estAmount || 0;
 
-          // Smart qty/price extraction
           const estQty = parseFloat(item.est_qty) || 0;
           const actQty = parseFloat(item.actual_qty) || parseFloat(item.qty) || 0;
           const estUnitCost = parseFloat(item.est_unit_cost) || 0;
@@ -262,7 +250,6 @@ Return every row - do not summarize or skip any data.`,
           const description = item.details || item.description || '';
           const category = categorizeItem(description);
 
-          // Track new categories
           if (!existingCategoryValues.includes(category) && !newCategories.find(c => c.value === category)) {
             const label = category.split('_').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
             newCategories.push({ value: category, label, icon: Hammer });
@@ -291,7 +278,6 @@ Return every row - do not summarize or skip any data.`,
             document_type: docType,
             date: docDate,
             status: 'pending',
-            // Production batch fields
             sku: item.sku || matchedProduct?.sku || '',
             product_id: matchedProduct?.id || '',
             product_name: item.product_name || matchedProduct?.name || '',
@@ -301,7 +287,6 @@ Return every row - do not summarize or skip any data.`,
           };
         });
 
-        // Filter out rows with no meaningful data
         const validData = mappedData.filter(item => 
           item.description.trim() !== '' || item.amount > 0
         );
@@ -342,7 +327,6 @@ Return every row - do not summarize or skip any data.`,
       let revenueCount = 0;
 
       for (const item of selectedItems) {
-        // Create production batch if product is matched and it's production data
         if (isProduction && item.product_id && item.is_production) {
           const batchNum = item.batch_number || `BATCH-${format(new Date(), 'yyyyMMdd')}-${String(batchCount + 1).padStart(3, '0')}`;
           
@@ -434,14 +418,12 @@ Return every row - do not summarize or skip any data.`,
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-5xl max-h-[95vh] overflow-hidden p-0 w-[98vw] [&>button]:hidden">
-        {/* Sierra Leone Flag Header */}
         <div className="h-2 flex">
           <div className="flex-1 bg-[#1EB053]" />
           <div className="flex-1 bg-white" />
           <div className="flex-1 bg-[#0072C6]" />
         </div>
 
-        {/* Header with gradient */}
         <div className="px-6 py-4 bg-gradient-to-r from-[#1EB053] to-[#0072C6] text-white">
           <div className="flex items-center gap-3">
             <div className="w-12 h-12 rounded-xl bg-white/20 flex items-center justify-center">
@@ -455,7 +437,6 @@ Return every row - do not summarize or skip any data.`,
         </div>
 
         <div className="p-6 space-y-4 overflow-y-auto max-h-[calc(95vh-140px)]">
-          {/* Upload Area */}
           {extractedData.length === 0 && (
             <div className="border-2 border-dashed border-gray-300 rounded-xl p-8 text-center hover:border-[#0072C6] transition-colors">
               <input
@@ -487,7 +468,6 @@ Return every row - do not summarize or skip any data.`,
             </div>
           )}
 
-          {/* Extracted Data Preview */}
           {extractedData.length > 0 && (
             <div className="space-y-4">
               <div className="flex items-center justify-between flex-wrap gap-2">
@@ -522,7 +502,6 @@ Return every row - do not summarize or skip any data.`,
                 </Button>
               </div>
 
-              {/* Show extracted columns info */}
               {extractedColumns.length > 0 && (
                 <div className="p-3 bg-blue-50 rounded-lg">
                   <p className="text-xs text-blue-700 font-medium mb-1">Columns detected from document:</p>
@@ -829,7 +808,6 @@ Return every row - do not summarize or skip any data.`,
           )}
         </div>
 
-        {/* Bottom flag stripe */}
         <div className="h-1 flex">
           <div className="flex-1 bg-[#1EB053]" />
           <div className="flex-1 bg-white" />
