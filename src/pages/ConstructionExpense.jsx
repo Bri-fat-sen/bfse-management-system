@@ -53,7 +53,10 @@ import {
   Clock,
   XCircle,
   AlertTriangle,
-  BarChart3
+  BarChart3,
+  Upload,
+  Loader2,
+  FileUp
 } from "lucide-react";
 import { useToast } from "@/components/ui/Toast";
 import LoadingSpinner from "@/components/ui/LoadingSpinner";
@@ -83,10 +86,13 @@ export default function ConstructionExpense() {
   const toast = useToast();
   const queryClient = useQueryClient();
   const [showExpenseDialog, setShowExpenseDialog] = useState(false);
+  const [showUploadDialog, setShowUploadDialog] = useState(false);
   const [editingExpense, setEditingExpense] = useState(null);
   const [categoryFilter, setCategoryFilter] = useState("all");
   const [statusFilter, setStatusFilter] = useState("all");
   const [dateRange, setDateRange] = useState("this_month");
+  const [uploadLoading, setUploadLoading] = useState(false);
+  const [extractedExpenses, setExtractedExpenses] = useState([]);
 
   const { data: user } = useQuery({
     queryKey: ['currentUser'],
@@ -294,6 +300,114 @@ export default function ConstructionExpense() {
     });
   };
 
+  // Handle file upload and extraction
+  const handleFileUpload = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setUploadLoading(true);
+    setExtractedExpenses([]);
+
+    try {
+      // Upload file first
+      const { file_url } = await base44.integrations.Core.UploadFile({ file });
+
+      // Extract data using AI
+      const result = await base44.integrations.Core.ExtractDataFromUploadedFile({
+        file_url,
+        json_schema: {
+          type: "array",
+          items: {
+            type: "object",
+            properties: {
+              description: { type: "string", description: "Description of the expense item" },
+              category: { 
+                type: "string", 
+                enum: ["materials", "labor", "equipment", "permits", "foundation", "roofing", "electrical", "plumbing", "finishing", "landscaping", "transport", "other"],
+                description: "Category of construction expense"
+              },
+              amount: { type: "number", description: "Amount in Leones" },
+              date: { type: "string", description: "Date in YYYY-MM-DD format" },
+              vendor: { type: "string", description: "Vendor or supplier name" },
+              notes: { type: "string", description: "Additional notes" }
+            },
+            required: ["description", "amount"]
+          }
+        }
+      });
+
+      if (result.status === 'success' && result.output) {
+        const expenses = Array.isArray(result.output) ? result.output : [result.output];
+        setExtractedExpenses(expenses.map((exp, idx) => ({
+          ...exp,
+          id: `temp-${idx}`,
+          selected: true,
+          category: exp.category || 'other',
+          date: exp.date || format(new Date(), 'yyyy-MM-dd'),
+          status: 'pending'
+        })));
+        toast.success("Data extracted", `Found ${expenses.length} expense(s) in document`);
+      } else {
+        toast.error("Extraction failed", result.details || "Could not extract data from document");
+      }
+    } catch (error) {
+      console.error("Upload error:", error);
+      toast.error("Upload failed", error.message);
+    } finally {
+      setUploadLoading(false);
+    }
+  };
+
+  // Create expenses from extracted data
+  const handleCreateExtractedExpenses = async () => {
+    const selectedExpenses = extractedExpenses.filter(e => e.selected);
+    if (selectedExpenses.length === 0) {
+      toast.warning("No expenses selected");
+      return;
+    }
+
+    setUploadLoading(true);
+    try {
+      for (const exp of selectedExpenses) {
+        await base44.entities.Expense.create({
+          organisation_id: orgId,
+          category: exp.category,
+          description: exp.description,
+          amount: exp.amount || 0,
+          date: exp.date,
+          vendor: exp.vendor || '',
+          payment_method: 'cash',
+          recorded_by: currentEmployee?.id,
+          recorded_by_name: currentEmployee?.full_name,
+          status: 'pending',
+          notes: exp.notes || 'Imported from document'
+        });
+      }
+
+      queryClient.invalidateQueries({ queryKey: ['constructionExpenses'] });
+      queryClient.invalidateQueries({ queryKey: ['expenses'] });
+      setShowUploadDialog(false);
+      setExtractedExpenses([]);
+      toast.success("Expenses created", `${selectedExpenses.length} expense(s) added`);
+    } catch (error) {
+      toast.error("Failed to create expenses", error.message);
+    } finally {
+      setUploadLoading(false);
+    }
+  };
+
+  const toggleExpenseSelection = (id) => {
+    setExtractedExpenses(prev => prev.map(e => 
+      e.id === id ? { ...e, selected: !e.selected } : e
+    ));
+  };
+
+  const updateExtractedExpense = (id, field, value) => {
+    setExtractedExpenses(prev => prev.map(e => 
+      e.id === id ? { ...e, [field]: value } : e
+    ));
+  };
+
   if (!user || isLoading) {
     return <LoadingSpinner message="Loading Construction Expenses..." fullScreen={true} />;
   }
@@ -325,13 +439,23 @@ export default function ConstructionExpense() {
             </div>
           </div>
         </div>
-        <Button 
-          onClick={() => { setEditingExpense(null); setShowExpenseDialog(true); }}
-          className="bg-gradient-to-r from-[#1EB053] to-[#0072C6]"
-        >
-          <Plus className="w-4 h-4 mr-2" />
-          Record Expense
-        </Button>
+        <div className="flex gap-2">
+          <Button 
+            variant="outline"
+            onClick={() => setShowUploadDialog(true)}
+            className="border-[#0072C6] text-[#0072C6] hover:bg-[#0072C6]/10"
+          >
+            <Upload className="w-4 h-4 mr-2" />
+            Upload Document
+          </Button>
+          <Button 
+            onClick={() => { setEditingExpense(null); setShowExpenseDialog(true); }}
+            className="bg-gradient-to-r from-[#1EB053] to-[#0072C6]"
+          >
+            <Plus className="w-4 h-4 mr-2" />
+            Record Expense
+          </Button>
+        </div>
       </div>
 
       {/* Sierra Leone Flag Stripe */}
@@ -785,6 +909,192 @@ export default function ConstructionExpense() {
               </Button>
             </DialogFooter>
           </form>
+
+          {/* Bottom flag stripe */}
+          <div className="h-1 flex">
+            <div className="flex-1 bg-[#1EB053]" />
+            <div className="flex-1 bg-white" />
+            <div className="flex-1 bg-[#0072C6]" />
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Upload Document Dialog */}
+      <Dialog open={showUploadDialog} onOpenChange={setShowUploadDialog}>
+        <DialogContent className="max-w-3xl max-h-[90vh] overflow-hidden p-0 w-[95vw] [&>button]:hidden">
+          {/* Sierra Leone Flag Header */}
+          <div className="h-2 flex">
+            <div className="flex-1 bg-[#1EB053]" />
+            <div className="flex-1 bg-white" />
+            <div className="flex-1 bg-[#0072C6]" />
+          </div>
+
+          {/* Header with gradient */}
+          <div className="px-6 py-4 bg-gradient-to-r from-[#1EB053] to-[#0072C6] text-white">
+            <div className="flex items-center gap-3">
+              <div className="w-12 h-12 rounded-xl bg-white/20 flex items-center justify-center">
+                <FileUp className="w-6 h-6 text-white" />
+              </div>
+              <div>
+                <h2 className="text-xl font-bold">Import from Document</h2>
+                <p className="text-white/80 text-sm">Upload Word/PDF documents to extract construction expenses</p>
+              </div>
+            </div>
+          </div>
+
+          <div className="p-6 space-y-4 overflow-y-auto max-h-[calc(90vh-200px)]">
+            {/* Upload Area */}
+            {extractedExpenses.length === 0 && (
+              <div className="border-2 border-dashed border-gray-300 rounded-xl p-8 text-center hover:border-[#0072C6] transition-colors">
+                <input
+                  type="file"
+                  accept=".doc,.docx,.pdf,.csv"
+                  onChange={handleFileUpload}
+                  className="hidden"
+                  id="doc-upload"
+                  disabled={uploadLoading}
+                />
+                <label htmlFor="doc-upload" className="cursor-pointer">
+                  {uploadLoading ? (
+                    <div className="flex flex-col items-center gap-3">
+                      <Loader2 className="w-12 h-12 text-[#0072C6] animate-spin" />
+                      <p className="text-gray-600">Extracting data from document...</p>
+                      <p className="text-sm text-gray-400">This may take a moment</p>
+                    </div>
+                  ) : (
+                    <div className="flex flex-col items-center gap-3">
+                      <div className="w-16 h-16 rounded-full bg-[#0072C6]/10 flex items-center justify-center">
+                        <Upload className="w-8 h-8 text-[#0072C6]" />
+                      </div>
+                      <p className="text-gray-600 font-medium">Click to upload document</p>
+                      <p className="text-sm text-gray-400">Supports Word (.doc, .docx), PDF, and CSV files</p>
+                    </div>
+                  )}
+                </label>
+              </div>
+            )}
+
+            {/* Extracted Expenses Preview */}
+            {extractedExpenses.length > 0 && (
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <h3 className="font-semibold text-gray-700">Extracted Expenses ({extractedExpenses.length})</h3>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setExtractedExpenses([])}
+                  >
+                    Clear & Upload New
+                  </Button>
+                </div>
+
+                <ScrollArea className="h-[350px] border rounded-lg">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead className="w-10">
+                          <input
+                            type="checkbox"
+                            checked={extractedExpenses.every(e => e.selected)}
+                            onChange={(e) => setExtractedExpenses(prev => prev.map(exp => ({ ...exp, selected: e.target.checked })))}
+                            className="w-4 h-4"
+                          />
+                        </TableHead>
+                        <TableHead>Description</TableHead>
+                        <TableHead>Category</TableHead>
+                        <TableHead>Amount</TableHead>
+                        <TableHead>Date</TableHead>
+                        <TableHead>Vendor</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {extractedExpenses.map((exp) => (
+                        <TableRow key={exp.id} className={!exp.selected ? 'opacity-50' : ''}>
+                          <TableCell>
+                            <input
+                              type="checkbox"
+                              checked={exp.selected}
+                              onChange={() => toggleExpenseSelection(exp.id)}
+                              className="w-4 h-4"
+                            />
+                          </TableCell>
+                          <TableCell>
+                            <Input
+                              value={exp.description || ''}
+                              onChange={(e) => updateExtractedExpense(exp.id, 'description', e.target.value)}
+                              className="h-8 text-sm"
+                            />
+                          </TableCell>
+                          <TableCell>
+                            <Select
+                              value={exp.category}
+                              onValueChange={(v) => updateExtractedExpense(exp.id, 'category', v)}
+                            >
+                              <SelectTrigger className="h-8 text-sm w-32">
+                                <SelectValue />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {CONSTRUCTION_CATEGORIES.map(cat => (
+                                  <SelectItem key={cat.value} value={cat.value}>{cat.label}</SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          </TableCell>
+                          <TableCell>
+                            <Input
+                              type="number"
+                              value={exp.amount || ''}
+                              onChange={(e) => updateExtractedExpense(exp.id, 'amount', parseFloat(e.target.value) || 0)}
+                              className="h-8 text-sm w-28"
+                            />
+                          </TableCell>
+                          <TableCell>
+                            <Input
+                              type="date"
+                              value={exp.date || ''}
+                              onChange={(e) => updateExtractedExpense(exp.id, 'date', e.target.value)}
+                              className="h-8 text-sm w-36"
+                            />
+                          </TableCell>
+                          <TableCell>
+                            <Input
+                              value={exp.vendor || ''}
+                              onChange={(e) => updateExtractedExpense(exp.id, 'vendor', e.target.value)}
+                              className="h-8 text-sm"
+                              placeholder="Vendor"
+                            />
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </ScrollArea>
+
+                <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+                  <div>
+                    <p className="font-medium">
+                      {extractedExpenses.filter(e => e.selected).length} expense(s) selected
+                    </p>
+                    <p className="text-sm text-gray-500">
+                      Total: Le {extractedExpenses.filter(e => e.selected).reduce((sum, e) => sum + (e.amount || 0), 0).toLocaleString()}
+                    </p>
+                  </div>
+                  <Button
+                    onClick={handleCreateExtractedExpenses}
+                    disabled={uploadLoading || extractedExpenses.filter(e => e.selected).length === 0}
+                    className="bg-gradient-to-r from-[#1EB053] to-[#0072C6]"
+                  >
+                    {uploadLoading ? (
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    ) : (
+                      <CheckCircle className="w-4 h-4 mr-2" />
+                    )}
+                    Create {extractedExpenses.filter(e => e.selected).length} Expense(s)
+                  </Button>
+                </div>
+              </div>
+            )}
+          </div>
 
           {/* Bottom flag stripe */}
           <div className="h-1 flex">
