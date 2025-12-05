@@ -48,14 +48,18 @@ const DEFAULT_EXPENSE_CATEGORIES = [
 ];
 
 const DEFAULT_REVENUE_SOURCES = [
+  { value: "retail_sales", label: "Retail Sales" },
+  { value: "wholesale_sales", label: "Wholesale Sales" },
+  { value: "vehicle_sales", label: "Vehicle Sales" },
+  { value: "transport_revenue", label: "Transport Revenue" },
+  { value: "contract_revenue", label: "Contract Revenue" },
+  { value: "service_income", label: "Service Income" },
   { value: "owner_contribution", label: "Owner Contribution" },
   { value: "ceo_contribution", label: "CEO Contribution" },
   { value: "investor_funding", label: "Investor Funding" },
   { value: "loan", label: "Loan" },
   { value: "grant", label: "Grant" },
   { value: "dividend", label: "Dividend Return" },
-  { value: "sales_revenue", label: "Sales Revenue" },
-  { value: "service_income", label: "Service Income" },
   { value: "other", label: "Other" }
 ];
 
@@ -94,24 +98,47 @@ export default function DocumentUploadExtractor({
       const prompt = isRevenue 
         ? `Extract all revenue/income line items from this document. 
 
-First, identify ALL columns present in the table. Common columns include but are not limited to:
-- NO/Item Number
-- Description/Details
-- Source/Type
-- Amount
-- Date
-- Reference Number
-- Any other columns present
+IMPORTANT: First determine the TYPE of revenue document:
+- SALES document: Contains product sales, invoices, receipts with items sold, quantities, prices
+- TRANSPORT document: Contains trip records, passenger counts, route information, transport fees
+- CONTRACT document: Contains contract amounts, project payments, service agreements
+- CONTRIBUTION document: Contains owner/CEO/investor contributions, loans, grants
 
-Also look for a DATE in the document header or anywhere else.
+First, identify ALL columns present in the table. Common columns include:
+- NO/Item Number
+- Description/Details/Product Name
+- Quantity/Qty
+- Unit Price/Rate
+- Total/Amount
+- Customer Name
+- Date
+- Invoice/Receipt Number
+- Route (for transport)
+- Passengers (for transport)
+
+Also look for a DATE in the document header.
 
 For each row/line item found, extract ALL available data including:
 - item_no: the NO/item number
-- description: the description/details field
-- amount: the amount value
-- source: classify as one of: owner_contribution, ceo_contribution, investor_funding, loan, grant, dividend, sales_revenue, service_income. If no existing source fits, create a new descriptive name (lowercase, use underscores).
-- contributor_name: name of contributor if present
-- reference_number: reference/transaction number if present
+- description: the description/product name/details field
+- quantity: quantity sold or number of trips/passengers
+- unit_price: price per unit or ticket price
+- amount: the total amount value
+- source: MUST classify correctly as one of:
+  * "retail_sales" - for retail store sales, POS receipts
+  * "wholesale_sales" - for bulk/wholesale orders
+  * "vehicle_sales" - for mobile/vehicle-based sales
+  * "transport_revenue" - for bus/transport fare collections, trip revenue
+  * "contract_revenue" - for contract payments, project fees
+  * "service_income" - for service fees, consulting
+  * "owner_contribution" - for owner capital injection
+  * "ceo_contribution" - for CEO contributions
+  * "investor_funding" - for investor money
+  * "loan" - for loan proceeds
+  * "grant" - for grants received
+  If none fit, create a new descriptive name (lowercase, use underscores).
+- customer_name: customer or contributor name if present
+- reference_number: invoice/receipt/transaction number if present
 - extra_columns: any other columns found as key-value pairs
 
 Also list all column headers found in the document.
@@ -149,6 +176,7 @@ Extract ALL line items from the document.`;
             type: "object",
             properties: {
               document_date: { type: "string", description: "Date found in document in YYYY-MM-DD format" },
+              document_type: { type: "string", description: "Type: sales, transport, contract, or contribution" },
               column_headers: { type: "array", items: { type: "string" } },
               items: {
                 type: "array",
@@ -157,9 +185,11 @@ Extract ALL line items from the document.`;
                   properties: {
                     item_no: { type: "string" },
                     description: { type: "string" },
+                    quantity: { type: "number" },
+                    unit_price: { type: "number" },
                     amount: { type: "number" },
-                    source: { type: "string" },
-                    contributor_name: { type: "string" },
+                    source: { type: "string", description: "retail_sales, wholesale_sales, vehicle_sales, transport_revenue, contract_revenue, service_income, owner_contribution, ceo_contribution, investor_funding, loan, grant, or other" },
+                    customer_name: { type: "string" },
                     reference_number: { type: "string" },
                     extra_columns: { type: "object", additionalProperties: true }
                   }
@@ -224,6 +254,8 @@ Extract ALL line items from the document.`;
           toast.info("New categories added", `${newCategories.map(c => c.label).join(', ')}`);
         }
 
+        const docType = result.document_type || '';
+        
         const mappedData = items.map((item, idx) => ({
           id: `temp-${idx}`,
           selected: true,
@@ -234,19 +266,24 @@ Extract ALL line items from the document.`;
           estimated_amount: item.estimated_amount || 0,
           actual_qty: item.actual_qty || 0,
           actual_unit_cost: item.actual_unit_cost || 0,
+          quantity: item.quantity || 0,
+          unit_price: item.unit_price || 0,
           amount: item.actual_amount || item.amount || 0,
           unit: item.unit || '',
           vendor: item.vendor || '',
-          contributor_name: item.contributor_name || '',
+          contributor_name: item.contributor_name || item.customer_name || '',
+          customer_name: item.customer_name || '',
           reference_number: item.reference_number || '',
           extra_columns: item.extra_columns || {},
           category: (item.category || item.source || 'other').toLowerCase().replace(/\s+/g, '_'),
+          document_type: docType,
           date: docDate,
           status: 'pending'
         }));
 
         setExtractedData(mappedData);
-        toast.success("Data extracted", `Found ${items.length} item(s) in document${columnHeaders.length > 0 ? ` with ${columnHeaders.length} columns` : ''}${docDate !== format(new Date(), 'yyyy-MM-dd') ? ` (Date: ${docDate})` : ''}`);
+        const typeLabel = docType ? ` (${docType})` : '';
+        toast.success("Data extracted", `Found ${items.length} item(s)${typeLabel}${columnHeaders.length > 0 ? ` with ${columnHeaders.length} columns` : ''}`);
       } else {
         toast.warning("No data found", "Could not find data in the document");
       }
@@ -426,7 +463,13 @@ Extract ALL line items from the document.`;
                           />
                         </TableHead>
                         <TableHead className="text-xs">NO</TableHead>
-                        <TableHead className="text-xs">{isRevenue ? 'DESCRIPTION' : 'DETAILS'}</TableHead>
+                        <TableHead className="text-xs">{isRevenue ? 'DESCRIPTION/PRODUCT' : 'DETAILS'}</TableHead>
+                        {isRevenue && (
+                          <>
+                            <TableHead className="text-xs text-center bg-blue-50">Qty</TableHead>
+                            <TableHead className="text-xs text-center bg-blue-50">Unit Price</TableHead>
+                          </>
+                        )}
                         {!isRevenue && (
                           <>
                             <TableHead className="text-xs">Unit</TableHead>
@@ -438,9 +481,9 @@ Extract ALL line items from the document.`;
                           </>
                         )}
                         <TableHead className="text-xs text-center bg-green-50">Amount</TableHead>
-                        {isRevenue && <TableHead className="text-xs">Contributor</TableHead>}
+                        {isRevenue && <TableHead className="text-xs">Customer/Contributor</TableHead>}
                         {!isRevenue && <TableHead className="text-xs">Vendor</TableHead>}
-                        <TableHead className="text-xs">{isRevenue ? 'Source' : 'Category'}</TableHead>
+                        <TableHead className="text-xs">{isRevenue ? 'Revenue Type' : 'Category'}</TableHead>
                         <TableHead className="text-xs">Date</TableHead>
                         {extractedData.length > 0 && extractedData[0].extra_columns && Object.keys(extractedData[0].extra_columns).length > 0 && (
                           Object.keys(extractedData[0].extra_columns).map(key => (
@@ -468,6 +511,26 @@ Extract ALL line items from the document.`;
                               className="h-7 text-xs min-w-[150px]"
                             />
                           </TableCell>
+                          {isRevenue && (
+                            <>
+                              <TableCell className="bg-blue-50/50">
+                                <Input
+                                  type="number"
+                                  value={item.quantity || ''}
+                                  onChange={(e) => updateItem(item.id, 'quantity', parseFloat(e.target.value) || 0)}
+                                  className="h-7 text-xs w-16 text-center"
+                                />
+                              </TableCell>
+                              <TableCell className="bg-blue-50/50">
+                                <Input
+                                  type="number"
+                                  value={item.unit_price || ''}
+                                  onChange={(e) => updateItem(item.id, 'unit_price', parseFloat(e.target.value) || 0)}
+                                  className="h-7 text-xs w-24 text-right"
+                                />
+                              </TableCell>
+                            </>
+                          )}
                           {!isRevenue && (
                             <>
                               <TableCell>
