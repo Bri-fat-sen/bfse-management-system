@@ -35,7 +35,7 @@ import {
 import { 
   Target, Plus, TrendingUp, TrendingDown, AlertTriangle, 
   CheckCircle2, Edit2, Trash2, Calendar, PiggyBank,
-  BarChart3, ArrowUpRight, ArrowDownRight, Minus, MapPin, Users
+  BarChart3, ArrowUpRight, ArrowDownRight, Minus, MapPin, Users, X
 } from "lucide-react";
 import { toast } from "sonner";
 import {
