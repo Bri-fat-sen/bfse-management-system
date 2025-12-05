@@ -240,34 +240,56 @@ RULES:
         const docType = result.document_type || '';
         
         const mappedData = items.map((item, idx) => {
-          // Calculate amount: prefer actual_amount, then amount, then estimated_amount
-          const finalAmount = item.actual_amount || item.amount || item.estimated_amount || 0;
+          // Parse numbers - handle strings with commas or currency symbols
+          const parseNum = (val) => {
+            if (typeof val === 'number') return val;
+            if (!val) return 0;
+            const cleaned = String(val).replace(/[^0-9.-]/g, '');
+            return parseFloat(cleaned) || 0;
+          };
+
+          const estQty = parseNum(item.estimated_qty);
+          const estUnitCost = parseNum(item.estimated_unit_cost);
+          const estAmount = parseNum(item.estimated_amount);
+          const actQty = parseNum(item.actual_qty);
+          const actUnitCost = parseNum(item.actual_unit_cost);
+          const actAmount = parseNum(item.actual_amount);
+          const qty = parseNum(item.quantity);
+          const unitPrice = parseNum(item.unit_price);
+          const rawAmount = parseNum(item.amount);
+
+          // Calculate estimated amount if not provided but qty and cost exist
+          const calculatedEstAmount = estAmount || (estQty && estUnitCost ? estQty * estUnitCost : 0);
+          // Calculate actual amount if not provided
+          const calculatedActAmount = actAmount || (actQty && actUnitCost ? actQty * actUnitCost : 0);
+          // Final amount priority: actual_amount > amount > calculated actual > estimated
+          const finalAmount = calculatedActAmount || rawAmount || (qty && unitPrice ? qty * unitPrice : 0) || calculatedEstAmount;
           
           return {
             id: `temp-${idx}`,
-            selected: true,
+            selected: finalAmount > 0 || item.description, // Only select if has amount or description
             item_no: item.item_no || String(idx + 1),
-            description: item.description || '',
-            estimated_qty: item.estimated_qty || 0,
-            estimated_unit_cost: item.estimated_unit_cost || 0,
-            estimated_amount: item.estimated_amount || 0,
-            actual_qty: item.actual_qty || item.quantity || 0,
-            actual_unit_cost: item.actual_unit_cost || item.unit_price || 0,
-            quantity: item.quantity || item.actual_qty || 0,
-            unit_price: item.unit_price || item.actual_unit_cost || 0,
+            description: (item.description || '').trim(),
+            estimated_qty: estQty,
+            estimated_unit_cost: estUnitCost,
+            estimated_amount: calculatedEstAmount,
+            actual_qty: actQty || qty,
+            actual_unit_cost: actUnitCost || unitPrice,
+            quantity: qty || actQty,
+            unit_price: unitPrice || actUnitCost,
             amount: finalAmount,
-            unit: item.unit || '',
-            vendor: item.vendor || '',
-            contributor_name: item.contributor_name || item.customer_name || '',
-            customer_name: item.customer_name || '',
-            reference_number: item.reference_number || '',
+            unit: (item.unit || '').trim(),
+            vendor: (item.vendor || '').trim(),
+            contributor_name: (item.contributor_name || item.customer_name || '').trim(),
+            customer_name: (item.customer_name || '').trim(),
+            reference_number: (item.reference_number || '').trim(),
             extra_columns: item.extra_columns || {},
             category: (item.category || item.source || 'other').toLowerCase().replace(/\s+/g, '_'),
             document_type: docType,
             date: docDate,
             status: 'pending'
           };
-        });
+        }).filter(item => item.description || item.amount > 0); // Filter out empty rows
 
         setExtractedData(mappedData);
         const typeLabel = docType ? ` (${docType})` : '';
