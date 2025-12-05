@@ -562,7 +562,12 @@ Return every row - do not summarize or skip any data.`,
                                 <Input
                                   type="number"
                                   value={item.actual_unit_cost || ''}
-                                  onChange={(e) => updateItem(item.id, 'actual_unit_cost', parseFloat(e.target.value) || 0)}
+                                  onChange={(e) => {
+                                    const newCost = parseFloat(e.target.value) || 0;
+                                    const newAmount = (item.actual_qty || 0) * newCost;
+                                    updateItem(item.id, 'actual_unit_cost', newCost);
+                                    if (item.actual_qty > 0) updateItem(item.id, 'amount', newAmount);
+                                  }}
                                   className="h-7 text-xs w-24 text-right"
                                 />
                               </TableCell>
