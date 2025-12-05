@@ -34,10 +34,12 @@ import {
   Clock,
   CheckCircle,
   XCircle,
-  MapPin
+  MapPin,
+  Upload
 } from "lucide-react";
 import EmptyState from "@/components/ui/EmptyState";
 import BatchStockAllocation from "./BatchStockAllocation";
+import DocumentUploadExtractor from "@/components/finance/DocumentUploadExtractor";
 import { logInventoryAudit } from "./inventoryAuditHelper";
 
 const STATUS_COLORS = {
@@ -57,6 +59,7 @@ export default function BatchManagement({ products = [], warehouses = [], vehicl
   const [editingBatch, setEditingBatch] = useState(null);
   const [showAllocationDialog, setShowAllocationDialog] = useState(false);
   const [allocatingBatch, setAllocatingBatch] = useState(null);
+  const [showUploadDialog, setShowUploadDialog] = useState(false);
 
   const { data: batches = [], isLoading } = useQuery({
     queryKey: ['inventoryBatches', orgId],
@@ -269,6 +272,10 @@ export default function BatchManagement({ products = [], warehouses = [], vehicl
                 <SelectItem value="quarantine">Quarantine</SelectItem>
               </SelectContent>
             </Select>
+            <Button variant="outline" onClick={() => setShowUploadDialog(true)}>
+              <Upload className="w-4 h-4 mr-2" />
+              Upload
+            </Button>
             <Button onClick={() => { setEditingBatch(null); setShowBatchDialog(true); }} className="bg-[#1EB053]">
               <Plus className="w-4 h-4 mr-2" />
               Add Batch
@@ -456,6 +463,18 @@ export default function BatchManagement({ products = [], warehouses = [], vehicl
         allBatches={batches}
         orgId={orgId}
         currentEmployee={currentEmployee}
+      />
+
+      {/* Document Upload Dialog */}
+      <DocumentUploadExtractor
+        open={showUploadDialog}
+        onOpenChange={setShowUploadDialog}
+        type="production"
+        orgId={orgId}
+        currentEmployee={currentEmployee}
+        products={products}
+        warehouses={warehouses}
+        onSuccess={() => queryClient.invalidateQueries({ queryKey: ['inventoryBatches'] })}
       />
 
       {/* Add/Edit Dialog */}
