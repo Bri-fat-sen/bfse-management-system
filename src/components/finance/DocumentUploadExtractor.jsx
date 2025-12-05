@@ -98,7 +98,9 @@ export default function DocumentUploadExtractor({
   const [documentSummary, setDocumentSummary] = useState(null);
   const [uploadLocation, setUploadLocation] = useState(selectedLocation || '');
   const [uploadSaleType, setUploadSaleType] = useState(selectedSaleType || 'retail');
-  const [currencyMode, setCurrencyMode] = useState('auto'); // 'auto', 'sle', 'sll'
+  const [currencyMode, setCurrencyMode] = useState(null); // null = not set, 'sle', 'sll'
+  const [showCurrencyDialog, setShowCurrencyDialog] = useState(false);
+  const [pendingFile, setPendingFile] = useState(null);
 
   const baseCategories = type === "expense" ? DEFAULT_EXPENSE_CATEGORIES : DEFAULT_REVENUE_SOURCES;
   const categories = useMemo(() => {
@@ -109,7 +111,19 @@ export default function DocumentUploadExtractor({
     const file = e.target.files?.[0];
     if (!file) return;
 
+    // Ask user about currency before processing
+    if (currencyMode === null) {
+      setPendingFile(file);
+      setShowCurrencyDialog(true);
+      return;
+    }
+
+    processFile(file);
+  };
+
+  const processFile = async (file) => {
     setUploadLoading(true);
+    setShowCurrencyDialog(false);
     setExtractedData([]);
     setExtractedColumns([]);
     setDocumentSummary(null);
@@ -339,11 +353,8 @@ Focus: ${typeSpecificPrompt}
         const rawEstUnitCost = parseFloat(item.est_unit_cost) || 0;
         const rawActUnitCost = parseFloat(item.actual_unit_cost) || parseFloat(item.price) || 0;
 
-        // Auto-detect: if amounts are > 10000, likely old SLL, otherwise new SLE
-        const needsConversion = currencyMode === 'sll' || 
-          (currencyMode === 'auto' && (rawActAmount > 10000 || rawEstAmount > 10000 || rawSingleAmount > 10000));
-        
-        const conversionFactor = needsConversion ? 1000 : 1;
+        // Convert from old SLL to new SLE if needed (1000 old = 1 new)
+        const conversionFactor = currencyMode === 'sll' ? 1000 : 1;
 
         const estAmount = rawEstAmount / conversionFactor;
         const actAmount = rawActAmount / conversionFactor;
@@ -749,49 +760,6 @@ Focus: ${typeSpecificPrompt}
         </div>
 
         <div className="p-6 space-y-4 overflow-y-auto max-h-[calc(95vh-140px)]">
-          {/* Currency Selection */}
-          {extractedData.length === 0 && (
-            <div className="p-4 bg-yellow-50 rounded-xl border border-yellow-200">
-              <h3 className="font-semibold text-yellow-900 mb-3 flex items-center gap-2">
-                💱 Currency Mode
-              </h3>
-              <div className="flex gap-2 flex-wrap">
-                <Button
-                  type="button"
-                  variant={currencyMode === 'auto' ? 'default' : 'outline'}
-                  size="sm"
-                  onClick={() => setCurrencyMode('auto')}
-                  className={currencyMode === 'auto' ? 'bg-yellow-600' : ''}
-                >
-                  Auto-Detect (Recommended)
-                </Button>
-                <Button
-                  type="button"
-                  variant={currencyMode === 'sle' ? 'default' : 'outline'}
-                  size="sm"
-                  onClick={() => setCurrencyMode('sle')}
-                  className={currencyMode === 'sle' ? 'bg-green-600' : ''}
-                >
-                  New Leone (SLE) - No Conversion
-                </Button>
-                <Button
-                  type="button"
-                  variant={currencyMode === 'sll' ? 'default' : 'outline'}
-                  size="sm"
-                  onClick={() => setCurrencyMode('sll')}
-                  className={currencyMode === 'sll' ? 'bg-blue-600' : ''}
-                >
-                  Old Leone (SLL) - Divide by 1000
-                </Button>
-              </div>
-              <p className="text-xs text-yellow-700 mt-2">
-                {currencyMode === 'auto' && '✓ Auto-detect will check if values are large (>10,000) to determine conversion'}
-                {currencyMode === 'sle' && '✓ Values already in new SLE - no conversion needed'}
-                {currencyMode === 'sll' && '✓ Convert from old SLL (1000 old = 1 new)'}
-              </p>
-            </div>
-          )}
-
           {/* Location & Sale Type Selection for Revenue/Sales */}
           {(detectedType === 'revenue' || isRevenue) && (
             <div className="p-4 bg-blue-50 rounded-xl border border-blue-200">
@@ -1316,6 +1284,82 @@ Focus: ${typeSpecificPrompt}
           <div className="flex-1 bg-[#0072C6]" />
         </div>
       </DialogContent>
+
+      {/* Currency Selection Dialog */}
+      <Dialog open={showCurrencyDialog} onOpenChange={setShowCurrencyDialog}>
+        <DialogContent className="max-w-md">
+          <div className="space-y-4">
+            <div className="text-center">
+              <div className="w-16 h-16 rounded-full bg-yellow-100 mx-auto mb-4 flex items-center justify-center">
+                <span className="text-3xl">💱</span>
+              </div>
+              <h3 className="text-xl font-bold text-gray-900 mb-2">What Currency is in the Document?</h3>
+              <p className="text-sm text-gray-600">
+                Sierra Leone redenominated in July 2022: 1,000 old Leones (SLL) = 1 new Leone (SLE)
+              </p>
+            </div>
+
+            <div className="space-y-3">
+              <Button
+                type="button"
+                variant="outline"
+                className="w-full h-auto py-4 px-6 text-left hover:border-green-500 hover:bg-green-50"
+                onClick={() => {
+                  setCurrencyMode('sle');
+                  if (pendingFile) processFile(pendingFile);
+                }}
+              >
+                <div className="flex items-start gap-3">
+                  <div className="w-10 h-10 rounded-lg bg-green-100 flex items-center justify-center flex-shrink-0 mt-1">
+                    <span className="text-xl">✓</span>
+                  </div>
+                  <div className="flex-1">
+                    <div className="font-bold text-gray-900 mb-1">New Leone (SLE)</div>
+                    <div className="text-sm text-gray-600">
+                      Document shows amounts like: <strong>75</strong>, <strong>1,500</strong>, <strong>25,000</strong>
+                    </div>
+                    <div className="text-xs text-gray-500 mt-1">No conversion needed</div>
+                  </div>
+                </div>
+              </Button>
+
+              <Button
+                type="button"
+                variant="outline"
+                className="w-full h-auto py-4 px-6 text-left hover:border-blue-500 hover:bg-blue-50"
+                onClick={() => {
+                  setCurrencyMode('sll');
+                  if (pendingFile) processFile(pendingFile);
+                }}
+              >
+                <div className="flex items-start gap-3">
+                  <div className="w-10 h-10 rounded-lg bg-blue-100 flex items-center justify-center flex-shrink-0 mt-1">
+                    <span className="text-xl">🔄</span>
+                  </div>
+                  <div className="flex-1">
+                    <div className="font-bold text-gray-900 mb-1">Old Leone (SLL)</div>
+                    <div className="text-sm text-gray-600">
+                      Document shows amounts like: <strong>75,000</strong>, <strong>1,500,000</strong>, <strong>25,000,000</strong>
+                    </div>
+                    <div className="text-xs text-gray-500 mt-1">Will divide by 1,000 to convert</div>
+                  </div>
+                </div>
+              </Button>
+            </div>
+
+            <Button
+              variant="ghost"
+              className="w-full"
+              onClick={() => {
+                setShowCurrencyDialog(false);
+                setPendingFile(null);
+              }}
+            >
+              Cancel
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </Dialog>
   );
 }
