@@ -96,79 +96,62 @@ export default function DocumentUploadExtractor({
 
       const isRevenue = type === "revenue";
       const prompt = isRevenue 
-        ? `You are extracting financial data from a document. This is a REVENUE/INCOME document.
+        ? `TASK: Extract revenue/income data from the uploaded document.
 
-STEP 1: Analyze the document structure
-- Look at the ENTIRE document carefully
-- Identify if this is: SALES INVOICE, RECEIPT, TRANSPORT LOG, CONTRACT, or CONTRIBUTION RECORD
-- Find ALL tables, lists, or line items with amounts
+READ THE DOCUMENT CAREFULLY. Look at:
+1. The document title and header for the DATE (convert to YYYY-MM-DD format)
+2. Any tables with line items, products, or transactions
+3. ALL column headers - write them exactly as shown
 
-STEP 2: Find the document date
-- Look for dates in headers, footers, or document title
-- Format as YYYY-MM-DD
+FOR EACH LINE ITEM IN THE TABLE, extract these fields by reading the corresponding column:
+- item_no: The row number or "NO" column value
+- description: The exact text from the "Description", "Product", "Item", or "Details" column - copy word for word
+- quantity: The number from "Qty", "Quantity", or count column
+- unit_price: The number from "Unit Price", "Rate", "Price" column
+- amount: The number from "Amount", "Total", "Subtotal" column (this is the money value)
+- customer_name: Customer name if shown
+- reference_number: Invoice number, receipt number if shown
+- source: Choose the best match: retail_sales, wholesale_sales, transport_revenue, contract_revenue, service_income, owner_contribution, loan, grant, other
 
-STEP 3: Identify ALL column headers exactly as they appear
-- List every column name you see in any table
+RULES:
+- Extract EVERY row that has data - do not skip any
+- Copy text exactly as written in the document
+- If a cell is empty, leave that field empty
+- Numbers should be extracted as numbers (remove currency symbols)
+- The "amount" is usually in the rightmost numeric column`
+        : `TASK: Extract expense data from the uploaded document.
 
-STEP 4: Extract EVERY row/line item - DO NOT SKIP ANY
-For EACH row extract:
-- item_no: Row number, item #, or sequence
-- description: Product name, service description, item details - COPY THE EXACT TEXT
-- quantity: Number of items, trips, or units
-- unit_price: Price per unit, rate, or unit cost
-- amount: Total amount for this line (quantity x unit_price, or just the total if shown)
-- source: Classify as:
-  * "retail_sales" - store sales, POS, retail receipts
-  * "wholesale_sales" - bulk orders, wholesale invoices
-  * "vehicle_sales" - mobile sales, delivery sales
-  * "transport_revenue" - bus fares, transport fees, trip revenue
-  * "contract_revenue" - project payments, contract fees
-  * "service_income" - service fees, consulting
-  * "owner_contribution" - owner capital
-  * "ceo_contribution" - CEO funds
-  * "investor_funding" - investor money
-  * "loan" - loan proceeds
-  * "grant" - grants
-  * Or create new source name if needed
-- customer_name: Customer, buyer, or contributor name
-- reference_number: Invoice #, receipt #, reference #
-- extra_columns: Any other data as key-value pairs
+READ THE DOCUMENT CAREFULLY. Look at:
+1. The document title and header for the DATE (convert to YYYY-MM-DD format)
+2. The main table with expense line items
+3. ALL column headers - write them exactly as they appear in the document
 
-IMPORTANT: Extract ALL rows. Do not summarize. Do not skip rows.`
-        : `You are extracting financial data from a document. This is an EXPENSE document.
+COLUMN MAPPING - Match document columns to these fields:
+- "NO" or "#" or row number → item_no
+- "DETAILS" or "Description" or "Item" → description (COPY EXACT TEXT)
+- "ESTIMATED QTY" or "Est. Qty" → estimated_qty
+- "ESTIMATED UNIT COST" or "Est. Unit Price" → estimated_unit_cost  
+- "ESTIMATED AMOUNT" or "Est. Total" → estimated_amount
+- "ACTUAL QTY" or "Act. Qty" → actual_qty
+- "ACTUAL UNIT COST" or "Act. Unit Price" → actual_unit_cost
+- "ACTUAL AMOUNT" or "Act. Total" or rightmost amount column → actual_amount
+- "UNIT" → unit (bags, pieces, kg, etc.)
+- Any supplier or vendor name → vendor
 
-STEP 1: Analyze the document structure
-- Look at the ENTIRE document carefully
-- Identify if this is: INVOICE, BILL, PURCHASE ORDER, EXPENSE REPORT, or BUDGET
-- Find ALL tables, lists, or line items with amounts
+FOR EACH ROW in the table:
+1. Read the item number from the first column
+2. Read the description/details text EXACTLY as written
+3. Read each numeric value from its corresponding column
+4. The main expense amount is usually in "ACTUAL AMOUNT" or the rightmost total column
 
-STEP 2: Find the document date
-- Look for dates in headers, footers, or document title
-- Format as YYYY-MM-DD
+CATEGORY: Based on the description, assign one of: fuel, maintenance, utilities, supplies, rent, materials, labor, equipment, transport, construction, or create a fitting category name.
 
-STEP 3: Identify ALL column headers exactly as they appear
-- List every column name you see in any table
-
-STEP 4: Extract EVERY row/line item - DO NOT SKIP ANY
-For EACH row extract:
-- item_no: Row number, item #, NO, or sequence number
-- description: Item name, details, DETAILS column - COPY THE EXACT TEXT from the document
-- estimated_qty: Estimated quantity (if column exists)
-- estimated_unit_cost: Estimated unit cost/price (if column exists)
-- estimated_amount: Estimated total amount (if column exists)
-- actual_qty: Actual quantity (if column exists)
-- actual_unit_cost: Actual unit cost/price (if column exists)
-- actual_amount: Actual total amount - THIS IS THE MAIN EXPENSE AMOUNT
-- unit: Unit of measurement (bags, pieces, kg, etc.)
-- vendor: Supplier or vendor name
-- category: Classify as: fuel, maintenance, utilities, supplies, rent, salaries, transport, marketing, insurance, petty_cash, materials, labor, equipment, or create new if needed
-- extra_columns: Any other columns as key-value pairs
-
-IMPORTANT: 
-- Extract ALL rows from the table. Do not summarize.
-- If a row has data, include it.
-- Copy descriptions exactly as written in the document.
-- If actual_amount is empty but estimated_amount exists, use estimated_amount for amount.`;
+RULES:
+- Extract ALL rows with data - every single line item
+- Copy the description text exactly as it appears
+- Numbers only (no currency symbols like "Le" or commas)
+- Empty cells = leave field empty or 0 for numbers
+- Do NOT summarize or combine rows`;
 
       const schema = isRevenue 
         ? {
