@@ -1070,18 +1070,20 @@ export default function BudgetingModule({ orgId, expenses = [], sales = [], curr
 
       {/* Budget Dialog */}
       <Dialog open={showBudgetDialog} onOpenChange={setShowBudgetDialog}>
-        <DialogContent className="max-w-lg [&>button]:hidden">
-          <DialogHeader>
-            {/* Sierra Leone Flag Stripe */}
-            <div className="flex h-1 w-16 rounded-full overflow-hidden mb-3">
-              <div className="flex-1 bg-[#1EB053]" />
-              <div className="flex-1 bg-white border-y border-gray-200" />
-              <div className="flex-1 bg-[#0072C6]" />
-            </div>
-            <DialogTitle>
-              {editingBudget ? 'Edit Budget' : budgetForm.budget_type === 'revenue_target' ? 'Set Revenue Target' : 'Create Expense Budget'}
-            </DialogTitle>
-          </DialogHeader>
+        <DialogContent className="max-w-lg [&>button]:hidden overflow-hidden p-0">
+          {/* Sierra Leone Flag Stripe - Top */}
+          <div className="h-2 flex w-full">
+            <div className="flex-1 bg-[#1EB053]" />
+            <div className="flex-1 bg-white" />
+            <div className="flex-1 bg-[#0072C6]" />
+          </div>
+          
+          <div className="p-6">
+            <DialogHeader>
+              <DialogTitle>
+                {editingBudget ? 'Edit Budget' : budgetForm.budget_type === 'revenue_target' ? 'Set Revenue Target' : 'Create Expense Budget'}
+              </DialogTitle>
+            </DialogHeader>
           
           <div className="space-y-4 py-4">
             {/* Budget Type Selection */}
@@ -1273,16 +1275,24 @@ export default function BudgetingModule({ orgId, expenses = [], sales = [], curr
             </div>
           </div>
 
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setShowBudgetDialog(false)}>Cancel</Button>
-            <Button 
-              onClick={handleSubmitBudget}
-              disabled={(budgetForm.budget_type === 'expense' && !budgetForm.category) || !budgetForm.budgeted_amount}
-              className="bg-gradient-to-r from-[#1EB053] to-[#0072C6]"
-            >
-              {editingBudget ? 'Update' : budgetForm.budget_type === 'revenue_target' ? 'Set Target' : 'Create Budget'}
-            </Button>
-          </DialogFooter>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setShowBudgetDialog(false)}>Cancel</Button>
+              <Button 
+                onClick={handleSubmitBudget}
+                disabled={(budgetForm.budget_type === 'expense' && !budgetForm.category) || !budgetForm.budgeted_amount}
+                className="bg-gradient-to-r from-[#1EB053] to-[#0072C6]"
+              >
+                {editingBudget ? 'Update' : budgetForm.budget_type === 'revenue_target' ? 'Set Target' : 'Create Budget'}
+              </Button>
+            </DialogFooter>
+          </div>
+          
+          {/* Sierra Leone Flag Stripe - Bottom */}
+          <div className="h-2 flex w-full">
+            <div className="flex-1 bg-[#1EB053]" />
+            <div className="flex-1 bg-white" />
+            <div className="flex-1 bg-[#0072C6]" />
+          </div>
         </DialogContent>
       </Dialog>
     </div>
