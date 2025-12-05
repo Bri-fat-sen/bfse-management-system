@@ -23,7 +23,8 @@ import {
   Eye,
   Download,
   MoreVertical,
-  FileText
+  FileText,
+  Upload
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -57,6 +58,7 @@ import LoadingSpinner from "@/components/ui/LoadingSpinner";
 
 import ReceiptDialog from "@/components/sales/ReceiptDialog";
 import InvoiceDialog from "@/components/sales/InvoiceDialog";
+import DocumentUploadExtractor from "@/components/finance/DocumentUploadExtractor";
 
 export default function Sales() {
   const toast = useToast();
@@ -77,6 +79,7 @@ export default function Sales() {
   const [customerSearch, setCustomerSearch] = useState("");
   const [showInvoice, setShowInvoice] = useState(false);
   const [autoSetupDone, setAutoSetupDone] = useState(false);
+  const [showUploadDialog, setShowUploadDialog] = useState(false);
 
   const { data: user } = useQuery({
     queryKey: ['currentUser'],
@@ -641,10 +644,20 @@ export default function Sales() {
 
   return (
     <div className="space-y-6">
-      <PageHeader
-        title="Sales & POS"
-        subtitle="Process sales and view transactions"
-      />
+      <div className="flex items-center justify-between">
+        <PageHeader
+          title="Sales & POS"
+          subtitle="Process sales and view transactions"
+        />
+        <Button
+          onClick={() => setShowUploadDialog(true)}
+          variant="outline"
+          className="gap-2"
+        >
+          <Upload className="w-4 h-4" />
+          <span className="hidden sm:inline">Upload Sales</span>
+        </Button>
+      </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab}>
         <TabsList className="mb-6 bg-gray-100 p-1 w-full">
@@ -1147,6 +1160,19 @@ export default function Sales() {
           }
         }}
         isLoading={deleteSaleMutation.isPending}
+      />
+
+      {/* Document Upload Dialog */}
+      <DocumentUploadExtractor
+        open={showUploadDialog}
+        onOpenChange={setShowUploadDialog}
+        type="auto"
+        orgId={orgId}
+        currentEmployee={currentEmployee}
+        products={products}
+        onSuccess={() => {
+          queryClient.invalidateQueries({ queryKey: ['sales'] });
+        }}
       />
     </div>
   );
