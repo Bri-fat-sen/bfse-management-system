@@ -63,22 +63,33 @@ const DEFAULT_REVENUE_SOURCES = [
   { value: "other", label: "Other" }
 ];
 
+const RECORD_TYPES = [
+  { value: "expense", label: "Expenses", icon: "💰", description: "Operating costs, purchases, bills" },
+  { value: "revenue", label: "Revenue/Income", icon: "📈", description: "Sales, contributions, funding" },
+  { value: "production", label: "Production Batches", icon: "🏭", description: "Manufacturing, production runs" },
+  { value: "inventory", label: "Stock/Inventory", icon: "📦", description: "Stock receipts, inventory adjustments" },
+  { value: "payroll", label: "Payroll Items", icon: "👥", description: "Salaries, bonuses, deductions" },
+];
+
 export default function DocumentUploadExtractor({ 
   open, 
   onOpenChange, 
-  type = "expense",
+  type = "auto", // "auto" will detect, or force a specific type
   orgId,
   currentEmployee,
   onSuccess,
   categories: customCategories,
-  products = []
+  products = [],
+  employees = [],
+  warehouses = []
 }) {
   const toast = useToast();
   const [uploadLoading, setUploadLoading] = useState(false);
   const [extractedData, setExtractedData] = useState([]);
   const [extractedColumns, setExtractedColumns] = useState([]);
   const [dynamicCategories, setDynamicCategories] = useState([]);
-  const [detectedType, setDetectedType] = useState(type);
+  const [detectedType, setDetectedType] = useState(type === "auto" ? null : type);
+  const [documentSummary, setDocumentSummary] = useState(null);
 
   const baseCategories = type === "expense" ? DEFAULT_EXPENSE_CATEGORIES : DEFAULT_REVENUE_SOURCES;
   const categories = useMemo(() => {
