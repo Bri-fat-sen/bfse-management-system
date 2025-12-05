@@ -96,80 +96,79 @@ export default function DocumentUploadExtractor({
 
       const isRevenue = type === "revenue";
       const prompt = isRevenue 
-        ? `Extract all revenue/income line items from this document. 
+        ? `You are extracting financial data from a document. This is a REVENUE/INCOME document.
 
-IMPORTANT: First determine the TYPE of revenue document:
-- SALES document: Contains product sales, invoices, receipts with items sold, quantities, prices
-- TRANSPORT document: Contains trip records, passenger counts, route information, transport fees
-- CONTRACT document: Contains contract amounts, project payments, service agreements
-- CONTRIBUTION document: Contains owner/CEO/investor contributions, loans, grants
+STEP 1: Analyze the document structure
+- Look at the ENTIRE document carefully
+- Identify if this is: SALES INVOICE, RECEIPT, TRANSPORT LOG, CONTRACT, or CONTRIBUTION RECORD
+- Find ALL tables, lists, or line items with amounts
 
-First, identify ALL columns present in the table. Common columns include:
-- NO/Item Number
-- Description/Details/Product Name
-- Quantity/Qty
-- Unit Price/Rate
-- Total/Amount
-- Customer Name
-- Date
-- Invoice/Receipt Number
-- Route (for transport)
-- Passengers (for transport)
+STEP 2: Find the document date
+- Look for dates in headers, footers, or document title
+- Format as YYYY-MM-DD
 
-Also look for a DATE in the document header.
+STEP 3: Identify ALL column headers exactly as they appear
+- List every column name you see in any table
 
-For each row/line item found, extract ALL available data including:
-- item_no: the NO/item number
-- description: the description/product name/details field
-- quantity: quantity sold or number of trips/passengers
-- unit_price: price per unit or ticket price
-- amount: the total amount value
-- source: MUST classify correctly as one of:
-  * "retail_sales" - for retail store sales, POS receipts
-  * "wholesale_sales" - for bulk/wholesale orders
-  * "vehicle_sales" - for mobile/vehicle-based sales
-  * "transport_revenue" - for bus/transport fare collections, trip revenue
-  * "contract_revenue" - for contract payments, project fees
-  * "service_income" - for service fees, consulting
-  * "owner_contribution" - for owner capital injection
-  * "ceo_contribution" - for CEO contributions
-  * "investor_funding" - for investor money
-  * "loan" - for loan proceeds
-  * "grant" - for grants received
-  If none fit, create a new descriptive name (lowercase, use underscores).
-- customer_name: customer or contributor name if present
-- reference_number: invoice/receipt/transaction number if present
-- extra_columns: any other columns found as key-value pairs
+STEP 4: Extract EVERY row/line item - DO NOT SKIP ANY
+For EACH row extract:
+- item_no: Row number, item #, or sequence
+- description: Product name, service description, item details - COPY THE EXACT TEXT
+- quantity: Number of items, trips, or units
+- unit_price: Price per unit, rate, or unit cost
+- amount: Total amount for this line (quantity x unit_price, or just the total if shown)
+- source: Classify as:
+  * "retail_sales" - store sales, POS, retail receipts
+  * "wholesale_sales" - bulk orders, wholesale invoices
+  * "vehicle_sales" - mobile sales, delivery sales
+  * "transport_revenue" - bus fares, transport fees, trip revenue
+  * "contract_revenue" - project payments, contract fees
+  * "service_income" - service fees, consulting
+  * "owner_contribution" - owner capital
+  * "ceo_contribution" - CEO funds
+  * "investor_funding" - investor money
+  * "loan" - loan proceeds
+  * "grant" - grants
+  * Or create new source name if needed
+- customer_name: Customer, buyer, or contributor name
+- reference_number: Invoice #, receipt #, reference #
+- extra_columns: Any other data as key-value pairs
 
-Also list all column headers found in the document.
-Extract ALL line items from the document.`
-        : `Extract all expense line items from this document. 
+IMPORTANT: Extract ALL rows. Do not summarize. Do not skip rows.`
+        : `You are extracting financial data from a document. This is an EXPENSE document.
 
-First, identify ALL columns present in the table. Common columns include but are not limited to:
-- NO/Item Number
-- DETAILS/Description
-- Estimated Qty, Estimated Unit Cost, Estimated Amount
-- Actual Qty, Actual Unit Cost, Actual Amount
-- Any other columns present (unit, supplier, notes, etc.)
+STEP 1: Analyze the document structure
+- Look at the ENTIRE document carefully
+- Identify if this is: INVOICE, BILL, PURCHASE ORDER, EXPENSE REPORT, or BUDGET
+- Find ALL tables, lists, or line items with amounts
 
-Also look for a DATE in the document header or anywhere else.
+STEP 2: Find the document date
+- Look for dates in headers, footers, or document title
+- Format as YYYY-MM-DD
 
-For each row/line item found, extract ALL available data including:
-- item_no: the NO/item number
-- description: the DETAILS/description field
-- estimated_qty: Estimated Qty value (if present)
-- estimated_unit_cost: Estimated unit cost value (if present)
-- estimated_amount: Estimated Amount/total (if present)
-- actual_qty: ACTUAL QTY value (if present)
-- actual_unit_cost: ACTUAL UNIT COST value (if present)
-- actual_amount: ACTUAL AMOUNT/total (if present) - this is the main expense amount
-- unit: unit of measurement (if present)
-- vendor: vendor/supplier name (if present)
-- extra_columns: any other columns found as key-value pairs
-- category: classify based on description. Use existing categories if they match: fuel, maintenance, utilities, supplies, rent, salaries, transport, marketing, insurance, petty_cash. If no existing category fits well, create a new descriptive category name (lowercase, use underscores).
+STEP 3: Identify ALL column headers exactly as they appear
+- List every column name you see in any table
 
-Also list all column headers found in the document.
-Extract ALL line items from the document.`;
+STEP 4: Extract EVERY row/line item - DO NOT SKIP ANY
+For EACH row extract:
+- item_no: Row number, item #, NO, or sequence number
+- description: Item name, details, DETAILS column - COPY THE EXACT TEXT from the document
+- estimated_qty: Estimated quantity (if column exists)
+- estimated_unit_cost: Estimated unit cost/price (if column exists)
+- estimated_amount: Estimated total amount (if column exists)
+- actual_qty: Actual quantity (if column exists)
+- actual_unit_cost: Actual unit cost/price (if column exists)
+- actual_amount: Actual total amount - THIS IS THE MAIN EXPENSE AMOUNT
+- unit: Unit of measurement (bags, pieces, kg, etc.)
+- vendor: Supplier or vendor name
+- category: Classify as: fuel, maintenance, utilities, supplies, rent, salaries, transport, marketing, insurance, petty_cash, materials, labor, equipment, or create new if needed
+- extra_columns: Any other columns as key-value pairs
+
+IMPORTANT: 
+- Extract ALL rows from the table. Do not summarize.
+- If a row has data, include it.
+- Copy descriptions exactly as written in the document.
+- If actual_amount is empty but estimated_amount exists, use estimated_amount for amount.`;
 
       const schema = isRevenue 
         ? {
