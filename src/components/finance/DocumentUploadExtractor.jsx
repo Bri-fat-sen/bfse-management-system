@@ -628,7 +628,7 @@ Return every row - do not summarize or skip any data.`,
                     </TableBody>
                   </Table>
                 </div>
-              </ScrollArea>
+              </div>
 
               <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
                 <div>
