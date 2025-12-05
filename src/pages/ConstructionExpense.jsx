@@ -325,6 +325,8 @@ The document contains a table with columns:
 - ACTUAL UNIT COST (actual cost per unit)
 - ACTUAL AMOUNT (total actual cost)
 
+Also look for a DATE in the document header or anywhere else (could be labeled as Date, Invoice Date, Document Date, etc).
+
 For each row/line item found, extract:
 - item_no: the NO/item number
 - description: the DETAILS field
@@ -336,11 +338,14 @@ For each row/line item found, extract:
 - actual_amount: ACTUAL AMOUNT value (this is the main expense amount)
 - category: classify based on description as one of: materials, labor, equipment, permits, foundation, roofing, electrical, plumbing, finishing, landscaping, transport, other
 
+Also extract the document date if found.
+
 Extract ALL line items from the document table.`,
         file_urls: [file_url],
         response_json_schema: {
           type: "object",
           properties: {
+            document_date: { type: "string", description: "Date found in document in YYYY-MM-DD format" },
             expenses: {
               type: "array",
               items: {
@@ -366,6 +371,7 @@ Extract ALL line items from the document table.`,
       });
 
       const expenses = result.expenses || [];
+      const docDate = result.document_date || format(new Date(), 'yyyy-MM-dd');
       if (expenses.length > 0) {
         setExtractedExpenses(expenses.map((exp, idx) => ({
           id: `temp-${idx}`,
@@ -379,11 +385,11 @@ Extract ALL line items from the document table.`,
           actual_unit_cost: exp.actual_unit_cost || 0,
           amount: exp.actual_amount || 0,
           category: exp.category || 'other',
-          date: format(new Date(), 'yyyy-MM-dd'),
+          date: docDate,
           status: 'pending',
           notes: `Est: ${exp.estimated_qty || 0} x Le${(exp.estimated_unit_cost || 0).toLocaleString()} = Le${(exp.estimated_amount || 0).toLocaleString()}`
         })));
-        toast.success("Data extracted", `Found ${expenses.length} expense(s) in document`);
+        toast.success("Data extracted", `Found ${expenses.length} expense(s) in document${docDate !== format(new Date(), 'yyyy-MM-dd') ? ` (Date: ${docDate})` : ''}`);
       } else {
         toast.warning("No expenses found", "Could not find expense data in the document");
       }
