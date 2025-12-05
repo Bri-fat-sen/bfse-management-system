@@ -414,25 +414,35 @@ Extract ALL line items from the document table.`,
           toast.info("New categories added", `${newCategories.map(c => c.label).join(', ')}`);
         }
 
-        setExtractedExpenses(expenses.map((exp, idx) => ({
-          id: `temp-${idx}`,
-          selected: true,
-          item_no: exp.item_no || '',
-          description: exp.description || '',
-          estimated_qty: exp.estimated_qty || 0,
-          estimated_unit_cost: exp.estimated_unit_cost || 0,
-          estimated_amount: exp.estimated_amount || 0,
-          actual_qty: exp.actual_qty || 0,
-          actual_unit_cost: exp.actual_unit_cost || 0,
-          amount: exp.actual_amount || 0,
-          unit: exp.unit || '',
-          supplier: exp.supplier || '',
-          extra_columns: exp.extra_columns || {},
-          category: (exp.category || 'other').toLowerCase().replace(/\s+/g, '_'),
-          date: docDate,
-          status: 'pending',
-          notes: `Est: ${exp.estimated_qty || 0} x Le${(exp.estimated_unit_cost || 0).toLocaleString()} = Le${(exp.estimated_amount || 0).toLocaleString()}`
-        })));
+        setExtractedExpenses(expenses.map((exp, idx) => {
+          const estQty = exp.estimated_qty || 0;
+          const estCost = exp.estimated_unit_cost || 0;
+          const estAmount = exp.estimated_amount || (estQty * estCost);
+          
+          const actQty = exp.actual_qty || 0;
+          const actCost = exp.actual_unit_cost || 0;
+          const actAmount = exp.actual_amount || (actQty * actCost);
+          
+          return {
+            id: `temp-${idx}`,
+            selected: true,
+            item_no: exp.item_no || '',
+            description: exp.description || '',
+            estimated_qty: estQty,
+            estimated_unit_cost: estCost,
+            estimated_amount: estAmount,
+            actual_qty: actQty,
+            actual_unit_cost: actCost,
+            amount: actAmount,
+            unit: exp.unit || '',
+            supplier: exp.supplier || '',
+            extra_columns: exp.extra_columns || {},
+            category: (exp.category || 'other').toLowerCase().replace(/\s+/g, '_'),
+            date: docDate,
+            status: 'pending',
+            notes: estAmount > 0 ? `Est: ${estQty} x Le${estCost.toLocaleString()} = Le${estAmount.toLocaleString()}` : 'Imported from document'
+          };
+        }));
         toast.success("Data extracted", `Found ${expenses.length} expense(s) in document${columnHeaders.length > 0 ? ` with ${columnHeaders.length} columns` : ''}${docDate !== format(new Date(), 'yyyy-MM-dd') ? ` (Date: ${docDate})` : ''}`);
       } else {
         toast.warning("No expenses found", "Could not find expense data in the document");
@@ -490,9 +500,27 @@ Extract ALL line items from the document table.`,
   };
 
   const updateExtractedExpense = (id, field, value) => {
-    setExtractedExpenses(prev => prev.map(e => 
-      e.id === id ? { ...e, [field]: value } : e
-    ));
+    setExtractedExpenses(prev => prev.map(e => {
+      if (e.id !== id) return e;
+      
+      const updated = { ...e, [field]: value };
+      
+      // Auto-calculate estimated amount when qty or unit cost changes
+      if (field === 'estimated_qty' || field === 'estimated_unit_cost') {
+        const qty = field === 'estimated_qty' ? value : e.estimated_qty || 0;
+        const cost = field === 'estimated_unit_cost' ? value : e.estimated_unit_cost || 0;
+        updated.estimated_amount = qty * cost;
+      }
+      
+      // Auto-calculate actual amount when qty or unit cost changes
+      if (field === 'actual_qty' || field === 'actual_unit_cost') {
+        const qty = field === 'actual_qty' ? value : e.actual_qty || 0;
+        const cost = field === 'actual_unit_cost' ? value : e.actual_unit_cost || 0;
+        updated.amount = qty * cost;
+      }
+      
+      return updated;
+    }));
   };
 
   if (!user || isLoading) {
@@ -1149,13 +1177,7 @@ Extract ALL line items from the document table.`,
                             <Input
                               type="number"
                               value={exp.estimated_qty || ''}
-                              onChange={(e) => {
-                                const newQty = parseFloat(e.target.value) || 0;
-                                updateExtractedExpense(exp.id, 'estimated_qty', newQty);
-                                // Auto-calculate estimated amount
-                                const newEstAmount = newQty * (exp.estimated_unit_cost || 0);
-                                updateExtractedExpense(exp.id, 'estimated_amount', newEstAmount);
-                              }}
+                              onChange={(e) => updateExtractedExpense(exp.id, 'estimated_qty', parseFloat(e.target.value) || 0)}
                               className="h-8 text-xs w-full text-center"
                             />
                           </TableCell>
@@ -1163,13 +1185,7 @@ Extract ALL line items from the document table.`,
                             <Input
                               type="number"
                               value={exp.estimated_unit_cost || ''}
-                              onChange={(e) => {
-                                const newCost = parseFloat(e.target.value) || 0;
-                                updateExtractedExpense(exp.id, 'estimated_unit_cost', newCost);
-                                // Auto-calculate estimated amount
-                                const newEstAmount = (exp.estimated_qty || 0) * newCost;
-                                updateExtractedExpense(exp.id, 'estimated_amount', newEstAmount);
-                              }}
+                              onChange={(e) => updateExtractedExpense(exp.id, 'estimated_unit_cost', parseFloat(e.target.value) || 0)}
                               className="h-8 text-xs w-full text-right"
                             />
                           </TableCell>
