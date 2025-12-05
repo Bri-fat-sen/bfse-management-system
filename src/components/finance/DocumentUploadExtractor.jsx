@@ -334,10 +334,34 @@ Return every row - do not summarize or skip any data.`,
 
     setUploadLoading(true);
     try {
-      const isRevenue = type === "revenue";
+      const isRevenue = detectedType === "revenue";
+      const isProduction = detectedType === "production";
       
+      let batchCount = 0;
+      let expenseCount = 0;
+      let revenueCount = 0;
+
       for (const item of selectedItems) {
-        if (isRevenue) {
+        // Create production batch if product is matched and it's production data
+        if (isProduction && item.product_id && item.is_production) {
+          const batchNum = item.batch_number || `BATCH-${format(new Date(), 'yyyyMMdd')}-${String(batchCount + 1).padStart(3, '0')}`;
+          
+          await base44.entities.ProductionBatch.create({
+            organisation_id: orgId,
+            batch_number: batchNum,
+            product_id: item.product_id,
+            product_name: item.product_name || item.description,
+            production_date: item.date || format(new Date(), 'yyyy-MM-dd'),
+            expiry_date: item.expiry_date || '',
+            quantity_produced: item.quantity || item.actual_qty || 0,
+            quality_status: 'pending',
+            supervisor_id: currentEmployee?.id,
+            supervisor_name: currentEmployee?.full_name,
+            status: 'completed',
+            notes: `Imported from document. ${item.description || ''}`
+          });
+          batchCount++;
+        } else if (isRevenue) {
           await base44.entities.Revenue.create({
             organisation_id: orgId,
             source: item.category,
@@ -351,6 +375,7 @@ Return every row - do not summarize or skip any data.`,
             status: 'pending',
             notes: `Imported from document`
           });
+          revenueCount++;
         } else {
           await base44.entities.Expense.create({
             organisation_id: orgId,
@@ -367,13 +392,21 @@ Return every row - do not summarize or skip any data.`,
               ? `Est: ${item.estimated_qty} x Le${item.estimated_unit_cost.toLocaleString()} = Le${item.estimated_amount.toLocaleString()}`
               : 'Imported from document'
           });
+          expenseCount++;
         }
       }
 
       onOpenChange(false);
       setExtractedData([]);
       setExtractedColumns([]);
-      toast.success("Records created", `${selectedItems.length} ${type}(s) added`);
+      setDetectedType(type);
+      
+      const messages = [];
+      if (batchCount > 0) messages.push(`${batchCount} production batch(es)`);
+      if (expenseCount > 0) messages.push(`${expenseCount} expense(s)`);
+      if (revenueCount > 0) messages.push(`${revenueCount} revenue(s)`);
+      
+      toast.success("Records created", messages.join(', ') + ' added');
       
       if (onSuccess) onSuccess();
     } catch (error) {
