@@ -29,7 +29,8 @@ import {
   Loader2,
   FileUp,
   CheckCircle,
-  Hammer
+  Hammer,
+  MapPin
 } from "lucide-react";
 import { useToast } from "@/components/ui/Toast";
 
