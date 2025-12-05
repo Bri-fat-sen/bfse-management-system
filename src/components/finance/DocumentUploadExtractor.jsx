@@ -135,6 +135,10 @@ export default function DocumentUploadExtractor({
                 amount: { type: "number", description: "Amount/Total if only one amount column" },
                 vendor: { type: "string", description: "Supplier or vendor name if shown" },
                 customer: { type: "string", description: "Customer name if shown" },
+                sku: { type: "string", description: "Product SKU or product code if shown" },
+                product_name: { type: "string", description: "Product name if this is production data" },
+                batch_number: { type: "string", description: "Batch number or lot number if shown" },
+                expiry_date: { type: "string", description: "Expiry date in YYYY-MM-DD format if shown" },
                 notes: { type: "string", description: "Any notes or remarks" }
               }
             }
