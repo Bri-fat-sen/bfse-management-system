@@ -98,6 +98,7 @@ export default function DocumentUploadExtractor({
   const [documentSummary, setDocumentSummary] = useState(null);
   const [uploadLocation, setUploadLocation] = useState(selectedLocation || '');
   const [uploadSaleType, setUploadSaleType] = useState(selectedSaleType || 'retail');
+  const [currencyMode, setCurrencyMode] = useState('auto'); // 'auto', 'sle', 'sll'
 
   const baseCategories = type === "expense" ? DEFAULT_EXPENSE_CATEGORIES : DEFAULT_REVENUE_SOURCES;
   const categories = useMemo(() => {
@@ -331,16 +332,28 @@ Focus: ${typeSpecificPrompt}
         const matchedProduct = matchProductBySku(item.sku, item.product_name || item.details);
         const matchedCustomer = matchCustomer(item.customer);
 
-        // Convert from old SLL to new SLE (divide by 1000, redenomination July 2022: 1000 SLL = 1 SLE)
-        const estAmount = (parseFloat(item.est_total) || parseFloat(item.estimated_amount) || 0) / 1000;
-        const actAmount = (parseFloat(item.actual_total) || parseFloat(item.actual_amount) || 0) / 1000;
-        const singleAmount = (parseFloat(item.amount) || 0) / 1000;
+        // Currency conversion logic
+        const rawEstAmount = parseFloat(item.est_total) || parseFloat(item.estimated_amount) || 0;
+        const rawActAmount = parseFloat(item.actual_total) || parseFloat(item.actual_amount) || 0;
+        const rawSingleAmount = parseFloat(item.amount) || 0;
+        const rawEstUnitCost = parseFloat(item.est_unit_cost) || 0;
+        const rawActUnitCost = parseFloat(item.actual_unit_cost) || parseFloat(item.price) || 0;
+
+        // Auto-detect: if amounts are > 10000, likely old SLL, otherwise new SLE
+        const needsConversion = currencyMode === 'sll' || 
+          (currencyMode === 'auto' && (rawActAmount > 10000 || rawEstAmount > 10000 || rawSingleAmount > 10000));
+        
+        const conversionFactor = needsConversion ? 1000 : 1;
+
+        const estAmount = rawEstAmount / conversionFactor;
+        const actAmount = rawActAmount / conversionFactor;
+        const singleAmount = rawSingleAmount / conversionFactor;
         const finalAmount = actAmount || singleAmount || estAmount || 0;
 
         const estQty = parseFloat(item.est_qty) || 0;
         const actQty = parseFloat(item.actual_qty) || parseFloat(item.qty) || 0;
-        const estUnitCost = (parseFloat(item.est_unit_cost) || 0) / 1000;
-        const actUnitCost = (parseFloat(item.actual_unit_cost) || parseFloat(item.price) || 0) / 1000;
+        const estUnitCost = rawEstUnitCost / conversionFactor;
+        const actUnitCost = rawActUnitCost / conversionFactor;
 
         const description = item.details || item.description || '';
         const category = categorizeItem(description);
@@ -736,6 +749,49 @@ Focus: ${typeSpecificPrompt}
         </div>
 
         <div className="p-6 space-y-4 overflow-y-auto max-h-[calc(95vh-140px)]">
+          {/* Currency Selection */}
+          {extractedData.length === 0 && (
+            <div className="p-4 bg-yellow-50 rounded-xl border border-yellow-200">
+              <h3 className="font-semibold text-yellow-900 mb-3 flex items-center gap-2">
+                💱 Currency Mode
+              </h3>
+              <div className="flex gap-2 flex-wrap">
+                <Button
+                  type="button"
+                  variant={currencyMode === 'auto' ? 'default' : 'outline'}
+                  size="sm"
+                  onClick={() => setCurrencyMode('auto')}
+                  className={currencyMode === 'auto' ? 'bg-yellow-600' : ''}
+                >
+                  Auto-Detect (Recommended)
+                </Button>
+                <Button
+                  type="button"
+                  variant={currencyMode === 'sle' ? 'default' : 'outline'}
+                  size="sm"
+                  onClick={() => setCurrencyMode('sle')}
+                  className={currencyMode === 'sle' ? 'bg-green-600' : ''}
+                >
+                  New Leone (SLE) - No Conversion
+                </Button>
+                <Button
+                  type="button"
+                  variant={currencyMode === 'sll' ? 'default' : 'outline'}
+                  size="sm"
+                  onClick={() => setCurrencyMode('sll')}
+                  className={currencyMode === 'sll' ? 'bg-blue-600' : ''}
+                >
+                  Old Leone (SLL) - Divide by 1000
+                </Button>
+              </div>
+              <p className="text-xs text-yellow-700 mt-2">
+                {currencyMode === 'auto' && '✓ Auto-detect will check if values are large (>10,000) to determine conversion'}
+                {currencyMode === 'sle' && '✓ Values already in new SLE - no conversion needed'}
+                {currencyMode === 'sll' && '✓ Convert from old SLL (1000 old = 1 new)'}
+              </p>
+            </div>
+          )}
+
           {/* Location & Sale Type Selection for Revenue/Sales */}
           {(detectedType === 'revenue' || isRevenue) && (
             <div className="p-4 bg-blue-50 rounded-xl border border-blue-200">
