@@ -66,17 +66,19 @@ const DEFAULT_REVENUE_SOURCES = [
 export default function DocumentUploadExtractor({ 
   open, 
   onOpenChange, 
-  type = "expense", // "expense" or "revenue"
+  type = "expense", // "expense", "revenue", or "production"
   orgId,
   currentEmployee,
   onSuccess,
-  categories: customCategories
+  categories: customCategories,
+  products = [] // Pass products list for SKU matching
 }) {
   const toast = useToast();
   const [uploadLoading, setUploadLoading] = useState(false);
   const [extractedData, setExtractedData] = useState([]);
   const [extractedColumns, setExtractedColumns] = useState([]);
   const [dynamicCategories, setDynamicCategories] = useState([]);
+  const [detectedType, setDetectedType] = useState(type); // Can auto-detect production batches
 
   const baseCategories = type === "expense" ? DEFAULT_EXPENSE_CATEGORIES : DEFAULT_REVENUE_SOURCES;
   const categories = useMemo(() => {
