@@ -262,30 +262,35 @@ IMPORTANT:
 
         const docType = result.document_type || '';
         
-        const mappedData = items.map((item, idx) => ({
-          id: `temp-${idx}`,
-          selected: true,
-          item_no: item.item_no || '',
-          description: item.description || '',
-          estimated_qty: item.estimated_qty || 0,
-          estimated_unit_cost: item.estimated_unit_cost || 0,
-          estimated_amount: item.estimated_amount || 0,
-          actual_qty: item.actual_qty || 0,
-          actual_unit_cost: item.actual_unit_cost || 0,
-          quantity: item.quantity || 0,
-          unit_price: item.unit_price || 0,
-          amount: item.actual_amount || item.amount || 0,
-          unit: item.unit || '',
-          vendor: item.vendor || '',
-          contributor_name: item.contributor_name || item.customer_name || '',
-          customer_name: item.customer_name || '',
-          reference_number: item.reference_number || '',
-          extra_columns: item.extra_columns || {},
-          category: (item.category || item.source || 'other').toLowerCase().replace(/\s+/g, '_'),
-          document_type: docType,
-          date: docDate,
-          status: 'pending'
-        }));
+        const mappedData = items.map((item, idx) => {
+          // Calculate amount: prefer actual_amount, then amount, then estimated_amount
+          const finalAmount = item.actual_amount || item.amount || item.estimated_amount || 0;
+          
+          return {
+            id: `temp-${idx}`,
+            selected: true,
+            item_no: item.item_no || String(idx + 1),
+            description: item.description || '',
+            estimated_qty: item.estimated_qty || 0,
+            estimated_unit_cost: item.estimated_unit_cost || 0,
+            estimated_amount: item.estimated_amount || 0,
+            actual_qty: item.actual_qty || item.quantity || 0,
+            actual_unit_cost: item.actual_unit_cost || item.unit_price || 0,
+            quantity: item.quantity || item.actual_qty || 0,
+            unit_price: item.unit_price || item.actual_unit_cost || 0,
+            amount: finalAmount,
+            unit: item.unit || '',
+            vendor: item.vendor || '',
+            contributor_name: item.contributor_name || item.customer_name || '',
+            customer_name: item.customer_name || '',
+            reference_number: item.reference_number || '',
+            extra_columns: item.extra_columns || {},
+            category: (item.category || item.source || 'other').toLowerCase().replace(/\s+/g, '_'),
+            document_type: docType,
+            date: docDate,
+            status: 'pending'
+          };
+        });
 
         setExtractedData(mappedData);
         const typeLabel = docType ? ` (${docType})` : '';
