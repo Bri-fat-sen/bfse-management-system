@@ -948,7 +948,7 @@ export default function ConstructionExpense() {
               <div className="border-2 border-dashed border-gray-300 rounded-xl p-8 text-center hover:border-[#0072C6] transition-colors">
                 <input
                   type="file"
-                  accept=".doc,.docx,.pdf,.csv"
+                  accept=".pdf,.csv,.png,.jpg,.jpeg"
                   onChange={handleFileUpload}
                   className="hidden"
                   id="doc-upload"
@@ -967,7 +967,8 @@ export default function ConstructionExpense() {
                         <Upload className="w-8 h-8 text-[#0072C6]" />
                       </div>
                       <p className="text-gray-600 font-medium">Click to upload document</p>
-                      <p className="text-sm text-gray-400">Supports Word (.doc, .docx), PDF, and CSV files</p>
+                      <p className="text-sm text-gray-400">Supports PDF, CSV, and images (PNG, JPG)</p>
+                      <p className="text-xs text-gray-400 mt-1">Tip: Save Word docs as PDF before uploading</p>
                     </div>
                   )}
                 </label>
