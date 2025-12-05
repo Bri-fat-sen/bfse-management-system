@@ -406,8 +406,45 @@ Focus: ${typeSpecificPrompt}
       let expenseCount = 0;
       let revenueCount = 0;
 
+      const isInventory = detectedType === "inventory";
+      const isPayroll = detectedType === "payroll";
+      let inventoryCount = 0;
+      let payrollCount = 0;
+
       for (const item of selectedItems) {
-        if (isProduction && item.product_id && item.is_production) {
+        if (isPayroll && item.employee_id) {
+          // Create payroll-related record or just log for now
+          // This would typically feed into the payroll processing system
+          await base44.entities.Expense.create({
+            organisation_id: orgId,
+            category: 'salaries',
+            description: `Payroll: ${item.employee_name} - ${item.description || 'Salary payment'}`,
+            amount: item.net_pay || item.amount || 0,
+            date: item.date,
+            payment_method: 'bank_transfer',
+            recorded_by: currentEmployee?.id,
+            recorded_by_name: currentEmployee?.full_name,
+            status: 'pending',
+            notes: `Base: Le${(item.base_salary || 0).toLocaleString()}, Bonus: Le${(item.bonus || 0).toLocaleString()}, Deductions: Le${(item.deduction || 0).toLocaleString()}`
+          });
+          payrollCount++;
+        } else if (isInventory && item.product_id) {
+          // Create stock movement record
+          await base44.entities.StockMovement.create({
+            organisation_id: orgId,
+            product_id: item.product_id,
+            product_name: item.product_name || item.description,
+            warehouse_id: item.warehouse_id || '',
+            warehouse_name: item.warehouse_name || '',
+            movement_type: item.stock_in > 0 ? 'in' : 'out',
+            quantity: item.stock_in || item.stock_out || item.quantity || 0,
+            reference_type: 'manual',
+            recorded_by: currentEmployee?.id,
+            recorded_by_name: currentEmployee?.full_name,
+            notes: `Imported from document. ${item.description || ''}`
+          });
+          inventoryCount++;
+        } else if (isProduction && item.product_id && item.is_production) {
           const batchNum = item.batch_number || `BATCH-${format(new Date(), 'yyyyMMdd')}-${String(batchCount + 1).padStart(3, '0')}`;
           
           await base44.entities.ProductionBatch.create({
