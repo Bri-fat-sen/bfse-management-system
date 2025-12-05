@@ -448,8 +448,8 @@ Return every row - do not summarize or skip any data.`,
               <FileUp className="w-6 h-6 text-white" />
             </div>
             <div>
-              <h2 className="text-xl font-bold">Import {isRevenue ? 'Revenue' : 'Expenses'} from Document</h2>
-              <p className="text-white/80 text-sm">Upload PDF, CSV, or images to extract {isRevenue ? 'revenue' : 'expense'} data</p>
+              <h2 className="text-xl font-bold">Import {isProduction ? 'Production Batches' : isRevenue ? 'Revenue' : 'Expenses'} from Document</h2>
+              <p className="text-white/80 text-sm">Upload PDF, CSV, or images to extract {isProduction ? 'production batch' : isRevenue ? 'revenue' : 'expense'} data</p>
             </div>
           </div>
         </div>
