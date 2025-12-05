@@ -331,15 +331,16 @@ Focus: ${typeSpecificPrompt}
         const matchedProduct = matchProductBySku(item.sku, item.product_name || item.details);
         const matchedCustomer = matchCustomer(item.customer);
 
-        const estAmount = parseFloat(item.est_total) || parseFloat(item.estimated_amount) || 0;
-        const actAmount = parseFloat(item.actual_total) || parseFloat(item.actual_amount) || 0;
-        const singleAmount = parseFloat(item.amount) || 0;
+        // Convert from old SLL to new SLE (divide by 10)
+        const estAmount = (parseFloat(item.est_total) || parseFloat(item.estimated_amount) || 0) / 10;
+        const actAmount = (parseFloat(item.actual_total) || parseFloat(item.actual_amount) || 0) / 10;
+        const singleAmount = (parseFloat(item.amount) || 0) / 10;
         const finalAmount = actAmount || singleAmount || estAmount || 0;
 
         const estQty = parseFloat(item.est_qty) || 0;
         const actQty = parseFloat(item.actual_qty) || parseFloat(item.qty) || 0;
-        const estUnitCost = parseFloat(item.est_unit_cost) || 0;
-        const actUnitCost = parseFloat(item.actual_unit_cost) || parseFloat(item.price) || 0;
+        const estUnitCost = (parseFloat(item.est_unit_cost) || 0) / 10;
+        const actUnitCost = (parseFloat(item.actual_unit_cost) || parseFloat(item.price) || 0) / 10;
 
         const description = item.details || item.description || '';
         const category = categorizeItem(description);
@@ -894,9 +895,8 @@ Focus: ${typeSpecificPrompt}
                 </div>
               )}
 
-              <div className="h-[calc(95vh-380px)] min-h-[300px] border rounded-lg overflow-auto">
-                <div className={isProduction ? "min-w-[1200px]" : isRevenue ? "min-w-[900px]" : "min-w-[1400px]"}>
-                  <Table>
+              <div className="h-[calc(95vh-380px)] min-h-[300px] border rounded-lg overflow-x-auto overflow-y-auto">
+                <Table className={isProduction ? "min-w-[1200px]" : isRevenue ? "min-w-[900px]" : "min-w-[1600px]"}>
                     <TableHeader>
                       <TableRow className="bg-gray-50">
                         <TableHead className="w-10">
@@ -1137,9 +1137,10 @@ Focus: ${typeSpecificPrompt}
                           <TableCell className="bg-green-50/50">
                             <Input
                               type="number"
+                              step="0.01"
                               value={item.amount || ''}
                               onChange={(e) => updateItem(item.id, 'amount', parseFloat(e.target.value) || 0)}
-                              className="h-7 text-xs w-24 text-right font-medium"
+                              className="h-7 text-xs w-28 text-right font-medium"
                               />
                               </TableCell>
                           {!isRevenue && !isProduction && (
@@ -1196,9 +1197,8 @@ Focus: ${typeSpecificPrompt}
                         </TableRow>
                       ))}
                     </TableBody>
-                  </Table>
-                </div>
-              </div>
+                    </Table>
+                    </div>
 
               <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
                 <div>
