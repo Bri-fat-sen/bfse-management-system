@@ -79,6 +79,8 @@ export default function ExpenseManagement() {
   const [selectedExpense, setSelectedExpense] = useState(null);
   const [showDetailDialog, setShowDetailDialog] = useState(false);
   const [showUploadDialog, setShowUploadDialog] = useState(false);
+  const [showBulkDeleteDialog, setShowBulkDeleteDialog] = useState(false);
+  const [bulkDeleteLoading, setBulkDeleteLoading] = useState(false);
 
   const { data: user } = useQuery({
     queryKey: ['currentUser'],
@@ -185,6 +187,24 @@ export default function ExpenseManagement() {
     setShowDetailDialog(true);
   };
 
+  const handleBulkDelete = async () => {
+    setBulkDeleteLoading(true);
+    try {
+      const expensesToDelete = filteredExpenses;
+      for (const expense of expensesToDelete) {
+        await base44.entities.Expense.delete(expense.id);
+      }
+      queryClient.invalidateQueries({ queryKey: ['allExpenses', orgId] });
+      queryClient.invalidateQueries({ queryKey: ['expenses', orgId] });
+      toast.success("Bulk delete complete", `Deleted ${expensesToDelete.length} expense(s)`);
+      setShowBulkDeleteDialog(false);
+    } catch (error) {
+      toast.error("Bulk delete failed", error.message);
+    } finally {
+      setBulkDeleteLoading(false);
+    }
+  };
+
   if (!user || isLoading) {
     return <LoadingSpinner message="Loading Expenses..." fullScreen={true} />;
   }
@@ -209,13 +229,25 @@ export default function ExpenseManagement() {
           subtitle="Review and approve all expense submissions"
           icon={Shield}
         />
-        <Button
-          onClick={() => setShowUploadDialog(true)}
-          className="bg-gradient-to-r from-[#1EB053] to-[#0072C6]"
-        >
-          <Upload className="w-4 h-4 mr-2" />
-          Upload Documents
-        </Button>
+        <div className="flex gap-2">
+          {filteredExpenses.length > 0 && (
+            <Button
+              variant="outline"
+              onClick={() => setShowBulkDeleteDialog(true)}
+              className="border-red-500 text-red-600 hover:bg-red-50"
+            >
+              <XCircle className="w-4 h-4 mr-2" />
+              Delete All ({filteredExpenses.length})
+            </Button>
+          )}
+          <Button
+            onClick={() => setShowUploadDialog(true)}
+            className="bg-gradient-to-r from-[#1EB053] to-[#0072C6]"
+          >
+            <Upload className="w-4 h-4 mr-2" />
+            Upload Documents
+          </Button>
+        </div>
       </div>
 
       {/* Sierra Leone Flag Stripe */}
@@ -527,6 +559,54 @@ export default function ExpenseManagement() {
           queryClient.invalidateQueries({ queryKey: ['expenses', orgId] });
         }}
       />
+
+      {/* Bulk Delete Confirmation Dialog */}
+      <Dialog open={showBulkDeleteDialog} onOpenChange={setShowBulkDeleteDialog}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-red-600">
+              <AlertTriangle className="w-5 h-5" />
+              Confirm Bulk Delete
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <p className="text-gray-700">
+              Are you sure you want to delete <strong>{filteredExpenses.length} expense record(s)</strong>?
+            </p>
+            <div className="bg-red-50 border border-red-200 rounded-lg p-3">
+              <p className="text-sm text-red-700 font-medium">⚠️ This action cannot be undone!</p>
+              <p className="text-xs text-red-600 mt-1">All selected expense records will be permanently deleted.</p>
+            </div>
+            <div className="flex gap-2 pt-2">
+              <Button
+                variant="outline"
+                className="flex-1"
+                onClick={() => setShowBulkDeleteDialog(false)}
+                disabled={bulkDeleteLoading}
+              >
+                Cancel
+              </Button>
+              <Button
+                className="flex-1 bg-red-600 hover:bg-red-700"
+                onClick={handleBulkDelete}
+                disabled={bulkDeleteLoading}
+              >
+                {bulkDeleteLoading ? (
+                  <>
+                    <Clock className="w-4 h-4 mr-2 animate-spin" />
+                    Deleting...
+                  </>
+                ) : (
+                  <>
+                    <XCircle className="w-4 h-4 mr-2" />
+                    Delete All
+                  </>
+                )}
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
