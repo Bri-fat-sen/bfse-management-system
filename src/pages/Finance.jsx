@@ -190,7 +190,7 @@ export default function Finance() {
   const createRevenueMutation = useMutation({
     mutationFn: (data) => base44.entities.Revenue.create(data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['revenues'] });
+      queryClient.invalidateQueries({ queryKey: ['revenues', orgId] });
       setShowRevenueDialog(false);
       setEditingRevenue(null);
       toast.success("Revenue recorded", "Contribution has been added");
@@ -204,7 +204,7 @@ export default function Finance() {
   const updateRevenueMutation = useMutation({
     mutationFn: ({ id, data }) => base44.entities.Revenue.update(id, data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['revenues'] });
+      queryClient.invalidateQueries({ queryKey: ['revenues', orgId] });
       setShowRevenueDialog(false);
       setEditingRevenue(null);
       toast.success("Revenue updated");
@@ -217,7 +217,7 @@ export default function Finance() {
   const deleteRevenueMutation = useMutation({
     mutationFn: (id) => base44.entities.Revenue.delete(id),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['revenues'] });
+      queryClient.invalidateQueries({ queryKey: ['revenues', orgId] });
       toast.success("Revenue deleted");
     },
     onError: (error) => {
