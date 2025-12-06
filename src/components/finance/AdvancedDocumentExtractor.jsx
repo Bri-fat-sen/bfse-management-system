@@ -71,9 +71,11 @@ export default function AdvancedDocumentExtractor({
 
   // Stage 1: Advanced Document Analysis with AI
   const analyzeDocument = async (file_url, file) => {
-    setUploadStage("analyzing");
-    
-    const analysisResult = await base44.integrations.Core.InvokeLLM({
+    try {
+      setUploadStage("analyzing");
+      console.log("Starting document analysis...");
+      
+      const analysisResult = await base44.integrations.Core.InvokeLLM({
       prompt: `You are an advanced document analysis AI. Analyze this business document comprehensively.
 
 **Primary Analysis:**
@@ -160,16 +162,23 @@ Provide detailed, accurate analysis with high confidence.`,
           }
         }
       }
-    });
+      });
 
-    return analysisResult;
+      console.log("Analysis complete:", analysisResult);
+      return analysisResult;
+    } catch (error) {
+      console.error("Analysis error:", error);
+      throw new Error("Failed to analyze document: " + error.message);
+    }
   };
 
   // Stage 2: Advanced Data Extraction with Multi-Pass
   const extractDocumentData = async (file_url, analysis) => {
-    const recordType = detectedType || analysis.record_type;
-    
-    const extractionPrompt = `Extract ALL tabular data from this business document. Read EVERY row carefully.
+    try {
+      console.log("Starting data extraction...");
+      const recordType = detectedType || analysis.record_type;
+      
+      const extractionPrompt = `Extract ALL tabular data from this business document. Read EVERY row carefully.
 
 CRITICAL INSTRUCTIONS:
 1. Look for ANY tables, lists, or structured data in the document
@@ -224,9 +233,14 @@ Provide each row as a separate data object with all fields you can identify.`;
           extraction_notes: { type: "string" }
         }
       }
-    });
+      });
 
-    return dataExtractionResult;
+      console.log("Extraction complete:", dataExtractionResult);
+      return dataExtractionResult;
+    } catch (error) {
+      console.error("Extraction error:", error);
+      throw new Error("Failed to extract data: " + error.message);
+    }
   };
 
   // Stage 3: Simple validation
@@ -322,10 +336,12 @@ Provide each row as a separate data object with all fields you can identify.`;
 
     } catch (error) {
       console.error("Processing error:", error);
-      toast.error("Processing failed", error.message || "Failed to analyze document");
+      console.error("Error stack:", error.stack);
+      toast.error("Processing failed", error.message || "Failed to process document. Check console for details.");
       setUploadStage("upload");
       setPendingFile(null);
       setFileUrl(null);
+      setExtractedData([]);
     } finally {
       setUploadLoading(false);
     }
