@@ -609,11 +609,18 @@ Return complete array of all data rows.`,
                       <div className="relative bg-white rounded-lg border-2 border-gray-200 overflow-hidden">
                         {isPDF ? (
                           <div className="relative">
-                            <iframe 
-                              src={fileUrl}
+                            <object 
+                              data={`${fileUrl}#toolbar=0&view=FitH`}
+                              type="application/pdf"
                               className="w-full h-[500px] bg-white border-0"
                               title="Document Preview"
-                            />
+                            >
+                              <iframe 
+                                src={`${fileUrl}#toolbar=0&view=FitH`}
+                                className="w-full h-[500px] bg-white border-0"
+                                title="Document Preview Fallback"
+                              />
+                            </object>
                             <div className="absolute top-2 left-2 bg-black/70 text-white text-xs px-2 py-1 rounded">
                               📄 PDF Document
                             </div>
