@@ -38,48 +38,7 @@ const EXPENSE_CATEGORIES = [
   { value: "other", label: "Other" },
 ];
 
-const VALID_EXPENSE_CATEGORIES = ['fuel', 'maintenance', 'utilities', 'supplies', 'rent', 'salaries', 'transport', 'marketing', 'insurance', 'petty_cash', 'other'];
 
-const mapToValidCategory = (category) => {
-  if (!category) return 'other';
-  const normalized = category.toLowerCase().trim();
-  
-  // Direct match
-  if (VALID_EXPENSE_CATEGORIES.includes(normalized)) return normalized;
-  
-  // Smart mapping
-  const categoryMap = {
-    'diesel': 'fuel',
-    'petrol': 'fuel',
-    'gasoline': 'fuel',
-    'gas': 'fuel',
-    'repair': 'maintenance',
-    'repairs': 'maintenance',
-    'servicing': 'maintenance',
-    'electricity': 'utilities',
-    'water': 'utilities',
-    'internet': 'utilities',
-    'phone': 'utilities',
-    'office_supplies': 'supplies',
-    'stationery': 'supplies',
-    'equipment': 'supplies',
-    'rental': 'rent',
-    'lease': 'rent',
-    'salary': 'salaries',
-    'wages': 'salaries',
-    'payroll': 'salaries',
-    'transportation': 'transport',
-    'travel': 'transport',
-    'delivery': 'transport',
-    'advertising': 'marketing',
-    'promotion': 'marketing',
-    'cash': 'petty_cash',
-    'misc': 'other',
-    'miscellaneous': 'other',
-  };
-  
-  return categoryMap[normalized] || 'other';
-};
 
 export default function AdvancedDocumentExtractor({ 
   open, 
@@ -320,8 +279,12 @@ Return complete array of all data rows.`,
         const rawAmount = parseFloat(row.amount || 0);
         const amount = rawAmount / conversionFactor;
         
-        const aiCategory = (row.category || 'other').toLowerCase().replace(/\s+/g, '_');
-        const validCategory = mapToValidCategory(aiCategory);
+        let category = (row.category || 'other').toLowerCase().replace(/\s+/g, '_');
+        const categoryExists = dynamicCategories.some(cat => cat.value === category);
+        
+        if (!categoryExists && category !== 'other') {
+          newCategories.add(category);
+        }
 
         return {
           id: `${fileItem.id}-row-${idx}`,
@@ -330,7 +293,7 @@ Return complete array of all data rows.`,
           row_number: idx + 1,
           description: row.description || row.notes || '',
           amount: amount,
-          category: validCategory,
+          category: category,
           date: row.date || analysis.metadata?.date || format(new Date(), 'yyyy-MM-dd'),
           vendor: row.vendor || analysis.metadata?.issuer_name || '',
           quantity: parseFloat(row.quantity || 0),
@@ -338,6 +301,14 @@ Return complete array of all data rows.`,
           raw_data: row
         };
       }).filter(item => item.description && item.amount > 0);
+
+      if (newCategories.size > 0) {
+        const newCategoryOptions = Array.from(newCategories).map(cat => ({
+          value: cat,
+          label: cat.split('_').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ')
+        }));
+        setDynamicCategories(prev => [...prev, ...newCategoryOptions]);
+      }
 
       setFileQueue(prev => prev.map((f, i) => 
         i === index ? { 
@@ -412,13 +383,18 @@ Return complete array of all data rows.`,
       }
 
       const conversionFactor = currencyMode === 'sll' ? 1000 : 1;
+      const newCategories = new Set();
       
       const mappedData = (rawExtraction.rows || []).map((row, idx) => {
         const rawAmount = parseFloat(row.amount || 0);
         const amount = rawAmount / conversionFactor;
         
-        const aiCategory = (row.category || 'other').toLowerCase().replace(/\s+/g, '_');
-        const validCategory = mapToValidCategory(aiCategory);
+        let category = (row.category || 'other').toLowerCase().replace(/\s+/g, '_');
+        const categoryExists = dynamicCategories.some(cat => cat.value === category);
+        
+        if (!categoryExists && category !== 'other') {
+          newCategories.add(category);
+        }
 
         return {
           id: `row-${idx}`,
@@ -426,7 +402,7 @@ Return complete array of all data rows.`,
           row_number: idx + 1,
           description: row.description || row.notes || '',
           amount: amount,
-          category: validCategory,
+          category: category,
           date: row.date || analysis.metadata?.date || format(new Date(), 'yyyy-MM-dd'),
           vendor: row.vendor || analysis.metadata?.issuer_name || '',
           quantity: parseFloat(row.quantity || 0),
@@ -434,6 +410,14 @@ Return complete array of all data rows.`,
           raw_data: row
         };
       }).filter(item => item.description && item.amount > 0);
+
+      if (newCategories.size > 0) {
+        const newCategoryOptions = Array.from(newCategories).map(cat => ({
+          value: cat,
+          label: cat.split('_').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ')
+        }));
+        setDynamicCategories(prev => [...prev, ...newCategoryOptions]);
+      }
 
       console.log("Mapped data:", mappedData);
 
