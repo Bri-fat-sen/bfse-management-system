@@ -5,6 +5,9 @@ import { format, startOfMonth, endOfMonth, subMonths } from "date-fns";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import {
   Select,
@@ -626,6 +629,135 @@ export default function ExpenseManagement() {
           queryClient.invalidateQueries({ queryKey: ['expenses', orgId] });
         }}
       />
+
+      {/* Add/Edit Expense Dialog */}
+      <Dialog open={showExpenseDialog} onOpenChange={setShowExpenseDialog}>
+        <DialogContent className="max-w-lg max-h-[90vh] overflow-hidden p-0 w-[95vw] sm:w-full [&>button]:hidden">
+          <div className="h-2 flex">
+            <div className="flex-1 bg-[#1EB053]" />
+            <div className="flex-1 bg-white" />
+            <div className="flex-1 bg-[#0072C6]" />
+          </div>
+
+          <div className="px-6 py-4 bg-gradient-to-r from-[#1EB053] to-[#0072C6] text-white">
+            <div className="flex items-center gap-3">
+              <div className="w-12 h-12 rounded-xl bg-white/20 flex items-center justify-center">
+                <DollarSign className="w-6 h-6 text-white" />
+              </div>
+              <div>
+                <h2 className="text-xl font-bold">
+                  {editingExpense ? 'Edit Expense' : 'Record Regular Expense'}
+                </h2>
+                <p className="text-white/80 text-sm">Track operational expenses</p>
+              </div>
+            </div>
+          </div>
+
+          <form onSubmit={handleExpenseSubmit} className="p-6 space-y-4 overflow-y-auto max-h-[calc(90vh-200px)]">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="col-span-2">
+                <Label>Category</Label>
+                <Select name="category" defaultValue={editingExpense?.category || ""} required>
+                  <SelectTrigger className="mt-1">
+                    <SelectValue placeholder="Select category" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {EXPENSE_CATEGORIES.map(cat => (
+                      <SelectItem key={cat.value} value={cat.value}>
+                        {cat.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="col-span-2">
+                <Label>Description</Label>
+                <Input 
+                  name="description" 
+                  required 
+                  className="mt-1" 
+                  placeholder="What was this expense for?"
+                  defaultValue={editingExpense?.description || ""}
+                />
+              </div>
+
+              <div>
+                <Label>Amount (Le)</Label>
+                <Input 
+                  name="amount" 
+                  type="number" 
+                  step="0.01" 
+                  required 
+                  className="mt-1"
+                  defaultValue={editingExpense?.amount || ""}
+                />
+              </div>
+
+              <div>
+                <Label>Date</Label>
+                <Input 
+                  name="date" 
+                  type="date" 
+                  defaultValue={editingExpense?.date || format(new Date(), 'yyyy-MM-dd')} 
+                  required 
+                  className="mt-1" 
+                />
+              </div>
+
+              <div>
+                <Label>Vendor/Supplier</Label>
+                <Input 
+                  name="vendor" 
+                  className="mt-1" 
+                  placeholder="Vendor name"
+                  defaultValue={editingExpense?.vendor || ""}
+                />
+              </div>
+
+              <div>
+                <Label>Payment Method</Label>
+                <Select name="payment_method" defaultValue={editingExpense?.payment_method || "cash"}>
+                  <SelectTrigger className="mt-1">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="cash">Cash</SelectItem>
+                    <SelectItem value="card">Card</SelectItem>
+                    <SelectItem value="bank_transfer">Bank Transfer</SelectItem>
+                    <SelectItem value="mobile_money">Mobile Money</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="col-span-2">
+                <Label>Notes</Label>
+                <Textarea 
+                  name="notes" 
+                  className="mt-1" 
+                  placeholder="Additional details..."
+                  defaultValue={editingExpense?.notes || ""}
+                />
+              </div>
+            </div>
+
+            <div className="flex gap-2 pt-4">
+              <Button type="button" variant="outline" onClick={() => setShowExpenseDialog(false)} className="w-full sm:w-auto">
+                Cancel
+              </Button>
+              <Button type="submit" className="bg-gradient-to-r from-[#1EB053] to-[#0072C6] w-full sm:w-auto">
+                {editingExpense ? 'Update Expense' : 'Record Expense'}
+              </Button>
+            </div>
+          </form>
+
+          <div className="h-1 flex">
+            <div className="flex-1 bg-[#1EB053]" />
+            <div className="flex-1 bg-white" />
+            <div className="flex-1 bg-[#0072C6]" />
+          </div>
+        </DialogContent>
+      </Dialog>
 
       {/* Bulk Delete Confirmation Dialog */}
       <Dialog open={showBulkDeleteDialog} onOpenChange={setShowBulkDeleteDialog}>
