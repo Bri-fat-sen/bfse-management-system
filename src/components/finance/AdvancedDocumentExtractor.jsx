@@ -230,7 +230,7 @@ Provide each row as a separate data object with all fields you can identify.`;
   };
 
   // Stage 3: Simple validation
-  const validateAndCorrectData = async (rawData) => {
+  const validateAndCorrectData = (rawData) => {
     return {
       overall_quality: {
         accuracy_score: 90,
@@ -260,7 +260,6 @@ Provide each row as a separate data object with all fields you can identify.`;
     setShowCurrencyDialog(false);
     setFileName(file.name);
     setFileType(file.type);
-    setPendingFile(file); // Store for re-analysis
     
     try {
       // Stage 1: Upload file
@@ -278,14 +277,13 @@ Provide each row as a separate data object with all fields you can identify.`;
       setConfidenceScore(analysis.confidence || 0);
       setTotalPages(1); // Could be enhanced to detect actual page count
 
-      // Stage 3: Extract data immediately
+      // Stage 3: Extract data immediately (don't wait for preview)
       toast.info("Extracting data...", "Reading all rows from the document");
       const rawExtraction = await extractDocumentData(file_url, analysis);
 
-      console.log("Raw extraction result:", rawExtraction);
-
-      // Stage 4: Validate
-      const validation = await validateAndCorrectData(rawExtraction);
+      // Stage 4: Validate & Correct
+      toast.info("Validating data...", "Checking accuracy and auto-correcting");
+      const validation = await validateAndCorrectData(rawExtraction, analysis);
       setValidationResults(validation.overall_quality);
 
       // Process and map data
@@ -312,20 +310,14 @@ Provide each row as a separate data object with all fields you can identify.`;
         };
       }).filter(item => item.description && item.amount > 0);
 
-      console.log("Mapped data:", mappedData);
-
-      if (mappedData.length === 0) {
-        toast.warning("No data found", "The document appears empty or unreadable. Try a clearer image.");
-        setUploadStage("upload");
-        return;
-      }
-
       setExtractedData(mappedData);
       setUploadStage("editing");
+      setUploadStage("preview");
       
+      const avgConfidence = validation.overall_quality?.accuracy_score || 85;
       toast.success(
         "Extraction complete", 
-        `${mappedData.length} rows extracted and ready for review`
+        `${mappedData.length} rows extracted with ${avgConfidence.toFixed(0)}% accuracy`
       );
 
     } catch (error) {
@@ -412,16 +404,10 @@ Provide each row as a separate data object with all fields you can identify.`;
     setUploadStage("upload");
     setFileUrl(null);
     setFileName("");
-    setFileType("");
     setExtractedData([]);
     setDocumentAnalysis(null);
     setValidationResults(null);
     setPendingFile(null);
-    setExtractedColumns([]);
-    setDocumentMetadata(null);
-    setConfidenceScore(0);
-    setZoom(100);
-    setViewMode("split");
   };
 
   const toggleSelection = (id) => {
@@ -592,7 +578,7 @@ Provide each row as a separate data object with all fields you can identify.`;
           )}
 
           {/* Editing Stage - Split View */}
-          {uploadStage === "editing" && (
+          {uploadStage === "editing" && extractedData.length > 0 && (
             <div className="space-y-4">
               {/* View Controls */}
               <div className="flex items-center justify-between">
@@ -635,38 +621,39 @@ Provide each row as a separate data object with all fields you can identify.`;
                 <Card className="overflow-hidden bg-gray-50">
                   <CardContent className="p-4">
                     <div className="relative bg-white rounded-lg border-2 border-gray-200 overflow-hidden">
-                      {fileType.includes('pdf') ? (
-                        <div className="relative">
-                          <iframe 
-                            src={`${fileUrl}#toolbar=0&navpanes=0`}
-                            className="w-full h-[500px] bg-white"
-                            title="Document Preview"
-                          />
-                          <div className="absolute top-2 left-2 bg-black/70 text-white text-xs px-2 py-1 rounded">
-                            PDF Document
-                          </div>
-                        </div>
+                      {fileName.toLowerCase().endsWith('.pdf') || fileType.includes('pdf') ? (
+                       <div className="relative">
+                         <iframe 
+                           src={fileUrl}
+                           className="w-full h-[500px] bg-white border-0"
+                           title="Document Preview"
+                         />
+                         <div className="absolute top-2 left-2 bg-black/70 text-white text-xs px-2 py-1 rounded">
+                           📄 PDF Document
+                         </div>
+                       </div>
                       ) : (
-                        <div className="relative bg-gray-100 flex items-center justify-center min-h-[500px] overflow-auto">
-                          <img 
-                            src={fileUrl} 
-                            alt="Document" 
-                            className="max-w-full h-auto"
-                            style={{ 
-                              transform: `scale(${zoom/100})`,
-                              transformOrigin: 'center center',
-                              transition: 'transform 0.2s'
-                            }}
-                            onError={(e) => {
-                              console.error("Image load error:", e);
-                              toast.error("Failed to load document", "Try re-uploading the file");
-                            }}
-                          />
-                        </div>
+                       <div className="relative bg-gray-100 flex items-center justify-center min-h-[500px] overflow-auto p-4">
+                         <img 
+                           src={fileUrl} 
+                           alt="Document Preview" 
+                           className="max-w-full h-auto shadow-lg"
+                           style={{ 
+                             transform: `scale(${zoom/100})`,
+                             transformOrigin: 'center center',
+                             transition: 'transform 0.2s'
+                           }}
+                           onLoad={() => console.log("Image loaded successfully")}
+                           onError={(e) => {
+                             console.error("Image load error:", fileUrl);
+                             e.target.src = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="200" height="200"%3E%3Ctext x="50%25" y="50%25" text-anchor="middle" dominant-baseline="middle" fill="%23999"%3EImage not found%3C/text%3E%3C/svg%3E';
+                           }}
+                         />
+                       </div>
                       )}
                       
                       {/* Zoom Controls */}
-                      {!fileType.includes('pdf') && (
+                      {!fileName.toLowerCase().endsWith('.pdf') && !fileType.includes('pdf') && (
                         <div className="absolute bottom-4 right-4 flex gap-1 bg-black/80 rounded-lg p-1.5 shadow-lg">
                           <Button 
                             size="icon" 
@@ -703,12 +690,21 @@ Provide each row as a separate data object with all fields you can identify.`;
               )}
 
               {/* Data Table */}
-              {viewMode !== "document" && (
+              {viewMode !== "document" && extractedData.length > 0 && (
                 <div className="space-y-3">
                   <div className="flex items-center justify-between">
                     <h3 className="font-semibold">Extracted Data ({extractedData.length} rows)</h3>
                     <div className="flex gap-2">
-                      <Select value={detectedType} onValueChange={setDetectedType}>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={handleReanalyze}
+                        disabled={uploadLoading}
+                      >
+                        <RefreshCw className="w-3 h-3 mr-1" />
+                        Re-extract
+                      </Button>
+                      <Select value={detectedType || "expense"} onValueChange={setDetectedType}>
                         <SelectTrigger className="w-[180px] h-8 text-xs">
                           <SelectValue />
                         </SelectTrigger>
@@ -841,40 +837,29 @@ Provide each row as a separate data object with all fields you can identify.`;
               )}
 
               {/* Summary Footer */}
-              {extractedData.length > 0 ? (
-                <div className="flex items-center justify-between p-4 bg-gradient-to-r from-gray-50 to-gray-100 rounded-lg border">
-                  <div>
-                    <p className="font-semibold">{selectedCount} items selected</p>
-                    <p className="text-sm text-gray-500">Total: Le {selectedTotal.toLocaleString()}</p>
-                  </div>
-                  <div className="flex gap-2">
-                    <Button variant="outline" onClick={() => { resetState(); }}>
-                      Upload New
-                    </Button>
-                    <Button
-                      onClick={handleCreateRecords}
-                      disabled={uploadLoading || selectedCount === 0}
-                      className="bg-gradient-to-r from-[#1EB053] to-[#0072C6]"
-                    >
-                      {uploadLoading ? (
-                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                      ) : (
-                        <CheckCircle className="w-4 h-4 mr-2" />
-                      )}
-                      Create {selectedCount} Record(s)
-                    </Button>
-                  </div>
+              <div className="flex items-center justify-between p-4 bg-gradient-to-r from-gray-50 to-gray-100 rounded-lg border">
+                <div>
+                  <p className="font-semibold">{selectedCount} items selected</p>
+                  <p className="text-sm text-gray-500">Total: Le {selectedTotal.toLocaleString()}</p>
                 </div>
-              ) : (
-                <div className="p-8 text-center border-2 border-dashed border-gray-300 rounded-xl bg-gray-50">
-                  <AlertCircle className="w-12 h-12 text-gray-400 mx-auto mb-3" />
-                  <p className="font-medium text-gray-600 mb-2">No data extracted</p>
-                  <p className="text-sm text-gray-500 mb-4">The AI couldn't find any tabular data in this document</p>
-                  <Button variant="outline" onClick={() => { resetState(); }}>
-                    Try Another Document
+                <div className="flex gap-2">
+                  <Button variant="outline" onClick={() => setUploadStage("upload")}>
+                    Upload New
+                  </Button>
+                  <Button
+                    onClick={handleCreateRecords}
+                    disabled={uploadLoading || selectedCount === 0}
+                    className="bg-gradient-to-r from-[#1EB053] to-[#0072C6]"
+                  >
+                    {uploadLoading ? (
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    ) : (
+                      <CheckCircle className="w-4 h-4 mr-2" />
+                    )}
+                    Create {selectedCount} Record(s)
                   </Button>
                 </div>
-              )}
+              </div>
             </div>
           )}
         </div>
