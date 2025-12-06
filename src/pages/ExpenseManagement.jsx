@@ -99,7 +99,11 @@ export default function ExpenseManagement() {
 
   const { data: expenses = [], isLoading } = useQuery({
     queryKey: ['allExpenses', orgId],
-    queryFn: () => base44.entities.Expense.filter({ organisation_id: orgId }, '-date', 1000),
+    queryFn: async () => {
+      const allExpenses = await base44.entities.Expense.filter({ organisation_id: orgId }, '-date', 1000);
+      // Filter out construction expenses - show only regular expenses
+      return allExpenses.filter(e => e.expense_type !== 'construction');
+    },
     enabled: !!orgId && isAdmin,
     staleTime: 30 * 1000,
   });
@@ -514,6 +518,7 @@ export default function ExpenseManagement() {
         open={showUploadDialog}
         onOpenChange={setShowUploadDialog}
         type="auto"
+        expenseType="regular"
         orgId={orgId}
         currentEmployee={currentEmployee}
         categories={EXPENSE_CATEGORIES}

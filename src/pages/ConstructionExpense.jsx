@@ -121,12 +121,10 @@ export default function ConstructionExpense() {
 
   const { data: expenses = [], isLoading } = useQuery({
     queryKey: ['constructionExpenses', orgId],
-    queryFn: async () => {
-      const allExpenses = await base44.entities.Expense.filter({ organisation_id: orgId }, '-date', 500);
-      // Only show expenses with construction-specific categories
-      const constructionCategoryValues = CONSTRUCTION_CATEGORIES.map(c => c.value);
-      return allExpenses.filter(e => constructionCategoryValues.includes(e.category));
-    },
+    queryFn: () => base44.entities.Expense.filter({ 
+      organisation_id: orgId,
+      expense_type: 'construction'
+    }, '-date', 500),
     enabled: !!orgId && isAdmin,
   });
 
@@ -223,8 +221,8 @@ export default function ConstructionExpense() {
   const createExpenseMutation = useMutation({
     mutationFn: (data) => base44.entities.Expense.create(data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['constructionExpenses'] });
-      queryClient.invalidateQueries({ queryKey: ['expenses'] });
+      queryClient.invalidateQueries({ queryKey: ['constructionExpenses', orgId] });
+      queryClient.invalidateQueries({ queryKey: ['expenses', orgId] });
       setShowExpenseDialog(false);
       setEditingExpense(null);
       toast.success("Expense recorded", "Construction expense has been added");
@@ -237,8 +235,8 @@ export default function ConstructionExpense() {
   const updateExpenseMutation = useMutation({
     mutationFn: ({ id, data }) => base44.entities.Expense.update(id, data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['constructionExpenses'] });
-      queryClient.invalidateQueries({ queryKey: ['expenses'] });
+      queryClient.invalidateQueries({ queryKey: ['constructionExpenses', orgId] });
+      queryClient.invalidateQueries({ queryKey: ['expenses', orgId] });
       setShowExpenseDialog(false);
       setEditingExpense(null);
       toast.success("Expense updated");
@@ -251,8 +249,8 @@ export default function ConstructionExpense() {
   const deleteExpenseMutation = useMutation({
     mutationFn: (id) => base44.entities.Expense.delete(id),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['constructionExpenses'] });
-      queryClient.invalidateQueries({ queryKey: ['expenses'] });
+      queryClient.invalidateQueries({ queryKey: ['constructionExpenses', orgId] });
+      queryClient.invalidateQueries({ queryKey: ['expenses', orgId] });
       toast.success("Expense deleted");
     }
   });
@@ -262,6 +260,7 @@ export default function ConstructionExpense() {
     const formData = new FormData(e.target);
     const data = {
       organisation_id: orgId,
+      expense_type: 'construction',
       category: formData.get('category'),
       description: formData.get('description'),
       amount: parseFloat(formData.get('amount')) || 0,
@@ -464,6 +463,7 @@ Extract ALL line items from the document table.`,
       for (const exp of selectedExpenses) {
         await base44.entities.Expense.create({
           organisation_id: orgId,
+          expense_type: 'construction',
           category: exp.category,
           description: exp.description,
           amount: exp.amount || 0,
@@ -477,8 +477,8 @@ Extract ALL line items from the document table.`,
         });
       }
 
-      queryClient.invalidateQueries({ queryKey: ['constructionExpenses'] });
-      queryClient.invalidateQueries({ queryKey: ['expenses'] });
+      queryClient.invalidateQueries({ queryKey: ['constructionExpenses', orgId] });
+      queryClient.invalidateQueries({ queryKey: ['expenses', orgId] });
       setShowUploadDialog(false);
       setExtractedExpenses([]);
       toast.success("Expenses created", `${selectedExpenses.length} expense(s) added`);
@@ -1035,12 +1035,13 @@ Extract ALL line items from the document table.`,
         open={showUploadDialog}
         onOpenChange={setShowUploadDialog}
         type="expense"
+        expenseType="construction"
         orgId={orgId}
         currentEmployee={currentEmployee}
         categories={CONSTRUCTION_CATEGORIES}
         onSuccess={() => {
-          queryClient.invalidateQueries({ queryKey: ['constructionExpenses'] });
-          queryClient.invalidateQueries({ queryKey: ['expenses'] });
+          queryClient.invalidateQueries({ queryKey: ['constructionExpenses', orgId] });
+          queryClient.invalidateQueries({ queryKey: ['expenses', orgId] });
         }}
       />
       

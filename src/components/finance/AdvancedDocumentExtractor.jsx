@@ -48,6 +48,7 @@ export default function AdvancedDocumentExtractor({
   currentEmployee,
   onSuccess,
   categories = EXPENSE_CATEGORIES,
+  expenseType = "regular",
 }) {
   const toast = useToast();
   const [uploadStage, setUploadStage] = useState("upload");
