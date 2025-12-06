@@ -99,6 +99,7 @@ export default function Finance() {
   const [showExpenseDialog, setShowExpenseDialog] = useState(false);
   const [showRevenueDialog, setShowRevenueDialog] = useState(false);
   const [showBankDepositDialog, setShowBankDepositDialog] = useState(false);
+  const [editingRevenue, setEditingRevenue] = useState(null);
   const [categoryFilter, setCategoryFilter] = useState("all");
   const [showFormsDialog, setShowFormsDialog] = useState(false);
   const [dateRange, setDateRange] = useState("this_month");
@@ -196,6 +197,30 @@ export default function Finance() {
     onError: (error) => {
       console.error('Create revenue error:', error);
       toast.error("Failed to record revenue", error.message);
+    }
+  });
+
+  const updateRevenueMutation = useMutation({
+    mutationFn: ({ id, data }) => base44.entities.Revenue.update(id, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['revenues'] });
+      setShowRevenueDialog(false);
+      setEditingRevenue(null);
+      toast.success("Revenue updated");
+    },
+    onError: (error) => {
+      toast.error("Failed to update revenue", error.message);
+    }
+  });
+
+  const deleteRevenueMutation = useMutation({
+    mutationFn: (id) => base44.entities.Revenue.delete(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['revenues'] });
+      toast.success("Revenue deleted");
+    },
+    onError: (error) => {
+      toast.error("Failed to delete revenue", error.message);
     }
   });
 
@@ -457,8 +482,15 @@ export default function Finance() {
       recorded_by_name: currentEmployee?.full_name,
       status: 'confirmed',
     };
-    createRevenueMutation.mutate(data);
+
+    if (editingRevenue) {
+      updateRevenueMutation.mutate({ id: editingRevenue.id, data });
+    } else {
+      createRevenueMutation.mutate(data);
+    }
   };
+
+  const isAdmin = ['super_admin', 'org_admin'].includes(currentEmployee?.role);
 
   if (!user) {
     return <LoadingSpinner message="Loading Finance..." subtitle="Fetching financial data" fullScreen={true} />;
@@ -1095,7 +1127,13 @@ export default function Finance() {
                   <DollarSign className="w-5 h-5 text-[#1EB053]" />
                   Revenue from Owners & CEO
                 </CardTitle>
-                <Button onClick={() => setShowRevenueDialog(true)} className="bg-gradient-to-r from-[#1EB053] to-[#0072C6]">
+                <Button 
+                  onClick={() => {
+                    setEditingRevenue(null);
+                    setShowRevenueDialog(true);
+                  }} 
+                  className="bg-gradient-to-r from-[#1EB053] to-[#0072C6]"
+                >
                   <Plus className="w-4 h-4 mr-2" />
                   Add Contribution
                 </Button>
@@ -1112,11 +1150,11 @@ export default function Finance() {
                     ) : (
                       revenues.map((revenue) => (
                         <div key={revenue.id} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
-                          <div className="flex items-center gap-4">
-                            <div className="w-10 h-10 rounded-full bg-green-100 flex items-center justify-center">
+                          <div className="flex items-center gap-4 flex-1 min-w-0">
+                            <div className="w-10 h-10 rounded-full bg-green-100 flex items-center justify-center flex-shrink-0">
                               <ArrowUpRight className="w-5 h-5 text-green-600" />
                             </div>
-                            <div>
+                            <div className="min-w-0 flex-1">
                               <p className="font-medium">{revenue.contributor_name || revenueSources.find(s => s.value === revenue.source)?.label || 'Contribution'}</p>
                               <div className="flex items-center gap-2 text-sm text-gray-500">
                                 <Badge variant="outline" className="text-xs bg-green-50 text-green-700 border-green-200">
@@ -1130,11 +1168,40 @@ export default function Finance() {
                               )}
                             </div>
                           </div>
-                          <div className="text-right">
-                            <p className="font-bold text-[#1EB053]">+Le {revenue.amount?.toLocaleString()}</p>
-                            <Badge variant={revenue.status === 'confirmed' ? 'secondary' : 'outline'} className="bg-green-100 text-green-700">
-                              {revenue.status}
-                            </Badge>
+                          <div className="flex items-center gap-3">
+                            <div className="text-right">
+                              <p className="font-bold text-[#1EB053]">+Le {revenue.amount?.toLocaleString()}</p>
+                              <Badge variant={revenue.status === 'confirmed' ? 'secondary' : 'outline'} className="bg-green-100 text-green-700">
+                                {revenue.status}
+                              </Badge>
+                            </div>
+                            {isAdmin && (
+                              <div className="flex gap-1">
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="h-8 w-8 text-[#0072C6] hover:bg-blue-50"
+                                  onClick={() => {
+                                    setEditingRevenue(revenue);
+                                    setShowRevenueDialog(true);
+                                  }}
+                                >
+                                  <Edit className="w-4 h-4" />
+                                </Button>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="h-8 w-8 text-red-600 hover:bg-red-50"
+                                  onClick={() => {
+                                    if (confirm(`Delete contribution from ${revenue.contributor_name}?`)) {
+                                      deleteRevenueMutation.mutate(revenue.id);
+                                    }
+                                  }}
+                                >
+                                  <Trash2 className="w-4 h-4" />
+                                </Button>
+                              </div>
+                            )}
                           </div>
                         </div>
                       ))
@@ -1556,7 +1623,9 @@ export default function Finance() {
                 <div className="flex-1 bg-white border-y border-gray-200" />
                 <div className="flex-1 bg-[#0072C6]" />
               </div>
-              <DialogTitle>Record Owner/CEO Contribution</DialogTitle>
+              <DialogTitle>
+                {editingRevenue ? 'Edit Owner/CEO Contribution' : 'Record Owner/CEO Contribution'}
+              </DialogTitle>
             </DialogHeader>
             <form onSubmit={handleRevenueSubmit} className="space-y-4">
               {/* Quick Fill Chips */}
@@ -1579,7 +1648,7 @@ export default function Finance() {
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="col-span-2">
                   <Label>Source Type</Label>
-                  <Select name="source" required defaultValue="owner_contribution">
+                  <Select name="source" required defaultValue={editingRevenue?.source || "owner_contribution"}>
                     <SelectTrigger className="mt-1">
                       <SelectValue placeholder="Select source" />
                     </SelectTrigger>
@@ -1594,19 +1663,38 @@ export default function Finance() {
                 </div>
                 <div className="col-span-2">
                   <Label>Contributor Name</Label>
-                  <Input name="contributor_name" required className="mt-1" placeholder="Name of owner, CEO, or investor" />
+                  <Input 
+                    name="contributor_name" 
+                    required 
+                    className="mt-1" 
+                    placeholder="Name of owner, CEO, or investor"
+                    defaultValue={editingRevenue?.contributor_name || ''}
+                  />
                 </div>
                 <div>
                   <Label>Amount (Le)</Label>
-                  <Input name="amount" type="number" step="0.01" required className="mt-1" />
+                  <Input 
+                    name="amount" 
+                    type="number" 
+                    step="0.01" 
+                    required 
+                    className="mt-1"
+                    defaultValue={editingRevenue?.amount || ''}
+                  />
                 </div>
                 <div>
                   <Label>Date</Label>
-                  <Input name="date" type="date" defaultValue={format(new Date(), 'yyyy-MM-dd')} required className="mt-1" />
+                  <Input 
+                    name="date" 
+                    type="date" 
+                    defaultValue={editingRevenue?.date || format(new Date(), 'yyyy-MM-dd')} 
+                    required 
+                    className="mt-1" 
+                  />
                 </div>
                 <div>
                   <Label>Payment Method</Label>
-                  <Select name="payment_method" defaultValue="bank_transfer">
+                  <Select name="payment_method" defaultValue={editingRevenue?.payment_method || "bank_transfer"}>
                     <SelectTrigger className="mt-1">
                       <SelectValue />
                     </SelectTrigger>
@@ -1621,15 +1709,30 @@ export default function Finance() {
                 </div>
                 <div>
                   <Label>Reference Number</Label>
-                  <Input name="reference_number" className="mt-1" placeholder="Bank ref or transaction ID" />
+                  <Input 
+                    name="reference_number" 
+                    className="mt-1" 
+                    placeholder="Bank ref or transaction ID"
+                    defaultValue={editingRevenue?.reference_number || ''}
+                  />
                 </div>
                 <div className="col-span-2">
                   <Label>Purpose</Label>
-                  <Input name="purpose" className="mt-1" placeholder="e.g., Capital injection, Working capital" />
+                  <Input 
+                    name="purpose" 
+                    className="mt-1" 
+                    placeholder="e.g., Capital injection, Working capital"
+                    defaultValue={editingRevenue?.purpose || ''}
+                  />
                 </div>
                 <div className="col-span-2">
                   <Label>Notes</Label>
-                  <Textarea name="notes" className="mt-1" placeholder="Additional details..." />
+                  <Textarea 
+                    name="notes" 
+                    className="mt-1" 
+                    placeholder="Additional details..."
+                    defaultValue={editingRevenue?.notes || ''}
+                  />
                 </div>
               </div>
 
@@ -1653,8 +1756,14 @@ export default function Finance() {
                 <Button type="button" variant="outline" onClick={() => setShowRevenueDialog(false)} className="w-full sm:w-auto">
                   Cancel
                 </Button>
-                <Button type="submit" className="bg-gradient-to-r from-[#1EB053] to-[#0072C6] w-full sm:w-auto" disabled={createRevenueMutation.isPending}>
-                  {createRevenueMutation.isPending ? 'Recording...' : 'Record Contribution'}
+                <Button 
+                  type="submit" 
+                  className="bg-gradient-to-r from-[#1EB053] to-[#0072C6] w-full sm:w-auto" 
+                  disabled={createRevenueMutation.isPending || updateRevenueMutation.isPending}
+                >
+                  {(createRevenueMutation.isPending || updateRevenueMutation.isPending) 
+                    ? 'Saving...' 
+                    : editingRevenue ? 'Update Contribution' : 'Record Contribution'}
                 </Button>
               </DialogFooter>
             </form>
