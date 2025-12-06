@@ -229,18 +229,9 @@ Provide each row as a separate data object with all fields you can identify.`;
     return dataExtractionResult;
   };
 
-  // Stage 3: Smart Validation & Auto-Correction
+  // Stage 3: Simple validation
   const validateAndCorrectData = async (rawData) => {
-    // Simple validation - just return the data structured properly
     return {
-      validated_rows: rawData.rows.map((row, idx) => ({
-        original_row_number: idx + 1,
-        corrected_data: row,
-        corrections_made: [],
-        validation_score: row.confidence || 90,
-        suggested_category: row.category || 'other',
-        warnings: []
-      })),
       overall_quality: {
         accuracy_score: 90,
         completeness_score: 95,
@@ -297,31 +288,27 @@ Provide each row as a separate data object with all fields you can identify.`;
 
       // Process and map data
       const conversionFactor = currencyMode === 'sll' ? 1000 : 1;
-      const mappedData = validation.validated_rows.map((row, idx) => {
-        const data = row.corrected_data || {};
-        
-        // Smart amount detection
-        const rawAmount = parseFloat(data.amount || data.actual_total || data.actual_amount || 
-                         data.total || data.price || data.value || 0);
+      const mappedData = (rawExtraction.rows || []).map((row, idx) => {
+        const rawAmount = parseFloat(row.amount || 0);
         const amount = rawAmount / conversionFactor;
 
         return {
           id: `row-${idx}`,
           selected: true,
-          row_number: row.original_row_number || idx + 1,
-          confidence: row.validation_score || 85,
-          description: data.description || data.details || data.item || '',
+          row_number: idx + 1,
+          confidence: row.confidence || 90,
+          description: row.description || row.notes || '',
           amount: amount,
-          category: row.suggested_category || 'other',
-          date: analysis.metadata?.date || format(new Date(), 'yyyy-MM-dd'),
-          vendor: data.vendor || data.supplier || analysis.metadata?.issuer_name || '',
-          quantity: parseFloat(data.qty || data.quantity || data.actual_qty || 0),
-          unit_price: parseFloat(data.unit_price || data.price || data.actual_unit_cost || 0) / conversionFactor,
-          warnings: row.warnings || [],
-          corrections: row.corrections_made || [],
-          raw_data: data
+          category: row.category || 'other',
+          date: row.date || analysis.metadata?.date || format(new Date(), 'yyyy-MM-dd'),
+          vendor: row.vendor || analysis.metadata?.issuer_name || '',
+          quantity: parseFloat(row.quantity || 0),
+          unit_price: parseFloat(row.unit_price || 0) / conversionFactor,
+          warnings: [],
+          corrections: [],
+          raw_data: row
         };
-      }).filter(item => item.description || item.amount > 0);
+      }).filter(item => item.description && item.amount > 0);
 
       setExtractedData(mappedData);
       setUploadStage("editing");
