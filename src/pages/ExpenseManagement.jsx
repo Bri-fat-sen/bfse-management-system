@@ -567,96 +567,199 @@ export default function ExpenseManagement() {
               description="No expenses match the current filters"
             />
           ) : (
-            <ScrollArea className="h-[500px]">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Date</TableHead>
-                    <TableHead>Description</TableHead>
-                    <TableHead>Category</TableHead>
-                    <TableHead>Submitted By</TableHead>
-                    <TableHead>Vendor</TableHead>
-                    <TableHead className="text-right">Amount</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead className="text-right">Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
+            <>
+              {/* Desktop Table View */}
+              <div className="hidden md:block">
+                <ScrollArea className="h-[500px]">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Date</TableHead>
+                        <TableHead>Description</TableHead>
+                        <TableHead>Category</TableHead>
+                        <TableHead>Submitted By</TableHead>
+                        <TableHead>Vendor</TableHead>
+                        <TableHead className="text-right">Amount</TableHead>
+                        <TableHead>Status</TableHead>
+                        <TableHead className="text-right">Actions</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {filteredExpenses.map((expense) => (
+                        <TableRow key={expense.id}>
+                          <TableCell className="text-sm">
+                            {expense.date ? format(new Date(expense.date), 'MMM d, yyyy') : '-'}
+                          </TableCell>
+                          <TableCell>
+                            <span className="font-medium">{expense.description || '-'}</span>
+                          </TableCell>
+                          <TableCell>
+                            <Badge variant="outline" className="text-xs">
+                              {EXPENSE_CATEGORIES.find(c => c.value === expense.category)?.label || expense.category}
+                            </Badge>
+                          </TableCell>
+                          <TableCell className="text-sm">{expense.recorded_by_name || '-'}</TableCell>
+                          <TableCell className="text-sm text-gray-600">{expense.vendor || '-'}</TableCell>
+                          <TableCell className="text-right font-bold">Le {expense.amount?.toLocaleString()}</TableCell>
+                          <TableCell>
+                            <Badge className={
+                              expense.status === 'approved' ? 'bg-green-100 text-green-700' :
+                              expense.status === 'rejected' ? 'bg-red-100 text-red-700' :
+                              'bg-amber-100 text-amber-700'
+                            }>
+                              {expense.status}
+                            </Badge>
+                          </TableCell>
+                          <TableCell className="text-right">
+                            <div className="flex justify-end gap-1">
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-8 w-8"
+                              onClick={() => handleViewDetails(expense)}
+                            >
+                              <Eye className="w-4 h-4" />
+                            </Button>
+                            {expense.status === 'pending' && isAdmin && (
+                              <>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="h-8 w-8 text-green-600 hover:bg-green-50"
+                                  onClick={() => handleApprove(expense)}
+                                >
+                                  <CheckCircle className="w-4 h-4" />
+                                </Button>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="h-8 w-8 text-red-600 hover:bg-red-50"
+                                  onClick={() => handleReject(expense)}
+                                >
+                                  <XCircle className="w-4 h-4" />
+                                </Button>
+                              </>
+                            )}
+                            {isAdmin && (
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-8 w-8 text-[#0072C6] hover:bg-blue-50"
+                                onClick={() => {
+                                  setEditingExpense(expense);
+                                  setShowExpenseDialog(true);
+                                }}
+                              >
+                                <Edit2 className="w-4 h-4" />
+                              </Button>
+                            )}
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </ScrollArea>
+              </div>
+
+              {/* Mobile Card View */}
+              <div className="md:hidden space-y-3">
+                <ScrollArea className="h-[500px]">
                   {filteredExpenses.map((expense) => (
-                    <TableRow key={expense.id}>
-                      <TableCell className="text-sm">
-                        {expense.date ? format(new Date(expense.date), 'MMM d, yyyy') : '-'}
-                      </TableCell>
-                      <TableCell>
-                        <span className="font-medium">{expense.description || '-'}</span>
-                      </TableCell>
-                      <TableCell>
-                        <Badge variant="outline" className="text-xs">
-                          {EXPENSE_CATEGORIES.find(c => c.value === expense.category)?.label || expense.category}
-                        </Badge>
-                      </TableCell>
-                      <TableCell className="text-sm">{expense.recorded_by_name || '-'}</TableCell>
-                      <TableCell className="text-sm text-gray-600">{expense.vendor || '-'}</TableCell>
-                      <TableCell className="text-right font-bold">Le {expense.amount?.toLocaleString()}</TableCell>
-                      <TableCell>
-                        <Badge className={
-                          expense.status === 'approved' ? 'bg-green-100 text-green-700' :
-                          expense.status === 'rejected' ? 'bg-red-100 text-red-700' :
-                          'bg-amber-100 text-amber-700'
-                        }>
-                          {expense.status}
-                        </Badge>
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <div className="flex justify-end gap-1">
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-8 w-8"
-                          onClick={() => handleViewDetails(expense)}
-                        >
-                          <Eye className="w-4 h-4" />
-                        </Button>
-                        {expense.status === 'pending' && isAdmin && (
-                          <>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="h-8 w-8 text-green-600 hover:bg-green-50"
-                              onClick={() => handleApprove(expense)}
-                            >
-                              <CheckCircle className="w-4 h-4" />
-                            </Button>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="h-8 w-8 text-red-600 hover:bg-red-50"
-                              onClick={() => handleReject(expense)}
-                            >
-                              <XCircle className="w-4 h-4" />
-                            </Button>
-                          </>
-                        )}
-                        {isAdmin && (
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-8 w-8 text-[#0072C6] hover:bg-blue-50"
-                            onClick={() => {
-                              setEditingExpense(expense);
-                              setShowExpenseDialog(true);
-                            }}
-                          >
-                            <Edit2 className="w-4 h-4" />
-                          </Button>
-                        )}
+                    <Card key={expense.id} className="mb-3 border-l-4" style={{
+                      borderLeftColor: expense.status === 'approved' ? '#1EB053' :
+                                      expense.status === 'rejected' ? '#ef4444' : '#f59e0b'
+                    }}>
+                      <CardContent className="p-4 space-y-3">
+                        {/* Header - Description and Amount */}
+                        <div className="flex items-start justify-between gap-2">
+                          <div className="flex-1 min-w-0">
+                            <p className="font-semibold text-gray-900 truncate">{expense.description || '-'}</p>
+                            <div className="flex items-center gap-2 mt-1 flex-wrap">
+                              <Badge variant="outline" className="text-xs">
+                                {EXPENSE_CATEGORIES.find(c => c.value === expense.category)?.label || expense.category}
+                              </Badge>
+                              <Badge className={
+                                expense.status === 'approved' ? 'bg-green-100 text-green-700 text-xs' :
+                                expense.status === 'rejected' ? 'bg-red-100 text-red-700 text-xs' :
+                                'bg-amber-100 text-amber-700 text-xs'
+                              }>
+                                {expense.status}
+                              </Badge>
+                            </div>
+                          </div>
+                          <div className="text-right flex-shrink-0">
+                            <p className="text-lg font-bold text-gray-900">Le {expense.amount?.toLocaleString()}</p>
+                            <p className="text-xs text-gray-500">
+                              {expense.date ? format(new Date(expense.date), 'MMM d') : '-'}
+                            </p>
+                          </div>
                         </div>
-                      </TableCell>
-                    </TableRow>
+
+                        {/* Details */}
+                        <div className="grid grid-cols-2 gap-2 text-sm">
+                          <div>
+                            <p className="text-xs text-gray-500">Vendor</p>
+                            <p className="font-medium text-gray-700 truncate">{expense.vendor || '-'}</p>
+                          </div>
+                          <div>
+                            <p className="text-xs text-gray-500">Submitted by</p>
+                            <p className="font-medium text-gray-700 truncate">{expense.recorded_by_name || '-'}</p>
+                          </div>
+                        </div>
+
+                        {/* Action Buttons */}
+                        <div className="flex gap-2 pt-2 border-t">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="flex-1"
+                            onClick={() => handleViewDetails(expense)}
+                          >
+                            <Eye className="w-4 h-4 mr-1" />
+                            View
+                          </Button>
+                          {expense.status === 'pending' && isAdmin && (
+                            <>
+                              <Button
+                                size="sm"
+                                className="flex-1 bg-green-600 hover:bg-green-700 text-white"
+                                onClick={() => handleApprove(expense)}
+                              >
+                                <CheckCircle className="w-4 h-4 mr-1" />
+                                Approve
+                              </Button>
+                              <Button
+                                size="sm"
+                                className="flex-1 bg-red-600 hover:bg-red-700 text-white"
+                                onClick={() => handleReject(expense)}
+                              >
+                                <XCircle className="w-4 h-4 mr-1" />
+                                Reject
+                              </Button>
+                            </>
+                          )}
+                          {isAdmin && expense.status !== 'pending' && (
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              className="flex-1 border-[#0072C6] text-[#0072C6]"
+                              onClick={() => {
+                                setEditingExpense(expense);
+                                setShowExpenseDialog(true);
+                              }}
+                            >
+                              <Edit2 className="w-4 h-4 mr-1" />
+                              Edit
+                            </Button>
+                          )}
+                        </div>
+                      </CardContent>
+                    </Card>
                   ))}
-                </TableBody>
-              </Table>
-            </ScrollArea>
+                </ScrollArea>
+              </div>
+            </>
           )}
         </CardContent>
       </Card>
