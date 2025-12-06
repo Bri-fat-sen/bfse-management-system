@@ -479,56 +479,71 @@ Return complete array of all data rows.`,
     }
     
     if (selectedItems.length === 0) {
-      toast.warning("No items selected");
+      toast.warning("No items selected", "Please select at least one item to create");
       return;
     }
 
     setUploadLoading(true);
+    
+    const recordType = detectedType || "expense";
+    
     try {
       let created = 0;
+      let failed = 0;
       
       for (const item of selectedItems) {
-        if (detectedType === "expense") {
-          await base44.entities.Expense.create({
-            organisation_id: orgId,
-            category: item.category,
-            description: item.description,
-            amount: item.amount,
-            date: item.date,
-            vendor: item.vendor,
-            payment_method: 'cash',
-            recorded_by: currentEmployee?.id,
-            recorded_by_name: currentEmployee?.full_name,
-            status: 'pending',
-            notes: batchMode ? 'Batch imported via AI extraction' : 'Imported via advanced AI extraction'
-          });
-          created++;
-        } else if (detectedType === "revenue") {
-          await base44.entities.Revenue.create({
-            organisation_id: orgId,
-            source: item.category,
-            contributor_name: item.vendor || item.description,
-            amount: item.amount,
-            date: item.date,
-            recorded_by: currentEmployee?.id,
-            recorded_by_name: currentEmployee?.full_name,
-            status: 'confirmed',
-            notes: batchMode ? 'Batch imported via AI extraction' : 'AI-extracted from document'
-          });
-          created++;
+        try {
+          if (recordType === "expense") {
+            await base44.entities.Expense.create({
+              organisation_id: orgId,
+              category: item.category || 'other',
+              description: item.description || 'No description',
+              amount: item.amount || 0,
+              date: item.date || format(new Date(), 'yyyy-MM-dd'),
+              vendor: item.vendor || '',
+              payment_method: 'cash',
+              recorded_by: currentEmployee?.id || '',
+              recorded_by_name: currentEmployee?.full_name || '',
+              status: 'pending',
+              notes: batchMode ? 'Batch imported via AI extraction' : 'Imported via advanced AI extraction'
+            });
+            created++;
+          } else if (recordType === "revenue") {
+            await base44.entities.Revenue.create({
+              organisation_id: orgId,
+              source: item.category || 'other',
+              contributor_name: item.vendor || item.description || 'Unknown',
+              amount: item.amount || 0,
+              date: item.date || format(new Date(), 'yyyy-MM-dd'),
+              recorded_by: currentEmployee?.id || '',
+              recorded_by_name: currentEmployee?.full_name || '',
+              status: 'confirmed',
+              notes: batchMode ? 'Batch imported via AI extraction' : 'AI-extracted from document'
+            });
+            created++;
+          }
+        } catch (itemError) {
+          console.error('Failed to create record:', itemError, item);
+          failed++;
         }
       }
 
       const filesProcessed = batchMode ? fileQueue.filter(f => f.status === 'completed').length : 1;
-      toast.success(
-        "Records created", 
-        `Successfully created ${created} records from ${filesProcessed} document${filesProcessed > 1 ? 's' : ''}`
-      );
-      onOpenChange(false);
-      resetState();
-      if (onSuccess) onSuccess();
+      
+      if (created > 0) {
+        toast.success(
+          "Records created", 
+          `Successfully created ${created} records from ${filesProcessed} document${filesProcessed > 1 ? 's' : ''}${failed > 0 ? `. ${failed} failed.` : ''}`
+        );
+        onOpenChange(false);
+        resetState();
+        if (onSuccess) onSuccess();
+      } else {
+        toast.error("Failed to create records", `All ${failed} records failed to create. Check console for details.`);
+      }
       
     } catch (error) {
+      console.error('Batch creation error:', error);
       toast.error("Failed to create records", error.message);
     } finally {
       setUploadLoading(false);
