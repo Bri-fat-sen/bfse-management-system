@@ -1030,7 +1030,21 @@ Extract ALL line items from the document table.`,
       </Dialog>
 
       {/* Upload Document Dialog */}
-      <Dialog open={showUploadDialog} onOpenChange={setShowUploadDialog}>
+      <AdvancedDocumentExtractor
+        open={showUploadDialog}
+        onOpenChange={setShowUploadDialog}
+        type="expense"
+        orgId={orgId}
+        currentEmployee={currentEmployee}
+        categories={CONSTRUCTION_CATEGORIES}
+        onSuccess={() => {
+          queryClient.invalidateQueries({ queryKey: ['constructionExpenses'] });
+          queryClient.invalidateQueries({ queryKey: ['expenses'] });
+        }}
+      />
+      
+      {/* Old Upload Dialog (backup) */}
+      <Dialog open={false} onOpenChange={() => {}}>
         <DialogContent className="max-w-6xl max-h-[95vh] overflow-hidden p-0 w-[98vw] [&>button]:hidden">
           {/* Sierra Leone Flag Header */}
           <div className="h-2 flex">

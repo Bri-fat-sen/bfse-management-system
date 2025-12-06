@@ -44,7 +44,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import DocumentUploadExtractor from "@/components/finance/DocumentUploadExtractor";
+import AdvancedDocumentExtractor from "@/components/finance/AdvancedDocumentExtractor";
 
 const EXPENSE_CATEGORIES = [
   { value: "fuel", label: "Fuel" },
@@ -509,13 +509,14 @@ export default function ExpenseManagement() {
         </DialogContent>
       </Dialog>
 
-      {/* Upload Document Dialog */}
-      <DocumentUploadExtractor
+      {/* Upload Document Dialog - Advanced */}
+      <AdvancedDocumentExtractor
         open={showUploadDialog}
         onOpenChange={setShowUploadDialog}
         type="auto"
         orgId={orgId}
         currentEmployee={currentEmployee}
+        categories={EXPENSE_CATEGORIES}
         onSuccess={() => {
           queryClient.invalidateQueries({ queryKey: ['allExpenses'] });
           queryClient.invalidateQueries({ queryKey: ['expenses'] });
