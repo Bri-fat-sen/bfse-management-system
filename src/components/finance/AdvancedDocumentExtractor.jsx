@@ -469,7 +469,6 @@ Return complete array of all data rows.`,
     let selectedItems;
     
     if (batchMode) {
-      // Collect all selected items from all files
       selectedItems = fileQueue.flatMap(f => 
         (f.extractedData || []).filter(e => e.selected)
       );
@@ -482,6 +481,11 @@ Return complete array of all data rows.`,
       return;
     }
 
+    if (!orgId) {
+      toast.error("Missing organisation", "Organisation ID is required to create records");
+      return;
+    }
+
     setUploadLoading(true);
     
     const recordType = detectedType || "expense";
@@ -489,15 +493,16 @@ Return complete array of all data rows.`,
     try {
       let created = 0;
       let failed = 0;
+      const errors = [];
       
       for (const item of selectedItems) {
         try {
           if (recordType === "expense") {
-            await base44.entities.Expense.create({
+            const expenseData = {
               organisation_id: orgId,
               category: item.category || 'other',
               description: item.description || 'No description',
-              amount: item.amount || 0,
+              amount: parseFloat(item.amount) || 0,
               date: item.date || format(new Date(), 'yyyy-MM-dd'),
               vendor: item.vendor || '',
               payment_method: 'cash',
@@ -505,24 +510,31 @@ Return complete array of all data rows.`,
               recorded_by_name: currentEmployee?.full_name || '',
               status: 'pending',
               notes: batchMode ? 'Batch imported via AI extraction' : 'Imported via advanced AI extraction'
-            });
+            };
+            
+            console.log('Creating expense record:', expenseData);
+            await base44.entities.Expense.create(expenseData);
             created++;
           } else if (recordType === "revenue") {
-            await base44.entities.Revenue.create({
+            const revenueData = {
               organisation_id: orgId,
               source: item.category || 'other',
               contributor_name: item.vendor || item.description || 'Unknown',
-              amount: item.amount || 0,
+              amount: parseFloat(item.amount) || 0,
               date: item.date || format(new Date(), 'yyyy-MM-dd'),
               recorded_by: currentEmployee?.id || '',
               recorded_by_name: currentEmployee?.full_name || '',
               status: 'confirmed',
               notes: batchMode ? 'Batch imported via AI extraction' : 'AI-extracted from document'
-            });
+            };
+            
+            console.log('Creating revenue record:', revenueData);
+            await base44.entities.Revenue.create(revenueData);
             created++;
           }
         } catch (itemError) {
           console.error('Failed to create record:', itemError, item);
+          errors.push({ item, error: itemError.message || String(itemError) });
           failed++;
         }
       }
@@ -531,19 +543,26 @@ Return complete array of all data rows.`,
       
       if (created > 0) {
         toast.success(
-          "Records created", 
-          `Successfully created ${created} records from ${filesProcessed} document${filesProcessed > 1 ? 's' : ''}${failed > 0 ? `. ${failed} failed.` : ''}`
+          "Records created successfully", 
+          `Created ${created} of ${selectedItems.length} records from ${filesProcessed} document${filesProcessed > 1 ? 's' : ''}`
         );
+        
+        if (failed > 0) {
+          console.warn('Failed to create some records:', errors);
+          toast.warning(`${failed} records failed`, "Check browser console for details");
+        }
+        
         onOpenChange(false);
         resetState();
         if (onSuccess) onSuccess();
       } else {
-        toast.error("Failed to create records", `All ${failed} records failed to create. Check console for details.`);
+        console.error('All records failed:', errors);
+        toast.error("Failed to create records", `All ${failed} records failed. Check browser console for details.`);
       }
       
     } catch (error) {
       console.error('Batch creation error:', error);
-      toast.error("Failed to create records", error.message);
+      toast.error("Failed to create records", error.message || String(error));
     } finally {
       setUploadLoading(false);
     }
