@@ -112,8 +112,8 @@ export default function Inventory() {
     queryKey: ['products', orgId],
     queryFn: () => base44.entities.Product.filter({ organisation_id: orgId }),
     enabled: !!orgId,
-    staleTime: 2 * 60 * 1000,
-    refetchOnWindowFocus: false,
+    staleTime: 0,
+    refetchOnWindowFocus: true,
   });
 
   const { data: warehouses = [] } = useQuery({
