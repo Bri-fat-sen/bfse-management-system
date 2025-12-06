@@ -76,35 +76,35 @@ export default function Dashboard() {
   const { data: employees = [] } = useQuery({
     queryKey: ['employees', orgId],
     queryFn: () => base44.entities.Employee.filter({ organisation_id: orgId }),
-    enabled: !!orgId && !isDriver && !isSalesStaff && !isManager,
+    enabled: !!orgId,
     ...queryConfig,
   });
 
   const { data: sales = [] } = useQuery({
     queryKey: ['sales', orgId],
     queryFn: () => base44.entities.Sale.filter({ organisation_id: orgId }, '-created_date', 50),
-    enabled: !!orgId && !isDriver && !isSalesStaff && !isManager,
+    enabled: !!orgId,
     ...queryConfig,
   });
 
   const { data: products = [] } = useQuery({
     queryKey: ['products', orgId],
     queryFn: () => base44.entities.Product.filter({ organisation_id: orgId }),
-    enabled: !!orgId && !isDriver && !isSalesStaff && !isManager,
+    enabled: !!orgId,
     ...queryConfig,
   });
 
   const { data: trips = [] } = useQuery({
     queryKey: ['trips', orgId],
     queryFn: () => base44.entities.Trip.filter({ organisation_id: orgId }, '-created_date', 20),
-    enabled: !!orgId && !isDriver && !isSalesStaff && !isManager,
+    enabled: !!orgId,
     ...queryConfig,
   });
 
   const { data: recentActivity = [] } = useQuery({
     queryKey: ['activity', orgId],
     queryFn: () => base44.entities.ActivityLog.filter({ organisation_id: orgId }, '-created_date', 5),
-    enabled: !!orgId && !isDriver && !isSalesStaff && !isManager,
+    enabled: !!orgId,
     ...queryConfig,
   });
 
@@ -114,14 +114,14 @@ export default function Dashboard() {
       organisation_id: orgId, 
       date: format(new Date(), 'yyyy-MM-dd') 
     }),
-    enabled: !!orgId && !isDriver && !isSalesStaff && !isManager,
+    enabled: !!orgId,
     ...queryConfig,
   });
 
   const { data: stockAlerts = [] } = useQuery({
     queryKey: ['stockAlerts', orgId],
     queryFn: () => base44.entities.StockAlert.filter({ organisation_id: orgId, status: 'active' }),
-    enabled: !!orgId && !isDriver && !isSalesStaff && !isManager,
+    enabled: !!orgId,
     staleTime: 5 * 60 * 1000,
     refetchOnWindowFocus: false,
   });
@@ -129,7 +129,7 @@ export default function Dashboard() {
   const { data: inventoryBatches = [] } = useQuery({
     queryKey: ['inventoryBatches', orgId],
     queryFn: () => base44.entities.InventoryBatch.filter({ organisation_id: orgId, status: 'active' }),
-    enabled: !!orgId && !isDriver && !isSalesStaff && !isManager,
+    enabled: !!orgId,
     staleTime: 5 * 60 * 1000,
     refetchOnWindowFocus: false,
   });
@@ -137,7 +137,7 @@ export default function Dashboard() {
   const { data: meetings = [] } = useQuery({
     queryKey: ['meetings', orgId],
     queryFn: () => base44.entities.Meeting.filter({ organisation_id: orgId }, '-date', 10),
-    enabled: !!orgId && !isDriver && !isSalesStaff && !isManager,
+    enabled: !!orgId,
     staleTime: 5 * 60 * 1000,
     refetchOnWindowFocus: false,
   });
@@ -145,14 +145,14 @@ export default function Dashboard() {
   const { data: expenses = [] } = useQuery({
     queryKey: ['expenses', orgId],
     queryFn: () => base44.entities.Expense.filter({ organisation_id: orgId }, '-created_date', 50),
-    enabled: !!orgId && !isDriver && !isSalesStaff && !isManager,
+    enabled: !!orgId,
     ...queryConfig,
   });
 
   const { data: vehicles = [] } = useQuery({
     queryKey: ['vehicles', orgId],
     queryFn: () => base44.entities.Vehicle.filter({ organisation_id: orgId }),
-    enabled: !!orgId && !isDriver && !isSalesStaff && !isManager,
+    enabled: !!orgId,
     staleTime: 5 * 60 * 1000,
     refetchOnWindowFocus: false,
   });
@@ -160,7 +160,7 @@ export default function Dashboard() {
   const { data: routes = [] } = useQuery({
     queryKey: ['routes', orgId],
     queryFn: () => base44.entities.Route.filter({ organisation_id: orgId, is_active: true }),
-    enabled: !!orgId && !isDriver && !isSalesStaff && !isManager,
+    enabled: !!orgId,
     staleTime: 5 * 60 * 1000,
     refetchOnWindowFocus: false,
   });
@@ -168,21 +168,21 @@ export default function Dashboard() {
   const { data: truckContracts = [] } = useQuery({
     queryKey: ['truckContracts', orgId],
     queryFn: () => base44.entities.TruckContract.filter({ organisation_id: orgId }),
-    enabled: !!orgId && !isDriver && !isSalesStaff && !isManager,
+    enabled: !!orgId,
     ...queryConfig,
   });
 
   const { data: revenues = [] } = useQuery({
     queryKey: ['revenues', orgId],
     queryFn: () => base44.entities.Revenue.filter({ organisation_id: orgId }),
-    enabled: !!orgId && !isDriver && !isSalesStaff && !isManager,
+    enabled: !!orgId,
     ...queryConfig,
   });
 
   const { data: maintenanceRecords = [] } = useQuery({
     queryKey: ['maintenanceRecords', orgId],
     queryFn: () => base44.entities.VehicleMaintenance.filter({ organisation_id: orgId }),
-    enabled: !!orgId && !isDriver && !isSalesStaff && !isManager,
+    enabled: !!orgId,
     ...queryConfig,
   });
 
