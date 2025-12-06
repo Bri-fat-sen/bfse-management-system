@@ -235,7 +235,7 @@ export default function Inventory() {
         }
         
         // Refresh alerts after creating new ones
-        queryClient.invalidateQueries({ queryKey: ['stockAlerts'] });
+        queryClient.invalidateQueries({ queryKey: ['stockAlerts', orgId] });
       } catch (error) {
         // Silently fail - user may not have permission
         console.log('Stock alert check skipped - insufficient permissions');
@@ -248,7 +248,7 @@ export default function Inventory() {
   const createProductMutation = useMutation({
     mutationFn: (data) => base44.entities.Product.create(data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['products'] });
+      queryClient.invalidateQueries({ queryKey: ['products', orgId] });
       setShowProductDialog(false);
       setEditingProduct(null);
       toast.success("Product created", "Product has been added to inventory");
@@ -262,7 +262,7 @@ export default function Inventory() {
   const updateProductMutation = useMutation({
     mutationFn: ({ id, data }) => base44.entities.Product.update(id, data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['products'] });
+      queryClient.invalidateQueries({ queryKey: ['products', orgId] });
       setShowProductDialog(false);
       setEditingProduct(null);
       toast.success("Product updated", "Changes have been saved");
@@ -276,7 +276,7 @@ export default function Inventory() {
   const deleteProductMutation = useMutation({
     mutationFn: (id) => base44.entities.Product.delete(id),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['products'] });
+      queryClient.invalidateQueries({ queryKey: ['products', orgId] });
       toast.success("Product deleted", "Product has been removed");
     },
     onError: (error) => {
