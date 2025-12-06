@@ -246,6 +246,7 @@ Be specific about WHY you chose that record type.`,
       let extractedDocDate = analysisResult.document_date || format(new Date(), 'yyyy-MM-dd');
       let columnHeaders = analysisResult.key_columns || [];
 
+      // Enhanced multi-stage extraction with better accuracy
       try {
         const extractResult = await base44.integrations.Core.ExtractDataFromUploadedFile({
           file_url: file_url,
@@ -261,26 +262,90 @@ Be specific about WHY you chose that record type.`,
           throw new Error('Primary extraction failed');
         }
       } catch (primaryError) {
-        console.log("ExtractDataFromUploadedFile failed, trying InvokeLLM:", primaryError);
+        console.log("ExtractDataFromUploadedFile failed, using advanced AI extraction:", primaryError);
 
         const typeSpecificPrompt = {
-          expense: "Extract expense/purchase items with amounts, vendors, categories",
-          revenue: "Extract revenue/income items with amounts, customers, sources",
-          production: "Extract production batch data with SKUs, quantities, batch numbers",
-          inventory: "Extract inventory/stock data with product names, quantities, warehouses",
-          payroll: "Extract payroll data with employee names, salaries, bonuses, deductions"
-        }[docType] || "Extract all tabular data";
+          expense: `Extract ALL expense line items. For EACH item extract:
+      - Description/details (exact text from document)
+      - Quantities (estimated AND actual if both columns exist)
+      - Unit costs (estimated AND actual if both columns exist)  
+      - Total amounts (estimated AND actual if both columns exist)
+      - Units of measure (bags, kg, pcs, etc)
+      - Vendor/supplier names
+      - Item numbers or row numbers
+      - Any additional columns present
+
+      DO NOT skip any rows. Extract every single line item from the table.`,
+          revenue: `Extract ALL revenue/sales items. For EACH item extract:
+      - Product names and descriptions
+      - Customer names (if present)
+      - Quantities sold
+      - Unit prices
+      - Total amounts
+      - SKUs or product codes
+      - Payment details
+      - Any additional columns
+
+      Extract EVERY row from the table.`,
+          production: `Extract ALL production batch records. For EACH batch extract:
+      - Product name and SKU
+      - Batch number or lot number
+      - Quantities (rolls, pieces, weight)
+      - Manufacturing/production dates
+      - Expiry dates
+      - Quality status
+      - Raw materials used
+      - Any additional batch information
+
+      Include ALL batches found in the document.`,
+          inventory: `Extract ALL inventory/stock records. For EACH item extract:
+      - Product name and SKU
+      - Warehouse or location
+      - Quantities (in, out, balance)
+      - Stock movements
+      - Dates
+      - Batch numbers
+      - Any additional inventory details
+
+      Extract every stock line item.`,
+          payroll: `Extract ALL payroll records. For EACH employee extract:
+      - Employee name and ID/code
+      - Base salary
+      - Allowances
+      - Bonuses
+      - Deductions
+      - Net pay
+      - Pay period
+      - Any additional payroll columns
+
+      Include ALL employee payroll records.`
+        }[docType] || "Extract all tabular data with maximum detail";
 
         const fallbackResult = await base44.integrations.Core.InvokeLLM({
-          prompt: `Read this document and extract tabular data.
+          prompt: `You are an advanced document extraction system. Analyze this ${docType} document with high precision.
 
-Document type detected: ${docType}
-Focus: ${typeSpecificPrompt}
+      CRITICAL INSTRUCTIONS:
+      1. Identify the EXACT date from the document (look in header, footer, or document body)
+      2. List ALL column headers found in the table(s) - do not skip any columns
+      3. Extract EVERY SINGLE ROW from the table - completeness is critical
+      4. For each row, capture ALL available fields based on column headers
+      5. ${typeSpecificPrompt}
+      6. Look for:
+      - Document reference numbers
+      - Subtotals and totals
+      - Notes or remarks
+      - Status indicators
+      - Approval signatures
 
-1. Find the document date (format as YYYY-MM-DD)
-2. List ALL column headers from the table
-3. For EACH row, extract all relevant fields based on the document type
-4. Return every row - do not summarize or skip any data.`,
+      EXTRACTION FOCUS:
+      ${typeSpecificPrompt}
+
+      Return structured data with:
+      - document_info: {date, title, type, reference}
+      - table_columns: [list of ALL column names found]
+      - rows: [array of ALL rows with complete data]
+
+      Be thorough and accurate. Do not skip rows or columns.`,
           file_urls: [file_url],
           response_json_schema: extractionSchema
         });
@@ -289,6 +354,11 @@ Focus: ${typeSpecificPrompt}
         items = result.rows || [];
         extractedDocDate = result.document_info?.date || extractedDocDate;
         columnHeaders = result.table_columns || columnHeaders;
+
+        // Second-pass validation for critical missing data
+        if (items.length === 0) {
+          toast.warning("No data extracted", "Document may be empty or format not recognized");
+        }
       }
 
       setExtractedColumns(columnHeaders);
