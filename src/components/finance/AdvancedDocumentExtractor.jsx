@@ -11,9 +11,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import {
-  Upload, Loader2, FileUp, CheckCircle, Eye, ZoomIn, ZoomOut,
-  RotateCw, Download, Sparkles, AlertCircle, Info, X, RefreshCw,
-  FileText, Image as ImageIcon, Table as TableIcon, ChevronRight, Trash2
+  Upload, Loader2, FileUp, CheckCircle, Sparkles, AlertCircle, X, RefreshCw,
+  FileText, Table as TableIcon, ChevronRight, Trash2
 } from "lucide-react";
 import { useToast } from "@/components/ui/Toast";
 
@@ -60,9 +59,6 @@ export default function AdvancedDocumentExtractor({
   const [extractedData, setExtractedData] = useState([]);
   const [extractedColumns, setExtractedColumns] = useState([]);
   const [documentMetadata, setDocumentMetadata] = useState(null);
-  
-  const [viewMode, setViewMode] = useState("split");
-  const [zoom, setZoom] = useState(100);
   
   const [validationResults, setValidationResults] = useState(null);
   const [confidenceScore, setConfidenceScore] = useState(0);
@@ -551,8 +547,6 @@ Return complete array of all data rows.`,
     setExtractedColumns([]);
     setDocumentMetadata(null);
     setConfidenceScore(0);
-    setZoom(100);
-    setViewMode("split");
     setDynamicCategories([...EXPENSE_CATEGORIES]);
     setBatchMode(false);
     setFileQueue([]);
@@ -1055,110 +1049,7 @@ Return complete array of all data rows.`,
 
             {uploadStage === "editing" && (
               <div className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <Tabs value={viewMode} onValueChange={setViewMode} className="w-auto">
-                    <TabsList>
-                      <TabsTrigger value="split" className="text-xs">
-                        <FileText className="w-3 h-3 mr-1" />
-                        Split View
-                      </TabsTrigger>
-                      <TabsTrigger value="document" className="text-xs">
-                        <ImageIcon className="w-3 h-3 mr-1" />
-                        Document
-                      </TabsTrigger>
-                      <TabsTrigger value="table" className="text-xs">
-                        <TableIcon className="w-3 h-3 mr-1" />
-                        Table Only
-                      </TabsTrigger>
-                    </TabsList>
-                  </Tabs>
-
-                  {validationResults && (
-                    <div className="flex items-center gap-3">
-                      <div className="text-sm">
-                        <span className="text-gray-500">Quality:</span>
-                        <span className="ml-2 font-bold text-green-600">
-                          {validationResults.accuracy_score?.toFixed(0)}%
-                        </span>
-                      </div>
-                    </div>
-                  )}
-                </div>
-
-                {(viewMode === "split" || viewMode === "document") && fileUrl && (
-                  <Card className="overflow-hidden bg-gray-50">
-                    <CardContent className="p-4">
-                      <div className="relative bg-white rounded-lg border-2 border-gray-200 overflow-hidden">
-                        {isPDF ? (
-                          <div className="relative">
-                            <object 
-                              data={`${fileUrl}#toolbar=0&view=FitH`}
-                              type="application/pdf"
-                              className="w-full h-[500px] bg-white border-0"
-                              title="Document Preview"
-                            >
-                              <iframe 
-                                src={`${fileUrl}#toolbar=0&view=FitH`}
-                                className="w-full h-[500px] bg-white border-0"
-                                title="Document Preview Fallback"
-                              />
-                            </object>
-                            <div className="absolute top-2 left-2 bg-black/70 text-white text-xs px-2 py-1 rounded">
-                              📄 PDF Document
-                            </div>
-                          </div>
-                        ) : (
-                          <div className="relative bg-gray-100 flex items-center justify-center min-h-[500px] overflow-auto p-4">
-                            <img 
-                              src={fileUrl} 
-                              alt="Document Preview" 
-                              className="max-w-full h-auto shadow-lg"
-                              style={{ 
-                                transform: `scale(${zoom/100})`,
-                                transformOrigin: 'center center',
-                                transition: 'transform 0.2s'
-                              }}
-                            />
-                          </div>
-                        )}
-                        
-                        {!isPDF && (
-                          <div className="absolute bottom-4 right-4 flex gap-1 bg-black/80 rounded-lg p-1.5 shadow-lg">
-                            <Button 
-                              size="icon" 
-                              variant="ghost" 
-                              className="h-8 w-8 text-white hover:bg-white/20"
-                              onClick={() => setZoom(Math.max(50, zoom - 10))}
-                            >
-                              <ZoomOut className="w-4 h-4" />
-                            </Button>
-                            <span className="px-3 py-1 text-white text-xs font-medium min-w-[60px] text-center flex items-center">
-                              {zoom}%
-                            </span>
-                            <Button 
-                              size="icon" 
-                              variant="ghost" 
-                              className="h-8 w-8 text-white hover:bg-white/20"
-                              onClick={() => setZoom(Math.min(200, zoom + 10))}
-                            >
-                              <ZoomIn className="w-4 h-4" />
-                            </Button>
-                            <Button 
-                              size="icon" 
-                              variant="ghost" 
-                              className="h-8 w-8 text-white hover:bg-white/20"
-                              onClick={() => setZoom(100)}
-                            >
-                              <RotateCw className="w-4 h-4" />
-                            </Button>
-                          </div>
-                        )}
-                      </div>
-                    </CardContent>
-                  </Card>
-                )}
-
-                {viewMode !== "document" && extractedData.length > 0 && (
+                {extractedData.length > 0 && (
                   <div className="space-y-3">
                     <div className="flex items-center justify-between">
                       <h3 className="font-semibold">Extracted Data ({extractedData.length} rows)</h3>
