@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from "react";
+import React, { useState } from "react";
 import { base44 } from "@/api/base44Client";
 import { format } from "date-fns";
 import { Button } from "@/components/ui/button";
@@ -7,370 +7,160 @@ import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent } from "@/components/ui/card";
-import { Progress } from "@/components/ui/progress";
 import {
-  Upload, Loader2, FileUp, CheckCircle, Eye, ZoomIn, ZoomOut,
-  RotateCw, Download, Sparkles, AlertCircle, Info, X, RefreshCw,
-  FileText, Image as ImageIcon, Table as TableIcon, ChevronRight, Trash2
+  Upload, Loader2, CheckCircle, X, Sparkles, AlertCircle, 
+  ZoomIn, ZoomOut, RotateCw, Trash2, RefreshCw
 } from "lucide-react";
 import { useToast } from "@/components/ui/Toast";
 
 const RECORD_TYPES = [
-  { value: "expense", label: "Expenses", icon: "💰", color: "red" },
-  { value: "revenue", label: "Revenue/Sales", icon: "📈", color: "green" },
-  { value: "production", label: "Production Batches", icon: "🏭", color: "blue" },
-  { value: "inventory", label: "Stock/Inventory", icon: "📦", color: "purple" },
-  { value: "payroll", label: "Payroll Items", icon: "👥", color: "amber" },
+  { value: "expense", label: "Expenses", icon: "💰" },
+  { value: "revenue", label: "Revenue/Sales", icon: "📈" },
+];
+
+const EXPENSE_CATEGORIES = [
+  { value: "fuel", label: "Fuel" },
+  { value: "maintenance", label: "Maintenance" },
+  { value: "utilities", label: "Utilities" },
+  { value: "supplies", label: "Supplies" },
+  { value: "rent", label: "Rent" },
+  { value: "salaries", label: "Salaries" },
+  { value: "transport", label: "Transport" },
+  { value: "marketing", label: "Marketing" },
+  { value: "insurance", label: "Insurance" },
+  { value: "other", label: "Other" },
 ];
 
 export default function AdvancedDocumentExtractor({ 
   open, 
   onOpenChange, 
-  type = "auto",
   orgId,
   currentEmployee,
   onSuccess,
-  categories,
-  products = [],
-  employees = [],
-  warehouses = [],
-  customers = [],
-  vehicles = [],
-  selectedLocation,
-  selectedSaleType,
 }) {
   const toast = useToast();
-  const [uploadStage, setUploadStage] = useState("upload"); // upload, analyzing, preview, editing
-  const [uploadLoading, setUploadLoading] = useState(false);
+  const [stage, setStage] = useState("upload"); // upload, processing, editing
+  const [loading, setLoading] = useState(false);
   const [fileUrl, setFileUrl] = useState(null);
   const [fileName, setFileName] = useState("");
-  const [fileType, setFileType] = useState("");
-  
-  // Document analysis results
-  const [documentAnalysis, setDocumentAnalysis] = useState(null);
-  const [detectedType, setDetectedType] = useState(type === "auto" ? null : type);
+  const [recordType, setRecordType] = useState("expense");
   const [extractedData, setExtractedData] = useState([]);
-  const [extractedColumns, setExtractedColumns] = useState([]);
-  const [documentMetadata, setDocumentMetadata] = useState(null);
-  
-  // Preview controls
-  const [viewMode, setViewMode] = useState("split"); // split, document, table
   const [zoom, setZoom] = useState(100);
-  const [currentPage, setCurrentPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
-  
-  // Validation & confidence
-  const [validationResults, setValidationResults] = useState(null);
-  const [confidenceScore, setConfidenceScore] = useState(0);
-
   const [currencyMode, setCurrencyMode] = useState(null);
   const [showCurrencyDialog, setShowCurrencyDialog] = useState(false);
   const [pendingFile, setPendingFile] = useState(null);
 
-  // Stage 1: Advanced Document Analysis with AI
-  const analyzeDocument = async (file_url, file) => {
-    try {
-      setUploadStage("analyzing");
-      console.log("Starting document analysis...");
-      
-      const analysisResult = await base44.integrations.Core.InvokeLLM({
-      prompt: `You are an advanced document analysis AI. Analyze this business document comprehensively.
-
-**Primary Analysis:**
-1. Document Type Detection:
-   - Identify if this is: invoice, receipt, purchase order, expense report, budget, sales report, inventory list, payroll sheet, production log, bank statement
-   - Determine the appropriate record type: expense, revenue, production, inventory, or payroll
-
-2. Document Structure:
-   - List ALL table headers/column names found (exact text)
-   - Identify the table structure (rows, columns, merged cells)
-   - Detect if there are multiple tables
-   - Find any summary rows (totals, subtotals)
-
-3. Key Metadata:
-   - Document date (any format - convert to YYYY-MM-DD)
-   - Document number/reference
-   - Issuer/vendor/customer name
-   - Total amount if shown
-   - Currency mentioned (SLE/SLL/other)
-
-4. Data Quality Assessment:
-   - Are numbers clearly readable?
-   - Are there any handwritten portions?
-   - Image quality score (1-10)
-   - Potential OCR challenges
-
-5. Business Context:
-   - What type of transaction does this represent?
-   - What business process does this belong to?
-   - Any compliance or regulatory information?
-
-Provide detailed, accurate analysis with high confidence.`,
-      file_urls: [file_url],
-      response_json_schema: {
-        type: "object",
-        properties: {
-          document_type: { type: "string" },
-          record_type: { 
-            type: "string", 
-            enum: ["expense", "revenue", "production", "inventory", "payroll"],
-          },
-          confidence: { type: "number", description: "0-100 confidence score" },
-          table_structure: {
-            type: "object",
-            properties: {
-              column_headers: { type: "array", items: { type: "string" } },
-              estimated_rows: { type: "number" },
-              has_subtotals: { type: "boolean" },
-              has_merged_cells: { type: "boolean" },
-              multiple_tables: { type: "boolean" }
-            }
-          },
-          metadata: {
-            type: "object",
-            properties: {
-              date: { type: "string" },
-              document_number: { type: "string" },
-              issuer_name: { type: "string" },
-              total_amount: { type: "number" },
-              currency: { type: "string" }
-            }
-          },
-          quality_assessment: {
-            type: "object",
-            properties: {
-              readability_score: { type: "number" },
-              has_handwriting: { type: "boolean" },
-              ocr_challenges: { type: "array", items: { type: "string" } },
-              image_quality: { type: "number" }
-            }
-          },
-          business_context: {
-            type: "object",
-            properties: {
-              transaction_type: { type: "string" },
-              business_process: { type: "string" },
-              compliance_notes: { type: "array", items: { type: "string" } }
-            }
-          },
-          extraction_recommendations: {
-            type: "array",
-            items: { type: "string" },
-            description: "Suggestions for optimal data extraction"
-          }
-        }
-      }
-      });
-
-      console.log("Analysis complete:", analysisResult);
-      return analysisResult;
-    } catch (error) {
-      console.error("Analysis error:", error);
-      throw new Error("Failed to analyze document: " + error.message);
-    }
-  };
-
-  // Stage 2: Advanced Data Extraction with Multi-Pass
-  const extractDocumentData = async (file_url, analysis) => {
-    try {
-      console.log("Starting data extraction...");
-      const recordType = detectedType || analysis.record_type;
-      
-      const extractionPrompt = `Extract ALL tabular data from this business document. Read EVERY row carefully.
-
-CRITICAL INSTRUCTIONS:
-1. Look for ANY tables, lists, or structured data in the document
-2. Extract EVERY SINGLE ROW - do not skip, summarize, or combine rows
-3. For each row, identify and extract:
-   - Description/Item/Details (text description of the item/expense/transaction)
-   - Amount/Total/Value (numeric value - extract the number, remove currency symbols)
-   - Date (if present in the row or use document date)
-   - Quantity/Qty (if present)
-   - Unit Price/Rate (if present)
-   - Category/Type (if mentioned)
-   - Any other relevant fields you see
-
-4. Number Parsing Rules:
-   - Remove commas from numbers (1,500 → 1500)
-   - Preserve decimals (1,500.50 → 1500.50)
-   - Extract ONLY the numeric value (Le 1,500 → 1500)
-
-5. Skip ONLY:
-   - Header rows (column titles)
-   - Total/Subtotal rows
-   - Empty rows
-
-6. If you see multiple sections or tables, extract from ALL of them
-
-Provide each row as a separate data object with all fields you can identify.`;
-
-    const dataExtractionResult = await base44.integrations.Core.InvokeLLM({
-      prompt: extractionPrompt,
-      file_urls: [file_url],
-      response_json_schema: {
-        type: "object",
-        properties: {
-          rows: {
-            type: "array",
-            items: {
-              type: "object",
-              properties: {
-                description: { type: "string" },
-                amount: { type: "number" },
-                date: { type: "string" },
-                quantity: { type: "number" },
-                unit_price: { type: "number" },
-                category: { type: "string" },
-                vendor: { type: "string" },
-                notes: { type: "string" },
-                confidence: { type: "number" }
-              }
-            }
-          },
-          total_rows_found: { type: "number" },
-          extraction_notes: { type: "string" }
-        }
-      }
-      });
-
-      console.log("Extraction complete:", dataExtractionResult);
-      return dataExtractionResult;
-    } catch (error) {
-      console.error("Extraction error:", error);
-      throw new Error("Failed to extract data: " + error.message);
-    }
-  };
-
-  // Stage 3: Simple validation
-  const validateAndCorrectData = (rawData) => {
-    return {
-      overall_quality: {
-        accuracy_score: 90,
-        completeness_score: 95,
-        issues_found: 0,
-        auto_corrections: 0
-      }
-    };
-  };
-
-  const handleFileUpload = async (e) => {
+  const handleFileSelect = (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    // Ask about currency first
     if (currencyMode === null) {
       setPendingFile(file);
       setShowCurrencyDialog(true);
-      return;
+    } else {
+      processFile(file);
     }
-
-    await processFile(file);
   };
 
   const processFile = async (file) => {
-    setUploadLoading(true);
-    setShowCurrencyDialog(false);
+    setLoading(true);
+    setStage("processing");
     setFileName(file.name);
-    setFileType(file.type);
+    setPendingFile(file);
     
     try {
-      // Stage 1: Upload file
-      toast.info("Uploading document...", "Processing your file");
+      // Step 1: Upload
+      toast.info("Uploading...", "Processing your document");
       const { file_url } = await base44.integrations.Core.UploadFile({ file });
       setFileUrl(file_url);
 
-      // Stage 2: Advanced Analysis
-      toast.info("Analyzing document...", "AI is reading the document structure");
-      const analysis = await analyzeDocument(file_url, file);
-      setDocumentAnalysis(analysis);
-      setDetectedType(type === "auto" ? analysis.record_type : type);
-      setExtractedColumns(analysis.table_structure?.column_headers || []);
-      setDocumentMetadata(analysis.metadata);
-      setConfidenceScore(analysis.confidence || 0);
-      setTotalPages(1); // Could be enhanced to detect actual page count
-
-      // Stage 3: Extract data immediately (don't wait for preview)
-      toast.info("Extracting data...", "Reading all rows from the document");
-      const rawExtraction = await extractDocumentData(file_url, analysis);
-
-      // Stage 4: Validate & Correct
-      toast.info("Validating data...", "Checking accuracy and auto-correcting");
-      const validation = await validateAndCorrectData(rawExtraction, analysis);
-      setValidationResults(validation.overall_quality);
-
-      // Process and map data
-      const conversionFactor = currencyMode === 'sll' ? 1000 : 1;
-      const mappedData = (rawExtraction.rows || []).map((row, idx) => {
-        const rawAmount = parseFloat(row.amount || 0);
-        const amount = rawAmount / conversionFactor;
-
-        return {
-          id: `row-${idx}`,
-          selected: true,
-          row_number: idx + 1,
-          confidence: row.confidence || 90,
-          description: row.description || row.notes || '',
-          amount: amount,
-          category: row.category || 'other',
-          date: row.date || analysis.metadata?.date || format(new Date(), 'yyyy-MM-dd'),
-          vendor: row.vendor || analysis.metadata?.issuer_name || '',
-          quantity: parseFloat(row.quantity || 0),
-          unit_price: parseFloat(row.unit_price || 0) / conversionFactor,
-          warnings: [],
-          corrections: [],
-          raw_data: row
-        };
-      }).filter(item => item.description && item.amount > 0);
-
-      setExtractedData(mappedData);
-      setUploadStage("editing");
-      setUploadStage("preview");
+      // Step 2: Extract data with simple, direct prompt
+      toast.info("Extracting data...", "AI is reading the document");
       
-      const avgConfidence = validation.overall_quality?.accuracy_score || 85;
-      toast.success(
-        "Extraction complete", 
-        `${mappedData.length} rows extracted with ${avgConfidence.toFixed(0)}% accuracy`
-      );
+      const result = await base44.integrations.Core.InvokeLLM({
+        prompt: `Extract ALL line items from this business document.
+
+For EACH line item you find, extract:
+- description: what the item/expense is
+- amount: the numeric value (just the number, no currency symbols)
+- date: if visible, otherwise leave empty
+- category: type of expense/item if mentioned
+
+CRITICAL RULES:
+1. Extract EVERY SINGLE LINE - don't skip any rows
+2. For amounts: Remove commas and currency symbols (Le 1,500.50 → 1500.50)
+3. Skip only header rows and total rows
+4. If you see 10 items, return 10 items. If you see 50, return 50.
+
+Return an array of all items found.`,
+        file_urls: [file_url],
+        response_json_schema: {
+          type: "object",
+          properties: {
+            items: {
+              type: "array",
+              items: {
+                type: "object",
+                properties: {
+                  description: { type: "string" },
+                  amount: { type: "number" },
+                  date: { type: "string" },
+                  category: { type: "string" }
+                }
+              }
+            }
+          }
+        }
+      });
+
+      console.log("Extraction result:", result);
+
+      const conversionFactor = currencyMode === 'sll' ? 1000 : 1;
+      const items = (result?.items || [])
+        .filter(item => item.description && item.amount > 0)
+        .map((item, idx) => ({
+          id: `item-${idx}`,
+          selected: true,
+          description: item.description,
+          amount: (item.amount || 0) / conversionFactor,
+          category: item.category || 'other',
+          date: item.date || format(new Date(), 'yyyy-MM-dd'),
+          vendor: ''
+        }));
+
+      console.log("Processed items:", items);
+
+      if (items.length === 0) {
+        toast.warning("No data found", "Couldn't extract any items. Try a clearer image or different document.");
+        setStage("upload");
+        return;
+      }
+
+      setExtractedData(items);
+      setStage("editing");
+      toast.success("Extraction complete", `Found ${items.length} items`);
 
     } catch (error) {
       console.error("Processing error:", error);
-      console.error("Error stack:", error.stack);
-      toast.error("Processing failed", error.message || "Failed to process document. Check console for details.");
-      setUploadStage("upload");
-      setPendingFile(null);
-      setFileUrl(null);
-      setExtractedData([]);
+      toast.error("Processing failed", error.message);
+      setStage("upload");
     } finally {
-      setUploadLoading(false);
+      setLoading(false);
     }
-  };
-
-  const handleReanalyze = async () => {
-    if (!pendingFile) {
-      toast.error("No file", "Please upload a document first");
-      return;
-    }
-    setExtractedData([]);
-    setDocumentAnalysis(null);
-    setValidationResults(null);
-    await processFile(pendingFile);
   };
 
   const handleCreateRecords = async () => {
-    const selectedItems = extractedData.filter(e => e.selected);
-    if (selectedItems.length === 0) {
+    const selected = extractedData.filter(e => e.selected);
+    if (selected.length === 0) {
       toast.warning("No items selected");
       return;
     }
 
-    setUploadLoading(true);
+    setLoading(true);
     try {
-      let created = 0;
-      
-      for (const item of selectedItems) {
-        if (detectedType === "expense") {
+      for (const item of selected) {
+        if (recordType === "expense") {
           await base44.entities.Expense.create({
             organisation_id: orgId,
             category: item.category,
@@ -382,12 +172,9 @@ Provide each row as a separate data object with all fields you can identify.`;
             recorded_by: currentEmployee?.id,
             recorded_by_name: currentEmployee?.full_name,
             status: 'pending',
-            notes: item.corrections.length > 0 
-              ? `AI auto-corrected: ${item.corrections.join(', ')}`
-              : 'Imported via advanced AI extraction'
+            notes: 'AI extracted from document'
           });
-          created++;
-        } else if (detectedType === "revenue") {
+        } else if (recordType === "revenue") {
           await base44.entities.Revenue.create({
             organisation_id: orgId,
             source: item.category,
@@ -397,33 +184,31 @@ Provide each row as a separate data object with all fields you can identify.`;
             recorded_by: currentEmployee?.id,
             recorded_by_name: currentEmployee?.full_name,
             status: 'confirmed',
-            notes: 'AI-extracted from document'
+            notes: 'AI extracted from document'
           });
-          created++;
         }
-        // Add other record types as needed...
       }
 
-      toast.success("Records created", `Successfully created ${created} ${RECORD_TYPES.find(r => r.value === detectedType)?.label}`);
-      onOpenChange(false);
+      toast.success("Records created", `Created ${selected.length} ${recordType} records`);
       resetState();
+      onOpenChange(false);
       if (onSuccess) onSuccess();
       
     } catch (error) {
+      console.error("Create error:", error);
       toast.error("Failed to create records", error.message);
     } finally {
-      setUploadLoading(false);
+      setLoading(false);
     }
   };
 
   const resetState = () => {
-    setUploadStage("upload");
+    setStage("upload");
     setFileUrl(null);
     setFileName("");
     setExtractedData([]);
-    setDocumentAnalysis(null);
-    setValidationResults(null);
     setPendingFile(null);
+    setZoom(100);
   };
 
   const toggleSelection = (id) => {
@@ -439,289 +224,148 @@ Provide each row as a separate data object with all fields you can identify.`;
   };
 
   const selectedCount = extractedData.filter(e => e.selected).length;
-  const selectedTotal = extractedData.filter(e => e.selected).reduce((sum, e) => sum + (e.amount || 0), 0);
+  const selectedTotal = extractedData.filter(e => e.selected).reduce((sum, e) => sum + e.amount, 0);
+
+  const isPDF = fileName.toLowerCase().endsWith('.pdf');
 
   return (
-    <Dialog open={open} onOpenChange={(isOpen) => { if (!isOpen) resetState(); onOpenChange(isOpen); }}>
-      <DialogContent className="max-w-[98vw] max-h-[98vh] overflow-hidden p-0 [&>button]:hidden">
-        {/* Header */}
-        <div className="h-2 flex">
-          <div className="flex-1 bg-[#1EB053]" />
-          <div className="flex-1 bg-white" />
-          <div className="flex-1 bg-[#0072C6]" />
-        </div>
-
-        <div className="px-6 py-4 bg-gradient-to-r from-[#1EB053] to-[#0072C6] text-white">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="w-12 h-12 rounded-xl bg-white/20 flex items-center justify-center">
-                <Sparkles className="w-6 h-6 text-white" />
-              </div>
-              <div>
-                <h2 className="text-xl font-bold">Advanced AI Document Extraction</h2>
-                <p className="text-white/80 text-sm">Multi-stage analysis with validation & preview</p>
-              </div>
-            </div>
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => onOpenChange(false)}
-              className="text-white hover:bg-white/20"
-            >
-              <X className="w-5 h-5" />
-            </Button>
+    <>
+      <Dialog open={open} onOpenChange={(isOpen) => { if (!isOpen) resetState(); onOpenChange(isOpen); }}>
+        <DialogContent className="max-w-[95vw] max-h-[95vh] overflow-hidden p-0 [&>button]:hidden">
+          {/* Header */}
+          <div className="h-1.5 flex">
+            <div className="flex-1 bg-[#1EB053]" />
+            <div className="flex-1 bg-white" />
+            <div className="flex-1 bg-[#0072C6]" />
           </div>
 
-          {/* Progress Indicator */}
-          {uploadStage !== "upload" && (
-            <div className="mt-4 flex items-center gap-2">
-              {["analyzing", "preview", "editing"].map((stage, idx) => (
-                <React.Fragment key={stage}>
-                  <div className={`flex items-center gap-2 ${
-                    uploadStage === stage ? 'text-white' : 
-                    ["analyzing", "preview", "editing"].indexOf(uploadStage) > idx ? 'text-white' : 'text-white/50'
-                  }`}>
-                    {["analyzing", "preview", "editing"].indexOf(uploadStage) > idx ? (
-                      <CheckCircle className="w-4 h-4" />
-                    ) : uploadStage === stage ? (
-                      <Loader2 className="w-4 h-4 animate-spin" />
-                    ) : (
-                      <div className="w-4 h-4 rounded-full border-2 border-current" />
-                    )}
-                    <span className="text-sm capitalize">{stage}</span>
-                  </div>
-                  {idx < 2 && <ChevronRight className="w-4 h-4 text-white/50" />}
-                </React.Fragment>
-              ))}
-            </div>
-          )}
-        </div>
-
-        {/* Main Content */}
-        <div className="p-6 overflow-y-auto max-h-[calc(98vh-180px)]">
-          
-          {/* Upload Stage */}
-          {uploadStage === "upload" && (
-            <div className="space-y-4">
-              <div className="border-2 border-dashed border-gray-300 rounded-xl p-12 text-center hover:border-[#0072C6] transition-colors">
-                <input
-                  type="file"
-                  accept=".pdf,.csv,.png,.jpg,.jpeg,.doc,.docx"
-                  onChange={handleFileUpload}
-                  className="hidden"
-                  id="advanced-doc-upload"
-                  disabled={uploadLoading}
-                />
-                <label htmlFor="advanced-doc-upload" className="cursor-pointer">
-                  <div className="flex flex-col items-center gap-4">
-                    <div className="w-20 h-20 rounded-full bg-gradient-to-br from-[#1EB053]/20 to-[#0072C6]/20 flex items-center justify-center">
-                      <Upload className="w-10 h-10 text-[#0072C6]" />
-                    </div>
-                    <div>
-                      <p className="text-lg font-semibold text-gray-700 mb-1">
-                        Upload Business Document
-                      </p>
-                      <p className="text-sm text-gray-500">
-                        AI will analyze structure, extract data, validate accuracy
-                      </p>
-                    </div>
-                    <div className="flex gap-2 flex-wrap justify-center">
-                      {RECORD_TYPES.map(rt => (
-                        <Badge key={rt.value} variant="outline" className="text-xs">
-                          {rt.icon} {rt.label}
-                        </Badge>
-                      ))}
-                    </div>
-                  </div>
-                </label>
+          <div className="px-6 py-4 bg-gradient-to-r from-[#1EB053] to-[#0072C6] text-white">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="w-12 h-12 rounded-xl bg-white/20 flex items-center justify-center">
+                  <Sparkles className="w-6 h-6 text-white" />
+                </div>
+                <div>
+                  <h2 className="text-xl font-bold">AI Document Extraction</h2>
+                  <p className="text-white/80 text-sm">Upload and extract data automatically</p>
+                </div>
               </div>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => onOpenChange(false)}
+                className="text-white hover:bg-white/20"
+              >
+                <X className="w-5 h-5" />
+              </Button>
+            </div>
+          </div>
 
-              {/* Features */}
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                <Card>
-                  <CardContent className="p-4 flex items-start gap-3">
-                    <div className="w-10 h-10 rounded-lg bg-green-100 flex items-center justify-center flex-shrink-0">
-                      <Sparkles className="w-5 h-5 text-green-600" />
+          {/* Content */}
+          <div className="p-6 overflow-y-auto max-h-[calc(95vh-140px)]">
+            
+            {/* Upload Stage */}
+            {stage === "upload" && (
+              <div className="space-y-4">
+                <div className="border-2 border-dashed border-gray-300 rounded-xl p-12 text-center hover:border-[#0072C6] transition-colors">
+                  <input
+                    type="file"
+                    accept=".pdf,.png,.jpg,.jpeg"
+                    onChange={handleFileSelect}
+                    className="hidden"
+                    id="doc-upload"
+                    disabled={loading}
+                  />
+                  <label htmlFor="doc-upload" className="cursor-pointer">
+                    <div className="flex flex-col items-center gap-4">
+                      <div className="w-20 h-20 rounded-full bg-gradient-to-br from-[#1EB053]/20 to-[#0072C6]/20 flex items-center justify-center">
+                        <Upload className="w-10 h-10 text-[#0072C6]" />
+                      </div>
+                      <div>
+                        <p className="text-lg font-semibold text-gray-700 mb-1">
+                          Upload Business Document
+                        </p>
+                        <p className="text-sm text-gray-500">
+                          Invoices, receipts, expense reports - AI will extract all items
+                        </p>
+                      </div>
+                      <div className="flex gap-2">
+                        {RECORD_TYPES.map(rt => (
+                          <Badge key={rt.value} variant="outline" className="text-xs">
+                            {rt.icon} {rt.label}
+                          </Badge>
+                        ))}
+                      </div>
                     </div>
-                    <div>
-                      <p className="font-medium text-sm">Smart Analysis</p>
-                      <p className="text-xs text-gray-500">Auto-detects document type & structure</p>
-                    </div>
-                  </CardContent>
-                </Card>
-                <Card>
-                  <CardContent className="p-4 flex items-start gap-3">
-                    <div className="w-10 h-10 rounded-lg bg-blue-100 flex items-center justify-center flex-shrink-0">
-                      <Eye className="w-5 h-5 text-blue-600" />
-                    </div>
-                    <div>
-                      <p className="font-medium text-sm">Live Preview</p>
-                      <p className="text-xs text-gray-500">See document & extracted data side-by-side</p>
-                    </div>
-                  </CardContent>
-                </Card>
-                <Card>
-                  <CardContent className="p-4 flex items-start gap-3">
-                    <div className="w-10 h-10 rounded-lg bg-purple-100 flex items-center justify-center flex-shrink-0">
-                      <CheckCircle className="w-5 h-5 text-purple-600" />
-                    </div>
-                    <div>
-                      <p className="font-medium text-sm">Auto-Validation</p>
-                      <p className="text-xs text-gray-500">Verifies accuracy & auto-corrects</p>
-                    </div>
-                  </CardContent>
-                </Card>
+                  </label>
+                </div>
               </div>
-            </div>
-          )}
+            )}
 
-          {/* Analysis Stage */}
-          {uploadStage === "analyzing" && (
-            <div className="flex flex-col items-center justify-center py-12">
-              <Loader2 className="w-16 h-16 text-[#0072C6] animate-spin mb-4" />
-              <p className="text-lg font-medium text-gray-700">Analyzing Document...</p>
-              <p className="text-sm text-gray-500">AI is reading structure and metadata</p>
-            </div>
-          )}
+            {/* Processing Stage */}
+            {stage === "processing" && (
+              <div className="flex flex-col items-center justify-center py-16">
+                <Loader2 className="w-16 h-16 text-[#0072C6] animate-spin mb-4" />
+                <p className="text-lg font-medium text-gray-700">Processing Document...</p>
+                <p className="text-sm text-gray-500">AI is extracting all data</p>
+              </div>
+            )}
 
-          {/* Preview Stage - Skip to editing automatically */}
-          {uploadStage === "preview" && (
-            <div className="flex flex-col items-center justify-center py-12">
-              <Loader2 className="w-16 h-16 text-[#0072C6] animate-spin mb-4" />
-              <p className="text-lg font-medium text-gray-700">Processing extracted data...</p>
-              <p className="text-sm text-gray-500">Preparing for review</p>
-            </div>
-          )}
-
-          {/* Editing Stage - Split View */}
-          {uploadStage === "editing" && extractedData.length > 0 && (
-            <div className="space-y-4">
-              {/* View Controls */}
-              <div className="flex items-center justify-between">
-                <Tabs value={viewMode} onValueChange={setViewMode} className="w-auto">
-                  <TabsList>
-                    <TabsTrigger value="split" className="text-xs">
-                      <FileText className="w-3 h-3 mr-1" />
-                      Split View
-                    </TabsTrigger>
-                    <TabsTrigger value="document" className="text-xs">
-                      <ImageIcon className="w-3 h-3 mr-1" />
-                      Document
-                    </TabsTrigger>
-                    <TabsTrigger value="table" className="text-xs">
-                      <TableIcon className="w-3 h-3 mr-1" />
-                      Table Only
-                    </TabsTrigger>
-                  </TabsList>
-                </Tabs>
-
-                {validationResults && (
-                  <div className="flex items-center gap-3">
-                    <div className="text-sm">
-                      <span className="text-gray-500">Quality:</span>
-                      <span className="ml-2 font-bold text-green-600">
-                        {validationResults.accuracy_score?.toFixed(0)}%
-                      </span>
-                    </div>
-                    {validationResults.auto_corrections > 0 && (
-                      <Badge variant="outline" className="text-xs">
-                        {validationResults.auto_corrections} auto-corrected
-                      </Badge>
-                    )}
-                  </div>
+            {/* Editing Stage */}
+            {stage === "editing" && (
+              <div className="space-y-4">
+                {/* Document Preview */}
+                {fileUrl && (
+                  <Card>
+                    <CardContent className="p-4">
+                      <div className="relative bg-white rounded-lg border overflow-hidden">
+                        {isPDF ? (
+                          <iframe 
+                            src={fileUrl}
+                            className="w-full h-[400px]"
+                            title="Document"
+                          />
+                        ) : (
+                          <div className="relative bg-gray-50 flex items-center justify-center p-4">
+                            <img 
+                              src={fileUrl} 
+                              alt="Document" 
+                              className="max-w-full h-auto"
+                              style={{ 
+                                transform: `scale(${zoom/100})`,
+                                transition: 'transform 0.2s'
+                              }}
+                            />
+                            <div className="absolute bottom-2 right-2 flex gap-1 bg-black/80 rounded-lg p-1.5">
+                              <Button size="icon" variant="ghost" className="h-7 w-7 text-white hover:bg-white/20" onClick={() => setZoom(Math.max(50, zoom - 10))}>
+                                <ZoomOut className="w-4 h-4" />
+                              </Button>
+                              <span className="px-2 text-white text-xs flex items-center">{zoom}%</span>
+                              <Button size="icon" variant="ghost" className="h-7 w-7 text-white hover:bg-white/20" onClick={() => setZoom(Math.min(200, zoom + 10))}>
+                                <ZoomIn className="w-4 h-4" />
+                              </Button>
+                              <Button size="icon" variant="ghost" className="h-7 w-7 text-white hover:bg-white/20" onClick={() => setZoom(100)}>
+                                <RotateCw className="w-4 h-4" />
+                              </Button>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    </CardContent>
+                  </Card>
                 )}
-              </div>
 
-              {/* Document Preview */}
-              {(viewMode === "split" || viewMode === "document") && fileUrl && (
-                <Card className="overflow-hidden bg-gray-50">
-                  <CardContent className="p-4">
-                    <div className="relative bg-white rounded-lg border-2 border-gray-200 overflow-hidden">
-                      {fileName.toLowerCase().endsWith('.pdf') || fileType.includes('pdf') ? (
-                       <div className="relative">
-                         <iframe 
-                           src={fileUrl}
-                           className="w-full h-[500px] bg-white border-0"
-                           title="Document Preview"
-                         />
-                         <div className="absolute top-2 left-2 bg-black/70 text-white text-xs px-2 py-1 rounded">
-                           📄 PDF Document
-                         </div>
-                       </div>
-                      ) : (
-                       <div className="relative bg-gray-100 flex items-center justify-center min-h-[500px] overflow-auto p-4">
-                         <img 
-                           src={fileUrl} 
-                           alt="Document Preview" 
-                           className="max-w-full h-auto shadow-lg"
-                           style={{ 
-                             transform: `scale(${zoom/100})`,
-                             transformOrigin: 'center center',
-                             transition: 'transform 0.2s'
-                           }}
-                           onLoad={() => console.log("Image loaded successfully")}
-                           onError={(e) => {
-                             console.error("Image load error:", fileUrl);
-                             e.target.src = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="200" height="200"%3E%3Ctext x="50%25" y="50%25" text-anchor="middle" dominant-baseline="middle" fill="%23999"%3EImage not found%3C/text%3E%3C/svg%3E';
-                           }}
-                         />
-                       </div>
-                      )}
-                      
-                      {/* Zoom Controls */}
-                      {!fileName.toLowerCase().endsWith('.pdf') && !fileType.includes('pdf') && (
-                        <div className="absolute bottom-4 right-4 flex gap-1 bg-black/80 rounded-lg p-1.5 shadow-lg">
-                          <Button 
-                            size="icon" 
-                            variant="ghost" 
-                            className="h-8 w-8 text-white hover:bg-white/20"
-                            onClick={() => setZoom(Math.max(50, zoom - 10))}
-                          >
-                            <ZoomOut className="w-4 h-4" />
-                          </Button>
-                          <span className="px-3 py-1 text-white text-xs font-medium min-w-[60px] text-center flex items-center">
-                            {zoom}%
-                          </span>
-                          <Button 
-                            size="icon" 
-                            variant="ghost" 
-                            className="h-8 w-8 text-white hover:bg-white/20"
-                            onClick={() => setZoom(Math.min(200, zoom + 10))}
-                          >
-                            <ZoomIn className="w-4 h-4" />
-                          </Button>
-                          <Button 
-                            size="icon" 
-                            variant="ghost" 
-                            className="h-8 w-8 text-white hover:bg-white/20"
-                            onClick={() => setZoom(100)}
-                          >
-                            <RotateCw className="w-4 h-4" />
-                          </Button>
-                        </div>
-                      )}
-                    </div>
-                  </CardContent>
-                </Card>
-              )}
-
-              {/* Data Table */}
-              {viewMode !== "document" && extractedData.length > 0 && (
+                {/* Data Table */}
                 <div className="space-y-3">
                   <div className="flex items-center justify-between">
-                    <h3 className="font-semibold">Extracted Data ({extractedData.length} rows)</h3>
+                    <h3 className="font-semibold">Extracted Data ({extractedData.length} items)</h3>
                     <div className="flex gap-2">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={handleReanalyze}
-                        disabled={uploadLoading}
-                      >
+                      <Button variant="outline" size="sm" onClick={() => pendingFile && processFile(pendingFile)} disabled={loading}>
                         <RefreshCw className="w-3 h-3 mr-1" />
                         Re-extract
                       </Button>
-                      <Select value={detectedType || "expense"} onValueChange={setDetectedType}>
-                        <SelectTrigger className="w-[180px] h-8 text-xs">
+                      <Select value={recordType} onValueChange={setRecordType}>
+                        <SelectTrigger className="w-[150px] h-9 text-xs">
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
@@ -735,221 +379,179 @@ Provide each row as a separate data object with all fields you can identify.`;
                     </div>
                   </div>
 
-                  {/* Columns Info */}
-                  {extractedColumns.length > 0 && (
-                    <div className="p-3 bg-blue-50 rounded-lg border border-blue-200">
-                      <p className="text-xs text-blue-700 font-medium mb-1">
-                        📊 {extractedColumns.length} columns detected
-                      </p>
-                      <div className="flex flex-wrap gap-1">
-                        {extractedColumns.slice(0, 10).map((col, idx) => (
-                          <Badge key={idx} variant="outline" className="text-xs bg-white">
-                            {col}
-                          </Badge>
+                  <div className="border rounded-lg overflow-auto max-h-[400px] bg-white">
+                    <Table>
+                      <TableHeader className="sticky top-0 bg-gray-50">
+                        <TableRow>
+                          <TableHead className="w-10">
+                            <input
+                              type="checkbox"
+                              checked={extractedData.every(e => e.selected)}
+                              onChange={(e) => setExtractedData(prev => prev.map(item => ({ ...item, selected: e.target.checked })))}
+                              className="w-4 h-4"
+                            />
+                          </TableHead>
+                          <TableHead className="text-xs">#</TableHead>
+                          <TableHead className="text-xs min-w-[200px]">Description</TableHead>
+                          <TableHead className="text-xs text-right w-28">Amount (Le)</TableHead>
+                          <TableHead className="text-xs w-36">Category</TableHead>
+                          <TableHead className="text-xs w-32">Date</TableHead>
+                          <TableHead className="text-xs w-16"></TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {extractedData.map((item, idx) => (
+                          <TableRow key={item.id} className={!item.selected ? 'opacity-50' : ''}>
+                            <TableCell>
+                              <input
+                                type="checkbox"
+                                checked={item.selected}
+                                onChange={() => toggleSelection(item.id)}
+                                className="w-4 h-4"
+                              />
+                            </TableCell>
+                            <TableCell className="text-xs text-gray-500">{idx + 1}</TableCell>
+                            <TableCell>
+                              <Input
+                                value={item.description}
+                                onChange={(e) => updateItem(item.id, 'description', e.target.value)}
+                                className="h-8 text-xs"
+                              />
+                            </TableCell>
+                            <TableCell className="text-right">
+                              <Input
+                                type="number"
+                                step="0.01"
+                                value={item.amount}
+                                onChange={(e) => updateItem(item.id, 'amount', parseFloat(e.target.value) || 0)}
+                                className="h-8 text-xs text-right font-bold"
+                              />
+                            </TableCell>
+                            <TableCell>
+                              <Select value={item.category} onValueChange={(v) => updateItem(item.id, 'category', v)}>
+                                <SelectTrigger className="h-8 text-xs">
+                                  <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  {EXPENSE_CATEGORIES.map(cat => (
+                                    <SelectItem key={cat.value} value={cat.value} className="text-xs">
+                                      {cat.label}
+                                    </SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                            </TableCell>
+                            <TableCell>
+                              <Input
+                                type="date"
+                                value={item.date}
+                                onChange={(e) => updateItem(item.id, 'date', e.target.value)}
+                                className="h-8 text-xs"
+                              />
+                            </TableCell>
+                            <TableCell>
+                              <Button
+                                size="icon"
+                                variant="ghost"
+                                className="h-7 w-7 text-red-500"
+                                onClick={() => setExtractedData(prev => prev.filter(e => e.id !== item.id))}
+                              >
+                                <Trash2 className="w-3 h-3" />
+                              </Button>
+                            </TableCell>
+                          </TableRow>
                         ))}
-                        {extractedColumns.length > 10 && (
-                          <Badge variant="outline" className="text-xs">
-                            +{extractedColumns.length - 10} more
-                          </Badge>
-                        )}
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Data Table */}
-                  <div className="border rounded-lg overflow-auto max-h-[500px] bg-white">
-                   <Table>
-                     <TableHeader className="sticky top-0 bg-gray-50 z-10">
-                       <TableRow>
-                         <TableHead className="w-12">
-                           <input
-                             type="checkbox"
-                             checked={extractedData.length > 0 && extractedData.every(e => e.selected)}
-                             onChange={(e) => setExtractedData(prev => prev.map(item => ({ ...item, selected: e.target.checked })))}
-                             className="w-4 h-4 cursor-pointer"
-                           />
-                         </TableHead>
-                         <TableHead className="text-xs w-12">#</TableHead>
-                         <TableHead className="text-xs min-w-[250px]">Description</TableHead>
-                         <TableHead className="text-xs text-right w-32">Amount (Le)</TableHead>
-                         <TableHead className="text-xs w-40">Category</TableHead>
-                         <TableHead className="text-xs w-36">Date</TableHead>
-                         <TableHead className="text-xs w-20">Actions</TableHead>
-                       </TableRow>
-                     </TableHeader>
-                     <TableBody>
-                       {extractedData.map((item) => (
-                         <TableRow key={item.id} className={!item.selected ? 'opacity-40 bg-gray-50' : 'hover:bg-blue-50'}>
-                           <TableCell>
-                             <input
-                               type="checkbox"
-                               checked={item.selected}
-                               onChange={() => toggleSelection(item.id)}
-                               className="w-4 h-4 cursor-pointer"
-                             />
-                           </TableCell>
-                           <TableCell className="text-xs text-gray-500">{item.row_number}</TableCell>
-                           <TableCell>
-                             <Input
-                               value={item.description}
-                               onChange={(e) => updateItem(item.id, 'description', e.target.value)}
-                               className="h-9 text-xs border-gray-200 focus:border-[#1EB053]"
-                               placeholder="Description..."
-                             />
-                             {item.vendor && (
-                               <p className="text-xs text-gray-500 mt-1">Vendor: {item.vendor}</p>
-                             )}
-                           </TableCell>
-                           <TableCell className="text-right">
-                             <Input
-                               type="number"
-                               step="0.01"
-                               value={item.amount}
-                               onChange={(e) => updateItem(item.id, 'amount', parseFloat(e.target.value) || 0)}
-                               className="h-9 text-xs text-right font-bold border-gray-200 focus:border-[#1EB053]"
-                             />
-                           </TableCell>
-                           <TableCell>
-                             <Select
-                               value={item.category}
-                               onValueChange={(v) => updateItem(item.id, 'category', v)}
-                             >
-                               <SelectTrigger className="h-9 text-xs border-gray-200">
-                                 <SelectValue />
-                               </SelectTrigger>
-                               <SelectContent>
-                                 {(categories || []).map(cat => (
-                                   <SelectItem key={cat.value} value={cat.value} className="text-xs">
-                                     {cat.label}
-                                   </SelectItem>
-                                 ))}
-                               </SelectContent>
-                             </Select>
-                           </TableCell>
-                           <TableCell>
-                             <Input
-                               type="date"
-                               value={item.date}
-                               onChange={(e) => updateItem(item.id, 'date', e.target.value)}
-                               className="h-9 text-xs border-gray-200 focus:border-[#1EB053]"
-                             />
-                           </TableCell>
-                           <TableCell>
-                             <Button
-                               size="icon"
-                               variant="ghost"
-                               className="h-8 w-8 text-red-500 hover:bg-red-50"
-                               onClick={() => setExtractedData(prev => prev.filter(e => e.id !== item.id))}
-                             >
-                               <Trash2 className="w-4 h-4" />
-                             </Button>
-                           </TableCell>
-                         </TableRow>
-                       ))}
-                     </TableBody>
-                   </Table>
+                      </TableBody>
+                    </Table>
                   </div>
                 </div>
-              )}
 
-              {/* Summary Footer */}
-              <div className="flex items-center justify-between p-4 bg-gradient-to-r from-gray-50 to-gray-100 rounded-lg border">
-                <div>
-                  <p className="font-semibold">{selectedCount} items selected</p>
-                  <p className="text-sm text-gray-500">Total: Le {selectedTotal.toLocaleString()}</p>
-                </div>
-                <div className="flex gap-2">
-                  <Button variant="outline" onClick={() => setUploadStage("upload")}>
-                    Upload New
-                  </Button>
-                  <Button
-                    onClick={handleCreateRecords}
-                    disabled={uploadLoading || selectedCount === 0}
-                    className="bg-gradient-to-r from-[#1EB053] to-[#0072C6]"
-                  >
-                    {uploadLoading ? (
-                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                    ) : (
-                      <CheckCircle className="w-4 h-4 mr-2" />
-                    )}
-                    Create {selectedCount} Record(s)
-                  </Button>
+                {/* Footer */}
+                <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+                  <div>
+                    <p className="font-semibold">{selectedCount} items selected</p>
+                    <p className="text-sm text-gray-500">Total: Le {selectedTotal.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</p>
+                  </div>
+                  <div className="flex gap-2">
+                    <Button variant="outline" onClick={resetState}>
+                      Cancel
+                    </Button>
+                    <Button
+                      onClick={handleCreateRecords}
+                      disabled={loading || selectedCount === 0}
+                      className="bg-gradient-to-r from-[#1EB053] to-[#0072C6]"
+                    >
+                      {loading ? (
+                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      ) : (
+                        <CheckCircle className="w-4 h-4 mr-2" />
+                      )}
+                      Create {selectedCount} Record(s)
+                    </Button>
+                  </div>
                 </div>
               </div>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Currency Dialog */}
+      <Dialog open={showCurrencyDialog} onOpenChange={setShowCurrencyDialog}>
+        <DialogContent className="max-w-md [&>button]:hidden">
+          <div className="space-y-4">
+            <div className="text-center">
+              <div className="w-16 h-16 rounded-full bg-yellow-100 mx-auto mb-4 flex items-center justify-center">
+                <span className="text-3xl">💱</span>
+              </div>
+              <h3 className="text-xl font-bold mb-2">Document Currency?</h3>
+              <p className="text-sm text-gray-600">Select currency used in the document</p>
             </div>
-          )}
-        </div>
 
-        {/* Currency Dialog */}
-        <Dialog open={showCurrencyDialog} onOpenChange={setShowCurrencyDialog}>
-          <DialogContent className="max-w-md">
-            <div className="space-y-4">
-              <div className="text-center">
-                <div className="w-16 h-16 rounded-full bg-yellow-100 mx-auto mb-4 flex items-center justify-center">
-                  <span className="text-3xl">💱</span>
+            <div className="space-y-2">
+              <Button
+                variant="outline"
+                className="w-full py-6 text-left hover:border-green-500"
+                onClick={() => {
+                  setCurrencyMode('sle');
+                  setShowCurrencyDialog(false);
+                  if (pendingFile) processFile(pendingFile);
+                }}
+              >
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-lg bg-green-100 flex items-center justify-center">
+                    <span className="text-xl">✓</span>
+                  </div>
+                  <div>
+                    <div className="font-bold">New Leone (SLE)</div>
+                    <div className="text-xs text-gray-600">Current - amounts like 75, 1,500</div>
+                  </div>
                 </div>
-                <h3 className="text-xl font-bold mb-2">Document Currency?</h3>
-                <p className="text-sm text-gray-600">
-                  Select the currency used in the document
-                </p>
-              </div>
+              </Button>
 
-              <div className="space-y-3">
-                <Button
-                  type="button"
-                  variant="outline"
-                  className="w-full h-auto py-4 text-left hover:border-green-500 hover:bg-green-50"
-                  onClick={() => {
-                    setCurrencyMode('sle');
-                    if (pendingFile) processFile(pendingFile);
-                  }}
-                >
-                  <div className="flex items-start gap-3">
-                    <div className="w-10 h-10 rounded-lg bg-green-100 flex items-center justify-center">
-                      <span className="text-xl">✓</span>
-                    </div>
-                    <div>
-                      <div className="font-bold">New Leone (SLE)</div>
-                      <div className="text-sm text-gray-600">
-                        Current currency - amounts like 75, 1,500, 25,000
-                      </div>
-                    </div>
+              <Button
+                variant="outline"
+                className="w-full py-6 text-left hover:border-blue-500"
+                onClick={() => {
+                  setCurrencyMode('sll');
+                  setShowCurrencyDialog(false);
+                  if (pendingFile) processFile(pendingFile);
+                }}
+              >
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-lg bg-blue-100 flex items-center justify-center">
+                    <span className="text-xl">🔄</span>
                   </div>
-                </Button>
-
-                <Button
-                  type="button"
-                  variant="outline"
-                  className="w-full h-auto py-4 text-left hover:border-blue-500 hover:bg-blue-50"
-                  onClick={() => {
-                    setCurrencyMode('sll');
-                    if (pendingFile) processFile(pendingFile);
-                  }}
-                >
-                  <div className="flex items-start gap-3">
-                    <div className="w-10 h-10 rounded-lg bg-blue-100 flex items-center justify-center">
-                      <span className="text-xl">🔄</span>
-                    </div>
-                    <div>
-                      <div className="font-bold">Old Leone (SLL)</div>
-                      <div className="text-sm text-gray-600">
-                        Pre-2022 - amounts like 75,000, 1,500,000 (÷1000)
-                      </div>
-                    </div>
+                  <div>
+                    <div className="font-bold">Old Leone (SLL)</div>
+                    <div className="text-xs text-gray-600">Pre-2022 - divide by 1000</div>
                   </div>
-                </Button>
-              </div>
+                </div>
+              </Button>
             </div>
-          </DialogContent>
-        </Dialog>
-
-        {/* Bottom Stripe */}
-        <div className="h-1 flex">
-          <div className="flex-1 bg-[#1EB053]" />
-          <div className="flex-1 bg-white" />
-          <div className="flex-1 bg-[#0072C6]" />
-        </div>
-      </DialogContent>
-    </Dialog>
+          </div>
+        </DialogContent>
+      </Dialog>
+    </>
   );
 }
