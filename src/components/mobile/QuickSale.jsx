@@ -82,12 +82,47 @@ export default function QuickSale({ products, currentEmployee, orgId, location }
       
       const sale = await base44.entities.Sale.create(saleData);
       
-      // Update stock
+      // Update stock for each item
       for (const item of cart) {
         const product = products.find(p => p.id === item.product_id);
         if (product) {
+          const newTotalStock = Math.max(0, (product.stock_quantity || 0) - item.quantity);
+          
+          // Update product total stock
           await base44.entities.Product.update(item.product_id, {
-            stock_quantity: Math.max(0, product.stock_quantity - item.quantity)
+            stock_quantity: newTotalStock
+          });
+
+          // Update stock levels for retail locations
+          const retailStockLevels = await base44.entities.StockLevel.filter({
+            organisation_id: orgId,
+            product_id: item.product_id
+          });
+
+          for (const stockLevel of retailStockLevels) {
+            const newLocationStock = Math.max(0, (stockLevel.quantity || 0) - item.quantity);
+            await base44.entities.StockLevel.update(stockLevel.id, {
+              quantity: newLocationStock,
+              available_quantity: newLocationStock
+            });
+          }
+
+          // Create stock movement
+          await base44.entities.StockMovement.create({
+            organisation_id: orgId,
+            product_id: item.product_id,
+            product_name: item.product_name,
+            warehouse_id: currentEmployee?.assigned_location_id || 'mobile',
+            warehouse_name: currentEmployee?.assigned_location_name || 'Mobile POS',
+            movement_type: 'out',
+            quantity: item.quantity,
+            previous_stock: product.stock_quantity || 0,
+            new_stock: newTotalStock,
+            reference_type: 'sale',
+            reference_id: saleData.sale_number,
+            recorded_by: currentEmployee?.id,
+            recorded_by_name: currentEmployee?.full_name,
+            notes: `Quick sale from dashboard`
           });
         }
       }
@@ -97,6 +132,8 @@ export default function QuickSale({ products, currentEmployee, orgId, location }
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['sales'] });
       queryClient.invalidateQueries({ queryKey: ['products'] });
+      queryClient.invalidateQueries({ queryKey: ['stockLevels'] });
+      queryClient.invalidateQueries({ queryKey: ['stockMovements'] });
       toast({ title: "Sale Complete!", description: `Total: Le ${cartTotal.toLocaleString()}` });
       setCart([]);
       setShowCheckout(false);

@@ -112,8 +112,10 @@ export default function MultiLocationStock({ orgId, products, warehouses, vehicl
         sl.product_id === productId && sl.warehouse_id === fromLocationId
       );
       if (sourceLevel) {
+        const newSourceQty = Math.max(0, (sourceLevel.quantity || 0) - quantity);
         await base44.entities.StockLevel.update(sourceLevel.id, {
-          quantity: sourceLevel.quantity - quantity
+          quantity: newSourceQty,
+          available_quantity: newSourceQty
         });
       }
 
@@ -125,8 +127,10 @@ export default function MultiLocationStock({ orgId, products, warehouses, vehicl
       const product = products.find(p => p.id === productId);
 
       if (destLevel) {
+        const newDestQty = (destLevel.quantity || 0) + quantity;
         await base44.entities.StockLevel.update(destLevel.id, {
-          quantity: destLevel.quantity + quantity
+          quantity: newDestQty,
+          available_quantity: newDestQty
         });
       } else {
         await base44.entities.StockLevel.create({
@@ -137,22 +141,47 @@ export default function MultiLocationStock({ orgId, products, warehouses, vehicl
           warehouse_name: destLocation?.name,
           location_type: destLocation?.type,
           quantity: quantity,
+          available_quantity: quantity,
+          reorder_level: product?.reorder_point || 10
         });
       }
 
-      // Create stock movement record
+      // Product total stock remains the same (just moving between locations)
+      // No need to update Product.stock_quantity for transfers
+
+      // Create stock movement records (out from source, in to destination)
+      const sourceLocation = allLocations.find(l => l.id === fromLocationId);
+      
+      await base44.entities.StockMovement.create({
+        organisation_id: orgId,
+        product_id: productId,
+        product_name: product?.name,
+        warehouse_id: fromLocationId,
+        warehouse_name: sourceLocation?.name,
+        movement_type: 'out',
+        quantity: quantity,
+        previous_stock: sourceLevel?.quantity || 0,
+        new_stock: Math.max(0, (sourceLevel?.quantity || 0) - quantity),
+        reference_type: 'transfer',
+        recorded_by: currentEmployee?.id,
+        recorded_by_name: currentEmployee?.full_name,
+        notes: `Transfer to ${destLocation?.name}`,
+      });
+
       await base44.entities.StockMovement.create({
         organisation_id: orgId,
         product_id: productId,
         product_name: product?.name,
         warehouse_id: toLocationId,
         warehouse_name: destLocation?.name,
-        movement_type: 'transfer',
+        movement_type: 'in',
         quantity: quantity,
+        previous_stock: destLevel?.quantity || 0,
+        new_stock: (destLevel?.quantity || 0) + quantity,
         reference_type: 'transfer',
         recorded_by: currentEmployee?.id,
         recorded_by_name: currentEmployee?.full_name,
-        notes: `Transfer from ${allLocations.find(l => l.id === fromLocationId)?.name}`,
+        notes: `Transfer from ${sourceLocation?.name}`,
       });
     },
     onSuccess: () => {
