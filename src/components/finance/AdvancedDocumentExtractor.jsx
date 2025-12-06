@@ -12,7 +12,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import {
   Upload, Loader2, FileUp, CheckCircle, Sparkles, AlertCircle, X, RefreshCw,
-  FileText, Table as TableIcon, ChevronRight, Trash2
+  FileText, Table as TableIcon, ChevronRight, Trash2, Eye
 } from "lucide-react";
 import { useToast } from "@/components/ui/Toast";
 
