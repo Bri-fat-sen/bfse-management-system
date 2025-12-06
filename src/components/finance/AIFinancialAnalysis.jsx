@@ -101,6 +101,20 @@ export default function AIFinancialAnalysis({ orgId, expenses = [], sales = [], 
 
       switch (type) {
         case "spending":
+          // Calculate category totals across all 6 months
+          const categoryTotals = {};
+          financialData.monthly.forEach(m => {
+            Object.entries(m.expensesByCategory || {}).forEach(([cat, amount]) => {
+              categoryTotals[cat] = (categoryTotals[cat] || 0) + amount;
+            });
+          });
+          
+          // Sort categories by total spending (highest to lowest)
+          const topCategories = Object.entries(categoryTotals)
+            .sort((a, b) => b[1] - a[1])
+            .slice(0, 5)
+            .map(([cat, amount]) => ({ category: cat, total: amount }));
+
           prompt = `Analyze this business spending data and identify cost-saving opportunities:
 
 Monthly Data (last 6 months):
@@ -113,8 +127,13 @@ ${JSON.stringify(financialData.monthly.map(m => ({
 Total Expenses: Le ${financialData.totalExpenses.toLocaleString()}
 Average Monthly: Le ${financialData.avgMonthlyExpenses.toLocaleString()}
 
+TOP SPENDING CATEGORIES (verified calculation):
+${topCategories.map((c, i) => `${i + 1}. ${c.category.replace(/_/g, ' ')}: Le ${c.total.toLocaleString()}`).join('\n')}
+
+IMPORTANT: Use these verified top categories. The HIGHEST spending category is "${topCategories[0]?.category.replace(/_/g, ' ')}" with Le ${topCategories[0]?.total.toLocaleString()}.
+
 Provide specific, actionable cost-saving recommendations. Consider:
-1. Categories with highest spending
+1. Focus on the verified top spending categories listed above
 2. Month-over-month spending trends
 3. Potential areas of waste or inefficiency
 4. Industry benchmarks for Sierra Leone businesses`;
@@ -699,7 +718,9 @@ Create an executive summary suitable for business owners and stakeholders.`;
                       Cost-Saving Opportunities
                     </h4>
                     <div className="space-y-3">
-                      {(analysisResults.spending.cost_saving_opportunities || []).map((opp, idx) => (
+                      {(analysisResults.spending.cost_saving_opportunities || [])
+                        .sort((a, b) => (b.current_spending || 0) - (a.current_spending || 0))
+                        .map((opp, idx) => (
                         <div key={idx} className="p-4 bg-gray-50 rounded-lg border">
                           <div className="flex items-start justify-between mb-2">
                             <div className="flex items-center gap-2">
