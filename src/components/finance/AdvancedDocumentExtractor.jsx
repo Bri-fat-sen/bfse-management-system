@@ -38,6 +38,49 @@ const EXPENSE_CATEGORIES = [
   { value: "other", label: "Other" },
 ];
 
+const VALID_EXPENSE_CATEGORIES = ['fuel', 'maintenance', 'utilities', 'supplies', 'rent', 'salaries', 'transport', 'marketing', 'insurance', 'petty_cash', 'other'];
+
+const mapToValidCategory = (category) => {
+  if (!category) return 'other';
+  const normalized = category.toLowerCase().trim();
+  
+  // Direct match
+  if (VALID_EXPENSE_CATEGORIES.includes(normalized)) return normalized;
+  
+  // Smart mapping
+  const categoryMap = {
+    'diesel': 'fuel',
+    'petrol': 'fuel',
+    'gasoline': 'fuel',
+    'gas': 'fuel',
+    'repair': 'maintenance',
+    'repairs': 'maintenance',
+    'servicing': 'maintenance',
+    'electricity': 'utilities',
+    'water': 'utilities',
+    'internet': 'utilities',
+    'phone': 'utilities',
+    'office_supplies': 'supplies',
+    'stationery': 'supplies',
+    'equipment': 'supplies',
+    'rental': 'rent',
+    'lease': 'rent',
+    'salary': 'salaries',
+    'wages': 'salaries',
+    'payroll': 'salaries',
+    'transportation': 'transport',
+    'travel': 'transport',
+    'delivery': 'transport',
+    'advertising': 'marketing',
+    'promotion': 'marketing',
+    'cash': 'petty_cash',
+    'misc': 'other',
+    'miscellaneous': 'other',
+  };
+  
+  return categoryMap[normalized] || 'other';
+};
+
 export default function AdvancedDocumentExtractor({ 
   open, 
   onOpenChange, 
@@ -277,12 +320,8 @@ Return complete array of all data rows.`,
         const rawAmount = parseFloat(row.amount || 0);
         const amount = rawAmount / conversionFactor;
         
-        let category = (row.category || 'other').toLowerCase().replace(/\s+/g, '_');
-        const categoryExists = EXPENSE_CATEGORIES.some(cat => cat.value === category);
-        
-        if (!categoryExists && category !== 'other') {
-          newCategories.add(category);
-        }
+        const aiCategory = (row.category || 'other').toLowerCase().replace(/\s+/g, '_');
+        const validCategory = mapToValidCategory(aiCategory);
 
         return {
           id: `${fileItem.id}-row-${idx}`,
@@ -291,7 +330,7 @@ Return complete array of all data rows.`,
           row_number: idx + 1,
           description: row.description || row.notes || '',
           amount: amount,
-          category: category,
+          category: validCategory,
           date: row.date || analysis.metadata?.date || format(new Date(), 'yyyy-MM-dd'),
           vendor: row.vendor || analysis.metadata?.issuer_name || '',
           quantity: parseFloat(row.quantity || 0),
@@ -299,14 +338,6 @@ Return complete array of all data rows.`,
           raw_data: row
         };
       }).filter(item => item.description && item.amount > 0);
-
-      if (newCategories.size > 0) {
-        const newCategoryOptions = Array.from(newCategories).map(cat => ({
-          value: cat,
-          label: cat.split('_').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ')
-        }));
-        setDynamicCategories(prev => [...prev, ...newCategoryOptions]);
-      }
 
       setFileQueue(prev => prev.map((f, i) => 
         i === index ? { 
@@ -381,19 +412,13 @@ Return complete array of all data rows.`,
       }
 
       const conversionFactor = currencyMode === 'sll' ? 1000 : 1;
-      const newCategories = new Set();
       
       const mappedData = (rawExtraction.rows || []).map((row, idx) => {
         const rawAmount = parseFloat(row.amount || 0);
         const amount = rawAmount / conversionFactor;
         
-        // Handle category - add to dynamic list if new
-        let category = (row.category || 'other').toLowerCase().replace(/\s+/g, '_');
-        const categoryExists = EXPENSE_CATEGORIES.some(cat => cat.value === category);
-        
-        if (!categoryExists && category !== 'other') {
-          newCategories.add(category);
-        }
+        const aiCategory = (row.category || 'other').toLowerCase().replace(/\s+/g, '_');
+        const validCategory = mapToValidCategory(aiCategory);
 
         return {
           id: `row-${idx}`,
@@ -401,7 +426,7 @@ Return complete array of all data rows.`,
           row_number: idx + 1,
           description: row.description || row.notes || '',
           amount: amount,
-          category: category,
+          category: validCategory,
           date: row.date || analysis.metadata?.date || format(new Date(), 'yyyy-MM-dd'),
           vendor: row.vendor || analysis.metadata?.issuer_name || '',
           quantity: parseFloat(row.quantity || 0),
@@ -409,16 +434,6 @@ Return complete array of all data rows.`,
           raw_data: row
         };
       }).filter(item => item.description && item.amount > 0);
-
-      // Add new categories to the dynamic list
-      if (newCategories.size > 0) {
-        const newCategoryOptions = Array.from(newCategories).map(cat => ({
-          value: cat,
-          label: cat.split('_').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ')
-        }));
-        setDynamicCategories(prev => [...prev, ...newCategoryOptions]);
-        console.log("Added new categories:", newCategoryOptions);
-      }
 
       console.log("Mapped data:", mappedData);
 
@@ -470,6 +485,7 @@ Return complete array of all data rows.`,
     let selectedItems;
     
     if (batchMode) {
+      // Collect all selected items from all files
       selectedItems = fileQueue.flatMap(f => 
         (f.extractedData || []).filter(e => e.selected)
       );
@@ -482,11 +498,6 @@ Return complete array of all data rows.`,
       return;
     }
 
-    if (!orgId) {
-      toast.error("Missing organisation", "Organisation ID is required");
-      return;
-    }
-
     setUploadLoading(true);
     
     const recordType = detectedType || "expense";
@@ -494,16 +505,15 @@ Return complete array of all data rows.`,
     try {
       let created = 0;
       let failed = 0;
-      const errors = [];
       
       for (const item of selectedItems) {
         try {
           if (recordType === "expense") {
-            const expenseData = {
+            await base44.entities.Expense.create({
               organisation_id: orgId,
               category: item.category || 'other',
               description: item.description || 'No description',
-              amount: parseFloat(item.amount) || 0,
+              amount: item.amount || 0,
               date: item.date || format(new Date(), 'yyyy-MM-dd'),
               vendor: item.vendor || '',
               payment_method: 'cash',
@@ -511,31 +521,24 @@ Return complete array of all data rows.`,
               recorded_by_name: currentEmployee?.full_name || '',
               status: 'pending',
               notes: batchMode ? 'Batch imported via AI extraction' : 'Imported via advanced AI extraction'
-            };
-            
-            console.log('Creating expense:', expenseData);
-            await base44.entities.Expense.create(expenseData);
+            });
             created++;
           } else if (recordType === "revenue") {
-            const revenueData = {
+            await base44.entities.Revenue.create({
               organisation_id: orgId,
               source: item.category || 'other',
               contributor_name: item.vendor || item.description || 'Unknown',
-              amount: parseFloat(item.amount) || 0,
+              amount: item.amount || 0,
               date: item.date || format(new Date(), 'yyyy-MM-dd'),
               recorded_by: currentEmployee?.id || '',
               recorded_by_name: currentEmployee?.full_name || '',
               status: 'confirmed',
               notes: batchMode ? 'Batch imported via AI extraction' : 'AI-extracted from document'
-            };
-            
-            console.log('Creating revenue:', revenueData);
-            await base44.entities.Revenue.create(revenueData);
+            });
             created++;
           }
         } catch (itemError) {
           console.error('Failed to create record:', itemError, item);
-          errors.push({ item, error: itemError.message });
           failed++;
         }
       }
@@ -544,21 +547,14 @@ Return complete array of all data rows.`,
       
       if (created > 0) {
         toast.success(
-          "Records created successfully", 
-          `Created ${created} of ${selectedItems.length} records from ${filesProcessed} document${filesProcessed > 1 ? 's' : ''}`
+          "Records created", 
+          `Successfully created ${created} records from ${filesProcessed} document${filesProcessed > 1 ? 's' : ''}${failed > 0 ? `. ${failed} failed.` : ''}`
         );
-        
-        if (failed > 0) {
-          console.warn('Failed records:', errors);
-          toast.warning(`${failed} records failed`, "Check console for details");
-        }
-        
         onOpenChange(false);
         resetState();
         if (onSuccess) onSuccess();
       } else {
-        console.error('All records failed:', errors);
-        toast.error("Failed to create records", `All ${failed} records failed. Check console for details.`);
+        toast.error("Failed to create records", `All ${failed} records failed to create. Check console for details.`);
       }
       
     } catch (error) {
