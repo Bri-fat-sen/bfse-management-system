@@ -663,6 +663,7 @@ Be thorough and accurate.`,
           if (recordType === "expense") {
             const expenseData = {
               organisation_id: orgId,
+              expense_type: expenseType,
               category: item.category || 'other',
               description: item.description || 'No description',
               amount: parseFloat(item.amount) || 0,
