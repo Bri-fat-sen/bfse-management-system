@@ -209,15 +209,16 @@ export default function ConstructionExpense() {
     return data;
   }, [expenses]);
 
-  // Category pie data
+  // Category pie data - sorted by value (highest first)
   const categoryPieData = useMemo(() => {
     return Object.entries(totals.byCategory)
       .filter(([_, value]) => value > 0)
+      .sort((a, b) => b[1] - a[1])
       .map(([name, value]) => ({
         name: CONSTRUCTION_CATEGORIES.find(c => c.value === name)?.label || name,
         value
       }));
-  }, [totals.byCategory]);
+  }, [totals.byCategory, CONSTRUCTION_CATEGORIES]);
 
   // Mutations
   const createExpenseMutation = useMutation({

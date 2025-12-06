@@ -114,6 +114,11 @@ export default function ReportGenerator({ sales = [], expenses = [], employees =
         filteredExpenses.forEach(e => {
           byCategory[e.category] = (byCategory[e.category] || 0) + (e.amount || 0);
         });
+        
+        // Sort categories by amount (highest first) - VERIFIED
+        const sortedCategories = Object.entries(byCategory)
+          .sort((a, b) => b[1] - a[1]);
+        const byCategorySorted = Object.fromEntries(sortedCategories);
         return {
           title: "Expense Report",
           summary: [
@@ -122,7 +127,7 @@ export default function ReportGenerator({ sales = [], expenses = [], employees =
             { label: "Approved", value: filteredExpenses.filter(e => e.status === 'approved').length },
             { label: "Pending", value: filteredExpenses.filter(e => e.status === 'pending').length },
           ],
-          categoryBreakdown: byCategory,
+          categoryBreakdown: byCategorySorted,
           columns: ["Date", "Category", "Description", "Vendor", "Payment", "Status", "Amount"],
           rows: filteredExpenses.map(e => ([
             format(parseISO(e.date), 'MMM d, yyyy'),
@@ -403,7 +408,7 @@ export default function ReportGenerator({ sales = [], expenses = [], employees =
             {/* Category Breakdown for Expenses */}
             {reportData.categoryBreakdown && Object.keys(reportData.categoryBreakdown).length > 0 && (
               <div className="mb-6">
-                <h4 className="font-semibold mb-3">By Category</h4>
+                <h4 className="font-semibold mb-3">By Category (Highest to Lowest)</h4>
                 <div className="flex flex-wrap gap-2">
                   {Object.entries(reportData.categoryBreakdown).map(([cat, amount]) => (
                     <Badge key={cat} variant="secondary" className="px-3 py-1">

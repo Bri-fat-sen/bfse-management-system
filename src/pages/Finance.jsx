@@ -463,10 +463,11 @@ export default function Finance() {
     return data;
   }, [sales, trips, expenses]);
 
-  // Expense pie chart data
+  // Expense pie chart data - sorted by value (highest first)
   const expensePieData = useMemo(() => {
     return Object.entries(financials.expensesByCategory)
       .filter(([_, value]) => value > 0)
+      .sort((a, b) => b[1] - a[1])
       .map(([name, value]) => ({
         name: name.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase()),
         value
