@@ -177,7 +177,7 @@ export default function Finance() {
   const createExpenseMutation = useMutation({
     mutationFn: (data) => base44.entities.Expense.create(data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['expenses'] });
+      queryClient.invalidateQueries({ queryKey: ['expenses', orgId] });
       setShowExpenseDialog(false);
       toast.success("Expense recorded", "Expense has been added");
     },
@@ -228,7 +228,7 @@ export default function Finance() {
   const createBankDepositMutation = useMutation({
     mutationFn: (data) => base44.entities.BankDeposit.create(data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['bankDeposits'] });
+      queryClient.invalidateQueries({ queryKey: ['bankDeposits', orgId] });
       setShowBankDepositDialog(false);
       toast.success("Deposit recorded", "Bank deposit has been added");
     },
@@ -241,7 +241,7 @@ export default function Finance() {
   const updateBankDepositMutation = useMutation({
     mutationFn: ({ id, data }) => base44.entities.BankDeposit.update(id, data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['bankDeposits'] });
+      queryClient.invalidateQueries({ queryKey: ['bankDeposits', orgId] });
       toast.success("Deposit updated");
     },
     onError: (error) => {
