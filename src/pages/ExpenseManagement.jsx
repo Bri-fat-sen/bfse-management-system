@@ -237,12 +237,13 @@ export default function ExpenseManagement() {
   const { data: expenses = [], isLoading } = useQuery({
     queryKey: ['allExpenses', orgId],
     queryFn: async () => {
-      const allExpenses = await base44.entities.Expense.filter({ organisation_id: orgId }, '-date', 1000);
+      const allExpenses = await base44.entities.Expense.filter({ organisation_id: orgId }, '-date', 5000);
       // Show only regular expenses (explicitly 'regular' or no expense_type set)
       return allExpenses.filter(e => e.expense_type === 'regular' || !e.expense_type);
     },
     enabled: !!orgId && isAdmin,
-    staleTime: 30 * 1000,
+    staleTime: 10 * 1000,
+    refetchOnWindowFocus: true,
   });
 
   // Date range calculation
