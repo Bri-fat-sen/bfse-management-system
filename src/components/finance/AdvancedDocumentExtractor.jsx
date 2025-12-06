@@ -144,32 +144,48 @@ Be thorough and accurate.`,
       console.log("Starting data extraction...");
       
       const extractionResult = await base44.integrations.Core.InvokeLLM({
-        prompt: `Extract ALL rows from this document's table/list.
+        prompt: `Extract ALL rows from this document's table/list with MAXIMUM detail and accuracy.
 
-**CRITICAL INSTRUCTIONS:**
-1. Extract EVERY SINGLE ROW - don't skip, summarize, or combine
-2. For EACH row, extract:
-   - description: Item/expense name
-   - amount: Numeric value (remove Le, commas: "Le 1,500" → 1500)
-   - date: If shown (YYYY-MM-DD format)
-   - quantity: If shown
-   - unit_price: If shown
-   - category: INTELLIGENTLY determine category based on the description (e.g., "Diesel" → "fuel", "Office supplies" → "supplies", "Rent payment" → "rent", "Staff salary" → "salaries"). Be specific and consistent. Create descriptive category names if none of the common ones fit.
-   - vendor: Supplier if mentioned
+      **CRITICAL INSTRUCTIONS:**
+      1. Extract EVERY SINGLE ROW - don't skip, summarize, or combine
+      2. For EACH row, extract ALL available data:
+      - description: Item/expense name (be descriptive)
+      - quantity: Quantity/amount (extract even if 1)
+      - unit: Unit of measurement (pcs, kg, hrs, m², etc.)
+      - unit_price: Price per unit
+      - subtotal/amount: Total line amount (qty × unit_price)
+      - estimated_quantity: If document has "Estimated" columns
+      - estimated_unit_price: If document has "Estimated" columns
+      - estimated_amount: Estimated subtotal
+      - actual_quantity: If document has "Actual" columns
+      - actual_unit_price: If document has "Actual" columns
+      - actual_amount: Actual subtotal
+      - date: If shown (YYYY-MM-DD format)
+      - category: INTELLIGENTLY determine (diesel→fuel, office supplies→supplies, rent payment→rent, staff salary→salaries)
+      - vendor: Supplier if mentioned
+      - confidence: Rate 0-100 how confident you are about this extraction (consider OCR quality, completeness)
 
-3. Category Guidelines:
-   - Match to common categories: fuel, maintenance, utilities, supplies, rent, salaries, transport, marketing, insurance, petty_cash
-   - If item doesn't fit, create a descriptive category (e.g., "medical", "training", "equipment", "consulting")
-   - Use lowercase, use underscores for spaces
+      3. Category Guidelines - Use fuzzy matching:
+      - Match to: fuel, maintenance, utilities, supplies, rent, salaries, transport, marketing, insurance, petty_cash
+      - Accept variations: "Diesel/Petrol/Gas"→fuel, "Repair/Fixing"→maintenance, "Water/Electricity"→utilities
+      - If no match, create descriptive category (medical, training, equipment, consulting)
+      - Use lowercase, underscores for spaces
 
-4. Skip ONLY:
-   - Header rows (column titles)
-   - Total/Subtotal summary rows
-   - Empty rows
+      4. Pricing Logic:
+      - If only subtotal shown: extract as amount, leave quantity/unit_price blank
+      - If qty + unit_price shown: calculate subtotal = qty × unit_price
+      - For estimated vs actual: extract both sets if present
+      - Default to actual amount if only one total shown
 
-5. If 50 items exist, return 50 items. Extract ALL.
+      5. Skip ONLY: Header rows, Total/Subtotal summary rows, Empty rows
 
-Return complete array of all data rows.`,
+      6. Confidence Scoring:
+      - 90-100: All fields clear and readable
+      - 70-89: Most fields clear, some minor uncertainties
+      - 50-69: Significant OCR issues or missing data
+      - Below 50: Highly uncertain extraction
+
+      Return complete array with all data rows.`,
         file_urls: [file_url],
         response_json_schema: {
           type: "object",
@@ -180,17 +196,26 @@ Return complete array of all data rows.`,
                 type: "object",
                 properties: {
                   description: { type: "string" },
-                  amount: { type: "number" },
-                  date: { type: "string" },
                   quantity: { type: "number" },
+                  unit: { type: "string" },
                   unit_price: { type: "number" },
+                  amount: { type: "number" },
+                  estimated_quantity: { type: "number" },
+                  estimated_unit_price: { type: "number" },
+                  estimated_amount: { type: "number" },
+                  actual_quantity: { type: "number" },
+                  actual_unit_price: { type: "number" },
+                  actual_amount: { type: "number" },
+                  date: { type: "string" },
                   category: { type: "string" },
                   vendor: { type: "string" },
                   notes: { type: "string" },
+                  confidence: { type: "number" },
                 }
               }
             },
             total_rows_found: { type: "number" },
+            extraction_quality: { type: "string" },
           }
         }
       });
@@ -385,29 +410,79 @@ Return complete array of all data rows.`,
 
       const conversionFactor = currencyMode === 'sll' ? 1000 : 1;
       const newCategories = new Set();
-      
-      const mappedData = (rawExtraction.rows || []).map((row, idx) => {
-        const rawAmount = parseFloat(row.amount || 0);
-        const amount = rawAmount / conversionFactor;
-        
-        let category = (row.category || 'other').toLowerCase().replace(/\s+/g, '_');
-        const categoryExists = dynamicCategories.some(cat => cat.value === category);
-        
-        if (!categoryExists && category !== 'other') {
-          newCategories.add(category);
+
+      // Fuzzy category matching function
+      const fuzzyMatchCategory = (extractedCat) => {
+        const normalized = (extractedCat || 'other').toLowerCase().replace(/\s+/g, '_');
+
+        // Direct match first
+        const directMatch = dynamicCategories.find(cat => cat.value === normalized);
+        if (directMatch) return directMatch.value;
+
+        // Fuzzy matching patterns
+        const patterns = {
+          fuel: ['diesel', 'petrol', 'gas', 'gasoline', 'fuel'],
+          maintenance: ['repair', 'fixing', 'servicing', 'maintenance', 'upkeep'],
+          utilities: ['water', 'electricity', 'power', 'utility', 'internet', 'phone'],
+          supplies: ['office', 'stationery', 'supplies', 'materials', 'consumables'],
+          rent: ['rent', 'lease', 'rental'],
+          salaries: ['salary', 'wage', 'payroll', 'staff', 'employee'],
+          transport: ['transportation', 'delivery', 'logistics', 'freight', 'shipping'],
+          marketing: ['advertising', 'promotion', 'marketing', 'media'],
+          insurance: ['insurance', 'coverage', 'premium'],
+          materials: ['building', 'construction', 'cement', 'sand', 'blocks', 'steel'],
+          labor: ['labor', 'labour', 'workers', 'manpower'],
+          equipment: ['equipment', 'tools', 'machinery', 'rental'],
+        };
+
+        // Check patterns
+        for (const [category, keywords] of Object.entries(patterns)) {
+          if (keywords.some(keyword => normalized.includes(keyword))) {
+            const matchedCat = dynamicCategories.find(cat => cat.value === category);
+            if (matchedCat) return matchedCat.value;
+          }
         }
+
+        // No match - add as new category
+        newCategories.add(normalized);
+        return normalized;
+      };
+
+      const mappedData = (rawExtraction.rows || []).map((row, idx) => {
+        const conversionFactor = currencyMode === 'sll' ? 1000 : 1;
+
+        // Smart amount calculation: prefer actual > amount > estimated
+        const actualAmt = parseFloat(row.actual_amount || 0) / conversionFactor;
+        const regularAmt = parseFloat(row.amount || 0) / conversionFactor;
+        const estimatedAmt = parseFloat(row.estimated_amount || 0) / conversionFactor;
+        const finalAmount = actualAmt || regularAmt || estimatedAmt;
+
+        // Extract all pricing details
+        const quantity = parseFloat(row.quantity || row.actual_quantity || row.estimated_quantity || 0);
+        const unitPrice = parseFloat(row.unit_price || row.actual_unit_price || row.estimated_unit_price || 0) / conversionFactor;
+
+        const category = fuzzyMatchCategory(row.category);
+        const confidence = row.confidence || 85;
 
         return {
           id: `row-${idx}`,
           selected: true,
           row_number: idx + 1,
           description: row.description || row.notes || '',
-          amount: amount,
+          amount: finalAmount,
+          quantity: quantity,
+          unit: row.unit || '',
+          unit_price: unitPrice,
+          estimated_quantity: parseFloat(row.estimated_quantity || 0),
+          estimated_unit_price: parseFloat(row.estimated_unit_price || 0) / conversionFactor,
+          estimated_amount: estimatedAmt,
+          actual_quantity: parseFloat(row.actual_quantity || 0),
+          actual_unit_price: parseFloat(row.actual_unit_price || 0) / conversionFactor,
+          actual_amount: actualAmt,
           category: category,
           date: row.date || analysis.metadata?.date || format(new Date(), 'yyyy-MM-dd'),
           vendor: row.vendor || analysis.metadata?.issuer_name || '',
-          quantity: parseFloat(row.quantity || 0),
-          unit_price: parseFloat(row.unit_price || 0) / conversionFactor,
+          confidence: confidence,
           raw_data: row
         };
       }).filter(item => item.description && item.amount > 0);
@@ -437,9 +512,10 @@ Return complete array of all data rows.`,
       });
       setUploadStage("editing");
       
+      const avgConfidence = mappedData.reduce((sum, item) => sum + item.confidence, 0) / mappedData.length;
       toast.success(
         "Extraction complete", 
-        `${mappedData.length} rows extracted and ready for review`
+        `${mappedData.length} rows • Avg confidence: ${avgConfidence.toFixed(0)}%`
       );
 
     } catch (error) {
@@ -1169,7 +1245,10 @@ Return complete array of all data rows.`,
                               />
                             </TableHead>
                             <TableHead className="text-xs w-12">#</TableHead>
-                            <TableHead className="text-xs min-w-[250px]">Description</TableHead>
+                            <TableHead className="text-xs w-16">Score</TableHead>
+                            <TableHead className="text-xs min-w-[200px]">Description</TableHead>
+                            <TableHead className="text-xs w-20 text-center">Qty</TableHead>
+                            <TableHead className="text-xs w-24 text-right">Unit Price</TableHead>
                             <TableHead className="text-xs text-right w-32">Amount (Le)</TableHead>
                             <TableHead className="text-xs w-40">Category</TableHead>
                             <TableHead className="text-xs w-36">Date</TableHead>
@@ -1189,6 +1268,19 @@ Return complete array of all data rows.`,
                               </TableCell>
                               <TableCell className="text-xs text-gray-500">{item.row_number}</TableCell>
                               <TableCell>
+                                <Badge 
+                                  variant="outline" 
+                                  className={`text-xs ${
+                                    item.confidence >= 90 ? 'bg-green-50 text-green-700 border-green-200' :
+                                    item.confidence >= 70 ? 'bg-blue-50 text-blue-700 border-blue-200' :
+                                    item.confidence >= 50 ? 'bg-amber-50 text-amber-700 border-amber-200' :
+                                    'bg-red-50 text-red-700 border-red-200'
+                                  }`}
+                                >
+                                  {item.confidence}%
+                                </Badge>
+                              </TableCell>
+                              <TableCell>
                                 <Input
                                   value={item.description}
                                   onChange={(e) => updateItem(item.id, 'description', e.target.value)}
@@ -1198,6 +1290,41 @@ Return complete array of all data rows.`,
                                 {item.vendor && (
                                   <p className="text-xs text-gray-500 mt-1">Vendor: {item.vendor}</p>
                                 )}
+                                {item.unit && (
+                                  <p className="text-xs text-gray-400 mt-1">Unit: {item.unit}</p>
+                                )}
+                              </TableCell>
+                              <TableCell className="text-center">
+                                <Input
+                                  type="number"
+                                  step="0.01"
+                                  value={item.quantity || ''}
+                                  onChange={(e) => {
+                                    const newQty = parseFloat(e.target.value) || 0;
+                                    updateItem(item.id, 'quantity', newQty);
+                                    if (item.unit_price > 0) {
+                                      updateItem(item.id, 'amount', newQty * item.unit_price);
+                                    }
+                                  }}
+                                  className="h-9 text-xs text-center border-gray-200 focus:border-[#1EB053]"
+                                  placeholder="Qty"
+                                />
+                              </TableCell>
+                              <TableCell className="text-right">
+                                <Input
+                                  type="number"
+                                  step="0.01"
+                                  value={item.unit_price || ''}
+                                  onChange={(e) => {
+                                    const newPrice = parseFloat(e.target.value) || 0;
+                                    updateItem(item.id, 'unit_price', newPrice);
+                                    if (item.quantity > 0) {
+                                      updateItem(item.id, 'amount', item.quantity * newPrice);
+                                    }
+                                  }}
+                                  className="h-9 text-xs text-right border-gray-200 focus:border-[#1EB053]"
+                                  placeholder="Price"
+                                />
                               </TableCell>
                               <TableCell className="text-right">
                                 <Input
