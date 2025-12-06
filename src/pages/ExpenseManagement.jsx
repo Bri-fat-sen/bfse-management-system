@@ -107,8 +107,8 @@ export default function ExpenseManagement() {
     queryKey: ['allExpenses', orgId],
     queryFn: async () => {
       const allExpenses = await base44.entities.Expense.filter({ organisation_id: orgId }, '-date', 1000);
-      // Filter out construction expenses - show only regular expenses
-      return allExpenses.filter(e => e.expense_type !== 'construction');
+      // Show only regular expenses (explicitly 'regular' or no expense_type set)
+      return allExpenses.filter(e => e.expense_type === 'regular' || !e.expense_type);
     },
     enabled: !!orgId && isAdmin,
     staleTime: 30 * 1000,
