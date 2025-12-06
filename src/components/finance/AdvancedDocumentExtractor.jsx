@@ -21,6 +21,7 @@ const RECORD_TYPES = [
   { value: "revenue", label: "Revenue/Sales", icon: "📈", color: "green" },
   { value: "production", label: "Production Batches", icon: "🏭", color: "blue" },
   { value: "inventory", label: "Stock/Inventory", icon: "📦", color: "purple" },
+  { value: "stock_receipt", label: "Stock Receipt/Delivery", icon: "📦", color: "teal" },
   { value: "payroll", label: "Payroll Items", icon: "👥", color: "amber" },
 ];
 
@@ -695,6 +696,39 @@ Be thorough and accurate.`,
             
             console.log(`Creating revenue ${i + 1}:`, revenueData);
             const result = await base44.entities.Revenue.create(revenueData);
+            console.log(`✓ Success ${i + 1}:`, result);
+            created++;
+          } else if (recordType === "production") {
+            const productionData = {
+              organisation_id: orgId,
+              batch_number: `BATCH-${Date.now()}-${i}`,
+              product_name: item.description || item.vendor || 'Unnamed Product',
+              production_date: item.date || format(new Date(), 'yyyy-MM-dd'),
+              quantity_produced: parseFloat(item.quantity) || parseFloat(item.amount) || 0,
+              status: 'completed',
+              notes: item.notes || 'Imported via AI extraction'
+            };
+            
+            console.log(`Creating production batch ${i + 1}:`, productionData);
+            const result = await base44.entities.ProductionBatch.create(productionData);
+            console.log(`✓ Success ${i + 1}:`, result);
+            created++;
+          } else if (recordType === "inventory" || recordType === "stock_receipt") {
+            // For inventory uploads - create products if they don't exist
+            const productData = {
+              organisation_id: orgId,
+              name: item.description || item.vendor || 'New Product',
+              sku: item.vendor || `SKU-${Date.now()}-${i}`,
+              category: item.category || 'other',
+              unit_price: parseFloat(item.unit_price || item.amount) || 0,
+              cost_price: parseFloat(item.unit_price || item.amount) || 0,
+              stock_quantity: parseFloat(item.quantity) || 0,
+              unit: item.unit || 'piece',
+              is_active: true
+            };
+            
+            console.log(`Creating product ${i + 1}:`, productData);
+            const result = await base44.entities.Product.create(productData);
             console.log(`✓ Success ${i + 1}:`, result);
             created++;
           }
