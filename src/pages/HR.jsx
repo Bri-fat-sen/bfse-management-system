@@ -125,8 +125,8 @@ export default function HR() {
     queryKey: ['payrolls', orgId],
     queryFn: () => base44.entities.Payroll.filter({ organisation_id: orgId }, '-created_date', 50),
     enabled: !!orgId,
-    staleTime: 2 * 60 * 1000,
-    refetchOnWindowFocus: false,
+    staleTime: 0,
+    refetchOnWindowFocus: true,
   });
 
   const { data: attendance = [] } = useQuery({

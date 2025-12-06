@@ -58,12 +58,16 @@ export default function CRM() {
     queryKey: ['customers', orgId],
     queryFn: () => base44.entities.Customer.filter({ organisation_id: orgId }),
     enabled: !!orgId,
+    staleTime: 0,
+    refetchOnWindowFocus: true,
   });
 
   const { data: sales = [] } = useQuery({
     queryKey: ['sales', orgId],
     queryFn: () => base44.entities.Sale.filter({ organisation_id: orgId }, '-created_date', 500),
     enabled: !!orgId,
+    staleTime: 0,
+    refetchOnWindowFocus: true,
   });
 
   const { data: interactions = [] } = useQuery({

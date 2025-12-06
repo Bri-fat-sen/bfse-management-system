@@ -122,12 +122,16 @@ export default function Analytics() {
     queryKey: ['allSales', orgId],
     queryFn: () => base44.entities.Sale.filter({ organisation_id: orgId }, '-created_date', 1000),
     enabled: !!orgId,
+    staleTime: 0,
+    refetchOnWindowFocus: true,
   });
 
   const { data: expenses = [] } = useQuery({
     queryKey: ['allExpenses', orgId],
     queryFn: () => base44.entities.Expense.filter({ organisation_id: orgId }, '-created_date', 500),
     enabled: !!orgId,
+    staleTime: 0,
+    refetchOnWindowFocus: true,
   });
 
   const { data: products = [] } = useQuery({
@@ -146,6 +150,8 @@ export default function Analytics() {
     queryKey: ['trips', orgId],
     queryFn: () => base44.entities.Trip.filter({ organisation_id: orgId }, '-created_date', 500),
     enabled: !!orgId,
+    staleTime: 0,
+    refetchOnWindowFocus: true,
   });
 
   const { data: truckContracts = [] } = useQuery({

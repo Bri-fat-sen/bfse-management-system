@@ -97,8 +97,8 @@ export default function Transport() {
     queryKey: ['trips', orgId],
     queryFn: () => base44.entities.Trip.filter({ organisation_id: orgId }, '-created_date', 100),
     enabled: !!orgId,
-    staleTime: 60 * 1000,
-    refetchOnWindowFocus: false,
+    staleTime: 0,
+    refetchOnWindowFocus: true,
   });
 
   const { data: vehicles = [] } = useQuery({
@@ -133,12 +133,16 @@ export default function Transport() {
     queryKey: ['truckContracts', orgId],
     queryFn: () => base44.entities.TruckContract.filter({ organisation_id: orgId }, '-contract_date', 100),
     enabled: !!orgId,
+    staleTime: 0,
+    refetchOnWindowFocus: true,
   });
 
   const { data: maintenanceRecords = [], isLoading: loadingMaintenance } = useQuery({
     queryKey: ['vehicleMaintenance', orgId],
     queryFn: () => base44.entities.VehicleMaintenance.filter({ organisation_id: orgId }, '-date_performed', 200),
     enabled: !!orgId,
+    staleTime: 0,
+    refetchOnWindowFocus: true,
   });
 
   const createTripMutation = useMutation({
