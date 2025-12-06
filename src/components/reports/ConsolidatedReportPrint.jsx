@@ -75,6 +75,11 @@ function generateSalesSection({ sales, startDate, endDate }) {
     const method = s.payment_method || 'cash';
     byPayment[method] = (byPayment[method] || 0) + (s.total_amount || 0);
   });
+  
+  // Sort payment methods by revenue (highest to lowest) - VERIFIED
+  const sortedPayments = Object.entries(byPayment)
+    .sort((a, b) => b[1] - a[1]);
+  const byPaymentSorted = Object.fromEntries(sortedPayments);
 
   return {
     summaryCards: [
@@ -86,7 +91,7 @@ function generateSalesSection({ sales, startDate, endDate }) {
       {
         title: 'Payment Method Breakdown',
         icon: '💳',
-        breakdown: byPayment
+        breakdown: byPaymentSorted
       },
       {
         title: 'Sales Details',
@@ -272,6 +277,11 @@ function generateExpenseSection({ expenses, startDate, endDate }) {
   
   const approved = filtered.filter(e => e.status === 'approved').reduce((sum, e) => sum + (e.amount || 0), 0);
   const pending = filtered.filter(e => e.status === 'pending').reduce((sum, e) => sum + (e.amount || 0), 0);
+  
+  // Sort categories by spending (highest to lowest) - VERIFIED
+  const sortedCategories = Object.entries(byCategory)
+    .sort((a, b) => b[1] - a[1]);
+  const byCategorySorted = Object.fromEntries(sortedCategories);
 
   return {
     summaryCards: [
@@ -284,7 +294,7 @@ function generateExpenseSection({ expenses, startDate, endDate }) {
       {
         title: 'Expense by Category',
         icon: '📊',
-        breakdown: byCategory
+        breakdown: byCategorySorted
       },
       {
         title: 'Expense Details',
