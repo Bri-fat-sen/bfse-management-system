@@ -33,6 +33,7 @@ import {
   MapPin
 } from "lucide-react";
 import { useToast } from "@/components/ui/Toast";
+import AdvancedDocumentViewer from "@/components/documents/AdvancedDocumentViewer";
 
 const DEFAULT_EXPENSE_CATEGORIES = [
   { value: "fuel", label: "Fuel" },
@@ -101,6 +102,9 @@ export default function DocumentUploadExtractor({
   const [currencyMode, setCurrencyMode] = useState(null); // null = not set, 'sle', 'sll'
   const [showCurrencyDialog, setShowCurrencyDialog] = useState(false);
   const [pendingFile, setPendingFile] = useState(null);
+  const [uploadedFileUrl, setUploadedFileUrl] = useState('');
+  const [uploadedFileName, setUploadedFileName] = useState('');
+  const [showDocViewer, setShowDocViewer] = useState(false);
 
   const baseCategories = type === "expense" ? DEFAULT_EXPENSE_CATEGORIES : DEFAULT_REVENUE_SOURCES;
   const categories = useMemo(() => {
@@ -131,6 +135,8 @@ export default function DocumentUploadExtractor({
 
     try {
       const { file_url } = await base44.integrations.Core.UploadFile({ file });
+      setUploadedFileUrl(file_url);
+      setUploadedFileName(file.name);
 
       // First, analyze document to detect what type of records to create
       const analysisResult = await base44.integrations.Core.InvokeLLM({
@@ -956,6 +962,17 @@ Be specific about WHY you chose that record type.`,
                   <h3 className="font-semibold text-gray-700">Extracted Data ({extractedData.length})</h3>
                 </div>
                 <div className="flex gap-2">
+                  {uploadedFileUrl && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setShowDocViewer(true)}
+                      className="border-blue-400 text-blue-600 hover:bg-blue-50"
+                    >
+                      <Eye className="w-4 h-4 mr-2" />
+                      View Original
+                    </Button>
+                  )}
                   <Select value={detectedType} onValueChange={setDetectedType}>
                     <SelectTrigger className="w-[200px] h-8 text-xs">
                       <SelectValue placeholder="Select record type" />
@@ -1430,6 +1447,15 @@ Be specific about WHY you chose that record type.`,
           </div>
         </DialogContent>
       </Dialog>
-    </Dialog>
-  );
-}
+
+      {/* Advanced Document Viewer */}
+      <AdvancedDocumentViewer
+        open={showDocViewer}
+        onOpenChange={setShowDocViewer}
+        fileUrl={uploadedFileUrl}
+        fileName={uploadedFileName}
+        fileType={pendingFile?.type}
+      />
+      </Dialog>
+      );
+      }
