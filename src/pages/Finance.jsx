@@ -35,7 +35,9 @@ import {
   Upload,
   Check,
   X,
-  Sparkles
+  Sparkles,
+  Edit2,
+  Trash2
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -100,6 +102,7 @@ export default function Finance() {
   const [showRevenueDialog, setShowRevenueDialog] = useState(false);
   const [showBankDepositDialog, setShowBankDepositDialog] = useState(false);
   const [editingRevenue, setEditingRevenue] = useState(null);
+  const [editingExpense, setEditingExpense] = useState(null);
   const [categoryFilter, setCategoryFilter] = useState("all");
   const [showFormsDialog, setShowFormsDialog] = useState(false);
   const [dateRange, setDateRange] = useState("this_month");
@@ -124,6 +127,8 @@ export default function Finance() {
     queryKey: ['expenses', orgId],
     queryFn: () => base44.entities.Expense.filter({ organisation_id: orgId }, '-date', 200),
     enabled: !!orgId,
+    staleTime: 0,
+    refetchOnWindowFocus: true,
   });
 
   const { data: sales = [] } = useQuery({
@@ -179,11 +184,36 @@ export default function Finance() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['expenses', orgId] });
       setShowExpenseDialog(false);
+      setEditingExpense(null);
       toast.success("Expense recorded", "Expense has been added");
     },
     onError: (error) => {
       console.error('Create expense error:', error);
       toast.error("Failed to record expense", error.message);
+    }
+  });
+
+  const updateExpenseMutation = useMutation({
+    mutationFn: ({ id, data }) => base44.entities.Expense.update(id, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['expenses', orgId] });
+      setShowExpenseDialog(false);
+      setEditingExpense(null);
+      toast.success("Expense updated");
+    },
+    onError: (error) => {
+      toast.error("Failed to update expense", error.message);
+    }
+  });
+
+  const deleteExpenseMutation = useMutation({
+    mutationFn: (id) => base44.entities.Expense.delete(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['expenses', orgId] });
+      toast.success("Expense deleted");
+    },
+    onError: (error) => {
+      toast.error("Failed to delete expense", error.message);
     }
   });
 
@@ -459,7 +489,12 @@ export default function Finance() {
       status: 'pending',
       notes: formData.get('notes'),
     };
-    createExpenseMutation.mutate(data);
+
+    if (editingExpense) {
+      updateExpenseMutation.mutate({ id: editingExpense.id, data });
+    } else {
+      createExpenseMutation.mutate(data);
+    }
   };
 
   const categoryFilteredExpenses = categoryFilter === "all" 
@@ -1053,14 +1088,43 @@ export default function Finance() {
                               </div>
                             </div>
                           </div>
-                          <div className="text-right">
-                            <p className="font-bold text-red-500">-Le {expense.amount?.toLocaleString()}</p>
-                            <Badge variant={
-                              expense.status === 'approved' ? 'secondary' :
-                              expense.status === 'rejected' ? 'destructive' : 'outline'
-                            }>
-                              {expense.status}
-                            </Badge>
+                          <div className="flex items-center gap-3">
+                            <div className="text-right">
+                              <p className="font-bold text-red-500">-Le {expense.amount?.toLocaleString()}</p>
+                              <Badge variant={
+                                expense.status === 'approved' ? 'secondary' :
+                                expense.status === 'rejected' ? 'destructive' : 'outline'
+                              }>
+                                {expense.status}
+                              </Badge>
+                            </div>
+                            {isAdmin && (
+                              <div className="flex gap-1">
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="h-8 w-8 text-[#0072C6] hover:bg-blue-50"
+                                  onClick={() => {
+                                    setEditingExpense(expense);
+                                    setShowExpenseDialog(true);
+                                  }}
+                                >
+                                  <Edit2 className="w-4 h-4" />
+                                </Button>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="h-8 w-8 text-red-600 hover:bg-red-50"
+                                  onClick={() => {
+                                    if (confirm(`Delete expense: ${expense.description}?`)) {
+                                      deleteExpenseMutation.mutate(expense.id);
+                                    }
+                                  }}
+                                >
+                                  <Trash2 className="w-4 h-4" />
+                                </Button>
+                              </div>
+                            )}
                           </div>
                         </div>
                       ))
@@ -1549,13 +1613,13 @@ export default function Finance() {
                 <div className="flex-1 bg-white border-y border-gray-200" />
                 <div className="flex-1 bg-[#0072C6]" />
               </div>
-              <DialogTitle>Record New Expense</DialogTitle>
+              <DialogTitle>{editingExpense ? 'Edit Expense' : 'Record New Expense'}</DialogTitle>
             </DialogHeader>
             <form onSubmit={handleExpenseSubmit} className="space-y-4">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="col-span-2">
                   <Label>Category</Label>
-                  <Select name="category" required>
+                  <Select name="category" defaultValue={editingExpense?.category || ""} required>
                     <SelectTrigger className="mt-1">
                       <SelectValue placeholder="Select category" />
                     </SelectTrigger>
@@ -1570,23 +1634,47 @@ export default function Finance() {
                 </div>
                 <div className="col-span-2">
                   <Label>Description</Label>
-                  <Input name="description" required className="mt-1" placeholder="What was this expense for?" />
+                  <Input 
+                    name="description" 
+                    required 
+                    className="mt-1" 
+                    placeholder="What was this expense for?"
+                    defaultValue={editingExpense?.description || ""}
+                  />
                 </div>
                 <div>
                   <Label>Amount (Le)</Label>
-                  <Input name="amount" type="number" step="0.01" required className="mt-1" />
+                  <Input 
+                    name="amount" 
+                    type="number" 
+                    step="0.01" 
+                    required 
+                    className="mt-1"
+                    defaultValue={editingExpense?.amount || ""}
+                  />
                 </div>
                 <div>
                   <Label>Date</Label>
-                  <Input name="date" type="date" defaultValue={format(new Date(), 'yyyy-MM-dd')} required className="mt-1" />
+                  <Input 
+                    name="date" 
+                    type="date" 
+                    defaultValue={editingExpense?.date || format(new Date(), 'yyyy-MM-dd')} 
+                    required 
+                    className="mt-1" 
+                  />
                 </div>
                 <div>
                   <Label>Vendor</Label>
-                  <Input name="vendor" className="mt-1" placeholder="Optional" />
+                  <Input 
+                    name="vendor" 
+                    className="mt-1" 
+                    placeholder="Optional"
+                    defaultValue={editingExpense?.vendor || ""}
+                  />
                 </div>
                 <div>
                   <Label>Payment Method</Label>
-                  <Select name="payment_method" defaultValue="cash">
+                  <Select name="payment_method" defaultValue={editingExpense?.payment_method || "cash"}>
                     <SelectTrigger className="mt-1">
                       <SelectValue />
                     </SelectTrigger>
@@ -1600,15 +1688,29 @@ export default function Finance() {
                 </div>
                 <div className="col-span-2">
                   <Label>Notes</Label>
-                  <Textarea name="notes" className="mt-1" placeholder="Additional details..." />
+                  <Textarea 
+                    name="notes" 
+                    className="mt-1" 
+                    placeholder="Additional details..."
+                    defaultValue={editingExpense?.notes || ""}
+                  />
                 </div>
               </div>
               <DialogFooter className="flex-col sm:flex-row gap-2">
-                <Button type="button" variant="outline" onClick={() => setShowExpenseDialog(false)} className="w-full sm:w-auto">
+                <Button type="button" variant="outline" onClick={() => {
+                  setShowExpenseDialog(false);
+                  setEditingExpense(null);
+                }} className="w-full sm:w-auto">
                   Cancel
                 </Button>
-                <Button type="submit" className="bg-gradient-to-r from-[#1EB053] to-[#0072C6] w-full sm:w-auto">
-                  Record Expense
+                <Button 
+                  type="submit" 
+                  className="bg-gradient-to-r from-[#1EB053] to-[#0072C6] w-full sm:w-auto"
+                  disabled={createExpenseMutation.isPending || updateExpenseMutation.isPending}
+                >
+                  {(createExpenseMutation.isPending || updateExpenseMutation.isPending) 
+                    ? 'Saving...' 
+                    : editingExpense ? 'Update Expense' : 'Record Expense'}
                 </Button>
               </DialogFooter>
             </form>
