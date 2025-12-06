@@ -135,12 +135,16 @@ export default function Finance() {
     queryKey: ['sales', orgId],
     queryFn: () => base44.entities.Sale.filter({ organisation_id: orgId }, '-created_date', 200),
     enabled: !!orgId,
+    staleTime: 0,
+    refetchOnWindowFocus: true,
   });
 
   const { data: trips = [] } = useQuery({
     queryKey: ['trips', orgId],
     queryFn: () => base44.entities.Trip.filter({ organisation_id: orgId }, '-date', 200),
     enabled: !!orgId,
+    staleTime: 0,
+    refetchOnWindowFocus: true,
   });
 
   const { data: truckContracts = [] } = useQuery({
@@ -171,12 +175,16 @@ export default function Finance() {
     queryKey: ['revenues', orgId],
     queryFn: () => base44.entities.Revenue.filter({ organisation_id: orgId }, '-date', 200),
     enabled: !!orgId,
+    staleTime: 0,
+    refetchOnWindowFocus: true,
   });
 
   const { data: bankDeposits = [] } = useQuery({
     queryKey: ['bankDeposits', orgId],
     queryFn: () => base44.entities.BankDeposit.filter({ organisation_id: orgId }, '-date', 200),
     enabled: !!orgId,
+    staleTime: 0,
+    refetchOnWindowFocus: true,
   });
 
   const createExpenseMutation = useMutation({
@@ -498,8 +506,8 @@ export default function Finance() {
   };
 
   const categoryFilteredExpenses = categoryFilter === "all" 
-    ? expenses 
-    : expenses.filter(e => e.category === categoryFilter);
+    ? filteredExpenses 
+    : filteredExpenses.filter(e => e.category === categoryFilter);
 
   const handleRevenueSubmit = (e) => {
     e.preventDefault();
