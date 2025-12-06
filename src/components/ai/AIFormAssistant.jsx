@@ -41,32 +41,57 @@ export default function AIFormAssistant({
     setIsAnalyzing(true);
 
     try {
+      const vendor = formData.vendor || '';
+      const amount = formData.amount || '';
+      
       const result = await base44.integrations.Core.InvokeLLM({
-        prompt: `Analyze this ${formType} description and suggest the best category and other details.
+        prompt: `You are an AI expense categorization assistant for a Sierra Leone business. Analyze and categorize this ${formType}.
 
-Description: "${description}"
+**Input:**
+- Description: "${description}"
+- Vendor: "${vendor}"
+- Amount: Le ${amount || 'not specified'}
 
-Available categories: ${categories.map(c => c.value || c).join(', ')}
+**Available Categories:** ${categories.map(c => `${c.value || c} (${c.label || c})`).join(', ')}
 
-Based on the description, provide:
-1. The most appropriate category from the list
-2. A suggested vendor name if it can be inferred
-3. Any validation warnings (e.g., unusually high amounts, missing details)
-4. A better/cleaner description if the current one is unclear
+**Past similar entries for learning:**
+${pastEntries.slice(0, 5).map(e => `- "${e.description}" → ${e.category} (Vendor: ${e.vendor || 'N/A'}, Amount: Le ${e.amount || 0})`).join('\n')}
 
-Respond in JSON format.`,
+**INSTRUCTIONS:**
+1. **suggested_category**: Choose the BEST matching category from the available list. Common Sierra Leone patterns:
+   - Fuel/Diesel/Petrol/Gas → "fuel"
+   - Generator/Vehicle/Equipment repairs → "maintenance"
+   - Electricity/Water/Internet bills → "utilities"
+   - Office items/Stationery → "supplies"
+   - Shop/Office rent → "rent"
+   - Driver/Staff wages → "salaries"
+   - Taxi/Transport costs → "transport"
+   - Advertising/Promotion → "marketing"
+   - Building materials/Construction → "materials" or "construction"
+   
+   **If NO existing category is appropriate**, suggest a NEW category name (lowercase, underscore_separated)
+   
+2. **is_new_category**: true if suggesting a brand new category, false if using existing
+3. **new_category_label**: If new category, provide readable label (e.g., "Generator Fuel")
+4. **suggested_vendor**: Standardized vendor name (fix spelling, proper case)
+5. **confidence**: 0-100 (be honest: 90+ = very sure, 70-89 = confident, 50-69 = uncertain, <50 = guessing)
+6. **reasoning**: 1-2 sentences explaining your categorization choice
+7. **improved_description**: Better/clearer description if current one is vague
+8. **warnings**: Any flags (unusual amounts, missing info, etc.)`,
         response_json_schema: {
           type: "object",
           properties: {
             suggested_category: { type: "string" },
+            is_new_category: { type: "boolean" },
+            new_category_label: { type: "string" },
             suggested_vendor: { type: "string" },
             improved_description: { type: "string" },
             confidence: { type: "number" },
+            reasoning: { type: "string" },
             warnings: { 
               type: "array", 
               items: { type: "string" } 
-            },
-            reasoning: { type: "string" }
+            }
           }
         }
       });
@@ -74,18 +99,33 @@ Respond in JSON format.`,
       if (result) {
         const newSuggestions = [];
         
+        // Category suggestion
         if (result.suggested_category && result.suggested_category !== formData.category) {
+          const categoryLabel = result.is_new_category && result.new_category_label
+            ? result.new_category_label
+            : categories.find(c => c.value === result.suggested_category)?.label || result.suggested_category.replace(/_/g, ' ');
+            
           newSuggestions.push({
             type: "category",
             field: "category",
             value: result.suggested_category,
-            label: `Category: ${result.suggested_category.replace(/_/g, ' ')}`,
-            confidence: result.confidence || 0.8,
-            reasoning: result.reasoning
+            label: `${result.is_new_category ? '✨ New Category: ' : 'Category: '}${categoryLabel}`,
+            confidence: result.confidence / 100 || 0.8,
+            reasoning: result.reasoning,
+            isNewCategory: result.is_new_category,
+            newCategoryLabel: result.new_category_label
           });
+          
+          // Auto-apply category if high confidence (75%+) and not a new category
+          if (result.confidence >= 75 && !result.is_new_category) {
+            setTimeout(() => {
+              onSuggestion('category', result.suggested_category);
+            }, 300);
+          }
         }
 
-        if (result.suggested_vendor && !formData.vendor) {
+        // Vendor suggestion
+        if (result.suggested_vendor && result.suggested_vendor !== formData.vendor) {
           newSuggestions.push({
             type: "vendor",
             field: "vendor",
@@ -95,12 +135,13 @@ Respond in JSON format.`,
           });
         }
 
-        if (result.improved_description && result.improved_description !== description) {
+        // Description improvement
+        if (result.improved_description && result.improved_description !== description && result.improved_description.length > description.length) {
           newSuggestions.push({
             type: "description",
             field: "description",
             value: result.improved_description,
-            label: `Better description: ${result.improved_description}`,
+            label: `Improved: ${result.improved_description}`,
             confidence: 0.6
           });
         }
@@ -247,23 +288,43 @@ Respond in JSON format.`,
                 AI Suggestions
               </div>
               {suggestions.map((suggestion, idx) => (
-                <div key={idx} className="flex items-center justify-between p-2 bg-white rounded-lg border border-purple-100">
-                  <div className="flex items-center gap-2 flex-1 min-w-0">
-                    <Lightbulb className="w-4 h-4 text-purple-500 flex-shrink-0" />
-                    <span className="text-sm text-gray-700 truncate">{suggestion.label}</span>
-                    {suggestion.confidence >= 0.8 && (
-                      <Badge className="bg-green-100 text-green-700 text-[10px]">High confidence</Badge>
-                    )}
+                <div key={idx} className={cn(
+                  "p-3 rounded-lg border-2",
+                  suggestion.type === "category" && suggestion.isNewCategory
+                    ? "bg-gradient-to-r from-amber-50 to-orange-50 border-amber-300"
+                    : "bg-white border-purple-200"
+                )}>
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="flex items-start gap-2 flex-1 min-w-0">
+                      <Lightbulb className="w-4 h-4 text-purple-500 flex-shrink-0 mt-0.5" />
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium text-gray-900 truncate">{suggestion.label}</p>
+                        {suggestion.reasoning && (
+                          <p className="text-xs text-gray-600 mt-1 italic">💡 {suggestion.reasoning}</p>
+                        )}
+                        {suggestion.confidence >= 0.8 && (
+                          <Badge className="bg-green-100 text-green-700 text-[10px] mt-1">
+                            {Math.round(suggestion.confidence * 100)}% confident
+                          </Badge>
+                        )}
+                        {suggestion.isNewCategory && (
+                          <div className="mt-2 p-2 bg-amber-100 rounded border border-amber-300">
+                            <p className="text-xs text-amber-800 font-medium">
+                              ⚠️ New category - will be added to your list
+                            </p>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                    <Button
+                      type="button"
+                      size="sm"
+                      onClick={() => applySuggestion(suggestion)}
+                      className="bg-purple-600 hover:bg-purple-700 text-white text-xs"
+                    >
+                      Apply
+                    </Button>
                   </div>
-                  <Button
-                    type="button"
-                    size="sm"
-                    variant="ghost"
-                    onClick={() => applySuggestion(suggestion)}
-                    className="text-purple-600 hover:text-purple-700 hover:bg-purple-50"
-                  >
-                    Apply
-                  </Button>
                 </div>
               ))}
             </div>

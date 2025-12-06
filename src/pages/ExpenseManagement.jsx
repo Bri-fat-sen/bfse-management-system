@@ -43,6 +43,7 @@ import { useToast } from "@/components/ui/Toast";
 import LoadingSpinner from "@/components/ui/LoadingSpinner";
 import PageHeader from "@/components/ui/PageHeader";
 import EmptyState from "@/components/ui/EmptyState";
+import AIFormAssistant from "@/components/ai/AIFormAssistant";
 import {
   Dialog,
   DialogContent,
@@ -74,6 +75,133 @@ const EXPENSE_CATEGORIES = [
   { value: "landscaping", label: "Landscaping" },
   { value: "other", label: "Other" }
 ];
+
+function ExpenseFormFields({ editingExpense, categories, orgId }) {
+  const [formData, setFormData] = React.useState({
+    category: editingExpense?.category || 'other',
+    description: editingExpense?.description || '',
+    vendor: editingExpense?.vendor || '',
+    amount: editingExpense?.amount || ''
+  });
+
+  const { data: pastExpenses = [] } = useQuery({
+    queryKey: ['pastExpenses', orgId],
+    queryFn: () => base44.entities.Expense.filter({ organisation_id: orgId, expense_type: 'regular' }, '-created_date', 30),
+    enabled: !!orgId,
+  });
+
+  const handleAISuggestion = (field, value) => {
+    setFormData(prev => ({ ...prev, [field]: value }));
+  };
+
+  return (
+    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+      <div className="col-span-2">
+        <Label>Category</Label>
+        <Select 
+          name="category" 
+          value={formData.category}
+          onValueChange={(v) => setFormData(prev => ({ ...prev, category: v }))}
+          required
+        >
+          <SelectTrigger className="mt-1">
+            <SelectValue placeholder="Select category" />
+          </SelectTrigger>
+          <SelectContent>
+            {categories.map(cat => (
+              <SelectItem key={cat.value} value={cat.value}>
+                {cat.label}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+
+      <div className="col-span-2">
+        <Label>Description</Label>
+        <Input 
+          name="description" 
+          required 
+          className="mt-1" 
+          placeholder="What was this expense for?"
+          value={formData.description}
+          onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
+        />
+      </div>
+
+      {/* AI Assistant - auto-suggests category as user types */}
+      <div className="col-span-2">
+        <AIFormAssistant
+          formType="expense"
+          formData={formData}
+          onSuggestion={handleAISuggestion}
+          pastEntries={pastExpenses}
+          categories={categories}
+        />
+      </div>
+
+      <div>
+        <Label>Amount (Le)</Label>
+        <Input 
+          name="amount" 
+          type="number" 
+          step="0.01" 
+          required 
+          className="mt-1"
+          value={formData.amount}
+          onChange={(e) => setFormData(prev => ({ ...prev, amount: e.target.value }))}
+        />
+      </div>
+
+      <div>
+        <Label>Date</Label>
+        <Input 
+          name="date" 
+          type="date" 
+          defaultValue={editingExpense?.date || format(new Date(), 'yyyy-MM-dd')} 
+          required 
+          className="mt-1" 
+        />
+      </div>
+
+      <div>
+        <Label>Vendor/Supplier</Label>
+        <Input 
+          name="vendor" 
+          className="mt-1" 
+          placeholder="Vendor name"
+          value={formData.vendor}
+          onChange={(e) => setFormData(prev => ({ ...prev, vendor: e.target.value }))}
+        />
+      </div>
+
+      <div>
+        <Label>Payment Method</Label>
+        <Select name="payment_method" defaultValue={editingExpense?.payment_method || "cash"}>
+          <SelectTrigger className="mt-1">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="cash">Cash</SelectItem>
+            <SelectItem value="card">Card</SelectItem>
+            <SelectItem value="bank_transfer">Bank Transfer</SelectItem>
+            <SelectItem value="mobile_money">Mobile Money</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+
+      <div className="col-span-2">
+        <Label>Notes</Label>
+        <Textarea 
+          name="notes" 
+          className="mt-1" 
+          placeholder="Additional details..."
+          defaultValue={editingExpense?.notes || ""}
+        />
+      </div>
+    </div>
+  );
+}
 
 export default function ExpenseManagement() {
   const toast = useToast();
@@ -654,33 +782,11 @@ export default function ExpenseManagement() {
           </div>
 
           <form onSubmit={handleExpenseSubmit} className="p-6 space-y-4 overflow-y-auto max-h-[calc(90vh-200px)]">
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div className="col-span-2">
-                <Label>Category</Label>
-                <Select name="category" defaultValue={editingExpense?.category || ""} required>
-                  <SelectTrigger className="mt-1">
-                    <SelectValue placeholder="Select category" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {EXPENSE_CATEGORIES.map(cat => (
-                      <SelectItem key={cat.value} value={cat.value}>
-                        {cat.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="col-span-2">
-                <Label>Description</Label>
-                <Input 
-                  name="description" 
-                  required 
-                  className="mt-1" 
-                  placeholder="What was this expense for?"
-                  defaultValue={editingExpense?.description || ""}
-                />
-              </div>
+            <ExpenseFormFields 
+              editingExpense={editingExpense}
+              categories={EXPENSE_CATEGORIES}
+              orgId={orgId}
+            />
 
               <div>
                 <Label>Amount (Le)</Label>
