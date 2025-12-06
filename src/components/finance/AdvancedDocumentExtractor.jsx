@@ -491,30 +491,26 @@ Return complete array of all data rows.`,
     const recordType = detectedType || "expense";
     
     try {
+      console.log('=== STARTING BATCH CREATION ===');
+      console.log('Total items:', selectedItems.length);
+      console.log('Record type:', recordType);
+      
       let created = 0;
       let failed = 0;
       const errors = [];
       
       for (let i = 0; i < selectedItems.length; i++) {
         const item = selectedItems[i];
+        console.log(`\n--- Item ${i + 1}/${selectedItems.length} ---`, item);
+        
         try {
           if (recordType === "expense") {
-            // Validate required fields
-            if (!item.description || !item.amount || !item.date) {
-              throw new Error(`Missing required fields - description: ${!!item.description}, amount: ${!!item.amount}, date: ${!!item.date}`);
-            }
-
-            const amount = parseFloat(item.amount);
-            if (isNaN(amount) || amount <= 0) {
-              throw new Error(`Invalid amount: ${item.amount}`);
-            }
-
             const expenseData = {
               organisation_id: orgId,
               category: item.category || 'other',
-              description: item.description,
-              amount: amount,
-              date: item.date,
+              description: item.description || 'No description',
+              amount: parseFloat(item.amount) || 0,
+              date: item.date || format(new Date(), 'yyyy-MM-dd'),
               vendor: item.vendor || '',
               payment_method: 'cash',
               recorded_by: currentEmployee?.id || '',
@@ -523,21 +519,16 @@ Return complete array of all data rows.`,
               notes: batchMode ? 'Batch imported via AI extraction' : 'Imported via advanced AI extraction'
             };
             
-            console.log(`Creating expense ${i + 1}/${selectedItems.length}:`, expenseData);
-            await base44.entities.Expense.create(expenseData);
-            console.log(`✓ Successfully created expense ${i + 1}`);
+            console.log(`Creating expense ${i + 1}:`, expenseData);
+            const result = await base44.entities.Expense.create(expenseData);
+            console.log(`✓ Success ${i + 1}:`, result);
             created++;
           } else if (recordType === "revenue") {
-            const amount = parseFloat(item.amount);
-            if (isNaN(amount) || amount <= 0) {
-              throw new Error(`Invalid amount: ${item.amount}`);
-            }
-
             const revenueData = {
               organisation_id: orgId,
               source: item.category || 'other',
               contributor_name: item.vendor || item.description || 'Unknown',
-              amount: amount,
+              amount: parseFloat(item.amount) || 0,
               date: item.date || format(new Date(), 'yyyy-MM-dd'),
               recorded_by: currentEmployee?.id || '',
               recorded_by_name: currentEmployee?.full_name || '',
@@ -545,23 +536,21 @@ Return complete array of all data rows.`,
               notes: batchMode ? 'Batch imported via AI extraction' : 'AI-extracted from document'
             };
             
-            console.log(`Creating revenue ${i + 1}/${selectedItems.length}:`, revenueData);
-            await base44.entities.Revenue.create(revenueData);
-            console.log(`✓ Successfully created revenue ${i + 1}`);
+            console.log(`Creating revenue ${i + 1}:`, revenueData);
+            const result = await base44.entities.Revenue.create(revenueData);
+            console.log(`✓ Success ${i + 1}:`, result);
             created++;
           }
         } catch (itemError) {
-          console.error(`✗ Failed to create record ${i + 1}:`, itemError);
-          console.error('Item data:', item);
-          errors.push({ 
-            index: i + 1,
-            item, 
-            error: itemError.message || String(itemError),
-            stack: itemError.stack
-          });
+          console.error(`✗ FAILED ${i + 1}:`, itemError);
+          console.error('Item:', item);
+          errors.push({ index: i + 1, item, error: itemError.message || String(itemError) });
           failed++;
         }
       }
+      
+      console.log('\n=== COMPLETE ===');
+      console.log('Created:', created, 'Failed:', failed);
 
       const filesProcessed = batchMode ? fileQueue.filter(f => f.status === 'completed').length : 1;
       
