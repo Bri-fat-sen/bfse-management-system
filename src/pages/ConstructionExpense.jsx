@@ -64,6 +64,7 @@ import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
   PieChart, Pie, Cell, Legend, LineChart, Line
 } from 'recharts';
+import AdvancedDocumentExtractor from "@/components/finance/AdvancedDocumentExtractor";
 
 const DEFAULT_CONSTRUCTION_CATEGORIES = [
   { value: "materials", label: "Building Materials", icon: Package },
