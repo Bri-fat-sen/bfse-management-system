@@ -399,10 +399,10 @@ export default function Sales() {
       return sale;
     },
     onSuccess: async (data) => {
-      queryClient.invalidateQueries({ queryKey: ['sales'] });
-      queryClient.invalidateQueries({ queryKey: ['products'] });
-      queryClient.invalidateQueries({ queryKey: ['stockLevels'] });
-      queryClient.invalidateQueries({ queryKey: ['reorderSuggestions'] });
+      queryClient.invalidateQueries({ queryKey: ['sales', orgId] });
+      queryClient.invalidateQueries({ queryKey: ['products', orgId] });
+      queryClient.invalidateQueries({ queryKey: ['stockLevels', orgId, selectedLocation] });
+      queryClient.invalidateQueries({ queryKey: ['reorderSuggestions', orgId] });
       setLastSale(data);
       setCart([]);
       setShowCheckout(false);
@@ -430,7 +430,7 @@ export default function Sales() {
   const deleteSaleMutation = useMutation({
     mutationFn: (saleId) => base44.entities.Sale.delete(saleId),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['sales'] });
+      queryClient.invalidateQueries({ queryKey: ['sales', orgId] });
       toast.success("Sale deleted successfully");
     },
     onError: (error) => {
@@ -593,7 +593,7 @@ export default function Sales() {
         related_sale_id: saleData.sale_number
       });
 
-      queryClient.invalidateQueries({ queryKey: ['customers'] });
+      queryClient.invalidateQueries({ queryKey: ['customers', orgId] });
     }
 
     setSelectedCustomer(null);
@@ -1165,8 +1165,8 @@ export default function Sales() {
         selectedLocation={selectedLocation}
         selectedSaleType={saleType}
         onSuccess={() => {
-          queryClient.invalidateQueries({ queryKey: ['sales'] });
-          queryClient.invalidateQueries({ queryKey: ['customers'] });
+          queryClient.invalidateQueries({ queryKey: ['sales', orgId] });
+          queryClient.invalidateQueries({ queryKey: ['customers', orgId] });
         }}
       />
     </div>

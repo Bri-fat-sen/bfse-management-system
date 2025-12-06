@@ -156,7 +156,7 @@ export default function HR() {
       await base44.entities.Payroll.delete(payroll.id);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['payrolls'] });
+      queryClient.invalidateQueries({ queryKey: ['payrolls', orgId] });
       toast.success("Payroll deleted successfully");
     },
     onError: (error) => {
@@ -184,7 +184,7 @@ export default function HR() {
       await base44.entities.Payroll.update(payroll.id, { status: 'cancelled' });
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['payrolls'] });
+      queryClient.invalidateQueries({ queryKey: ['payrolls', orgId] });
       toast.success("Payroll reversed successfully");
     },
     onError: (error) => {

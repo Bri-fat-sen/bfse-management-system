@@ -149,9 +149,9 @@ export default function ExpenseManagement() {
   const updateExpenseMutation = useMutation({
     mutationFn: ({ id, data }) => base44.entities.Expense.update(id, data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['allExpenses'] });
-      queryClient.invalidateQueries({ queryKey: ['expenses'] });
-      queryClient.invalidateQueries({ queryKey: ['constructionExpenses'] });
+      queryClient.invalidateQueries({ queryKey: ['allExpenses', orgId] });
+      queryClient.invalidateQueries({ queryKey: ['expenses', orgId] });
+      queryClient.invalidateQueries({ queryKey: ['constructionExpenses', orgId] });
       toast.success("Expense updated");
     },
     onError: (error) => {
@@ -518,8 +518,8 @@ export default function ExpenseManagement() {
         currentEmployee={currentEmployee}
         categories={EXPENSE_CATEGORIES}
         onSuccess={() => {
-          queryClient.invalidateQueries({ queryKey: ['allExpenses'] });
-          queryClient.invalidateQueries({ queryKey: ['expenses'] });
+          queryClient.invalidateQueries({ queryKey: ['allExpenses', orgId] });
+          queryClient.invalidateQueries({ queryKey: ['expenses', orgId] });
         }}
       />
     </div>

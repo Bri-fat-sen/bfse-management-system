@@ -144,7 +144,7 @@ export default function Transport() {
   const createTripMutation = useMutation({
     mutationFn: (data) => base44.entities.Trip.create(data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['trips'] });
+      queryClient.invalidateQueries({ queryKey: ['trips', orgId] });
       setShowTripDialog(false);
       toast.success("Trip recorded successfully");
     },
@@ -157,7 +157,7 @@ export default function Transport() {
   const createVehicleMutation = useMutation({
     mutationFn: (data) => base44.entities.Vehicle.create(data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['vehicles'] });
+      queryClient.invalidateQueries({ queryKey: ['vehicles', orgId] });
       setShowVehicleDialog(false);
       toast.success("Vehicle added successfully");
     },
@@ -170,7 +170,7 @@ export default function Transport() {
   const updateTripMutation = useMutation({
     mutationFn: ({ id, data }) => base44.entities.Trip.update(id, data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['trips'] });
+      queryClient.invalidateQueries({ queryKey: ['trips', orgId] });
       toast.success("Trip updated successfully");
     },
     onError: (error) => {

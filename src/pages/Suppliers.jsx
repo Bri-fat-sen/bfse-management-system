@@ -131,7 +131,7 @@ export default function Suppliers() {
   const deleteMutation = useMutation({
     mutationFn: (id) => base44.entities.Supplier.delete(id),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['suppliers'] });
+      queryClient.invalidateQueries({ queryKey: ['suppliers', orgId] });
       toast.success("Supplier deleted");
     },
     onError: (error) => {
@@ -143,7 +143,7 @@ export default function Suppliers() {
   const updatePOMutation = useMutation({
     mutationFn: ({ id, data }) => base44.entities.PurchaseOrder.update(id, data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['purchaseOrders'] });
+      queryClient.invalidateQueries({ queryKey: ['purchaseOrders', orgId] });
       toast.success("Purchase order updated");
     },
     onError: (error) => {

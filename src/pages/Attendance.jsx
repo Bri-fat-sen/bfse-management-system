@@ -150,7 +150,7 @@ export default function Attendance() {
       overtime_approval_date: format(new Date(), 'yyyy-MM-dd')
     }),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['allAttendance'] });
+      queryClient.invalidateQueries({ queryKey: ['allAttendance', orgId] });
       toast.success("Overtime approved", "Overtime hours have been approved for payroll");
     },
     onError: (error) => {
