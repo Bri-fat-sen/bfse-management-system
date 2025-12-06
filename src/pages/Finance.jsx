@@ -35,9 +35,7 @@ import {
   Upload,
   Check,
   X,
-  Sparkles,
-  Edit,
-  Trash2
+  Sparkles
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -194,6 +192,7 @@ export default function Finance() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['revenues'] });
       setShowRevenueDialog(false);
+      setEditingRevenue(null);
       toast.success("Revenue recorded", "Contribution has been added");
     },
     onError: (error) => {
@@ -1188,7 +1187,7 @@ export default function Finance() {
                                     setShowRevenueDialog(true);
                                   }}
                                 >
-                                  <Edit className="w-4 h-4" />
+                                  <Edit2 className="w-4 h-4" />
                                 </Button>
                                 <Button
                                   variant="ghost"
