@@ -41,12 +41,51 @@ export default function StockAdjustmentDialog({
 
   const createMovementMutation = useMutation({
     mutationFn: async (data) => {
-      // Create stock movement record
-      await base44.entities.StockMovement.create(data.movement);
       // Update product stock
       await base44.entities.Product.update(data.productId, { 
         stock_quantity: data.newStock 
       });
+
+      // Update or create stock level at warehouse
+      const existingStockLevel = await base44.entities.StockLevel.filter({
+        organisation_id: orgId,
+        product_id: data.productId,
+        warehouse_id: data.warehouseId
+      });
+
+      if (existingStockLevel.length > 0) {
+        const currentLocationStock = existingStockLevel[0].quantity || 0;
+        let newLocationStock = currentLocationStock;
+        
+        if (data.movement.movement_type === 'in') {
+          newLocationStock = currentLocationStock + data.movement.quantity;
+        } else if (data.movement.movement_type === 'out') {
+          newLocationStock = Math.max(0, currentLocationStock - data.movement.quantity);
+        } else if (data.movement.movement_type === 'adjustment') {
+          newLocationStock = data.newStock; // Direct set for adjustments
+        }
+
+        await base44.entities.StockLevel.update(existingStockLevel[0].id, {
+          quantity: newLocationStock,
+          available_quantity: newLocationStock
+        });
+      } else if (data.movement.movement_type === 'in' || data.movement.movement_type === 'adjustment') {
+        // Create new stock level if adding stock
+        await base44.entities.StockLevel.create({
+          organisation_id: orgId,
+          product_id: data.productId,
+          product_name: data.product?.name,
+          warehouse_id: data.warehouseId,
+          warehouse_name: data.warehouseName,
+          location_type: 'warehouse',
+          quantity: data.movement.movement_type === 'adjustment' ? data.newStock : data.movement.quantity,
+          available_quantity: data.movement.movement_type === 'adjustment' ? data.newStock : data.movement.quantity,
+          reorder_level: data.product?.reorder_point || 10
+        });
+      }
+
+      // Create stock movement record
+      await base44.entities.StockMovement.create(data.movement);
       
       // Create or update batch if batch number provided
       if (data.batchNumber && data.movement.movement_type === 'in') {
@@ -118,6 +157,7 @@ export default function StockAdjustmentDialog({
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['products'] });
+      queryClient.invalidateQueries({ queryKey: ['stockLevels'] });
       queryClient.invalidateQueries({ queryKey: ['stockMovements'] });
       queryClient.invalidateQueries({ queryKey: ['stockAlerts'] });
       queryClient.invalidateQueries({ queryKey: ['inventoryBatches'] });

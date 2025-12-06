@@ -128,8 +128,10 @@ export default function BatchStockAllocation({
           );
 
           if (existingStock) {
+            const newQty = (existingStock.quantity || 0) + allocateFromThis;
             await base44.entities.StockLevel.update(existingStock.id, {
-              quantity: existingStock.quantity + allocateFromThis
+              quantity: newQty,
+              available_quantity: newQty
             });
           } else {
             await base44.entities.StockLevel.create({
@@ -140,6 +142,7 @@ export default function BatchStockAllocation({
               warehouse_name: targetLocation.name,
               location_type: targetLocation.type,
               quantity: allocateFromThis,
+              available_quantity: allocateFromThis,
               reorder_level: 10
             });
           }
@@ -223,8 +226,10 @@ export default function BatchStockAllocation({
         );
 
         if (existingStock) {
+          const newQty = (existingStock.quantity || 0) + alloc.allocate_qty;
           await base44.entities.StockLevel.update(existingStock.id, {
-            quantity: existingStock.quantity + alloc.allocate_qty
+            quantity: newQty,
+            available_quantity: newQty
           });
         } else {
           await base44.entities.StockLevel.create({
@@ -235,6 +240,7 @@ export default function BatchStockAllocation({
             warehouse_name: alloc.location_name,
             location_type: alloc.location_type,
             quantity: alloc.allocate_qty,
+            available_quantity: alloc.allocate_qty,
             reorder_level: 10
           });
         }

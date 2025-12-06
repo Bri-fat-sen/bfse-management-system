@@ -57,6 +57,33 @@ export default function ReceiveStockDialog({
               cost_price: item.unit_cost // Update cost price from PO
             });
 
+            // Update or create stock level at warehouse
+            const existingStockLevel = await base44.entities.StockLevel.filter({
+              organisation_id: orgId,
+              product_id: item.product_id,
+              warehouse_id: purchaseOrder.warehouse_id
+            });
+
+            if (existingStockLevel.length > 0) {
+              const currentLocationStock = existingStockLevel[0].quantity || 0;
+              await base44.entities.StockLevel.update(existingStockLevel[0].id, {
+                quantity: currentLocationStock + item.receiving_quantity,
+                available_quantity: currentLocationStock + item.receiving_quantity
+              });
+            } else {
+              await base44.entities.StockLevel.create({
+                organisation_id: orgId,
+                product_id: item.product_id,
+                product_name: item.product_name,
+                warehouse_id: purchaseOrder.warehouse_id,
+                warehouse_name: purchaseOrder.warehouse_name,
+                location_type: 'warehouse',
+                quantity: item.receiving_quantity,
+                available_quantity: item.receiving_quantity,
+                reorder_level: product.reorder_point || 10
+              });
+            }
+
             // Create stock movement
             await base44.entities.StockMovement.create({
               organisation_id: orgId,
@@ -151,6 +178,7 @@ export default function ReceiveStockDialog({
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['purchaseOrders'] });
       queryClient.invalidateQueries({ queryKey: ['products'] });
+      queryClient.invalidateQueries({ queryKey: ['stockLevels'] });
       queryClient.invalidateQueries({ queryKey: ['stockMovements'] });
       queryClient.invalidateQueries({ queryKey: ['stockAlerts'] });
       queryClient.invalidateQueries({ queryKey: ['suppliers'] });

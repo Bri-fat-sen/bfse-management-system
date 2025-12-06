@@ -68,8 +68,10 @@ export default function StockTransferDialog({
         sl => sl.product_id === productId && sl.warehouse_id === fromLocId
       );
       if (sourceLevel) {
+        const newSourceQty = Math.max(0, (sourceLevel.quantity || 0) - qty);
         await base44.entities.StockLevel.update(sourceLevel.id, {
-          quantity: sourceLevel.quantity - qty
+          quantity: newSourceQty,
+          available_quantity: newSourceQty
         });
       }
 
@@ -78,8 +80,10 @@ export default function StockTransferDialog({
         sl => sl.product_id === productId && sl.warehouse_id === toLocId
       );
       if (destLevel) {
+        const newDestQty = (destLevel.quantity || 0) + qty;
         await base44.entities.StockLevel.update(destLevel.id, {
-          quantity: destLevel.quantity + qty
+          quantity: newDestQty,
+          available_quantity: newDestQty
         });
       } else {
         await base44.entities.StockLevel.create({
@@ -89,9 +93,14 @@ export default function StockTransferDialog({
           warehouse_id: toLocId,
           warehouse_name: toLoc.name,
           location_type: toLoc.type,
-          quantity: qty
+          quantity: qty,
+          available_quantity: qty,
+          reorder_level: product.reorder_point || 10
         });
       }
+
+      // Product total stock remains the same (just moving between locations)
+      // No need to update Product.stock_quantity for transfers
 
       // Create stock movement records
       await base44.entities.StockMovement.create({
