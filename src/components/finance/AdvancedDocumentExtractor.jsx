@@ -482,11 +482,22 @@ Return complete array of all data rows.`,
     }
 
     if (!orgId) {
-      toast.error("Missing organisation", "Organisation ID is required to create records");
+      toast.error("Missing organisation", "Organisation ID is required");
+      return;
+    }
+
+    if (!currentEmployee?.id) {
+      toast.error("Missing employee info", "Please ensure you're logged in as an employee");
       return;
     }
 
     setUploadLoading(true);
+    
+    console.log('=== PRE-CREATION VALIDATION ===');
+    console.log('Organisation ID:', orgId);
+    console.log('Employee ID:', currentEmployee?.id);
+    console.log('Employee Name:', currentEmployee?.full_name);
+    console.log('Selected items:', selectedItems.length);
     
     const recordType = detectedType || "expense";
     
