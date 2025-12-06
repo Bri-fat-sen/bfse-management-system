@@ -263,6 +263,10 @@ export default function ExpenseManagement() {
         return { start: startOfMonth(subMonths(today, 2)), end: today };
       case "this_year": 
         return { start: new Date(today.getFullYear(), 0, 1), end: today };
+      case "last_year":
+        return { start: new Date(today.getFullYear() - 1, 0, 1), end: new Date(today.getFullYear() - 1, 11, 31) };
+      case "all_time":
+        return { start: new Date(2020, 0, 1), end: today };
       default: return { start: startOfMonth(today), end: today };
     }
   }, [dateRange]);
@@ -521,6 +525,8 @@ export default function ExpenseManagement() {
               <SelectItem value="last_month">Last Month</SelectItem>
               <SelectItem value="last_3_months">Last 3 Months</SelectItem>
               <SelectItem value="this_year">This Year</SelectItem>
+              <SelectItem value="last_year">Last Year</SelectItem>
+              <SelectItem value="all_time">All Time</SelectItem>
             </SelectContent>
           </Select>
         </div>
