@@ -788,65 +788,6 @@ export default function ExpenseManagement() {
               orgId={orgId}
             />
 
-              <div>
-                <Label>Amount (Le)</Label>
-                <Input 
-                  name="amount" 
-                  type="number" 
-                  step="0.01" 
-                  required 
-                  className="mt-1"
-                  defaultValue={editingExpense?.amount || ""}
-                />
-              </div>
-
-              <div>
-                <Label>Date</Label>
-                <Input 
-                  name="date" 
-                  type="date" 
-                  defaultValue={editingExpense?.date || format(new Date(), 'yyyy-MM-dd')} 
-                  required 
-                  className="mt-1" 
-                />
-              </div>
-
-              <div>
-                <Label>Vendor/Supplier</Label>
-                <Input 
-                  name="vendor" 
-                  className="mt-1" 
-                  placeholder="Vendor name"
-                  defaultValue={editingExpense?.vendor || ""}
-                />
-              </div>
-
-              <div>
-                <Label>Payment Method</Label>
-                <Select name="payment_method" defaultValue={editingExpense?.payment_method || "cash"}>
-                  <SelectTrigger className="mt-1">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="cash">Cash</SelectItem>
-                    <SelectItem value="card">Card</SelectItem>
-                    <SelectItem value="bank_transfer">Bank Transfer</SelectItem>
-                    <SelectItem value="mobile_money">Mobile Money</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="col-span-2">
-                <Label>Notes</Label>
-                <Textarea 
-                  name="notes" 
-                  className="mt-1" 
-                  placeholder="Additional details..."
-                  defaultValue={editingExpense?.notes || ""}
-                />
-              </div>
-            </div>
-
             <div className="flex gap-2 pt-4 border-t mt-4">
               <Button type="button" variant="outline" onClick={() => setShowExpenseDialog(false)} className="w-full sm:w-auto">
                 Cancel
