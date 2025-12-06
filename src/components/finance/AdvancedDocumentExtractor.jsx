@@ -70,6 +70,7 @@ export default function AdvancedDocumentExtractor({
   const [currencyMode, setCurrencyMode] = useState(null);
   const [showCurrencyDialog, setShowCurrencyDialog] = useState(false);
   const [pendingFile, setPendingFile] = useState(null);
+  const [dynamicCategories, setDynamicCategories] = useState([...EXPENSE_CATEGORIES]);
 
   const analyzeDocument = async (file_url) => {
     try {
@@ -148,15 +149,20 @@ Be thorough and accurate.`,
    - date: If shown (YYYY-MM-DD format)
    - quantity: If shown
    - unit_price: If shown
-   - category: Type if mentioned
+   - category: INTELLIGENTLY determine category based on the description (e.g., "Diesel" → "fuel", "Office supplies" → "supplies", "Rent payment" → "rent", "Staff salary" → "salaries"). Be specific and consistent. Create descriptive category names if none of the common ones fit.
    - vendor: Supplier if mentioned
 
-3. Skip ONLY:
+3. Category Guidelines:
+   - Match to common categories: fuel, maintenance, utilities, supplies, rent, salaries, transport, marketing, insurance, petty_cash
+   - If item doesn't fit, create a descriptive category (e.g., "medical", "training", "equipment", "consulting")
+   - Use lowercase, use underscores for spaces
+
+4. Skip ONLY:
    - Header rows (column titles)
    - Total/Subtotal summary rows
    - Empty rows
 
-4. If 50 items exist, return 50 items. Extract ALL.
+5. If 50 items exist, return 50 items. Extract ALL.
 
 Return complete array of all data rows.`,
         file_urls: [file_url],
@@ -249,9 +255,19 @@ Return complete array of all data rows.`,
       }
 
       const conversionFactor = currencyMode === 'sll' ? 1000 : 1;
+      const newCategories = new Set();
+      
       const mappedData = (rawExtraction.rows || []).map((row, idx) => {
         const rawAmount = parseFloat(row.amount || 0);
         const amount = rawAmount / conversionFactor;
+        
+        // Handle category - add to dynamic list if new
+        let category = (row.category || 'other').toLowerCase().replace(/\s+/g, '_');
+        const categoryExists = EXPENSE_CATEGORIES.some(cat => cat.value === category);
+        
+        if (!categoryExists && category !== 'other') {
+          newCategories.add(category);
+        }
 
         return {
           id: `row-${idx}`,
@@ -259,7 +275,7 @@ Return complete array of all data rows.`,
           row_number: idx + 1,
           description: row.description || row.notes || '',
           amount: amount,
-          category: row.category || 'other',
+          category: category,
           date: row.date || analysis.metadata?.date || format(new Date(), 'yyyy-MM-dd'),
           vendor: row.vendor || analysis.metadata?.issuer_name || '',
           quantity: parseFloat(row.quantity || 0),
@@ -267,6 +283,16 @@ Return complete array of all data rows.`,
           raw_data: row
         };
       }).filter(item => item.description && item.amount > 0);
+
+      // Add new categories to the dynamic list
+      if (newCategories.size > 0) {
+        const newCategoryOptions = Array.from(newCategories).map(cat => ({
+          value: cat,
+          label: cat.split('_').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ')
+        }));
+        setDynamicCategories(prev => [...prev, ...newCategoryOptions]);
+        console.log("Added new categories:", newCategoryOptions);
+      }
 
       console.log("Mapped data:", mappedData);
 
@@ -383,6 +409,7 @@ Return complete array of all data rows.`,
     setConfidenceScore(0);
     setZoom(100);
     setViewMode("split");
+    setDynamicCategories([...EXPENSE_CATEGORIES]);
   };
 
   const toggleSelection = (id) => {
@@ -752,7 +779,7 @@ Return complete array of all data rows.`,
                                     <SelectValue />
                                   </SelectTrigger>
                                   <SelectContent>
-                                    {categories.map(cat => (
+                                    {dynamicCategories.map(cat => (
                                       <SelectItem key={cat.value} value={cat.value} className="text-xs">
                                         {cat.label}
                                       </SelectItem>
