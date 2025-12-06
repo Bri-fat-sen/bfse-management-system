@@ -32,7 +32,9 @@ import {
   FileText,
   Shield,
   Eye,
-  Upload
+  Upload,
+  Plus,
+  Edit2
 } from "lucide-react";
 import { useToast } from "@/components/ui/Toast";
 import LoadingSpinner from "@/components/ui/LoadingSpinner";
@@ -77,10 +79,12 @@ export default function ExpenseManagement() {
   const [statusFilter, setStatusFilter] = useState("pending");
   const [dateRange, setDateRange] = useState("this_month");
   const [selectedExpense, setSelectedExpense] = useState(null);
+  const [editingExpense, setEditingExpense] = useState(null);
   const [showDetailDialog, setShowDetailDialog] = useState(false);
   const [showUploadDialog, setShowUploadDialog] = useState(false);
   const [showBulkDeleteDialog, setShowBulkDeleteDialog] = useState(false);
   const [bulkDeleteLoading, setBulkDeleteLoading] = useState(false);
+  const [showExpenseDialog, setShowExpenseDialog] = useState(false);
 
   const { data: user } = useQuery({
     queryKey: ['currentUser'],
@@ -187,6 +191,45 @@ export default function ExpenseManagement() {
     setShowDetailDialog(true);
   };
 
+  const createExpenseMutation = useMutation({
+    mutationFn: (data) => base44.entities.Expense.create(data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['allExpenses', orgId] });
+      queryClient.invalidateQueries({ queryKey: ['expenses', orgId] });
+      setShowExpenseDialog(false);
+      setEditingExpense(null);
+      toast.success("Expense recorded", "Expense has been added");
+    },
+    onError: (error) => {
+      toast.error("Failed to record expense", error.message);
+    }
+  });
+
+  const handleExpenseSubmit = (e) => {
+    e.preventDefault();
+    const formData = new FormData(e.target);
+    const data = {
+      organisation_id: orgId,
+      expense_type: 'regular',
+      category: formData.get('category'),
+      description: formData.get('description'),
+      amount: parseFloat(formData.get('amount')) || 0,
+      date: formData.get('date'),
+      vendor: formData.get('vendor'),
+      payment_method: formData.get('payment_method'),
+      recorded_by: currentEmployee?.id,
+      recorded_by_name: currentEmployee?.full_name,
+      status: 'pending',
+      notes: formData.get('notes'),
+    };
+
+    if (editingExpense) {
+      updateExpenseMutation.mutate({ id: editingExpense.id, data });
+    } else {
+      createExpenseMutation.mutate(data);
+    }
+  };
+
   const handleBulkDelete = async () => {
     setBulkDeleteLoading(true);
     try {
@@ -241,11 +284,22 @@ export default function ExpenseManagement() {
             </Button>
           )}
           <Button
+            variant="outline"
             onClick={() => setShowUploadDialog(true)}
-            className="bg-gradient-to-r from-[#1EB053] to-[#0072C6]"
+            className="border-[#0072C6] text-[#0072C6] hover:bg-[#0072C6]/10"
           >
             <Upload className="w-4 h-4 mr-2" />
             Upload Documents
+          </Button>
+          <Button
+            onClick={() => {
+              setEditingExpense(null);
+              setShowExpenseDialog(true);
+            }}
+            className="bg-gradient-to-r from-[#1EB053] to-[#0072C6]"
+          >
+            <Plus className="w-4 h-4 mr-2" />
+            Record Expense
           </Button>
         </div>
       </div>
@@ -423,34 +477,47 @@ export default function ExpenseManagement() {
                       </TableCell>
                       <TableCell className="text-right">
                         <div className="flex justify-end gap-1">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8"
+                          onClick={() => handleViewDetails(expense)}
+                        >
+                          <Eye className="w-4 h-4" />
+                        </Button>
+                        {expense.status === 'pending' && isAdmin && (
+                          <>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-8 w-8 text-green-600 hover:bg-green-50"
+                              onClick={() => handleApprove(expense)}
+                            >
+                              <CheckCircle className="w-4 h-4" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-8 w-8 text-red-600 hover:bg-red-50"
+                              onClick={() => handleReject(expense)}
+                            >
+                              <XCircle className="w-4 h-4" />
+                            </Button>
+                          </>
+                        )}
+                        {isAdmin && (
                           <Button
                             variant="ghost"
                             size="icon"
-                            className="h-8 w-8"
-                            onClick={() => handleViewDetails(expense)}
+                            className="h-8 w-8 text-[#0072C6] hover:bg-blue-50"
+                            onClick={() => {
+                              setEditingExpense(expense);
+                              setShowExpenseDialog(true);
+                            }}
                           >
-                            <Eye className="w-4 h-4" />
+                            <Edit2 className="w-4 h-4" />
                           </Button>
-                          {expense.status === 'pending' && (
-                            <>
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                className="h-8 w-8 text-green-600 hover:bg-green-50"
-                                onClick={() => handleApprove(expense)}
-                              >
-                                <CheckCircle className="w-4 h-4" />
-                              </Button>
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                className="h-8 w-8 text-red-600 hover:bg-red-50"
-                                onClick={() => handleReject(expense)}
-                              >
-                                <XCircle className="w-4 h-4" />
-                              </Button>
-                            </>
-                          )}
+                        )}
                         </div>
                       </TableCell>
                     </TableRow>

@@ -602,8 +602,6 @@ export default function Finance() {
         <PageHeader
           title="Finance"
           subtitle="Complete financial overview and management"
-          action={() => setShowExpenseDialog(true)}
-          actionLabel="Record Expense"
         >
           <Button 
             variant="outline" 
@@ -1114,10 +1112,6 @@ export default function Finance() {
                       Delete All ({categoryFilteredExpenses.length})
                     </Button>
                   )}
-                  <Button onClick={() => setShowExpenseDialog(true)} className="bg-gradient-to-r from-[#1EB053] to-[#0072C6]">
-                    <Plus className="w-4 h-4 mr-2" />
-                    Add
-                  </Button>
                 </div>
               </CardHeader>
               <CardContent>
