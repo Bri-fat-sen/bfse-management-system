@@ -847,7 +847,7 @@ export default function ExpenseManagement() {
               </div>
             </div>
 
-            <div className="flex gap-2 pt-4">
+            <div className="flex gap-2 pt-4 border-t mt-4">
               <Button type="button" variant="outline" onClick={() => setShowExpenseDialog(false)} className="w-full sm:w-auto">
                 Cancel
               </Button>
