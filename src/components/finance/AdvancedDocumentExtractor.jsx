@@ -323,10 +323,7 @@ Return validated data with corrections and confidence scores.`;
       setConfidenceScore(analysis.confidence || 0);
       setTotalPages(1); // Could be enhanced to detect actual page count
 
-      setUploadStage("preview");
-      toast.success("Analysis complete", `${analysis.confidence}% confidence - ${analysis.table_structure.estimated_rows} rows detected`);
-
-      // Stage 3: Extract data
+      // Stage 3: Extract data immediately (don't wait for preview)
       toast.info("Extracting data...", "Reading all rows from the document");
       const rawExtraction = await extractDocumentData(file_url, analysis);
 
@@ -365,6 +362,7 @@ Return validated data with corrections and confidence scores.`;
 
       setExtractedData(mappedData);
       setUploadStage("editing");
+      setUploadStage("preview");
       
       const avgConfidence = validation.overall_quality?.accuracy_score || 85;
       toast.success(
@@ -374,15 +372,23 @@ Return validated data with corrections and confidence scores.`;
 
     } catch (error) {
       console.error("Processing error:", error);
-      toast.error("Processing failed", error.message);
+      toast.error("Processing failed", error.message || "Failed to analyze document");
       setUploadStage("upload");
+      setPendingFile(null);
+      setFileUrl(null);
     } finally {
       setUploadLoading(false);
     }
   };
 
   const handleReanalyze = async () => {
-    if (!fileUrl || !pendingFile) return;
+    if (!pendingFile) {
+      toast.error("No file", "Please upload a document first");
+      return;
+    }
+    setExtractedData([]);
+    setDocumentAnalysis(null);
+    setValidationResults(null);
     await processFile(pendingFile);
   };
 
@@ -670,12 +676,22 @@ Return validated data with corrections and confidence scores.`;
               </Card>
 
               <div className="flex justify-center gap-2">
-                <Button onClick={handleReanalyze} variant="outline">
+                <Button onClick={handleReanalyze} variant="outline" disabled={uploadLoading}>
                   <RefreshCw className="w-4 h-4 mr-2" />
                   Re-analyze
                 </Button>
-                <Button onClick={() => setUploadStage("editing")} className="bg-gradient-to-r from-[#1EB053] to-[#0072C6]">
-                  Continue to Edit
+                <Button 
+                  onClick={() => {
+                    if (extractedData.length > 0) {
+                      setUploadStage("editing");
+                    } else {
+                      toast.error("No data extracted", "Please re-analyze or upload a different document");
+                    }
+                  }} 
+                  className="bg-gradient-to-r from-[#1EB053] to-[#0072C6]"
+                  disabled={extractedData.length === 0}
+                >
+                  {extractedData.length > 0 ? `Review ${extractedData.length} rows` : "No data found"}
                   <ChevronRight className="w-4 h-4 ml-2" />
                 </Button>
               </div>
