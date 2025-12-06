@@ -593,7 +593,7 @@ export default function Sales() {
         related_sale_id: saleData.sale_number
       });
 
-      queryClient.invalidateQueries({ queryKey: ['customers'] });
+      queryClient.invalidateQueries({ queryKey: ['customers', orgId] });
     }
 
     setSelectedCustomer(null);
