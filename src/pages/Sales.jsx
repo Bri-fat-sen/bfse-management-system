@@ -111,16 +111,16 @@ export default function Sales() {
     queryKey: ['products', orgId],
     queryFn: () => base44.entities.Product.filter({ organisation_id: orgId, is_active: true }),
     enabled: !!orgId,
-    staleTime: 2 * 60 * 1000,
-    refetchOnWindowFocus: false,
+    staleTime: 0,
+    refetchOnWindowFocus: true,
   });
 
   const { data: sales = [], isLoading: loadingSales } = useQuery({
     queryKey: ['sales', orgId],
     queryFn: () => base44.entities.Sale.filter({ organisation_id: orgId }, '-created_date', 100),
     enabled: !!orgId,
-    staleTime: 60 * 1000,
-    refetchOnWindowFocus: false,
+    staleTime: 0,
+    refetchOnWindowFocus: true,
   });
 
   const { data: vehicles = [] } = useQuery({
@@ -143,8 +143,8 @@ export default function Sales() {
     queryKey: ['customers', orgId],
     queryFn: () => base44.entities.Customer.filter({ organisation_id: orgId, status: 'active' }),
     enabled: !!orgId,
-    staleTime: 2 * 60 * 1000,
-    refetchOnWindowFocus: false,
+    staleTime: 0,
+    refetchOnWindowFocus: true,
   });
 
   // Fetch stock levels for the selected location
@@ -155,6 +155,8 @@ export default function Sales() {
       warehouse_id: selectedLocation 
     }),
     enabled: !!orgId && !!selectedLocation,
+    staleTime: 0,
+    refetchOnWindowFocus: true,
   });
 
   const filteredCustomers = customers.filter(c =>

@@ -111,6 +111,8 @@ export default function Attendance() {
     queryKey: ['allAttendance', orgId],
     queryFn: () => base44.entities.Attendance.filter({ organisation_id: orgId }, '-date', 1000),
     enabled: !!orgId,
+    staleTime: 0,
+    refetchOnWindowFocus: true,
   });
 
   const { data: todayAttendanceData } = useQuery({

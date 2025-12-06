@@ -84,7 +84,8 @@ export default function Dashboard() {
     queryKey: ['sales', orgId],
     queryFn: () => base44.entities.Sale.filter({ organisation_id: orgId }, '-created_date', 50),
     enabled: !!orgId,
-    ...queryConfig,
+    staleTime: 0,
+    refetchOnWindowFocus: true,
   });
 
   const { data: products = [] } = useQuery({
@@ -98,7 +99,8 @@ export default function Dashboard() {
     queryKey: ['trips', orgId],
     queryFn: () => base44.entities.Trip.filter({ organisation_id: orgId }, '-created_date', 20),
     enabled: !!orgId,
-    ...queryConfig,
+    staleTime: 0,
+    refetchOnWindowFocus: true,
   });
 
   const { data: recentActivity = [] } = useQuery({
@@ -146,7 +148,8 @@ export default function Dashboard() {
     queryKey: ['expenses', orgId],
     queryFn: () => base44.entities.Expense.filter({ organisation_id: orgId }, '-created_date', 50),
     enabled: !!orgId,
-    ...queryConfig,
+    staleTime: 0,
+    refetchOnWindowFocus: true,
   });
 
   const { data: vehicles = [] } = useQuery({
