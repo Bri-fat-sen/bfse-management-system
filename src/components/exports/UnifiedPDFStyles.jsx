@@ -225,17 +225,19 @@ export function getUnifiedPDFStyles(organisation, documentType = 'receipt') {
     /* Summary Cards */
     .summary-cards {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-      gap: 12px;
-      margin-bottom: 24px;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 10px;
+      margin-bottom: 20px;
+      page-break-inside: avoid;
     }
     
     .summary-card {
       background: var(--gray-50);
       border: 1px solid var(--gray-200);
-      border-radius: 12px;
-      padding: 16px;
+      border-radius: 8px;
+      padding: 12px;
       text-align: center;
+      page-break-inside: avoid;
     }
     
     .summary-card .label {
@@ -247,9 +249,10 @@ export function getUnifiedPDFStyles(organisation, documentType = 'receipt') {
     }
     
     .summary-card .value {
-      font-size: 20px;
+      font-size: 16px;
       font-weight: 700;
       color: var(--gray-800);
+      word-break: break-word;
     }
     
     .summary-card .subtext {
@@ -268,12 +271,13 @@ export function getUnifiedPDFStyles(organisation, documentType = 'receipt') {
       display: flex;
       align-items: center;
       gap: 8px;
-      font-size: 14px;
+      font-size: 13px;
       font-weight: 700;
       color: var(--gray-700);
-      margin: 24px 0 12px 0;
-      padding-bottom: 8px;
+      margin: 20px 0 10px 0;
+      padding-bottom: 6px;
       border-bottom: 2px solid var(--gray-200);
+      page-break-after: avoid;
     }
     
     .section-title .icon {
@@ -284,8 +288,9 @@ export function getUnifiedPDFStyles(organisation, documentType = 'receipt') {
     .data-table {
       width: 100%;
       border-collapse: collapse;
-      font-size: 13px;
+      font-size: 11px;
       margin-bottom: 20px;
+      page-break-inside: auto;
     }
     
     .data-table thead {
@@ -294,12 +299,12 @@ export function getUnifiedPDFStyles(organisation, documentType = 'receipt') {
     }
     
     .data-table th {
-      padding: 12px 16px;
+      padding: 8px 10px;
       text-align: left;
       font-weight: 600;
-      font-size: 11px;
+      font-size: 9px;
       text-transform: uppercase;
-      letter-spacing: 0.5px;
+      letter-spacing: 0.3px;
     }
     
     .data-table th.amount {
@@ -307,9 +312,11 @@ export function getUnifiedPDFStyles(organisation, documentType = 'receipt') {
     }
     
     .data-table td {
-      padding: 12px 16px;
+      padding: 8px 10px;
       border-bottom: 1px solid var(--gray-100);
       vertical-align: middle;
+      font-size: 11px;
+      page-break-inside: avoid;
     }
     
     .data-table td.amount {
@@ -537,10 +544,51 @@ export function getUnifiedPDFStyles(organisation, documentType = 'receipt') {
         -webkit-print-color-adjust: exact !important;
         print-color-adjust: exact !important;
       }
+      
+      /* Page break controls */
+      .summary-cards,
+      .summary-card,
+      .section-title,
+      .breakdown-grid,
+      .breakdown-item {
+        page-break-inside: avoid;
+      }
+      
+      .data-table {
+        page-break-inside: auto;
+      }
+      
+      .data-table tr {
+        page-break-inside: avoid;
+        page-break-after: auto;
+      }
+      
+      .data-table thead {
+        display: table-header-group;
+      }
+      
+      .data-table tfoot {
+        display: table-footer-group;
+      }
+      
+      /* Prevent widows and orphans */
+      h1, h2, h3, h4, h5, h6, .section-title {
+        page-break-after: avoid;
+      }
+      
+      /* Scale down content if needed */
+      .data-table {
+        font-size: 10px;
+      }
+      
+      .data-table th,
+      .data-table td {
+        padding: 6px 8px;
+      }
     }
     
     @page {
-      margin: 10mm;
+      margin: 12mm 10mm;
       size: A4 portrait;
     }
   `;

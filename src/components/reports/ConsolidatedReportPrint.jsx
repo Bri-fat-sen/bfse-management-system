@@ -78,7 +78,8 @@ function generateSalesSection({ sales, startDate, endDate }) {
 
   return {
     summaryCards: [
-      { label: 'Total Revenue', value: `SLE ${totalRevenue.toLocaleString()}`, subtext: `${filteredSales.length} transactions` },
+      { label: 'Total Revenue', value: `SLE ${totalRevenue.toLocaleString()}`, highlight: 'green' },
+      { label: 'Transactions', value: filteredSales.length.toString() },
       { label: 'Avg. Transaction', value: `SLE ${filteredSales.length > 0 ? Math.round(totalRevenue / filteredSales.length).toLocaleString() : 0}` }
     ],
     sections: [
@@ -88,14 +89,14 @@ function generateSalesSection({ sales, startDate, endDate }) {
         breakdown: byPayment
       },
       {
-        title: 'Recent Sales',
+        title: 'Sales Details',
         icon: '🛒',
         table: {
-          columns: ['Date', 'Sale #', 'Customer', 'Payment', 'Amount (SLE)'],
-          rows: filteredSales.slice(0, 20).map(s => [
-            format(new Date(s.created_date), 'MMM d, yyyy'),
-            s.sale_number || '-',
-            s.customer_name || 'Walk-in',
+          columns: ['Date', 'Sale #', 'Customer', 'Payment', 'Amount'],
+          rows: filteredSales.map(s => [
+            format(new Date(s.created_date), 'MMM d'),
+            (s.sale_number || '-').substring(0, 15),
+            (s.customer_name || 'Walk-in').substring(0, 25),
             (s.payment_method || 'cash').replace(/_/g, ' '),
             `SLE ${(s.total_amount || 0).toLocaleString()}`
           ])
@@ -268,11 +269,15 @@ function generateExpenseSection({ expenses, startDate, endDate }) {
     const cat = e.category || 'other';
     byCategory[cat] = (byCategory[cat] || 0) + (e.amount || 0);
   });
+  
+  const approved = filtered.filter(e => e.status === 'approved').reduce((sum, e) => sum + (e.amount || 0), 0);
+  const pending = filtered.filter(e => e.status === 'pending').reduce((sum, e) => sum + (e.amount || 0), 0);
 
   return {
     summaryCards: [
       { label: 'Total Expenses', value: `SLE ${totalExpenses.toLocaleString()}`, highlight: 'red' },
-      { label: 'Categories', value: Object.keys(byCategory).length.toString() },
+      { label: 'Approved', value: `SLE ${approved.toLocaleString()}` },
+      { label: 'Pending', value: `SLE ${pending.toLocaleString()}`, highlight: 'gold' },
       { label: 'Transactions', value: filtered.length.toString() }
     ],
     sections: [
@@ -286,11 +291,11 @@ function generateExpenseSection({ expenses, startDate, endDate }) {
         icon: '📋',
         table: {
           columns: ['Date', 'Category', 'Description', 'Vendor', 'Amount'],
-          rows: filtered.slice(0, 20).map(e => [
+          rows: filtered.map(e => [
             e.date ? format(new Date(e.date), 'MMM d, yyyy') : '-',
             (e.category || 'other').replace(/_/g, ' '),
-            e.description || '-',
-            e.vendor || '-',
+            (e.description || '-').substring(0, 50) + ((e.description?.length || 0) > 50 ? '...' : ''),
+            (e.vendor || '-').substring(0, 30),
             `SLE ${(e.amount || 0).toLocaleString()}`
           ])
         }
@@ -462,38 +467,41 @@ export default function ConsolidatedReportPrint({
       if (config && config.generate) {
         const result = config.generate(data);
         
-        // Add report title as section header
+        // Add report title as section header with divider
         allSections.push({
           title: config.name,
-          icon: '📊'
+          icon: '📊',
+          content: '<div style="margin-bottom: 12px;"></div>'
         });
         
-        // Add summary cards for this report
+        // Collect summary cards (we'll show all at the top)
         if (result.summaryCards?.length > 0) {
-          allSummaryCards = [...allSummaryCards, ...result.summaryCards.slice(0, 4)];
+          allSummaryCards = [...allSummaryCards, ...result.summaryCards];
         }
         
-        // Add sections
+        // Add sections for this report
         if (result.sections?.length > 0) {
           allSections = [...allSections, ...result.sections];
         }
+        
+        // Add spacing between reports
+        allSections.push({
+          content: '<div style="height: 30px; page-break-after: avoid;"></div>'
+        });
       }
     }
-
-    // Take first 4 summary cards for the main summary
-    const mainSummaryCards = allSummaryCards.slice(0, 4);
 
     const orgName = organisation?.name || 'Business Report';
     
     await downloadProfessionalReportAsPDF({
-      title: `${orgName} - Consolidated Report`,
-      subtitle: `Comprehensive report covering ${reportsToInclude.length} areas`,
+      title: `Consolidated Report`,
+      subtitle: `${orgName} - ${reportsToInclude.length} report${reportsToInclude.length > 1 ? 's' : ''}`,
       organisation: organisation || {},
       dateRange: dateLabel,
-      summaryCards: mainSummaryCards,
+      summaryCards: allSummaryCards.slice(0, 8),
       sections: allSections,
       reportType: 'financial'
-    }, 'consolidated-report');
+    }, `${orgName.replace(/\s+/g, '_')}_consolidated_report_${format(new Date(), 'yyyy-MM-dd')}`);
     setIsPrinting(false);
   };
 
