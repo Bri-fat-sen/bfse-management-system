@@ -386,7 +386,16 @@ export default function Analytics() {
 
   const expenseMetrics = useMemo(() => {
     const totalExpenses = filteredExpenses.reduce((sum, e) => sum + (e.amount || 0), 0);
-    return { totalExpenses, count: filteredExpenses.length };
+    
+    // Calculate category breakdown (sorted highest to lowest)
+    const byCategory = {};
+    filteredExpenses.forEach(e => {
+      const cat = e.category || 'other';
+      byCategory[cat] = (byCategory[cat] || 0) + (e.amount || 0);
+    });
+    const sortedCategories = Object.entries(byCategory).sort((a, b) => b[1] - a[1]);
+    
+    return { totalExpenses, count: filteredExpenses.length, byCategory: Object.fromEntries(sortedCategories) };
   }, [filteredExpenses]);
 
   const transportMetrics = useMemo(() => {
@@ -434,7 +443,9 @@ export default function Analytics() {
           acc[cat] = (acc[cat] || 0) + (e.amount || 0);
           return acc;
         }, {})
-      ).map(([name, value]) => ({ name, value }))
+      )
+      .sort((a, b) => b[1] - a[1])
+      .map(([name, value]) => ({ name, value }))
     };
     
     const transportAnalytics = {
