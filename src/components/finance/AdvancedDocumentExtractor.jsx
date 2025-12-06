@@ -71,6 +71,12 @@ export default function AdvancedDocumentExtractor({
   const [showCurrencyDialog, setShowCurrencyDialog] = useState(false);
   const [pendingFile, setPendingFile] = useState(null);
   const [dynamicCategories, setDynamicCategories] = useState([...EXPENSE_CATEGORIES]);
+  
+  // Batch processing state
+  const [batchMode, setBatchMode] = useState(false);
+  const [fileQueue, setFileQueue] = useState([]);
+  const [processingIndex, setProcessingIndex] = useState(null);
+  const [batchResults, setBatchResults] = useState([]);
 
   const analyzeDocument = async (file_url) => {
     try {
@@ -199,16 +205,140 @@ Return complete array of all data rows.`,
   };
 
   const handleFileUpload = async (e) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
+    const files = Array.from(e.target.files || []);
+    if (files.length === 0) return;
 
     if (currencyMode === null) {
-      setPendingFile(file);
+      if (files.length === 1) {
+        setPendingFile(files[0]);
+      } else {
+        setPendingFile(files);
+      }
       setShowCurrencyDialog(true);
       return;
     }
 
-    await processFile(file);
+    if (files.length === 1) {
+      await processFile(files[0]);
+    } else {
+      await startBatchProcessing(files);
+    }
+  };
+
+  const startBatchProcessing = async (files) => {
+    setBatchMode(true);
+    const queue = files.map((file, idx) => ({
+      id: `file-${idx}-${Date.now()}`,
+      file,
+      fileName: file.name,
+      fileType: file.type,
+      status: 'pending',
+      progress: 0,
+      error: null,
+      fileUrl: null,
+      extractedData: [],
+      analysis: null
+    }));
+    
+    setFileQueue(queue);
+    setUploadStage("batch-processing");
+    
+    // Process files sequentially
+    for (let i = 0; i < queue.length; i++) {
+      setProcessingIndex(i);
+      await processBatchFile(queue[i], i);
+    }
+    
+    setProcessingIndex(null);
+    setUploadStage("batch-review");
+  };
+
+  const processBatchFile = async (fileItem, index) => {
+    try {
+      // Update status to uploading
+      setFileQueue(prev => prev.map((f, i) => 
+        i === index ? { ...f, status: 'uploading', progress: 10 } : f
+      ));
+
+      const uploadResult = await base44.integrations.Core.UploadFile({ file: fileItem.file });
+      
+      setFileQueue(prev => prev.map((f, i) => 
+        i === index ? { ...f, fileUrl: uploadResult.file_url, status: 'analyzing', progress: 30 } : f
+      ));
+
+      const analysis = await analyzeDocument(uploadResult.file_url);
+      
+      setFileQueue(prev => prev.map((f, i) => 
+        i === index ? { ...f, analysis, status: 'extracting', progress: 60 } : f
+      ));
+
+      const rawExtraction = await extractDocumentData(uploadResult.file_url, analysis);
+      
+      const conversionFactor = currencyMode === 'sll' ? 1000 : 1;
+      const newCategories = new Set();
+      
+      const mappedData = (rawExtraction.rows || []).map((row, idx) => {
+        const rawAmount = parseFloat(row.amount || 0);
+        const amount = rawAmount / conversionFactor;
+        
+        let category = (row.category || 'other').toLowerCase().replace(/\s+/g, '_');
+        const categoryExists = EXPENSE_CATEGORIES.some(cat => cat.value === category);
+        
+        if (!categoryExists && category !== 'other') {
+          newCategories.add(category);
+        }
+
+        return {
+          id: `${fileItem.id}-row-${idx}`,
+          fileId: fileItem.id,
+          selected: true,
+          row_number: idx + 1,
+          description: row.description || row.notes || '',
+          amount: amount,
+          category: category,
+          date: row.date || analysis.metadata?.date || format(new Date(), 'yyyy-MM-dd'),
+          vendor: row.vendor || analysis.metadata?.issuer_name || '',
+          quantity: parseFloat(row.quantity || 0),
+          unit_price: parseFloat(row.unit_price || 0) / conversionFactor,
+          raw_data: row
+        };
+      }).filter(item => item.description && item.amount > 0);
+
+      if (newCategories.size > 0) {
+        const newCategoryOptions = Array.from(newCategories).map(cat => ({
+          value: cat,
+          label: cat.split('_').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ')
+        }));
+        setDynamicCategories(prev => [...prev, ...newCategoryOptions]);
+      }
+
+      setFileQueue(prev => prev.map((f, i) => 
+        i === index ? { 
+          ...f, 
+          extractedData: mappedData, 
+          status: 'completed', 
+          progress: 100 
+        } : f
+      ));
+
+      setBatchResults(prev => [...prev, {
+        fileId: fileItem.id,
+        fileName: fileItem.fileName,
+        rowCount: mappedData.length,
+        totalAmount: mappedData.reduce((sum, item) => sum + item.amount, 0)
+      }]);
+
+    } catch (error) {
+      console.error(`Error processing ${fileItem.fileName}:`, error);
+      setFileQueue(prev => prev.map((f, i) => 
+        i === index ? { 
+          ...f, 
+          status: 'failed', 
+          error: error.message,
+          progress: 0
+        } : f
+      ));
+    }
   };
 
   const processFile = async (file) => {
@@ -341,7 +471,17 @@ Return complete array of all data rows.`,
   };
 
   const handleCreateRecords = async () => {
-    const selectedItems = extractedData.filter(e => e.selected);
+    let selectedItems;
+    
+    if (batchMode) {
+      // Collect all selected items from all files
+      selectedItems = fileQueue.flatMap(f => 
+        (f.extractedData || []).filter(e => e.selected)
+      );
+    } else {
+      selectedItems = extractedData.filter(e => e.selected);
+    }
+    
     if (selectedItems.length === 0) {
       toast.warning("No items selected");
       return;
@@ -364,7 +504,7 @@ Return complete array of all data rows.`,
             recorded_by: currentEmployee?.id,
             recorded_by_name: currentEmployee?.full_name,
             status: 'pending',
-            notes: 'Imported via advanced AI extraction'
+            notes: batchMode ? 'Batch imported via AI extraction' : 'Imported via advanced AI extraction'
           });
           created++;
         } else if (detectedType === "revenue") {
@@ -377,13 +517,17 @@ Return complete array of all data rows.`,
             recorded_by: currentEmployee?.id,
             recorded_by_name: currentEmployee?.full_name,
             status: 'confirmed',
-            notes: 'AI-extracted from document'
+            notes: batchMode ? 'Batch imported via AI extraction' : 'AI-extracted from document'
           });
           created++;
         }
       }
 
-      toast.success("Records created", `Successfully created ${created} ${RECORD_TYPES.find(r => r.value === detectedType)?.label}`);
+      const filesProcessed = batchMode ? fileQueue.filter(f => f.status === 'completed').length : 1;
+      toast.success(
+        "Records created", 
+        `Successfully created ${created} records from ${filesProcessed} document${filesProcessed > 1 ? 's' : ''}`
+      );
       onOpenChange(false);
       resetState();
       if (onSuccess) onSuccess();
@@ -410,6 +554,10 @@ Return complete array of all data rows.`,
     setZoom(100);
     setViewMode("split");
     setDynamicCategories([...EXPENSE_CATEGORIES]);
+    setBatchMode(false);
+    setFileQueue([]);
+    setProcessingIndex(null);
+    setBatchResults([]);
   };
 
   const toggleSelection = (id) => {
@@ -497,6 +645,7 @@ Return complete array of all data rows.`,
                     type="file"
                     accept=".pdf,.csv,.png,.jpg,.jpeg,.doc,.docx"
                     onChange={handleFileUpload}
+                    multiple
                     className="hidden"
                     id="advanced-doc-upload"
                     disabled={uploadLoading}
@@ -508,10 +657,13 @@ Return complete array of all data rows.`,
                       </div>
                       <div>
                         <p className="text-lg font-semibold text-gray-700 mb-1">
-                          Upload Business Document
+                          Upload Documents (Single or Multiple)
                         </p>
                         <p className="text-sm text-gray-500">
                           AI will analyze structure, extract data, validate accuracy
+                        </p>
+                        <p className="text-xs text-[#0072C6] mt-2 font-medium">
+                          ✨ Select multiple files for batch processing
                         </p>
                       </div>
                       <div className="flex gap-2 flex-wrap justify-center">
@@ -568,6 +720,336 @@ Return complete array of all data rows.`,
                 <Loader2 className="w-16 h-16 text-[#0072C6] animate-spin mb-4" />
                 <p className="text-lg font-medium text-gray-700">Analyzing Document...</p>
                 <p className="text-sm text-gray-500">AI is reading structure and extracting data</p>
+              </div>
+            )}
+
+            {uploadStage === "batch-processing" && (
+              <div className="space-y-4">
+                <div className="text-center mb-6">
+                  <h3 className="text-lg font-bold mb-2">Processing {fileQueue.length} Documents</h3>
+                  <p className="text-sm text-gray-500">
+                    {fileQueue.filter(f => f.status === 'completed').length} completed, 
+                    {fileQueue.filter(f => f.status === 'failed').length} failed
+                  </p>
+                </div>
+
+                <div className="space-y-3">
+                  {fileQueue.map((file, idx) => (
+                    <Card key={file.id} className={
+                      file.status === 'completed' ? 'border-green-200 bg-green-50' :
+                      file.status === 'failed' ? 'border-red-200 bg-red-50' :
+                      processingIndex === idx ? 'border-blue-300 bg-blue-50' : 'bg-gray-50'
+                    }>
+                      <CardContent className="p-4">
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 rounded-lg bg-white flex items-center justify-center flex-shrink-0">
+                            {file.status === 'completed' ? (
+                              <CheckCircle className="w-5 h-5 text-green-600" />
+                            ) : file.status === 'failed' ? (
+                              <AlertCircle className="w-5 h-5 text-red-600" />
+                            ) : processingIndex === idx ? (
+                              <Loader2 className="w-5 h-5 text-blue-600 animate-spin" />
+                            ) : (
+                              <FileText className="w-5 h-5 text-gray-400" />
+                            )}
+                          </div>
+                          
+                          <div className="flex-1 min-w-0">
+                            <p className="font-medium text-sm truncate">{file.fileName}</p>
+                            <div className="flex items-center gap-2 mt-1">
+                              <Badge variant="outline" className="text-xs">
+                                {file.status === 'pending' ? 'Queued' :
+                                 file.status === 'uploading' ? 'Uploading' :
+                                 file.status === 'analyzing' ? 'Analyzing' :
+                                 file.status === 'extracting' ? 'Extracting' :
+                                 file.status === 'completed' ? `${file.extractedData?.length || 0} rows` :
+                                 'Failed'}
+                              </Badge>
+                              {file.error && (
+                                <span className="text-xs text-red-600">{file.error}</span>
+                              )}
+                            </div>
+                          </div>
+
+                          {file.status !== 'pending' && file.status !== 'completed' && file.status !== 'failed' && (
+                            <div className="w-24">
+                              <Progress value={file.progress} className="h-2" />
+                            </div>
+                          )}
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {uploadStage === "batch-review" && (
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h3 className="text-lg font-bold">Batch Results</h3>
+                    <p className="text-sm text-gray-500">
+                      Review and edit data from all documents
+                    </p>
+                  </div>
+                  <Select value={detectedType || "expense"} onValueChange={setDetectedType}>
+                    <SelectTrigger className="w-[180px] h-8 text-xs">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {RECORD_TYPES.map(rt => (
+                        <SelectItem key={rt.value} value={rt.value}>
+                          {rt.icon} {rt.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                  <Card>
+                    <CardContent className="p-4">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-lg bg-green-100 flex items-center justify-center">
+                          <CheckCircle className="w-5 h-5 text-green-600" />
+                        </div>
+                        <div>
+                          <p className="text-2xl font-bold">
+                            {fileQueue.filter(f => f.status === 'completed').length}
+                          </p>
+                          <p className="text-xs text-gray-500">Successful</p>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                  <Card>
+                    <CardContent className="p-4">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-lg bg-blue-100 flex items-center justify-center">
+                          <TableIcon className="w-5 h-5 text-blue-600" />
+                        </div>
+                        <div>
+                          <p className="text-2xl font-bold">
+                            {fileQueue.reduce((sum, f) => sum + (f.extractedData?.length || 0), 0)}
+                          </p>
+                          <p className="text-xs text-gray-500">Total Rows</p>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                  <Card>
+                    <CardContent className="p-4">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-lg bg-purple-100 flex items-center justify-center">
+                          <span className="text-lg">💰</span>
+                        </div>
+                        <div>
+                          <p className="text-2xl font-bold">
+                            Le {fileQueue.reduce((sum, f) => 
+                              sum + (f.extractedData || []).filter(e => e.selected).reduce((s, e) => s + e.amount, 0), 0
+                            ).toLocaleString()}
+                          </p>
+                          <p className="text-xs text-gray-500">Total Amount</p>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </div>
+
+                <Tabs defaultValue={fileQueue[0]?.id} className="w-full">
+                  <TabsList className="w-full justify-start overflow-x-auto flex-nowrap">
+                    {fileQueue.filter(f => f.status === 'completed').map(file => (
+                      <TabsTrigger key={file.id} value={file.id} className="text-xs whitespace-nowrap">
+                        {file.fileName}
+                        <Badge variant="outline" className="ml-2 text-xs">
+                          {file.extractedData?.filter(e => e.selected).length}
+                        </Badge>
+                      </TabsTrigger>
+                    ))}
+                  </TabsList>
+
+                  {fileQueue.filter(f => f.status === 'completed').map(file => (
+                    <TabsContent key={file.id} value={file.id} className="mt-4">
+                      <div className="border rounded-lg overflow-auto max-h-[400px] bg-white">
+                        <Table>
+                          <TableHeader className="sticky top-0 bg-gray-50 z-10">
+                            <TableRow>
+                              <TableHead className="w-12">
+                                <input
+                                  type="checkbox"
+                                  checked={file.extractedData?.every(e => e.selected)}
+                                  onChange={(e) => {
+                                    const checked = e.target.checked;
+                                    setFileQueue(prev => prev.map(f => 
+                                      f.id === file.id ? {
+                                        ...f,
+                                        extractedData: f.extractedData.map(item => ({ ...item, selected: checked }))
+                                      } : f
+                                    ));
+                                  }}
+                                  className="w-4 h-4 cursor-pointer"
+                                />
+                              </TableHead>
+                              <TableHead className="text-xs w-12">#</TableHead>
+                              <TableHead className="text-xs min-w-[250px]">Description</TableHead>
+                              <TableHead className="text-xs text-right w-32">Amount (Le)</TableHead>
+                              <TableHead className="text-xs w-40">Category</TableHead>
+                              <TableHead className="text-xs w-36">Date</TableHead>
+                              <TableHead className="text-xs w-20">Actions</TableHead>
+                            </TableRow>
+                          </TableHeader>
+                          <TableBody>
+                            {(file.extractedData || []).map((item) => (
+                              <TableRow key={item.id} className={!item.selected ? 'opacity-40 bg-gray-50' : 'hover:bg-blue-50'}>
+                                <TableCell>
+                                  <input
+                                    type="checkbox"
+                                    checked={item.selected}
+                                    onChange={() => {
+                                      setFileQueue(prev => prev.map(f => 
+                                        f.id === file.id ? {
+                                          ...f,
+                                          extractedData: f.extractedData.map(e => 
+                                            e.id === item.id ? { ...e, selected: !e.selected } : e
+                                          )
+                                        } : f
+                                      ));
+                                    }}
+                                    className="w-4 h-4 cursor-pointer"
+                                  />
+                                </TableCell>
+                                <TableCell className="text-xs text-gray-500">{item.row_number}</TableCell>
+                                <TableCell>
+                                  <Input
+                                    value={item.description}
+                                    onChange={(e) => {
+                                      setFileQueue(prev => prev.map(f => 
+                                        f.id === file.id ? {
+                                          ...f,
+                                          extractedData: f.extractedData.map(i => 
+                                            i.id === item.id ? { ...i, description: e.target.value } : i
+                                          )
+                                        } : f
+                                      ));
+                                    }}
+                                    className="h-9 text-xs border-gray-200 focus:border-[#1EB053]"
+                                  />
+                                </TableCell>
+                                <TableCell className="text-right">
+                                  <Input
+                                    type="number"
+                                    step="0.01"
+                                    value={item.amount}
+                                    onChange={(e) => {
+                                      setFileQueue(prev => prev.map(f => 
+                                        f.id === file.id ? {
+                                          ...f,
+                                          extractedData: f.extractedData.map(i => 
+                                            i.id === item.id ? { ...i, amount: parseFloat(e.target.value) || 0 } : i
+                                          )
+                                        } : f
+                                      ));
+                                    }}
+                                    className="h-9 text-xs text-right font-bold border-gray-200 focus:border-[#1EB053]"
+                                  />
+                                </TableCell>
+                                <TableCell>
+                                  <Select
+                                    value={item.category}
+                                    onValueChange={(v) => {
+                                      setFileQueue(prev => prev.map(f => 
+                                        f.id === file.id ? {
+                                          ...f,
+                                          extractedData: f.extractedData.map(i => 
+                                            i.id === item.id ? { ...i, category: v } : i
+                                          )
+                                        } : f
+                                      ));
+                                    }}
+                                  >
+                                    <SelectTrigger className="h-9 text-xs border-gray-200">
+                                      <SelectValue />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                      {dynamicCategories.map(cat => (
+                                        <SelectItem key={cat.value} value={cat.value} className="text-xs">
+                                          {cat.label}
+                                        </SelectItem>
+                                      ))}
+                                    </SelectContent>
+                                  </Select>
+                                </TableCell>
+                                <TableCell>
+                                  <Input
+                                    type="date"
+                                    value={item.date}
+                                    onChange={(e) => {
+                                      setFileQueue(prev => prev.map(f => 
+                                        f.id === file.id ? {
+                                          ...f,
+                                          extractedData: f.extractedData.map(i => 
+                                            i.id === item.id ? { ...i, date: e.target.value } : i
+                                          )
+                                        } : f
+                                      ));
+                                    }}
+                                    className="h-9 text-xs border-gray-200 focus:border-[#1EB053]"
+                                  />
+                                </TableCell>
+                                <TableCell>
+                                  <Button
+                                    size="icon"
+                                    variant="ghost"
+                                    className="h-8 w-8 text-red-500 hover:bg-red-50"
+                                    onClick={() => {
+                                      setFileQueue(prev => prev.map(f => 
+                                        f.id === file.id ? {
+                                          ...f,
+                                          extractedData: f.extractedData.filter(i => i.id !== item.id)
+                                        } : f
+                                      ));
+                                    }}
+                                  >
+                                    <Trash2 className="w-4 h-4" />
+                                  </Button>
+                                </TableCell>
+                              </TableRow>
+                            ))}
+                          </TableBody>
+                        </Table>
+                      </div>
+                    </TabsContent>
+                  ))}
+                </Tabs>
+
+                <div className="flex items-center justify-between p-4 bg-gradient-to-r from-gray-50 to-gray-100 rounded-lg border">
+                  <div>
+                    <p className="font-semibold">
+                      {fileQueue.reduce((sum, f) => sum + (f.extractedData || []).filter(e => e.selected).length, 0)} items selected
+                    </p>
+                    <p className="text-sm text-gray-500">
+                      From {fileQueue.filter(f => f.status === 'completed').length} documents
+                    </p>
+                  </div>
+                  <div className="flex gap-2">
+                    <Button variant="outline" onClick={resetState}>
+                      Upload New
+                    </Button>
+                    <Button
+                      onClick={handleCreateRecords}
+                      disabled={uploadLoading}
+                      className="bg-gradient-to-r from-[#1EB053] to-[#0072C6]"
+                    >
+                      {uploadLoading ? (
+                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      ) : (
+                        <CheckCircle className="w-4 h-4 mr-2" />
+                      )}
+                      Create All Records
+                    </Button>
+                  </div>
+                </div>
               </div>
             )}
 
@@ -884,7 +1366,11 @@ Return complete array of all data rows.`,
                 className="w-full h-auto py-4 text-left hover:border-green-500 hover:bg-green-50"
                 onClick={() => {
                   setCurrencyMode('sle');
-                  if (pendingFile) processFile(pendingFile);
+                  if (Array.isArray(pendingFile)) {
+                    startBatchProcessing(pendingFile);
+                  } else if (pendingFile) {
+                    processFile(pendingFile);
+                  }
                 }}
               >
                 <div className="flex items-start gap-3">
@@ -906,7 +1392,11 @@ Return complete array of all data rows.`,
                 className="w-full h-auto py-4 text-left hover:border-blue-500 hover:bg-blue-50"
                 onClick={() => {
                   setCurrencyMode('sll');
-                  if (pendingFile) processFile(pendingFile);
+                  if (Array.isArray(pendingFile)) {
+                    startBatchProcessing(pendingFile);
+                  } else if (pendingFile) {
+                    processFile(pendingFile);
+                  }
                 }}
               >
                 <div className="flex items-start gap-3">
