@@ -106,6 +106,9 @@ export default function Finance() {
   const [categoryFilter, setCategoryFilter] = useState("all");
   const [showFormsDialog, setShowFormsDialog] = useState(false);
   const [dateRange, setDateRange] = useState("this_month");
+  const [showBulkDeleteExpenses, setShowBulkDeleteExpenses] = useState(false);
+  const [showBulkDeleteRevenues, setShowBulkDeleteRevenues] = useState(false);
+  const [bulkDeleteLoading, setBulkDeleteLoading] = useState(false);
 
   const { data: user } = useQuery({
     queryKey: ['currentUser'],
@@ -486,6 +489,7 @@ export default function Finance() {
     const formData = new FormData(e.target);
     const data = {
       organisation_id: orgId,
+      expense_type: 'regular',
       category: formData.get('category'),
       description: formData.get('description'),
       amount: parseFloat(formData.get('amount')) || 0,
@@ -502,6 +506,41 @@ export default function Finance() {
       updateExpenseMutation.mutate({ id: editingExpense.id, data });
     } else {
       createExpenseMutation.mutate(data);
+    }
+  };
+
+  const handleBulkDeleteExpenses = async () => {
+    setBulkDeleteLoading(true);
+    try {
+      const expensesToDelete = categoryFilteredExpenses;
+      for (const expense of expensesToDelete) {
+        await base44.entities.Expense.delete(expense.id);
+      }
+      queryClient.invalidateQueries({ queryKey: ['expenses', orgId] });
+      queryClient.invalidateQueries({ queryKey: ['allExpenses', orgId] });
+      toast.success("Bulk delete complete", `Deleted ${expensesToDelete.length} expense(s)`);
+      setShowBulkDeleteExpenses(false);
+    } catch (error) {
+      toast.error("Bulk delete failed", error.message);
+    } finally {
+      setBulkDeleteLoading(false);
+    }
+  };
+
+  const handleBulkDeleteRevenues = async () => {
+    setBulkDeleteLoading(true);
+    try {
+      const revenuesToDelete = filteredRevenues;
+      for (const revenue of revenuesToDelete) {
+        await base44.entities.Revenue.delete(revenue.id);
+      }
+      queryClient.invalidateQueries({ queryKey: ['revenues', orgId] });
+      toast.success("Bulk delete complete", `Deleted ${revenuesToDelete.length} revenue(s)`);
+      setShowBulkDeleteRevenues(false);
+    } catch (error) {
+      toast.error("Bulk delete failed", error.message);
+    } finally {
+      setBulkDeleteLoading(false);
     }
   };
 
@@ -1064,6 +1103,16 @@ export default function Finance() {
                       ))}
                     </SelectContent>
                   </Select>
+                  {categoryFilteredExpenses.length > 0 && isAdmin && (
+                    <Button 
+                      variant="outline"
+                      onClick={() => setShowBulkDeleteExpenses(true)}
+                      className="border-red-500 text-red-600 hover:bg-red-50"
+                    >
+                      <Trash2 className="w-4 h-4 mr-2" />
+                      Delete All ({categoryFilteredExpenses.length})
+                    </Button>
+                  )}
                   <Button onClick={() => setShowExpenseDialog(true)} className="bg-gradient-to-r from-[#1EB053] to-[#0072C6]">
                     <Plus className="w-4 h-4 mr-2" />
                     Add
@@ -1200,16 +1249,28 @@ export default function Finance() {
                   <DollarSign className="w-5 h-5 text-[#1EB053]" />
                   Revenue from Owners & CEO
                 </CardTitle>
-                <Button 
-                  onClick={() => {
-                    setEditingRevenue(null);
-                    setShowRevenueDialog(true);
-                  }} 
-                  className="bg-gradient-to-r from-[#1EB053] to-[#0072C6]"
-                >
-                  <Plus className="w-4 h-4 mr-2" />
-                  Add Contribution
-                </Button>
+                <div className="flex gap-2">
+                  {filteredRevenues.length > 0 && isAdmin && (
+                    <Button 
+                      variant="outline"
+                      onClick={() => setShowBulkDeleteRevenues(true)}
+                      className="border-red-500 text-red-600 hover:bg-red-50"
+                    >
+                      <Trash2 className="w-4 h-4 mr-2" />
+                      Delete All ({filteredRevenues.length})
+                    </Button>
+                  )}
+                  <Button 
+                    onClick={() => {
+                      setEditingRevenue(null);
+                      setShowRevenueDialog(true);
+                    }} 
+                    className="bg-gradient-to-r from-[#1EB053] to-[#0072C6]"
+                  >
+                    <Plus className="w-4 h-4 mr-2" />
+                    Add Contribution
+                  </Button>
+                </div>
               </CardHeader>
               <CardContent>
                 <ScrollArea className="h-[400px]">
@@ -1887,6 +1948,126 @@ export default function Finance() {
           onOpenChange={setShowFormsDialog}
           organisation={organisation?.[0]}
         />
+
+        {/* Bulk Delete Expenses Dialog */}
+        <Dialog open={showBulkDeleteExpenses} onOpenChange={setShowBulkDeleteExpenses}>
+          <DialogContent className="max-w-md [&>button]:hidden">
+            <div className="h-1 flex">
+              <div className="flex-1 bg-[#1EB053]" />
+              <div className="flex-1 bg-white" />
+              <div className="flex-1 bg-[#0072C6]" />
+            </div>
+            <div className="p-6">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="w-12 h-12 rounded-full bg-red-100 flex items-center justify-center">
+                  <AlertTriangle className="w-6 h-6 text-red-600" />
+                </div>
+                <h3 className="text-lg font-bold text-red-600">Confirm Bulk Delete</h3>
+              </div>
+              <div className="space-y-4">
+                <p className="text-gray-700">
+                  Are you sure you want to delete <strong>{categoryFilteredExpenses.length} expense record(s)</strong>?
+                </p>
+                <div className="bg-red-50 border border-red-200 rounded-lg p-3">
+                  <p className="text-sm text-red-700 font-medium">⚠️ This action cannot be undone!</p>
+                  <p className="text-xs text-red-600 mt-1">All filtered expense records will be permanently deleted.</p>
+                </div>
+                <div className="flex gap-2 pt-2">
+                  <Button
+                    variant="outline"
+                    className="flex-1"
+                    onClick={() => setShowBulkDeleteExpenses(false)}
+                    disabled={bulkDeleteLoading}
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    className="flex-1 bg-red-600 hover:bg-red-700"
+                    onClick={handleBulkDeleteExpenses}
+                    disabled={bulkDeleteLoading}
+                  >
+                    {bulkDeleteLoading ? (
+                      <>
+                        <Clock className="w-4 h-4 mr-2 animate-spin" />
+                        Deleting...
+                      </>
+                    ) : (
+                      <>
+                        <Trash2 className="w-4 h-4 mr-2" />
+                        Delete All
+                      </>
+                    )}
+                  </Button>
+                </div>
+              </div>
+            </div>
+            <div className="h-1 flex">
+              <div className="flex-1 bg-[#1EB053]" />
+              <div className="flex-1 bg-white" />
+              <div className="flex-1 bg-[#0072C6]" />
+            </div>
+          </DialogContent>
+        </Dialog>
+
+        {/* Bulk Delete Revenues Dialog */}
+        <Dialog open={showBulkDeleteRevenues} onOpenChange={setShowBulkDeleteRevenues}>
+          <DialogContent className="max-w-md [&>button]:hidden">
+            <div className="h-1 flex">
+              <div className="flex-1 bg-[#1EB053]" />
+              <div className="flex-1 bg-white" />
+              <div className="flex-1 bg-[#0072C6]" />
+            </div>
+            <div className="p-6">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="w-12 h-12 rounded-full bg-red-100 flex items-center justify-center">
+                  <AlertTriangle className="w-6 h-6 text-red-600" />
+                </div>
+                <h3 className="text-lg font-bold text-red-600">Confirm Bulk Delete</h3>
+              </div>
+              <div className="space-y-4">
+                <p className="text-gray-700">
+                  Are you sure you want to delete <strong>{filteredRevenues.length} revenue record(s)</strong>?
+                </p>
+                <div className="bg-red-50 border border-red-200 rounded-lg p-3">
+                  <p className="text-sm text-red-700 font-medium">⚠️ This action cannot be undone!</p>
+                  <p className="text-xs text-red-600 mt-1">All filtered revenue records will be permanently deleted.</p>
+                </div>
+                <div className="flex gap-2 pt-2">
+                  <Button
+                    variant="outline"
+                    className="flex-1"
+                    onClick={() => setShowBulkDeleteRevenues(false)}
+                    disabled={bulkDeleteLoading}
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    className="flex-1 bg-red-600 hover:bg-red-700"
+                    onClick={handleBulkDeleteRevenues}
+                    disabled={bulkDeleteLoading}
+                  >
+                    {bulkDeleteLoading ? (
+                      <>
+                        <Clock className="w-4 h-4 mr-2 animate-spin" />
+                        Deleting...
+                      </>
+                    ) : (
+                      <>
+                        <Trash2 className="w-4 h-4 mr-2" />
+                        Delete All
+                      </>
+                    )}
+                  </Button>
+                </div>
+              </div>
+            </div>
+            <div className="h-1 flex">
+              <div className="flex-1 bg-[#1EB053]" />
+              <div className="flex-1 bg-white" />
+              <div className="flex-1 bg-[#0072C6]" />
+            </div>
+          </DialogContent>
+        </Dialog>
 
         {/* Bank Deposit Dialog */}
         <Dialog open={showBankDepositDialog} onOpenChange={setShowBankDepositDialog}>
