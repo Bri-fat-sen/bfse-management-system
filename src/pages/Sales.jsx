@@ -278,10 +278,131 @@ export default function Sales() {
   }, [selectedLocation]);
 
   const createSaleMutation = useMutation({
-    mutationFn: (saleData) => base44.entities.Sale.create(saleData),
+    mutationFn: async (saleData) => {
+      // Create the sale first
+      const sale = await base44.entities.Sale.create(saleData);
+      
+      // Update stock quantities for each item
+      for (const item of saleData.items) {
+        const product = products.find(p => p.id === item.product_id);
+        const currentLocationStock = locationStockMap[item.product_id] ?? 0;
+        
+        if (product) {
+          const newLocationStock = Math.max(0, currentLocationStock - item.quantity);
+          
+          // Update stock level at the specific location
+          const existingStockLevel = stockLevels.find(sl => sl.product_id === item.product_id);
+          if (existingStockLevel) {
+            await base44.entities.StockLevel.update(existingStockLevel.id, {
+              quantity: newLocationStock,
+              available_quantity: newLocationStock
+            });
+          }
+          
+          // Also update product's total stock
+          const newTotalStock = Math.max(0, (product.stock_quantity || 0) - item.quantity);
+          await base44.entities.Product.update(item.product_id, {
+            stock_quantity: newTotalStock
+          });
+
+          // Create stock movement record
+          await base44.entities.StockMovement.create({
+            organisation_id: orgId,
+            product_id: item.product_id,
+            product_name: item.product_name,
+            warehouse_id: saleData.selectedLocation,
+            warehouse_name: saleData.locationName,
+            movement_type: "out",
+            quantity: item.quantity,
+            previous_stock: currentLocationStock,
+            new_stock: newLocationStock,
+            reference_type: "sale",
+            reference_id: saleData.sale_number,
+            recorded_by: currentEmployee?.id,
+            recorded_by_name: currentEmployee?.full_name,
+            notes: `${saleData.sale_type} sale to ${saleData.customer_name || 'Walk-in Customer'} from ${saleData.locationName}`
+          });
+
+          // Create reorder suggestion if needed
+          const reorderPoint = product.reorder_point || 10;
+          if (newTotalStock <= reorderPoint && newTotalStock >= 0) {
+            const existingSuggestions = await base44.entities.ReorderSuggestion.filter({
+              organisation_id: orgId,
+              product_id: item.product_id,
+              status: 'pending'
+            });
+            
+            if (existingSuggestions.length === 0) {
+              await base44.entities.ReorderSuggestion.create({
+                organisation_id: orgId,
+                product_id: item.product_id,
+                product_name: item.product_name,
+                current_stock: newTotalStock,
+                reorder_point: reorderPoint,
+                suggested_quantity: product.reorder_quantity || 50,
+                priority: newTotalStock === 0 ? 'critical' : newTotalStock <= 5 ? 'high' : 'medium',
+                status: 'pending',
+                supplier_id: product.preferred_supplier_id,
+                supplier_name: product.preferred_supplier_name,
+                estimated_cost: (product.reorder_quantity || 50) * (product.cost_price || 0),
+              });
+            }
+          }
+
+          // Create stock alert if needed
+          const threshold = product.reorder_point || product.low_stock_threshold || 10;
+          if (newLocationStock <= threshold && newLocationStock > 0) {
+            const existingAlerts = await base44.entities.StockAlert.filter({
+              organisation_id: orgId,
+              product_id: item.product_id,
+              status: 'active',
+              alert_type: 'low_stock'
+            });
+            
+            if (existingAlerts.length === 0) {
+              await base44.entities.StockAlert.create({
+                organisation_id: orgId,
+                product_id: item.product_id,
+                product_name: item.product_name,
+                warehouse_id: saleData.selectedLocation,
+                warehouse_name: saleData.locationName,
+                alert_type: 'low_stock',
+                current_quantity: newLocationStock,
+                threshold_quantity: threshold,
+                status: 'active'
+              });
+            }
+          } else if (newLocationStock === 0) {
+            const existingAlerts = await base44.entities.StockAlert.filter({
+              organisation_id: orgId,
+              product_id: item.product_id,
+              status: 'active'
+            });
+            
+            if (existingAlerts.length === 0) {
+              await base44.entities.StockAlert.create({
+                organisation_id: orgId,
+                product_id: item.product_id,
+                product_name: item.product_name,
+                warehouse_id: saleData.selectedLocation,
+                warehouse_name: saleData.locationName,
+                alert_type: 'out_of_stock',
+                current_quantity: 0,
+                threshold_quantity: threshold,
+                status: 'active'
+              });
+            }
+          }
+        }
+      }
+      
+      return sale;
+    },
     onSuccess: async (data) => {
       queryClient.invalidateQueries({ queryKey: ['sales'] });
       queryClient.invalidateQueries({ queryKey: ['products'] });
+      queryClient.invalidateQueries({ queryKey: ['stockLevels'] });
+      queryClient.invalidateQueries({ queryKey: ['reorderSuggestions'] });
       setLastSale(data);
       setCart([]);
       setShowCheckout(false);
@@ -439,11 +560,12 @@ export default function Sales() {
       payment_method: paymentMethod,
       payment_status: "paid",
       vehicle_id: saleType === 'vehicle' ? selectedLocation : null,
-      location: selectedLocationData?.name || ''
+      location: selectedLocationData?.name || '',
+      // Pass these for stock updates
+      selectedLocation: selectedLocation,
+      locationName: selectedLocationData?.name
     };
     
-    createSaleMutation.mutate(saleData);
-
     // Update customer stats if a customer is linked
     if (selectedCustomer) {
       const newTotalSpent = (selectedCustomer.total_spent || 0) + cartTotal;
@@ -476,142 +598,8 @@ export default function Sales() {
 
     setSelectedCustomer(null);
     setCustomerSearch("");
-
-    // Update stock quantities at the location and create stock movements
-    for (const item of cart) {
-      const product = products.find(p => p.id === item.product_id);
-      const currentLocationStock = locationStockMap[item.product_id] ?? 0;
-      
-      if (product) {
-        const newLocationStock = Math.max(0, currentLocationStock - item.quantity);
-        
-        // Update stock level at the specific location
-        const existingStockLevel = stockLevels.find(sl => sl.product_id === item.product_id);
-        if (existingStockLevel) {
-          await base44.entities.StockLevel.update(existingStockLevel.id, {
-            quantity: newLocationStock,
-            available_quantity: newLocationStock
-          });
-        }
-        
-        // Also update product's total stock
-        const newTotalStock = Math.max(0, product.stock_quantity - item.quantity);
-        await base44.entities.Product.update(item.product_id, {
-          stock_quantity: newTotalStock
-        });
-
-        // Create stock movement record
-        await base44.entities.StockMovement.create({
-          organisation_id: orgId,
-          product_id: item.product_id,
-          product_name: item.product_name,
-          warehouse_id: selectedLocation,
-          warehouse_name: selectedLocationData?.name,
-          movement_type: "out",
-          quantity: item.quantity,
-          previous_stock: currentLocationStock,
-          new_stock: newLocationStock,
-          reference_type: "sale",
-          reference_id: saleData.sale_number,
-          recorded_by: currentEmployee?.id,
-          recorded_by_name: currentEmployee?.full_name,
-          notes: `${saleType} sale to ${customerName || 'Walk-in Customer'} from ${selectedLocationData?.name}`
-        });
-
-        // Real-time stock alert generation
-        const threshold = product.reorder_point || product.low_stock_threshold || 10;
-        const reorderPoint = product.reorder_point || 10;
-        
-        // Create reorder suggestion if stock falls below reorder point
-        if (newTotalStock <= reorderPoint && newTotalStock >= 0) {
-          const existingSuggestions = await base44.entities.ReorderSuggestion.filter({
-            organisation_id: orgId,
-            product_id: item.product_id,
-            status: 'pending'
-          });
-          
-          if (existingSuggestions.length === 0) {
-            await base44.entities.ReorderSuggestion.create({
-              organisation_id: orgId,
-              product_id: item.product_id,
-              product_name: item.product_name,
-              current_stock: newTotalStock,
-              reorder_point: reorderPoint,
-              suggested_quantity: product.reorder_quantity || 50,
-              priority: newTotalStock === 0 ? 'critical' : newTotalStock <= 5 ? 'high' : 'medium',
-              status: 'pending',
-              supplier_id: product.preferred_supplier_id,
-              supplier_name: product.preferred_supplier_name,
-              estimated_cost: (product.reorder_quantity || 50) * (product.cost_price || 0),
-            });
-          }
-        }
-
-        // Create stock alert
-        if (newLocationStock <= threshold && newLocationStock > 0) {
-          const existingAlerts = await base44.entities.StockAlert.filter({
-            organisation_id: orgId,
-            product_id: item.product_id,
-            status: 'active',
-            alert_type: 'low_stock'
-          });
-          
-          if (existingAlerts.length === 0) {
-            await base44.entities.StockAlert.create({
-              organisation_id: orgId,
-              product_id: item.product_id,
-              product_name: item.product_name,
-              warehouse_id: selectedLocation,
-              warehouse_name: selectedLocationData?.name,
-              alert_type: 'low_stock',
-              current_quantity: newLocationStock,
-              threshold_quantity: threshold,
-              status: 'active'
-            });
-            
-            // Show notification
-            toast.warning("Low Stock Alert", `${item.product_name} is running low (${newLocationStock} left)`);
-          }
-        } else if (newLocationStock === 0) {
-          const existingAlerts = await base44.entities.StockAlert.filter({
-            organisation_id: orgId,
-            product_id: item.product_id,
-            status: 'active'
-          });
-          
-          if (existingAlerts.length === 0) {
-            await base44.entities.StockAlert.create({
-              organisation_id: orgId,
-              product_id: item.product_id,
-              product_name: item.product_name,
-              warehouse_id: selectedLocation,
-              warehouse_name: selectedLocationData?.name,
-              alert_type: 'out_of_stock',
-              current_quantity: 0,
-              threshold_quantity: threshold,
-              status: 'active'
-            });
-            
-            // Show critical notification
-            toast.error("Out of Stock", `${item.product_name} is now out of stock!`);
-          }
-        }
-      }
-    }
     
-    // Invalidate queries
-    queryClient.invalidateQueries({ queryKey: ['stockLevels'] });
-    queryClient.invalidateQueries({ queryKey: ['reorderSuggestions'] });
-
-    // Log activity
-    await base44.entities.ActivityLog.create({
-      organisation_id: orgId,
-      employee_id: currentEmployee?.id,
-      employee_name: currentEmployee?.full_name,
-      action_type: "sale",
-      module: "POS",
-      description: `Completed ${saleType} sale for Le ${cartTotal.toLocaleString()}`
-    });
+    createSaleMutation.mutate(saleData);
   };
 
   // Determine if user can change sale type (admins can, role-specific users cannot)
