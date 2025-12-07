@@ -45,18 +45,53 @@ import LoadingSpinner from "@/components/ui/LoadingSpinner";
 import { useToast } from "@/components/ui/Toast";
 
 const ENTITY_CONFIG = [
+  // Employee references
   { name: "Attendance", icon: Clock, parentField: "employee_id", parentEntity: "Employee" },
   { name: "Payroll", icon: DollarSign, parentField: "employee_id", parentEntity: "Employee" },
   { name: "Sale", icon: DollarSign, parentField: "employee_id", parentEntity: "Employee" },
   { name: "Trip", icon: Truck, parentField: "driver_id", parentEntity: "Employee" },
   { name: "Expense", icon: DollarSign, parentField: "recorded_by", parentEntity: "Employee" },
-  { name: "StockMovement", icon: Package, parentField: "product_id", parentEntity: "Product" },
-  { name: "StockLevel", icon: Package, parentField: "product_id", parentEntity: "Product" },
+  { name: "Revenue", icon: DollarSign, parentField: "recorded_by", parentEntity: "Employee" },
   { name: "ChatMessage", icon: MessageSquare, parentField: "sender_id", parentEntity: "Employee" },
   { name: "Meeting", icon: Calendar, parentField: "organizer_id", parentEntity: "Employee" },
   { name: "LeaveRequest", icon: Calendar, parentField: "employee_id", parentEntity: "Employee" },
   { name: "PerformanceReview", icon: FileText, parentField: "employee_id", parentEntity: "Employee" },
   { name: "Notification", icon: MessageSquare, parentField: "recipient_id", parentEntity: "Employee" },
+  { name: "Task", icon: FileText, parentField: "assigned_to", parentEntity: "Employee" },
+  { name: "EmployeeDocument", icon: FileText, parentField: "employee_id", parentEntity: "Employee" },
+  { name: "ActivityLog", icon: Clock, parentField: "employee_id", parentEntity: "Employee" },
+  { name: "BankDeposit", icon: DollarSign, parentField: "deposited_by", parentEntity: "Employee" },
+  { name: "PayrollAudit", icon: DollarSign, parentField: "employee_id", parentEntity: "Employee" },
+  
+  // Product references
+  { name: "StockMovement", icon: Package, parentField: "product_id", parentEntity: "Product" },
+  { name: "StockLevel", icon: Package, parentField: "product_id", parentEntity: "Product" },
+  { name: "InventoryBatch", icon: Package, parentField: "product_id", parentEntity: "Product" },
+  { name: "SupplierProduct", icon: Package, parentField: "product_id", parentEntity: "Product" },
+  { name: "SerializedItem", icon: Package, parentField: "product_id", parentEntity: "Product" },
+  { name: "ReorderSuggestion", icon: Package, parentField: "product_id", parentEntity: "Product" },
+  { name: "StockAlert", icon: Package, parentField: "product_id", parentEntity: "Product" },
+  { name: "InventoryAudit", icon: Package, parentField: "product_id", parentEntity: "Product" },
+  
+  // Warehouse references
+  { name: "StockLevel", icon: Package, parentField: "warehouse_id", parentEntity: "Warehouse", secondCheck: true },
+  { name: "StockMovement", icon: Package, parentField: "warehouse_id", parentEntity: "Warehouse", secondCheck: true },
+  { name: "Vehicle", icon: Truck, parentField: "parent_warehouse_id", parentEntity: "Warehouse" },
+  
+  // Vehicle references
+  { name: "Trip", icon: Truck, parentField: "vehicle_id", parentEntity: "Vehicle", secondCheck: true },
+  
+  // Supplier references
+  { name: "SupplierProduct", icon: Package, parentField: "supplier_id", parentEntity: "Supplier", secondCheck: true },
+  { name: "PurchaseOrder", icon: FileText, parentField: "supplier_id", parentEntity: "Supplier" },
+  { name: "SupplierPriceHistory", icon: DollarSign, parentField: "supplier_id", parentEntity: "Supplier" },
+  
+  // Customer references
+  { name: "Sale", icon: DollarSign, parentField: "customer_id", parentEntity: "Customer", secondCheck: true },
+  { name: "CustomerInteraction", icon: MessageSquare, parentField: "customer_id", parentEntity: "Customer" },
+  
+  // Route references
+  { name: "Trip", icon: Truck, parentField: "route_id", parentEntity: "Route", thirdCheck: true },
 ];
 
 export default function OrphanedData() {
@@ -82,7 +117,7 @@ export default function OrphanedData() {
   const currentEmployee = employee?.[0];
   const orgId = currentEmployee?.organisation_id;
 
-  // Fetch all employees and products for reference
+  // Fetch all parent entities for reference
   const { data: employees = [] } = useQuery({
     queryKey: ['allEmployees', orgId],
     queryFn: () => base44.entities.Employee.filter({ organisation_id: orgId }),
@@ -95,8 +130,43 @@ export default function OrphanedData() {
     enabled: !!orgId,
   });
 
+  const { data: warehouses = [] } = useQuery({
+    queryKey: ['allWarehouses', orgId],
+    queryFn: () => base44.entities.Warehouse.filter({ organisation_id: orgId }),
+    enabled: !!orgId,
+  });
+
+  const { data: vehicles = [] } = useQuery({
+    queryKey: ['allVehicles', orgId],
+    queryFn: () => base44.entities.Vehicle.filter({ organisation_id: orgId }),
+    enabled: !!orgId,
+  });
+
+  const { data: suppliers = [] } = useQuery({
+    queryKey: ['allSuppliers', orgId],
+    queryFn: () => base44.entities.Supplier.filter({ organisation_id: orgId }),
+    enabled: !!orgId,
+  });
+
+  const { data: customers = [] } = useQuery({
+    queryKey: ['allCustomers', orgId],
+    queryFn: () => base44.entities.Customer.filter({ organisation_id: orgId }),
+    enabled: !!orgId,
+  });
+
+  const { data: routes = [] } = useQuery({
+    queryKey: ['allRoutes', orgId],
+    queryFn: () => base44.entities.Route.filter({ organisation_id: orgId }),
+    enabled: !!orgId,
+  });
+
   const employeeIds = useMemo(() => new Set(employees.map(e => e.id)), [employees]);
   const productIds = useMemo(() => new Set(products.map(p => p.id)), [products]);
+  const warehouseIds = useMemo(() => new Set(warehouses.map(w => w.id)), [warehouses]);
+  const vehicleIds = useMemo(() => new Set(vehicles.map(v => v.id)), [vehicles]);
+  const supplierIds = useMemo(() => new Set(suppliers.map(s => s.id)), [suppliers]);
+  const customerIds = useMemo(() => new Set(customers.map(c => c.id)), [customers]);
+  const routeIds = useMemo(() => new Set(routes.map(r => r.id)), [routes]);
 
   // Fetch data for each entity type
   const entityQueries = ENTITY_CONFIG.map(config => {
@@ -119,12 +189,25 @@ export default function OrphanedData() {
   // Calculate orphaned records for each entity
   const orphanedData = useMemo(() => {
     const result = [];
+    const processed = new Map(); // Track which entity+field combos we've checked
     
     entityQueries.forEach(query => {
       if (!query.data) return;
       
       const { name, records, config } = query.data;
-      const parentIds = config.parentEntity === "Employee" ? employeeIds : productIds;
+      
+      // Get parent IDs based on parent entity type
+      let parentIds;
+      switch(config.parentEntity) {
+        case "Employee": parentIds = employeeIds; break;
+        case "Product": parentIds = productIds; break;
+        case "Warehouse": parentIds = warehouseIds; break;
+        case "Vehicle": parentIds = vehicleIds; break;
+        case "Supplier": parentIds = supplierIds; break;
+        case "Customer": parentIds = customerIds; break;
+        case "Route": parentIds = routeIds; break;
+        default: return;
+      }
       
       const orphaned = records.filter(record => {
         const parentId = record[config.parentField];
@@ -132,19 +215,23 @@ export default function OrphanedData() {
       });
       
       if (orphaned.length > 0) {
-        result.push({
-          entity: name,
-          icon: config.icon,
-          orphanedRecords: orphaned,
-          parentField: config.parentField,
-          parentEntity: config.parentEntity,
-          totalRecords: records.length,
-        });
+        const key = `${name}-${config.parentField}`;
+        if (!processed.has(key)) {
+          result.push({
+            entity: name,
+            icon: config.icon,
+            orphanedRecords: orphaned,
+            parentField: config.parentField,
+            parentEntity: config.parentEntity,
+            totalRecords: records.length,
+          });
+          processed.set(key, true);
+        }
       }
     });
     
     return result;
-  }, [entityQueries, employeeIds, productIds]);
+  }, [entityQueries, employeeIds, productIds, warehouseIds, vehicleIds, supplierIds, customerIds, routeIds]);
 
   const totalOrphaned = orphanedData.reduce((sum, d) => sum + d.orphanedRecords.length, 0);
 
@@ -238,7 +325,7 @@ export default function OrphanedData() {
       <div className="space-y-6">
         <PageHeader
           title="Orphaned Data Cleanup"
-          subtitle="Find and remove records that reference deleted employees or products"
+          subtitle="Find and remove records with invalid references to deleted employees, products, warehouses, vehicles, suppliers, customers, or routes"
         />
 
         {/* Summary Cards */}
@@ -272,7 +359,9 @@ export default function OrphanedData() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-xs text-gray-500 uppercase">Active References</p>
-                  <p className="text-3xl font-bold text-[#1EB053]">{employees.length + products.length}</p>
+                  <p className="text-3xl font-bold text-[#1EB053]">
+                    {employees.length + products.length + warehouses.length + vehicles.length + suppliers.length + customers.length + routes.length}
+                  </p>
                 </div>
                 <CheckCircle2 className="w-10 h-10 text-[#1EB053]" />
               </div>
@@ -289,7 +378,7 @@ export default function OrphanedData() {
                   <div>
                     <p className="font-semibold text-amber-800">Orphaned data detected</p>
                     <p className="text-sm text-amber-700">
-                      {totalOrphaned} records reference deleted employees or products
+                      {totalOrphaned} records with invalid references detected
                     </p>
                   </div>
                 </div>
