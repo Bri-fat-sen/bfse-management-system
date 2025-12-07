@@ -144,16 +144,7 @@ export default function Layout({ children, currentPageName }) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [darkMode, setDarkMode] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
-  const [collapsedSections, setCollapsedSections] = useState({ 
-    "Home": false,
-    "Sales & Customers": true,
-    "Inventory & Supply": true,
-    "Transport & Logistics": true,
-    "Human Resources": true,
-    "Finance & Reports": true,
-    "System & Settings": true,
-    "Administration": true
-  });
+  const [collapsedSections, setCollapsedSections] = useState({});
   const [chatPanelOpen, setChatPanelOpen] = useState(false);
   const [showQuickSale, setShowQuickSale] = useState(false);
   const [showStockCheck, setShowStockCheck] = useState(false);
@@ -169,7 +160,7 @@ export default function Layout({ children, currentPageName }) {
   const { data: user } = useQuery({
     queryKey: ['currentUser'],
     queryFn: () => base44.auth.me(),
-    staleTime: 10 * 60 * 1000, // 10 minutes
+    staleTime: 10 * 60 * 1000,
     refetchOnWindowFocus: false,
   });
 
@@ -181,13 +172,11 @@ export default function Layout({ children, currentPageName }) {
     refetchOnWindowFocus: false,
   });
 
-  // Auto-link user to unlinked employee record if one exists with matching email
   useEffect(() => {
     const autoLinkEmployee = async () => {
       if (!user?.email || employee?.length > 0) return;
       
       try {
-        // Check if there's an employee record with this email but no user_email set
         const unlinkedEmployees = await base44.entities.Employee.filter({ 
           email: user.email 
         });
@@ -195,7 +184,6 @@ export default function Layout({ children, currentPageName }) {
         const matchingEmployee = unlinkedEmployees.find(e => !e.user_email);
         
         if (matchingEmployee) {
-          // Link the user to this employee record
           await base44.entities.Employee.update(matchingEmployee.id, {
             user_email: user.email
           });
@@ -214,14 +202,12 @@ export default function Layout({ children, currentPageName }) {
   const { data: notifications = [] } = useQuery({
     queryKey: ['notifications', currentEmployee?.id],
     queryFn: () => base44.entities.Notification.filter({ is_read: false }, '-created_date', 10),
-    staleTime: 60 * 1000, // 1 minute
+    staleTime: 60 * 1000,
     refetchOnWindowFocus: false,
-    enabled: !!currentEmployee?.id, // Only fetch if employee exists
+    enabled: !!currentEmployee?.id,
   });
-  // For platform admin users who might not have an employee record yet, check the base44 user role
-  // Platform admins (user.role === 'admin') get super_admin privileges
+
   const actualRole = currentEmployee?.role || (user?.role === 'admin' ? 'super_admin' : 'read_only');
-  // Use preview role if super_admin has one set, otherwise use actual role
   const userRole = (actualRole === 'super_admin' && previewRole) ? previewRole : actualRole;
   const orgId = currentEmployee?.organisation_id;
 
@@ -238,7 +224,7 @@ export default function Layout({ children, currentPageName }) {
   const { data: chatRooms = [] } = useQuery({
     queryKey: ['chatRooms', orgId, currentEmployee?.id],
     queryFn: () => base44.entities.ChatRoom.filter({ organisation_id: orgId }),
-    enabled: !!orgId && !!currentEmployee?.id, // Only fetch if both exist
+    enabled: !!orgId && !!currentEmployee?.id,
     staleTime: 30 * 1000,
     refetchInterval: 30000,
     refetchOnWindowFocus: false,
@@ -256,11 +242,9 @@ export default function Layout({ children, currentPageName }) {
   }, [userRole]);
 
   const filteredMenuSections = useMemo(() => {
-    // When in preview mode, filter based on preview role permissions
     const effectiveRole = (actualRole === 'super_admin' && previewRole) ? previewRole : userRole;
     const effectivePermissions = previewRole ? (DEFAULT_ROLE_PERMISSIONS[previewRole] || DEFAULT_ROLE_PERMISSIONS.read_only) : permissions;
     
-    // Super admin always gets full access regardless of employee record
     if (effectiveRole === 'super_admin' && !previewRole) {
       return menuSections;
     }
@@ -290,7 +274,6 @@ export default function Layout({ children, currentPageName }) {
     sessionStorage.setItem('pinUnlocked', 'true');
   };
 
-  // Check if already unlocked in this session
   useEffect(() => {
     const unlocked = sessionStorage.getItem('pinUnlocked');
     if (unlocked === 'true') {
@@ -298,10 +281,8 @@ export default function Layout({ children, currentPageName }) {
     }
   }, []);
 
-  // Users with PIN set need to verify it before accessing the app
   const requiresPinAuth = currentEmployee?.pin_hash && !isPinUnlocked;
 
-  // Show lock screen if PIN is required
   if (requiresPinAuth && user && currentEmployee) {
     return (
       <PinLockScreen
@@ -386,9 +367,7 @@ export default function Layout({ children, currentPageName }) {
         w-[85vw] max-w-64 lg:${sidebarOpen ? 'w-64' : 'w-20'}
         ${mobileMenuOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
       `}>
-        {/* Header Section */}
         <div className="flex-shrink-0">
-          {/* Sierra Leone Stripe - Top */}
           <div className="h-1.5 flex">
             <div className="flex-1 bg-[#1EB053]" />
             <div className="flex-1 bg-white" />
@@ -405,7 +384,7 @@ export default function Layout({ children, currentPageName }) {
                   className="w-10 h-10 object-contain flex-shrink-0"
                 />
               )}
-              <p className="font-bold text-xs text-white leading-tight line-clamp-2 min-w-0">{currentOrg?.name || 'Loading...'}</p>
+              <p className="font-bold text-base text-white leading-tight line-clamp-2 min-w-0">{currentOrg?.name || 'Loading...'}</p>
             </div>
           ) : (
             currentOrg?.logo_url ? (
@@ -436,7 +415,6 @@ export default function Layout({ children, currentPageName }) {
             </Button>
             </div>
 
-            {/* Separator Stripe */}
             <div className="h-0.5 flex mx-4">
             <div className="flex-1 bg-[#1EB053]/30" />
             <div className="flex-1 bg-white/30" />
@@ -444,7 +422,6 @@ export default function Layout({ children, currentPageName }) {
             </div>
             </div>
 
-            {/* Body Section - Scrollable Menu */}
             <nav className="flex-1 overflow-y-auto p-3 space-y-1">
           {filteredMenuSections.map((section, sectionIndex) => (
             <div key={section.title}>
@@ -458,7 +435,7 @@ export default function Layout({ children, currentPageName }) {
               {sidebarOpen ? (
                 <button
                   onClick={() => toggleSection(section.title)}
-                  className="w-full flex items-center justify-between px-3 mb-2 text-xs font-semibold uppercase tracking-wider text-gray-400 hover:text-white transition-colors"
+                  className="w-full flex items-center justify-between px-3 mb-2 text-sm font-semibold uppercase tracking-wider text-gray-400 hover:text-white transition-colors"
                 >
                   <span>{section.title}</span>
                   {collapsedSections[section.title] ? (
@@ -508,9 +485,7 @@ export default function Layout({ children, currentPageName }) {
           ))}
         </nav>
 
-        {/* Footer Section */}
         <div className="flex-shrink-0">
-          {/* Separator Stripe */}
           <div className="h-0.5 flex mx-4 mb-3">
             <div className="flex-1 bg-[#1EB053]/30" />
             <div className="flex-1 bg-white/30" />
@@ -539,7 +514,6 @@ export default function Layout({ children, currentPageName }) {
             </div>
           )}
 
-          {/* Bottom Sierra Leone Stripe */}
           <div className="h-1.5 flex">
             <div className="flex-1 bg-[#1EB053]" />
             <div className="flex-1 bg-white" />
@@ -574,7 +548,6 @@ export default function Layout({ children, currentPageName }) {
               <kbd className="ml-auto px-2 py-0.5 text-xs bg-gray-100 rounded">⌘K</kbd>
             </Button>
 
-            {/* Role Preview Switcher for Super Admin */}
             <RolePreviewSwitcher
               currentPreviewRole={previewRole}
               onPreviewRoleChange={setPreviewRole}
@@ -659,7 +632,6 @@ export default function Layout({ children, currentPageName }) {
 
         <div className="h-1.5 sl-flag-stripe" />
 
-        {/* Role Preview Banner */}
         <RolePreviewBanner 
           previewRole={previewRole} 
           onExit={() => setPreviewRole(null)} 
@@ -676,8 +648,6 @@ export default function Layout({ children, currentPageName }) {
         </main>
 
         <MobileNav currentPageName={currentPageName} />
-
-
 
         <MobileQuickSale
           open={showQuickSale}
@@ -699,15 +669,11 @@ export default function Layout({ children, currentPageName }) {
           currentEmployee={currentEmployee}
         />
 
-
-
         <GlobalSearch 
           orgId={orgId} 
           isOpen={searchOpen} 
           onClose={() => setSearchOpen(false)} 
         />
-
-
 
         <InstallPrompt />
 
