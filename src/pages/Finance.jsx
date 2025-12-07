@@ -761,9 +761,26 @@ export default function Finance() {
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">
-              {/* Revenue Trend */}
-              <Card className="overflow-hidden">
-                <div className="h-1 flex">
+              {/* Revenue & Expenses Trend */}
+              <Card className="overflow-hidden relative">
+                {/* Sierra Leone Pattern Background */}
+                <div className="absolute inset-0 opacity-[0.03] pointer-events-none">
+                  <div className="absolute inset-0" style={{
+                    backgroundImage: `repeating-linear-gradient(
+                      0deg,
+                      #1EB053 0px,
+                      #1EB053 8px,
+                      #FFFFFF 8px,
+                      #FFFFFF 16px,
+                      #0072C6 16px,
+                      #0072C6 24px,
+                      transparent 24px,
+                      transparent 48px
+                    )`
+                  }} />
+                </div>
+                
+                <div className="h-1.5 flex">
                   <div className="flex-1 bg-[#1EB053]" />
                   <div className="flex-1 bg-white" />
                   <div className="flex-1 bg-[#0072C6]" />
@@ -773,25 +790,92 @@ export default function Finance() {
                     <BarChart3 className="w-5 h-5 text-[#1EB053]" />
                     Financial Trend (6 Months)
                   </CardTitle>
+                  <CardDescription className="text-xs">Revenue vs Expenses comparison</CardDescription>
                 </CardHeader>
-                <CardContent>
-                  <ResponsiveContainer width="100%" height={300}>
-                    <AreaChart data={monthlyTrend}>
-                      <CartesianGrid strokeDasharray="3 3" />
-                      <XAxis dataKey="month" />
-                      <YAxis />
-                      <Tooltip formatter={(value) => `Le ${value.toLocaleString()}`} />
-                      <Legend />
-                      <Area type="monotone" dataKey="revenue" stackId="1" stroke="#1EB053" fill="#1EB053" fillOpacity={0.6} name="Revenue" />
-                      <Area type="monotone" dataKey="expenses" stackId="2" stroke="#ef4444" fill="#ef4444" fillOpacity={0.6} name="Expenses" />
-                    </AreaChart>
+                <CardContent className="relative">
+                  <ResponsiveContainer width="100%" height={340}>
+                    <BarChart 
+                      data={monthlyTrend}
+                      margin={{ top: 20, right: 30, left: 20, bottom: 20 }}
+                    >
+                      <defs>
+                        <linearGradient id="revenueGradient" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="0%" stopColor="#1EB053" stopOpacity={0.9} />
+                          <stop offset="100%" stopColor="#1EB053" stopOpacity={0.6} />
+                        </linearGradient>
+                        <linearGradient id="expenseGradient" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="0%" stopColor="#ef4444" stopOpacity={0.9} />
+                          <stop offset="100%" stopColor="#ef4444" stopOpacity={0.6} />
+                        </linearGradient>
+                      </defs>
+                      <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" vertical={false} />
+                      <XAxis 
+                        dataKey="month" 
+                        stroke="#9ca3af"
+                        style={{ fontSize: '12px', fontWeight: '500' }}
+                        axisLine={{ stroke: '#d1d5db', strokeWidth: 2 }}
+                      />
+                      <YAxis 
+                        tickFormatter={(v) => `Le ${(v/1000).toFixed(0)}k`}
+                        stroke="#9ca3af"
+                        style={{ fontSize: '11px' }}
+                        axisLine={{ stroke: '#d1d5db', strokeWidth: 2 }}
+                      />
+                      <Tooltip 
+                        formatter={(value, name) => [`Le ${value.toLocaleString()}`, name === 'revenue' ? 'Revenue' : 'Expenses']}
+                        contentStyle={{ 
+                          backgroundColor: 'white', 
+                          border: '2px solid #1EB053',
+                          borderRadius: '12px',
+                          padding: '12px 16px',
+                          boxShadow: '0 4px 16px rgba(0,0,0,0.12)'
+                        }}
+                        labelStyle={{ fontWeight: 'bold', color: '#0F1F3C', marginBottom: '6px', fontSize: '13px' }}
+                        cursor={{ fill: 'rgba(30, 176, 83, 0.05)' }}
+                      />
+                      <Legend 
+                        wrapperStyle={{ paddingTop: '20px' }}
+                        iconType="circle"
+                      />
+                      <Bar 
+                        dataKey="revenue" 
+                        fill="url(#revenueGradient)" 
+                        radius={[8, 8, 0, 0]}
+                        name="Revenue"
+                        maxBarSize={50}
+                      />
+                      <Bar 
+                        dataKey="expenses" 
+                        fill="url(#expenseGradient)" 
+                        radius={[8, 8, 0, 0]}
+                        name="Expenses"
+                        maxBarSize={50}
+                      />
+                    </BarChart>
                   </ResponsiveContainer>
                 </CardContent>
               </Card>
 
               {/* Profit Trend */}
-              <Card className="overflow-hidden">
-                <div className="h-1 flex">
+              <Card className="overflow-hidden relative">
+                {/* Sierra Leone Pattern Background */}
+                <div className="absolute inset-0 opacity-[0.03] pointer-events-none">
+                  <div className="absolute inset-0" style={{
+                    backgroundImage: `repeating-linear-gradient(
+                      90deg,
+                      #1EB053 0px,
+                      #1EB053 8px,
+                      #FFFFFF 8px,
+                      #FFFFFF 16px,
+                      #0072C6 16px,
+                      #0072C6 24px,
+                      transparent 24px,
+                      transparent 48px
+                    )`
+                  }} />
+                </div>
+
+                <div className="h-1.5 flex">
                   <div className="flex-1 bg-[#1EB053]" />
                   <div className="flex-1 bg-white" />
                   <div className="flex-1 bg-[#0072C6]" />
@@ -801,16 +885,67 @@ export default function Finance() {
                     <TrendingUp className="w-5 h-5 text-[#0072C6]" />
                     Profit Trend
                   </CardTitle>
+                  <CardDescription className="text-xs">Net profit margin over time</CardDescription>
                 </CardHeader>
-                <CardContent>
-                  <ResponsiveContainer width="100%" height={300}>
-                    <LineChart data={monthlyTrend}>
-                      <CartesianGrid strokeDasharray="3 3" />
-                      <XAxis dataKey="month" />
-                      <YAxis />
-                      <Tooltip formatter={(value) => `Le ${value.toLocaleString()}`} />
-                      <Line type="monotone" dataKey="profit" stroke="#0072C6" strokeWidth={3} dot={{ fill: '#0072C6', strokeWidth: 2 }} name="Net Profit" />
-                    </LineChart>
+                <CardContent className="relative">
+                  <ResponsiveContainer width="100%" height={340}>
+                    <AreaChart 
+                      data={monthlyTrend}
+                      margin={{ top: 20, right: 30, left: 20, bottom: 20 }}
+                    >
+                      <defs>
+                        <linearGradient id="profitAreaGradient" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="0%" stopColor="#0072C6" stopOpacity={0.4} />
+                          <stop offset="50%" stopColor="#1EB053" stopOpacity={0.2} />
+                          <stop offset="100%" stopColor="#1EB053" stopOpacity={0.05} />
+                        </linearGradient>
+                        <linearGradient id="profitLineGradient" x1="0" y1="0" x2="1" y2="0">
+                          <stop offset="0%" stopColor="#1EB053" />
+                          <stop offset="50%" stopColor="#0072C6" />
+                          <stop offset="100%" stopColor="#1EB053" />
+                        </linearGradient>
+                      </defs>
+                      <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" vertical={false} />
+                      <XAxis 
+                        dataKey="month" 
+                        stroke="#9ca3af"
+                        style={{ fontSize: '12px', fontWeight: '500' }}
+                        axisLine={{ stroke: '#d1d5db', strokeWidth: 2 }}
+                      />
+                      <YAxis 
+                        tickFormatter={(v) => `Le ${(v/1000).toFixed(0)}k`}
+                        stroke="#9ca3af"
+                        style={{ fontSize: '11px' }}
+                        axisLine={{ stroke: '#d1d5db', strokeWidth: 2 }}
+                      />
+                      <Tooltip 
+                        formatter={(value) => [`Le ${value.toLocaleString()}`, 'Net Profit']}
+                        contentStyle={{ 
+                          backgroundColor: 'white', 
+                          border: '2px solid #0072C6',
+                          borderRadius: '12px',
+                          padding: '12px 16px',
+                          boxShadow: '0 4px 16px rgba(0,0,0,0.12)'
+                        }}
+                        labelStyle={{ fontWeight: 'bold', color: '#0F1F3C', marginBottom: '6px', fontSize: '13px' }}
+                        cursor={{ strokeDasharray: '3 3', stroke: '#0072C6' }}
+                      />
+                      <Area 
+                        type="monotone" 
+                        dataKey="profit" 
+                        stroke="url(#profitLineGradient)"
+                        strokeWidth={3}
+                        fill="url(#profitAreaGradient)"
+                        dot={{ 
+                          fill: '#0072C6', 
+                          strokeWidth: 2, 
+                          r: 5,
+                          stroke: 'white'
+                        }}
+                        activeDot={{ r: 7, strokeWidth: 3, stroke: '#1EB053' }}
+                        name="Net Profit"
+                      />
+                    </AreaChart>
                   </ResponsiveContainer>
                 </CardContent>
               </Card>
