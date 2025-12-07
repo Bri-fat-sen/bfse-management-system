@@ -1,8 +1,8 @@
 import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Printer, Receipt, DollarSign, Loader2 } from "lucide-react";
-import { format } from "date-fns";
 import { useToast } from "@/components/ui/Toast";
+import { printUnifiedPDF, getUnifiedPDFStyles, getUnifiedHeader, getUnifiedFooter } from "@/components/exports/UnifiedPDFStyles";
 
 export default function PrintFormsButtons({ organisation }) {
   const toast = useToast();
@@ -10,396 +10,432 @@ export default function PrintFormsButtons({ organisation }) {
   const [printingRevenue, setPrintingRevenue] = useState(false);
 
   const generateExpenseFormHTML = () => {
-    const today = format(new Date(), 'MMMM d, yyyy');
+    const styles = getUnifiedPDFStyles(organisation, 'report');
+    const header = getUnifiedHeader(organisation, 'Expense Entry Form', 'EXPENSE-FORM', new Date().toLocaleDateString(), 'report');
+    const footer = getUnifiedFooter(organisation);
     
     return `
-      <!DOCTYPE html>
-      <html>
-      <head>
-        <meta charset="UTF-8">
-        <title>Expense Form - ${organisation?.name || 'Organisation'}</title>
-        <style>
-          @page { size: A4; margin: 1cm; }
-          * { margin: 0; padding: 0; box-sizing: border-box; }
-          body { 
-            font-family: 'Arial', sans-serif; 
-            line-height: 1.6; 
-            color: #0F1F3C;
-            padding: 20px;
-          }
-          .header {
-            border-bottom: 4px solid;
-            border-image: linear-gradient(to right, #1EB053 33.33%, #FFFFFF 33.33%, #FFFFFF 66.66%, #0072C6 66.66%) 1;
-            padding-bottom: 15px;
-            margin-bottom: 25px;
-          }
-          .org-logo { max-height: 60px; margin-bottom: 10px; }
-          .org-info h1 { color: #0F1F3C; font-size: 24px; font-weight: bold; margin-bottom: 5px; }
-          .org-info p { color: #666; font-size: 11px; }
-          .form-title { 
-            background: linear-gradient(135deg, #1EB053 0%, #0072C6 100%);
-            color: white;
-            padding: 15px 20px;
-            border-radius: 8px;
-            margin: 20px 0;
-            text-align: center;
-            font-size: 18px;
-            font-weight: bold;
-          }
-          .form-section { margin: 20px 0; }
-          .section-title {
-            background: #f0f0f0;
-            padding: 8px 12px;
-            border-left: 4px solid #1EB053;
-            font-weight: bold;
-            margin-bottom: 15px;
-            font-size: 14px;
-          }
-          .form-row { display: flex; gap: 15px; margin-bottom: 15px; }
-          .form-field { flex: 1; }
-          .form-field label {
-            display: block;
-            font-size: 11px;
-            font-weight: bold;
-            color: #0F1F3C;
-            margin-bottom: 4px;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-          }
-          .form-field input, .form-field select, .form-field textarea {
-            width: 100%;
-            border: 1.5px solid #ddd;
-            border-radius: 4px;
-            padding: 8px 10px;
-            font-size: 13px;
-            font-family: inherit;
-          }
-          .form-field textarea { min-height: 60px; resize: vertical; }
-          .checkbox-group { display: flex; gap: 15px; flex-wrap: wrap; margin-top: 8px; }
-          .checkbox-item { display: flex; align-items: center; gap: 6px; }
-          .checkbox-item input { width: 16px; height: 16px; }
-          .checkbox-item label { font-size: 12px; font-weight: normal; }
-          .signature-section {
-            margin-top: 40px;
-            display: grid;
-            grid-template-columns: 1fr 1fr 1fr;
-            gap: 30px;
-          }
-          .signature-box {
-            border-top: 2px solid #0F1F3C;
-            padding-top: 8px;
-          }
-          .signature-box p { font-size: 11px; font-weight: bold; color: #666; }
-          .footer {
-            margin-top: 30px;
-            padding-top: 15px;
-            border-top: 4px solid;
-            border-image: linear-gradient(to right, #1EB053 33.33%, #FFFFFF 33.33%, #FFFFFF 66.66%, #0072C6 66.66%) 1;
-            text-align: center;
-            font-size: 10px;
-            color: #666;
-          }
-          @media print {
-            body { padding: 0; }
-            .no-print { display: none; }
-          }
-        </style>
-      </head>
-      <body>
-        <div class="header">
-          ${organisation?.logo_url ? `<img src="${organisation.logo_url}" alt="Logo" class="org-logo">` : ''}
-          <div class="org-info">
-            <h1>${organisation?.name || 'Organisation Name'}</h1>
-            <p>🇸🇱 ${organisation?.address || ''}, ${organisation?.city || ''} • Tel: ${organisation?.phone || ''} • Email: ${organisation?.email || ''}</p>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Expense Entry Form - ${organisation?.name || 'Organisation'}</title>
+  <style>${styles}
+    .instructions {
+      background: var(--gray-50);
+      padding: 16px 20px;
+      border-radius: 8px;
+      margin-bottom: 24px;
+      border-left: 4px solid var(--primary);
+    }
+    
+    .instructions h3 {
+      font-size: 13px;
+      font-weight: 700;
+      margin-bottom: 10px;
+      color: var(--gray-800);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    
+    .instructions ol {
+      margin-left: 20px;
+      font-size: 12px;
+      color: var(--gray-600);
+      line-height: 1.8;
+    }
+    
+    .instructions li {
+      margin-bottom: 6px;
+    }
+    
+    .form-section {
+      margin-bottom: 28px;
+      page-break-inside: avoid;
+    }
+    
+    .form-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      margin-bottom: 16px;
+    }
+    
+    .form-field {
+      display: flex;
+      flex-direction: column;
+    }
+    
+    .form-field.full-width {
+      grid-column: 1 / -1;
+    }
+    
+    .form-field label {
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--gray-700);
+      margin-bottom: 6px;
+    }
+    
+    .form-field label .required {
+      color: var(--danger);
+      font-weight: 700;
+    }
+    
+    .form-field .input-box {
+      border: 2px solid var(--gray-200);
+      border-radius: 6px;
+      padding: 10px 12px;
+      min-height: 40px;
+      background: white;
+      transition: border-color 0.2s;
+    }
+    
+    .form-field .input-box.large {
+      min-height: 80px;
+    }
+    
+    .signature-section {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 40px;
+      margin-top: 30px;
+      page-break-inside: avoid;
+    }
+    
+    .signature-box {
+      border-top: 2px solid var(--gray-800);
+      padding-top: 10px;
+    }
+    
+    .signature-box p {
+      font-size: 11px;
+      color: var(--gray-600);
+      margin-top: 4px;
+    }
+    
+    .signature-box strong {
+      color: var(--gray-800);
+      font-size: 12px;
+    }
+  </style>
+</head>
+<body>
+  <div class="document">
+    ${header}
+    
+    <div class="content">
+      <div class="instructions">
+        <h3>📋 Instructions - EXPENSE ENTRY FORM</h3>
+        <ol>
+          <li><strong>DOCUMENT TYPE: EXPENSE ENTRY FORM</strong></li>
+          <li>Fill in all required fields (*) with clear, legible handwriting</li>
+          <li>Use black or blue ink only</li>
+          <li>Write expense details, amounts, and dates clearly</li>
+          <li>After completing, scan or photograph this form</li>
+          <li>Upload using "Upload Document" in Expense Management or Finance section</li>
+          <li>The system will automatically extract and create expense records</li>
+        </ol>
+      </div>
+
+      <div class="form-section">
+        <div class="section-title">
+          <div class="icon">💰</div>
+          Expense Information
+        </div>
+        <div class="form-grid">
+          <div class="form-field">
+            <label>Date <span class="required">*</span></label>
+            <div class="input-box"></div>
+          </div>
+          <div class="form-field">
+            <label>Reference Number</label>
+            <div class="input-box"></div>
           </div>
         </div>
+      </div>
 
-        <div class="form-title">EXPENSE REQUEST FORM</div>
-
-        <div class="form-section">
-          <div class="section-title">Expense Information</div>
-          
-          <div class="form-row">
-            <div class="form-field">
-              <label>Date</label>
-              <input type="date" value="${today}" />
-            </div>
-            <div class="form-field">
-              <label>Expense No.</label>
-              <input type="text" placeholder="Auto-generated" />
-            </div>
-          </div>
-
-          <div class="form-row">
-            <div class="form-field">
-              <label>Category</label>
-              <select>
-                <option value="">Select category</option>
-                <option value="fuel">Fuel</option>
-                <option value="maintenance">Maintenance</option>
-                <option value="utilities">Utilities</option>
-                <option value="supplies">Supplies</option>
-                <option value="rent">Rent</option>
-                <option value="salaries">Salaries</option>
-                <option value="transport">Transport</option>
-                <option value="marketing">Marketing</option>
-                <option value="insurance">Insurance</option>
-                <option value="petty_cash">Petty Cash</option>
-                <option value="other">Other</option>
-              </select>
-            </div>
-            <div class="form-field">
-              <label>Amount (Le)</label>
-              <input type="text" placeholder="0.00" />
-            </div>
-          </div>
-
-          <div class="form-row">
-            <div class="form-field">
-              <label>Description</label>
-              <textarea placeholder="What was this expense for?"></textarea>
-            </div>
-          </div>
-
-          <div class="form-row">
-            <div class="form-field">
-              <label>Vendor/Supplier</label>
-              <input type="text" placeholder="Vendor name" />
-            </div>
-            <div class="form-field">
-              <label>Payment Method</label>
-              <select>
-                <option value="cash">Cash</option>
-                <option value="card">Card</option>
-                <option value="bank_transfer">Bank Transfer</option>
-                <option value="mobile_money">Mobile Money</option>
-              </select>
-            </div>
-          </div>
-
-          <div class="form-row">
-            <div class="form-field">
-              <label>Notes</label>
-              <textarea placeholder="Additional details"></textarea>
-            </div>
-          </div>
+      <div class="form-section">
+        <div class="section-title">
+          <div class="icon">📋</div>
+          Expense Items
         </div>
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th style="width: 40px;">NO</th>
+              <th>DETAILS / DESCRIPTION <span class="required">*</span></th>
+              <th style="width: 80px;">UNIT</th>
+              <th style="width: 80px;">QTY</th>
+              <th style="width: 100px;">UNIT COST (Le)</th>
+              <th style="width: 120px;">TOTAL (Le) <span class="required">*</span></th>
+              <th style="width: 120px;">VENDOR</th>
+              <th style="width: 100px;">CATEGORY</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${Array.from({ length: 15 }, (_, i) => `
+              <tr>
+                <td>${i + 1}</td>
+                <td>&nbsp;</td>
+                <td>&nbsp;</td>
+                <td>&nbsp;</td>
+                <td>&nbsp;</td>
+                <td>&nbsp;</td>
+                <td>&nbsp;</td>
+                <td>&nbsp;</td>
+              </tr>
+            `).join('')}
+          </tbody>
+          <tfoot>
+            <tr class="total-row">
+              <td colspan="5" style="text-align: right; font-weight: bold;">TOTAL:</td>
+              <td style="font-weight: bold;">Le ______________</td>
+              <td colspan="2"></td>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
 
-        <div class="signature-section">
-          <div class="signature-box">
-            <p>Requested By</p>
-          </div>
-          <div class="signature-box">
-            <p>Approved By</p>
-          </div>
-          <div class="signature-box">
-            <p>Date</p>
-          </div>
+      <div class="form-section">
+        <div class="form-field full-width">
+          <label>Notes / Comments</label>
+          <div class="input-box large"></div>
         </div>
+      </div>
 
-        <div class="footer">
-          <p>🇸🇱 ${organisation?.name || 'Organisation'} • Generated on ${today}</p>
-          <p style="margin-top: 5px; font-style: italic;">This is an official expense form. All fields must be completed accurately.</p>
+      <div class="signature-section">
+        <div class="signature-box">
+          <p><strong>Prepared By:</strong></p>
+          <p style="margin-top: 50px;">Name: _______________________________</p>
+          <p>Date: _______________________________</p>
         </div>
-      </body>
-      </html>
+        <div class="signature-box">
+          <p><strong>Approved By:</strong></p>
+          <p style="margin-top: 50px;">Name: _______________________________</p>
+          <p>Date: _______________________________</p>
+        </div>
+      </div>
+    </div>
+    
+    ${footer}
+  </div>
+</body>
+</html>
     `;
   };
 
   const generateRevenueFormHTML = () => {
-    const today = format(new Date(), 'MMMM d, yyyy');
+    const styles = getUnifiedPDFStyles(organisation, 'report');
+    const header = getUnifiedHeader(organisation, 'Revenue Entry Form', 'REVENUE-FORM', new Date().toLocaleDateString(), 'report');
+    const footer = getUnifiedFooter(organisation);
     
     return `
-      <!DOCTYPE html>
-      <html>
-      <head>
-        <meta charset="UTF-8">
-        <title>Revenue Form - ${organisation?.name || 'Organisation'}</title>
-        <style>
-          @page { size: A4; margin: 1cm; }
-          * { margin: 0; padding: 0; box-sizing: border-box; }
-          body { 
-            font-family: 'Arial', sans-serif; 
-            line-height: 1.6; 
-            color: #0F1F3C;
-            padding: 20px;
-          }
-          .header {
-            border-bottom: 4px solid;
-            border-image: linear-gradient(to right, #1EB053 33.33%, #FFFFFF 33.33%, #FFFFFF 66.66%, #0072C6 66.66%) 1;
-            padding-bottom: 15px;
-            margin-bottom: 25px;
-          }
-          .org-logo { max-height: 60px; margin-bottom: 10px; }
-          .org-info h1 { color: #0F1F3C; font-size: 24px; font-weight: bold; margin-bottom: 5px; }
-          .org-info p { color: #666; font-size: 11px; }
-          .form-title { 
-            background: linear-gradient(135deg, #1EB053 0%, #0072C6 100%);
-            color: white;
-            padding: 15px 20px;
-            border-radius: 8px;
-            margin: 20px 0;
-            text-align: center;
-            font-size: 18px;
-            font-weight: bold;
-          }
-          .form-section { margin: 20px 0; }
-          .section-title {
-            background: #f0f0f0;
-            padding: 8px 12px;
-            border-left: 4px solid #1EB053;
-            font-weight: bold;
-            margin-bottom: 15px;
-            font-size: 14px;
-          }
-          .form-row { display: flex; gap: 15px; margin-bottom: 15px; }
-          .form-field { flex: 1; }
-          .form-field label {
-            display: block;
-            font-size: 11px;
-            font-weight: bold;
-            color: #0F1F3C;
-            margin-bottom: 4px;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-          }
-          .form-field input, .form-field select, .form-field textarea {
-            width: 100%;
-            border: 1.5px solid #ddd;
-            border-radius: 4px;
-            padding: 8px 10px;
-            font-size: 13px;
-            font-family: inherit;
-          }
-          .form-field textarea { min-height: 60px; resize: vertical; }
-          .signature-section {
-            margin-top: 40px;
-            display: grid;
-            grid-template-columns: 1fr 1fr 1fr;
-            gap: 30px;
-          }
-          .signature-box {
-            border-top: 2px solid #0F1F3C;
-            padding-top: 8px;
-          }
-          .signature-box p { font-size: 11px; font-weight: bold; color: #666; }
-          .footer {
-            margin-top: 30px;
-            padding-top: 15px;
-            border-top: 4px solid;
-            border-image: linear-gradient(to right, #1EB053 33.33%, #FFFFFF 33.33%, #FFFFFF 66.66%, #0072C6 66.66%) 1;
-            text-align: center;
-            font-size: 10px;
-            color: #666;
-          }
-          @media print {
-            body { padding: 0; }
-            .no-print { display: none; }
-          }
-        </style>
-      </head>
-      <body>
-        <div class="header">
-          ${organisation?.logo_url ? `<img src="${organisation.logo_url}" alt="Logo" class="org-logo">` : ''}
-          <div class="org-info">
-            <h1>${organisation?.name || 'Organisation Name'}</h1>
-            <p>🇸🇱 ${organisation?.address || ''}, ${organisation?.city || ''} • Tel: ${organisation?.phone || ''} • Email: ${organisation?.email || ''}</p>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Revenue Entry Form - ${organisation?.name || 'Organisation'}</title>
+  <style>${styles}
+    .instructions {
+      background: var(--gray-50);
+      padding: 16px 20px;
+      border-radius: 8px;
+      margin-bottom: 24px;
+      border-left: 4px solid var(--primary);
+    }
+    
+    .instructions h3 {
+      font-size: 13px;
+      font-weight: 700;
+      margin-bottom: 10px;
+      color: var(--gray-800);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    
+    .instructions ol {
+      margin-left: 20px;
+      font-size: 12px;
+      color: var(--gray-600);
+      line-height: 1.8;
+    }
+    
+    .instructions li {
+      margin-bottom: 6px;
+    }
+    
+    .form-section {
+      margin-bottom: 28px;
+      page-break-inside: avoid;
+    }
+    
+    .form-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      margin-bottom: 16px;
+    }
+    
+    .form-field {
+      display: flex;
+      flex-direction: column;
+    }
+    
+    .form-field.full-width {
+      grid-column: 1 / -1;
+    }
+    
+    .form-field label {
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--gray-700);
+      margin-bottom: 6px;
+    }
+    
+    .form-field label .required {
+      color: var(--danger);
+      font-weight: 700;
+    }
+    
+    .form-field .input-box {
+      border: 2px solid var(--gray-200);
+      border-radius: 6px;
+      padding: 10px 12px;
+      min-height: 40px;
+      background: white;
+      transition: border-color 0.2s;
+    }
+    
+    .form-field .input-box.large {
+      min-height: 80px;
+    }
+    
+    .signature-section {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 40px;
+      margin-top: 30px;
+      page-break-inside: avoid;
+    }
+    
+    .signature-box {
+      border-top: 2px solid var(--gray-800);
+      padding-top: 10px;
+    }
+    
+    .signature-box p {
+      font-size: 11px;
+      color: var(--gray-600);
+      margin-top: 4px;
+    }
+    
+    .signature-box strong {
+      color: var(--gray-800);
+      font-size: 12px;
+    }
+  </style>
+</head>
+<body>
+  <div class="document">
+    ${header}
+    
+    <div class="content">
+      <div class="instructions">
+        <h3>📋 Instructions - REVENUE ENTRY FORM</h3>
+        <ol>
+          <li><strong>DOCUMENT TYPE: REVENUE ENTRY FORM</strong></li>
+          <li>Fill in all required fields (*) with clear, legible handwriting</li>
+          <li>Use black or blue ink only</li>
+          <li>Write revenue details, amounts, and sources clearly</li>
+          <li>After completing, scan or photograph this form</li>
+          <li>Upload using "Upload Document" in Finance section</li>
+          <li>The system will automatically extract and create revenue records</li>
+        </ol>
+      </div>
+
+      <div class="form-section">
+        <div class="section-title">
+          <div class="icon">📈</div>
+          Revenue Information
+        </div>
+        <div class="form-grid">
+          <div class="form-field">
+            <label>Date <span class="required">*</span></label>
+            <div class="input-box"></div>
+          </div>
+          <div class="form-field">
+            <label>Reference Number</label>
+            <div class="input-box"></div>
           </div>
         </div>
+      </div>
 
-        <div class="form-title">REVENUE / CONTRIBUTION FORM</div>
-
-        <div class="form-section">
-          <div class="section-title">Revenue Information</div>
-          
-          <div class="form-row">
-            <div class="form-field">
-              <label>Date</label>
-              <input type="date" value="${today}" />
-            </div>
-            <div class="form-field">
-              <label>Reference No.</label>
-              <input type="text" placeholder="Auto-generated" />
-            </div>
-          </div>
-
-          <div class="form-row">
-            <div class="form-field">
-              <label>Source Type</label>
-              <select>
-                <option value="">Select source</option>
-                <option value="owner_contribution">Owner Contribution</option>
-                <option value="ceo_contribution">CEO Contribution</option>
-                <option value="investor_funding">Investor Funding</option>
-                <option value="loan">Loan</option>
-                <option value="grant">Grant</option>
-                <option value="dividend">Dividend Return</option>
-                <option value="other">Other</option>
-              </select>
-            </div>
-            <div class="form-field">
-              <label>Amount (Le)</label>
-              <input type="text" placeholder="0.00" />
-            </div>
-          </div>
-
-          <div class="form-row">
-            <div class="form-field">
-              <label>Contributor Name</label>
-              <input type="text" placeholder="Name of owner, CEO, or investor" />
-            </div>
-          </div>
-
-          <div class="form-row">
-            <div class="form-field">
-              <label>Payment Method</label>
-              <select>
-                <option value="cash">Cash</option>
-                <option value="bank_transfer">Bank Transfer</option>
-                <option value="cheque">Cheque</option>
-                <option value="mobile_money">Mobile Money</option>
-                <option value="other">Other</option>
-              </select>
-            </div>
-            <div class="form-field">
-              <label>Reference Number</label>
-              <input type="text" placeholder="Bank ref or transaction ID" />
-            </div>
-          </div>
-
-          <div class="form-row">
-            <div class="form-field">
-              <label>Purpose</label>
-              <textarea placeholder="e.g., Capital injection, Working capital"></textarea>
-            </div>
-          </div>
-
-          <div class="form-row">
-            <div class="form-field">
-              <label>Notes</label>
-              <textarea placeholder="Additional details"></textarea>
-            </div>
-          </div>
+      <div class="form-section">
+        <div class="section-title">
+          <div class="icon">📋</div>
+          Revenue Items
         </div>
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th style="width: 40px;">NO</th>
+              <th>DESCRIPTION / PURPOSE <span class="required">*</span></th>
+              <th style="width: 150px;">CONTRIBUTOR / CUSTOMER</th>
+              <th style="width: 120px;">AMOUNT (Le) <span class="required">*</span></th>
+              <th style="width: 120px;">SOURCE / CATEGORY</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${Array.from({ length: 15 }, (_, i) => `
+              <tr>
+                <td>${i + 1}</td>
+                <td>&nbsp;</td>
+                <td>&nbsp;</td>
+                <td>&nbsp;</td>
+                <td>&nbsp;</td>
+              </tr>
+            `).join('')}
+          </tbody>
+          <tfoot>
+            <tr class="total-row">
+              <td colspan="3" style="text-align: right; font-weight: bold;">TOTAL:</td>
+              <td style="font-weight: bold;">Le ______________</td>
+              <td></td>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
 
-        <div class="signature-section">
-          <div class="signature-box">
-            <p>Received By</p>
-          </div>
-          <div class="signature-box">
-            <p>Approved By</p>
-          </div>
-          <div class="signature-box">
-            <p>Date</p>
-          </div>
+      <div class="form-section">
+        <div class="form-field full-width">
+          <label>Notes / Comments</label>
+          <div class="input-box large"></div>
         </div>
+      </div>
 
-        <div class="footer">
-          <p>🇸🇱 ${organisation?.name || 'Organisation'} • Generated on ${today}</p>
-          <p style="margin-top: 5px; font-style: italic;">This is an official revenue form. All fields must be completed accurately.</p>
+      <div class="signature-section">
+        <div class="signature-box">
+          <p><strong>Recorded By:</strong></p>
+          <p style="margin-top: 50px;">Name: _______________________________</p>
+          <p>Date: _______________________________</p>
         </div>
-      </body>
-      </html>
+        <div class="signature-box">
+          <p><strong>Verified By:</strong></p>
+          <p style="margin-top: 50px;">Name: _______________________________</p>
+          <p>Date: _______________________________</p>
+        </div>
+      </div>
+    </div>
+    
+    ${footer}
+  </div>
+</body>
+</html>
     `;
   };
 
