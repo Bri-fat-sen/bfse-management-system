@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Printer, Receipt, DollarSign, Loader2, Fuel, Wrench, Building2, ShoppingCart, Users, Truck, Megaphone, FileText, Wallet, X } from "lucide-react";
 import { useToast } from "@/components/ui/Toast";
@@ -26,17 +26,11 @@ export default function PrintFormsButtons({ organisation }) {
 
   const revenueFormTypes = [
     { id: 'general', name: 'General Revenue Form', icon: DollarSign, color: 'green', description: 'Multi-item revenue form' },
-    { id: 'sales', name: 'Sales Revenue', icon: ShoppingCart, color: 'blue', description: 'Product/service sales' },
-    { id: 'owner', name: 'Owner Contribution', icon: Users, color: 'purple', description: 'Owner capital injection' },
-    { id: 'ceo', name: 'CEO Contribution', icon: Users, color: 'indigo', description: 'CEO funding' },
+    { id: 'owner', name: 'Owner Contribution', icon: Users, color: 'blue', description: 'Owner capital injection' },
+    { id: 'ceo', name: 'CEO Contribution', icon: Users, color: 'purple', description: 'CEO funding' },
     { id: 'investor', name: 'Investor Funding', icon: Building2, color: 'teal', description: 'Investment received' },
     { id: 'loan', name: 'Loan Receipt', icon: FileText, color: 'amber', description: 'Bank or private loans' },
     { id: 'grant', name: 'Grant Receipt', icon: DollarSign, color: 'cyan', description: 'Government or NGO grants' },
-    { id: 'service', name: 'Service Revenue', icon: Wrench, color: 'violet', description: 'Service fees & contracts' },
-    { id: 'rental', name: 'Rental Income', icon: Building2, color: 'orange', description: 'Property/equipment rental' },
-    { id: 'interest', name: 'Interest Income', icon: DollarSign, color: 'emerald', description: 'Bank interest & investments' },
-    { id: 'refund', name: 'Refund Receipt', icon: Receipt, color: 'rose', description: 'Refunds & reimbursements' },
-    { id: 'other', name: 'Other Income', icon: FileText, color: 'slate', description: 'Miscellaneous revenue' },
   ];
 
   const generateExpenseFormHTML = (formType) => {
@@ -483,33 +477,7 @@ export default function PrintFormsButtons({ organisation }) {
         </div>
       </div>
 
-      ${formType.id === 'sales' ? `
-      <div class="form-section">
-        <div class="section-title"><div class="icon">🛒</div>Sales Information</div>
-        <div class="form-grid">
-          <div class="form-field"><label>Customer Name</label><div class="input-box"></div></div>
-          <div class="form-field"><label>Customer Phone</label><div class="input-box"></div></div>
-          <div class="form-field"><label>Sale Type (Retail/Warehouse/Vehicle)</label><div class="input-box"></div></div>
-          <div class="form-field"><label>Receipt/Invoice Number</label><div class="input-box"></div></div>
-        </div>
-      </div>
-      <div class="form-section">
-        <div class="section-title"><div class="icon">📋</div>Items Sold</div>
-        <table class="data-table">
-          <thead><tr><th style="width: 40px;">NO</th><th>PRODUCT/ITEM <span class="required">*</span></th><th style="width: 80px;">QTY</th><th style="width: 120px;">UNIT PRICE (Le)</th><th style="width: 120px;">TOTAL (Le)</th></tr></thead>
-          <tbody>${Array.from({ length: 15 }, (_, i) => `<tr><td>${i + 1}</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td></tr>`).join('')}</tbody>
-          <tfoot><tr class="total-row"><td colspan="4" style="text-align: right; font-weight: bold;">TOTAL:</td><td style="font-weight: bold;">Le ______________</td></tr></tfoot>
-        </table>
-      </div>
-      <div class="form-section">
-        <div class="section-title"><div class="icon">💳</div>Payment Details</div>
-        <div class="form-grid">
-          <div class="form-field"><label>Payment Method <span class="required">*</span></label><div class="input-box"></div></div>
-          <div class="form-field"><label>Amount Received (Le) <span class="required">*</span></label><div class="input-box"></div></div>
-          <div class="form-field"><label>Discount (Le)</label><div class="input-box"></div></div>
-          <div class="form-field"><label>Tax (Le)</label><div class="input-box"></div></div>
-        </div>
-      </div>` : formType.id === 'owner' || formType.id === 'ceo' ? `
+      ${formType.id === 'owner' || formType.id === 'ceo' ? `
       <div class="form-section">
         <div class="section-title"><div class="icon">👤</div>${formType.name} Details</div>
         <div class="form-grid">
@@ -561,77 +529,6 @@ export default function PrintFormsButtons({ organisation }) {
           <div class="form-field"><label>Grant Period</label><div class="input-box"></div></div>
           <div class="form-field full-width"><label>Grant Purpose/Project</label><div class="input-box large"></div></div>
           <div class="form-field full-width"><label>Reporting Requirements</label><div class="input-box"></div></div>
-        </div>
-      </div>` : formType.id === 'service' ? `
-      <div class="form-section">
-        <div class="section-title"><div class="icon">🔧</div>Service Details</div>
-        <div class="form-grid">
-          <div class="form-field"><label>Client Name <span class="required">*</span></label><div class="input-box"></div></div>
-          <div class="form-field"><label>Contact Number</label><div class="input-box"></div></div>
-          <div class="form-field"><label>Service Type <span class="required">*</span></label><div class="input-box"></div></div>
-          <div class="form-field"><label>Service Date</label><div class="input-box"></div></div>
-          <div class="form-field"><label>Contract Number</label><div class="input-box"></div></div>
-          <div class="form-field"><label>Amount (Le) <span class="required">*</span></label><div class="input-box"></div></div>
-          <div class="form-field"><label>Payment Terms</label><div class="input-box"></div></div>
-          <div class="form-field"><label>Payment Method</label><div class="input-box"></div></div>
-          <div class="form-field full-width"><label>Service Description</label><div class="input-box large"></div></div>
-        </div>
-      </div>` : formType.id === 'rental' ? `
-      <div class="form-section">
-        <div class="section-title"><div class="icon">🏢</div>Rental Details</div>
-        <div class="form-grid">
-          <div class="form-field"><label>Tenant/Renter Name <span class="required">*</span></label><div class="input-box"></div></div>
-          <div class="form-field"><label>Contact Number</label><div class="input-box"></div></div>
-          <div class="form-field"><label>Property/Asset <span class="required">*</span></label><div class="input-box"></div></div>
-          <div class="form-field"><label>Location</label><div class="input-box"></div></div>
-          <div class="form-field"><label>Rental Period (From)</label><div class="input-box"></div></div>
-          <div class="form-field"><label>Rental Period (To)</label><div class="input-box"></div></div>
-          <div class="form-field"><label>Monthly Rent (Le)</label><div class="input-box"></div></div>
-          <div class="form-field"><label>Amount Received (Le) <span class="required">*</span></label><div class="input-box"></div></div>
-          <div class="form-field"><label>Payment Method</label><div class="input-box"></div></div>
-          <div class="form-field"><label>Receipt Number</label><div class="input-box"></div></div>
-          <div class="form-field full-width"><label>Additional Notes</label><div class="input-box"></div></div>
-        </div>
-      </div>` : formType.id === 'interest' ? `
-      <div class="form-section">
-        <div class="section-title"><div class="icon">💰</div>Interest Income Details</div>
-        <div class="form-grid">
-          <div class="form-field"><label>Bank/Institution Name <span class="required">*</span></label><div class="input-box"></div></div>
-          <div class="form-field"><label>Account Number</label><div class="input-box"></div></div>
-          <div class="form-field"><label>Account Type</label><div class="input-box"></div></div>
-          <div class="form-field"><label>Interest Period (From)</label><div class="input-box"></div></div>
-          <div class="form-field"><label>Interest Period (To)</label><div class="input-box"></div></div>
-          <div class="form-field"><label>Interest Rate (%)</label><div class="input-box"></div></div>
-          <div class="form-field"><label>Principal Amount (Le)</label><div class="input-box"></div></div>
-          <div class="form-field"><label>Interest Earned (Le) <span class="required">*</span></label><div class="input-box"></div></div>
-          <div class="form-field"><label>Tax Withheld (Le)</label><div class="input-box"></div></div>
-          <div class="form-field"><label>Net Amount (Le)</label><div class="input-box"></div></div>
-        </div>
-      </div>` : formType.id === 'refund' ? `
-      <div class="form-section">
-        <div class="section-title"><div class="icon">↩️</div>Refund Details</div>
-        <div class="form-grid">
-          <div class="form-field"><label>Refund Source <span class="required">*</span></label><div class="input-box"></div></div>
-          <div class="form-field"><label>Original Transaction Ref</label><div class="input-box"></div></div>
-          <div class="form-field"><label>Original Date</label><div class="input-box"></div></div>
-          <div class="form-field"><label>Refund Date <span class="required">*</span></label><div class="input-box"></div></div>
-          <div class="form-field"><label>Refund Amount (Le) <span class="required">*</span></label><div class="input-box"></div></div>
-          <div class="form-field"><label>Refund Method</label><div class="input-box"></div></div>
-          <div class="form-field"><label>Receipt Number</label><div class="input-box"></div></div>
-          <div class="form-field"><label>Approved By</label><div class="input-box"></div></div>
-          <div class="form-field full-width"><label>Reason for Refund <span class="required">*</span></label><div class="input-box large"></div></div>
-        </div>
-      </div>` : formType.id === 'other' ? `
-      <div class="form-section">
-        <div class="section-title"><div class="icon">📝</div>Other Income Details</div>
-        <div class="form-grid">
-          <div class="form-field"><label>Income Source <span class="required">*</span></label><div class="input-box"></div></div>
-          <div class="form-field"><label>Source Category</label><div class="input-box"></div></div>
-          <div class="form-field"><label>Amount (Le) <span class="required">*</span></label><div class="input-box"></div></div>
-          <div class="form-field"><label>Payment Method</label><div class="input-box"></div></div>
-          <div class="form-field"><label>Reference Number</label><div class="input-box"></div></div>
-          <div class="form-field"><label>Received From</label><div class="input-box"></div></div>
-          <div class="form-field full-width"><label>Description <span class="required">*</span></label><div class="input-box large"></div></div>
         </div>
       </div>` : `
       <div class="form-section">
