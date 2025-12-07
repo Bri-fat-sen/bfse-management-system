@@ -35,10 +35,12 @@ import {
   CheckCircle,
   XCircle,
   MapPin,
-  Upload
+  Upload,
+  Download
 } from "lucide-react";
 import EmptyState from "@/components/ui/EmptyState";
 import BatchStockAllocation from "./BatchStockAllocation";
+import BatchTemplatePrint from "./BatchTemplatePrint";
 import DocumentUploadExtractor from "@/components/finance/DocumentUploadExtractor";
 import { logInventoryAudit } from "./inventoryAuditHelper";
 
@@ -49,7 +51,7 @@ const STATUS_COLORS = {
   quarantine: "bg-yellow-100 text-yellow-700"
 };
 
-export default function BatchManagement({ products = [], warehouses = [], vehicles = [], stockLevels = [], orgId, currentEmployee }) {
+export default function BatchManagement({ products = [], warehouses = [], vehicles = [], stockLevels = [], orgId, currentEmployee, organisation }) {
   const toast = useToast();
   const queryClient = useQueryClient();
   const [searchTerm, setSearchTerm] = useState("");
@@ -60,6 +62,7 @@ export default function BatchManagement({ products = [], warehouses = [], vehicl
   const [showAllocationDialog, setShowAllocationDialog] = useState(false);
   const [allocatingBatch, setAllocatingBatch] = useState(null);
   const [showUploadDialog, setShowUploadDialog] = useState(false);
+  const [showUploadForm, setShowUploadForm] = useState(false);
 
   const { data: batches = [], isLoading } = useQuery({
     queryKey: ['inventoryBatches', orgId],
@@ -303,9 +306,10 @@ export default function BatchManagement({ products = [], warehouses = [], vehicl
                 <SelectItem value="quarantine">Quarantine</SelectItem>
               </SelectContent>
             </Select>
-            <Button variant="outline" onClick={() => setShowUploadDialog(true)}>
+            <BatchTemplatePrint organisation={organisation} />
+            <Button variant="outline" onClick={() => setShowUploadForm(true)} className="border-[#0072C6]/30 hover:border-[#0072C6]">
               <Upload className="w-4 h-4 mr-2" />
-              Upload
+              Upload Form
             </Button>
             <Button onClick={() => { setEditingBatch(null); setShowBatchDialog(true); }} className="bg-[#1EB053]">
               <Plus className="w-4 h-4 mr-2" />
@@ -510,6 +514,23 @@ export default function BatchManagement({ products = [], warehouses = [], vehicl
         products={products}
         warehouses={warehouses}
         onSuccess={() => queryClient.invalidateQueries({ queryKey: ['inventoryBatches'] })}
+      />
+
+      {/* Upload Filled Form Dialog */}
+      <DocumentUploadExtractor
+        open={showUploadForm}
+        onOpenChange={setShowUploadForm}
+        autoDetectType={false}
+        forcedRecordType="batch"
+        title="Upload Filled Batch Form"
+        description="Upload your filled batch entry form. The system will automatically extract batch information."
+        orgId={orgId}
+        currentEmployee={currentEmployee}
+        onSuccess={() => {
+          queryClient.invalidateQueries({ queryKey: ['inventoryBatches'] });
+          queryClient.invalidateQueries({ queryKey: ['products'] });
+          setShowUploadForm(false);
+        }}
       />
 
       {/* Add/Edit Dialog */}
