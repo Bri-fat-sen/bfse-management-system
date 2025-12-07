@@ -112,7 +112,6 @@ const menuSections = [
     title: "Finance & Reports",
     items: [
       { name: "Financial Overview", icon: DollarSign, page: "Finance", module: "finance" },
-      { name: "Business Analytics", icon: BarChart3, page: "Analytics", module: "dashboard" },
       { name: "Activity Logs", icon: Activity, page: "ActivityLog", module: "activity_log" },
     ]
   },
