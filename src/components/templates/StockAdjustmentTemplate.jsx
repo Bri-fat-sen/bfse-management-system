@@ -21,7 +21,6 @@ export default function StockAdjustmentTemplate({ organisation }) {
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Stock Adjustment Form - ${organisation?.name || 'Organisation'}</title>
   <style>${styles}
-    /* Additional form-specific styles */
     .instructions {
       background: var(--gray-50);
       padding: 16px 20px;
@@ -127,7 +126,6 @@ export default function StockAdjustmentTemplate({ organisation }) {
     ${header}
     
     <div class="content">
-      <!-- Instructions -->
       <div class="instructions">
         <h3>📋 Instructions - STOCK ADJUSTMENT FORM</h3>
         <ol>
@@ -141,7 +139,6 @@ export default function StockAdjustmentTemplate({ organisation }) {
         </ol>
       </div>
 
-      <!-- Stock Movement Information -->
       <div class="form-section">
         <div class="section-title">
           <div class="icon">📦</div>
@@ -163,7 +160,6 @@ export default function StockAdjustmentTemplate({ organisation }) {
         </div>
       </div>
 
-      <!-- Stock Items Table -->
       <div class="form-section">
         <div class="section-title">
           <div class="icon">📋</div>
@@ -195,7 +191,6 @@ export default function StockAdjustmentTemplate({ organisation }) {
         </table>
       </div>
 
-      <!-- Notes -->
       <div class="form-section">
         <div class="form-field full-width">
           <label>Additional Notes / Comments</label>
@@ -203,7 +198,6 @@ export default function StockAdjustmentTemplate({ organisation }) {
         </div>
       </div>
 
-      <!-- Signatures -->
       <div class="signature-section">
         <div class="signature-box">
           <p><strong>Prepared By:</strong></p>

@@ -21,7 +21,6 @@ export default function RevenueEntryTemplate({ organisation }) {
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Revenue Entry Form - ${organisation?.name || 'Organisation'}</title>
   <style>${styles}
-    /* Additional form-specific styles */
     .instructions {
       background: var(--gray-50);
       padding: 16px 20px;
@@ -127,7 +126,6 @@ export default function RevenueEntryTemplate({ organisation }) {
     ${header}
     
     <div class="content">
-      <!-- Instructions -->
       <div class="instructions">
         <h3>📋 Instructions - REVENUE ENTRY FORM</h3>
         <ol>
@@ -141,7 +139,6 @@ export default function RevenueEntryTemplate({ organisation }) {
         </ol>
       </div>
 
-      <!-- Revenue Information -->
       <div class="form-section">
         <div class="section-title">
           <div class="icon">📈</div>
@@ -159,7 +156,6 @@ export default function RevenueEntryTemplate({ organisation }) {
         </div>
       </div>
 
-      <!-- Revenue Items Table -->
       <div class="form-section">
         <div class="section-title">
           <div class="icon">📋</div>
@@ -196,7 +192,6 @@ export default function RevenueEntryTemplate({ organisation }) {
         </table>
       </div>
 
-      <!-- Notes -->
       <div class="form-section">
         <div class="form-field full-width">
           <label>Notes / Comments</label>
@@ -204,7 +199,6 @@ export default function RevenueEntryTemplate({ organisation }) {
         </div>
       </div>
 
-      <!-- Signatures -->
       <div class="signature-section">
         <div class="signature-box">
           <p><strong>Recorded By:</strong></p>

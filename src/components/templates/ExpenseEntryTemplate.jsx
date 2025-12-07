@@ -21,7 +21,6 @@ export default function ExpenseEntryTemplate({ organisation }) {
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Expense Entry Form - ${organisation?.name || 'Organisation'}</title>
   <style>${styles}
-    /* Additional form-specific styles */
     .instructions {
       background: var(--gray-50);
       padding: 16px 20px;
@@ -127,7 +126,6 @@ export default function ExpenseEntryTemplate({ organisation }) {
     ${header}
     
     <div class="content">
-      <!-- Instructions -->
       <div class="instructions">
         <h3>📋 Instructions - EXPENSE ENTRY FORM</h3>
         <ol>
@@ -141,7 +139,6 @@ export default function ExpenseEntryTemplate({ organisation }) {
         </ol>
       </div>
 
-      <!-- Expense Information -->
       <div class="form-section">
         <div class="section-title">
           <div class="icon">💰</div>
@@ -159,7 +156,6 @@ export default function ExpenseEntryTemplate({ organisation }) {
         </div>
       </div>
 
-      <!-- Expense Items Table -->
       <div class="form-section">
         <div class="section-title">
           <div class="icon">📋</div>
@@ -202,7 +198,6 @@ export default function ExpenseEntryTemplate({ organisation }) {
         </table>
       </div>
 
-      <!-- Notes -->
       <div class="form-section">
         <div class="form-field full-width">
           <label>Notes / Comments</label>
@@ -210,7 +205,6 @@ export default function ExpenseEntryTemplate({ organisation }) {
         </div>
       </div>
 
-      <!-- Signatures -->
       <div class="signature-section">
         <div class="signature-box">
           <p><strong>Prepared By:</strong></p>
