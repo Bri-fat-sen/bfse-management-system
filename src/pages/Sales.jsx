@@ -59,6 +59,7 @@ import LoadingSpinner from "@/components/ui/LoadingSpinner";
 import ReceiptDialog from "@/components/sales/ReceiptDialog";
 import InvoiceDialog from "@/components/sales/InvoiceDialog";
 import DocumentUploadExtractor from "@/components/finance/DocumentUploadExtractor";
+import PrintableFormsDownload from "@/components/finance/PrintableFormsDownload";
 
 export default function Sales() {
   const toast = useToast();
@@ -80,6 +81,7 @@ export default function Sales() {
   const [showInvoice, setShowInvoice] = useState(false);
   const [autoSetupDone, setAutoSetupDone] = useState(false);
   const [showUploadDialog, setShowUploadDialog] = useState(false);
+  const [showFormsDialog, setShowFormsDialog] = useState(false);
 
   const { data: user } = useQuery({
     queryKey: ['currentUser'],
@@ -639,14 +641,24 @@ export default function Sales() {
           title="Sales & POS"
           subtitle="Process sales and view transactions"
         />
-        <Button
-          onClick={() => setShowUploadDialog(true)}
-          variant="outline"
-          className="gap-2"
-        >
-          <Upload className="w-4 h-4" />
-          <span className="hidden sm:inline">Upload Sales</span>
-        </Button>
+        <div className="flex gap-2">
+          <Button
+            onClick={() => setShowFormsDialog(true)}
+            variant="outline"
+            className="gap-2"
+          >
+            <Printer className="w-4 h-4" />
+            <span className="hidden sm:inline">Print Forms</span>
+          </Button>
+          <Button
+            onClick={() => setShowUploadDialog(true)}
+            variant="outline"
+            className="gap-2"
+          >
+            <Upload className="w-4 h-4" />
+            <span className="hidden sm:inline">Upload Sales</span>
+          </Button>
+        </div>
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab}>
@@ -1170,6 +1182,14 @@ export default function Sales() {
           queryClient.invalidateQueries({ queryKey: ['sales', orgId] });
           queryClient.invalidateQueries({ queryKey: ['customers', orgId] });
         }}
+      />
+
+      {/* Printable Forms Dialog */}
+      <PrintableFormsDownload
+        open={showFormsDialog}
+        onOpenChange={setShowFormsDialog}
+        organisation={organisation?.[0]}
+        filterForms={['revenue_retail_sales', 'revenue_warehouse_sales', 'revenue_vehicle_sales']}
       />
     </div>
   );

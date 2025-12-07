@@ -18,7 +18,8 @@ import {
   FileText,
   Package,
   Wrench,
-  AlertTriangle
+  AlertTriangle,
+  Printer
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -53,6 +54,7 @@ import MaintenanceDialog from "@/components/transport/MaintenanceDialog";
 import { MaintenanceCard, UpcomingMaintenanceCard, MaintenanceStats } from "@/components/transport/MaintenanceList";
 import { isPast, differenceInDays } from "date-fns";
 import AIRouteOptimizer from "@/components/ai/AIRouteOptimizer";
+import PrintableFormsDownload from "@/components/finance/PrintableFormsDownload";
 
 export default function Transport() {
   const toast = useToast();
@@ -66,6 +68,7 @@ export default function Transport() {
   const [showMaintenanceDialog, setShowMaintenanceDialog] = useState(false);
   const [editingMaintenance, setEditingMaintenance] = useState(null);
   const [selectedVehicleForMaintenance, setSelectedVehicleForMaintenance] = useState(null);
+  const [showFormsDialog, setShowFormsDialog] = useState(false);
 
   const { data: user } = useQuery({
     queryKey: ['currentUser'],
@@ -282,12 +285,22 @@ export default function Transport() {
 
   return (
     <div className="space-y-6">
-      <PageHeader
-        title="Transport & Drivers"
-        subtitle="Manage vehicles, routes, and driver trips"
-        action={() => setShowTripDialog(true)}
-        actionLabel="Record Trip"
-      />
+      <div className="flex items-center justify-between">
+        <PageHeader
+          title="Transport & Drivers"
+          subtitle="Manage vehicles, routes, and driver trips"
+          action={() => setShowTripDialog(true)}
+          actionLabel="Record Trip"
+        />
+        <Button
+          onClick={() => setShowFormsDialog(true)}
+          variant="outline"
+          className="gap-2"
+        >
+          <Printer className="w-4 h-4" />
+          <span className="hidden sm:inline">Print Forms</span>
+        </Button>
+      </div>
 
       {/* AI Route Optimization */}
       <AIRouteOptimizer 
@@ -894,6 +907,14 @@ export default function Transport() {
         open={showRouteDialog}
         onOpenChange={setShowRouteDialog}
         orgId={orgId}
+      />
+
+      {/* Printable Forms Dialog */}
+      <PrintableFormsDownload
+        open={showFormsDialog}
+        onOpenChange={setShowFormsDialog}
+        organisation={organisation?.[0]}
+        filterForms={['revenue_trip', 'expense_fuel', 'expense_maintenance', 'expense_truck_contract', 'expense_transport']}
       />
 
       {/* Vehicle Dialog */}

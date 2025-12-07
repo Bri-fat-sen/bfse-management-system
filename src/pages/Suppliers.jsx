@@ -22,7 +22,8 @@ import {
   Ban,
   MoreVertical,
   Eye,
-  Download
+  Download,
+  Printer
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -56,6 +57,7 @@ import ReceiveStockDialog from "@/components/suppliers/ReceiveStockDialog";
 import PriceHistoryDialog from "@/components/suppliers/PriceHistoryDialog";
 import { PermissionGate } from "@/components/permissions/PermissionGate";
 import { format } from "date-fns";
+import PrintableFormsDownload from "@/components/finance/PrintableFormsDownload";
 
 const STATUS_CONFIG = {
   draft: { label: 'Draft', color: 'bg-gray-100 text-gray-700', icon: FileText },
@@ -85,6 +87,7 @@ export default function Suppliers() {
   const [receivingPO, setReceivingPO] = useState(null);
   const [showPriceHistory, setShowPriceHistory] = useState(false);
   const [priceHistorySupplier, setPriceHistorySupplier] = useState(null);
+  const [showFormsDialog, setShowFormsDialog] = useState(false);
 
   const { data: user } = useQuery({
     queryKey: ['currentUser'],
@@ -126,6 +129,14 @@ export default function Suppliers() {
     queryKey: ['warehouses', orgId],
     queryFn: () => base44.entities.Warehouse.filter({ organisation_id: orgId }),
     enabled: !!orgId,
+  });
+
+  const { data: organisation } = useQuery({
+    queryKey: ['organisation', orgId],
+    queryFn: () => base44.entities.Organisation.filter({ id: orgId }),
+    enabled: !!orgId,
+    staleTime: 10 * 60 * 1000,
+    refetchOnWindowFocus: false,
   });
 
   const deleteMutation = useMutation({
@@ -219,6 +230,13 @@ export default function Suppliers() {
           actionLabel="Add Supplier"
         >
           <div className="flex flex-wrap gap-2">
+            <Button variant="outline" size="sm" className="text-xs sm:text-sm" onClick={() => {
+              setShowFormsDialog(true);
+            }}>
+              <Printer className="w-4 h-4 sm:mr-2" />
+              <span className="hidden sm:inline">Print Forms</span>
+              <span className="sm:hidden">Forms</span>
+            </Button>
             <Button variant="outline" size="sm" className="text-xs sm:text-sm" onClick={() => {
               setEditingPO(null);
               setShowPODialog(true);
@@ -742,6 +760,14 @@ export default function Suppliers() {
           onOpenChange={setShowPriceHistory}
           supplier={priceHistorySupplier}
           orgId={orgId}
+        />
+
+        {/* Printable Forms Dialog */}
+        <PrintableFormsDownload
+          open={showFormsDialog}
+          onOpenChange={setShowFormsDialog}
+          organisation={organisation?.[0]}
+          filterForms={['expense_supplies', 'expense_general']}
         />
       </div>
     </PermissionGate>
