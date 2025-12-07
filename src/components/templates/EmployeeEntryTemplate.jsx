@@ -19,7 +19,7 @@ export default function EmployeeEntryTemplate({ organisation }) {
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Employee Entry Form - ${organisation?.name || 'Organisation'}</title>
+  <title>Employee Onboarding Form - ${organisation?.name || 'Organisation'}</title>
   <style>${styles}
     /* Additional form-specific styles */
     .instructions {
@@ -97,6 +97,10 @@ export default function EmployeeEntryTemplate({ organisation }) {
       min-height: 80px;
     }
     
+    .form-field .input-box:focus-within {
+      border-color: var(--primary);
+    }
+    
     .signature-section {
       display: grid;
       grid-template-columns: 1fr 1fr;
@@ -126,10 +130,10 @@ export default function EmployeeEntryTemplate({ organisation }) {
   <div class="document">
     ${header}
     
-    <div class="content">`
+    <div class="content">
       <!-- Instructions -->
       <div class="instructions">
-        <h3>📋 Instructions - EMPLOYEE ONBOARDING FORM</h3>
+        <h3>📋 Instructions - EMPLOYEE ENTRY FORM</h3>
         <ol>
           <li><strong>DOCUMENT TYPE: EMPLOYEE ENTRY FORM</strong></li>
           <li>Fill in all required fields (*) with clear, legible handwriting</li>
@@ -224,14 +228,6 @@ export default function EmployeeEntryTemplate({ organisation }) {
             <label>Emergency Contact Phone</label>
             <div class="input-box"></div>
           </div>
-        </div>
-      </div>
-
-      <!-- Notes -->
-      <div class="form-section">
-        <div class="form-field full-width">
-          <label>Additional Notes</label>
-          <div class="input-box large"></div>
         </div>
       </div>
 

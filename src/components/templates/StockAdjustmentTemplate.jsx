@@ -10,7 +10,7 @@ export default function StockAdjustmentTemplate({ organisation }) {
 
   const getTemplateHTML = () => {
     const styles = getUnifiedPDFStyles(organisation, 'report');
-    const header = getUnifiedHeader(organisation, 'Stock Adjustment Form', 'STOCK-FORM', new Date().toLocaleDateString(), 'report');
+    const header = getUnifiedHeader(organisation, 'Stock Adjustment Form', 'STOCK-ADJ-FORM', new Date().toLocaleDateString(), 'report');
     const footer = getUnifiedFooter(organisation);
 
     return `
@@ -97,6 +97,10 @@ export default function StockAdjustmentTemplate({ organisation }) {
       min-height: 80px;
     }
     
+    .form-field .input-box:focus-within {
+      border-color: var(--primary);
+    }
+    
     .signature-section {
       display: grid;
       grid-template-columns: 1fr 1fr;
@@ -126,7 +130,7 @@ export default function StockAdjustmentTemplate({ organisation }) {
   <div class="document">
     ${header}
     
-    <div class="content">`
+    <div class="content">
       <!-- Instructions -->
       <div class="instructions">
         <h3>📋 Instructions - STOCK ADJUSTMENT FORM</h3>
@@ -141,7 +145,7 @@ export default function StockAdjustmentTemplate({ organisation }) {
         </ol>
       </div>
 
-      <!-- Stock Movement Information -->
+      <!-- Movement Information -->
       <div class="form-section">
         <div class="section-title">
           <div class="icon">📦</div>
@@ -193,14 +197,6 @@ export default function StockAdjustmentTemplate({ organisation }) {
             `).join('')}
           </tbody>
         </table>
-      </div>
-
-      <!-- Notes -->
-      <div class="form-section">
-        <div class="form-field full-width">
-          <label>Additional Notes / Comments</label>
-          <div class="input-box large"></div>
-        </div>
       </div>
 
       <!-- Signatures -->
