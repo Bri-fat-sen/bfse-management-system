@@ -213,33 +213,61 @@ const generateFormHTML = (formType, org) => {
             <div class="icon">⛽</div>
             Fuel Information
           </div>
-        <div class="field-row">
-          <div class="field"><label>Date</label><div class="field-input"></div></div>
-          <div class="field"><label>Vehicle Registration</label><div class="field-input"></div></div>
-          <div class="field"><label>Driver Name</label><div class="field-input"></div></div>
+          <div class="form-grid">
+            <div class="form-field">
+              <label>Date <span class="required">*</span></label>
+              <div class="input-box"></div>
+            </div>
+            <div class="form-field">
+              <label>Vehicle Registration <span class="required">*</span></label>
+              <div class="input-box"></div>
+            </div>
+            <div class="form-field">
+              <label>Driver Name</label>
+              <div class="input-box"></div>
+            </div>
+          </div>
+          <div class="form-grid">
+            <div class="form-field">
+              <label>Fuel Station</label>
+              <div class="input-box"></div>
+            </div>
+            <div class="form-field">
+              <label>Current Mileage (km)</label>
+              <div class="input-box"></div>
+            </div>
+          </div>
         </div>
-        <div class="field-row">
-          <div class="field"><label>Fuel Station</label><div class="field-input"></div></div>
-          <div class="field"><label>Current Mileage (km)</label><div class="field-input"></div></div>
+
+        <div class="form-section">
+          <div class="section-title">
+            <div class="icon">⛽</div>
+            Fuel Details
+          </div>
+          <table class="data-table">
+            <thead>
+              <tr><th>Fuel Type</th><th>Litres <span class="required">*</span></th><th>Price/Litre (Le)</th><th>Total (Le) <span class="required">*</span></th></tr>
+            </thead>
+            <tbody>
+              <tr><td>☐ Petrol  ☐ Diesel</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td></tr>
+              <tr class="total-row"><td colspan="3">TOTAL AMOUNT</td><td></td></tr>
+            </tbody>
+          </table>
         </div>
-        <div class="section-title">⛽ Fuel Details</div>
-        <table>
-          <tr><th>Fuel Type</th><th>Litres</th><th>Price per Litre (Le)</th><th>Total (Le)</th></tr>
-          <tr>
-            <td>
-              <div class="checkbox-group">
-                <div class="checkbox-item"><span class="checkbox"></span> Petrol</div>
-                <div class="checkbox-item"><span class="checkbox"></span> Diesel</div>
-              </div>
-            </td>
-            <td></td><td></td><td></td>
-          </tr>
-          <tr class="total-row"><td colspan="3">TOTAL AMOUNT</td><td></td></tr>
-        </table>
-        <div class="field-row">
-          <div class="field"><label>Receipt Number</label><div class="field-input"></div></div>
-          <div class="field"><label>Notes</label><div class="field-input"></div></div>
+
+        <div class="form-section">
+          <div class="form-grid">
+            <div class="form-field">
+              <label>Receipt Number</label>
+              <div class="input-box"></div>
+            </div>
+            <div class="form-field full-width">
+              <label>Notes</label>
+              <div class="input-box"></div>
+            </div>
+          </div>
         </div>
+
         ${signatureSection}
       </div>
     `,
