@@ -145,6 +145,10 @@ export default function BatchManagement({ products = [], warehouses = [], vehicl
         organisation_id: orgId, 
         batch_id: batchId 
       });
+      
+      // Calculate total allocated stock to subtract from product
+      const totalAllocatedStock = batchAllocations.reduce((sum, sl) => sum + (sl.quantity || 0), 0);
+      
       if (batchAllocations.length > 0) {
         await Promise.all(batchAllocations.map(sl => base44.entities.StockLevel.delete(sl.id)));
       }
@@ -158,6 +162,17 @@ export default function BatchManagement({ products = [], warehouses = [], vehicl
         await Promise.all(batchMovements.map(sm => base44.entities.StockMovement.delete(sm.id)));
       }
       
+      // Update product stock quantity by subtracting the deleted batch quantity
+      if (batch?.product_id) {
+        const product = products.find(p => p.id === batch.product_id);
+        if (product) {
+          const newStockQty = Math.max(0, (product.stock_quantity || 0) - (batch.quantity || 0));
+          await base44.entities.Product.update(product.id, {
+            stock_quantity: newStockQty
+          });
+        }
+      }
+      
       // Log audit before deletion
       await logInventoryAudit({
         orgId,
@@ -169,7 +184,7 @@ export default function BatchManagement({ products = [], warehouses = [], vehicl
         performedByName: currentEmployee?.full_name,
         batchNumber: batch?.batch_number,
         quantityChanged: -(batch?.quantity || 0),
-        notes: `Deleted batch ${batch?.batch_number} with ${batch?.quantity} units. Also deleted ${batchAllocations.length} allocations and ${batchMovements.length} movements.`,
+        notes: `Deleted batch ${batch?.batch_number} with ${batch?.quantity} units. Removed ${batchAllocations.length} allocations (${totalAllocatedStock} units) and ${batchMovements.length} movements. Updated product stock.`,
         previousValues: { quantity: batch?.quantity, allocated: batch?.allocated_quantity }
       });
       
@@ -180,7 +195,8 @@ export default function BatchManagement({ products = [], warehouses = [], vehicl
       queryClient.invalidateQueries({ queryKey: ['inventoryBatches'] });
       queryClient.invalidateQueries({ queryKey: ['stockLevels'] });
       queryClient.invalidateQueries({ queryKey: ['stockMovements'] });
-      toast.success("Batch deleted", "Batch and related data removed");
+      queryClient.invalidateQueries({ queryKey: ['products'] });
+      toast.success("Batch deleted", "Batch, stock allocations, and product stock updated");
     },
     onError: (error) => {
       console.error('Delete batch error:', error);
