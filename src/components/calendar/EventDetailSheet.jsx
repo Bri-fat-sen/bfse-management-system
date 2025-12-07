@@ -1,5 +1,8 @@
 import React from "react";
 import { format, parseISO } from "date-fns";
+import { base44 } from "@/api/base44Client";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
 import {
   Sheet,
   SheetContent,
@@ -19,7 +22,8 @@ import {
   Edit,
   Video,
   Phone,
-  Briefcase
+  Briefcase,
+  Trash2
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -45,9 +49,29 @@ export default function EventDetailSheet({
   event, 
   onEdit 
 }) {
+  const queryClient = useQueryClient();
+
+  const deleteTaskMutation = useMutation({
+    mutationFn: (taskId) => base44.entities.Task.delete(taskId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['tasks'] });
+      toast.success("Task deleted successfully");
+      onOpenChange(false);
+    },
+    onError: () => {
+      toast.error("Failed to delete task");
+    },
+  });
+
   if (!event) return null;
 
   const { type, data } = event;
+
+  const handleDeleteTask = () => {
+    if (confirm("Are you sure you want to delete this task?")) {
+      deleteTaskMutation.mutate(data.id);
+    }
+  };
 
   const renderTaskDetails = () => (
     <div className="space-y-4">
@@ -91,13 +115,22 @@ export default function EventDetailSheet({
         )}
       </div>
 
-      <Button
-        onClick={() => onEdit?.(event)}
-        className="w-full bg-gradient-to-r from-[#1EB053] to-[#0072C6]"
-      >
-        <Edit className="w-4 h-4 mr-2" />
-        Edit Task
-      </Button>
+      <div className="flex gap-2">
+        <Button
+          onClick={() => onEdit?.(event)}
+          className="flex-1 bg-gradient-to-r from-[#1EB053] to-[#0072C6]"
+        >
+          <Edit className="w-4 h-4 mr-2" />
+          Edit Task
+        </Button>
+        <Button
+          onClick={handleDeleteTask}
+          variant="destructive"
+          disabled={deleteTaskMutation.isPending}
+        >
+          <Trash2 className="w-4 h-4" />
+        </Button>
+      </div>
     </div>
   );
 
