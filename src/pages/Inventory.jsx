@@ -485,6 +485,7 @@ export default function Inventory() {
             stockLevels={stockLevels}
             orgId={orgId}
             currentEmployee={currentEmployee}
+            organisation={currentOrg}
           />
         </TabsContent>
 
