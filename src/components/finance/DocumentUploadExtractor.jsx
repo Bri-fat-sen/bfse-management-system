@@ -560,31 +560,6 @@ IMPORTANT FOR BATCH ENTRY FORMS:
         };
       });
 
-      // Save uploaded document to HR Documents
-      if (orgId && currentEmployee) {
-        try {
-          await base44.entities.EmployeeDocument.create({
-            organisation_id: orgId,
-            employee_id: currentEmployee?.id,
-            employee_name: currentEmployee?.full_name,
-            employee_email: currentEmployee?.email || currentEmployee?.user_email,
-            document_type: 'custom',
-            title: `Uploaded ${detectedType.charAt(0).toUpperCase() + detectedType.slice(1)} Document - ${format(new Date(), 'MMM d, yyyy')}`,
-            content: `<div class="sl-document"><h2>Uploaded Document</h2><p>This document was uploaded and processed on ${format(new Date(), 'MMMM d, yyyy')}.</p><p><strong>Type:</strong> ${RECORD_TYPES.find(r => r.value === detectedType)?.label || detectedType}</p><p><strong>Items Extracted:</strong> ${selectedItems.length}</p><p><strong>Total Value:</strong> Le ${selectedItems.reduce((sum, e) => sum + (e.amount || 0), 0).toLocaleString()}</p></div>`,
-            variables: {},
-            status: 'signed',
-            requires_signature: false,
-            issued_by_id: currentEmployee?.id,
-            issued_by_name: currentEmployee?.full_name,
-            issued_at: new Date().toISOString(),
-            signed_at: new Date().toISOString(),
-            signed_by_name: currentEmployee?.full_name
-          });
-        } catch (error) {
-          console.error('Failed to save document to HR Documents:', error);
-        }
-      }
-
       for (const item of selectedItems) {
         if ((isRevenue || detectedType === 'auto') && item.product_id && uploadLocation) {
           // Create sales record from revenue document

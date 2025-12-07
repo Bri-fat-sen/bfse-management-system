@@ -661,31 +661,7 @@ export default function CreateDocumentDialog({
                   <div className="p-5">
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                       {selectedTemplate.variables
-                        .filter(v => {
-                          // Don't show auto-filled variables unless empty
-                          if (v.auto_fill && variables[v.key]) return false;
-                          
-                          // Conditional display logic
-                          if (v.conditional) {
-                            const { field, value } = v.conditional;
-                            // Only show if the condition field matches the value
-                            if (variables[field] !== value) return false;
-                          }
-                          
-                          // Hide for specific document types
-                          if (v.hideForTypes && v.hideForTypes.includes(documentType)) return false;
-                          
-                          // Show only for specific document types
-                          if (v.showOnlyForTypes && !v.showOnlyForTypes.includes(documentType)) return false;
-                          
-                          // Hide if employee doesn't match criteria
-                          if (v.requiresEmployeeField && selectedEmployees.length > 0) {
-                            const emp = employees.find(e => e.id === selectedEmployees[0]);
-                            if (!emp?.[v.requiresEmployeeField]) return false;
-                          }
-                          
-                          return true;
-                        })
+                        .filter(v => !v.auto_fill || !variables[v.key])
                         .map(v => (
                         <div key={v.key} className="space-y-1.5">
                           <Label className="text-xs font-medium text-gray-600 flex items-center gap-1.5">
