@@ -144,7 +144,16 @@ export default function Layout({ children, currentPageName }) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [darkMode, setDarkMode] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
-  const [collapsedSections, setCollapsedSections] = useState({ "Home": false });
+  const [collapsedSections, setCollapsedSections] = useState({ 
+    "Home": false,
+    "Sales & Customers": true,
+    "Inventory & Supply": true,
+    "Transport & Logistics": true,
+    "Human Resources": true,
+    "Finance & Reports": true,
+    "System & Settings": true,
+    "Administration": true
+  });
   const [chatPanelOpen, setChatPanelOpen] = useState(false);
   const [showQuickSale, setShowQuickSale] = useState(false);
   const [showStockCheck, setShowStockCheck] = useState(false);
