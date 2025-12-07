@@ -580,22 +580,11 @@ export default function PrintFormsButtons({ organisation }) {
 
     const html = isExpense ? generateExpenseFormHTML(formType) : generateRevenueFormHTML(formType);
     
-    const printWindow = window.open('', '_blank');
-    if (printWindow) {
-      printWindow.document.write(html);
-      printWindow.document.close();
-      
-      setTimeout(() => {
-        printWindow.print();
-        setPrintingExpense(false);
-        setPrintingRevenue(false);
-        toast.success("Form ready", `${formType.name} opened for printing`);
-      }, 500);
-    } else {
-      setPrintingExpense(false);
-      setPrintingRevenue(false);
-      toast.error("Print failed", "Please allow popups for this site");
-    }
+    printUnifiedPDF(html, `${formType.name.replace(/\s+/g, '_')}_${new Date().toISOString().split('T')[0]}.pdf`);
+    
+    setPrintingExpense(false);
+    setPrintingRevenue(false);
+    toast.success("PDF Generated", `${formType.name} downloaded successfully`);
   };
 
   return (
