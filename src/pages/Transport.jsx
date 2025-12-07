@@ -96,6 +96,12 @@ export default function Transport() {
     refetchOnWindowFocus: false,
   });
 
+  const { data: warehouses = [] } = useQuery({
+    queryKey: ['warehouses', orgId],
+    queryFn: () => base44.entities.Warehouse.filter({ organisation_id: orgId }),
+    enabled: !!orgId,
+  });
+
   const { data: trips = [], isLoading: loadingTrips } = useQuery({
     queryKey: ['trips', orgId],
     queryFn: () => base44.entities.Trip.filter({ organisation_id: orgId }, '-created_date', 100),
@@ -914,7 +920,7 @@ export default function Transport() {
         open={showFormsDialog}
         onOpenChange={setShowFormsDialog}
         organisation={organisation?.[0]}
-        filterForms={['revenue_trip', 'expense_fuel', 'expense_maintenance', 'expense_truck_contract', 'expense_transport']}
+        filterForms={['revenue_trip', 'revenue_truck_contract', 'expense_fuel', 'expense_maintenance', 'expense_truck_contract', 'expense_transport']}
       />
 
       {/* Vehicle Dialog */}

@@ -24,7 +24,8 @@ import {
   Download,
   MoreVertical,
   FileText,
-  Upload
+  Upload,
+  Printer
 } from "lucide-react";
 import {
   DropdownMenu,
