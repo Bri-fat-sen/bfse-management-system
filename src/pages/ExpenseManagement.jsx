@@ -51,6 +51,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import AdvancedDocumentExtractor from "@/components/finance/AdvancedDocumentExtractor";
+import ExpenseEntryTemplate from "@/components/templates/ExpenseEntryTemplate";
 
 const EXPENSE_CATEGORIES = [
   { value: "fuel", label: "Fuel" },
@@ -234,6 +235,12 @@ export default function ExpenseManagement() {
   const orgId = currentEmployee?.organisation_id;
   const isAdmin = ['super_admin', 'org_admin'].includes(currentEmployee?.role);
 
+  const { data: organisation } = useQuery({
+    queryKey: ['organisation', orgId],
+    queryFn: () => base44.entities.Organisation.filter({ id: orgId }),
+    enabled: !!orgId,
+  });
+
   const { data: expenses = [], isLoading } = useQuery({
     queryKey: ['allExpenses', orgId],
     queryFn: async () => {
@@ -408,7 +415,8 @@ export default function ExpenseManagement() {
           subtitle="Review and approve all expense submissions"
           icon={Shield}
         />
-        <div className="flex gap-2">
+        <div className="flex gap-2 flex-wrap">
+          <ExpenseEntryTemplate organisation={organisation?.[0]} />
           {filteredExpenses.length > 0 && (
             <Button
               variant="outline"

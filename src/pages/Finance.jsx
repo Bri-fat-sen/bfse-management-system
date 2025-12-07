@@ -77,6 +77,8 @@ import BankAccountsReport from "@/components/finance/BankAccountsReport";
 import BudgetingModule from "@/components/finance/BudgetingModule";
 import AIFinancialAnalysis from "@/components/finance/AIFinancialAnalysis";
 import DocumentUploadExtractor from "@/components/finance/DocumentUploadExtractor";
+import ExpenseEntryTemplate from "@/components/templates/ExpenseEntryTemplate";
+import RevenueEntryTemplate from "@/components/templates/RevenueEntryTemplate";
 
 const expenseCategories = [
   "fuel", "maintenance", "utilities", "supplies", "rent", 
@@ -1089,6 +1091,7 @@ export default function Finance() {
               <CardHeader className="flex flex-row items-center justify-between flex-wrap gap-2">
                 <CardTitle>Expense Records</CardTitle>
                 <div className="flex items-center gap-2 flex-wrap">
+                  <ExpenseEntryTemplate organisation={organisation?.[0]} />
                   <Select value={categoryFilter} onValueChange={setCategoryFilter}>
                     <SelectTrigger className="w-40">
                       <Filter className="w-4 h-4 mr-2" />
@@ -1245,7 +1248,8 @@ export default function Finance() {
                   <DollarSign className="w-5 h-5 text-[#1EB053]" />
                   Revenue from Owners & CEO
                 </CardTitle>
-                <div className="flex gap-2">
+                <div className="flex gap-2 flex-wrap">
+                  <RevenueEntryTemplate organisation={organisation?.[0]} />
                   {filteredRevenues.length > 0 && isAdmin && (
                     <Button 
                       variant="outline"

@@ -71,6 +71,7 @@ import PayComponentManager from "@/components/hr/PayComponentManager";
 import StatutoryRateManager from "@/components/hr/StatutoryRateManager";
 import PayrollApprovalWorkflow from "@/components/hr/PayrollApprovalWorkflow";
 import OvertimePrediction from "@/components/hr/OvertimePrediction";
+import EmployeeEntryTemplate from "@/components/templates/EmployeeEntryTemplate";
 
 export default function HR() {
   const toast = useToast();
@@ -223,7 +224,9 @@ export default function HR() {
       <PageHeader
         title="HR & Payroll"
         subtitle="Manage attendance, payroll, leave and performance"
-      />
+      >
+        <EmployeeEntryTemplate organisation={organisation?.[0]} />
+      </PageHeader>
 
       {/* Stats */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
