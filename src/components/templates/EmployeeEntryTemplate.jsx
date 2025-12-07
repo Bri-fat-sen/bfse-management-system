@@ -9,15 +9,125 @@ export default function EmployeeEntryTemplate({ organisation }) {
   };
 
   const getTemplateHTML = () => {
-    const styles = getUnifiedPDFStyles(organisation);
-    const header = getUnifiedHeader(organisation, {
-      documentType: "EMPLOYEE ONBOARDING FORM",
-      documentNumber: "TEMPLATE",
-      documentDate: new Date().toLocaleDateString()
-    });
+    const styles = getUnifiedPDFStyles(organisation, 'report');
+    const header = getUnifiedHeader(organisation, 'Employee Onboarding Form', 'EMPLOYEE-FORM', new Date().toLocaleDateString(), 'report');
     const footer = getUnifiedFooter(organisation);
 
-    const content = `
+    return `
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Employee Entry Form - ${organisation?.name || 'Organisation'}</title>
+  <style>${styles}
+    /* Additional form-specific styles */
+    .instructions {
+      background: var(--gray-50);
+      padding: 16px 20px;
+      border-radius: 8px;
+      margin-bottom: 24px;
+      border-left: 4px solid var(--primary);
+    }
+    
+    .instructions h3 {
+      font-size: 13px;
+      font-weight: 700;
+      margin-bottom: 10px;
+      color: var(--gray-800);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    
+    .instructions ol {
+      margin-left: 20px;
+      font-size: 12px;
+      color: var(--gray-600);
+      line-height: 1.8;
+    }
+    
+    .instructions li {
+      margin-bottom: 6px;
+    }
+    
+    .form-section {
+      margin-bottom: 28px;
+      page-break-inside: avoid;
+    }
+    
+    .form-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      margin-bottom: 16px;
+    }
+    
+    .form-field {
+      display: flex;
+      flex-direction: column;
+    }
+    
+    .form-field.full-width {
+      grid-column: 1 / -1;
+    }
+    
+    .form-field label {
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--gray-700);
+      margin-bottom: 6px;
+    }
+    
+    .form-field label .required {
+      color: var(--danger);
+      font-weight: 700;
+    }
+    
+    .form-field .input-box {
+      border: 2px solid var(--gray-200);
+      border-radius: 6px;
+      padding: 10px 12px;
+      min-height: 40px;
+      background: white;
+      transition: border-color 0.2s;
+    }
+    
+    .form-field .input-box.large {
+      min-height: 80px;
+    }
+    
+    .signature-section {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 40px;
+      margin-top: 30px;
+      page-break-inside: avoid;
+    }
+    
+    .signature-box {
+      border-top: 2px solid var(--gray-800);
+      padding-top: 10px;
+    }
+    
+    .signature-box p {
+      font-size: 11px;
+      color: var(--gray-600);
+      margin-top: 4px;
+    }
+    
+    .signature-box strong {
+      color: var(--gray-800);
+      font-size: 12px;
+    }
+  </style>
+</head>
+<body>
+  <div class="document">
+    ${header}
+    
+    <div class="content">`
+      <!-- Instructions -->
       <div class="instructions">
         <h3>📋 Instructions - EMPLOYEE ONBOARDING FORM</h3>
         <ol>
@@ -31,118 +141,119 @@ export default function EmployeeEntryTemplate({ organisation }) {
         </ol>
       </div>
 
+      <!-- Personal Information -->
       <div class="form-section">
-        <h3>Personal Information</h3>
+        <div class="section-title">
+          <div class="icon">👤</div>
+          Personal Information
+        </div>
         <div class="form-grid">
           <div class="form-field">
-            <label>First Name *</label>
-            <div class="form-input">____________________</div>
+            <label>First Name <span class="required">*</span></label>
+            <div class="input-box"></div>
           </div>
           <div class="form-field">
-            <label>Last Name *</label>
-            <div class="form-input">____________________</div>
+            <label>Last Name <span class="required">*</span></label>
+            <div class="input-box"></div>
           </div>
           <div class="form-field">
-            <label>Employee Code *</label>
-            <div class="form-input">____________________</div>
+            <label>Employee Code <span class="required">*</span></label>
+            <div class="input-box"></div>
           </div>
           <div class="form-field">
-            <label>Phone Number *</label>
-            <div class="form-input">____________________</div>
+            <label>Phone Number <span class="required">*</span></label>
+            <div class="input-box"></div>
           </div>
           <div class="form-field">
             <label>Email Address</label>
-            <div class="form-input">____________________</div>
+            <div class="input-box"></div>
           </div>
           <div class="form-field">
             <label>Address</label>
-            <div class="form-input">____________________</div>
+            <div class="input-box"></div>
           </div>
         </div>
       </div>
 
+      <!-- Employment Details -->
       <div class="form-section">
-        <h3>Employment Details</h3>
+        <div class="section-title">
+          <div class="icon">💼</div>
+          Employment Details
+        </div>
         <div class="form-grid">
           <div class="form-field">
-            <label>Position / Role *</label>
-            <div class="form-input">____________________</div>
+            <label>Position / Role <span class="required">*</span></label>
+            <div class="input-box"></div>
           </div>
           <div class="form-field">
             <label>Department</label>
-            <div class="form-input">____________________</div>
+            <div class="input-box"></div>
           </div>
           <div class="form-field">
-            <label>Hire Date *</label>
-            <div class="form-input">____________________</div>
+            <label>Hire Date <span class="required">*</span></label>
+            <div class="input-box"></div>
           </div>
           <div class="form-field">
-            <label>Base Salary (Le) *</label>
-            <div class="form-input">____________________</div>
+            <label>Base Salary (Le) <span class="required">*</span></label>
+            <div class="input-box"></div>
           </div>
           <div class="form-field">
             <label>Salary Type</label>
-            <div class="form-input">☐ Monthly  ☐ Hourly  ☐ Daily</div>
+            <div class="input-box">☐ Monthly  ☐ Hourly  ☐ Daily</div>
           </div>
           <div class="form-field">
             <label>Status</label>
-            <div class="form-input">☐ Active  ☐ Inactive</div>
+            <div class="input-box">☐ Active  ☐ Inactive</div>
           </div>
         </div>
       </div>
 
+      <!-- Emergency Contact -->
       <div class="form-section">
-        <h3>Emergency Contact</h3>
+        <div class="section-title">
+          <div class="icon">🚨</div>
+          Emergency Contact
+        </div>
         <div class="form-grid">
           <div class="form-field">
             <label>Emergency Contact Name</label>
-            <div class="form-input">____________________</div>
+            <div class="input-box"></div>
           </div>
           <div class="form-field">
             <label>Emergency Contact Phone</label>
-            <div class="form-input">____________________</div>
+            <div class="input-box"></div>
           </div>
         </div>
       </div>
 
-      <div class="notes-section">
-        <h4>Additional Notes:</h4>
-        <div class="notes-box">
-          <div class="notes-line"></div>
-          <div class="notes-line"></div>
+      <!-- Notes -->
+      <div class="form-section">
+        <div class="form-field full-width">
+          <label>Additional Notes</label>
+          <div class="input-box large"></div>
         </div>
       </div>
 
+      <!-- Signatures -->
       <div class="signature-section">
         <div class="signature-box">
-          <div class="signature-line"></div>
-          <div class="signature-label">Employee Signature</div>
-          <div class="signature-date">Date: ______________</div>
+          <p><strong>Employee Signature:</strong></p>
+          <p style="margin-top: 50px;">Name: _______________________________</p>
+          <p>Date: _______________________________</p>
         </div>
         <div class="signature-box">
-          <div class="signature-line"></div>
-          <div class="signature-label">HR Manager</div>
-          <div class="signature-date">Date: ______________</div>
+          <p><strong>HR Manager:</strong></p>
+          <p style="margin-top: 50px;">Name: _______________________________</p>
+          <p>Date: _______________________________</p>
         </div>
       </div>
-    `;
-
-    return `
-      <!DOCTYPE html>
-      <html>
-        <head>
-          <meta charset="UTF-8">
-          <title>Employee Entry Form</title>
-          <style>${styles}</style>
-        </head>
-        <body>
-          ${header}
-          <div class="content">
-            ${content}
-          </div>
-          ${footer}
-        </body>
-      </html>
+    </div>
+    
+    ${footer}
+  </div>
+</body>
+</html>
     `;
   };
 
