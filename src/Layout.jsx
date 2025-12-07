@@ -34,7 +34,8 @@ import {
   Calendar,
   Lock,
   AlertTriangle,
-  FileText
+  FileText,
+  Upload
 } from "lucide-react";
 import PinLockScreen from "@/components/auth/PinLockScreen";
 import SetPinDialog from "@/components/auth/SetPinDialog";
@@ -115,6 +116,7 @@ const menuSections = [
       { name: "Stock Audit", icon: Package, page: "StockAudit", module: "inventory", adminOnly: true },
       { name: "Organisation", icon: Building2, page: "OrganisationManage", module: "settings", adminOnly: true },
       { name: "Permissions", icon: Shield, page: "RolePermissions", module: "settings", adminOnly: true },
+      { name: "Uploaded Documents", icon: Upload, page: "UploadedDocuments", module: "settings", adminOnly: true },
       { name: "Orphaned Data", icon: AlertTriangle, page: "OrphanedData", module: "settings", adminOnly: true },
       { name: "Reset Data", icon: AlertTriangle, page: "ResetData", module: "settings", adminOnly: true },
       { name: "Settings", icon: Settings, page: "Settings", module: "settings" },
