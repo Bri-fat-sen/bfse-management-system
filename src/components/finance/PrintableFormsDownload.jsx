@@ -1198,9 +1198,7 @@ const generateFormHTML = (formType, org) => {
     </head>
     <body>
       <div class="document">
-        ${header}
         ${forms[formType] || ''}
-        ${footer}
       </div>
     </body>
     </html>
