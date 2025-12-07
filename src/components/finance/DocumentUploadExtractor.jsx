@@ -138,15 +138,24 @@ export default function DocumentUploadExtractor({
 
 Available record types:
 1. EXPENSE - Operating costs, purchases, bills, invoices for things bought, petty cash, maintenance costs
+   → Look for: "EXPENSE ENTRY FORM" in header/title
 2. REVENUE - Sales receipts, income records, contributions, funding received, customer payments
-3. PRODUCTION - Manufacturing records, production batches, batch numbers, product runs with quantities, BATCH ENTRY FORMS
+   → Look for: "REVENUE ENTRY FORM" in header/title
+3. PRODUCTION - Manufacturing records, production batches, batch numbers, product runs with quantities
+   → Look for: "BATCH ENTRY FORM" or "PRODUCTION BATCH ENTRY FORM" in header/title
+   → Fields: Batch Number, Manufacturing Date, Expiry Date, Quantity Produced, Rolls, Weight (kg)
 4. INVENTORY - Stock receipts, goods received notes, inventory counts, stock adjustments
+   → Look for: "STOCK ADJUSTMENT FORM" or "INVENTORY" in header/title
+   → Fields: Stock In, Stock Out, Warehouse/Location
 5. PAYROLL - Salary sheets, payroll records, employee payments, bonus lists, deduction schedules
+   → Look for: "EMPLOYEE ENTRY FORM" or "EMPLOYEE ONBOARDING FORM" in header/title
+   → Fields: Employee Code, Position, Salary, Hire Date
 
-IMPORTANT HINTS:
-- If you see "BATCH ENTRY FORM" or "PRODUCTION BATCH ENTRY FORM" in the header/title, this is definitely PRODUCTION type
-- Look for fields like: Batch Number, Manufacturing Date, Expiry Date, Quantity Produced, Rolls, Weight (kg)
-- Batch forms typically have signature sections at the bottom
+RECOGNITION RULES:
+- Check the document header/title FIRST for form type keywords
+- Forms have signature sections at the bottom
+- Templates have "TEMPLATE" as document number
+- All our standard forms have "Instructions" section at top with "DOCUMENT TYPE:" label
 
 Analyze the document content, headers, columns, and data to determine:
 - What type of record this document represents
@@ -229,17 +238,29 @@ Be specific about WHY you chose that record type.`,
                 warehouse: { type: "string", description: "Warehouse name from 'Warehouse' field" },
                 quality_status: { type: "string", description: "Quality status from 'Quality Status' field (pending/passed/failed)" },
                 notes: { type: "string", description: "Any notes or remarks from 'Notes/Comments' field" },
-                // Payroll specific
-                employee_name: { type: "string", description: "Employee name" },
-                employee_code: { type: "string", description: "Employee ID/code" },
+                // Payroll / Employee specific
+                employee_name: { type: "string", description: "Employee name or full name from form" },
+                employee_code: { type: "string", description: "Employee ID/code from form" },
+                first_name: { type: "string", description: "First name from employee form" },
+                last_name: { type: "string", description: "Last name from employee form" },
+                position: { type: "string", description: "Job position/role from form" },
+                department: { type: "string", description: "Department from form" },
+                hire_date: { type: "string", description: "Hire date in YYYY-MM-DD format" },
+                phone: { type: "string", description: "Phone number from form" },
+                email: { type: "string", description: "Email address from form" },
+                address: { type: "string", description: "Address from form" },
+                salary_type: { type: "string", description: "Salary type: monthly, hourly, or daily" },
+                emergency_contact: { type: "string", description: "Emergency contact name" },
+                emergency_phone: { type: "string", description: "Emergency contact phone" },
                 base_salary: { type: "number", description: "Base salary amount" },
                 bonus: { type: "number", description: "Bonus amount" },
                 deduction: { type: "number", description: "Deduction amount" },
                 net_pay: { type: "number", description: "Net pay amount" },
                 // Inventory specific
-                warehouse: { type: "string", description: "Warehouse or location name" },
-                stock_in: { type: "number", description: "Quantity received/added" },
-                stock_out: { type: "number", description: "Quantity issued/removed" },
+                warehouse: { type: "string", description: "Warehouse or location name from form" },
+                stock_in: { type: "number", description: "Quantity received/added from 'Stock IN' column" },
+                stock_out: { type: "number", description: "Quantity issued/removed from 'Stock OUT' column" },
+                movement_reason: { type: "string", description: "Reason for stock movement from Notes/Reason column" },
                 // Production batch specific
                 rolls: { type: "number", description: "Number of rolls" },
                 weight_kg: { type: "number", description: "Weight in kilograms (kg)" }
@@ -272,11 +293,11 @@ Be specific about WHY you chose that record type.`,
         console.log("ExtractDataFromUploadedFile failed, trying InvokeLLM:", primaryError);
 
         const typeSpecificPrompt = {
-          expense: "Extract expense/purchase items with amounts, vendors, categories",
-          revenue: "Extract revenue/income items with amounts, customers, sources",
-          production: "Extract production batch data with SKUs, quantities, batch numbers",
-          inventory: "Extract inventory/stock data with product names, quantities, warehouses",
-          payroll: "Extract payroll data with employee names, salaries, bonuses, deductions"
+          expense: "Extract expense/purchase items with amounts, vendors, categories from EXPENSE ENTRY FORM",
+          revenue: "Extract revenue/income items with amounts, customers, sources from REVENUE ENTRY FORM",
+          production: "Extract production batch data with SKUs, quantities, batch numbers from BATCH ENTRY FORM",
+          inventory: "Extract inventory/stock movements with products, stock in/out quantities from STOCK ADJUSTMENT FORM",
+          payroll: "Extract employee data with names, codes, positions, salaries from EMPLOYEE ENTRY FORM"
         }[docType] || "Extract all tabular data";
 
         const fallbackResult = await base44.integrations.Core.InvokeLLM({
@@ -501,8 +522,10 @@ IMPORTANT FOR BATCH ENTRY FORMS:
 
       const isInventory = detectedType === "inventory";
       const isPayroll = detectedType === "payroll";
+      const isEmployeeForm = isPayroll && selectedItems.some(i => i.first_name || i.employee_code);
       let inventoryCount = 0;
       let payrollCount = 0;
+      let employeeCount = 0;
 
       // Create missing customers first
       const customerCache = {};
@@ -607,9 +630,33 @@ IMPORTANT FOR BATCH ENTRY FORMS:
           }
 
           salesCount++;
+        } else if (isEmployeeForm && (item.first_name || item.employee_code)) {
+          // Create employee record from form
+          const fullName = item.first_name && item.last_name ? 
+            `${item.first_name} ${item.last_name}` : 
+            item.employee_name || item.first_name || '';
+          
+          await base44.entities.Employee.create({
+            organisation_id: orgId,
+            employee_code: item.employee_code || `EMP-${format(new Date(), 'yyyyMMdd')}-${Math.floor(1000 + Math.random() * 9000)}`,
+            first_name: item.first_name || item.employee_name?.split(' ')[0] || '',
+            last_name: item.last_name || item.employee_name?.split(' ').slice(1).join(' ') || '',
+            full_name: fullName,
+            position: item.position || item.description || '',
+            department: item.department || '',
+            phone: item.phone || '',
+            email: item.email || '',
+            address: item.address || '',
+            hire_date: item.hire_date || item.date || format(new Date(), 'yyyy-MM-dd'),
+            salary_type: item.salary_type?.toLowerCase() || 'monthly',
+            base_salary: item.base_salary || item.amount || 0,
+            status: 'active',
+            emergency_contact: item.emergency_contact || '',
+            emergency_phone: item.emergency_phone || ''
+          });
+          employeeCount++;
         } else if (isPayroll && item.employee_id) {
-          // Create payroll-related record or just log for now
-          // This would typically feed into the payroll processing system
+          // Create payroll-related expense record
           await base44.entities.Expense.create({
             organisation_id: orgId,
             category: 'salaries',
@@ -625,18 +672,21 @@ IMPORTANT FOR BATCH ENTRY FORMS:
           payrollCount++;
         } else if (isInventory && item.product_id) {
           // Create stock movement record
+          const movementQty = item.stock_in || item.stock_out || item.quantity || 0;
+          const movementType = item.stock_in > 0 ? 'in' : 'out';
+          
           await base44.entities.StockMovement.create({
             organisation_id: orgId,
             product_id: item.product_id,
             product_name: item.product_name || item.description,
             warehouse_id: item.warehouse_id || '',
-            warehouse_name: item.warehouse_name || '',
-            movement_type: item.stock_in > 0 ? 'in' : 'out',
-            quantity: item.stock_in || item.stock_out || item.quantity || 0,
+            warehouse_name: item.warehouse_name || item.warehouse || '',
+            movement_type: movementType,
+            quantity: movementQty,
             reference_type: 'manual',
             recorded_by: currentEmployee?.id,
             recorded_by_name: currentEmployee?.full_name,
-            notes: `Imported from document. ${item.description || ''}`
+            notes: item.movement_reason || item.notes || `Imported from STOCK ADJUSTMENT FORM. ${item.description || ''}`
           });
           inventoryCount++;
         } else if (isProduction) {
@@ -720,6 +770,7 @@ IMPORTANT FOR BATCH ENTRY FORMS:
       setDetectedType(type);
       
       const messages = [];
+      if (employeeCount > 0) messages.push(`${employeeCount} employee(s)`);
       if (salesCount > 0) messages.push(`${salesCount} sale(s)`);
       if (batchCount > 0) messages.push(`${batchCount} production batch(es)`);
       if (expenseCount > 0) messages.push(`${expenseCount} expense(s)`);
