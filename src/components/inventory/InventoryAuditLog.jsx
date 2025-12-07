@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { base44 } from "@/api/base44Client";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useToast } from "@/components/ui/Toast";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -61,6 +62,8 @@ const ENTITY_ICONS = {
 };
 
 export default function InventoryAuditLog({ orgId }) {
+  const toast = useToast();
+  const queryClient = useQueryClient();
   const [searchTerm, setSearchTerm] = useState("");
   const [actionFilter, setActionFilter] = useState("all");
   const [entityFilter, setEntityFilter] = useState("all");
@@ -68,6 +71,17 @@ export default function InventoryAuditLog({ orgId }) {
   const [page, setPage] = useState(0);
   const [selectedAudit, setSelectedAudit] = useState(null);
   const pageSize = 20;
+
+  const deleteAuditMutation = useMutation({
+    mutationFn: (id) => base44.entities.InventoryAudit.delete(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['inventoryAudits'] });
+      toast.success("Audit log deleted", "Entry removed successfully");
+    },
+    onError: (error) => {
+      toast.error("Delete failed", error.message);
+    }
+  });
 
   const { data: audits = [], isLoading } = useQuery({
     queryKey: ['inventoryAudits', orgId],
@@ -279,9 +293,24 @@ export default function InventoryAuditLog({ orgId }) {
                         <span>{format(new Date(audit.created_date), 'HH:mm')}</span>
                       </div>
                     </div>
-                    <Button variant="ghost" size="icon" className="flex-shrink-0">
-                      <Eye className="w-4 h-4" />
-                    </Button>
+                    <div className="flex gap-1 flex-shrink-0">
+                      <Button variant="ghost" size="icon">
+                        <Eye className="w-4 h-4" />
+                      </Button>
+                      <Button 
+                        variant="ghost" 
+                        size="icon"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          if (confirm('Delete this audit log entry?')) {
+                            deleteAuditMutation.mutate(audit.id);
+                          }
+                        }}
+                        className="hover:bg-red-50 hover:text-red-500"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </Button>
+                    </div>
                   </div>
                 </div>
               );
