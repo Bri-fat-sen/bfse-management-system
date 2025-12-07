@@ -719,8 +719,25 @@ Extract ALL line items from the document table.`,
       {/* Charts */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Monthly Trend */}
-        <Card className="overflow-hidden">
-          <div className="h-1 flex">
+        <Card className="overflow-hidden relative">
+          {/* Sierra Leone Pattern Background */}
+          <div className="absolute inset-0 opacity-[0.03] pointer-events-none">
+            <div className="absolute inset-0" style={{
+              backgroundImage: `repeating-linear-gradient(
+                0deg,
+                #1EB053 0px,
+                #1EB053 8px,
+                #FFFFFF 8px,
+                #FFFFFF 16px,
+                #0072C6 16px,
+                #0072C6 24px,
+                transparent 24px,
+                transparent 48px
+              )`
+            }} />
+          </div>
+
+          <div className="h-1.5 flex">
             <div className="flex-1 bg-[#1EB053]" />
             <div className="flex-1 bg-white" />
             <div className="flex-1 bg-[#0072C6]" />
@@ -730,25 +747,54 @@ Extract ALL line items from the document table.`,
               <BarChart3 className="w-5 h-5 text-[#0072C6]" />
               Monthly Trend
             </CardTitle>
+            <CardDescription className="text-xs">Construction expenses over time</CardDescription>
           </CardHeader>
-          <CardContent>
-            <div className="h-[280px]">
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={monthlyTrend}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="month" />
-                  <YAxis tickFormatter={(v) => `Le ${(v/1000).toFixed(0)}k`} />
-                  <Tooltip formatter={(value) => `Le ${value.toLocaleString()}`} />
-                  <Bar dataKey="total" fill="url(#colorGradient)" radius={[4, 4, 0, 0]} />
-                  <defs>
-                    <linearGradient id="colorGradient" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="0%" stopColor="#1EB053" />
-                      <stop offset="100%" stopColor="#0072C6" />
-                    </linearGradient>
-                  </defs>
-                </BarChart>
-              </ResponsiveContainer>
-            </div>
+          <CardContent className="relative">
+            <ResponsiveContainer width="100%" height={340}>
+              <BarChart 
+                data={monthlyTrend}
+                margin={{ top: 20, right: 30, left: 20, bottom: 20 }}
+              >
+                <defs>
+                  <linearGradient id="constructionBarGradient" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor="#1EB053" stopOpacity={0.9} />
+                    <stop offset="100%" stopColor="#0072C6" stopOpacity={0.7} />
+                  </linearGradient>
+                </defs>
+                <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" vertical={false} />
+                <XAxis 
+                  dataKey="month" 
+                  stroke="#9ca3af"
+                  style={{ fontSize: '12px', fontWeight: '500' }}
+                  axisLine={{ stroke: '#d1d5db', strokeWidth: 2 }}
+                />
+                <YAxis 
+                  tickFormatter={(v) => `Le ${(v/1000).toFixed(0)}k`}
+                  stroke="#9ca3af"
+                  style={{ fontSize: '11px' }}
+                  axisLine={{ stroke: '#d1d5db', strokeWidth: 2 }}
+                />
+                <Tooltip 
+                  formatter={(value) => [`Le ${value.toLocaleString()}`, 'Total Expenses']}
+                  contentStyle={{ 
+                    backgroundColor: 'white', 
+                    border: '2px solid #1EB053',
+                    borderRadius: '12px',
+                    padding: '12px 16px',
+                    boxShadow: '0 4px 16px rgba(0,0,0,0.12)'
+                  }}
+                  labelStyle={{ fontWeight: 'bold', color: '#0F1F3C', marginBottom: '6px', fontSize: '13px' }}
+                  cursor={{ fill: 'rgba(30, 176, 83, 0.05)' }}
+                />
+                <Bar 
+                  dataKey="total" 
+                  fill="url(#constructionBarGradient)" 
+                  radius={[8, 8, 0, 0]}
+                  maxBarSize={60}
+                  animationDuration={800}
+                />
+              </BarChart>
+            </ResponsiveContainer>
           </CardContent>
         </Card>
 
