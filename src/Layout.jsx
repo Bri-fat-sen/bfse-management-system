@@ -144,7 +144,7 @@ export default function Layout({ children, currentPageName }) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [darkMode, setDarkMode] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
-  const [collapsedSections, setCollapsedSections] = useState({});
+  const [collapsedSections, setCollapsedSections] = useState({ "Home": false });
   const [chatPanelOpen, setChatPanelOpen] = useState(false);
   const [showQuickSale, setShowQuickSale] = useState(false);
   const [showStockCheck, setShowStockCheck] = useState(false);
