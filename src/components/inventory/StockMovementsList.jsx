@@ -1,9 +1,26 @@
-import { Download, Upload, ArrowLeftRight, Package } from "lucide-react";
+import { Download, Upload, ArrowLeftRight, Package, Trash2 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { formatDistanceToNow } from "date-fns";
+import { base44 } from "@/api/base44Client";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useToast } from "@/components/ui/Toast";
 
 export default function StockMovementsList({ movements, products, locations }) {
+  const toast = useToast();
+  const queryClient = useQueryClient();
+
+  const deleteMovementMutation = useMutation({
+    mutationFn: (id) => base44.entities.StockMovement.delete(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['stockMovements'] });
+      toast.success("Movement deleted", "Stock movement removed successfully");
+    },
+    onError: (error) => {
+      toast.error("Delete failed", error.message);
+    }
+  });
   if (movements.length === 0) {
     return (
       <Card>
@@ -57,13 +74,27 @@ export default function StockMovementsList({ movements, products, locations }) {
                     {formatDistanceToNow(new Date(movement.created_date), { addSuffix: true })}
                   </p>
                 </div>
-                <div className="text-right">
-                  <p className={`font-bold text-lg ${movement.movement_type === 'in' ? 'text-[#1EB053]' : 'text-red-500'}`}>
-                    {movement.movement_type === 'in' ? '+' : '-'}{movement.quantity}
-                  </p>
-                  <p className="text-sm text-gray-500">
-                    {movement.previous_stock} → {movement.new_stock}
-                  </p>
+                <div className="flex items-center gap-3">
+                  <div className="text-right">
+                    <p className={`font-bold text-lg ${movement.movement_type === 'in' ? 'text-[#1EB053]' : 'text-red-500'}`}>
+                      {movement.movement_type === 'in' ? '+' : '-'}{movement.quantity}
+                    </p>
+                    <p className="text-sm text-gray-500">
+                      {movement.previous_stock} → {movement.new_stock}
+                    </p>
+                  </div>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => {
+                      if (confirm('Delete this stock movement?')) {
+                        deleteMovementMutation.mutate(movement.id);
+                      }
+                    }}
+                    className="hover:bg-red-50 hover:text-red-500"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </Button>
                 </div>
               </div>
             );
