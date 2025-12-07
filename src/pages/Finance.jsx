@@ -1108,11 +1108,6 @@ export default function Finance() {
 
           {/* Expenses Tab */}
           <TabsContent value="expenses" className="mt-6 space-y-4 sm:space-y-6">
-            <div className="flex justify-between items-center mb-4">
-              <h3 className="text-lg font-semibold">Expense Tracking</h3>
-              <PrintableFormsDownload organisation={organisation?.[0]} />
-            </div>
-            
             <div className="grid grid-cols-2 md:grid-cols-4 gap-2 sm:gap-4">
               <Card className="bg-gradient-to-br from-red-50 to-white">
                 <CardContent className="p-3 sm:p-4">
@@ -1277,10 +1272,6 @@ export default function Finance() {
 
           {/* Owner/CEO Contributions Tab */}
           <TabsContent value="contributions" className="mt-6 space-y-6">
-            <div className="flex justify-end mb-4">
-              <PrintableFormsDownload organisation={organisation?.[0]} />
-            </div>
-            
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               <Card className="bg-gradient-to-br from-[#1EB053]/10 to-white border-t-4 border-t-[#1EB053]">
                 <CardContent className="p-5">

@@ -53,7 +53,7 @@ import {
 } from "@/components/ui/dialog";
 import AdvancedDocumentExtractor from "@/components/finance/AdvancedDocumentExtractor";
 import ExpenseEntryTemplate from "@/components/templates/ExpenseEntryTemplate";
-import PrintableFormsDownload from "@/components/finance/PrintableFormsDownload";
+import PrintFormsButtons from "@/components/finance/PrintFormsButtons";
 
 const EXPENSE_CATEGORIES = [
   { value: "fuel", label: "Fuel" },
@@ -219,7 +219,6 @@ export default function ExpenseManagement() {
   const [showBulkDeleteDialog, setShowBulkDeleteDialog] = useState(false);
   const [bulkDeleteLoading, setBulkDeleteLoading] = useState(false);
   const [showExpenseDialog, setShowExpenseDialog] = useState(false);
-  const [showFormsDialog, setShowFormsDialog] = useState(false);
 
   const { data: user } = useQuery({
     queryKey: ['currentUser'],
@@ -419,14 +418,7 @@ export default function ExpenseManagement() {
           icon={Shield}
         />
         <div className="flex gap-2 flex-wrap">
-          <Button 
-            variant="outline" 
-            onClick={() => setShowFormsDialog(true)}
-            className="border-[#0072C6]/30 hover:border-[#0072C6] hover:bg-[#0072C6]/10"
-          >
-            <Printer className="w-4 h-4 mr-2" />
-            Print Forms
-          </Button>
+          <PrintFormsButtons organisation={organisation?.[0]} />
           {filteredExpenses.length > 0 && (
             <Button
               variant="outline"
@@ -933,13 +925,6 @@ export default function ExpenseManagement() {
           </div>
         </DialogContent>
       </Dialog>
-
-      {/* Printable Forms Dialog */}
-      <PrintableFormsDownload
-        open={showFormsDialog}
-        onOpenChange={setShowFormsDialog}
-        organisation={organisation?.[0]}
-      />
 
       {/* Bulk Delete Confirmation Dialog */}
       <Dialog open={showBulkDeleteDialog} onOpenChange={setShowBulkDeleteDialog}>
