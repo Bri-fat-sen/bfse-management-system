@@ -248,7 +248,14 @@ Provide realistic, professional values appropriate for Sierra Leone employment d
 
   return (
     <Dialog open={open} onOpenChange={(v) => { if (!v) resetWizard(); onOpenChange(v); }}>
-      <DialogContent className="max-w-4xl h-[85vh] overflow-hidden flex flex-col p-0">
+      <DialogContent className="max-w-4xl max-h-[90vh] overflow-hidden flex flex-col p-0">
+        {/* Sierra Leone Flag Stripe */}
+        <div className="flex h-1 w-full">
+          <div className="flex-1 bg-[#1EB053]" />
+          <div className="flex-1 bg-white" />
+          <div className="flex-1 bg-[#0072C6]" />
+        </div>
+
         {/* Header */}
         <DialogHeader className="px-6 py-4 border-b bg-gradient-to-r from-[#0F1F3C] via-[#1a3a6e] to-[#0F1F3C]">
           <DialogTitle className="text-white flex items-center gap-2">
@@ -444,19 +451,31 @@ Provide realistic, professional values appropriate for Sierra Leone employment d
 
         {/* Footer */}
         {step === 4 && (
-          <DialogFooter className="px-6 py-4 border-t bg-gray-50 gap-2">
+          <DialogFooter className="px-6 py-4 border-t bg-white gap-2">
+            <div className="flex h-1.5 w-12 rounded-full overflow-hidden mr-auto">
+              <div className="flex-1 bg-[#1EB053]" />
+              <div className="flex-1 bg-white border" />
+              <div className="flex-1 bg-[#0072C6]" />
+            </div>
             <Button variant="outline" onClick={() => setStep(3)}>
               <RefreshCw className="w-4 h-4 mr-2" /> Edit Variables
             </Button>
             <Button variant="outline" onClick={() => createDocument(false)} disabled={isCreating}>
               <Save className="w-4 h-4 mr-2" /> Save as Draft
             </Button>
-            <Button onClick={() => createDocument(true)} disabled={isCreating} className="bg-[#1EB053] hover:bg-[#178f43]">
+            <Button onClick={() => createDocument(true)} disabled={isCreating} className="bg-gradient-to-r from-[#1EB053] to-[#0072C6] hover:from-[#178f43] hover:to-[#0062a6]">
               {isCreating ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Send className="w-4 h-4 mr-2" />}
               Send for Signature
             </Button>
           </DialogFooter>
         )}
+
+        {/* Bottom Sierra Leone Flag Stripe */}
+        <div className="flex h-1 w-full">
+          <div className="flex-1 bg-[#1EB053]" />
+          <div className="flex-1 bg-white" />
+          <div className="flex-1 bg-[#0072C6]" />
+        </div>
       </DialogContent>
     </Dialog>
   );
