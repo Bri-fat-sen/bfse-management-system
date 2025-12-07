@@ -80,6 +80,7 @@ import DocumentUploadExtractor from "@/components/finance/DocumentUploadExtracto
 import ExpenseEntryTemplate from "@/components/templates/ExpenseEntryTemplate";
 import RevenueEntryTemplate from "@/components/templates/RevenueEntryTemplate";
 import CategoryBreakdownChart from "@/components/finance/CategoryBreakdownChart";
+import AutomatedFinancialReports from "@/components/finance/AutomatedFinancialReports";
 
 const expenseCategories = [
   "fuel", "maintenance", "utilities", "supplies", "rent", 
@@ -726,6 +727,10 @@ export default function Finance() {
             <TabsTrigger value="ai-analysis" className="text-xs sm:text-sm data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#1EB053] data-[state=active]:to-[#0072C6] data-[state=active]:text-white">
               <Sparkles className="w-4 h-4 mr-1" />
               AI Analysis
+            </TabsTrigger>
+            <TabsTrigger value="automated-reports" className="text-xs sm:text-sm data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#1EB053] data-[state=active]:to-[#0072C6] data-[state=active]:text-white">
+              <FileText className="w-4 h-4 mr-1" />
+              Auto Reports
             </TabsTrigger>
           </TabsList>
           </div>
@@ -1637,6 +1642,20 @@ export default function Finance() {
               expenses={expenses} 
               sales={sales}
               trips={trips}
+              organisation={organisation?.[0]}
+            />
+          </TabsContent>
+
+          {/* Automated Reports Tab */}
+          <TabsContent value="automated-reports" className="mt-6">
+            <AutomatedFinancialReports
+              orgId={orgId}
+              sales={sales}
+              expenses={expenses}
+              trips={trips}
+              revenues={revenues}
+              truckContracts={truckContracts}
+              maintenanceRecords={maintenanceRecords}
               organisation={organisation?.[0]}
             />
           </TabsContent>
