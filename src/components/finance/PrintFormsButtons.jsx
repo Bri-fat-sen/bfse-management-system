@@ -490,7 +490,193 @@ export default function PrintFormsButtons({ organisation }) {
         </div>
       </div>
 
-      ${formType.id === 'owner' || formType.id === 'ceo' ? `
+      ${formType.id === 'retail_sales' ? `
+      <div class="form-section">
+        <div class="section-title"><div class="icon">🛒</div>Retail Store Sales</div>
+        <div class="form-grid">
+          <div class="form-field"><label>Store/Location <span class="required">*</span></label><div class="input-box"></div></div>
+          <div class="form-field"><label>Cashier Name</label><div class="input-box"></div></div>
+          <div class="form-field"><label>Customer Name</label><div class="input-box"></div></div>
+          <div class="form-field"><label>Customer Phone</label><div class="input-box"></div></div>
+          <div class="form-field"><label>Receipt Number <span class="required">*</span></label><div class="input-box"></div></div>
+          <div class="form-field"><label>Sale Date & Time</label><div class="input-box"></div></div>
+        </div>
+      </div>
+      <div class="form-section">
+        <div class="section-title"><div class="icon">📋</div>Items Sold</div>
+        <table class="data-table">
+          <thead><tr><th style="width: 40px;">NO</th><th>PRODUCT <span class="required">*</span></th><th style="width: 100px;">SKU/BARCODE</th><th style="width: 80px;">QTY</th><th style="width: 120px;">UNIT PRICE (Le)</th><th style="width: 120px;">TOTAL (Le)</th></tr></thead>
+          <tbody>${Array.from({ length: 15 }, (_, i) => `<tr><td>${i + 1}</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td></tr>`).join('')}</tbody>
+          <tfoot><tr class="total-row"><td colspan="5" style="text-align: right; font-weight: bold;">SUBTOTAL:</td><td style="font-weight: bold;">Le ______________</td></tr><tr><td colspan="5" style="text-align: right;">Tax:</td><td>Le ______________</td></tr><tr><td colspan="5" style="text-align: right;">Discount:</td><td>Le ______________</td></tr><tr style="font-size: 1.1em;"><td colspan="5" style="text-align: right; font-weight: bold;">GRAND TOTAL:</td><td style="font-weight: bold;">Le ______________</td></tr></tfoot>
+        </table>
+      </div>
+      <div class="form-section">
+        <div class="section-title"><div class="icon">💳</div>Payment Details</div>
+        <div class="form-grid">
+          <div class="form-field"><label>Payment Method <span class="required">*</span></label><div class="input-box"></div></div>
+          <div class="form-field"><label>Amount Paid (Le)</label><div class="input-box"></div></div>
+          <div class="form-field"><label>Change Given (Le)</label><div class="input-box"></div></div>
+          <div class="form-field"><label>Payment Status</label><div class="input-box"></div></div>
+        </div>
+      </div>` : formType.id === 'warehouse_sales' ? `
+      <div class="form-section">
+        <div class="section-title"><div class="icon">📦</div>Warehouse Bulk Sales</div>
+        <div class="form-grid">
+          <div class="form-field"><label>Warehouse Location <span class="required">*</span></label><div class="input-box"></div></div>
+          <div class="form-field"><label>Sales Representative</label><div class="input-box"></div></div>
+          <div class="form-field"><label>Customer/Business Name <span class="required">*</span></label><div class="input-box"></div></div>
+          <div class="form-field"><label>Contact Person</label><div class="input-box"></div></div>
+          <div class="form-field"><label>Phone Number</label><div class="input-box"></div></div>
+          <div class="form-field"><label>Invoice Number</label><div class="input-box"></div></div>
+          <div class="form-field"><label>Delivery Address</label><div class="input-box"></div></div>
+          <div class="form-field"><label>Delivery Date</label><div class="input-box"></div></div>
+        </div>
+      </div>
+      <div class="form-section">
+        <div class="section-title"><div class="icon">📋</div>Bulk Items</div>
+        <table class="data-table">
+          <thead><tr><th style="width: 40px;">NO</th><th>PRODUCT <span class="required">*</span></th><th style="width: 100px;">UNIT</th><th style="width: 80px;">QTY</th><th style="width: 120px;">WHOLESALE PRICE (Le)</th><th style="width: 120px;">TOTAL (Le)</th></tr></thead>
+          <tbody>${Array.from({ length: 12 }, (_, i) => `<tr><td>${i + 1}</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td></tr>`).join('')}</tbody>
+          <tfoot><tr class="total-row"><td colspan="5" style="text-align: right; font-weight: bold;">TOTAL:</td><td style="font-weight: bold;">Le ______________</td></tr></tfoot>
+        </table>
+      </div>
+      <div class="form-section">
+        <div class="section-title"><div class="icon">💳</div>Payment & Terms</div>
+        <div class="form-grid">
+          <div class="form-field"><label>Payment Terms</label><div class="input-box"></div></div>
+          <div class="form-field"><label>Payment Method</label><div class="input-box"></div></div>
+          <div class="form-field"><label>Amount Paid (Le)</label><div class="input-box"></div></div>
+          <div class="form-field"><label>Balance Due (Le)</label><div class="input-box"></div></div>
+        </div>
+      </div>` : formType.id === 'vehicle_sales' ? `
+      <div class="form-section">
+        <div class="section-title"><div class="icon">🚐</div>Vehicle/Mobile Sales</div>
+        <div class="form-grid">
+          <div class="form-field"><label>Vehicle Registration <span class="required">*</span></label><div class="input-box"></div></div>
+          <div class="form-field"><label>Driver Name</label><div class="input-box"></div></div>
+          <div class="form-field"><label>Route/Location</label><div class="input-box"></div></div>
+          <div class="form-field"><label>Sale Date</label><div class="input-box"></div></div>
+          <div class="form-field"><label>Customer Name</label><div class="input-box"></div></div>
+          <div class="form-field"><label>Customer Phone</label><div class="input-box"></div></div>
+        </div>
+      </div>
+      <div class="form-section">
+        <div class="section-title"><div class="icon">📋</div>Items Sold from Vehicle</div>
+        <table class="data-table">
+          <thead><tr><th style="width: 40px;">NO</th><th>PRODUCT <span class="required">*</span></th><th style="width: 80px;">QTY</th><th style="width: 120px;">UNIT PRICE (Le)</th><th style="width: 120px;">TOTAL (Le)</th></tr></thead>
+          <tbody>${Array.from({ length: 15 }, (_, i) => `<tr><td>${i + 1}</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td></tr>`).join('')}</tbody>
+          <tfoot><tr class="total-row"><td colspan="4" style="text-align: right; font-weight: bold;">TOTAL:</td><td style="font-weight: bold;">Le ______________</td></tr></tfoot>
+        </table>
+      </div>
+      <div class="form-section">
+        <div class="section-title"><div class="icon">💳</div>Payment</div>
+        <div class="form-grid">
+          <div class="form-field"><label>Payment Method</label><div class="input-box"></div></div>
+          <div class="form-field"><label>Amount Received (Le)</label><div class="input-box"></div></div>
+        </div>
+      </div>` : formType.id === 'water_sales' ? `
+      <div class="form-section">
+        <div class="section-title"><div class="icon">💧</div>Water Product Sales</div>
+        <div class="form-grid">
+          <div class="form-field"><label>Location/Store <span class="required">*</span></label><div class="input-box"></div></div>
+          <div class="form-field"><label>Employee Name</label><div class="input-box"></div></div>
+          <div class="form-field"><label>Customer Name</label><div class="input-box"></div></div>
+          <div class="form-field"><label>Delivery Address</label><div class="input-box"></div></div>
+          <div class="form-field"><label>Receipt Number</label><div class="input-box"></div></div>
+          <div class="form-field"><label>Sale Date</label><div class="input-box"></div></div>
+        </div>
+      </div>
+      <div class="form-section">
+        <div class="section-title"><div class="icon">📋</div>Water Products</div>
+        <table class="data-table">
+          <thead><tr><th style="width: 40px;">NO</th><th>PRODUCT TYPE <span class="required">*</span></th><th style="width: 120px;">SIZE/VOLUME</th><th style="width: 80px;">QTY</th><th style="width: 120px;">UNIT PRICE (Le)</th><th style="width: 120px;">TOTAL (Le)</th></tr></thead>
+          <tbody>${Array.from({ length: 10 }, (_, i) => `<tr><td>${i + 1}</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td></tr>`).join('')}</tbody>
+          <tfoot><tr class="total-row"><td colspan="5" style="text-align: right; font-weight: bold;">TOTAL:</td><td style="font-weight: bold;">Le ______________</td></tr></tfoot>
+        </table>
+      </div>
+      <div class="form-section">
+        <div class="section-title"><div class="icon">💳</div>Payment Details</div>
+        <div class="form-grid">
+          <div class="form-field"><label>Payment Method</label><div class="input-box"></div></div>
+          <div class="form-field"><label>Amount Paid (Le)</label><div class="input-box"></div></div>
+          <div class="form-field"><label>Deposit Returned (Le)</label><div class="input-box"></div></div>
+        </div>
+      </div>` : formType.id === 'trip_revenue' ? `
+      <div class="form-section">
+        <div class="section-title"><div class="icon">🚌</div>Transport Trip Revenue</div>
+        <div class="form-grid">
+          <div class="form-field"><label>Vehicle Registration <span class="required">*</span></label><div class="input-box"></div></div>
+          <div class="form-field"><label>Driver Name <span class="required">*</span></label><div class="input-box"></div></div>
+          <div class="form-field"><label>Route <span class="required">*</span></label><div class="input-box"></div></div>
+          <div class="form-field"><label>Trip Date</label><div class="input-box"></div></div>
+          <div class="form-field"><label>Start Time</label><div class="input-box"></div></div>
+          <div class="form-field"><label>End Time</label><div class="input-box"></div></div>
+          <div class="form-field"><label>Start Location</label><div class="input-box"></div></div>
+          <div class="form-field"><label>End Location</label><div class="input-box"></div></div>
+        </div>
+      </div>
+      <div class="form-section">
+        <div class="section-title"><div class="icon">👥</div>Passenger & Fare Details</div>
+        <div class="form-grid">
+          <div class="form-field"><label>Total Passengers <span class="required">*</span></label><div class="input-box"></div></div>
+          <div class="form-field"><label>Ticket Price (Le)</label><div class="input-box"></div></div>
+          <div class="form-field"><label>Total Fare Revenue (Le) <span class="required">*</span></label><div class="input-box"></div></div>
+          <div class="form-field"><label>Extra Baggage (Le)</label><div class="input-box"></div></div>
+          <div class="form-field"><label>Charter/Special (Le)</label><div class="input-box"></div></div>
+          <div class="form-field"><label>Total Revenue (Le)</label><div class="input-box"></div></div>
+          <div class="form-field full-width"><label>Notes</label><div class="input-box"></div></div>
+        </div>
+      </div>` : formType.id === 'truck_contract' ? `
+      <div class="form-section">
+        <div class="section-title"><div class="icon">🚛</div>Truck Contract Revenue</div>
+        <div class="form-grid">
+          <div class="form-field"><label>Contract Number <span class="required">*</span></label><div class="input-box"></div></div>
+          <div class="form-field"><label>Client Name <span class="required">*</span></label><div class="input-box"></div></div>
+          <div class="form-field"><label>Contact Person</label><div class="input-box"></div></div>
+          <div class="form-field"><label>Phone Number</label><div class="input-box"></div></div>
+          <div class="form-field"><label>Vehicle Registration</label><div class="input-box"></div></div>
+          <div class="form-field"><label>Driver Assigned</label><div class="input-box"></div></div>
+          <div class="form-field"><label>Contract Start Date</label><div class="input-box"></div></div>
+          <div class="form-field"><label>Contract End Date</label><div class="input-box"></div></div>
+          <div class="form-field"><label>Service Type</label><div class="input-box"></div></div>
+          <div class="form-field"><label>Route/Destination</label><div class="input-box"></div></div>
+          <div class="form-field"><label>Contract Value (Le) <span class="required">*</span></label><div class="input-box"></div></div>
+          <div class="form-field"><label>Payment Schedule</label><div class="input-box"></div></div>
+          <div class="form-field"><label>Amount Received (Le)</label><div class="input-box"></div></div>
+          <div class="form-field"><label>Payment Method</label><div class="input-box"></div></div>
+          <div class="form-field full-width"><label>Contract Terms</label><div class="input-box large"></div></div>
+        </div>
+      </div>` : formType.id === 'service' ? `
+      <div class="form-section">
+        <div class="section-title"><div class="icon">🔧</div>Service Revenue Details</div>
+        <div class="form-grid">
+          <div class="form-field"><label>Client Name <span class="required">*</span></label><div class="input-box"></div></div>
+          <div class="form-field"><label>Contact Number</label><div class="input-box"></div></div>
+          <div class="form-field"><label>Service Type <span class="required">*</span></label><div class="input-box"></div></div>
+          <div class="form-field"><label>Service Date</label><div class="input-box"></div></div>
+          <div class="form-field"><label>Contract Number</label><div class="input-box"></div></div>
+          <div class="form-field"><label>Amount (Le) <span class="required">*</span></label><div class="input-box"></div></div>
+          <div class="form-field"><label>Payment Terms</label><div class="input-box"></div></div>
+          <div class="form-field"><label>Payment Method</label><div class="input-box"></div></div>
+          <div class="form-field full-width"><label>Service Description</label><div class="input-box large"></div></div>
+        </div>
+      </div>` : formType.id === 'rental' ? `
+      <div class="form-section">
+        <div class="section-title"><div class="icon">🏢</div>Rental Income Details</div>
+        <div class="form-grid">
+          <div class="form-field"><label>Tenant/Renter Name <span class="required">*</span></label><div class="input-box"></div></div>
+          <div class="form-field"><label>Contact Number</label><div class="input-box"></div></div>
+          <div class="form-field"><label>Property/Asset <span class="required">*</span></label><div class="input-box"></div></div>
+          <div class="form-field"><label>Location</label><div class="input-box"></div></div>
+          <div class="form-field"><label>Rental Period (From)</label><div class="input-box"></div></div>
+          <div class="form-field"><label>Rental Period (To)</label><div class="input-box"></div></div>
+          <div class="form-field"><label>Monthly Rent (Le)</label><div class="input-box"></div></div>
+          <div class="form-field"><label>Amount Received (Le) <span class="required">*</span></label><div class="input-box"></div></div>
+          <div class="form-field"><label>Payment Method</label><div class="input-box"></div></div>
+          <div class="form-field"><label>Receipt Number</label><div class="input-box"></div></div>
+          <div class="form-field full-width"><label>Additional Notes</label><div class="input-box"></div></div>
+        </div>
+      </div>` : formType.id === 'owner' || formType.id === 'ceo' ? `
       <div class="form-section">
         <div class="section-title"><div class="icon">👤</div>${formType.name} Details</div>
         <div class="form-grid">
@@ -542,6 +728,75 @@ export default function PrintFormsButtons({ organisation }) {
           <div class="form-field"><label>Grant Period</label><div class="input-box"></div></div>
           <div class="form-field full-width"><label>Grant Purpose/Project</label><div class="input-box large"></div></div>
           <div class="form-field full-width"><label>Reporting Requirements</label><div class="input-box"></div></div>
+        </div>
+      </div>` : formType.id === 'interest' ? `
+      <div class="form-section">
+        <div class="section-title"><div class="icon">💰</div>Interest Income Details</div>
+        <div class="form-grid">
+          <div class="form-field"><label>Bank/Institution Name <span class="required">*</span></label><div class="input-box"></div></div>
+          <div class="form-field"><label>Account Number</label><div class="input-box"></div></div>
+          <div class="form-field"><label>Account Type</label><div class="input-box"></div></div>
+          <div class="form-field"><label>Interest Period (From)</label><div class="input-box"></div></div>
+          <div class="form-field"><label>Interest Period (To)</label><div class="input-box"></div></div>
+          <div class="form-field"><label>Interest Rate (%)</label><div class="input-box"></div></div>
+          <div class="form-field"><label>Principal Amount (Le)</label><div class="input-box"></div></div>
+          <div class="form-field"><label>Interest Earned (Le) <span class="required">*</span></label><div class="input-box"></div></div>
+          <div class="form-field"><label>Tax Withheld (Le)</label><div class="input-box"></div></div>
+          <div class="form-field"><label>Net Amount (Le)</label><div class="input-box"></div></div>
+        </div>
+      </div>` : formType.id === 'refund' ? `
+      <div class="form-section">
+        <div class="section-title"><div class="icon">↩️</div>Refund Receipt Details</div>
+        <div class="form-grid">
+          <div class="form-field"><label>Refund Source <span class="required">*</span></label><div class="input-box"></div></div>
+          <div class="form-field"><label>Original Transaction Ref</label><div class="input-box"></div></div>
+          <div class="form-field"><label>Original Date</label><div class="input-box"></div></div>
+          <div class="form-field"><label>Refund Date <span class="required">*</span></label><div class="input-box"></div></div>
+          <div class="form-field"><label>Refund Amount (Le) <span class="required">*</span></label><div class="input-box"></div></div>
+          <div class="form-field"><label>Refund Method</label><div class="input-box"></div></div>
+          <div class="form-field"><label>Receipt Number</label><div class="input-box"></div></div>
+          <div class="form-field"><label>Approved By</label><div class="input-box"></div></div>
+          <div class="form-field full-width"><label>Reason for Refund <span class="required">*</span></label><div class="input-box large"></div></div>
+        </div>
+      </div>` : formType.id === 'commission' ? `
+      <div class="form-section">
+        <div class="section-title"><div class="icon">💵</div>Commission Revenue Details</div>
+        <div class="form-grid">
+          <div class="form-field"><label>Sales Person/Agent <span class="required">*</span></label><div class="input-box"></div></div>
+          <div class="form-field"><label>Transaction/Sale Reference</label><div class="input-box"></div></div>
+          <div class="form-field"><label>Commission Period From</label><div class="input-box"></div></div>
+          <div class="form-field"><label>Commission Period To</label><div class="input-box"></div></div>
+          <div class="form-field"><label>Total Sales Value (Le)</label><div class="input-box"></div></div>
+          <div class="form-field"><label>Commission Rate (%)</label><div class="input-box"></div></div>
+          <div class="form-field"><label>Commission Amount (Le) <span class="required">*</span></label><div class="input-box"></div></div>
+          <div class="form-field"><label>Payment Date</label><div class="input-box"></div></div>
+          <div class="form-field full-width"><label>Notes</label><div class="input-box"></div></div>
+        </div>
+      </div>` : formType.id === 'dividend' ? `
+      <div class="form-section">
+        <div class="section-title"><div class="icon">📊</div>Dividend Income Details</div>
+        <div class="form-grid">
+          <div class="form-field"><label>Company/Investment Name <span class="required">*</span></label><div class="input-box"></div></div>
+          <div class="form-field"><label>Number of Shares</label><div class="input-box"></div></div>
+          <div class="form-field"><label>Dividend Per Share (Le)</label><div class="input-box"></div></div>
+          <div class="form-field"><label>Payment Date</label><div class="input-box"></div></div>
+          <div class="form-field"><label>Gross Dividend (Le)</label><div class="input-box"></div></div>
+          <div class="form-field"><label>Tax Withheld (Le)</label><div class="input-box"></div></div>
+          <div class="form-field"><label>Net Dividend (Le) <span class="required">*</span></label><div class="input-box"></div></div>
+          <div class="form-field"><label>Payment Method</label><div class="input-box"></div></div>
+          <div class="form-field full-width"><label>Additional Notes</label><div class="input-box"></div></div>
+        </div>
+      </div>` : formType.id === 'other' ? `
+      <div class="form-section">
+        <div class="section-title"><div class="icon">📝</div>Other Income Details</div>
+        <div class="form-grid">
+          <div class="form-field"><label>Income Source <span class="required">*</span></label><div class="input-box"></div></div>
+          <div class="form-field"><label>Source Category</label><div class="input-box"></div></div>
+          <div class="form-field"><label>Amount (Le) <span class="required">*</span></label><div class="input-box"></div></div>
+          <div class="form-field"><label>Payment Method</label><div class="input-box"></div></div>
+          <div class="form-field"><label>Reference Number</label><div class="input-box"></div></div>
+          <div class="form-field"><label>Received From</label><div class="input-box"></div></div>
+          <div class="form-field full-width"><label>Description <span class="required">*</span></label><div class="input-box large"></div></div>
         </div>
       </div>` : `
       <div class="form-section">
