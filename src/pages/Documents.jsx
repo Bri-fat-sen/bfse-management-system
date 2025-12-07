@@ -704,25 +704,16 @@ export default function Documents() {
       />
 
       {/* Dialogs */}
-      <CreateDocumentDialog
-        open={showCreateDialog}
-        onOpenChange={setShowCreateDialog}
-        employees={allEmployees}
-        organisation={organisation}
-        currentEmployee={currentEmployee}
-        orgId={orgId}
-      />
-
-      <AIDocumentAssistant
-        open={showAIAssistant}
-        onOpenChange={setShowAIAssistant}
-        templates={allTemplates}
-        employees={allEmployees}
-        organisation={organisation}
-        currentEmployee={currentEmployee}
-        orgId={orgId}
-        onDocumentCreated={() => queryClient.invalidateQueries({ queryKey: ['employeeDocuments'] })}
-      />
+      {isAdmin && (
+        <CreateDocumentDialog
+          open={showCreateDialog}
+          onOpenChange={setShowCreateDialog}
+          employees={allEmployees}
+          organisation={organisation}
+          currentEmployee={currentEmployee}
+          orgId={orgId}
+        />
+      )}
 
 
 
