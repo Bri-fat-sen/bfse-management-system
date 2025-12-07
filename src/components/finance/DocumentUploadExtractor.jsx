@@ -132,6 +132,19 @@ export default function DocumentUploadExtractor({
     try {
       const { file_url } = await base44.integrations.Core.UploadFile({ file });
 
+      // Save uploaded document for record keeping
+      await base44.entities.UploadedDocument.create({
+        organisation_id: orgId,
+        file_name: file.name,
+        file_url: file_url,
+        file_type: file.type || file.name.split('.').pop(),
+        file_size: file.size,
+        category: type === "auto" ? "other" : type === "revenue" ? "revenue" : "expense",
+        uploaded_by_id: currentEmployee?.id,
+        uploaded_by_name: currentEmployee?.full_name,
+        description: `Uploaded for data extraction`
+      });
+
       // First, analyze document to detect what type of records to create
       const analysisResult = await base44.integrations.Core.InvokeLLM({
         prompt: `Analyze this document and determine what type of business records should be created from it.
@@ -559,6 +572,24 @@ IMPORTANT FOR BATCH ENTRY FORMS:
           available_quantity: sl.available_quantity || sl.quantity || 0
         };
       });
+
+      // Update the uploaded document with extracted data and category
+      const uploadedDocs = await base44.entities.UploadedDocument.filter({
+        organisation_id: orgId
+      }, '-created_date', 1);
+      
+      if (uploadedDocs.length > 0) {
+        const lastDoc = uploadedDocs[0];
+        await base44.entities.UploadedDocument.update(lastDoc.id, {
+          category: detectedType,
+          extracted_data: {
+            total_items: selectedItems.length,
+            total_amount: selectedItems.reduce((sum, i) => sum + (i.amount || 0), 0),
+            record_type: detectedType
+          },
+          tags: [detectedType, format(new Date(), 'MMM yyyy')]
+        });
+      }
 
       for (const item of selectedItems) {
         if ((isRevenue || detectedType === 'auto') && item.product_id && uploadLocation) {
