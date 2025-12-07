@@ -70,6 +70,16 @@ export default function BatchManagement({ products = [], warehouses = [], vehicl
   const createMutation = useMutation({
     mutationFn: async (data) => {
       const result = await base44.entities.InventoryBatch.create(data);
+      
+      // Update product stock_quantity when batch is created
+      const product = products.find(p => p.id === data.product_id);
+      if (product) {
+        const newStockQty = (product.stock_quantity || 0) + data.quantity;
+        await base44.entities.Product.update(product.id, {
+          stock_quantity: newStockQty
+        });
+      }
+      
       await logInventoryAudit({
         orgId,
         actionType: 'batch_created',
@@ -80,15 +90,16 @@ export default function BatchManagement({ products = [], warehouses = [], vehicl
         performedByName: currentEmployee?.full_name,
         batchNumber: data.batch_number,
         quantityChanged: data.quantity,
-        notes: `Created batch ${data.batch_number} with ${data.quantity} units`,
+        notes: `Created batch ${data.batch_number} with ${data.quantity} units and updated product stock`,
         newValues: { quantity: data.quantity, status: data.status }
       });
       return result;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['inventoryBatches'] });
+      queryClient.invalidateQueries({ queryKey: ['products'] });
       setShowBatchDialog(false);
-      toast.success("Batch created", "Batch has been added to inventory");
+      toast.success("Batch created", "Batch and product stock updated");
     },
     onError: (error) => {
       console.error('Create batch error:', error);

@@ -68,7 +68,6 @@ import MultiLocationStock from "@/components/inventory/MultiLocationStock";
 import LowStockNotificationBanner from "@/components/inventory/LowStockNotificationBanner";
 import InventoryAuditLog from "@/components/inventory/InventoryAuditLog";
 import ProductFormDialog from "@/components/inventory/ProductFormDialog";
-import AdvancedDocumentExtractor from "@/components/finance/AdvancedDocumentExtractor";
 
 const DEFAULT_CATEGORIES = ["Water", "Beverages", "Food", "Electronics", "Clothing", "Other"];
 
@@ -79,6 +78,7 @@ export default function Inventory() {
   const [productToDelete, setProductToDelete] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("all");
+  const [stockFilter, setStockFilter] = useState("all");
   const [showProductDialog, setShowProductDialog] = useState(false);
   const [editingProduct, setEditingProduct] = useState(null);
   const [activeTab, setActiveTab] = useState("products");
@@ -90,7 +90,6 @@ export default function Inventory() {
   const [showTransferDialog, setShowTransferDialog] = useState(false);
   const [showProductDetails, setShowProductDetails] = useState(false);
   const [viewingProduct, setViewingProduct] = useState(null);
-  const [showDocumentUpload, setShowDocumentUpload] = useState(false);
 
   const { data: user } = useQuery({
     queryKey: ['currentUser'],
@@ -291,7 +290,11 @@ export default function Inventory() {
     const matchesSearch = p.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          p.sku?.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesCategory = categoryFilter === "all" || p.category === categoryFilter;
-    return matchesSearch && matchesCategory;
+    const matchesStock = stockFilter === "all" || 
+                        (stockFilter === "in_stock" && p.stock_quantity > 0) ||
+                        (stockFilter === "low_stock" && p.stock_quantity > 0 && p.stock_quantity <= (p.low_stock_threshold || 10)) ||
+                        (stockFilter === "out_of_stock" && p.stock_quantity === 0);
+    return matchesSearch && matchesCategory && matchesStock;
   });
 
   const lowStockProducts = products.filter(p => p.stock_quantity <= (p.low_stock_threshold || 10));
@@ -353,19 +356,10 @@ export default function Inventory() {
           <Button 
             variant="outline" 
             size="sm"
-            onClick={() => setShowDocumentUpload(true)}
-            className="text-xs sm:text-sm border-purple-400/30 hover:border-purple-500 hover:bg-purple-500/10 hover:text-purple-600"
-          >
-            <Upload className="w-3 h-3 sm:w-4 sm:h-4 sm:mr-2" />
-            <span className="hidden sm:inline">Import</span>
-          </Button>
-          <Button 
-            variant="outline" 
-            size="sm"
             onClick={() => setShowStockDialog(true)}
             className="text-xs sm:text-sm border-[#1EB053]/30 hover:border-[#1EB053] hover:bg-[#1EB053]/10 hover:text-[#1EB053]"
           >
-            <RefreshCw className="w-3 h-3 sm:w-4 sm:h-4 sm:mr-2" />
+            <Upload className="w-3 h-3 sm:w-4 sm:h-4 sm:mr-2" />
             <span className="hidden sm:inline">Adjust</span>
           </Button>
           <Button 
@@ -512,6 +506,18 @@ export default function Inventory() {
                         <SelectItem key={cat} value={cat}>{cat}</SelectItem>
                       ))}
                     </SelectContent>
+                </Select>
+                <Select value={stockFilter} onValueChange={setStockFilter}>
+                  <SelectTrigger className="w-40">
+                    <Package className="w-4 h-4 mr-2" />
+                    <SelectValue placeholder="Stock Status" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Stock</SelectItem>
+                    <SelectItem value="in_stock">In Stock</SelectItem>
+                    <SelectItem value="low_stock">Low Stock</SelectItem>
+                    <SelectItem value="out_of_stock">Out of Stock</SelectItem>
+                  </SelectContent>
                 </Select>
               </div>
             </CardContent>
@@ -979,20 +985,6 @@ export default function Inventory() {
         allLocations={allLocations}
         organisation={organisation?.[0]}
         isLoading={createProductMutation.isPending || updateProductMutation.isPending}
-      />
-
-      {/* Document Upload Dialog */}
-      <AdvancedDocumentExtractor
-        open={showDocumentUpload}
-        onOpenChange={setShowDocumentUpload}
-        type="auto"
-        orgId={orgId}
-        currentEmployee={currentEmployee}
-        onSuccess={() => {
-          queryClient.invalidateQueries({ queryKey: ['products', orgId] });
-          queryClient.invalidateQueries({ queryKey: ['stockMovements', orgId] });
-          queryClient.invalidateQueries({ queryKey: ['inventoryBatches', orgId] });
-        }}
       />
     </div>
   );
