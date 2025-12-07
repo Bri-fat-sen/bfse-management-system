@@ -334,229 +334,493 @@ const generateFormHTML = (formType, org) => {
       </div>
     `,
     expense_utilities: `
-      <div class="form-title"><div class="form-icon">⚡</div><h2>Utilities Expense Form</h2></div>
+      ${getHeader('Utilities Expense Form')}
       <div class="content">
-        <div class="field-row">
-          <div class="field"><label>Date</label><div class="field-input"></div></div>
-          <div class="field"><label>Bill Period</label><div class="field-input"></div></div>
+        ${getInstructions('Utilities Expense Form', 'expense')}
+        <div class="form-section">
+          <div class="section-title">
+            <div class="icon">⚡</div>
+            Utility Information
+          </div>
+          <div class="form-grid">
+            <div class="form-field">
+              <label>Date <span class="required">*</span></label>
+              <div class="input-box"></div>
+            </div>
+            <div class="form-field">
+              <label>Bill Period</label>
+              <div class="input-box"></div>
+            </div>
+          </div>
+          <div class="form-field full-width">
+            <label>Utility Type <span class="required">*</span></label>
+            <div class="input-box">☐ Electricity  ☐ Water  ☐ Internet  ☐ Phone  ☐ Generator Fuel</div>
+          </div>
         </div>
-        <div class="section-title">⚡ Utility Type</div>
-        <div class="checkbox-group">
-          <div class="checkbox-item"><span class="checkbox"></span> Electricity</div>
-          <div class="checkbox-item"><span class="checkbox"></span> Water</div>
-          <div class="checkbox-item"><span class="checkbox"></span> Internet</div>
-          <div class="checkbox-item"><span class="checkbox"></span> Phone</div>
-          <div class="checkbox-item"><span class="checkbox"></span> Generator Fuel</div>
+
+        <div class="form-section">
+          <div class="section-title">
+            <div class="icon">📋</div>
+            Utility Details
+          </div>
+          <table class="data-table">
+            <thead>
+              <tr><th>Description <span class="required">*</span></th><th>Meter Reading</th><th>Units</th><th>Amount (Le) <span class="required">*</span></th></tr>
+            </thead>
+            <tbody>
+              ${Array.from({ length: 3 }, () => `<tr><td>&nbsp;</td><td></td><td></td><td></td></tr>`).join('')}
+              <tr class="total-row"><td colspan="3">TOTAL AMOUNT</td><td></td></tr>
+            </tbody>
+          </table>
         </div>
-        <table>
-          <tr><th>Description</th><th>Meter Reading</th><th>Units</th><th>Amount (Le)</th></tr>
-          <tr><td>&nbsp;</td><td></td><td></td><td></td></tr>
-          <tr class="total-row"><td colspan="3">TOTAL AMOUNT</td><td></td></tr>
-        </table>
-        <div class="field-row">
-          <div class="field"><label>Account Number</label><div class="field-input"></div></div>
-          <div class="field"><label>Receipt Number</label><div class="field-input"></div></div>
+
+        <div class="form-section">
+          <div class="form-grid">
+            <div class="form-field">
+              <label>Account Number</label>
+              <div class="input-box"></div>
+            </div>
+            <div class="form-field">
+              <label>Receipt Number</label>
+              <div class="input-box"></div>
+            </div>
+          </div>
         </div>
+
         ${signatureSection}
       </div>
     `,
     expense_supplies: `
-      <div class="form-title"><div class="form-icon">📦</div><h2>Supplies Expense Form</h2></div>
+      ${getHeader('Supplies Expense Form')}
       <div class="content">
-        <div class="field-row">
-          <div class="field"><label>Date</label><div class="field-input"></div></div>
-          <div class="field"><label>Supplier</label><div class="field-input"></div></div>
-          <div class="field"><label>Invoice No.</label><div class="field-input"></div></div>
+        ${getInstructions('Supplies Expense Form', 'expense')}
+        <div class="form-section">
+          <div class="section-title">
+            <div class="icon">📦</div>
+            Purchase Information
+          </div>
+          <div class="form-grid">
+            <div class="form-field">
+              <label>Date <span class="required">*</span></label>
+              <div class="input-box"></div>
+            </div>
+            <div class="form-field">
+              <label>Supplier</label>
+              <div class="input-box"></div>
+            </div>
+            <div class="form-field">
+              <label>Invoice No.</label>
+              <div class="input-box"></div>
+            </div>
+          </div>
         </div>
-        <div class="section-title">📦 Items Purchased</div>
-        <table>
-          <tr><th>Item Description</th><th>Qty</th><th>Unit Price (Le)</th><th>Total (Le)</th></tr>
-          <tr><td>&nbsp;</td><td></td><td></td><td></td></tr>
-          <tr><td>&nbsp;</td><td></td><td></td><td></td></tr>
-          <tr><td>&nbsp;</td><td></td><td></td><td></td></tr>
-          <tr class="total-row"><td colspan="3">TOTAL AMOUNT</td><td></td></tr>
-        </table>
+
+        <div class="form-section">
+          <div class="section-title">
+            <div class="icon">📋</div>
+            Items Purchased
+          </div>
+          <table class="data-table">
+            <thead>
+              <tr><th>Item Description <span class="required">*</span></th><th>Qty</th><th>Unit Price (Le)</th><th>Total (Le) <span class="required">*</span></th></tr>
+            </thead>
+            <tbody>
+              ${Array.from({ length: 10 }, () => `<tr><td>&nbsp;</td><td></td><td></td><td></td></tr>`).join('')}
+              <tr class="total-row"><td colspan="3">TOTAL AMOUNT</td><td></td></tr>
+            </tbody>
+          </table>
+        </div>
+
         ${signatureSection}
       </div>
     `,
     expense_rent: `
-      <div class="form-title"><div class="form-icon">🏢</div><h2>Rent Expense Form</h2></div>
+      ${getHeader('Rent Expense Form')}
       <div class="content">
-        <div class="field-row">
-          <div class="field"><label>Date Paid</label><div class="field-input"></div></div>
-          <div class="field"><label>Rent Period</label><div class="field-input"></div></div>
+        ${getInstructions('Rent Expense Form', 'expense')}
+        <div class="form-section">
+          <div class="section-title">
+            <div class="icon">🏢</div>
+            Rent Information
+          </div>
+          <div class="form-grid">
+            <div class="form-field">
+              <label>Date Paid <span class="required">*</span></label>
+              <div class="input-box"></div>
+            </div>
+            <div class="form-field">
+              <label>Rent Period</label>
+              <div class="input-box"></div>
+            </div>
+          </div>
+          <div class="form-field full-width">
+            <label>Property Type <span class="required">*</span></label>
+            <div class="input-box">☐ Office  ☐ Warehouse  ☐ Shop  ☐ Parking</div>
+          </div>
         </div>
-        <div class="section-title">🏢 Property Type</div>
-        <div class="checkbox-group">
-          <div class="checkbox-item"><span class="checkbox"></span> Office</div>
-          <div class="checkbox-item"><span class="checkbox"></span> Warehouse</div>
-          <div class="checkbox-item"><span class="checkbox"></span> Shop</div>
-          <div class="checkbox-item"><span class="checkbox"></span> Parking</div>
+
+        <div class="form-section">
+          <div class="section-title">
+            <div class="icon">📋</div>
+            Rent Details
+          </div>
+          <table class="data-table">
+            <thead>
+              <tr><th>Property/Location <span class="required">*</span></th><th>Address</th><th>Monthly Rent (Le) <span class="required">*</span></th></tr>
+            </thead>
+            <tbody>
+              ${Array.from({ length: 3 }, () => `<tr><td>&nbsp;</td><td></td><td></td></tr>`).join('')}
+              <tr class="total-row"><td colspan="2">TOTAL RENT</td><td></td></tr>
+            </tbody>
+          </table>
         </div>
-        <table>
-          <tr><th>Property/Location</th><th>Address</th><th>Monthly Rent (Le)</th></tr>
-          <tr><td>&nbsp;</td><td></td><td></td></tr>
-          <tr class="total-row"><td colspan="2">TOTAL RENT</td><td></td></tr>
-        </table>
-        <div class="field-row">
-          <div class="field"><label>Landlord Name</label><div class="field-input"></div></div>
-          <div class="field"><label>Receipt Number</label><div class="field-input"></div></div>
+
+        <div class="form-section">
+          <div class="form-grid">
+            <div class="form-field">
+              <label>Landlord Name</label>
+              <div class="input-box"></div>
+            </div>
+            <div class="form-field">
+              <label>Receipt Number</label>
+              <div class="input-box"></div>
+            </div>
+          </div>
         </div>
+
         ${signatureSection}
       </div>
     `,
     expense_salaries: `
-      <div class="form-title"><div class="form-icon">👥</div><h2>Salary / Wages Form</h2></div>
+      ${getHeader('Salary / Wages Form')}
       <div class="content">
-        <div class="field-row">
-          <div class="field"><label>Pay Period</label><div class="field-input"></div></div>
-          <div class="field"><label>Payment Date</label><div class="field-input"></div></div>
+        ${getInstructions('Salary / Wages Form', 'expense')}
+        <div class="form-section">
+          <div class="section-title">
+            <div class="icon">👥</div>
+            Payroll Information
+          </div>
+          <div class="form-grid">
+            <div class="form-field">
+              <label>Pay Period <span class="required">*</span></label>
+              <div class="input-box"></div>
+            </div>
+            <div class="form-field">
+              <label>Payment Date <span class="required">*</span></label>
+              <div class="input-box"></div>
+            </div>
+          </div>
         </div>
-        <div class="section-title">👥 Employee Payments</div>
-        <table>
-          <tr><th>Employee</th><th>Position</th><th>Days</th><th>Basic (Le)</th><th>Allowances</th><th>Deductions</th><th>Net Pay</th></tr>
-          <tr><td>&nbsp;</td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
-          <tr><td>&nbsp;</td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
-          <tr><td>&nbsp;</td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
-          <tr class="total-row"><td colspan="6">TOTAL PAYROLL</td><td></td></tr>
-        </table>
+
+        <div class="form-section">
+          <div class="section-title">
+            <div class="icon">📋</div>
+            Employee Payments
+          </div>
+          <table class="data-table">
+            <thead>
+              <tr><th>Employee <span class="required">*</span></th><th>Position</th><th>Days</th><th>Basic (Le)</th><th>Allowances</th><th>Deductions</th><th>Net Pay <span class="required">*</span></th></tr>
+            </thead>
+            <tbody>
+              ${Array.from({ length: 8 }, () => `<tr><td>&nbsp;</td><td></td><td></td><td></td><td></td><td></td><td></td></tr>`).join('')}
+              <tr class="total-row"><td colspan="6">TOTAL PAYROLL</td><td></td></tr>
+            </tbody>
+          </table>
+        </div>
+
         ${signatureSection}
       </div>
     `,
     expense_transport: `
-      <div class="form-title"><div class="form-icon">🚌</div><h2>Transport Expense Form</h2></div>
+      ${getHeader('Transport Expense Form')}
       <div class="content">
-        <div class="field-row">
-          <div class="field"><label>Date</label><div class="field-input"></div></div>
-          <div class="field"><label>Employee Name</label><div class="field-input"></div></div>
+        ${getInstructions('Transport Expense Form', 'expense')}
+        <div class="form-section">
+          <div class="section-title">
+            <div class="icon">🚌</div>
+            Transport Information
+          </div>
+          <div class="form-grid">
+            <div class="form-field">
+              <label>Date <span class="required">*</span></label>
+              <div class="input-box"></div>
+            </div>
+            <div class="form-field">
+              <label>Employee Name</label>
+              <div class="input-box"></div>
+            </div>
+          </div>
         </div>
-        <div class="section-title">🚌 Trip Details</div>
-        <table>
-          <tr><th>From</th><th>To</th><th>Purpose</th><th>Amount (Le)</th></tr>
-          <tr><td>&nbsp;</td><td></td><td></td><td></td></tr>
-          <tr><td>&nbsp;</td><td></td><td></td><td></td></tr>
-          <tr class="total-row"><td colspan="3">TOTAL AMOUNT</td><td></td></tr>
-        </table>
+
+        <div class="form-section">
+          <div class="section-title">
+            <div class="icon">📋</div>
+            Trip Details
+          </div>
+          <table class="data-table">
+            <thead>
+              <tr><th>From <span class="required">*</span></th><th>To <span class="required">*</span></th><th>Purpose</th><th>Amount (Le) <span class="required">*</span></th></tr>
+            </thead>
+            <tbody>
+              ${Array.from({ length: 8 }, () => `<tr><td>&nbsp;</td><td></td><td></td><td></td></tr>`).join('')}
+              <tr class="total-row"><td colspan="3">TOTAL AMOUNT</td><td></td></tr>
+            </tbody>
+          </table>
+        </div>
+
         ${signatureSection}
       </div>
     `,
     expense_marketing: `
-      <div class="form-title"><div class="form-icon">📢</div><h2>Marketing Expense Form</h2></div>
+      ${getHeader('Marketing Expense Form')}
       <div class="content">
-        <div class="field-row">
-          <div class="field"><label>Date</label><div class="field-input"></div></div>
-          <div class="field"><label>Campaign Name</label><div class="field-input"></div></div>
+        ${getInstructions('Marketing Expense Form', 'expense')}
+        <div class="form-section">
+          <div class="section-title">
+            <div class="icon">📢</div>
+            Campaign Information
+          </div>
+          <div class="form-grid">
+            <div class="form-field">
+              <label>Date <span class="required">*</span></label>
+              <div class="input-box"></div>
+            </div>
+            <div class="form-field">
+              <label>Campaign Name</label>
+              <div class="input-box"></div>
+            </div>
+          </div>
+          <div class="form-field full-width">
+            <label>Marketing Type <span class="required">*</span></label>
+            <div class="input-box">☐ Radio/TV  ☐ Print  ☐ Social Media  ☐ Event  ☐ Billboard</div>
+          </div>
         </div>
-        <div class="section-title">📢 Marketing Type</div>
-        <div class="checkbox-group">
-          <div class="checkbox-item"><span class="checkbox"></span> Radio/TV</div>
-          <div class="checkbox-item"><span class="checkbox"></span> Print</div>
-          <div class="checkbox-item"><span class="checkbox"></span> Social Media</div>
-          <div class="checkbox-item"><span class="checkbox"></span> Event</div>
-          <div class="checkbox-item"><span class="checkbox"></span> Billboard</div>
+
+        <div class="form-section">
+          <div class="section-title">
+            <div class="icon">📋</div>
+            Marketing Expenses
+          </div>
+          <table class="data-table">
+            <thead>
+              <tr><th>Description <span class="required">*</span></th><th>Vendor</th><th>Amount (Le) <span class="required">*</span></th></tr>
+            </thead>
+            <tbody>
+              ${Array.from({ length: 6 }, () => `<tr><td>&nbsp;</td><td></td><td></td></tr>`).join('')}
+              <tr class="total-row"><td colspan="2">TOTAL AMOUNT</td><td></td></tr>
+            </tbody>
+          </table>
         </div>
-        <table>
-          <tr><th>Description</th><th>Vendor</th><th>Amount (Le)</th></tr>
-          <tr><td>&nbsp;</td><td></td><td></td></tr>
-          <tr class="total-row"><td colspan="2">TOTAL AMOUNT</td><td></td></tr>
-        </table>
+
         ${signatureSection}
       </div>
     `,
     expense_insurance: `
-      <div class="form-title"><div class="form-icon">🛡️</div><h2>Insurance Expense Form</h2></div>
+      ${getHeader('Insurance Expense Form')}
       <div class="content">
-        <div class="field-row">
-          <div class="field"><label>Date Paid</label><div class="field-input"></div></div>
-          <div class="field"><label>Policy Number</label><div class="field-input"></div></div>
+        ${getInstructions('Insurance Expense Form', 'expense')}
+        <div class="form-section">
+          <div class="section-title">
+            <div class="icon">🛡️</div>
+            Insurance Information
+          </div>
+          <div class="form-grid">
+            <div class="form-field">
+              <label>Date Paid <span class="required">*</span></label>
+              <div class="input-box"></div>
+            </div>
+            <div class="form-field">
+              <label>Policy Number</label>
+              <div class="input-box"></div>
+            </div>
+          </div>
+          <div class="form-field full-width">
+            <label>Insurance Type <span class="required">*</span></label>
+            <div class="input-box">☐ Vehicle  ☐ Property  ☐ Business  ☐ Cargo</div>
+          </div>
         </div>
-        <div class="section-title">🛡️ Insurance Type</div>
-        <div class="checkbox-group">
-          <div class="checkbox-item"><span class="checkbox"></span> Vehicle</div>
-          <div class="checkbox-item"><span class="checkbox"></span> Property</div>
-          <div class="checkbox-item"><span class="checkbox"></span> Business</div>
-          <div class="checkbox-item"><span class="checkbox"></span> Cargo</div>
+
+        <div class="form-section">
+          <div class="section-title">
+            <div class="icon">📋</div>
+            Insurance Details
+          </div>
+          <table class="data-table">
+            <thead>
+              <tr><th>Item Insured <span class="required">*</span></th><th>Coverage Period</th><th>Premium (Le) <span class="required">*</span></th></tr>
+            </thead>
+            <tbody>
+              ${Array.from({ length: 4 }, () => `<tr><td>&nbsp;</td><td></td><td></td></tr>`).join('')}
+              <tr class="total-row"><td colspan="2">TOTAL PREMIUM</td><td></td></tr>
+            </tbody>
+          </table>
         </div>
-        <table>
-          <tr><th>Item Insured</th><th>Coverage Period</th><th>Premium (Le)</th></tr>
-          <tr><td>&nbsp;</td><td></td><td></td></tr>
-          <tr class="total-row"><td colspan="2">TOTAL PREMIUM</td><td></td></tr>
-        </table>
-        <div class="field-row">
-          <div class="field"><label>Insurance Company</label><div class="field-input"></div></div>
-          <div class="field"><label>Expiry Date</label><div class="field-input"></div></div>
+
+        <div class="form-section">
+          <div class="form-grid">
+            <div class="form-field">
+              <label>Insurance Company</label>
+              <div class="input-box"></div>
+            </div>
+            <div class="form-field">
+              <label>Expiry Date</label>
+              <div class="input-box"></div>
+            </div>
+          </div>
         </div>
+
         ${signatureSection}
       </div>
     `,
     expense_petty_cash: `
-      <div class="form-title"><div class="form-icon">💰</div><h2>Petty Cash Form</h2></div>
+      ${getHeader('Petty Cash Form')}
       <div class="content">
-        <div class="field-row">
-          <div class="field"><label>Date</label><div class="field-input"></div></div>
-          <div class="field"><label>Requested By</label><div class="field-input"></div></div>
+        ${getInstructions('Petty Cash Form', 'expense')}
+        <div class="form-section">
+          <div class="section-title">
+            <div class="icon">💰</div>
+            Petty Cash Information
+          </div>
+          <div class="form-grid">
+            <div class="form-field">
+              <label>Date <span class="required">*</span></label>
+              <div class="input-box"></div>
+            </div>
+            <div class="form-field">
+              <label>Requested By</label>
+              <div class="input-box"></div>
+            </div>
+            <div class="form-field">
+              <label>Opening Balance (Le)</label>
+              <div class="input-box"></div>
+            </div>
+            <div class="form-field">
+              <label>Closing Balance (Le)</label>
+              <div class="input-box"></div>
+            </div>
+          </div>
         </div>
-        <div class="field-row">
-          <div class="field"><label>Opening Balance (Le)</label><div class="field-input"></div></div>
-          <div class="field"><label>Closing Balance (Le)</label><div class="field-input"></div></div>
+
+        <div class="form-section">
+          <div class="section-title">
+            <div class="icon">📋</div>
+            Expense Items
+          </div>
+          <table class="data-table">
+            <thead>
+              <tr><th>Date</th><th>Description <span class="required">*</span></th><th>Amount (Le) <span class="required">*</span></th><th>Receipt #</th></tr>
+            </thead>
+            <tbody>
+              ${Array.from({ length: 10 }, () => `<tr><td>&nbsp;</td><td></td><td></td><td></td></tr>`).join('')}
+              <tr class="total-row"><td colspan="2">TOTAL SPENT</td><td></td><td></td></tr>
+            </tbody>
+          </table>
         </div>
-        <div class="section-title">💰 Expense Items</div>
-        <table>
-          <tr><th>Date</th><th>Description</th><th>Amount (Le)</th><th>Receipt #</th></tr>
-          <tr><td>&nbsp;</td><td></td><td></td><td></td></tr>
-          <tr><td>&nbsp;</td><td></td><td></td><td></td></tr>
-          <tr><td>&nbsp;</td><td></td><td></td><td></td></tr>
-          <tr class="total-row"><td colspan="2">TOTAL SPENT</td><td></td><td></td></tr>
-        </table>
+
         ${signatureSection}
       </div>
     `,
     expense_truck_contract: `
-      <div class="form-title"><div class="form-icon">🚛</div><h2>Truck Contract Expense Form</h2></div>
+      ${getHeader('Truck Contract Expense Form')}
       <div class="content">
-        <div class="field-row">
-          <div class="field"><label>Contract Number</label><div class="field-input"></div></div>
-          <div class="field"><label>Date</label><div class="field-input"></div></div>
+        ${getInstructions('Truck Contract Expense Form', 'expense')}
+        <div class="form-section">
+          <div class="section-title">
+            <div class="icon">🚛</div>
+            Contract Information
+          </div>
+          <div class="form-grid">
+            <div class="form-field">
+              <label>Contract Number</label>
+              <div class="input-box"></div>
+            </div>
+            <div class="form-field">
+              <label>Date <span class="required">*</span></label>
+              <div class="input-box"></div>
+            </div>
+            <div class="form-field">
+              <label>Vehicle</label>
+              <div class="input-box"></div>
+            </div>
+            <div class="form-field">
+              <label>Driver</label>
+              <div class="input-box"></div>
+            </div>
+          </div>
         </div>
-        <div class="field-row">
-          <div class="field"><label>Vehicle</label><div class="field-input"></div></div>
-          <div class="field"><label>Driver</label><div class="field-input"></div></div>
+
+        <div class="form-section">
+          <div class="section-title">
+            <div class="icon">📋</div>
+            Contract Expenses
+          </div>
+          <table class="data-table">
+            <thead>
+              <tr><th>Category <span class="required">*</span></th><th>Description</th><th>Amount (Le) <span class="required">*</span></th></tr>
+            </thead>
+            <tbody>
+              <tr><td>Fuel</td><td></td><td></td></tr>
+              <tr><td>Tolls</td><td></td><td></td></tr>
+              <tr><td>Loading</td><td></td><td></td></tr>
+              <tr><td>Unloading</td><td></td><td></td></tr>
+              <tr><td>Food/Accommodation</td><td></td><td></td></tr>
+              <tr><td>Other</td><td></td><td></td></tr>
+              <tr class="total-row"><td colspan="2">TOTAL EXPENSES</td><td></td></tr>
+            </tbody>
+          </table>
         </div>
-        <div class="section-title">🚛 Contract Expenses</div>
-        <table>
-          <tr><th>Category</th><th>Description</th><th>Amount (Le)</th></tr>
-          <tr><td>Fuel</td><td></td><td></td></tr>
-          <tr><td>Tolls</td><td></td><td></td></tr>
-          <tr><td>Loading</td><td></td><td></td></tr>
-          <tr><td>Unloading</td><td></td><td></td></tr>
-          <tr><td>Food/Accommodation</td><td></td><td></td></tr>
-          <tr><td>Other</td><td></td><td></td></tr>
-          <tr class="total-row"><td colspan="2">TOTAL EXPENSES</td><td></td></tr>
-        </table>
+
         ${signatureSection}
       </div>
     `,
     expense_general: `
-      <div class="form-title"><div class="form-icon">📋</div><h2>General Expense Form</h2></div>
+      ${getHeader('General Expense Form')}
       <div class="content">
-        <div class="field-row">
-          <div class="field"><label>Date</label><div class="field-input"></div></div>
-          <div class="field"><label>Invoice No.</label><div class="field-input"></div></div>
-          <div class="field"><label>Vendor</label><div class="field-input"></div></div>
+        ${getInstructions('General Expense Form', 'expense')}
+        <div class="form-section">
+          <div class="section-title">
+            <div class="icon">📋</div>
+            Expense Information
+          </div>
+          <div class="form-grid">
+            <div class="form-field">
+              <label>Date <span class="required">*</span></label>
+              <div class="input-box"></div>
+            </div>
+            <div class="form-field">
+              <label>Invoice No.</label>
+              <div class="input-box"></div>
+            </div>
+            <div class="form-field">
+              <label>Vendor</label>
+              <div class="input-box"></div>
+            </div>
+          </div>
         </div>
-        <div class="section-title">📋 Expense Details</div>
-        <table>
-          <tr><th>Description</th><th>Qty</th><th>Unit Price (Le)</th><th>Total (Le)</th></tr>
-          <tr><td>&nbsp;</td><td></td><td></td><td></td></tr>
-          <tr><td>&nbsp;</td><td></td><td></td><td></td></tr>
-          <tr class="total-row"><td colspan="3">TOTAL AMOUNT</td><td></td></tr>
-        </table>
-        <div class="section-title">💳 Payment Method</div>
-        <div class="checkbox-group">
-          <div class="checkbox-item"><span class="checkbox"></span> Cash</div>
-          <div class="checkbox-item"><span class="checkbox"></span> Bank Transfer</div>
-          <div class="checkbox-item"><span class="checkbox"></span> Mobile Money</div>
+
+        <div class="form-section">
+          <div class="section-title">
+            <div class="icon">💰</div>
+            Expense Details
+          </div>
+          <table class="data-table">
+            <thead>
+              <tr><th>Description <span class="required">*</span></th><th>Qty</th><th>Unit Price (Le)</th><th>Total (Le) <span class="required">*</span></th></tr>
+            </thead>
+            <tbody>
+              ${Array.from({ length: 10 }, () => `<tr><td>&nbsp;</td><td></td><td></td><td></td></tr>`).join('')}
+              <tr class="total-row"><td colspan="3">TOTAL AMOUNT</td><td></td></tr>
+            </tbody>
+          </table>
         </div>
+
+        <div class="form-section">
+          <div class="form-field full-width">
+            <label>Payment Method <span class="required">*</span></label>
+            <div class="input-box">☐ Cash  ☐ Bank Transfer  ☐ Mobile Money</div>
+          </div>
+        </div>
+
         ${signatureSection}
       </div>
     `,
@@ -567,7 +831,7 @@ const generateFormHTML = (formType, org) => {
         <div class="form-section">
           <div class="section-title">
             <div class="icon">🛒</div>
-            Sale Information
+            Sales Information
           </div>
           <div class="form-grid">
             <div class="form-field">
@@ -582,6 +846,8 @@ const generateFormHTML = (formType, org) => {
               <label>Sales Person</label>
               <div class="input-box"></div>
             </div>
+          </div>
+          <div class="form-grid">
             <div class="form-field">
               <label>Customer Name</label>
               <div class="input-box"></div>
@@ -603,7 +869,7 @@ const generateFormHTML = (formType, org) => {
               <tr><th>Product <span class="required">*</span></th><th>Qty</th><th>Unit Price (Le)</th><th>Total (Le) <span class="required">*</span></th></tr>
             </thead>
             <tbody>
-              ${Array.from({ length: 12 }, () => `<tr><td>&nbsp;</td><td></td><td></td><td></td></tr>`).join('')}
+              ${Array.from({ length: 10 }, () => `<tr><td>&nbsp;</td><td></td><td></td><td></td></tr>`).join('')}
               <tr><td colspan="3">Discount</td><td></td></tr>
               <tr class="total-row"><td colspan="3">TOTAL AMOUNT</td><td></td></tr>
             </tbody>
@@ -627,7 +893,7 @@ const generateFormHTML = (formType, org) => {
         <div class="form-section">
           <div class="section-title">
             <div class="icon">📦</div>
-            Sale Information
+            Sales Information
           </div>
           <div class="form-grid">
             <div class="form-field">
@@ -638,6 +904,8 @@ const generateFormHTML = (formType, org) => {
               <label>Invoice No.</label>
               <div class="input-box"></div>
             </div>
+          </div>
+          <div class="form-grid">
             <div class="form-field">
               <label>Customer/Business <span class="required">*</span></label>
               <div class="input-box"></div>
@@ -656,10 +924,10 @@ const generateFormHTML = (formType, org) => {
           </div>
           <table class="data-table">
             <thead>
-              <tr><th>Product <span class="required">*</span></th><th>SKU</th><th>Qty</th><th>Wholesale Price</th><th>Total (Le) <span class="required">*</span></th></tr>
+              <tr><th>Product <span class="required">*</span></th><th>SKU</th><th>Qty</th><th>Wholesale Price (Le)</th><th>Total (Le) <span class="required">*</span></th></tr>
             </thead>
             <tbody>
-              ${Array.from({ length: 12 }, () => `<tr><td>&nbsp;</td><td></td><td></td><td></td><td></td></tr>`).join('')}
+              ${Array.from({ length: 10 }, () => `<tr><td>&nbsp;</td><td></td><td></td><td></td><td></td></tr>`).join('')}
               <tr><td colspan="4">Bulk Discount</td><td></td></tr>
               <tr class="total-row"><td colspan="4">TOTAL AMOUNT</td><td></td></tr>
             </tbody>
@@ -676,7 +944,7 @@ const generateFormHTML = (formType, org) => {
         <div class="form-section">
           <div class="section-title">
             <div class="icon">🚐</div>
-            Sale Information
+            Sales Information
           </div>
           <div class="form-grid">
             <div class="form-field">
@@ -691,6 +959,8 @@ const generateFormHTML = (formType, org) => {
               <label>Driver</label>
               <div class="input-box"></div>
             </div>
+          </div>
+          <div class="form-grid">
             <div class="form-field">
               <label>Route/Location</label>
               <div class="input-box"></div>
@@ -739,6 +1009,8 @@ const generateFormHTML = (formType, org) => {
               <label>Trip No.</label>
               <div class="input-box"></div>
             </div>
+          </div>
+          <div class="form-grid">
             <div class="form-field">
               <label>Vehicle</label>
               <div class="input-box"></div>
@@ -748,7 +1020,7 @@ const generateFormHTML = (formType, org) => {
               <div class="input-box"></div>
             </div>
             <div class="form-field">
-              <label>Route</label>
+              <label>Route <span class="required">*</span></label>
               <div class="input-box"></div>
             </div>
           </div>
@@ -809,6 +1081,8 @@ const generateFormHTML = (formType, org) => {
               <label>Date <span class="required">*</span></label>
               <div class="input-box"></div>
             </div>
+          </div>
+          <div class="form-grid">
             <div class="form-field">
               <label>Client <span class="required">*</span></label>
               <div class="input-box"></div>
@@ -821,6 +1095,8 @@ const generateFormHTML = (formType, org) => {
               <label>Driver</label>
               <div class="input-box"></div>
             </div>
+          </div>
+          <div class="form-grid">
             <div class="form-field">
               <label>Pickup Location</label>
               <div class="input-box"></div>
@@ -889,7 +1165,7 @@ const generateFormHTML = (formType, org) => {
               <tr><th>Description <span class="required">*</span></th><th>Amount (Le) <span class="required">*</span></th></tr>
             </thead>
             <tbody>
-              ${Array.from({ length: 6 }, () => `<tr><td>&nbsp;</td><td></td></tr>`).join('')}
+              ${Array.from({ length: 5 }, () => `<tr><td>&nbsp;</td><td></td></tr>`).join('')}
               <tr class="total-row"><td>TOTAL AMOUNT</td><td></td></tr>
             </tbody>
           </table>
@@ -941,10 +1217,29 @@ export default function PrintableFormsDownload({ open, onOpenChange, organisatio
   const handleDownload = async (formId) => {
     setLoading(formId);
     try {
+      const response = await base44.functions.invoke('generateFormPDF', {
+        formType: formId,
+        organisation: organisation
+      });
+      
+      const formName = FORM_TEMPLATES.find(f => f.id === formId)?.name || formId;
+      
+      // Create blob from response data
+      const blob = new Blob([response.data], { type: 'application/pdf' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `${formName.replace(/\s+/g, '_')}.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error('Error generating PDF:', error);
+      // Fallback: Use hidden iframe for cleaner PDF experience
       const html = generateFormHTML(formId, organisation);
       const formName = FORM_TEMPLATES.find(f => f.id === formId)?.name || formId;
       
-      // Use hidden iframe for cleaner PDF experience
       const iframe = document.createElement('iframe');
       iframe.style.position = 'fixed';
       iframe.style.right = '0';
