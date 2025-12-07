@@ -107,7 +107,6 @@ export default function Finance() {
   const [editingRevenue, setEditingRevenue] = useState(null);
   const [editingExpense, setEditingExpense] = useState(null);
   const [categoryFilter, setCategoryFilter] = useState("all");
-  const [showFormsDialog, setShowFormsDialog] = useState(false);
   const [dateRange, setDateRange] = useState("this_month");
   const [showBulkDeleteExpenses, setShowBulkDeleteExpenses] = useState(false);
   const [showBulkDeleteRevenues, setShowBulkDeleteRevenues] = useState(false);
@@ -605,16 +604,7 @@ export default function Finance() {
         <PageHeader
           title="Finance"
           subtitle="Complete financial overview and management"
-        >
-          <Button 
-            variant="outline" 
-            onClick={() => setShowFormsDialog(true)}
-            className="border-[#0072C6]/30 hover:border-[#0072C6] hover:bg-[#0072C6]/10"
-          >
-            <Printer className="w-4 h-4 mr-2" />
-            Print Forms
-          </Button>
-        </PageHeader>
+        />
 
         {/* Date Filter */}
         <div className="flex items-center gap-4 flex-wrap">
@@ -1942,12 +1932,7 @@ export default function Finance() {
           </DialogContent>
         </Dialog>
 
-        {/* Printable Forms Dialog */}
-        <PrintableFormsDownload
-          open={showFormsDialog}
-          onOpenChange={setShowFormsDialog}
-          organisation={organisation?.[0]}
-        />
+
 
         {/* Bulk Delete Expenses Dialog */}
         <Dialog open={showBulkDeleteExpenses} onOpenChange={setShowBulkDeleteExpenses}>
