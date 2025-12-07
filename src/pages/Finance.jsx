@@ -111,7 +111,6 @@ export default function Finance() {
   const [showBulkDeleteExpenses, setShowBulkDeleteExpenses] = useState(false);
   const [showBulkDeleteRevenues, setShowBulkDeleteRevenues] = useState(false);
   const [bulkDeleteLoading, setBulkDeleteLoading] = useState(false);
-  const [showFormsDialog, setShowFormsDialog] = useState(false);
 
   const { data: user } = useQuery({
     queryKey: ['currentUser'],
@@ -1082,14 +1081,7 @@ export default function Finance() {
               <CardHeader className="flex flex-row items-center justify-between flex-wrap gap-2">
                 <CardTitle>Expense Records</CardTitle>
                 <div className="flex items-center gap-2 flex-wrap">
-                  <Button 
-                    variant="outline" 
-                    onClick={() => setShowFormsDialog(true)}
-                    className="border-[#0072C6]/30 hover:border-[#0072C6] hover:bg-[#0072C6]/10"
-                  >
-                    <Printer className="w-4 h-4 mr-2" />
-                    Print Forms
-                  </Button>
+                  <ExpenseEntryTemplate organisation={organisation?.[0]} />
                   <Select value={categoryFilter} onValueChange={setCategoryFilter}>
                     <SelectTrigger className="w-40">
                       <Filter className="w-4 h-4 mr-2" />
@@ -1247,14 +1239,7 @@ export default function Finance() {
                   Revenue from Owners & CEO
                 </CardTitle>
                 <div className="flex gap-2 flex-wrap">
-                  <Button 
-                    variant="outline" 
-                    onClick={() => setShowFormsDialog(true)}
-                    className="border-[#0072C6]/30 hover:border-[#0072C6] hover:bg-[#0072C6]/10"
-                  >
-                    <Printer className="w-4 h-4 mr-2" />
-                    Print Forms
-                  </Button>
+                  <RevenueEntryTemplate organisation={organisation?.[0]} />
                   {filteredRevenues.length > 0 && isAdmin && (
                     <Button 
                       variant="outline"
