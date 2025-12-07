@@ -135,28 +135,33 @@ export default function CategoryBreakdownChart({
                 </PieChart>
               </ResponsiveContainer>
             ) : (
-              <ResponsiveContainer width="100%" height={hasManyCategories ? 450 : 320}>
+              <ResponsiveContainer width="100%" height={hasManyCategories ? 500 : 350}>
                 <BarChart 
                   data={chartData} 
                   layout="vertical"
-                  margin={{ top: 10, right: 30, left: 10, bottom: 10 }}
+                  margin={{ top: 15, right: 40, left: 5, bottom: 15 }}
+                  barCategoryGap="20%"
                 >
-                  <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+                  <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" horizontal={true} vertical={false} />
                   <XAxis 
                     type="number" 
-                    tickFormatter={(val) => `Le ${(val / 1000).toFixed(0)}k`}
-                    stroke="#6b7280"
-                    style={{ fontSize: '12px' }}
+                    tickFormatter={(val) => `${(val / 1000).toFixed(0)}k`}
+                    stroke="#9ca3af"
+                    style={{ fontSize: '11px' }}
+                    axisLine={{ stroke: '#d1d5db' }}
                   />
                   <YAxis 
                     type="category" 
                     dataKey="name" 
-                    width={150}
-                    tick={{ fontSize: 12, fill: '#374151' }}
-                    stroke="#6b7280"
+                    width={140}
+                    tick={{ fontSize: 11, fill: '#4b5563' }}
+                    stroke="#9ca3af"
+                    axisLine={{ stroke: '#d1d5db' }}
+                    tickLine={false}
                   />
                   <Tooltip 
                     formatter={(value) => valueFormatter(value)}
+                    cursor={{ fill: 'rgba(30, 176, 83, 0.05)' }}
                     contentStyle={{ 
                       backgroundColor: 'white', 
                       border: '2px solid #1EB053',
@@ -170,18 +175,19 @@ export default function CategoryBreakdownChart({
                     dataKey="value" 
                     radius={[0, 8, 8, 0]}
                     animationDuration={800}
+                    maxBarSize={40}
                   >
                     {chartData.map((entry, index) => (
                       <Cell 
                         key={`cell-${index}`} 
-                        fill={`url(#gradient-${index})`}
+                        fill={`url(#bar-gradient-${index})`}
                       />
                     ))}
                   </Bar>
                   <defs>
                     {chartData.map((entry, index) => (
-                      <linearGradient key={`gradient-${index}`} id={`gradient-${index}`} x1="0" y1="0" x2="1" y2="0">
-                        <stop offset="0%" stopColor={colors[index]} stopOpacity={0.8} />
+                      <linearGradient key={`bar-gradient-${index}`} id={`bar-gradient-${index}`} x1="0" y1="0" x2="1" y2="0">
+                        <stop offset="0%" stopColor={colors[index]} stopOpacity={0.7} />
                         <stop offset="100%" stopColor={colors[index]} stopOpacity={1} />
                       </linearGradient>
                     ))}
