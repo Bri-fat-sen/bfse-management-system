@@ -421,7 +421,7 @@ export default function CreateDocumentDialog({
                   </Badge>
                 </div>
                 
-                <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
                   {Object.entries(DOCUMENT_TYPE_INFO).map(([type, info]) => {
                     const IconComponent = DOCUMENT_ICONS[type] || FileText;
                     const isSelected = documentType === type;
@@ -429,68 +429,120 @@ export default function CreateDocumentDialog({
                       <button
                         key={type}
                         onClick={() => setDocumentType(type)}
-                        className={`group relative p-5 rounded-xl border-2 text-left transition-all duration-200 ${
+                        className={`group relative rounded-xl border-2 text-left transition-all duration-200 overflow-hidden ${
                           isSelected 
-                            ? 'border-[#1EB053] bg-gradient-to-br from-[#1EB053]/5 to-[#0072C6]/5 shadow-lg shadow-[#1EB053]/10' 
-                            : 'border-gray-200 hover:border-[#0072C6]/50 hover:shadow-md hover:bg-gray-50/50'
+                            ? 'border-[#1EB053] bg-white shadow-xl shadow-[#1EB053]/20' 
+                            : 'border-gray-200 hover:border-[#0072C6]/50 hover:shadow-lg hover:bg-gray-50'
                         }`}
                       >
-                        {isSelected && (
-                          <div className="absolute top-3 right-3">
-                            <CheckCircle2 className="w-5 h-5 text-[#1EB053]" />
-                          </div>
-                        )}
-                        <div className={`w-10 h-10 rounded-lg flex items-center justify-center mb-3 transition-colors ${
-                          isSelected 
-                            ? 'bg-gradient-to-br from-[#1EB053] to-[#0072C6] text-white' 
-                            : 'bg-gray-100 text-gray-500 group-hover:bg-[#0072C6]/10 group-hover:text-[#0072C6]'
-                        }`}>
-                          <IconComponent className="w-5 h-5" />
+                        {/* Sierra Leone Stripe */}
+                        <div className={`flex h-1 w-full ${isSelected ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'} transition-opacity`}>
+                          <div className="flex-1 bg-[#1EB053]" />
+                          <div className="flex-1 bg-white" />
+                          <div className="flex-1 bg-[#0072C6]" />
                         </div>
-                        <p className={`font-semibold text-sm ${isSelected ? 'text-[#0F1F3C]' : 'text-gray-700'}`}>
-                          {info.label}
-                        </p>
-                        <p className="text-xs text-gray-500 mt-1 line-clamp-2">{info.description}</p>
-                        {info.requiresSignature && (
-                          <div className="flex items-center gap-1 mt-3">
-                            <FileSignature className="w-3 h-3 text-[#0072C6]" />
-                            <span className="text-[10px] font-medium text-[#0072C6]">Signature Required</span>
+                        
+                        <div className="p-5">
+                          <div className="flex items-start gap-4">
+                            <div className={`w-14 h-14 rounded-xl flex items-center justify-center flex-shrink-0 transition-all duration-200 shadow-md ${
+                              isSelected 
+                                ? 'bg-gradient-to-br from-[#1EB053] to-[#0072C6] text-white shadow-[#1EB053]/30' 
+                                : 'bg-gradient-to-br from-gray-100 to-gray-50 text-gray-500 group-hover:from-[#0072C6]/10 group-hover:to-[#0072C6]/5 group-hover:text-[#0072C6]'
+                            }`}>
+                              <IconComponent className="w-7 h-7" />
+                            </div>
+                            
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-start justify-between gap-2 mb-2">
+                                <h4 className={`font-bold text-base ${isSelected ? 'text-[#0F1F3C]' : 'text-gray-800'}`}>
+                                  {info.label}
+                                </h4>
+                                {isSelected && (
+                                  <CheckCircle2 className="w-5 h-5 text-[#1EB053] flex-shrink-0" />
+                                )}
+                              </div>
+                              
+                              <p className="text-sm text-gray-600 leading-relaxed mb-3">
+                                {info.description}
+                              </p>
+                              
+                              <div className="flex flex-wrap items-center gap-2">
+                                {info.requiresSignature && (
+                                  <Badge className="bg-[#0072C6]/10 text-[#0072C6] border-0 text-xs">
+                                    <FileSignature className="w-3 h-3 mr-1" />
+                                    Signature Required
+                                  </Badge>
+                                )}
+                                <Badge variant="outline" className="text-xs border-gray-200 text-gray-600">
+                                  Professional Template
+                                </Badge>
+                              </div>
+                            </div>
                           </div>
-                        )}
+                        </div>
                       </button>
                     );
                   })}
                 </div>
 
                 {customTemplates.length > 0 && (
-                  <div className="mt-8 pt-6 border-t">
-                    <div className="flex items-center gap-2 mb-4">
-                      <Sparkles className="w-4 h-4 text-amber-500" />
-                      <h4 className="font-semibold text-[#0F1F3C]">Custom Templates</h4>
+                  <div className="mt-8 pt-8 border-t-2 border-dashed">
+                    <div className="flex items-center gap-3 mb-5">
+                      <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center">
+                        <Sparkles className="w-4 h-4 text-white" />
+                      </div>
+                      <div>
+                        <h4 className="font-bold text-[#0F1F3C]">Custom Templates</h4>
+                        <p className="text-xs text-gray-500">Organization-specific document templates</p>
+                      </div>
                     </div>
-                    <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
                       {customTemplates.map(template => {
                         const isSelected = documentType === template.id;
                         return (
                           <button
                             key={template.id}
                             onClick={() => setDocumentType(template.id)}
-                            className={`group relative p-5 rounded-xl border-2 text-left transition-all duration-200 ${
+                            className={`group relative rounded-xl border-2 text-left transition-all duration-200 overflow-hidden ${
                               isSelected 
-                                ? 'border-amber-400 bg-gradient-to-br from-amber-50 to-orange-50 shadow-lg' 
-                                : 'border-gray-200 hover:border-amber-300 hover:shadow-md'
+                                ? 'border-amber-400 bg-white shadow-xl shadow-amber-500/20' 
+                                : 'border-gray-200 hover:border-amber-300 hover:shadow-lg hover:bg-amber-50/30'
                             }`}
                           >
-                            {isSelected && (
-                              <div className="absolute top-3 right-3">
-                                <CheckCircle2 className="w-5 h-5 text-amber-500" />
-                              </div>
-                            )}
-                            <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-amber-400 to-orange-500 text-white flex items-center justify-center mb-3">
-                              <FileText className="w-5 h-5" />
+                            {/* Custom Stripe */}
+                            <div className={`flex h-1 w-full ${isSelected ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'} transition-opacity`}>
+                              <div className="flex-1 bg-amber-400" />
+                              <div className="flex-1 bg-white" />
+                              <div className="flex-1 bg-orange-500" />
                             </div>
-                            <p className="font-semibold text-sm text-gray-700">{template.name}</p>
-                            <Badge className="mt-2 bg-amber-100 text-amber-700 border-0 text-[10px]">Custom Template</Badge>
+                            
+                            <div className="p-5">
+                              <div className="flex items-start gap-4">
+                                <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-amber-400 to-orange-500 text-white flex items-center justify-center flex-shrink-0 shadow-md">
+                                  <FileText className="w-7 h-7" />
+                                </div>
+                                
+                                <div className="flex-1 min-w-0">
+                                  <div className="flex items-start justify-between gap-2 mb-2">
+                                    <h4 className="font-bold text-base text-gray-800">
+                                      {template.name}
+                                    </h4>
+                                    {isSelected && (
+                                      <CheckCircle2 className="w-5 h-5 text-amber-500 flex-shrink-0" />
+                                    )}
+                                  </div>
+                                  
+                                  <p className="text-sm text-gray-600 mb-3">
+                                    {template.description || 'Custom organization template'}
+                                  </p>
+                                  
+                                  <Badge className="bg-gradient-to-r from-amber-100 to-orange-100 text-amber-800 border-0 text-xs">
+                                    <Sparkles className="w-3 h-3 mr-1" />
+                                    Custom Template
+                                  </Badge>
+                                </div>
+                              </div>
+                            </div>
                           </button>
                         );
                       })}
@@ -503,7 +555,14 @@ export default function CreateDocumentDialog({
           {step === 2 && (
             <div className="space-y-6">
               {/* Recipients Section */}
-              <div className="bg-white rounded-xl border shadow-sm overflow-hidden">
+              <div className="bg-white rounded-xl border-2 shadow-lg overflow-hidden">
+                {/* Sierra Leone Stripe */}
+                <div className="flex h-1 w-full">
+                  <div className="flex-1 bg-[#1EB053]" />
+                  <div className="flex-1 bg-white" />
+                  <div className="flex-1 bg-[#0072C6]" />
+                </div>
+                
                 <div className="px-5 py-4 bg-gradient-to-r from-gray-50 to-white border-b flex items-center justify-between">
                   <div className="flex items-center gap-3">
                     <div className="w-8 h-8 rounded-lg bg-[#0072C6]/10 flex items-center justify-center">
@@ -573,7 +632,14 @@ export default function CreateDocumentDialog({
 
               {/* Document Details Section */}
               {selectedTemplate?.variables?.length > 0 && selectedEmployees.length > 0 && (
-                <div className="bg-white rounded-xl border shadow-sm overflow-hidden">
+                <div className="bg-white rounded-xl border-2 shadow-lg overflow-hidden">
+                  {/* Sierra Leone Stripe */}
+                  <div className="flex h-1 w-full">
+                    <div className="flex-1 bg-[#1EB053]" />
+                    <div className="flex-1 bg-white" />
+                    <div className="flex-1 bg-[#0072C6]" />
+                  </div>
+                  
                   <div className="px-5 py-4 bg-gradient-to-r from-gray-50 to-white border-b flex items-center justify-between">
                     <div className="flex items-center gap-3">
                       <div className="w-8 h-8 rounded-lg bg-[#1EB053]/10 flex items-center justify-center">
@@ -685,7 +751,14 @@ export default function CreateDocumentDialog({
                 </div>
 
                 {/* Document Preview */}
-                <div className="bg-white rounded-xl border shadow-sm overflow-hidden">
+                <div className="bg-white rounded-xl border-2 shadow-lg overflow-hidden">
+                  {/* Sierra Leone Stripe */}
+                  <div className="flex h-1 w-full">
+                    <div className="flex-1 bg-[#1EB053]" />
+                    <div className="flex-1 bg-white" />
+                    <div className="flex-1 bg-[#0072C6]" />
+                  </div>
+                  
                   <div className="px-5 py-3 bg-gradient-to-r from-gray-50 to-white border-b flex items-center justify-between">
                     <div className="flex items-center gap-2">
                       <Eye className="w-4 h-4 text-gray-500" />
@@ -709,7 +782,15 @@ export default function CreateDocumentDialog({
                 </div>
 
                 {/* What's Next Info */}
-                <div className="bg-gradient-to-r from-[#0072C6]/5 to-[#1EB053]/5 border border-[#0072C6]/20 rounded-xl p-5">
+                <div className="bg-white border-2 border-[#0072C6]/20 rounded-xl overflow-hidden shadow-lg">
+                  {/* Sierra Leone Stripe */}
+                  <div className="flex h-1 w-full">
+                    <div className="flex-1 bg-[#1EB053]" />
+                    <div className="flex-1 bg-white" />
+                    <div className="flex-1 bg-[#0072C6]" />
+                  </div>
+                  
+                  <div className="bg-gradient-to-r from-[#0072C6]/5 to-[#1EB053]/5 p-5">
                   <div className="flex items-start gap-4">
                     <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#0072C6] to-[#1EB053] text-white flex items-center justify-center flex-shrink-0">
                       <Send className="w-5 h-5" />
@@ -735,6 +816,7 @@ export default function CreateDocumentDialog({
                         </div>
                       </div>
                     </div>
+                  </div>
                   </div>
                 </div>
               </div>
