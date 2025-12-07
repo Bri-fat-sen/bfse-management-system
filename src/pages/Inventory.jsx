@@ -79,6 +79,7 @@ export default function Inventory() {
   const [searchTerm, setSearchTerm] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("all");
   const [stockFilter, setStockFilter] = useState("all");
+  const [locationFilter, setLocationFilter] = useState("all");
   const [showProductDialog, setShowProductDialog] = useState(false);
   const [editingProduct, setEditingProduct] = useState(null);
   const [activeTab, setActiveTab] = useState("products");
@@ -90,6 +91,7 @@ export default function Inventory() {
   const [showTransferDialog, setShowTransferDialog] = useState(false);
   const [showProductDetails, setShowProductDetails] = useState(false);
   const [viewingProduct, setViewingProduct] = useState(null);
+  const [viewMode, setViewMode] = useState('grid'); // 'grid' or 'table'
 
   const { data: user } = useQuery({
     queryKey: ['currentUser'],
@@ -299,13 +301,17 @@ export default function Inventory() {
 
   const filteredProducts = products.filter(p => {
     const matchesSearch = p.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         p.sku?.toLowerCase().includes(searchTerm.toLowerCase());
+                         p.sku?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         p.description?.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesCategory = categoryFilter === "all" || p.category === categoryFilter;
     const matchesStock = stockFilter === "all" || 
                         (stockFilter === "in_stock" && p.stock_quantity > 0) ||
                         (stockFilter === "low_stock" && p.stock_quantity > 0 && p.stock_quantity <= (p.low_stock_threshold || 10)) ||
                         (stockFilter === "out_of_stock" && p.stock_quantity === 0);
-    return matchesSearch && matchesCategory && matchesStock;
+    const matchesLocation = locationFilter === "all" || 
+                           (p.location_ids?.length === 0) || 
+                           (p.location_ids?.includes(locationFilter));
+    return matchesSearch && matchesCategory && matchesStock && matchesLocation;
   });
 
   const lowStockProducts = products.filter(p => p.stock_quantity <= (p.low_stock_threshold || 10));
@@ -494,42 +500,112 @@ export default function Inventory() {
 
         <TabsContent value="products" className="mt-6">
           {/* Filters */}
-          <Card className="mb-6">
-            <CardContent className="p-4">
-              <div className="flex flex-col sm:flex-row gap-4">
-                <div className="relative flex-1">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                  <Input
-                    placeholder="Search products..."
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    className="pl-10"
-                  />
+          <Card className="mb-6 border-t-4 border-t-[#1EB053]">
+            <CardContent className="p-3 sm:p-4">
+              <div className="flex flex-col gap-3">
+                <div className="flex flex-col sm:flex-row gap-3">
+                  <div className="relative flex-1">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                    <Input
+                      placeholder="Search by name, SKU, or description..."
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                      className="pl-10 h-9 sm:h-10"
+                    />
+                  </div>
+                  <div className="flex gap-2 flex-wrap sm:flex-nowrap">
+                    <Select value={categoryFilter} onValueChange={setCategoryFilter}>
+                      <SelectTrigger className="w-full sm:w-40 h-9 sm:h-10 text-xs sm:text-sm">
+                        <Filter className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
+                        <SelectValue placeholder="Category" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">All Categories</SelectItem>
+                        {categoryList.map(cat => (
+                          <SelectItem key={cat} value={cat}>{cat}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <Select value={stockFilter} onValueChange={setStockFilter}>
+                      <SelectTrigger className="w-full sm:w-36 h-9 sm:h-10 text-xs sm:text-sm">
+                        <Package className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
+                        <SelectValue placeholder="Stock" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">All Stock</SelectItem>
+                        <SelectItem value="in_stock">In Stock</SelectItem>
+                        <SelectItem value="low_stock">Low Stock</SelectItem>
+                        <SelectItem value="out_of_stock">Out of Stock</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <Select value={locationFilter} onValueChange={setLocationFilter}>
+                      <SelectTrigger className="w-full sm:w-40 h-9 sm:h-10 text-xs sm:text-sm">
+                        <MapPin className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
+                        <SelectValue placeholder="Location" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">All Locations</SelectItem>
+                        {allLocations.map(loc => (
+                          <SelectItem key={loc.id} value={loc.id}>
+                            <div className="flex items-center gap-2">
+                              {loc.type === 'warehouse' ? <Warehouse className="w-3 h-3" /> : <Truck className="w-3 h-3" />}
+                              <span className="truncate">{loc.name}</span>
+                            </div>
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
                 </div>
-                <Select value={categoryFilter} onValueChange={setCategoryFilter}>
-                  <SelectTrigger className="w-40">
-                    <Filter className="w-4 h-4 mr-2" />
-                    <SelectValue placeholder="Category" />
-                  </SelectTrigger>
-                  <SelectContent>
-                      <SelectItem value="all">All Categories</SelectItem>
-                      {categoryList.map(cat => (
-                        <SelectItem key={cat} value={cat}>{cat}</SelectItem>
-                      ))}
-                    </SelectContent>
-                </Select>
-                <Select value={stockFilter} onValueChange={setStockFilter}>
-                  <SelectTrigger className="w-40">
-                    <Package className="w-4 h-4 mr-2" />
-                    <SelectValue placeholder="Stock Status" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All Stock</SelectItem>
-                    <SelectItem value="in_stock">In Stock</SelectItem>
-                    <SelectItem value="low_stock">Low Stock</SelectItem>
-                    <SelectItem value="out_of_stock">Out of Stock</SelectItem>
-                  </SelectContent>
-                </Select>
+                
+                {/* Active Filters Display */}
+                {(searchTerm || categoryFilter !== "all" || stockFilter !== "all" || locationFilter !== "all") && (
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className="text-xs text-gray-500">Active filters:</span>
+                    {searchTerm && (
+                      <Badge variant="secondary" className="text-xs">
+                        Search: {searchTerm}
+                        <X className="w-3 h-3 ml-1 cursor-pointer" onClick={() => setSearchTerm("")} />
+                      </Badge>
+                    )}
+                    {categoryFilter !== "all" && (
+                      <Badge variant="secondary" className="text-xs">
+                        Category: {categoryFilter}
+                        <X className="w-3 h-3 ml-1 cursor-pointer" onClick={() => setCategoryFilter("all")} />
+                      </Badge>
+                    )}
+                    {stockFilter !== "all" && (
+                      <Badge variant="secondary" className="text-xs">
+                        Stock: {stockFilter.replace('_', ' ')}
+                        <X className="w-3 h-3 ml-1 cursor-pointer" onClick={() => setStockFilter("all")} />
+                      </Badge>
+                    )}
+                    {locationFilter !== "all" && (
+                      <Badge variant="secondary" className="text-xs">
+                        Location: {allLocations.find(l => l.id === locationFilter)?.name}
+                        <X className="w-3 h-3 ml-1 cursor-pointer" onClick={() => setLocationFilter("all")} />
+                      </Badge>
+                    )}
+                    <Button 
+                      variant="ghost" 
+                      size="sm" 
+                      onClick={() => {
+                        setSearchTerm("");
+                        setCategoryFilter("all");
+                        setStockFilter("all");
+                        setLocationFilter("all");
+                      }}
+                      className="text-xs h-6"
+                    >
+                      Clear all
+                    </Button>
+                  </div>
+                )}
+
+                {/* Results count */}
+                <div className="flex items-center justify-between text-xs text-gray-500">
+                  <span>Showing {filteredProducts.length} of {products.length} products</span>
+                </div>
               </div>
             </CardContent>
           </Card>
@@ -551,88 +627,74 @@ export default function Inventory() {
             />
           ) : (
             <>
-              {/* Mobile Cards */}
-              <div className="block md:hidden space-y-3">
+              {/* Mobile Grid View */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:hidden gap-3">
                 {filteredProducts.map((product) => (
-                  <Card key={product.id} className="overflow-hidden">
-                    <CardContent className="p-3">
-                      <div className="flex items-start gap-3">
+                  <Card 
+                    key={product.id} 
+                    className="overflow-hidden hover:shadow-lg transition-shadow cursor-pointer group"
+                    onClick={() => {
+                      setViewingProduct(product);
+                      setShowProductDetails(true);
+                    }}
+                  >
+                    <CardContent className="p-0">
+                      <div className="relative h-32 sm:h-40 bg-gradient-to-br from-gray-50 to-gray-100 overflow-hidden">
                         {product.image_url ? (
-                          <img src={product.image_url} alt="" className="w-12 h-12 rounded-lg object-cover flex-shrink-0" />
+                          <img 
+                            src={product.image_url} 
+                            alt={product.name} 
+                            className="w-full h-full object-cover group-hover:scale-105 transition-transform"
+                          />
                         ) : (
-                          <div className="w-12 h-12 rounded-lg bg-gradient-to-br from-[#1EB053]/20 to-[#1D5FC3]/20 flex items-center justify-center flex-shrink-0">
-                            <Package className="w-6 h-6 text-[#1D5FC3]" />
+                          <div className="w-full h-full flex items-center justify-center">
+                            <Package className="w-12 h-12 text-gray-300" />
                           </div>
                         )}
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-start justify-between gap-2">
-                            <div className="min-w-0">
-                              <p className="font-semibold truncate">{product.name}</p>
-                              <p className="text-xs text-gray-500">{product.sku || 'No SKU'}</p>
-                            </div>
-                            <Badge variant={product.stock_quantity <= product.low_stock_threshold ? "destructive" : "secondary"} className="flex-shrink-0">
-                              {product.stock_quantity}
-                            </Badge>
+                        <div className="absolute top-2 right-2 flex gap-1">
+                          <Badge variant={product.stock_quantity === 0 ? "destructive" : product.stock_quantity <= product.low_stock_threshold ? "secondary" : "default"} className="text-xs">
+                            {product.stock_quantity}
+                          </Badge>
+                        </div>
+                      </div>
+                      <div className="p-3">
+                        <div className="flex items-start justify-between gap-2 mb-2">
+                          <div className="min-w-0 flex-1">
+                            <p className="font-semibold text-sm truncate">{product.name}</p>
+                            <p className="text-xs text-gray-500">{product.sku || 'No SKU'}</p>
                           </div>
-                          <div className="flex items-center gap-1 mt-1">
-                            {product.location_ids?.length > 0 ? (
-                              product.location_ids.slice(0, 2).map(locId => {
-                                const loc = allLocations.find(l => l.id === locId);
-                                if (!loc) return null;
-                                return (
-                                  <Badge key={locId} variant="outline" className="text-[10px] px-1">
-                                    {loc.type === 'warehouse' ? <Warehouse className="w-2 h-2" /> : <Truck className="w-2 h-2" />}
-                                  </Badge>
-                                );
-                              })
-                            ) : (
-                              <span className="text-[10px] text-gray-400">All</span>
-                            )}
-                            {product.location_ids?.length > 2 && (
-                              <span className="text-[10px] text-gray-400">+{product.location_ids.length - 2}</span>
-                            )}
-                          </div>
-                          <div className="flex items-center justify-between mt-2">
-                            <div className="flex items-center gap-2">
-                              <Badge variant="outline" className="text-xs">{product.category || 'Other'}</Badge>
-                              <span className="font-semibold text-[#1EB053]">Le {product.unit_price?.toLocaleString()}</span>
-                            </div>
-                            <div className="flex items-center gap-1">
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                className="h-8 w-8 text-[#0072C6]"
-                                onClick={() => {
-                                  setViewingProduct(product);
-                                  setShowProductDetails(true);
-                                }}
-                              >
-                                <Eye className="w-4 h-4" />
-                              </Button>
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                className="h-8 w-8"
-                                onClick={() => {
-                                  setEditingProduct(product);
-                                  setShowProductDialog(true);
-                                }}
-                              >
-                                <Edit className="w-4 h-4" />
-                              </Button>
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                className="h-8 w-8 text-red-500"
-                                onClick={() => {
-                                  setProductToDelete(product);
-                                  setShowDeleteConfirm(true);
-                                }}
-                              >
-                                <Trash2 className="w-4 h-4" />
-                              </Button>
-                            </div>
-                          </div>
+                        </div>
+                        <div className="flex items-center justify-between">
+                          <Badge variant="outline" className="text-xs">{product.category || 'Other'}</Badge>
+                          <span className="font-bold text-[#1EB053] text-sm">Le {product.unit_price?.toLocaleString()}</span>
+                        </div>
+                        <div className="flex items-center gap-1 mt-2 pt-2 border-t">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="flex-1 h-7 text-xs"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setEditingProduct(product);
+                              setShowProductDialog(true);
+                            }}
+                          >
+                            <Edit className="w-3 h-3 mr-1" />
+                            Edit
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="flex-1 h-7 text-xs text-red-500"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setProductToDelete(product);
+                              setShowDeleteConfirm(true);
+                            }}
+                          >
+                            <Trash2 className="w-3 h-3 mr-1" />
+                            Delete
+                          </Button>
                         </div>
                       </div>
                     </CardContent>
@@ -955,6 +1017,7 @@ export default function Inventory() {
         stockLevels={stockLevels}
         orgId={orgId}
         currentEmployee={currentEmployee}
+        organisation={organisation?.[0]}
       />
 
       {/* Product Details Dialog */}
