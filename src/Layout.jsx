@@ -34,8 +34,7 @@ import {
   Calendar,
   Lock,
   AlertTriangle,
-  FileText,
-  Upload
+  FileText
 } from "lucide-react";
 import PinLockScreen from "@/components/auth/PinLockScreen";
 import SetPinDialog from "@/components/auth/SetPinDialog";
@@ -116,7 +115,6 @@ const menuSections = [
       { name: "Stock Audit", icon: Package, page: "StockAudit", module: "inventory", adminOnly: true },
       { name: "Organisation", icon: Building2, page: "OrganisationManage", module: "settings", adminOnly: true },
       { name: "Permissions", icon: Shield, page: "RolePermissions", module: "settings", adminOnly: true },
-      { name: "Uploaded Documents", icon: Upload, page: "UploadedDocuments", module: "settings", adminOnly: true },
       { name: "Orphaned Data", icon: AlertTriangle, page: "OrphanedData", module: "settings", adminOnly: true },
       { name: "Reset Data", icon: AlertTriangle, page: "ResetData", module: "settings", adminOnly: true },
       { name: "Settings", icon: Settings, page: "Settings", module: "settings" },
@@ -364,11 +362,20 @@ export default function Layout({ children, currentPageName }) {
       )}
 
       <aside className={`
-        fixed top-0 left-0 z-50 h-full bg-[#0F1F3C] text-white transition-all duration-300
+        fixed top-0 left-0 z-50 h-full bg-[#0F1F3C] text-white transition-all duration-300 flex flex-col
         w-[85vw] max-w-64 lg:${sidebarOpen ? 'w-64' : 'w-20'}
         ${mobileMenuOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
       `}>
-        <div className="h-16 flex items-center justify-between px-4 border-b border-white/10">
+        {/* Header Section */}
+        <div className="flex-shrink-0">
+          {/* Sierra Leone Stripe - Top */}
+          <div className="h-1.5 flex">
+            <div className="flex-1 bg-[#1EB053]" />
+            <div className="flex-1 bg-white" />
+            <div className="flex-1 bg-[#0072C6]" />
+          </div>
+
+          <div className="h-16 flex items-center justify-between px-4 border-b border-white/10">
           {sidebarOpen ? (
             <div className="flex items-center gap-2 min-w-0 flex-1">
               {currentOrg?.logo_url && (
@@ -406,10 +413,19 @@ export default function Layout({ children, currentPageName }) {
             className="text-white hover:bg-white/10 lg:hidden"
           >
             <X className="w-5 h-5" />
-          </Button>
-        </div>
+            </Button>
+            </div>
 
-        <nav className="p-3 space-y-4 overflow-y-auto h-[calc(100%-8rem)]">
+            {/* Separator Stripe */}
+            <div className="h-0.5 flex mx-4">
+            <div className="flex-1 bg-[#1EB053]/30" />
+            <div className="flex-1 bg-white/30" />
+            <div className="flex-1 bg-[#0072C6]/30" />
+            </div>
+            </div>
+
+            {/* Body Section - Scrollable Menu */}
+            <nav className="flex-1 overflow-y-auto p-3 space-y-1">
           {filteredMenuSections.map((section, sectionIndex) => (
             <div key={section.title}>
               {sidebarOpen ? (
@@ -426,9 +442,8 @@ export default function Layout({ children, currentPageName }) {
                 </button>
               ) : (
                 sectionIndex > 0 && <div className="border-t border-white/10 my-2" />
-              )}
               {(!collapsedSections[section.title] || !sidebarOpen) && (
-                <div className="space-y-1">
+                <div className="space-y-0.5">
                   {section.items.map((item) => {
                     const isActive = currentPageName === item.page;
                     return (
@@ -467,18 +482,44 @@ export default function Layout({ children, currentPageName }) {
           ))}
         </nav>
 
-        {sidebarOpen && (
-          <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-white/10">
-            <div className="flex items-center gap-3 px-2">
-              <div className="flex h-8 w-1 rounded-full overflow-hidden">
-                <div className="w-full bg-gradient-to-b from-[#1EB053] via-white to-[#0072C6]" />
-              </div>
-              <div className="text-xs">
-                <p className="text-gray-400">🇸🇱 {currentOrg?.country || 'Sierra Leone'}</p>
+        {/* Footer Section */}
+        <div className="flex-shrink-0">
+          {/* Separator Stripe */}
+          <div className="h-0.5 flex mx-4 mb-3">
+            <div className="flex-1 bg-[#1EB053]/30" />
+            <div className="flex-1 bg-white/30" />
+            <div className="flex-1 bg-[#0072C6]/30" />
+          </div>
+
+          {sidebarOpen ? (
+            <div className="px-4 pb-4">
+              <div className="p-3 bg-white/5 rounded-xl border border-white/10">
+                <div className="flex items-center gap-3">
+                  <div className="flex h-8 w-1 rounded-full overflow-hidden">
+                    <div className="w-full bg-gradient-to-b from-[#1EB053] via-white to-[#0072C6]" />
+                  </div>
+                  <div className="text-xs flex-1">
+                    <p className="text-white/90 font-medium">🇸🇱 {currentOrg?.name || 'Organisation'}</p>
+                    <p className="text-gray-400 text-[10px]">{currentOrg?.country || 'Sierra Leone'}</p>
+                  </div>
+                </div>
               </div>
             </div>
+          ) : (
+            <div className="px-2 pb-4">
+              <div className="flex h-10 w-1 rounded-full overflow-hidden mx-auto">
+                <div className="w-full bg-gradient-to-b from-[#1EB053] via-white to-[#0072C6]" />
+              </div>
+            </div>
+          )}
+
+          {/* Bottom Sierra Leone Stripe */}
+          <div className="h-1.5 flex">
+            <div className="flex-1 bg-[#1EB053]" />
+            <div className="flex-1 bg-white" />
+            <div className="flex-1 bg-[#0072C6]" />
           </div>
-        )}
+        </div>
       </aside>
 
       <div className={`transition-all duration-300 ${sidebarOpen ? 'lg:ml-64' : 'lg:ml-20'}`}>
