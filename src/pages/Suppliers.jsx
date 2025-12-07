@@ -109,26 +109,46 @@ export default function Suppliers() {
 
   const { data: suppliers = [], isLoading: loadingSuppliers } = useQuery({
     queryKey: ['suppliers', orgId],
-    queryFn: () => base44.entities.Supplier.filter({ organisation_id: orgId }),
+    queryFn: async () => {
+      if (!orgId) return [];
+      const result = await base44.entities.Supplier.filter({ organisation_id: orgId });
+      return result || [];
+    },
     enabled: !!orgId,
+    staleTime: 30 * 1000,
   });
 
   const { data: purchaseOrders = [], isLoading: loadingPOs } = useQuery({
     queryKey: ['purchaseOrders', orgId],
-    queryFn: () => base44.entities.PurchaseOrder.filter({ organisation_id: orgId }, '-created_date', 100),
+    queryFn: async () => {
+      if (!orgId) return [];
+      const result = await base44.entities.PurchaseOrder.filter({ organisation_id: orgId }, '-created_date', 100);
+      return result || [];
+    },
     enabled: !!orgId,
+    staleTime: 30 * 1000,
   });
 
   const { data: products = [] } = useQuery({
     queryKey: ['products', orgId],
-    queryFn: () => base44.entities.Product.filter({ organisation_id: orgId }),
+    queryFn: async () => {
+      if (!orgId) return [];
+      const result = await base44.entities.Product.filter({ organisation_id: orgId });
+      return result || [];
+    },
     enabled: !!orgId,
+    staleTime: 60 * 1000,
   });
 
   const { data: warehouses = [] } = useQuery({
     queryKey: ['warehouses', orgId],
-    queryFn: () => base44.entities.Warehouse.filter({ organisation_id: orgId }),
+    queryFn: async () => {
+      if (!orgId) return [];
+      const result = await base44.entities.Warehouse.filter({ organisation_id: orgId });
+      return result || [];
+    },
     enabled: !!orgId,
+    staleTime: 60 * 1000,
   });
 
   const { data: organisation } = useQuery({
@@ -223,13 +243,22 @@ export default function Suppliers() {
         <PageHeader
           title="Supplier Management"
           subtitle="Manage suppliers and purchase orders"
-          action={() => {
-            setEditingSupplier(null);
-            setShowSupplierDialog(true);
-          }}
-          actionLabel="Add Supplier"
         >
           <div className="flex flex-wrap gap-2">
+            <PermissionGate module="inventory" action="create" fallback={null}>
+              <Button 
+                size="sm" 
+                className="bg-[#1EB053] hover:bg-[#178f43] text-xs sm:text-sm"
+                onClick={() => {
+                  setEditingSupplier(null);
+                  setShowSupplierDialog(true);
+                }}
+              >
+                <Plus className="w-4 h-4 sm:mr-2" />
+                <span className="hidden sm:inline">Add Supplier</span>
+                <span className="sm:hidden">Add</span>
+              </Button>
+            </PermissionGate>
             <Button variant="outline" size="sm" className="text-xs sm:text-sm" onClick={() => {
               setShowFormsDialog(true);
             }}>
@@ -237,14 +266,16 @@ export default function Suppliers() {
               <span className="hidden sm:inline">Print Forms</span>
               <span className="sm:hidden">Forms</span>
             </Button>
-            <Button variant="outline" size="sm" className="text-xs sm:text-sm" onClick={() => {
-              setEditingPO(null);
-              setShowPODialog(true);
-            }}>
-              <FileText className="w-4 h-4 sm:mr-2" />
-              <span className="hidden sm:inline">New Purchase Order</span>
-              <span className="sm:hidden">New PO</span>
-            </Button>
+            <PermissionGate module="inventory" action="create" fallback={null}>
+              <Button variant="outline" size="sm" className="text-xs sm:text-sm" onClick={() => {
+                setEditingPO(null);
+                setShowPODialog(true);
+              }}>
+                <FileText className="w-4 h-4 sm:mr-2" />
+                <span className="hidden sm:inline">New Purchase Order</span>
+                <span className="sm:hidden">New PO</span>
+              </Button>
+            </PermissionGate>
             <Button variant="outline" size="sm" className="text-xs sm:text-sm" onClick={() => {
               setPriceHistorySupplier(null);
               setShowPriceHistory(true);
@@ -363,13 +394,21 @@ export default function Suppliers() {
                 ))}
               </div>
             ) : filteredSuppliers.length === 0 ? (
-              <EmptyState
-                icon={Truck}
-                title="No Suppliers Found"
-                description="Add your first supplier to start managing your supply chain"
-                action={() => setShowSupplierDialog(true)}
-                actionLabel="Add Supplier"
-              />
+              <PermissionGate module="inventory" action="create" fallback={
+                <EmptyState
+                  icon={Truck}
+                  title="No Suppliers Found"
+                  description={searchTerm || statusFilter !== "all" ? "No suppliers match your filters" : "No suppliers have been added yet"}
+                />
+              }>
+                <EmptyState
+                  icon={Truck}
+                  title="No Suppliers Found"
+                  description="Add your first supplier to start managing your supply chain"
+                  action={() => setShowSupplierDialog(true)}
+                  actionLabel="Add Supplier"
+                />
+              </PermissionGate>
             ) : (
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
                 {filteredSuppliers.map((supplier) => (
@@ -391,47 +430,51 @@ export default function Suppliers() {
                            </Badge>
                          </div>
                        </div>
-                       <DropdownMenu>
-                         <DropdownMenuTrigger asChild>
-                           <Button variant="ghost" size="icon" className="flex-shrink-0">
-                             <MoreVertical className="w-4 h-4" />
-                           </Button>
-                         </DropdownMenuTrigger>
-                         <DropdownMenuContent align="end">
-                           <DropdownMenuItem onClick={() => {
-                             setSelectedSupplier(supplier);
-                             setShowProductsDialog(true);
-                           }}>
-                             <Package className="w-4 h-4 mr-2" />
-                             Manage Products
-                           </DropdownMenuItem>
-                           <DropdownMenuItem onClick={() => {
-                             setPriceHistorySupplier(supplier);
-                             setShowPriceHistory(true);
-                           }}>
-                             <TrendingUp className="w-4 h-4 mr-2" />
-                             Price History
-                           </DropdownMenuItem>
-                           <DropdownMenuSeparator />
-                           <DropdownMenuItem onClick={() => {
-                             setEditingSupplier(supplier);
-                             setShowSupplierDialog(true);
-                           }}>
-                             <Edit className="w-4 h-4 mr-2" />
-                             Edit
-                           </DropdownMenuItem>
-                           <DropdownMenuItem 
-                             className="text-red-600"
-                             onClick={() => {
-                               setSupplierToDelete(supplier);
-                               setShowDeleteConfirm(true);
-                             }}
-                           >
-                             <Trash2 className="w-4 h-4 mr-2" />
-                             Delete
-                           </DropdownMenuItem>
-                         </DropdownMenuContent>
-                       </DropdownMenu>
+                       <PermissionGate module="inventory" action="edit" fallback={null}>
+                         <DropdownMenu>
+                           <DropdownMenuTrigger asChild>
+                             <Button variant="ghost" size="icon" className="flex-shrink-0">
+                               <MoreVertical className="w-4 h-4" />
+                             </Button>
+                           </DropdownMenuTrigger>
+                           <DropdownMenuContent align="end">
+                             <DropdownMenuItem onClick={() => {
+                               setSelectedSupplier(supplier);
+                               setShowProductsDialog(true);
+                             }}>
+                               <Package className="w-4 h-4 mr-2" />
+                               Manage Products
+                             </DropdownMenuItem>
+                             <DropdownMenuItem onClick={() => {
+                               setPriceHistorySupplier(supplier);
+                               setShowPriceHistory(true);
+                             }}>
+                               <TrendingUp className="w-4 h-4 mr-2" />
+                               Price History
+                             </DropdownMenuItem>
+                             <DropdownMenuSeparator />
+                             <DropdownMenuItem onClick={() => {
+                               setEditingSupplier(supplier);
+                               setShowSupplierDialog(true);
+                             }}>
+                               <Edit className="w-4 h-4 mr-2" />
+                               Edit
+                             </DropdownMenuItem>
+                             <PermissionGate module="inventory" action="delete" fallback={null}>
+                               <DropdownMenuItem 
+                                 className="text-red-600"
+                                 onClick={() => {
+                                   setSupplierToDelete(supplier);
+                                   setShowDeleteConfirm(true);
+                                 }}
+                               >
+                                 <Trash2 className="w-4 h-4 mr-2" />
+                                 Delete
+                               </DropdownMenuItem>
+                             </PermissionGate>
+                           </DropdownMenuContent>
+                         </DropdownMenu>
+                       </PermissionGate>
                      </div>
 
                      {renderStars(supplier.rating)}
@@ -492,13 +535,21 @@ export default function Suppliers() {
                 ))}
               </div>
             ) : filteredPOs.length === 0 ? (
-              <EmptyState
-                icon={FileText}
-                title="No Purchase Orders"
-                description="Create your first purchase order to track supplier deliveries"
-                action={() => setShowPODialog(true)}
-                actionLabel="Create Order"
-              />
+              <PermissionGate module="inventory" action="create" fallback={
+                <EmptyState
+                  icon={FileText}
+                  title="No Purchase Orders"
+                  description={searchTerm || statusFilter !== "all" ? "No orders match your filters" : "No purchase orders have been created yet"}
+                />
+              }>
+                <EmptyState
+                  icon={FileText}
+                  title="No Purchase Orders"
+                  description="Create your first purchase order to track supplier deliveries"
+                  action={() => setShowPODialog(true)}
+                  actionLabel="Create Order"
+                />
+              </PermissionGate>
             ) : (
               <>
               {/* Desktop Table View */}
@@ -541,54 +592,56 @@ export default function Suppliers() {
                               </td>
                               <td className="p-4">
                                 <div className="flex justify-end gap-2">
-                                  {['ordered', 'partial'].includes(po.status) && (
-                                    <Button
-                                      variant="outline"
-                                      size="sm"
-                                      onClick={() => {
-                                        setReceivingPO(po);
-                                        setShowReceiveDialog(true);
-                                      }}
-                                      className="text-[#1EB053] border-[#1EB053]"
-                                    >
-                                      <Download className="w-4 h-4 mr-1" />
-                                      Receive
-                                    </Button>
-                                  )}
-                                  {po.status === 'draft' && (
-                                    <Button
-                                      variant="outline"
-                                      size="sm"
-                                      onClick={() => updatePOMutation.mutate({ id: po.id, data: { status: 'ordered' } })}
-                                    >
-                                      Send Order
-                                    </Button>
-                                  )}
-                                  <DropdownMenu>
-                                    <DropdownMenuTrigger asChild>
-                                      <Button variant="ghost" size="icon">
-                                        <MoreVertical className="w-4 h-4" />
+                                  <PermissionGate module="inventory" action="edit" fallback={null}>
+                                    {['ordered', 'partial'].includes(po.status) && (
+                                      <Button
+                                        variant="outline"
+                                        size="sm"
+                                        onClick={() => {
+                                          setReceivingPO(po);
+                                          setShowReceiveDialog(true);
+                                        }}
+                                        className="text-[#1EB053] border-[#1EB053]"
+                                      >
+                                        <Download className="w-4 h-4 mr-1" />
+                                        Receive
                                       </Button>
-                                    </DropdownMenuTrigger>
-                                    <DropdownMenuContent align="end">
-                                      <DropdownMenuItem onClick={() => {
-                                        setEditingPO(po);
-                                        setShowPODialog(true);
-                                      }}>
-                                        <Edit className="w-4 h-4 mr-2" />
-                                        Edit
-                                      </DropdownMenuItem>
-                                      {po.status !== 'cancelled' && po.status !== 'received' && (
-                                        <DropdownMenuItem 
-                                          className="text-red-600"
-                                          onClick={() => updatePOMutation.mutate({ id: po.id, data: { status: 'cancelled' } })}
-                                        >
-                                          <Ban className="w-4 h-4 mr-2" />
-                                          Cancel Order
+                                    )}
+                                    {po.status === 'draft' && (
+                                      <Button
+                                        variant="outline"
+                                        size="sm"
+                                        onClick={() => updatePOMutation.mutate({ id: po.id, data: { status: 'ordered' } })}
+                                      >
+                                        Send Order
+                                      </Button>
+                                    )}
+                                    <DropdownMenu>
+                                      <DropdownMenuTrigger asChild>
+                                        <Button variant="ghost" size="icon">
+                                          <MoreVertical className="w-4 h-4" />
+                                        </Button>
+                                      </DropdownMenuTrigger>
+                                      <DropdownMenuContent align="end">
+                                        <DropdownMenuItem onClick={() => {
+                                          setEditingPO(po);
+                                          setShowPODialog(true);
+                                        }}>
+                                          <Edit className="w-4 h-4 mr-2" />
+                                          Edit
                                         </DropdownMenuItem>
-                                      )}
-                                    </DropdownMenuContent>
-                                  </DropdownMenu>
+                                        {po.status !== 'cancelled' && po.status !== 'received' && (
+                                          <DropdownMenuItem 
+                                            className="text-red-600"
+                                            onClick={() => updatePOMutation.mutate({ id: po.id, data: { status: 'cancelled' } })}
+                                          >
+                                            <Ban className="w-4 h-4 mr-2" />
+                                            Cancel Order
+                                          </DropdownMenuItem>
+                                        )}
+                                      </DropdownMenuContent>
+                                    </DropdownMenu>
+                                  </PermissionGate>
                                 </div>
                               </td>
                             </tr>
@@ -638,57 +691,59 @@ export default function Suppliers() {
                           </div>
                         </div>
 
-                        <div className="flex gap-2 pt-3 border-t">
-                          {['ordered', 'partial'].includes(po.status) && (
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => {
-                                setReceivingPO(po);
-                                setShowReceiveDialog(true);
-                              }}
-                              className="text-[#1EB053] border-[#1EB053] text-xs flex-1"
-                            >
-                              <Download className="w-3 h-3 mr-1" />
-                              Receive
-                            </Button>
-                          )}
-                          {po.status === 'draft' && (
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => updatePOMutation.mutate({ id: po.id, data: { status: 'ordered' } })}
-                              className="text-xs flex-1"
-                            >
-                              Send Order
-                            </Button>
-                          )}
-                          <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                              <Button variant="ghost" size="icon" className="flex-shrink-0">
-                                <MoreVertical className="w-4 h-4" />
+                        <PermissionGate module="inventory" action="edit" fallback={null}>
+                          <div className="flex gap-2 pt-3 border-t">
+                            {['ordered', 'partial'].includes(po.status) && (
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => {
+                                  setReceivingPO(po);
+                                  setShowReceiveDialog(true);
+                                }}
+                                className="text-[#1EB053] border-[#1EB053] text-xs flex-1"
+                              >
+                                <Download className="w-3 h-3 mr-1" />
+                                Receive
                               </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end">
-                              <DropdownMenuItem onClick={() => {
-                                setEditingPO(po);
-                                setShowPODialog(true);
-                              }}>
-                                <Edit className="w-4 h-4 mr-2" />
-                                Edit
-                              </DropdownMenuItem>
-                              {po.status !== 'cancelled' && po.status !== 'received' && (
-                                <DropdownMenuItem 
-                                  className="text-red-600"
-                                  onClick={() => updatePOMutation.mutate({ id: po.id, data: { status: 'cancelled' } })}
-                                >
-                                  <Ban className="w-4 h-4 mr-2" />
-                                  Cancel Order
+                            )}
+                            {po.status === 'draft' && (
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => updatePOMutation.mutate({ id: po.id, data: { status: 'ordered' } })}
+                                className="text-xs flex-1"
+                              >
+                                Send Order
+                              </Button>
+                            )}
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                <Button variant="ghost" size="icon" className="flex-shrink-0">
+                                  <MoreVertical className="w-4 h-4" />
+                                </Button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent align="end">
+                                <DropdownMenuItem onClick={() => {
+                                  setEditingPO(po);
+                                  setShowPODialog(true);
+                                }}>
+                                  <Edit className="w-4 h-4 mr-2" />
+                                  Edit
                                 </DropdownMenuItem>
-                              )}
-                            </DropdownMenuContent>
-                          </DropdownMenu>
-                        </div>
+                                {po.status !== 'cancelled' && po.status !== 'received' && (
+                                  <DropdownMenuItem 
+                                    className="text-red-600"
+                                    onClick={() => updatePOMutation.mutate({ id: po.id, data: { status: 'cancelled' } })}
+                                  >
+                                    <Ban className="w-4 h-4 mr-2" />
+                                    Cancel Order
+                                  </DropdownMenuItem>
+                                )}
+                              </DropdownMenuContent>
+                            </DropdownMenu>
+                          </div>
+                        </PermissionGate>
                       </CardContent>
                     </Card>
                   );
