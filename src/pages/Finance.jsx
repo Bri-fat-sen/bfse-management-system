@@ -67,7 +67,6 @@ import PageHeader from "@/components/ui/PageHeader";
 import { useToast } from "@/components/ui/Toast";
 import StatCard from "@/components/ui/StatCard";
 import LoadingSpinner from "@/components/ui/LoadingSpinner";
-import PrintableFormsDownload from "@/components/finance/PrintableFormsDownload";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart as RePieChart, Pie, Cell, LineChart, Line, Area, AreaChart, Legend } from 'recharts';
 import AIInsightsPanel from "@/components/ai/AIInsightsPanel";
 import AIReportSummary from "@/components/ai/AIReportSummary";
