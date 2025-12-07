@@ -69,142 +69,150 @@ const generateFormHTML = (formType, org) => {
     <style>
       ${unifiedStyles}
       
-      /* Form-specific overrides */
-      .form-title {
+      .instructions {
         background: var(--gray-50);
-        padding: 16px 40px;
-        border-bottom: 1px solid var(--gray-200);
-        display: flex;
-        align-items: center;
-        gap: 12px;
-      }
-      
-      .form-icon {
-        width: 40px;
-        height: 40px;
-        background: linear-gradient(135deg, var(--primary), var(--secondary));
-        border-radius: 10px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 20px;
-      }
-      
-      .form-title h2 {
-        font-size: 16px;
-        font-weight: 700;
-        color: var(--gray-800);
-      }
-      
-      /* Field Styles */
-      .field-row { display: flex; margin-bottom: 16px; gap: 16px; }
-      .field { flex: 1; }
-      .field label { 
-        display: block; 
-        font-weight: 600; 
-        font-size: 10px; 
-        color: var(--gray-500); 
-        margin-bottom: 6px; 
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
-      }
-      .field-input { 
-        border: 1px solid var(--gray-200); 
-        border-radius: 8px; 
-        padding: 12px 14px; 
-        min-height: 24px; 
-        background: white;
-      }
-      .field-input.large { min-height: 80px; }
-      
-      /* Section Title Override */
-      .section-title { 
-        font-weight: 700; 
-        color: var(--gray-700);
-        padding: 12px 16px;
-        margin: 24px 0 16px; 
-        font-size: 12px;
-        background: var(--gray-50);
+        padding: 16px 20px;
         border-radius: 8px;
+        margin-bottom: 24px;
         border-left: 4px solid var(--primary);
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        border-bottom: none;
       }
       
-      /* Checkbox Styles */
-      .checkbox-group { 
-        display: flex; 
-        flex-wrap: wrap; 
-        gap: 12px;
-        padding: 12px;
-        background: var(--gray-50);
-        border-radius: 8px;
-        border: 1px solid var(--gray-200);
+      .instructions h3 {
+        font-size: 13px;
+        font-weight: 700;
+        margin-bottom: 10px;
+        color: var(--gray-800);
+        display: flex;
+        align-items: center;
+        gap: 6px;
       }
-      .checkbox-item { 
-        display: flex; 
-        align-items: center; 
-        gap: 8px;
+      
+      .instructions ol {
+        margin-left: 20px;
+        font-size: 12px;
+        color: var(--gray-600);
+        line-height: 1.8;
+      }
+      
+      .instructions li {
+        margin-bottom: 6px;
+      }
+      
+      .form-section {
+        margin-bottom: 28px;
+        page-break-inside: avoid;
+      }
+      
+      .form-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 16px;
+        margin-bottom: 16px;
+      }
+      
+      .form-field {
+        display: flex;
+        flex-direction: column;
+      }
+      
+      .form-field.full-width {
+        grid-column: 1 / -1;
+      }
+      
+      .form-field label {
         font-size: 11px;
+        font-weight: 600;
         color: var(--gray-700);
+        margin-bottom: 6px;
       }
-      .checkbox { 
-        width: 18px; 
-        height: 18px; 
-        border: 2px solid var(--gray-300); 
-        border-radius: 4px;
-        display: inline-block;
+      
+      .form-field label .required {
+        color: var(--danger);
+        font-weight: 700;
+      }
+      
+      .form-field .input-box {
+        border: 2px solid var(--gray-200);
+        border-radius: 6px;
+        padding: 10px 12px;
+        min-height: 40px;
         background: white;
       }
       
-      /* Signature Section */
-      .signature-section { 
-        margin-top: 48px; 
-        display: flex; 
-        justify-content: space-between;
-        gap: 40px;
-      }
-      .signature-box { flex: 1; text-align: center; }
-      .signature-line { 
-        border-top: 2px solid var(--gray-300); 
-        margin-top: 60px; 
-        padding-top: 10px; 
-        font-size: 11px;
-        color: var(--gray-500);
-        font-weight: 500;
+      .form-field .input-box.large {
+        min-height: 80px;
       }
       
-      /* Table total row */
-      .total-row { background: var(--gray-100) !important; }
-      .total-row td { 
-        font-weight: 700;
-        font-size: 13px;
-        border-top: 2px solid var(--gray-300);
-        background: transparent !important;
+      .signature-section {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 40px;
+        margin-top: 30px;
+        page-break-inside: avoid;
+      }
+      
+      .signature-box {
+        border-top: 2px solid var(--gray-800);
+        padding-top: 10px;
+      }
+      
+      .signature-box p {
+        font-size: 11px;
+        color: var(--gray-600);
+        margin-top: 4px;
+      }
+      
+      .signature-box strong {
+        color: var(--gray-800);
+        font-size: 12px;
       }
     </style>
   `;
 
-  const header = getUnifiedHeader(org, 'Data Entry Form', '', today, 'report');
   const footer = getUnifiedFooter(org);
 
   const signatureSection = `
     <div class="signature-section">
       <div class="signature-box">
-        <div class="signature-line">Prepared By (Name & Signature)</div>
+        <p><strong>Prepared By:</strong></p>
+        <p style="margin-top: 50px;">Name: _______________________________</p>
+        <p>Date: _______________________________</p>
       </div>
       <div class="signature-box">
-        <div class="signature-line">Approved By (Name & Signature)</div>
+        <p><strong>Approved By:</strong></p>
+        <p style="margin-top: 50px;">Name: _______________________________</p>
+        <p>Date: _______________________________</p>
       </div>
     </div>
   `;
+  
+  const getInstructions = (formName, formType) => `
+    <div class="instructions">
+      <h3>📋 Instructions - ${formName.toUpperCase()}</h3>
+      <ol>
+        <li><strong>DOCUMENT TYPE: ${formName.toUpperCase()}</strong></li>
+        <li>Fill in all required fields with clear, legible handwriting</li>
+        <li>Use black or blue ink only</li>
+        <li>Write all amounts and details clearly</li>
+        <li>After completing, scan or photograph this form</li>
+        <li>Upload using "Upload Document" in ${formType === 'expense' ? 'Expense Management' : 'Finance'} section</li>
+        <li>The system will automatically extract and create ${formType} records</li>
+      </ol>
+    </div>
+  `;
 
+  const getHeader = (formName) => getUnifiedHeader(org, formName, `${formType.toUpperCase().slice(0,3)}-FORM`, today, 'report');
+  
   const forms = {
     expense_fuel: `
-      <div class="form-title"><div class="form-icon">⛽</div><h2>Fuel Expense Form</h2></div>
+      ${getHeader('Fuel Expense Form')}
       <div class="content">
+        ${getInstructions('Fuel Expense Form', 'expense')}
+        <div class="form-section">
+          <div class="section-title">
+            <div class="icon">⛽</div>
+            Fuel Information
+          </div>
         <div class="field-row">
           <div class="field"><label>Date</label><div class="field-input"></div></div>
           <div class="field"><label>Vehicle Registration</label><div class="field-input"></div></div>
