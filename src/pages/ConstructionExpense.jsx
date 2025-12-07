@@ -65,6 +65,7 @@ import {
   PieChart, Pie, Cell, Legend, LineChart, Line
 } from 'recharts';
 import AdvancedDocumentExtractor from "@/components/finance/AdvancedDocumentExtractor";
+import CategoryBreakdownChart from "@/components/finance/CategoryBreakdownChart";
 
 const DEFAULT_CONSTRUCTION_CATEGORIES = [
   { value: "materials", label: "Building Materials", icon: Package },
@@ -752,48 +753,13 @@ Extract ALL line items from the document table.`,
         </Card>
 
         {/* Category Breakdown */}
-        <Card className="overflow-hidden">
-          <div className="h-1 flex">
-            <div className="flex-1 bg-[#1EB053]" />
-            <div className="flex-1 bg-white" />
-            <div className="flex-1 bg-[#0072C6]" />
-          </div>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Building2 className="w-5 h-5 text-[#1EB053]" />
-              Category Breakdown
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            {categoryPieData.length === 0 ? (
-              <div className="h-[280px] flex items-center justify-center text-gray-500">
-                No data for this period
-              </div>
-            ) : (
-              <div className="h-[280px]">
-                <ResponsiveContainer width="100%" height="100%">
-                  <PieChart>
-                    <Pie
-                      data={categoryPieData}
-                      cx="50%"
-                      cy="50%"
-                      innerRadius={60}
-                      outerRadius={100}
-                      fill="#8884d8"
-                      dataKey="value"
-                      label={({ name, percent }) => `${name.split(' ')[0]} ${(percent * 100).toFixed(0)}%`}
-                    >
-                      {categoryPieData.map((entry, index) => (
-                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                      ))}
-                    </Pie>
-                    <Tooltip formatter={(value) => `Le ${value.toLocaleString()}`} />
-                  </PieChart>
-                </ResponsiveContainer>
-              </div>
-            )}
-          </CardContent>
-        </Card>
+        <CategoryBreakdownChart
+          data={categoryPieData}
+          title="Category Breakdown"
+          valueFormatter={(val) => `Le ${val.toLocaleString()}`}
+          icon={Building2}
+          iconColor="text-[#1EB053]"
+        />
       </div>
 
       {/* Expense List */}
