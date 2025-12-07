@@ -97,10 +97,6 @@ export default function RevenueEntryTemplate({ organisation }) {
       min-height: 80px;
     }
     
-    .form-field .input-box:focus-within {
-      border-color: var(--primary);
-    }
-    
     .signature-section {
       display: grid;
       grid-template-columns: 1fr 1fr;
@@ -148,7 +144,7 @@ export default function RevenueEntryTemplate({ organisation }) {
       <!-- Revenue Information -->
       <div class="form-section">
         <div class="section-title">
-          <div class="icon">💵</div>
+          <div class="icon">📈</div>
           Revenue Information
         </div>
         <div class="form-grid">
@@ -157,40 +153,61 @@ export default function RevenueEntryTemplate({ organisation }) {
             <div class="input-box"></div>
           </div>
           <div class="form-field">
-            <label>Source Type <span class="required">*</span></label>
-            <div class="input-box"></div>
-          </div>
-          <div class="form-field">
-            <label>Contributor Name <span class="required">*</span></label>
-            <div class="input-box"></div>
-          </div>
-          <div class="form-field">
-            <label>Amount (Le) <span class="required">*</span></label>
-            <div class="input-box"></div>
-          </div>
-          <div class="form-field">
-            <label>Payment Method</label>
-            <div class="input-box"></div>
-          </div>
-          <div class="form-field">
             <label>Reference Number</label>
             <div class="input-box"></div>
           </div>
-          <div class="form-field full-width">
-            <label>Purpose <span class="required">*</span></label>
-            <div class="input-box large"></div>
-          </div>
-          <div class="form-field full-width">
-            <label>Notes / Comments</label>
-            <div class="input-box large"></div>
-          </div>
+        </div>
+      </div>
+
+      <!-- Revenue Items Table -->
+      <div class="form-section">
+        <div class="section-title">
+          <div class="icon">📋</div>
+          Revenue Items
+        </div>
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th style="width: 40px;">NO</th>
+              <th>DESCRIPTION / PURPOSE <span class="required">*</span></th>
+              <th style="width: 150px;">CONTRIBUTOR / CUSTOMER</th>
+              <th style="width: 120px;">AMOUNT (Le) <span class="required">*</span></th>
+              <th style="width: 120px;">SOURCE / CATEGORY</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${Array.from({ length: 15 }, (_, i) => `
+              <tr>
+                <td>${i + 1}</td>
+                <td>&nbsp;</td>
+                <td>&nbsp;</td>
+                <td>&nbsp;</td>
+                <td>&nbsp;</td>
+              </tr>
+            `).join('')}
+          </tbody>
+          <tfoot>
+            <tr class="total-row">
+              <td colspan="3" style="text-align: right; font-weight: bold;">TOTAL:</td>
+              <td style="font-weight: bold;">Le ______________</td>
+              <td></td>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+
+      <!-- Notes -->
+      <div class="form-section">
+        <div class="form-field full-width">
+          <label>Notes / Comments</label>
+          <div class="input-box large"></div>
         </div>
       </div>
 
       <!-- Signatures -->
       <div class="signature-section">
         <div class="signature-box">
-          <p><strong>Prepared By:</strong></p>
+          <p><strong>Recorded By:</strong></p>
           <p style="margin-top: 50px;">Name: _______________________________</p>
           <p>Date: _______________________________</p>
         </div>

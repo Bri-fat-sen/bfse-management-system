@@ -97,10 +97,6 @@ export default function ExpenseEntryTemplate({ organisation }) {
       min-height: 80px;
     }
     
-    .form-field .input-box:focus-within {
-      border-color: var(--primary);
-    }
-    
     .signature-section {
       display: grid;
       grid-template-columns: 1fr 1fr;
@@ -157,33 +153,60 @@ export default function ExpenseEntryTemplate({ organisation }) {
             <div class="input-box"></div>
           </div>
           <div class="form-field">
-            <label>Category <span class="required">*</span></label>
-            <div class="input-box"></div>
-          </div>
-          <div class="form-field">
-            <label>Vendor/Supplier <span class="required">*</span></label>
-            <div class="input-box"></div>
-          </div>
-          <div class="form-field">
-            <label>Amount (Le) <span class="required">*</span></label>
-            <div class="input-box"></div>
-          </div>
-          <div class="form-field">
-            <label>Payment Method</label>
-            <div class="input-box"></div>
-          </div>
-          <div class="form-field">
             <label>Reference Number</label>
             <div class="input-box"></div>
           </div>
-          <div class="form-field full-width">
-            <label>Description <span class="required">*</span></label>
-            <div class="input-box large"></div>
-          </div>
-          <div class="form-field full-width">
-            <label>Notes / Comments</label>
-            <div class="input-box large"></div>
-          </div>
+        </div>
+      </div>
+
+      <!-- Expense Items Table -->
+      <div class="form-section">
+        <div class="section-title">
+          <div class="icon">📋</div>
+          Expense Items
+        </div>
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th style="width: 40px;">NO</th>
+              <th>DETAILS / DESCRIPTION <span class="required">*</span></th>
+              <th style="width: 80px;">UNIT</th>
+              <th style="width: 80px;">QTY</th>
+              <th style="width: 100px;">UNIT COST (Le)</th>
+              <th style="width: 120px;">TOTAL (Le) <span class="required">*</span></th>
+              <th style="width: 120px;">VENDOR</th>
+              <th style="width: 100px;">CATEGORY</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${Array.from({ length: 15 }, (_, i) => `
+              <tr>
+                <td>${i + 1}</td>
+                <td>&nbsp;</td>
+                <td>&nbsp;</td>
+                <td>&nbsp;</td>
+                <td>&nbsp;</td>
+                <td>&nbsp;</td>
+                <td>&nbsp;</td>
+                <td>&nbsp;</td>
+              </tr>
+            `).join('')}
+          </tbody>
+          <tfoot>
+            <tr class="total-row">
+              <td colspan="5" style="text-align: right; font-weight: bold;">TOTAL:</td>
+              <td style="font-weight: bold;">Le ______________</td>
+              <td colspan="2"></td>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+
+      <!-- Notes -->
+      <div class="form-section">
+        <div class="form-field full-width">
+          <label>Notes / Comments</label>
+          <div class="input-box large"></div>
         </div>
       </div>
 
