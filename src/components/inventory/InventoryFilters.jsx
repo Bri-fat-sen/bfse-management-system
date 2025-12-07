@@ -1,6 +1,6 @@
-import React from "react";
-import { Badge } from "@/components/ui/badge";
+import { Filter, Package, MapPin, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import {
   Select,
   SelectContent,
@@ -8,49 +8,40 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Filter, Package, MapPin, Warehouse, Truck, X, ArrowUpDown } from "lucide-react";
 
-export default function InventoryFilters({
-  categoryFilter,
-  setCategoryFilter,
-  stockFilter,
-  setStockFilter,
-  locationFilter,
-  setLocationFilter,
-  sortBy,
-  setSortBy,
-  sortOrder,
-  setSortOrder,
-  categoryList,
-  allLocations,
-  searchTerm,
-  setSearchTerm,
-  totalProducts,
-  filteredCount
-}) {
-  const hasActiveFilters = searchTerm || categoryFilter !== "all" || stockFilter !== "all" || locationFilter !== "all";
+export default function InventoryFilters({ filters, onFiltersChange, categories, locations }) {
+  const hasActiveFilters = 
+    filters.category !== 'all' || 
+    filters.stockStatus !== 'all' || 
+    filters.location !== 'all';
 
   return (
     <div className="space-y-3">
-      {/* Filter Controls */}
+      {/* Filter Selects */}
       <div className="flex flex-wrap gap-2">
-        <Select value={categoryFilter} onValueChange={setCategoryFilter}>
-          <SelectTrigger className="w-40 h-9">
-            <Filter className="w-4 h-4 mr-2" />
-            <SelectValue placeholder="Category" />
+        <Select 
+          value={filters.category} 
+          onValueChange={(value) => onFiltersChange({ ...filters, category: value })}
+        >
+          <SelectTrigger className="w-[140px] h-9 text-xs">
+            <Filter className="w-3 h-3 mr-1" />
+            <SelectValue />
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">All Categories</SelectItem>
-            {categoryList.map(cat => (
+            {categories.map(cat => (
               <SelectItem key={cat} value={cat}>{cat}</SelectItem>
             ))}
           </SelectContent>
         </Select>
 
-        <Select value={stockFilter} onValueChange={setStockFilter}>
-          <SelectTrigger className="w-36 h-9">
-            <Package className="w-4 h-4 mr-2" />
-            <SelectValue placeholder="Stock" />
+        <Select 
+          value={filters.stockStatus} 
+          onValueChange={(value) => onFiltersChange({ ...filters, stockStatus: value })}
+        >
+          <SelectTrigger className="w-[130px] h-9 text-xs">
+            <Package className="w-3 h-3 mr-1" />
+            <SelectValue />
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">All Stock</SelectItem>
@@ -60,100 +51,68 @@ export default function InventoryFilters({
           </SelectContent>
         </Select>
 
-        <Select value={locationFilter} onValueChange={setLocationFilter}>
-          <SelectTrigger className="w-40 h-9">
-            <MapPin className="w-4 h-4 mr-2" />
-            <SelectValue placeholder="Location" />
+        <Select 
+          value={filters.location} 
+          onValueChange={(value) => onFiltersChange({ ...filters, location: value })}
+        >
+          <SelectTrigger className="w-[150px] h-9 text-xs">
+            <MapPin className="w-3 h-3 mr-1" />
+            <SelectValue />
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">All Locations</SelectItem>
-            {allLocations.map(loc => (
-              <SelectItem key={loc.id} value={loc.id}>
-                <div className="flex items-center gap-2">
-                  {loc.type === 'warehouse' ? <Warehouse className="w-3 h-3" /> : <Truck className="w-3 h-3" />}
-                  <span className="truncate max-w-[150px]">{loc.name}</span>
-                </div>
-              </SelectItem>
+            {locations.map(loc => (
+              <SelectItem key={loc.id} value={loc.id}>{loc.name}</SelectItem>
             ))}
           </SelectContent>
         </Select>
 
-        <Select value={sortBy} onValueChange={setSortBy}>
-          <SelectTrigger className="w-32 h-9">
-            <ArrowUpDown className="w-4 h-4 mr-2" />
-            <SelectValue placeholder="Sort" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="name">Name</SelectItem>
-            <SelectItem value="stock">Stock</SelectItem>
-            <SelectItem value="price">Price</SelectItem>
-            <SelectItem value="value">Value</SelectItem>
-          </SelectContent>
-        </Select>
-
-        <Button 
-          variant="outline" 
-          size="sm"
-          onClick={() => setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')}
-          className="h-9 px-3"
-        >
-          {sortOrder === 'asc' ? '↑' : '↓'}
-        </Button>
-
         {hasActiveFilters && (
-          <Button 
-            variant="ghost" 
+          <Button
+            variant="ghost"
             size="sm"
-            onClick={() => {
-              setSearchTerm("");
-              setCategoryFilter("all");
-              setStockFilter("all");
-              setLocationFilter("all");
-            }}
-            className="h-9 text-red-600"
+            onClick={() => onFiltersChange({ category: 'all', stockStatus: 'all', location: 'all' })}
+            className="h-9 text-xs"
           >
-            <X className="w-4 h-4 mr-1" />
+            <X className="w-3 h-3 mr-1" />
             Clear
           </Button>
         )}
       </div>
 
-      {/* Active Filters */}
+      {/* Active Filters Display */}
       {hasActiveFilters && (
         <div className="flex items-center gap-2 flex-wrap">
           <span className="text-xs text-gray-500">Active:</span>
-          {searchTerm && (
+          {filters.category !== 'all' && (
             <Badge variant="secondary" className="text-xs">
-              Search: {searchTerm}
-              <X className="w-3 h-3 ml-1 cursor-pointer" onClick={() => setSearchTerm("")} />
+              {filters.category}
+              <X 
+                className="w-3 h-3 ml-1 cursor-pointer" 
+                onClick={() => onFiltersChange({ ...filters, category: 'all' })}
+              />
             </Badge>
           )}
-          {categoryFilter !== "all" && (
+          {filters.stockStatus !== 'all' && (
             <Badge variant="secondary" className="text-xs">
-              {categoryFilter}
-              <X className="w-3 h-3 ml-1 cursor-pointer" onClick={() => setCategoryFilter("all")} />
+              {filters.stockStatus.replace('_', ' ')}
+              <X 
+                className="w-3 h-3 ml-1 cursor-pointer" 
+                onClick={() => onFiltersChange({ ...filters, stockStatus: 'all' })}
+              />
             </Badge>
           )}
-          {stockFilter !== "all" && (
+          {filters.location !== 'all' && (
             <Badge variant="secondary" className="text-xs">
-              {stockFilter.replace('_', ' ')}
-              <X className="w-3 h-3 ml-1 cursor-pointer" onClick={() => setStockFilter("all")} />
-            </Badge>
-          )}
-          {locationFilter !== "all" && (
-            <Badge variant="secondary" className="text-xs">
-              {allLocations.find(l => l.id === locationFilter)?.name}
-              <X className="w-3 h-3 ml-1 cursor-pointer" onClick={() => setLocationFilter("all")} />
+              {locations.find(l => l.id === filters.location)?.name}
+              <X 
+                className="w-3 h-3 ml-1 cursor-pointer" 
+                onClick={() => onFiltersChange({ ...filters, location: 'all' })}
+              />
             </Badge>
           )}
         </div>
       )}
-
-      {/* Results Count */}
-      <div className="flex items-center justify-between text-xs text-gray-500">
-        <span>Showing <strong>{filteredCount}</strong> of <strong>{totalProducts}</strong> products</span>
-        <span>Sorted by <strong>{sortBy}</strong> ({sortOrder === 'asc' ? 'ascending' : 'descending'})</span>
-      </div>
     </div>
   );
 }

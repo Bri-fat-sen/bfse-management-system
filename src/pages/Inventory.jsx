@@ -6,69 +6,56 @@ import {
   Package,
   Search,
   Plus,
-  Filter,
-  Download,
-  Upload,
+  TrendingUp,
+  AlertTriangle,
+  Warehouse,
   BarChart3,
   Grid3x3,
   List,
-  AlertTriangle,
-  TrendingUp,
-  TrendingDown,
+  Filter,
   RefreshCw,
-  Zap,
-  ArrowUpDown
+  Download,
+  Upload,
+  ArrowLeftRight,
+  Zap
 } from "lucide-react";
-import { Card } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 import LoadingSpinner from "@/components/ui/LoadingSpinner";
-import InventoryStats from "@/components/inventory/InventoryStats";
-import InventoryFilters from "@/components/inventory/InventoryFilters";
-import InventoryProductGrid from "@/components/inventory/InventoryProductGrid";
-import InventoryProductList from "@/components/inventory/InventoryProductList";
-import InventoryQuickActions from "@/components/inventory/InventoryQuickActions";
+import StatCard from "@/components/ui/StatCard";
+import ProductCard from "@/components/inventory/ProductCard";
+import ProductTable from "@/components/inventory/ProductTable";
+import QuickStockAdjust from "@/components/inventory/QuickStockAdjust";
+import QuickTransfer from "@/components/inventory/QuickTransfer";
 import ProductFormDialog from "@/components/inventory/ProductFormDialog";
-import StockAdjustmentDialog from "@/components/inventory/StockAdjustmentDialog";
-import StockTransferDialog from "@/components/inventory/StockTransferDialog";
-import ProductDetailsDialog from "@/components/inventory/ProductDetailsDialog";
+import InventoryFilters from "@/components/inventory/InventoryFilters";
+import StockMovementsList from "@/components/inventory/StockMovementsList";
 import InventoryInsights from "@/components/inventory/InventoryInsights";
+import BatchManagement from "@/components/inventory/BatchManagement";
+import LocationStockView from "@/components/inventory/LocationStockView";
 
 export default function Inventory() {
   const toast = useToast();
   const queryClient = useQueryClient();
   
-  // View state
   const [viewMode, setViewMode] = useState('grid');
-  const [sortBy, setSortBy] = useState('name');
-  const [sortOrder, setSortOrder] = useState('asc');
-  
-  // Filters
   const [searchTerm, setSearchTerm] = useState("");
-  const [categoryFilter, setCategoryFilter] = useState("all");
-  const [stockFilter, setStockFilter] = useState("all");
-  const [locationFilter, setLocationFilter] = useState("all");
-  
-  // Dialogs
+  const [filters, setFilters] = useState({
+    category: "all",
+    stockStatus: "all",
+    location: "all"
+  });
   const [showProductDialog, setShowProductDialog] = useState(false);
-  const [showStockDialog, setShowStockDialog] = useState(false);
-  const [showTransferDialog, setShowTransferDialog] = useState(false);
-  const [showProductDetails, setShowProductDetails] = useState(false);
-  
-  // Selected items
   const [editingProduct, setEditingProduct] = useState(null);
-  const [viewingProduct, setViewingProduct] = useState(null);
+  const [activeTab, setActiveTab] = useState("products");
+  const [showQuickAdjust, setShowQuickAdjust] = useState(false);
+  const [showQuickTransfer, setShowQuickTransfer] = useState(false);
 
-  // Fetch user and employee data
+  // Fetch current user and employee
   const { data: user } = useQuery({
     queryKey: ['currentUser'],
     queryFn: () => base44.auth.me(),
@@ -85,45 +72,7 @@ export default function Inventory() {
   const currentEmployee = employee?.[0];
   const orgId = currentEmployee?.organisation_id;
 
-  // Fetch all data with optimized queries
-  const { data: products = [], isLoading: productsLoading } = useQuery({
-    queryKey: ['products', orgId],
-    queryFn: async () => {
-      if (!orgId) return [];
-      return await base44.entities.Product.filter({ organisation_id: orgId }, '-created_date', 5000);
-    },
-    enabled: !!orgId,
-    staleTime: 2 * 60 * 1000,
-  });
-
-  const { data: categories = [] } = useQuery({
-    queryKey: ['categories', orgId],
-    queryFn: () => base44.entities.ProductCategory.filter({ organisation_id: orgId }),
-    enabled: !!orgId,
-    staleTime: 10 * 60 * 1000,
-  });
-
-  const { data: warehouses = [] } = useQuery({
-    queryKey: ['warehouses', orgId],
-    queryFn: () => base44.entities.Warehouse.filter({ organisation_id: orgId }),
-    enabled: !!orgId,
-    staleTime: 10 * 60 * 1000,
-  });
-
-  const { data: vehicles = [] } = useQuery({
-    queryKey: ['vehicles', orgId],
-    queryFn: () => base44.entities.Vehicle.filter({ organisation_id: orgId }),
-    enabled: !!orgId,
-    staleTime: 10 * 60 * 1000,
-  });
-
-  const { data: stockLevels = [] } = useQuery({
-    queryKey: ['stockLevels', orgId],
-    queryFn: () => base44.entities.StockLevel.filter({ organisation_id: orgId }),
-    enabled: !!orgId,
-    staleTime: 2 * 60 * 1000,
-  });
-
+  // Fetch organization
   const { data: organisation } = useQuery({
     queryKey: ['organisation', orgId],
     queryFn: () => base44.entities.Organisation.filter({ id: orgId }),
@@ -132,84 +81,115 @@ export default function Inventory() {
   });
 
   const currentOrg = organisation?.[0];
-  const primaryColor = currentOrg?.primary_color || '#1EB053';
-  const secondaryColor = currentOrg?.secondary_color || '#0072C6';
+
+  // Fetch all inventory data
+  const { data: products = [], isLoading: productsLoading } = useQuery({
+    queryKey: ['products', orgId],
+    queryFn: async () => {
+      if (!orgId) return [];
+      return await base44.entities.Product.filter({ organisation_id: orgId }, '-created_date', 5000);
+    },
+    enabled: !!orgId,
+  });
+
+  const { data: categories = [] } = useQuery({
+    queryKey: ['categories', orgId],
+    queryFn: () => base44.entities.ProductCategory.filter({ organisation_id: orgId }),
+    enabled: !!orgId,
+  });
+
+  const { data: warehouses = [] } = useQuery({
+    queryKey: ['warehouses', orgId],
+    queryFn: () => base44.entities.Warehouse.filter({ organisation_id: orgId }),
+    enabled: !!orgId,
+  });
+
+  const { data: vehicles = [] } = useQuery({
+    queryKey: ['vehicles', orgId],
+    queryFn: () => base44.entities.Vehicle.filter({ organisation_id: orgId, status: 'active' }),
+    enabled: !!orgId,
+  });
+
+  const { data: stockLevels = [] } = useQuery({
+    queryKey: ['stockLevels', orgId],
+    queryFn: () => base44.entities.StockLevel.filter({ organisation_id: orgId }, '-created_date', 5000),
+    enabled: !!orgId,
+  });
+
+  const { data: stockMovements = [] } = useQuery({
+    queryKey: ['stockMovements', orgId],
+    queryFn: () => base44.entities.StockMovement.filter({ organisation_id: orgId }, '-created_date', 100),
+    enabled: !!orgId,
+  });
+
+  const { data: inventoryBatches = [] } = useQuery({
+    queryKey: ['inventoryBatches', orgId],
+    queryFn: () => base44.entities.InventoryBatch.filter({ organisation_id: orgId }),
+    enabled: !!orgId,
+  });
 
   // Combine locations
   const allLocations = useMemo(() => [
     ...warehouses.map(w => ({ id: w.id, name: w.name, type: 'warehouse' })),
-    ...vehicles.map(v => ({ id: v.id, name: `${v.registration_number} - ${v.brand || ''} ${v.model || ''}`.trim(), type: 'vehicle' }))
+    ...vehicles.map(v => ({ id: v.id, name: `${v.registration_number}`, type: 'vehicle' }))
   ], [warehouses, vehicles]);
 
   // Category list
   const categoryList = useMemo(() => 
-    categories.length > 0 ? categories.map(c => c.name) : ["Water", "Beverages", "Food", "Electronics", "Clothing", "Other"],
+    categories.length > 0 
+      ? categories.map(c => c.name) 
+      : ["Water", "Beverages", "Food", "Electronics", "Clothing", "Other"],
     [categories]
   );
 
-  // Filter and sort products
+  // Filter products
   const filteredProducts = useMemo(() => {
-    let filtered = products.filter(p => {
-      const matchesSearch = p.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                           p.sku?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                           p.description?.toLowerCase().includes(searchTerm.toLowerCase());
-      const matchesCategory = categoryFilter === "all" || p.category === categoryFilter;
-      const matchesStock = stockFilter === "all" || 
-                          (stockFilter === "in_stock" && p.stock_quantity > 0) ||
-                          (stockFilter === "low_stock" && p.stock_quantity > 0 && p.stock_quantity <= (p.low_stock_threshold || 10)) ||
-                          (stockFilter === "out_of_stock" && p.stock_quantity === 0);
-      const matchesLocation = locationFilter === "all" || 
-                             !p.location_ids?.length ||
-                             p.location_ids?.includes(locationFilter);
+    return products.filter(p => {
+      const matchesSearch = 
+        p.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        p.sku?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        p.description?.toLowerCase().includes(searchTerm.toLowerCase());
+      
+      const matchesCategory = filters.category === "all" || p.category === filters.category;
+      
+      const matchesStock = filters.stockStatus === "all" ||
+        (filters.stockStatus === "in_stock" && p.stock_quantity > (p.low_stock_threshold || 10)) ||
+        (filters.stockStatus === "low_stock" && p.stock_quantity > 0 && p.stock_quantity <= (p.low_stock_threshold || 10)) ||
+        (filters.stockStatus === "out_of_stock" && p.stock_quantity === 0);
+      
+      const matchesLocation = filters.location === "all" ||
+        !p.location_ids?.length ||
+        p.location_ids?.includes(filters.location);
+      
       return matchesSearch && matchesCategory && matchesStock && matchesLocation;
     });
+  }, [products, searchTerm, filters]);
 
-    // Sort
-    filtered.sort((a, b) => {
-      let aVal, bVal;
-      switch(sortBy) {
-        case 'name':
-          aVal = a.name?.toLowerCase() || '';
-          bVal = b.name?.toLowerCase() || '';
-          break;
-        case 'stock':
-          aVal = a.stock_quantity || 0;
-          bVal = b.stock_quantity || 0;
-          break;
-        case 'price':
-          aVal = a.unit_price || 0;
-          bVal = b.unit_price || 0;
-          break;
-        case 'value':
-          aVal = (a.stock_quantity || 0) * (a.cost_price || 0);
-          bVal = (b.stock_quantity || 0) * (b.cost_price || 0);
-          break;
-        default:
-          return 0;
-      }
-      
-      if (sortOrder === 'asc') {
-        return aVal > bVal ? 1 : -1;
-      } else {
-        return aVal < bVal ? 1 : -1;
-      }
-    });
+  // Calculate stats
+  const stats = useMemo(() => {
+    const totalValue = products.reduce((sum, p) => sum + (p.stock_quantity * (p.cost_price || 0)), 0);
+    const lowStock = products.filter(p => p.stock_quantity > 0 && p.stock_quantity <= (p.low_stock_threshold || 10));
+    const outOfStock = products.filter(p => p.stock_quantity === 0);
+    const totalItems = products.reduce((sum, p) => sum + (p.stock_quantity || 0), 0);
+    
+    return {
+      totalProducts: products.length,
+      totalValue,
+      lowStockCount: lowStock.length,
+      outOfStockCount: outOfStock.length,
+      totalItems
+    };
+  }, [products]);
 
-    return filtered;
-  }, [products, searchTerm, categoryFilter, stockFilter, locationFilter, sortBy, sortOrder]);
-
-  // Product mutations
+  // Mutations
   const createProductMutation = useMutation({
-    mutationFn: (data) => base44.entities.Product.create(data),
+    mutationFn: (data) => base44.entities.Product.create({ organisation_id: orgId, ...data }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['products'] });
       setShowProductDialog(false);
       setEditingProduct(null);
-      toast.success("Product created", "Successfully added to inventory");
+      toast.success("Product created", "Product added successfully");
     },
-    onError: (error) => {
-      toast.error("Failed to create product", error.message);
-    }
   });
 
   const updateProductMutation = useMutation({
@@ -220,19 +200,15 @@ export default function Inventory() {
       setEditingProduct(null);
       toast.success("Product updated", "Changes saved successfully");
     },
-    onError: (error) => {
-      toast.error("Failed to update product", error.message);
-    }
   });
 
-  const handleProductSubmit = async (data) => {
-    const productData = { organisation_id: orgId, ...data };
-    if (editingProduct) {
-      await updateProductMutation.mutateAsync({ id: editingProduct.id, data: productData });
-    } else {
-      await createProductMutation.mutateAsync(productData);
-    }
-  };
+  const deleteProductMutation = useMutation({
+    mutationFn: (id) => base44.entities.Product.delete(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['products'] });
+      toast.success("Product deleted", "Product removed successfully");
+    },
+  });
 
   if (!user || !currentEmployee || !orgId) {
     return <LoadingSpinner message="Loading Inventory..." fullScreen />;
@@ -244,200 +220,314 @@ export default function Inventory() {
 
   return (
     <div className="space-y-4 sm:space-y-6">
-      {/* Sierra Leone Flag Header */}
-      <div className="h-1.5 rounded-full flex overflow-hidden shadow-sm">
-        <div className="flex-1" style={{ backgroundColor: primaryColor }} />
-        <div className="flex-1 bg-white" />
-        <div className="flex-1" style={{ backgroundColor: secondaryColor }} />
+      {/* Sierra Leone Stripe Header */}
+      <div className="h-1 w-full flex rounded-full overflow-hidden">
+        <div className="flex-1 bg-[#1EB053]" />
+        <div className="flex-1 bg-white border-y border-gray-200" />
+        <div className="flex-1 bg-[#0072C6]" />
       </div>
 
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <div className="flex items-center gap-3">
-            <div 
-              className="w-12 h-12 rounded-xl flex items-center justify-center shadow-lg"
-              style={{ background: `linear-gradient(135deg, ${primaryColor} 0%, ${secondaryColor} 100%)` }}
-            >
-              <Package className="w-6 h-6 text-white" />
-            </div>
-            <div>
-              <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Inventory</h1>
-              <p className="text-sm text-gray-500">Manage your products and stock</p>
-            </div>
-          </div>
+          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Inventory</h1>
+          <p className="text-sm text-gray-500 mt-1">Manage your products and stock levels</p>
         </div>
-        <Button 
-          onClick={() => {
-            setEditingProduct(null);
-            setShowProductDialog(true);
-          }}
-          className="text-white shadow-lg"
-          style={{ background: `linear-gradient(135deg, ${primaryColor} 0%, ${secondaryColor} 100%)` }}
-        >
-          <Plus className="w-4 h-4 mr-2" />
-          Add Product
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button
+            onClick={() => {
+              setEditingProduct(null);
+              setShowProductDialog(true);
+            }}
+            className="bg-gradient-to-r from-[#1EB053] to-[#16803d] hover:from-[#16803d] hover:to-[#1EB053] text-white"
+          >
+            <Plus className="w-4 h-4 mr-2" />
+            Add Product
+          </Button>
+        </div>
       </div>
 
       {/* Stats */}
-      <InventoryStats 
-        products={products}
-        primaryColor={primaryColor}
-        secondaryColor={secondaryColor}
-      />
+      <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-5 gap-3 sm:gap-4">
+        <StatCard
+          title="Products"
+          value={stats.totalProducts}
+          icon={Package}
+          color="blue"
+          subtitle={`${stats.totalItems.toLocaleString()} items`}
+        />
+        <StatCard
+          title="Inventory Value"
+          value={`Le ${stats.totalValue.toLocaleString()}`}
+          icon={TrendingUp}
+          color="green"
+        />
+        <StatCard
+          title="Low Stock"
+          value={stats.lowStockCount}
+          icon={AlertTriangle}
+          color="gold"
+        />
+        <StatCard
+          title="Out of Stock"
+          value={stats.outOfStockCount}
+          icon={AlertTriangle}
+          color="red"
+        />
+        <StatCard
+          title="Locations"
+          value={allLocations.length}
+          icon={Warehouse}
+          color="purple"
+        />
+      </div>
 
       {/* Quick Actions */}
-      <InventoryQuickActions
-        onAdjustStock={() => setShowStockDialog(true)}
-        onTransferStock={() => setShowTransferDialog(true)}
-        primaryColor={primaryColor}
-        secondaryColor={secondaryColor}
-      />
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3">
+        <Button
+          variant="outline"
+          className="h-auto py-3 flex-col gap-2 border-[#1EB053]/30 hover:border-[#1EB053] hover:bg-[#1EB053]/5"
+          onClick={() => setShowQuickAdjust(true)}
+        >
+          <Zap className="w-5 h-5 text-[#1EB053]" />
+          <span className="text-xs font-medium">Quick Adjust</span>
+        </Button>
+        <Button
+          variant="outline"
+          className="h-auto py-3 flex-col gap-2 border-[#0072C6]/30 hover:border-[#0072C6] hover:bg-[#0072C6]/5"
+          onClick={() => setShowQuickTransfer(true)}
+        >
+          <ArrowLeftRight className="w-5 h-5 text-[#0072C6]" />
+          <span className="text-xs font-medium">Transfer</span>
+        </Button>
+        <Button
+          variant="outline"
+          className="h-auto py-3 flex-col gap-2 border-purple-400/30 hover:border-purple-500 hover:bg-purple-50"
+          onClick={() => setActiveTab("batches")}
+        >
+          <Package className="w-5 h-5 text-purple-600" />
+          <span className="text-xs font-medium">Batches</span>
+        </Button>
+        <Button
+          variant="outline"
+          className="h-auto py-3 flex-col gap-2 border-amber-400/30 hover:border-amber-500 hover:bg-amber-50"
+          onClick={() => setActiveTab("insights")}
+        >
+          <BarChart3 className="w-5 h-5 text-amber-600" />
+          <span className="text-xs font-medium">Insights</span>
+        </Button>
+      </div>
 
-      {/* Insights */}
-      <InventoryInsights 
-        products={products}
-        primaryColor={primaryColor}
-      />
+      <Tabs value={activeTab} onValueChange={setActiveTab}>
+        <TabsList className="bg-gray-100 w-full justify-start overflow-x-auto">
+          <TabsTrigger 
+            value="products" 
+            className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#1EB053] data-[state=active]:to-[#0072C6] data-[state=active]:text-white"
+          >
+            Products
+          </TabsTrigger>
+          <TabsTrigger 
+            value="movements"
+            className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#1EB053] data-[state=active]:to-[#0072C6] data-[state=active]:text-white"
+          >
+            Movements
+          </TabsTrigger>
+          <TabsTrigger 
+            value="locations"
+            className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#1EB053] data-[state=active]:to-[#0072C6] data-[state=active]:text-white"
+          >
+            Locations
+          </TabsTrigger>
+          <TabsTrigger 
+            value="batches"
+            className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#1EB053] data-[state=active]:to-[#0072C6] data-[state=active]:text-white"
+          >
+            Batches
+          </TabsTrigger>
+          <TabsTrigger 
+            value="insights"
+            className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#1EB053] data-[state=active]:to-[#0072C6] data-[state=active]:text-white"
+          >
+            Insights
+          </TabsTrigger>
+        </TabsList>
 
-      {/* Main Content */}
-      <Card className="border-0 shadow-lg">
-        <div className="p-4 sm:p-6 space-y-4">
-          {/* Search and View Toggle */}
-          <div className="flex flex-col sm:flex-row gap-3">
-            <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-              <Input
-                placeholder="Search products by name, SKU, or description..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10 h-11"
-              />
-            </div>
-            <div className="flex gap-2">
-              <Button
-                variant={viewMode === 'grid' ? 'default' : 'outline'}
-                size="icon"
-                onClick={() => setViewMode('grid')}
-                className="h-11 w-11"
-              >
-                <Grid3x3 className="w-4 h-4" />
-              </Button>
-              <Button
-                variant={viewMode === 'list' ? 'default' : 'outline'}
-                size="icon"
-                onClick={() => setViewMode('list')}
-                className="h-11 w-11"
-              >
-                <List className="w-4 h-4" />
-              </Button>
-            </div>
-          </div>
+        <TabsContent value="products" className="mt-6 space-y-4">
+          {/* Search and Filters */}
+          <Card className="border-t-4 border-t-[#1EB053]">
+            <CardContent className="p-4">
+              <div className="flex flex-col gap-3">
+                <div className="flex flex-col sm:flex-row gap-3">
+                  <div className="relative flex-1">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                    <Input
+                      placeholder="Search products..."
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                      className="pl-10"
+                    />
+                  </div>
+                  <div className="flex gap-2">
+                    <Button
+                      variant={viewMode === 'grid' ? 'default' : 'outline'}
+                      size="icon"
+                      onClick={() => setViewMode('grid')}
+                      className={viewMode === 'grid' ? 'bg-gradient-to-r from-[#1EB053] to-[#0072C6] text-white' : ''}
+                    >
+                      <Grid3x3 className="w-4 h-4" />
+                    </Button>
+                    <Button
+                      variant={viewMode === 'table' ? 'default' : 'outline'}
+                      size="icon"
+                      onClick={() => setViewMode('table')}
+                      className={viewMode === 'table' ? 'bg-gradient-to-r from-[#1EB053] to-[#0072C6] text-white' : ''}
+                    >
+                      <List className="w-4 h-4" />
+                    </Button>
+                  </div>
+                </div>
+                
+                <InventoryFilters
+                  filters={filters}
+                  onFiltersChange={setFilters}
+                  categories={categoryList}
+                  locations={allLocations}
+                />
 
-          {/* Filters */}
-          <InventoryFilters
-            categoryFilter={categoryFilter}
-            setCategoryFilter={setCategoryFilter}
-            stockFilter={stockFilter}
-            setStockFilter={setStockFilter}
-            locationFilter={locationFilter}
-            setLocationFilter={setLocationFilter}
-            sortBy={sortBy}
-            setSortBy={setSortBy}
-            sortOrder={sortOrder}
-            setSortOrder={setSortOrder}
-            categoryList={categoryList}
-            allLocations={allLocations}
-            searchTerm={searchTerm}
-            setSearchTerm={setSearchTerm}
-            totalProducts={products.length}
-            filteredCount={filteredProducts.length}
-          />
+                <div className="flex items-center justify-between text-xs text-gray-500">
+                  <span>Showing {filteredProducts.length} of {products.length} products</span>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => {
+                      queryClient.invalidateQueries({ queryKey: ['products'] });
+                      queryClient.invalidateQueries({ queryKey: ['stockLevels'] });
+                    }}
+                    className="h-7"
+                  >
+                    <RefreshCw className="w-3 h-3 mr-1" />
+                    Refresh
+                  </Button>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
 
           {/* Products Display */}
           {filteredProducts.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-16 text-center">
-              <div 
-                className="w-20 h-20 rounded-2xl flex items-center justify-center mb-4"
-                style={{ background: `linear-gradient(135deg, ${primaryColor}20 0%, ${secondaryColor}20 100%)` }}
-              >
-                <Package className="w-10 h-10 text-gray-400" />
-              </div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">No Products Found</h3>
-              <p className="text-gray-500 mb-6">
-                {searchTerm || categoryFilter !== "all" || stockFilter !== "all" || locationFilter !== "all"
-                  ? "Try adjusting your filters"
-                  : "Start by adding your first product"}
-              </p>
-              {!searchTerm && categoryFilter === "all" && stockFilter === "all" && locationFilter === "all" && (
-                <Button 
-                  onClick={() => setShowProductDialog(true)}
-                  style={{ background: `linear-gradient(135deg, ${primaryColor} 0%, ${secondaryColor} 100%)` }}
-                  className="text-white"
-                >
-                  <Plus className="w-4 h-4 mr-2" />
-                  Add Your First Product
-                </Button>
-              )}
-            </div>
+            <Card>
+              <CardContent className="p-12 text-center">
+                <Package className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+                <h3 className="text-lg font-semibold text-gray-600 mb-2">No products found</h3>
+                <p className="text-gray-500 mb-4">
+                  {searchTerm || filters.category !== 'all' || filters.stockStatus !== 'all' || filters.location !== 'all'
+                    ? "Try adjusting your filters"
+                    : "Get started by adding your first product"}
+                </p>
+                {!searchTerm && filters.category === 'all' && filters.stockStatus === 'all' && (
+                  <Button onClick={() => setShowProductDialog(true)} className="bg-gradient-to-r from-[#1EB053] to-[#0072C6] text-white">
+                    <Plus className="w-4 h-4 mr-2" />
+                    Add Product
+                  </Button>
+                )}
+              </CardContent>
+            </Card>
           ) : viewMode === 'grid' ? (
-            <InventoryProductGrid
-              products={filteredProducts}
-              allLocations={allLocations}
-              onViewProduct={(product) => {
-                setViewingProduct(product);
-                setShowProductDetails(true);
-              }}
-              onEditProduct={(product) => {
-                setEditingProduct(product);
-                setShowProductDialog(true);
-              }}
-              primaryColor={primaryColor}
-              secondaryColor={secondaryColor}
-            />
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+              {filteredProducts.map(product => (
+                <ProductCard
+                  key={product.id}
+                  product={product}
+                  locations={allLocations}
+                  onEdit={(p) => {
+                    setEditingProduct(p);
+                    setShowProductDialog(true);
+                  }}
+                  onDelete={(p) => deleteProductMutation.mutate(p.id)}
+                />
+              ))}
+            </div>
           ) : (
-            <InventoryProductList
+            <ProductTable
               products={filteredProducts}
-              allLocations={allLocations}
-              onViewProduct={(product) => {
-                setViewingProduct(product);
-                setShowProductDetails(true);
-              }}
-              onEditProduct={(product) => {
-                setEditingProduct(product);
+              locations={allLocations}
+              onEdit={(p) => {
+                setEditingProduct(p);
                 setShowProductDialog(true);
               }}
-              primaryColor={primaryColor}
+              onDelete={(p) => deleteProductMutation.mutate(p.id)}
             />
           )}
-        </div>
-      </Card>
+        </TabsContent>
+
+        <TabsContent value="movements" className="mt-6">
+          <StockMovementsList
+            movements={stockMovements}
+            products={products}
+            locations={allLocations}
+          />
+        </TabsContent>
+
+        <TabsContent value="locations" className="mt-6">
+          <LocationStockView
+            stockLevels={stockLevels}
+            products={products}
+            warehouses={warehouses}
+            vehicles={vehicles}
+          />
+        </TabsContent>
+
+        <TabsContent value="batches" className="mt-6">
+          <BatchManagement
+            products={products}
+            warehouses={warehouses}
+            vehicles={vehicles}
+            stockLevels={stockLevels}
+            orgId={orgId}
+            currentEmployee={currentEmployee}
+          />
+        </TabsContent>
+
+        <TabsContent value="insights" className="mt-6">
+          <InventoryInsights
+            products={products}
+            stockMovements={stockMovements}
+            stockLevels={stockLevels}
+            orgId={orgId}
+          />
+        </TabsContent>
+      </Tabs>
 
       {/* Dialogs */}
       <ProductFormDialog
         open={showProductDialog}
         onOpenChange={setShowProductDialog}
         editingProduct={editingProduct}
-        onSubmit={handleProductSubmit}
+        onSubmit={(data) => {
+          if (editingProduct) {
+            updateProductMutation.mutate({ id: editingProduct.id, data });
+          } else {
+            createProductMutation.mutate(data);
+          }
+        }}
         categoryList={categoryList}
         allLocations={allLocations}
         organisation={currentOrg}
         isLoading={createProductMutation.isPending || updateProductMutation.isPending}
       />
 
-      <StockAdjustmentDialog
-        open={showStockDialog}
-        onOpenChange={setShowStockDialog}
+      <QuickStockAdjust
+        open={showQuickAdjust}
+        onOpenChange={setShowQuickAdjust}
         products={products}
         warehouses={warehouses}
         orgId={orgId}
         currentEmployee={currentEmployee}
       />
 
-      <StockTransferDialog
-        open={showTransferDialog}
-        onOpenChange={setShowTransferDialog}
+      <QuickTransfer
+        open={showQuickTransfer}
+        onOpenChange={setShowQuickTransfer}
         products={products}
         warehouses={warehouses}
         vehicles={vehicles}
@@ -445,16 +535,6 @@ export default function Inventory() {
         orgId={orgId}
         currentEmployee={currentEmployee}
         organisation={currentOrg}
-      />
-
-      <ProductDetailsDialog
-        open={showProductDetails}
-        onOpenChange={setShowProductDetails}
-        product={viewingProduct}
-        warehouses={warehouses}
-        vehicles={vehicles}
-        stockLevels={stockLevels}
-        orgId={orgId}
       />
     </div>
   );
