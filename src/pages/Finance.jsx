@@ -79,6 +79,7 @@ import AIFinancialAnalysis from "@/components/finance/AIFinancialAnalysis";
 import DocumentUploadExtractor from "@/components/finance/DocumentUploadExtractor";
 import ExpenseEntryTemplate from "@/components/templates/ExpenseEntryTemplate";
 import RevenueEntryTemplate from "@/components/templates/RevenueEntryTemplate";
+import CategoryBreakdownChart from "@/components/finance/CategoryBreakdownChart";
 
 const expenseCategories = [
   "fuel", "maintenance", "utilities", "supplies", "rent", 
@@ -815,88 +816,22 @@ export default function Finance() {
               </Card>
 
               {/* Revenue Sources */}
-              <Card className="overflow-hidden">
-                <div className="h-1 flex">
-                  <div className="flex-1 bg-[#1EB053]" />
-                  <div className="flex-1 bg-white" />
-                  <div className="flex-1 bg-[#0072C6]" />
-                </div>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <PieChart className="w-5 h-5 text-[#1EB053]" />
-                    Revenue Breakdown
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  {revenuePieData.length === 0 ? (
-                    <div className="h-[280px] flex items-center justify-center text-gray-500">
-                      No revenue data for this period
-                    </div>
-                  ) : (
-                    <ResponsiveContainer width="100%" height={280}>
-                      <RePieChart>
-                        <Pie
-                          data={revenuePieData}
-                          cx="50%"
-                          cy="50%"
-                          innerRadius={60}
-                          outerRadius={100}
-                          fill="#8884d8"
-                          dataKey="value"
-                          label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
-                        >
-                          {revenuePieData.map((entry, index) => (
-                            <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                          ))}
-                        </Pie>
-                        <Tooltip formatter={(value) => `Le ${value.toLocaleString()}`} />
-                      </RePieChart>
-                    </ResponsiveContainer>
-                  )}
-                </CardContent>
-              </Card>
+              <CategoryBreakdownChart
+                data={revenuePieData}
+                title="Revenue Breakdown"
+                valueFormatter={(val) => `Le ${val.toLocaleString()}`}
+                icon={PieChart}
+                iconColor="text-[#1EB053]"
+              />
 
               {/* Expense Breakdown */}
-              <Card className="overflow-hidden">
-                <div className="h-1 flex">
-                  <div className="flex-1 bg-[#1EB053]" />
-                  <div className="flex-1 bg-white" />
-                  <div className="flex-1 bg-[#0072C6]" />
-                </div>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <PieChart className="w-5 h-5 text-red-500" />
-                    Expense Breakdown
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  {expensePieData.length === 0 ? (
-                    <div className="h-[280px] flex items-center justify-center text-gray-500">
-                      No expense data for this period
-                    </div>
-                  ) : (
-                    <ResponsiveContainer width="100%" height={280}>
-                      <RePieChart>
-                        <Pie
-                          data={expensePieData}
-                          cx="50%"
-                          cy="50%"
-                          innerRadius={60}
-                          outerRadius={100}
-                          fill="#8884d8"
-                          dataKey="value"
-                          label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
-                        >
-                          {expensePieData.map((entry, index) => (
-                            <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                          ))}
-                        </Pie>
-                        <Tooltip formatter={(value) => `Le ${value.toLocaleString()}`} />
-                      </RePieChart>
-                    </ResponsiveContainer>
-                  )}
-                </CardContent>
-              </Card>
+              <CategoryBreakdownChart
+                data={expensePieData}
+                title="Expense Breakdown"
+                valueFormatter={(val) => `Le ${val.toLocaleString()}`}
+                icon={Receipt}
+                iconColor="text-red-500"
+              />
             </div>
           </TabsContent>
 
