@@ -59,6 +59,8 @@ export default function AutomatedFinancialReports({
     const currentYear = today.getFullYear();
     
     switch (selectedPeriod) {
+      case "all_time":
+        return { start: new Date(2020, 0, 1), end: today, label: "All Time" };
       case "this_month":
         return { start: startOfMonth(today), end: endOfMonth(today), label: format(today, 'MMMM yyyy') };
       case "last_month":
@@ -303,6 +305,7 @@ Format your response in markdown with clear sections.`,
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
+              <SelectItem value="all_time">All Time</SelectItem>
               <SelectItem value="this_month">This Month</SelectItem>
               <SelectItem value="last_month">Last Month</SelectItem>
               <SelectItem value="last_3_months">Last 3 Months</SelectItem>
