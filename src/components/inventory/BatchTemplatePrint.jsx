@@ -7,19 +7,14 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { useState } from "react";
-import { getUnifiedPDFStyles, getUnifiedHeader, getUnifiedFooter } from "@/components/exports/UnifiedPDFStyles";
+import { getUnifiedPDFStyles, getUnifiedHeader, getUnifiedFooter, printUnifiedPDF } from "@/components/exports/UnifiedPDFStyles";
 
 export default function BatchTemplatePrint({ organisation }) {
   const [showPreview, setShowPreview] = useState(false);
 
-  const handlePrint = () => {
-    const printWindow = window.open('', '_blank');
-    printWindow.document.write(getTemplateHTML());
-    printWindow.document.close();
-    printWindow.focus();
-    setTimeout(() => {
-      printWindow.print();
-    }, 250);
+  const handleDownload = () => {
+    const html = getTemplateHTML();
+    printUnifiedPDF(html, 'batch-entry-form.pdf');
   };
 
   const getTemplateHTML = () => {
@@ -259,33 +254,13 @@ export default function BatchTemplatePrint({ organisation }) {
   };
 
   return (
-    <>
-      <Button
-        variant="outline"
-        onClick={handlePrint}
-        className="border-[#1EB053]/30 hover:border-[#1EB053] hover:bg-[#1EB053]/5"
-      >
-        <Download className="w-4 h-4 mr-2" />
-        Download Template
-      </Button>
-
-      <Dialog open={showPreview} onOpenChange={setShowPreview}>
-        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>Batch Entry Form Preview</DialogTitle>
-          </DialogHeader>
-          <div dangerouslySetInnerHTML={{ __html: getTemplateHTML() }} />
-          <div className="flex justify-end gap-2 pt-4 border-t">
-            <Button variant="outline" onClick={() => setShowPreview(false)}>
-              Close
-            </Button>
-            <Button onClick={handlePrint} className="bg-[#1EB053] hover:bg-[#16803d] text-white">
-              <Printer className="w-4 h-4 mr-2" />
-              Print
-            </Button>
-          </div>
-        </DialogContent>
-      </Dialog>
-    </>
+    <Button
+      variant="outline"
+      onClick={handleDownload}
+      className="border-[#1EB053]/30 hover:border-[#1EB053] hover:bg-[#1EB053]/5"
+    >
+      <Download className="w-4 h-4 mr-2" />
+      Download Template
+    </Button>
   );
 }
