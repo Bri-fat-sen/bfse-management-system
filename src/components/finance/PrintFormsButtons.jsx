@@ -1,13 +1,37 @@
 import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Printer, Receipt, DollarSign, Loader2 } from "lucide-react";
+import { Printer, Receipt, DollarSign, Loader2, Fuel, Wrench, Building2, ShoppingCart, Users, Truck, Megaphone, FileText, Wallet, X } from "lucide-react";
 import { useToast } from "@/components/ui/Toast";
 import { printUnifiedPDF, getUnifiedPDFStyles, getUnifiedHeader, getUnifiedFooter } from "@/components/exports/UnifiedPDFStyles";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
 export default function PrintFormsButtons({ organisation }) {
   const toast = useToast();
   const [printingExpense, setPrintingExpense] = useState(false);
   const [printingRevenue, setPrintingRevenue] = useState(false);
+  const [showExpenseDialog, setShowExpenseDialog] = useState(false);
+  const [showRevenueDialog, setShowRevenueDialog] = useState(false);
+
+  const expenseFormTypes = [
+    { id: 'general', name: 'General Expense Form', icon: Receipt, color: 'red', description: 'Multi-item expense form' },
+    { id: 'fuel', name: 'Fuel Purchase Form', icon: Fuel, color: 'orange', description: 'Vehicle fuel expenses' },
+    { id: 'maintenance', name: 'Maintenance Form', icon: Wrench, color: 'blue', description: 'Repair & maintenance costs' },
+    { id: 'utilities', name: 'Utilities Form', icon: Building2, color: 'cyan', description: 'Electricity, water, internet' },
+    { id: 'supplies', name: 'Office Supplies', icon: ShoppingCart, color: 'purple', description: 'Office & operational supplies' },
+    { id: 'salaries', name: 'Salary Advance', icon: Users, color: 'green', description: 'Employee salary advances' },
+    { id: 'transport', name: 'Transport Expenses', icon: Truck, color: 'teal', description: 'Transport & logistics costs' },
+    { id: 'marketing', name: 'Marketing Expenses', icon: Megaphone, color: 'pink', description: 'Advertising & promotions' },
+    { id: 'petty_cash', name: 'Petty Cash Form', icon: Wallet, color: 'amber', description: 'Small daily expenses' },
+  ];
+
+  const revenueFormTypes = [
+    { id: 'general', name: 'General Revenue Form', icon: DollarSign, color: 'green', description: 'Multi-item revenue form' },
+    { id: 'owner', name: 'Owner Contribution', icon: Users, color: 'blue', description: 'Owner capital injection' },
+    { id: 'ceo', name: 'CEO Contribution', icon: Users, color: 'purple', description: 'CEO funding' },
+    { id: 'investor', name: 'Investor Funding', icon: Building2, color: 'teal', description: 'Investment received' },
+    { id: 'loan', name: 'Loan Receipt', icon: FileText, color: 'amber', description: 'Bank or private loans' },
+    { id: 'grant', name: 'Grant Receipt', icon: DollarSign, color: 'cyan', description: 'Government or NGO grants' },
+  ];
 
   const generateExpenseFormHTML = () => {
     const styles = getUnifiedPDFStyles(organisation, 'report');
@@ -439,14 +463,17 @@ export default function PrintFormsButtons({ organisation }) {
     `;
   };
 
-  const handlePrintForm = (type) => {
-    if (type === 'expense') {
+  const handlePrintForm = (formType, category) => {
+    const isExpense = category === 'expense';
+    if (isExpense) {
       setPrintingExpense(true);
+      setShowExpenseDialog(false);
     } else {
       setPrintingRevenue(true);
+      setShowRevenueDialog(false);
     }
 
-    const html = type === 'expense' ? generateExpenseFormHTML() : generateRevenueFormHTML();
+    const html = isExpense ? generateExpenseFormHTML() : generateRevenueFormHTML();
     
     const printWindow = window.open('', '_blank');
     if (printWindow) {
@@ -457,7 +484,7 @@ export default function PrintFormsButtons({ organisation }) {
         printWindow.print();
         setPrintingExpense(false);
         setPrintingRevenue(false);
-        toast.success("Form ready", `${type === 'expense' ? 'Expense' : 'Revenue'} form opened for printing`);
+        toast.success("Form ready", `${formType.name} opened for printing`);
       }, 500);
     } else {
       setPrintingExpense(false);
@@ -467,34 +494,118 @@ export default function PrintFormsButtons({ organisation }) {
   };
 
   return (
-    <div className="flex gap-2 flex-wrap">
-      <Button
-        variant="outline"
-        onClick={() => handlePrintForm('expense')}
-        disabled={printingExpense}
-        className="border-red-500 text-red-600 hover:bg-red-50"
-      >
-        {printingExpense ? (
-          <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-        ) : (
-          <Receipt className="w-4 h-4 mr-2" />
-        )}
-        Print Expense Form
-      </Button>
-      
-      <Button
-        variant="outline"
-        onClick={() => handlePrintForm('revenue')}
-        disabled={printingRevenue}
-        className="border-[#1EB053] text-[#1EB053] hover:bg-[#1EB053]/10"
-      >
-        {printingRevenue ? (
-          <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-        ) : (
-          <DollarSign className="w-4 h-4 mr-2" />
-        )}
-        Print Revenue Form
-      </Button>
-    </div>
+    <>
+      <div className="flex gap-2 flex-wrap">
+        <Button
+          variant="outline"
+          onClick={() => setShowExpenseDialog(true)}
+          disabled={printingExpense}
+          className="border-red-500 text-red-600 hover:bg-red-50"
+        >
+          {printingExpense ? (
+            <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+          ) : (
+            <Receipt className="w-4 h-4 mr-2" />
+          )}
+          Print Expense Form
+        </Button>
+        
+        <Button
+          variant="outline"
+          onClick={() => setShowRevenueDialog(true)}
+          disabled={printingRevenue}
+          className="border-[#1EB053] text-[#1EB053] hover:bg-[#1EB053]/10"
+        >
+          {printingRevenue ? (
+            <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+          ) : (
+            <DollarSign className="w-4 h-4 mr-2" />
+          )}
+          Print Revenue Form
+        </Button>
+      </div>
+
+      {/* Expense Forms Dialog */}
+      <Dialog open={showExpenseDialog} onOpenChange={setShowExpenseDialog}>
+        <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto [&>button]:hidden">
+          <DialogHeader>
+            <div className="flex items-center justify-between">
+              <DialogTitle className="flex items-center gap-2">
+                <Receipt className="w-5 h-5 text-red-500" />
+                Select Expense Form Type
+              </DialogTitle>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => setShowExpenseDialog(false)}
+                className="h-8 w-8"
+              >
+                <X className="w-4 h-4" />
+              </Button>
+            </div>
+          </DialogHeader>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mt-4">
+            {expenseFormTypes.map((form) => (
+              <button
+                key={form.id}
+                onClick={() => handlePrintForm(form, 'expense')}
+                className={`p-4 border-2 rounded-lg hover:shadow-md transition-all text-left border-${form.color}-200 hover:border-${form.color}-400 hover:bg-${form.color}-50/50`}
+              >
+                <div className="flex items-start gap-3">
+                  <div className={`w-10 h-10 rounded-lg bg-${form.color}-100 flex items-center justify-center flex-shrink-0`}>
+                    <form.icon className={`w-5 h-5 text-${form.color}-600`} />
+                  </div>
+                  <div>
+                    <p className="font-semibold text-gray-900">{form.name}</p>
+                    <p className="text-xs text-gray-500 mt-1">{form.description}</p>
+                  </div>
+                </div>
+              </button>
+            ))}
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Revenue Forms Dialog */}
+      <Dialog open={showRevenueDialog} onOpenChange={setShowRevenueDialog}>
+        <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto [&>button]:hidden">
+          <DialogHeader>
+            <div className="flex items-center justify-between">
+              <DialogTitle className="flex items-center gap-2">
+                <DollarSign className="w-5 h-5 text-[#1EB053]" />
+                Select Revenue Form Type
+              </DialogTitle>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => setShowRevenueDialog(false)}
+                className="h-8 w-8"
+              >
+                <X className="w-4 h-4" />
+              </Button>
+            </div>
+          </DialogHeader>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mt-4">
+            {revenueFormTypes.map((form) => (
+              <button
+                key={form.id}
+                onClick={() => handlePrintForm(form, 'revenue')}
+                className={`p-4 border-2 rounded-lg hover:shadow-md transition-all text-left border-${form.color}-200 hover:border-${form.color}-400 hover:bg-${form.color}-50/50`}
+              >
+                <div className="flex items-start gap-3">
+                  <div className={`w-10 h-10 rounded-lg bg-${form.color}-100 flex items-center justify-center flex-shrink-0`}>
+                    <form.icon className={`w-5 h-5 text-${form.color}-600`} />
+                  </div>
+                  <div>
+                    <p className="font-semibold text-gray-900">{form.name}</p>
+                    <p className="text-xs text-gray-500 mt-1">{form.description}</p>
+                  </div>
+                </div>
+              </button>
+            ))}
+          </div>
+        </DialogContent>
+      </Dialog>
+    </>
   );
 }
