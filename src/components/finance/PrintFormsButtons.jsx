@@ -507,7 +507,7 @@ export default function PrintFormsButtons({ organisation }) {
         <table class="data-table">
           <thead><tr><th style="width: 40px;">NO</th><th>PRODUCT <span class="required">*</span></th><th style="width: 100px;">SKU/BARCODE</th><th style="width: 80px;">QTY</th><th style="width: 120px;">UNIT PRICE (Le)</th><th style="width: 120px;">TOTAL (Le)</th></tr></thead>
           <tbody>${Array.from({ length: 15 }, (_, i) => `<tr><td>${i + 1}</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td></tr>`).join('')}</tbody>
-          <tfoot><tr class="total-row"><td colspan="5" style="text-align: right; font-weight: bold;">SUBTOTAL:</td><td style="font-weight: bold;">Le ______________</td></tr><tr><td colspan="5" style="text-align: right;">Tax:</td><td>Le ______________</td></tr><tr><td colspan="5" style="text-align: right;">Discount:</td><td>Le ______________</td></tr><tr style="font-size: 1.1em;"><td colspan="5" style="text-align: right; font-weight: bold;">GRAND TOTAL:</td><td style="font-weight: bold;">Le ______________</td></tr></tfoot>
+          <tfoot><tr class="total-row"><td colspan="5" style="text-align: right; font-weight: bold;">SUBTOTAL:</td><td style="font-weight: bold;">Le ______________</td></tr><tr class="total-row"><td colspan="5" style="text-align: right;">Tax:</td><td>Le ______________</td></tr><tr class="total-row"><td colspan="5" style="text-align: right;">Discount:</td><td>Le ______________</td></tr><tr class="total-row" style="font-size: 1.1em;"><td colspan="5" style="text-align: right; font-weight: bold;">GRAND TOTAL:</td><td style="font-weight: bold;">Le ______________</td></tr></tfoot>
         </table>
       </div>
       <div class="form-section">
@@ -728,75 +728,6 @@ export default function PrintFormsButtons({ organisation }) {
           <div class="form-field"><label>Grant Period</label><div class="input-box"></div></div>
           <div class="form-field full-width"><label>Grant Purpose/Project</label><div class="input-box large"></div></div>
           <div class="form-field full-width"><label>Reporting Requirements</label><div class="input-box"></div></div>
-        </div>
-      </div>` : formType.id === 'interest' ? `
-      <div class="form-section">
-        <div class="section-title"><div class="icon">💰</div>Interest Income Details</div>
-        <div class="form-grid">
-          <div class="form-field"><label>Bank/Institution Name <span class="required">*</span></label><div class="input-box"></div></div>
-          <div class="form-field"><label>Account Number</label><div class="input-box"></div></div>
-          <div class="form-field"><label>Account Type</label><div class="input-box"></div></div>
-          <div class="form-field"><label>Interest Period (From)</label><div class="input-box"></div></div>
-          <div class="form-field"><label>Interest Period (To)</label><div class="input-box"></div></div>
-          <div class="form-field"><label>Interest Rate (%)</label><div class="input-box"></div></div>
-          <div class="form-field"><label>Principal Amount (Le)</label><div class="input-box"></div></div>
-          <div class="form-field"><label>Interest Earned (Le) <span class="required">*</span></label><div class="input-box"></div></div>
-          <div class="form-field"><label>Tax Withheld (Le)</label><div class="input-box"></div></div>
-          <div class="form-field"><label>Net Amount (Le)</label><div class="input-box"></div></div>
-        </div>
-      </div>` : formType.id === 'refund' ? `
-      <div class="form-section">
-        <div class="section-title"><div class="icon">↩️</div>Refund Receipt Details</div>
-        <div class="form-grid">
-          <div class="form-field"><label>Refund Source <span class="required">*</span></label><div class="input-box"></div></div>
-          <div class="form-field"><label>Original Transaction Ref</label><div class="input-box"></div></div>
-          <div class="form-field"><label>Original Date</label><div class="input-box"></div></div>
-          <div class="form-field"><label>Refund Date <span class="required">*</span></label><div class="input-box"></div></div>
-          <div class="form-field"><label>Refund Amount (Le) <span class="required">*</span></label><div class="input-box"></div></div>
-          <div class="form-field"><label>Refund Method</label><div class="input-box"></div></div>
-          <div class="form-field"><label>Receipt Number</label><div class="input-box"></div></div>
-          <div class="form-field"><label>Approved By</label><div class="input-box"></div></div>
-          <div class="form-field full-width"><label>Reason for Refund <span class="required">*</span></label><div class="input-box large"></div></div>
-        </div>
-      </div>` : formType.id === 'commission' ? `
-      <div class="form-section">
-        <div class="section-title"><div class="icon">💵</div>Commission Revenue Details</div>
-        <div class="form-grid">
-          <div class="form-field"><label>Sales Person/Agent <span class="required">*</span></label><div class="input-box"></div></div>
-          <div class="form-field"><label>Transaction/Sale Reference</label><div class="input-box"></div></div>
-          <div class="form-field"><label>Commission Period From</label><div class="input-box"></div></div>
-          <div class="form-field"><label>Commission Period To</label><div class="input-box"></div></div>
-          <div class="form-field"><label>Total Sales Value (Le)</label><div class="input-box"></div></div>
-          <div class="form-field"><label>Commission Rate (%)</label><div class="input-box"></div></div>
-          <div class="form-field"><label>Commission Amount (Le) <span class="required">*</span></label><div class="input-box"></div></div>
-          <div class="form-field"><label>Payment Date</label><div class="input-box"></div></div>
-          <div class="form-field full-width"><label>Notes</label><div class="input-box"></div></div>
-        </div>
-      </div>` : formType.id === 'dividend' ? `
-      <div class="form-section">
-        <div class="section-title"><div class="icon">📊</div>Dividend Income Details</div>
-        <div class="form-grid">
-          <div class="form-field"><label>Company/Investment Name <span class="required">*</span></label><div class="input-box"></div></div>
-          <div class="form-field"><label>Number of Shares</label><div class="input-box"></div></div>
-          <div class="form-field"><label>Dividend Per Share (Le)</label><div class="input-box"></div></div>
-          <div class="form-field"><label>Payment Date</label><div class="input-box"></div></div>
-          <div class="form-field"><label>Gross Dividend (Le)</label><div class="input-box"></div></div>
-          <div class="form-field"><label>Tax Withheld (Le)</label><div class="input-box"></div></div>
-          <div class="form-field"><label>Net Dividend (Le) <span class="required">*</span></label><div class="input-box"></div></div>
-          <div class="form-field"><label>Payment Method</label><div class="input-box"></div></div>
-          <div class="form-field full-width"><label>Additional Notes</label><div class="input-box"></div></div>
-        </div>
-      </div>` : formType.id === 'other' ? `
-      <div class="form-section">
-        <div class="section-title"><div class="icon">📝</div>Other Income Details</div>
-        <div class="form-grid">
-          <div class="form-field"><label>Income Source <span class="required">*</span></label><div class="input-box"></div></div>
-          <div class="form-field"><label>Source Category</label><div class="input-box"></div></div>
-          <div class="form-field"><label>Amount (Le) <span class="required">*</span></label><div class="input-box"></div></div>
-          <div class="form-field"><label>Payment Method</label><div class="input-box"></div></div>
-          <div class="form-field"><label>Reference Number</label><div class="input-box"></div></div>
-          <div class="form-field"><label>Received From</label><div class="input-box"></div></div>
-          <div class="form-field full-width"><label>Description <span class="required">*</span></label><div class="input-box large"></div></div>
         </div>
       </div>` : `
       <div class="form-section">
