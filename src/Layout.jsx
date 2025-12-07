@@ -439,16 +439,23 @@ export default function Layout({ children, currentPageName }) {
             <nav className="flex-1 overflow-y-auto p-3 space-y-1">
           {filteredMenuSections.map((section, sectionIndex) => (
             <div key={section.title}>
+              {sectionIndex > 0 && (!collapsedSections[section.title] || !sidebarOpen) && (
+                <div className="h-0.5 flex mx-3 my-3">
+                  <div className="flex-1 bg-[#1EB053]/30" />
+                  <div className="flex-1 bg-white/30" />
+                  <div className="flex-1 bg-[#0072C6]/30" />
+                </div>
+              )}
               {sidebarOpen ? (
                 <button
                   onClick={() => toggleSection(section.title)}
-                  className="w-full flex items-center justify-between px-3 mb-2 text-[10px] font-semibold uppercase tracking-wider text-gray-500 hover:text-gray-300 transition-colors"
+                  className="w-full flex items-center justify-between px-3 mb-2 text-xs font-semibold uppercase tracking-wider text-gray-400 hover:text-white transition-colors"
                 >
                   <span>{section.title}</span>
                   {collapsedSections[section.title] ? (
-                    <ChevronDown className="w-3 h-3" />
+                    <ChevronDown className="w-4 h-4" />
                   ) : (
-                    <ChevronUp className="w-3 h-3" />
+                    <ChevronUp className="w-4 h-4" />
                   )}
                 </button>
               ) : null}
