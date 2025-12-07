@@ -482,32 +482,107 @@ export default function PayrollReportingModule({ orgId, employees = [], organisa
         <TabsContent value="summary" className="mt-0">
           <div className="grid md:grid-cols-2 gap-6">
             {/* Department Distribution Chart */}
-            <Card>
+            <Card className="overflow-hidden relative">
+              <div className="absolute inset-0 opacity-[0.03] pointer-events-none">
+                <div className="absolute inset-0" style={{
+                  backgroundImage: `repeating-linear-gradient(
+                    0deg,
+                    #1EB053 0px,
+                    #1EB053 8px,
+                    #FFFFFF 8px,
+                    #FFFFFF 16px,
+                    #0072C6 16px,
+                    #0072C6 24px,
+                    transparent 24px,
+                    transparent 48px
+                  )`
+                }} />
+              </div>
+              
+              <div className="h-1.5 flex">
+                <div className="flex-1 bg-[#1EB053]" />
+                <div className="flex-1 bg-white" />
+                <div className="flex-1 bg-[#0072C6]" />
+              </div>
               <CardHeader>
                 <CardTitle className="text-sm">Payroll by Department</CardTitle>
               </CardHeader>
-              <CardContent>
-                <ResponsiveContainer width="100%" height={250}>
-                  <BarChart data={departmentData}>
-                    <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis dataKey="department" tick={{ fontSize: 12 }} />
-                    <YAxis tick={{ fontSize: 12 }} />
-                    <Tooltip formatter={(v) => formatSLE(v)} />
-                    <Legend />
-                    <Bar dataKey="gross" name="Gross Pay" fill="#1EB053" />
-                    <Bar dataKey="net" name="Net Pay" fill="#0072C6" />
+              <CardContent className="relative">
+                <ResponsiveContainer width="100%" height={280}>
+                  <BarChart 
+                    data={departmentData}
+                    margin={{ top: 15, right: 20, left: 15, bottom: 15 }}
+                  >
+                    <defs>
+                      <linearGradient id="grossGradient" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%" stopColor="#1EB053" stopOpacity={0.9} />
+                        <stop offset="100%" stopColor="#1EB053" stopOpacity={0.6} />
+                      </linearGradient>
+                      <linearGradient id="netGradient" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%" stopColor="#0072C6" stopOpacity={0.9} />
+                        <stop offset="100%" stopColor="#0072C6" stopOpacity={0.6} />
+                      </linearGradient>
+                    </defs>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" vertical={false} />
+                    <XAxis 
+                      dataKey="department" 
+                      tick={{ fontSize: 11, fill: '#4b5563' }}
+                      stroke="#9ca3af"
+                      axisLine={{ stroke: '#d1d5db', strokeWidth: 2 }}
+                    />
+                    <YAxis 
+                      tick={{ fontSize: 11 }}
+                      stroke="#9ca3af"
+                      axisLine={{ stroke: '#d1d5db', strokeWidth: 2 }}
+                    />
+                    <Tooltip 
+                      formatter={(v) => formatSLE(v)}
+                      contentStyle={{ 
+                        backgroundColor: 'white', 
+                        border: '2px solid #1EB053',
+                        borderRadius: '12px',
+                        padding: '10px 14px',
+                        boxShadow: '0 4px 12px rgba(0,0,0,0.1)'
+                      }}
+                      labelStyle={{ fontWeight: 'bold', color: '#0F1F3C', marginBottom: '4px' }}
+                      cursor={{ fill: 'rgba(30, 176, 83, 0.05)' }}
+                    />
+                    <Legend wrapperStyle={{ paddingTop: '15px' }} />
+                    <Bar dataKey="gross" name="Gross Pay" fill="url(#grossGradient)" radius={[6, 6, 0, 0]} />
+                    <Bar dataKey="net" name="Net Pay" fill="url(#netGradient)" radius={[6, 6, 0, 0]} />
                   </BarChart>
                 </ResponsiveContainer>
               </CardContent>
             </Card>
 
             {/* Cost Distribution */}
-            <Card>
+            <Card className="overflow-hidden relative">
+              <div className="absolute inset-0 opacity-[0.03] pointer-events-none">
+                <div className="absolute inset-0" style={{
+                  backgroundImage: `repeating-linear-gradient(
+                    90deg,
+                    #1EB053 0px,
+                    #1EB053 8px,
+                    #FFFFFF 8px,
+                    #FFFFFF 16px,
+                    #0072C6 16px,
+                    #0072C6 24px,
+                    transparent 24px,
+                    transparent 48px
+                  )`
+                }} />
+              </div>
+              
+              <div className="h-1.5 flex">
+                <div className="flex-1 bg-[#1EB053]" />
+                <div className="flex-1 bg-white" />
+                <div className="flex-1 bg-[#0072C6]" />
+              </div>
               <CardHeader>
                 <CardTitle className="text-sm">Cost Distribution</CardTitle>
               </CardHeader>
-              <CardContent>
-                <ResponsiveContainer width="100%" height={250}>
+              <CardContent className="relative">
+                <ResponsiveContainer width="100%" height={280}>
                   <PieChart>
                     <Pie
                       data={[
@@ -518,15 +593,25 @@ export default function PayrollReportingModule({ orgId, employees = [], organisa
                       ]}
                       cx="50%"
                       cy="50%"
-                      outerRadius={80}
+                      innerRadius={50}
+                      outerRadius={90}
                       dataKey="value"
-                      label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
+                      label={({ name, percent }) => `${(percent * 100).toFixed(0)}%`}
                     >
                       {COLORS.map((color, index) => (
                         <Cell key={`cell-${index}`} fill={color} />
                       ))}
                     </Pie>
-                    <Tooltip formatter={(v) => formatSLE(v)} />
+                    <Tooltip 
+                      formatter={(v) => formatSLE(v)}
+                      contentStyle={{ 
+                        backgroundColor: 'white', 
+                        border: '2px solid #0072C6',
+                        borderRadius: '12px',
+                        padding: '10px 14px',
+                        boxShadow: '0 4px 12px rgba(0,0,0,0.1)'
+                      }}
+                    />
                   </PieChart>
                 </ResponsiveContainer>
               </CardContent>
