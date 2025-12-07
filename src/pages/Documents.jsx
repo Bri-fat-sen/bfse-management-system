@@ -32,12 +32,14 @@ import ConfirmDialog from "@/components/ui/ConfirmDialog";
 import { 
   FileText, Search, MoreVertical, 
   Eye, Trash2, Clock, CheckCircle2, XCircle,
-  AlertCircle, Bell, FileCheck
+  AlertCircle, Bell, FileCheck, Users, History
 } from "lucide-react";
 import { format } from "date-fns";
 import PageHeader from "@/components/ui/PageHeader";
 import LoadingSpinner from "@/components/ui/LoadingSpinner";
 import CreateDocumentDialog from "@/components/documents/CreateDocumentDialog";
+import BulkDocumentDialog from "@/components/documents/BulkDocumentDialog";
+import DocumentVersionControl from "@/components/documents/DocumentVersionControl";
 import DocumentSignatureDialog from "@/components/documents/DocumentSignatureDialog";
 import DocumentViewer from "@/components/documents/DocumentViewer";
 import { DOCUMENT_TYPE_INFO } from "@/components/documents/DocumentTemplates";
@@ -62,6 +64,8 @@ export default function Documents() {
   const [statusFilter, setStatusFilter] = useState("all");
   const [typeFilter, setTypeFilter] = useState("all");
   const [showCreateDialog, setShowCreateDialog] = useState(false);
+  const [showBulkDialog, setShowBulkDialog] = useState(false);
+  const [showVersionControl, setShowVersionControl] = useState(false);
   const [selectedDocument, setSelectedDocument] = useState(null);
   const [showSignDialog, setShowSignDialog] = useState(false);
   const [showViewer, setShowViewer] = useState(false);
@@ -245,7 +249,16 @@ export default function Documents() {
           subtitle="Create and send professional employment documents for signature"
           action={() => setShowCreateDialog(true)}
           actionLabel="Create Document"
-        />
+        >
+          <Button 
+            onClick={() => setShowBulkDialog(true)}
+            variant="outline"
+            className="border-[#1EB053] text-[#1EB053] hover:bg-[#1EB053]/10"
+          >
+            <Users className="w-4 h-4 mr-2" />
+            Bulk Send
+          </Button>
+        </PageHeader>
       ) : (
         <PageHeader
           title="My Documents"
@@ -502,6 +515,16 @@ export default function Documents() {
                               <Eye className="w-4 h-4 mr-2" />
                               View Document
                             </DropdownMenuItem>
+
+                            {doc.version > 1 && (
+                              <DropdownMenuItem onClick={() => {
+                                setSelectedDocument(doc);
+                                setShowVersionControl(true);
+                              }}>
+                                <History className="w-4 h-4 mr-2" />
+                                Version History ({doc.version})
+                              </DropdownMenuItem>
+                            )}
                             
                             {isPendingForMe && (
                               <DropdownMenuItem onClick={() => {
@@ -647,6 +670,16 @@ export default function Documents() {
                                   <Eye className="w-4 h-4 mr-2" />
                                   View Document
                                 </DropdownMenuItem>
+
+                                {doc.version > 1 && (
+                                  <DropdownMenuItem onClick={() => {
+                                    setSelectedDocument(doc);
+                                    setShowVersionControl(true);
+                                  }}>
+                                    <History className="w-4 h-4 mr-2" />
+                                    Version History ({doc.version})
+                                  </DropdownMenuItem>
+                                )}
                                 
                                 {isPendingForMe && (
                                   <DropdownMenuItem onClick={() => {
@@ -731,13 +764,37 @@ export default function Documents() {
 
       {/* Dialogs */}
       {isAdmin && (
-        <CreateDocumentDialog
-          open={showCreateDialog}
-          onOpenChange={setShowCreateDialog}
-          employees={allEmployees}
-          organisation={organisation}
-          currentEmployee={currentEmployee}
-          orgId={orgId}
+        <>
+          <CreateDocumentDialog
+            open={showCreateDialog}
+            onOpenChange={setShowCreateDialog}
+            employees={allEmployees}
+            organisation={organisation}
+            currentEmployee={currentEmployee}
+            orgId={orgId}
+          />
+          
+          <BulkDocumentDialog
+            open={showBulkDialog}
+            onOpenChange={setShowBulkDialog}
+            employees={allEmployees}
+            organisation={organisation}
+            currentEmployee={currentEmployee}
+            orgId={orgId}
+          />
+        </>
+      )}
+
+      {selectedDocument && (
+        <DocumentVersionControl
+          document={selectedDocument}
+          open={showVersionControl}
+          onOpenChange={setShowVersionControl}
+          onRevert={(targetVersion) => revertDocumentMutation.mutate({ 
+            document: selectedDocument, 
+            targetVersion 
+          })}
+          isReverting={revertDocumentMutation.isPending}
         />
       )}
 
