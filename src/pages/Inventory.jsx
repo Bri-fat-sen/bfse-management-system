@@ -111,8 +111,19 @@ export default function Inventory() {
 
   const { data: products = [], isLoading } = useQuery({
     queryKey: ['products', orgId],
-    queryFn: () => base44.entities.Product.filter({ organisation_id: orgId }, '-created_date', 10000),
-    enabled: !!orgId,
+    queryFn: async () => {
+      if (!orgId) return [];
+      try {
+        const allProducts = await base44.entities.Product.filter({ 
+          organisation_id: orgId 
+        }, '-created_date', 10000);
+        return allProducts || [];
+      } catch (error) {
+        console.error('Error fetching products:', error);
+        return [];
+      }
+    },
+    enabled: !!orgId && !!currentEmployee,
     staleTime: 0,
     refetchOnWindowFocus: true,
   });
