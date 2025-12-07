@@ -110,9 +110,13 @@ export default function Inventory() {
   const orgId = currentEmployee?.organisation_id;
 
   const { data: products = [], isLoading } = useQuery({
-    queryKey: ['products', orgId],
-    queryFn: () => base44.entities.Product.filter({ organisation_id: orgId }, '-created_date', 10000),
-    enabled: !!orgId,
+    queryKey: ['products', orgId, currentEmployee?.id],
+    queryFn: async () => {
+      const prods = await base44.entities.Product.filter({ organisation_id: orgId }, '-created_date', 10000);
+      console.log('Fetched products for org:', orgId, 'Count:', prods.length);
+      return prods;
+    },
+    enabled: !!orgId && !!currentEmployee,
     staleTime: 0,
     refetchOnWindowFocus: true,
   });
