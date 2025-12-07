@@ -298,6 +298,8 @@ export default function Finance() {
   // Date range calculation
   const getDateRange = useMemo(() => {
     const today = new Date();
+    const currentYear = today.getFullYear();
+    
     switch (dateRange) {
       case "today": return { start: today, end: today };
       case "this_week": return { start: startOfWeek(today), end: today };
@@ -307,6 +309,14 @@ export default function Finance() {
         return { start: startOfMonth(lm), end: endOfMonth(lm) };
       case "this_quarter": return { start: startOfQuarter(today), end: today };
       case "this_year": return { start: startOfYear(today), end: today };
+      case "last_year": 
+        return { start: new Date(currentYear - 1, 0, 1), end: new Date(currentYear - 1, 11, 31, 23, 59, 59) };
+      case "2024":
+        return { start: new Date(2024, 0, 1), end: new Date(2024, 11, 31, 23, 59, 59) };
+      case "2023":
+        return { start: new Date(2023, 0, 1), end: new Date(2023, 11, 31, 23, 59, 59) };
+      case "2022":
+        return { start: new Date(2022, 0, 1), end: new Date(2022, 11, 31, 23, 59, 59) };
       default: return { start: startOfMonth(today), end: today };
     }
   }, [dateRange]);
@@ -625,6 +635,10 @@ export default function Finance() {
               <SelectItem value="last_month">Last Month</SelectItem>
               <SelectItem value="this_quarter">This Quarter</SelectItem>
               <SelectItem value="this_year">This Year</SelectItem>
+              <SelectItem value="last_year">Last Year</SelectItem>
+              <SelectItem value="2024">2024</SelectItem>
+              <SelectItem value="2023">2023</SelectItem>
+              <SelectItem value="2022">2022</SelectItem>
             </SelectContent>
           </Select>
         </div>

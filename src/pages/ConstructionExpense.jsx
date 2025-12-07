@@ -140,6 +140,8 @@ export default function ConstructionExpense() {
   // Date range calculation
   const getDateRange = useMemo(() => {
     const today = new Date();
+    const currentYear = today.getFullYear();
+    
     switch (dateRange) {
       case "today": return { start: today, end: today };
       case "this_week": 
@@ -154,6 +156,14 @@ export default function ConstructionExpense() {
         return { start: startOfMonth(subMonths(today, 2)), end: today };
       case "this_year": 
         return { start: new Date(today.getFullYear(), 0, 1), end: today };
+      case "last_year":
+        return { start: new Date(currentYear - 1, 0, 1), end: new Date(currentYear - 1, 11, 31, 23, 59, 59) };
+      case "2024":
+        return { start: new Date(2024, 0, 1), end: new Date(2024, 11, 31, 23, 59, 59) };
+      case "2023":
+        return { start: new Date(2023, 0, 1), end: new Date(2023, 11, 31, 23, 59, 59) };
+      case "2022":
+        return { start: new Date(2022, 0, 1), end: new Date(2022, 11, 31, 23, 59, 59) };
       default: return { start: startOfMonth(today), end: today };
     }
   }, [dateRange]);
@@ -623,6 +633,10 @@ Extract ALL line items from the document table.`,
               <SelectItem value="last_month">Last Month</SelectItem>
               <SelectItem value="last_3_months">Last 3 Months</SelectItem>
               <SelectItem value="this_year">This Year</SelectItem>
+              <SelectItem value="last_year">Last Year</SelectItem>
+              <SelectItem value="2024">2024</SelectItem>
+              <SelectItem value="2023">2023</SelectItem>
+              <SelectItem value="2022">2022</SelectItem>
             </SelectContent>
           </Select>
         </div>
