@@ -34,7 +34,8 @@ import {
   Calendar,
   Lock,
   AlertTriangle,
-  FileText
+  FileText,
+  Upload
 } from "lucide-react";
 import PinLockScreen from "@/components/auth/PinLockScreen";
 import SetPinDialog from "@/components/auth/SetPinDialog";
@@ -71,54 +72,70 @@ import { ToastProvider } from "@/components/ui/Toast";
 
 const menuSections = [
   {
-    title: "Overview",
+    title: "Home",
     items: [
       { name: "Dashboard", icon: LayoutDashboard, page: "Dashboard", module: "dashboard" },
       { name: "My Portal", icon: User, page: "EmployeeSelfService", module: "dashboard" },
-      { name: "Calendar", icon: Calendar, page: "Calendar", module: "dashboard" },
-    ]
-    },
-  {
-    title: "Operations",
-    items: [
-      { name: "Sales & POS", icon: ShoppingCart, page: "Sales", module: "sales" },
-      { name: "Customers", icon: Users, page: "CRM", module: "sales" },
-      { name: "Inventory", icon: Package, page: "Inventory", module: "inventory" },
-      { name: "Suppliers", icon: Building2, page: "Suppliers", module: "inventory" },
-      { name: "Transport", icon: Truck, page: "Transport", module: "transport" },
+      { name: "Calendar & Tasks", icon: Calendar, page: "Calendar", module: "dashboard" },
     ]
   },
   {
-    title: "People",
+    title: "Sales & Customers",
     items: [
-      { name: "HR & Payroll", icon: Users, page: "HR", module: "hr" },
-      { name: "Documents", icon: FileText, page: "Documents", module: "hr" },
-      { name: "Attendance", icon: Clock, page: "Attendance", module: "attendance" },
-      { name: "Work Schedules", icon: Calendar, page: "WorkSchedules", module: "hr" },
+      { name: "Point of Sale", icon: ShoppingCart, page: "Sales", module: "sales" },
+      { name: "Customer Management", icon: Users, page: "CRM", module: "sales" },
     ]
   },
   {
-    title: "Insights",
+    title: "Inventory & Supply",
     items: [
-      { name: "Analytics & Reports", icon: BarChart3, page: "Analytics", module: "dashboard" },
-      { name: "Finance", icon: DollarSign, page: "Finance", module: "finance" },
-      { name: "Activity Log", icon: Activity, page: "ActivityLog", module: "activity_log" },
+      { name: "Stock Management", icon: Package, page: "Inventory", module: "inventory" },
+      { name: "Supplier Relations", icon: Building2, page: "Suppliers", module: "inventory" },
     ]
   },
   {
-    title: "Admin",
+    title: "Transport & Logistics",
     items: [
-      { name: "User Management", icon: Users, page: "UserManagement", module: "settings", adminOnly: true },
-      { name: "Expense Management", icon: Shield, page: "ExpenseManagement", module: "finance", adminOnly: true },
-      { name: "Locations", icon: MapPin, page: "Locations", module: "settings", adminOnly: true },
-      { name: "Construction Expenses", icon: Building2, page: "ConstructionExpense", module: "finance", adminOnly: true },
-      { name: "Stock Audit", icon: Package, page: "StockAudit", module: "inventory", adminOnly: true },
-      { name: "Organisation", icon: Building2, page: "OrganisationManage", module: "settings", adminOnly: true },
-      { name: "Permissions", icon: Shield, page: "RolePermissions", module: "settings", adminOnly: true },
-      { name: "Orphaned Data", icon: AlertTriangle, page: "OrphanedData", module: "settings", adminOnly: true },
-      { name: "Reset Data", icon: AlertTriangle, page: "ResetData", module: "settings", adminOnly: true },
+      { name: "Fleet Operations", icon: Truck, page: "Transport", module: "transport" },
+    ]
+  },
+  {
+    title: "Human Resources",
+    items: [
+      { name: "Employee Management", icon: Users, page: "HR", module: "hr" },
+      { name: "HR Documents", icon: FileText, page: "Documents", module: "hr" },
+      { name: "Time & Attendance", icon: Clock, page: "Attendance", module: "attendance" },
+      { name: "Schedules", icon: Calendar, page: "WorkSchedules", module: "hr" },
+    ]
+  },
+  {
+    title: "Finance & Reports",
+    items: [
+      { name: "Financial Overview", icon: DollarSign, page: "Finance", module: "finance" },
+      { name: "Business Analytics", icon: BarChart3, page: "Analytics", module: "dashboard" },
+      { name: "Activity Logs", icon: Activity, page: "ActivityLog", module: "activity_log" },
+    ]
+  },
+  {
+    title: "System & Settings",
+    items: [
       { name: "Settings", icon: Settings, page: "Settings", module: "settings" },
-      { name: "Support", icon: HelpCircle, page: "Support", module: "settings" },
+      { name: "Help & Support", icon: HelpCircle, page: "Support", module: "settings" },
+    ]
+  },
+  {
+    title: "Administration",
+    items: [
+      { name: "Users & Access", icon: Shield, page: "UserManagement", module: "settings", adminOnly: true },
+      { name: "Role Permissions", icon: Lock, page: "RolePermissions", module: "settings", adminOnly: true },
+      { name: "Organisation Settings", icon: Building2, page: "OrganisationManage", module: "settings", adminOnly: true },
+      { name: "Locations & Sites", icon: MapPin, page: "Locations", module: "settings", adminOnly: true },
+      { name: "Expense Control", icon: DollarSign, page: "ExpenseManagement", module: "finance", adminOnly: true },
+      { name: "Construction Projects", icon: Building2, page: "ConstructionExpense", module: "finance", adminOnly: true },
+      { name: "Stock Auditing", icon: Package, page: "StockAudit", module: "inventory", adminOnly: true },
+      { name: "Document Archive", icon: Upload, page: "UploadedDocuments", module: "settings", adminOnly: true },
+      { name: "Data Cleanup", icon: AlertTriangle, page: "OrphanedData", module: "settings", adminOnly: true },
+      { name: "System Reset", icon: AlertTriangle, page: "ResetData", module: "settings", adminOnly: true },
     ]
   }
 ];
@@ -435,8 +452,7 @@ export default function Layout({ children, currentPageName }) {
                     <ChevronUp className="w-3 h-3" />
                   )}
                 </button>
-              ) : (
-                sectionIndex > 0 && <div className="border-t border-white/10 my-2" />
+              ) : null}
               {(!collapsedSections[section.title] || !sidebarOpen) && (
                 <div className="space-y-0.5">
                   {section.items.map((item) => {
