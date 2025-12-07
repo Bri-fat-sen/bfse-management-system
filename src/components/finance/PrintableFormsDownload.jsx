@@ -1205,12 +1205,16 @@ const generateFormHTML = (formType, org) => {
   `;
 };
 
-export default function PrintableFormsDownload({ open, onOpenChange, organisation }) {
+export default function PrintableFormsDownload({ open, onOpenChange, organisation, filterForms = null }) {
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [loading, setLoading] = useState(null);
   
   const primaryColor = organisation?.primary_color || '#1EB053';
   const secondaryColor = organisation?.secondary_color || '#0072C6';
+
+  const filteredTemplates = filterForms 
+    ? FORM_TEMPLATES.filter(f => filterForms.includes(f.id))
+    : FORM_TEMPLATES;
 
   const handleDownload = async (formId) => {
     setLoading(formId);
@@ -1248,14 +1252,14 @@ export default function PrintableFormsDownload({ open, onOpenChange, organisatio
   };
 
   const handleDownloadAll = (category) => {
-    const forms = FORM_TEMPLATES.filter(f => category === 'all' || f.category === category);
+    const forms = filteredTemplates.filter(f => category === 'all' || f.category === category);
     forms.forEach((form, index) => {
       setTimeout(() => handleDownload(form.id), index * 1500);
     });
   };
 
-  const expenseForms = FORM_TEMPLATES.filter(f => f.category === 'expense');
-  const revenueForms = FORM_TEMPLATES.filter(f => f.category === 'revenue');
+  const expenseForms = filteredTemplates.filter(f => f.category === 'expense');
+  const revenueForms = filteredTemplates.filter(f => f.category === 'revenue');
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
