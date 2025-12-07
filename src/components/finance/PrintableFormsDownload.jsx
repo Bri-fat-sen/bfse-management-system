@@ -1215,28 +1215,7 @@ export default function PrintableFormsDownload({ open, onOpenChange, organisatio
   const handleDownload = async (formId) => {
     setLoading(formId);
     try {
-      const response = await base44.functions.invoke('generateFormPDF', {
-        formType: formId,
-        organisation: organisation
-      });
-      
-      const formName = FORM_TEMPLATES.find(f => f.id === formId)?.name || formId;
-      
-      // Create blob from response data
-      const blob = new Blob([response.data], { type: 'application/pdf' });
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = `${formName.replace(/\s+/g, '_')}.pdf`;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      URL.revokeObjectURL(url);
-    } catch (error) {
-      console.error('Error generating PDF:', error);
-      // Fallback: Use hidden iframe for cleaner PDF experience
       const html = generateFormHTML(formId, organisation);
-      const formName = FORM_TEMPLATES.find(f => f.id === formId)?.name || formId;
       
       const iframe = document.createElement('iframe');
       iframe.style.position = 'fixed';
@@ -1339,7 +1318,7 @@ export default function PrintableFormsDownload({ open, onOpenChange, organisatio
                       {loading === form.id ? (
                         <Loader2 className="w-4 h-4 text-gray-400 animate-spin" />
                       ) : (
-                        <Download className="w-4 h-4 text-gray-400" />
+                        <Printer className="w-4 h-4 text-gray-400" />
                       )}
                     </CardContent>
                   </Card>
@@ -1373,7 +1352,7 @@ export default function PrintableFormsDownload({ open, onOpenChange, organisatio
                       {loading === form.id ? (
                         <Loader2 className="w-4 h-4 text-gray-400 animate-spin" />
                       ) : (
-                        <Download className="w-4 h-4 text-gray-400" />
+                        <Printer className="w-4 h-4 text-gray-400" />
                       )}
                     </CardContent>
                   </Card>
