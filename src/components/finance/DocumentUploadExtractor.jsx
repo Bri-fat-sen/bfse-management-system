@@ -33,7 +33,6 @@ import {
   MapPin
 } from "lucide-react";
 import { useToast } from "@/components/ui/Toast";
-import AdvancedDocumentViewer from "@/components/documents/AdvancedDocumentViewer";
 
 const DEFAULT_EXPENSE_CATEGORIES = [
   { value: "fuel", label: "Fuel" },
@@ -102,9 +101,6 @@ export default function DocumentUploadExtractor({
   const [currencyMode, setCurrencyMode] = useState(null); // null = not set, 'sle', 'sll'
   const [showCurrencyDialog, setShowCurrencyDialog] = useState(false);
   const [pendingFile, setPendingFile] = useState(null);
-  const [uploadedFileUrl, setUploadedFileUrl] = useState('');
-  const [uploadedFileName, setUploadedFileName] = useState('');
-  const [showDocViewer, setShowDocViewer] = useState(false);
 
   const baseCategories = type === "expense" ? DEFAULT_EXPENSE_CATEGORIES : DEFAULT_REVENUE_SOURCES;
   const categories = useMemo(() => {
@@ -135,8 +131,6 @@ export default function DocumentUploadExtractor({
 
     try {
       const { file_url } = await base44.integrations.Core.UploadFile({ file });
-      setUploadedFileUrl(file_url);
-      setUploadedFileName(file.name);
 
       // First, analyze document to detect what type of records to create
       const analysisResult = await base44.integrations.Core.InvokeLLM({
@@ -145,9 +139,14 @@ export default function DocumentUploadExtractor({
 Available record types:
 1. EXPENSE - Operating costs, purchases, bills, invoices for things bought, petty cash, maintenance costs
 2. REVENUE - Sales receipts, income records, contributions, funding received, customer payments
-3. PRODUCTION - Manufacturing records, production batches, batch numbers, product runs with quantities
+3. PRODUCTION - Manufacturing records, production batches, batch numbers, product runs with quantities, BATCH ENTRY FORMS
 4. INVENTORY - Stock receipts, goods received notes, inventory counts, stock adjustments
 5. PAYROLL - Salary sheets, payroll records, employee payments, bonus lists, deduction schedules
+
+IMPORTANT HINTS:
+- If you see "BATCH ENTRY FORM" or "PRODUCTION BATCH ENTRY FORM" in the header/title, this is definitely PRODUCTION type
+- Look for fields like: Batch Number, Manufacturing Date, Expiry Date, Quantity Produced, Rolls, Weight (kg)
+- Batch forms typically have signature sections at the bottom
 
 Analyze the document content, headers, columns, and data to determine:
 - What type of record this document represents
@@ -223,10 +222,13 @@ Be specific about WHY you chose that record type.`,
                 vendor: { type: "string", description: "Supplier or vendor name if shown" },
                 customer: { type: "string", description: "Customer name if shown" },
                 sku: { type: "string", description: "Product SKU or product code if shown" },
-                product_name: { type: "string", description: "Product name if this is production data" },
-                batch_number: { type: "string", description: "Batch number or lot number if shown" },
-                expiry_date: { type: "string", description: "Expiry date in YYYY-MM-DD format if shown" },
-                notes: { type: "string", description: "Any notes or remarks" },
+                product_name: { type: "string", description: "Product name if this is production data, or from 'Product Name' field" },
+                batch_number: { type: "string", description: "Batch number from 'Batch Number' field or lot number if shown" },
+                manufacturing_date: { type: "string", description: "Manufacturing/Production Date in YYYY-MM-DD format from 'Manufacturing Date' or 'Production Date' field" },
+                expiry_date: { type: "string", description: "Expiry date in YYYY-MM-DD format from 'Expiry Date' field" },
+                warehouse: { type: "string", description: "Warehouse name from 'Warehouse' field" },
+                quality_status: { type: "string", description: "Quality status from 'Quality Status' field (pending/passed/failed)" },
+                notes: { type: "string", description: "Any notes or remarks from 'Notes/Comments' field" },
                 // Payroll specific
                 employee_name: { type: "string", description: "Employee name" },
                 employee_code: { type: "string", description: "Employee ID/code" },
@@ -252,7 +254,6 @@ Be specific about WHY you chose that record type.`,
       let extractedDocDate = analysisResult.document_date || format(new Date(), 'yyyy-MM-dd');
       let columnHeaders = analysisResult.key_columns || [];
 
-      // Enhanced multi-stage extraction with better accuracy
       try {
         const extractResult = await base44.integrations.Core.ExtractDataFromUploadedFile({
           file_url: file_url,
@@ -268,90 +269,32 @@ Be specific about WHY you chose that record type.`,
           throw new Error('Primary extraction failed');
         }
       } catch (primaryError) {
-        console.log("ExtractDataFromUploadedFile failed, using advanced AI extraction:", primaryError);
+        console.log("ExtractDataFromUploadedFile failed, trying InvokeLLM:", primaryError);
 
         const typeSpecificPrompt = {
-          expense: `Extract ALL expense line items. For EACH item extract:
-      - Description/details (exact text from document)
-      - Quantities (estimated AND actual if both columns exist)
-      - Unit costs (estimated AND actual if both columns exist)  
-      - Total amounts (estimated AND actual if both columns exist)
-      - Units of measure (bags, kg, pcs, etc)
-      - Vendor/supplier names
-      - Item numbers or row numbers
-      - Any additional columns present
-
-      DO NOT skip any rows. Extract every single line item from the table.`,
-          revenue: `Extract ALL revenue/sales items. For EACH item extract:
-      - Product names and descriptions
-      - Customer names (if present)
-      - Quantities sold
-      - Unit prices
-      - Total amounts
-      - SKUs or product codes
-      - Payment details
-      - Any additional columns
-
-      Extract EVERY row from the table.`,
-          production: `Extract ALL production batch records. For EACH batch extract:
-      - Product name and SKU
-      - Batch number or lot number
-      - Quantities (rolls, pieces, weight)
-      - Manufacturing/production dates
-      - Expiry dates
-      - Quality status
-      - Raw materials used
-      - Any additional batch information
-
-      Include ALL batches found in the document.`,
-          inventory: `Extract ALL inventory/stock records. For EACH item extract:
-      - Product name and SKU
-      - Warehouse or location
-      - Quantities (in, out, balance)
-      - Stock movements
-      - Dates
-      - Batch numbers
-      - Any additional inventory details
-
-      Extract every stock line item.`,
-          payroll: `Extract ALL payroll records. For EACH employee extract:
-      - Employee name and ID/code
-      - Base salary
-      - Allowances
-      - Bonuses
-      - Deductions
-      - Net pay
-      - Pay period
-      - Any additional payroll columns
-
-      Include ALL employee payroll records.`
-        }[docType] || "Extract all tabular data with maximum detail";
+          expense: "Extract expense/purchase items with amounts, vendors, categories",
+          revenue: "Extract revenue/income items with amounts, customers, sources",
+          production: "Extract production batch data with SKUs, quantities, batch numbers",
+          inventory: "Extract inventory/stock data with product names, quantities, warehouses",
+          payroll: "Extract payroll data with employee names, salaries, bonuses, deductions"
+        }[docType] || "Extract all tabular data";
 
         const fallbackResult = await base44.integrations.Core.InvokeLLM({
-          prompt: `You are an advanced document extraction system. Analyze this ${docType} document with high precision.
+          prompt: `Read this document and extract data.
 
-      CRITICAL INSTRUCTIONS:
-      1. Identify the EXACT date from the document (look in header, footer, or document body)
-      2. List ALL column headers found in the table(s) - do not skip any columns
-      3. Extract EVERY SINGLE ROW from the table - completeness is critical
-      4. For each row, capture ALL available fields based on column headers
-      5. ${typeSpecificPrompt}
-      6. Look for:
-      - Document reference numbers
-      - Subtotals and totals
-      - Notes or remarks
-      - Status indicators
-      - Approval signatures
+Document type detected: ${docType}
+Focus: ${typeSpecificPrompt}
 
-      EXTRACTION FOCUS:
-      ${typeSpecificPrompt}
+IMPORTANT FOR BATCH ENTRY FORMS:
+- Look for individual form fields like "Batch Number:", "Product Name:", "Quantity Produced:", etc.
+- Extract the handwritten or typed values next to each field label
+- For Stock Allocation table, extract all rows with Location Name, Quantity, Notes
+- Manufacturing Date and Expiry Date should be in YYYY-MM-DD format
 
-      Return structured data with:
-      - document_info: {date, title, type, reference}
-      - table_columns: [list of ALL column names found]
-      - rows: [array of ALL rows with complete data]
-
-      Be thorough and accurate. Do not skip rows or columns.`,
+1. Find the document date (format as YYYY-MM-DD)
+2. For forms: extract field values. For tables: list ALL column headers
+3. Extract all relevant data based on the document type
+4. Return all data - do not skip anything.`,
           file_urls: [file_url],
           response_json_schema: extractionSchema
         });
@@ -360,11 +303,6 @@ Be specific about WHY you chose that record type.`,
         items = result.rows || [];
         extractedDocDate = result.document_info?.date || extractedDocDate;
         columnHeaders = result.table_columns || columnHeaders;
-
-        // Second-pass validation for critical missing data
-        if (items.length === 0) {
-          toast.warning("No data extracted", "Document may be empty or format not recognized");
-        }
       }
 
       setExtractedColumns(columnHeaders);
@@ -706,7 +644,7 @@ Be specific about WHY you chose that record type.`,
           
           // Find warehouse by name if not already matched
           let warehouseId = item.warehouse_id;
-          let warehouseName = item.warehouse_name;
+          let warehouseName = item.warehouse_name || item.warehouse;
           if (!warehouseId && warehouseName) {
             const matchedWarehouse = warehouses.find(w => 
               w.name?.toLowerCase().includes(warehouseName.toLowerCase()) ||
@@ -734,11 +672,11 @@ Be specific about WHY you chose that record type.`,
             quantity: item.quantity || item.actual_qty || 0,
             rolls: item.rolls || 0,
             weight_kg: item.weight_kg || 0,
-            manufacturing_date: item.date || format(new Date(), 'yyyy-MM-dd'),
+            manufacturing_date: item.manufacturing_date || item.date || format(new Date(), 'yyyy-MM-dd'),
             expiry_date: item.expiry_date || '',
             cost_price: item.unit_price || item.actual_unit_cost || 0,
-            status: 'active',
-            notes: `Imported from document. ${item.description || ''}`
+            status: item.quality_status || 'active',
+            notes: item.notes || `Imported from document. ${item.description || ''}`
           });
           batchCount++;
         } else if (isRevenue) {
@@ -962,17 +900,6 @@ Be specific about WHY you chose that record type.`,
                   <h3 className="font-semibold text-gray-700">Extracted Data ({extractedData.length})</h3>
                 </div>
                 <div className="flex gap-2">
-                  {uploadedFileUrl && (
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setShowDocViewer(true)}
-                      className="border-blue-400 text-blue-600 hover:bg-blue-50"
-                    >
-                      <Eye className="w-4 h-4 mr-2" />
-                      View Original
-                    </Button>
-                  )}
                   <Select value={detectedType} onValueChange={setDetectedType}>
                     <SelectTrigger className="w-[200px] h-8 text-xs">
                       <SelectValue placeholder="Select record type" />
@@ -1447,15 +1374,6 @@ Be specific about WHY you chose that record type.`,
           </div>
         </DialogContent>
       </Dialog>
-
-      {/* Advanced Document Viewer */}
-      <AdvancedDocumentViewer
-        open={showDocViewer}
-        onOpenChange={setShowDocViewer}
-        fileUrl={uploadedFileUrl}
-        fileName={uploadedFileName}
-        fileType={pendingFile?.type}
-      />
-      </Dialog>
-      );
-      }
+    </Dialog>
+  );
+}

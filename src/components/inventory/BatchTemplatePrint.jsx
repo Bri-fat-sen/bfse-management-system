@@ -142,14 +142,15 @@ export default function BatchTemplatePrint({ organisation }) {
     <div class="content">
       <!-- Instructions -->
       <div class="instructions">
-        <h3>📋 Instructions</h3>
+        <h3>📋 Instructions - BATCH ENTRY FORM</h3>
         <ol>
+          <li><strong>DOCUMENT TYPE: PRODUCTION BATCH ENTRY FORM</strong></li>
           <li>Fill in all required fields (*) with clear, legible handwriting</li>
           <li>Use black or blue ink only</li>
           <li>Write batch number, product name, quantity, and dates clearly</li>
           <li>After completing, scan or photograph this form</li>
-          <li>Upload the image using the "Upload Form" button</li>
-          <li>The system will automatically extract and create batch records</li>
+          <li>Upload the image using the "Upload Form" button in the Batch Management tab</li>
+          <li>The system will automatically extract and create production batch records</li>
         </ol>
       </div>
 
