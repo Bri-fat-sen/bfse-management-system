@@ -23,6 +23,7 @@ const DEFAULT_ROLE_PERMISSIONS = {
     dashboard: { can_view: true, can_create: true, can_edit: true, can_delete: true, can_export: true, can_approve: true },
     sales: { can_view: true, can_create: true, can_edit: true, can_delete: true, can_export: true, can_approve: true },
     inventory: { can_view: true, can_create: true, can_edit: true, can_delete: true, can_export: true, can_approve: true },
+    suppliers: { can_view: true, can_create: true, can_edit: true, can_delete: true, can_export: true, can_approve: true },
     transport: { can_view: true, can_create: true, can_edit: true, can_delete: true, can_export: true, can_approve: true },
     hr: { can_view: true, can_create: true, can_edit: true, can_delete: true, can_export: true, can_approve: true },
     finance: { can_view: true, can_create: true, can_edit: true, can_delete: true, can_export: true, can_approve: true },
