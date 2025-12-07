@@ -37,169 +37,6 @@ export default function PrintFormsButtons({ organisation }) {
     const styles = getUnifiedPDFStyles(organisation, 'report');
     const header = getUnifiedHeader(organisation, formType.name, 'EXPENSE-FORM', new Date().toLocaleDateString(), 'report');
     const footer = getUnifiedFooter(organisation);
-
-    const formContent = {
-      general: `
-        <div class="form-section">
-          <div class="section-title"><div class="icon">📋</div>Expense Items</div>
-          <table class="data-table">
-            <thead>
-              <tr>
-                <th style="width: 40px;">NO</th>
-                <th>DETAILS / DESCRIPTION <span class="required">*</span></th>
-                <th style="width: 80px;">UNIT</th>
-                <th style="width: 80px;">QTY</th>
-                <th style="width: 100px;">UNIT COST (Le)</th>
-                <th style="width: 120px;">TOTAL (Le) <span class="required">*</span></th>
-                <th style="width: 120px;">VENDOR</th>
-                <th style="width: 100px;">CATEGORY</th>
-              </tr>
-            </thead>
-            <tbody>
-              ${Array.from({ length: 15 }, (_, i) => `<tr><td>${i + 1}</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td></tr>`).join('')}
-            </tbody>
-            <tfoot>
-              <tr class="total-row">
-                <td colspan="5" style="text-align: right; font-weight: bold;">TOTAL:</td>
-                <td style="font-weight: bold;">Le ______________</td>
-                <td colspan="2"></td>
-              </tr>
-            </tfoot>
-          </table>
-        </div>`,
-      fuel: `
-        <div class="form-section">
-          <div class="section-title"><div class="icon">⛽</div>Vehicle & Fuel Details</div>
-          <div class="form-grid">
-            <div class="form-field"><label>Vehicle Registration <span class="required">*</span></label><div class="input-box"></div></div>
-            <div class="form-field"><label>Driver Name <span class="required">*</span></label><div class="input-box"></div></div>
-            <div class="form-field"><label>Previous Odometer Reading</label><div class="input-box"></div></div>
-            <div class="form-field"><label>Current Odometer Reading</label><div class="input-box"></div></div>
-            <div class="form-field"><label>Fuel Station/Vendor <span class="required">*</span></label><div class="input-box"></div></div>
-            <div class="form-field"><label>Fuel Type (Petrol/Diesel)</label><div class="input-box"></div></div>
-            <div class="form-field"><label>Litres <span class="required">*</span></label><div class="input-box"></div></div>
-            <div class="form-field"><label>Price per Litre (Le)</label><div class="input-box"></div></div>
-            <div class="form-field"><label>Total Amount (Le) <span class="required">*</span></label><div class="input-box"></div></div>
-            <div class="form-field"><label>Receipt Number</label><div class="input-box"></div></div>
-            <div class="form-field full-width"><label>Purpose of Trip</label><div class="input-box large"></div></div>
-          </div>
-        </div>`,
-      maintenance: `
-        <div class="form-section">
-          <div class="section-title"><div class="icon">🔧</div>Maintenance Details</div>
-          <div class="form-grid">
-            <div class="form-field"><label>Vehicle/Equipment <span class="required">*</span></label><div class="input-box"></div></div>
-            <div class="form-field"><label>Registration/ID Number</label><div class="input-box"></div></div>
-            <div class="form-field"><label>Maintenance Type <span class="required">*</span></label><div class="input-box"></div></div>
-            <div class="form-field"><label>Service Provider/Mechanic</label><div class="input-box"></div></div>
-            <div class="form-field full-width"><label>Work Description <span class="required">*</span></label><div class="input-box large"></div></div>
-          </div>
-        </div>
-        <div class="form-section">
-          <div class="section-title"><div class="icon">💰</div>Parts & Labor</div>
-          <table class="data-table">
-            <thead>
-              <tr><th style="width: 40px;">NO</th><th>PART/SERVICE</th><th style="width: 80px;">QTY</th><th style="width: 120px;">UNIT PRICE (Le)</th><th style="width: 120px;">TOTAL (Le)</th></tr>
-            </thead>
-            <tbody>
-              ${Array.from({ length: 10 }, (_, i) => `<tr><td>${i + 1}</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td></tr>`).join('')}
-            </tbody>
-            <tfoot>
-              <tr class="total-row"><td colspan="4" style="text-align: right; font-weight: bold;">TOTAL:</td><td style="font-weight: bold;">Le ______________</td></tr>
-            </tfoot>
-          </table>
-        </div>`,
-      utilities: `
-        <div class="form-section">
-          <div class="section-title"><div class="icon">💡</div>Utility Details</div>
-          <div class="form-grid">
-            <div class="form-field"><label>Utility Type <span class="required">*</span></label><div class="input-box"></div></div>
-            <div class="form-field"><label>Account Number</label><div class="input-box"></div></div>
-            <div class="form-field"><label>Service Provider</label><div class="input-box"></div></div>
-            <div class="form-field"><label>Billing Period</label><div class="input-box"></div></div>
-            <div class="form-field"><label>Previous Reading</label><div class="input-box"></div></div>
-            <div class="form-field"><label>Current Reading</label><div class="input-box"></div></div>
-            <div class="form-field"><label>Units Consumed</label><div class="input-box"></div></div>
-            <div class="form-field"><label>Amount (Le) <span class="required">*</span></label><div class="input-box"></div></div>
-          </div>
-        </div>`,
-      supplies: `
-        <div class="form-section">
-          <div class="section-title"><div class="icon">📦</div>Office Supplies</div>
-          <table class="data-table">
-            <thead>
-              <tr><th style="width: 40px;">NO</th><th>ITEM DESCRIPTION <span class="required">*</span></th><th style="width: 80px;">QTY</th><th style="width: 120px;">UNIT PRICE (Le)</th><th style="width: 120px;">TOTAL (Le)</th><th style="width: 120px;">SUPPLIER</th></tr>
-            </thead>
-            <tbody>
-              ${Array.from({ length: 12 }, (_, i) => `<tr><td>${i + 1}</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td></tr>`).join('')}
-            </tbody>
-            <tfoot>
-              <tr class="total-row"><td colspan="4" style="text-align: right; font-weight: bold;">TOTAL:</td><td style="font-weight: bold;">Le ______________</td><td></td></tr>
-            </tfoot>
-          </table>
-        </div>`,
-      salaries: `
-        <div class="form-section">
-          <div class="section-title"><div class="icon">👤</div>Salary Advance Details</div>
-          <div class="form-grid">
-            <div class="form-field"><label>Employee Name <span class="required">*</span></label><div class="input-box"></div></div>
-            <div class="form-field"><label>Employee ID/Code</label><div class="input-box"></div></div>
-            <div class="form-field"><label>Department/Position</label><div class="input-box"></div></div>
-            <div class="form-field"><label>Monthly Salary (Le)</label><div class="input-box"></div></div>
-            <div class="form-field"><label>Advance Amount (Le) <span class="required">*</span></label><div class="input-box"></div></div>
-            <div class="form-field"><label>Repayment Method</label><div class="input-box"></div></div>
-            <div class="form-field full-width"><label>Reason for Advance <span class="required">*</span></label><div class="input-box large"></div></div>
-          </div>
-        </div>`,
-      transport: `
-        <div class="form-section">
-          <div class="section-title"><div class="icon">🚚</div>Transport Details</div>
-          <div class="form-grid">
-            <div class="form-field"><label>Transport Type <span class="required">*</span></label><div class="input-box"></div></div>
-            <div class="form-field"><label>Vehicle/Route</label><div class="input-box"></div></div>
-            <div class="form-field"><label>Origin</label><div class="input-box"></div></div>
-            <div class="form-field"><label>Destination</label><div class="input-box"></div></div>
-            <div class="form-field"><label>Distance (km)</label><div class="input-box"></div></div>
-            <div class="form-field"><label>Driver Name</label><div class="input-box"></div></div>
-            <div class="form-field"><label>Toll Fees (Le)</label><div class="input-box"></div></div>
-            <div class="form-field"><label>Parking Fees (Le)</label><div class="input-box"></div></div>
-            <div class="form-field"><label>Other Costs (Le)</label><div class="input-box"></div></div>
-            <div class="form-field"><label>Total Amount (Le) <span class="required">*</span></label><div class="input-box"></div></div>
-          </div>
-        </div>`,
-      marketing: `
-        <div class="form-section">
-          <div class="section-title"><div class="icon">📣</div>Marketing Campaign Details</div>
-          <div class="form-grid">
-            <div class="form-field"><label>Campaign Name <span class="required">*</span></label><div class="input-box"></div></div>
-            <div class="form-field"><label>Campaign Type</label><div class="input-box"></div></div>
-            <div class="form-field"><label>Start Date</label><div class="input-box"></div></div>
-            <div class="form-field"><label>End Date</label><div class="input-box"></div></div>
-            <div class="form-field"><label>Media/Channel</label><div class="input-box"></div></div>
-            <div class="form-field"><label>Vendor/Agency</label><div class="input-box"></div></div>
-            <div class="form-field"><label>Target Audience</label><div class="input-box"></div></div>
-            <div class="form-field"><label>Amount (Le) <span class="required">*</span></label><div class="input-box"></div></div>
-            <div class="form-field full-width"><label>Campaign Objectives</label><div class="input-box large"></div></div>
-          </div>
-        </div>`,
-      petty_cash: `
-        <div class="form-section">
-          <div class="section-title"><div class="icon">💵</div>Petty Cash Expenses</div>
-          <table class="data-table">
-            <thead>
-              <tr><th style="width: 40px;">NO</th><th>DATE</th><th>DESCRIPTION <span class="required">*</span></th><th style="width: 120px;">AMOUNT (Le) <span class="required">*</span></th><th style="width: 120px;">PAID TO</th></tr>
-            </thead>
-            <tbody>
-              ${Array.from({ length: 20 }, (_, i) => `<tr><td>${i + 1}</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td></tr>`).join('')}
-            </tbody>
-            <tfoot>
-              <tr class="total-row"><td colspan="3" style="text-align: right; font-weight: bold;">TOTAL:</td><td style="font-weight: bold;">Le ______________</td><td></td></tr>
-            </tfoot>
-          </table>
-        </div>`,
-    };
-
-    const selectedContent = formContent[formType.id] || formContent.general;
     
     return `
 <!DOCTYPE html>
@@ -315,12 +152,12 @@ export default function PrintFormsButtons({ organisation }) {
     
     <div class="content">
       <div class="instructions">
-        <h3>📋 Instructions - EXPENSE ENTRY FORM</h3>
+        <h3>📋 Instructions - ${formType.name.toUpperCase()}</h3>
         <ol>
-          <li><strong>DOCUMENT TYPE: EXPENSE ENTRY FORM</strong></li>
+          <li><strong>DOCUMENT TYPE: ${formType.name.toUpperCase()}</strong></li>
           <li>Fill in all required fields (*) with clear, legible handwriting</li>
           <li>Use black or blue ink only</li>
-          <li>Write expense details, amounts, and dates clearly</li>
+          <li>${formType.description}</li>
           <li>After completing, scan or photograph this form</li>
           <li>Upload using "Upload Document" in Expense Management or Finance section</li>
           <li>The system will automatically extract and create expense records</li>
@@ -329,8 +166,8 @@ export default function PrintFormsButtons({ organisation }) {
 
       <div class="form-section">
         <div class="section-title">
-          <div class="icon">📅</div>
-          Basic Information
+          <div class="icon">💰</div>
+          ${formType.name} - Basic Information
         </div>
         <div class="form-grid">
           <div class="form-field">
@@ -344,7 +181,49 @@ export default function PrintFormsButtons({ organisation }) {
         </div>
       </div>
 
-      ${selectedContent}
+      <div class="form-section">
+        <div class="section-title">
+          <div class="icon">📋</div>
+          ${formType.id === 'general' ? 'Expense Items' : formType.name + ' Details'}
+        </div>
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th style="width: 40px;">NO</th>
+              <th>DETAILS / DESCRIPTION <span class="required">*</span></th>
+              ${formType.id === 'fuel' ? '<th style="width: 100px;">VEHICLE REG</th>' : ''}
+              ${formType.id === 'fuel' ? '<th style="width: 80px;">LITRES</th>' : '<th style="width: 80px;">UNIT</th>'}
+              ${formType.id === 'fuel' ? '' : '<th style="width: 80px;">QTY</th>'}
+              <th style="width: 100px;">UNIT COST (Le)</th>
+              <th style="width: 120px;">TOTAL (Le) <span class="required">*</span></th>
+              <th style="width: 120px;">VENDOR</th>
+              ${formType.id === 'general' ? '<th style="width: 100px;">CATEGORY</th>' : ''}
+            </tr>
+          </thead>
+          <tbody>
+            ${Array.from({ length: 15 }, (_, i) => `
+              <tr>
+                <td>${i + 1}</td>
+                <td>&nbsp;</td>
+                ${formType.id === 'fuel' ? '<td>&nbsp;</td>' : ''}
+                <td>&nbsp;</td>
+                ${formType.id === 'fuel' ? '' : '<td>&nbsp;</td>'}
+                <td>&nbsp;</td>
+                <td>&nbsp;</td>
+                <td>&nbsp;</td>
+                ${formType.id === 'general' ? '<td>&nbsp;</td>' : ''}
+              </tr>
+            `).join('')}
+          </tbody>
+          <tfoot>
+            <tr class="total-row">
+              <td colspan="${formType.id === 'fuel' ? '4' : formType.id === 'general' ? '5' : '4'}" style="text-align: right; font-weight: bold;">TOTAL:</td>
+              <td style="font-weight: bold;">Le ______________</td>
+              <td colspan="${formType.id === 'general' ? '2' : '1'}"></td>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
 
       <div class="form-section">
         <div class="form-field full-width">
@@ -378,102 +257,6 @@ export default function PrintFormsButtons({ organisation }) {
     const styles = getUnifiedPDFStyles(organisation, 'report');
     const header = getUnifiedHeader(organisation, formType.name, 'REVENUE-FORM', new Date().toLocaleDateString(), 'report');
     const footer = getUnifiedFooter(organisation);
-
-    const formContent = {
-      general: `
-        <div class="form-section">
-          <div class="section-title"><div class="icon">📋</div>Revenue Items</div>
-          <table class="data-table">
-            <thead>
-              <tr>
-                <th style="width: 40px;">NO</th>
-                <th>DESCRIPTION / PURPOSE <span class="required">*</span></th>
-                <th style="width: 150px;">CONTRIBUTOR / CUSTOMER</th>
-                <th style="width: 120px;">AMOUNT (Le) <span class="required">*</span></th>
-                <th style="width: 120px;">SOURCE / CATEGORY</th>
-              </tr>
-            </thead>
-            <tbody>
-              ${Array.from({ length: 15 }, (_, i) => `<tr><td>${i + 1}</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td></tr>`).join('')}
-            </tbody>
-            <tfoot>
-              <tr class="total-row"><td colspan="3" style="text-align: right; font-weight: bold;">TOTAL:</td><td style="font-weight: bold;">Le ______________</td><td></td></tr>
-            </tfoot>
-          </table>
-        </div>`,
-      owner: `
-        <div class="form-section">
-          <div class="section-title"><div class="icon">👤</div>Owner Contribution Details</div>
-          <div class="form-grid">
-            <div class="form-field"><label>Owner Name <span class="required">*</span></label><div class="input-box"></div></div>
-            <div class="form-field"><label>Contribution Date <span class="required">*</span></label><div class="input-box"></div></div>
-            <div class="form-field"><label>Amount (Le) <span class="required">*</span></label><div class="input-box"></div></div>
-            <div class="form-field"><label>Payment Method</label><div class="input-box"></div></div>
-            <div class="form-field"><label>Reference/Transaction Number</label><div class="input-box"></div></div>
-            <div class="form-field"><label>Bank Name (if transfer)</label><div class="input-box"></div></div>
-            <div class="form-field full-width"><label>Purpose/Notes <span class="required">*</span></label><div class="input-box large"></div></div>
-          </div>
-        </div>`,
-      ceo: `
-        <div class="form-section">
-          <div class="section-title"><div class="icon">👤</div>CEO Contribution Details</div>
-          <div class="form-grid">
-            <div class="form-field"><label>CEO Name <span class="required">*</span></label><div class="input-box"></div></div>
-            <div class="form-field"><label>Contribution Date <span class="required">*</span></label><div class="input-box"></div></div>
-            <div class="form-field"><label>Amount (Le) <span class="required">*</span></label><div class="input-box"></div></div>
-            <div class="form-field"><label>Payment Method</label><div class="input-box"></div></div>
-            <div class="form-field"><label>Reference/Transaction Number</label><div class="input-box"></div></div>
-            <div class="form-field"><label>Bank Name (if transfer)</label><div class="input-box"></div></div>
-            <div class="form-field full-width"><label>Purpose/Notes <span class="required">*</span></label><div class="input-box large"></div></div>
-          </div>
-        </div>`,
-      investor: `
-        <div class="form-section">
-          <div class="section-title"><div class="icon">🏢</div>Investor Details</div>
-          <div class="form-grid">
-            <div class="form-field"><label>Investor Name/Company <span class="required">*</span></label><div class="input-box"></div></div>
-            <div class="form-field"><label>Contact Person</label><div class="input-box"></div></div>
-            <div class="form-field"><label>Investment Amount (Le) <span class="required">*</span></label><div class="input-box"></div></div>
-            <div class="form-field"><label>Investment Date <span class="required">*</span></label><div class="input-box"></div></div>
-            <div class="form-field"><label>Equity %</label><div class="input-box"></div></div>
-            <div class="form-field"><label>Payment Method</label><div class="input-box"></div></div>
-            <div class="form-field"><label>Reference Number</label><div class="input-box"></div></div>
-            <div class="form-field"><label>Agreement Date</label><div class="input-box"></div></div>
-            <div class="form-field full-width"><label>Investment Terms/Purpose</label><div class="input-box large"></div></div>
-          </div>
-        </div>`,
-      loan: `
-        <div class="form-section">
-          <div class="section-title"><div class="icon">🏦</div>Loan Details</div>
-          <div class="form-grid">
-            <div class="form-field"><label>Lender Name <span class="required">*</span></label><div class="input-box"></div></div>
-            <div class="form-field"><label>Loan Type</label><div class="input-box"></div></div>
-            <div class="form-field"><label>Loan Amount (Le) <span class="required">*</span></label><div class="input-box"></div></div>
-            <div class="form-field"><label>Disbursement Date <span class="required">*</span></label><div class="input-box"></div></div>
-            <div class="form-field"><label>Interest Rate (%)</label><div class="input-box"></div></div>
-            <div class="form-field"><label>Loan Term (months)</label><div class="input-box"></div></div>
-            <div class="form-field"><label>Monthly Repayment (Le)</label><div class="input-box"></div></div>
-            <div class="form-field"><label>Reference Number</label><div class="input-box"></div></div>
-            <div class="form-field full-width"><label>Purpose of Loan</label><div class="input-box large"></div></div>
-          </div>
-        </div>`,
-      grant: `
-        <div class="form-section">
-          <div class="section-title"><div class="icon">🎁</div>Grant Details</div>
-          <div class="form-grid">
-            <div class="form-field"><label>Grant Provider <span class="required">*</span></label><div class="input-box"></div></div>
-            <div class="form-field"><label>Grant Program Name</label><div class="input-box"></div></div>
-            <div class="form-field"><label>Grant Amount (Le) <span class="required">*</span></label><div class="input-box"></div></div>
-            <div class="form-field"><label>Receipt Date <span class="required">*</span></label><div class="input-box"></div></div>
-            <div class="form-field"><label>Grant Reference Number</label><div class="input-box"></div></div>
-            <div class="form-field"><label>Grant Period</label><div class="input-box"></div></div>
-            <div class="form-field full-width"><label>Grant Purpose/Project</label><div class="input-box large"></div></div>
-            <div class="form-field full-width"><label>Reporting Requirements</label><div class="input-box"></div></div>
-          </div>
-        </div>`,
-    };
-
-    const selectedContent = formContent[formType.id] || formContent.general;
     
     return `
 <!DOCTYPE html>
@@ -589,12 +372,12 @@ export default function PrintFormsButtons({ organisation }) {
     
     <div class="content">
       <div class="instructions">
-        <h3>📋 Instructions - REVENUE ENTRY FORM</h3>
+        <h3>📋 Instructions - ${formType.name.toUpperCase()}</h3>
         <ol>
-          <li><strong>DOCUMENT TYPE: REVENUE ENTRY FORM</strong></li>
+          <li><strong>DOCUMENT TYPE: ${formType.name.toUpperCase()}</strong></li>
           <li>Fill in all required fields (*) with clear, legible handwriting</li>
           <li>Use black or blue ink only</li>
-          <li>Write revenue details, amounts, and sources clearly</li>
+          <li>${formType.description}</li>
           <li>After completing, scan or photograph this form</li>
           <li>Upload using "Upload Document" in Finance section</li>
           <li>The system will automatically extract and create revenue records</li>
@@ -603,8 +386,8 @@ export default function PrintFormsButtons({ organisation }) {
 
       <div class="form-section">
         <div class="section-title">
-          <div class="icon">📅</div>
-          Basic Information
+          <div class="icon">📈</div>
+          ${formType.name} - Information
         </div>
         <div class="form-grid">
           <div class="form-field">
@@ -615,10 +398,50 @@ export default function PrintFormsButtons({ organisation }) {
             <label>Reference Number</label>
             <div class="input-box"></div>
           </div>
+          ${formType.id !== 'general' ? `
+          <div class="form-field full-width">
+            <label>Contributor / Source Name <span class="required">*</span></label>
+            <div class="input-box"></div>
+          </div>
+          ` : ''}
         </div>
       </div>
 
-      ${selectedContent}
+      <div class="form-section">
+        <div class="section-title">
+          <div class="icon">📋</div>
+          ${formType.id === 'general' ? 'Revenue Items' : formType.name + ' Details'}
+        </div>
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th style="width: 40px;">NO</th>
+              <th>DESCRIPTION / PURPOSE <span class="required">*</span></th>
+              ${formType.id === 'general' ? '<th style="width: 150px;">CONTRIBUTOR / CUSTOMER</th>' : ''}
+              <th style="width: 120px;">AMOUNT (Le) <span class="required">*</span></th>
+              ${formType.id === 'general' ? '<th style="width: 120px;">SOURCE / CATEGORY</th>' : '<th style="width: 150px;">PAYMENT METHOD</th>'}
+            </tr>
+          </thead>
+          <tbody>
+            ${Array.from({ length: 15 }, (_, i) => `
+              <tr>
+                <td>${i + 1}</td>
+                <td>&nbsp;</td>
+                ${formType.id === 'general' ? '<td>&nbsp;</td>' : ''}
+                <td>&nbsp;</td>
+                <td>&nbsp;</td>
+              </tr>
+            `).join('')}
+          </tbody>
+          <tfoot>
+            <tr class="total-row">
+              <td colspan="${formType.id === 'general' ? '3' : '2'}" style="text-align: right; font-weight: bold;">TOTAL:</td>
+              <td style="font-weight: bold;">Le ______________</td>
+              <td></td>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
 
       <div class="form-section">
         <div class="form-field full-width">
