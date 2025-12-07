@@ -90,7 +90,7 @@ const menuSections = [
     title: "Inventory & Supply",
     items: [
       { name: "Stock Management", icon: Package, page: "Inventory", module: "inventory" },
-      { name: "Supplier Relations", icon: Building2, page: "Suppliers", module: "inventory" },
+      { name: "Supplier Relations", icon: Building2, page: "Suppliers", module: "suppliers" },
     ]
   },
   {
