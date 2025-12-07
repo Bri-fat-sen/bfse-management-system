@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Printer, Receipt, DollarSign, Loader2, Fuel, Wrench, Building2, ShoppingCart, Users, Truck, Megaphone, FileText, Wallet, X } from "lucide-react";
+import { Printer, Receipt, DollarSign, Loader2, Fuel, Wrench, Building2, ShoppingCart, Users, Truck, Megaphone, FileText, Wallet, X, Package, Droplets, Bus, TrendingUp } from "lucide-react";
 import { useToast } from "@/components/ui/Toast";
 import { printUnifiedPDF, getUnifiedPDFStyles, getUnifiedHeader, getUnifiedFooter } from "@/components/exports/UnifiedPDFStyles";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -26,11 +26,24 @@ export default function PrintFormsButtons({ organisation }) {
 
   const revenueFormTypes = [
     { id: 'general', name: 'General Revenue Form', icon: DollarSign, color: 'green', description: 'Multi-item revenue form' },
-    { id: 'owner', name: 'Owner Contribution', icon: Users, color: 'blue', description: 'Owner capital injection' },
-    { id: 'ceo', name: 'CEO Contribution', icon: Users, color: 'purple', description: 'CEO funding' },
-    { id: 'investor', name: 'Investor Funding', icon: Building2, color: 'teal', description: 'Investment received' },
-    { id: 'loan', name: 'Loan Receipt', icon: FileText, color: 'amber', description: 'Bank or private loans' },
-    { id: 'grant', name: 'Grant Receipt', icon: DollarSign, color: 'cyan', description: 'Government or NGO grants' },
+    { id: 'retail_sales', name: 'Retail Store Sales', icon: ShoppingCart, color: 'blue', description: 'Retail store product sales' },
+    { id: 'warehouse_sales', name: 'Warehouse Sales', icon: Package, color: 'indigo', description: 'Bulk warehouse sales' },
+    { id: 'vehicle_sales', name: 'Vehicle/Mobile Sales', icon: Truck, color: 'purple', description: 'Vehicle-based sales' },
+    { id: 'water_sales', name: 'Water Product Sales', icon: Droplets, color: 'cyan', description: 'Bottled water revenue' },
+    { id: 'trip_revenue', name: 'Transport Trip Revenue', icon: Bus, color: 'violet', description: 'Bus/transport fare revenue' },
+    { id: 'truck_contract', name: 'Truck Contract Revenue', icon: Truck, color: 'orange', description: 'Truck rental contracts' },
+    { id: 'service', name: 'Service Revenue', icon: Wrench, color: 'teal', description: 'Service fees & contracts' },
+    { id: 'rental', name: 'Rental Income', icon: Building2, color: 'amber', description: 'Property/equipment rental' },
+    { id: 'owner', name: 'Owner Contribution', icon: Users, color: 'emerald', description: 'Owner capital injection' },
+    { id: 'ceo', name: 'CEO Contribution', icon: Users, color: 'rose', description: 'CEO funding' },
+    { id: 'investor', name: 'Investor Funding', icon: Building2, color: 'pink', description: 'Investment received' },
+    { id: 'loan', name: 'Loan Receipt', icon: FileText, color: 'yellow', description: 'Bank or private loans' },
+    { id: 'grant', name: 'Grant Receipt', icon: DollarSign, color: 'lime', description: 'Government or NGO grants' },
+    { id: 'interest', name: 'Interest Income', icon: TrendingUp, color: 'sky', description: 'Bank interest & investments' },
+    { id: 'refund', name: 'Refund Receipt', icon: Receipt, color: 'red', description: 'Refunds & reimbursements' },
+    { id: 'commission', name: 'Commission Revenue', icon: DollarSign, color: 'fuchsia', description: 'Sales commissions' },
+    { id: 'dividend', name: 'Dividend Income', icon: TrendingUp, color: 'green', description: 'Investment dividends' },
+    { id: 'other', name: 'Other Income', icon: FileText, color: 'slate', description: 'Miscellaneous revenue' },
   ];
 
   const generateExpenseFormHTML = (formType) => {
