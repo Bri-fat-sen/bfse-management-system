@@ -272,36 +272,64 @@ const generateFormHTML = (formType, org) => {
       </div>
     `,
     expense_maintenance: `
-      <div class="form-title"><div class="form-icon">🔧</div><h2>Maintenance Expense Form</h2></div>
+      ${getHeader('Maintenance Expense Form')}
       <div class="content">
-        <div class="field-row">
-          <div class="field"><label>Date</label><div class="field-input"></div></div>
-          <div class="field"><label>Vehicle Registration</label><div class="field-input"></div></div>
-          <div class="field"><label>Current Mileage</label><div class="field-input"></div></div>
+        ${getInstructions('Maintenance Expense Form', 'expense')}
+        <div class="form-section">
+          <div class="section-title">
+            <div class="icon">🔧</div>
+            Vehicle Information
+          </div>
+          <div class="form-grid">
+            <div class="form-field">
+              <label>Date <span class="required">*</span></label>
+              <div class="input-box"></div>
+            </div>
+            <div class="form-field">
+              <label>Vehicle Registration <span class="required">*</span></label>
+              <div class="input-box"></div>
+            </div>
+            <div class="form-field">
+              <label>Current Mileage</label>
+              <div class="input-box"></div>
+            </div>
+          </div>
+          <div class="form-field full-width">
+            <label>Maintenance Type <span class="required">*</span></label>
+            <div class="input-box">☐ Oil Change  ☐ Tire Rotation  ☐ Tire Replacement  ☐ Brake Service  ☐ Engine Repair  ☐ Battery  ☐ Electrical  ☐ Other</div>
+          </div>
         </div>
-        <div class="section-title">🔧 Maintenance Type</div>
-        <div class="checkbox-group">
-          <div class="checkbox-item"><span class="checkbox"></span> Oil Change</div>
-          <div class="checkbox-item"><span class="checkbox"></span> Tire Rotation</div>
-          <div class="checkbox-item"><span class="checkbox"></span> Tire Replacement</div>
-          <div class="checkbox-item"><span class="checkbox"></span> Brake Service</div>
-          <div class="checkbox-item"><span class="checkbox"></span> Engine Repair</div>
-          <div class="checkbox-item"><span class="checkbox"></span> Battery</div>
-          <div class="checkbox-item"><span class="checkbox"></span> Electrical</div>
-          <div class="checkbox-item"><span class="checkbox"></span> Other</div>
+
+        <div class="form-section">
+          <div class="section-title">
+            <div class="icon">📋</div>
+            Parts & Labor
+          </div>
+          <table class="data-table">
+            <thead>
+              <tr><th>Part Name</th><th>Qty</th><th>Unit Cost (Le)</th><th>Total (Le) <span class="required">*</span></th></tr>
+            </thead>
+            <tbody>
+              ${Array.from({ length: 5 }, (_, i) => `<tr><td>&nbsp;</td><td></td><td></td><td></td></tr>`).join('')}
+              <tr><td>Labour Cost</td><td>-</td><td>-</td><td></td></tr>
+              <tr class="total-row"><td colspan="3">TOTAL AMOUNT</td><td></td></tr>
+            </tbody>
+          </table>
         </div>
-        <div class="section-title">📦 Parts Replaced</div>
-        <table>
-          <tr><th>Part Name</th><th>Qty</th><th>Unit Cost (Le)</th><th>Total (Le)</th></tr>
-          <tr><td>&nbsp;</td><td></td><td></td><td></td></tr>
-          <tr><td>&nbsp;</td><td></td><td></td><td></td></tr>
-          <tr><td>Labour Cost</td><td>-</td><td>-</td><td></td></tr>
-          <tr class="total-row"><td colspan="3">TOTAL AMOUNT</td><td></td></tr>
-        </table>
-        <div class="field-row">
-          <div class="field"><label>Vendor/Mechanic</label><div class="field-input"></div></div>
-          <div class="field"><label>Next Service Date</label><div class="field-input"></div></div>
+
+        <div class="form-section">
+          <div class="form-grid">
+            <div class="form-field">
+              <label>Vendor/Mechanic</label>
+              <div class="input-box"></div>
+            </div>
+            <div class="form-field">
+              <label>Next Service Date</label>
+              <div class="input-box"></div>
+            </div>
+          </div>
         </div>
+
         ${signatureSection}
       </div>
     `,
