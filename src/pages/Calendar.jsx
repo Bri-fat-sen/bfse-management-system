@@ -20,7 +20,8 @@ import {
   Clock, 
   AlertCircle,
   Filter,
-  RefreshCw
+  RefreshCw,
+  Trash2
 } from "lucide-react";
 
 export default function CalendarPage() {
@@ -88,6 +89,18 @@ export default function CalendarPage() {
     },
     onError: () => {
       toast.error("Failed to reschedule task");
+    },
+  });
+
+  // Delete task mutation
+  const deleteTaskMutation = useMutation({
+    mutationFn: (taskId) => base44.entities.Task.delete(taskId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['tasks'] });
+      toast.success("Task deleted");
+    },
+    onError: () => {
+      toast.error("Failed to delete task");
     },
   });
 
@@ -313,13 +326,15 @@ export default function CalendarPage() {
                       .map(task => (
                         <div
                           key={task.id}
-                          onClick={() => {
-                            setSelectedTask(task);
-                            setShowTaskDialog(true);
-                          }}
-                          className="flex items-start sm:items-center justify-between p-2.5 sm:p-3 rounded-lg border hover:bg-gray-50 cursor-pointer transition-colors gap-2"
+                          className="flex items-start sm:items-center justify-between p-2.5 sm:p-3 rounded-lg border hover:bg-gray-50 transition-colors gap-2"
                         >
-                          <div className="flex items-start sm:items-center gap-2 sm:gap-3 min-w-0 flex-1">
+                          <div 
+                            onClick={() => {
+                              setSelectedTask(task);
+                              setShowTaskDialog(true);
+                            }}
+                            className="flex items-start sm:items-center gap-2 sm:gap-3 min-w-0 flex-1 cursor-pointer"
+                          >
                             <div className={`w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full flex-shrink-0 mt-1.5 sm:mt-0 ${
                               task.status === 'completed' ? 'bg-green-500' :
                               task.status === 'in_progress' ? 'bg-blue-500' :
@@ -345,6 +360,19 @@ export default function CalendarPage() {
                                 {task.assigned_to_name.split(' ')[0]}
                               </Badge>
                             )}
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                if (confirm("Delete this task?")) {
+                                  deleteTaskMutation.mutate(task.id);
+                                }
+                              }}
+                              className="h-7 w-7 text-gray-400 hover:text-red-600 hover:bg-red-50"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </Button>
                           </div>
                         </div>
                       ))}
