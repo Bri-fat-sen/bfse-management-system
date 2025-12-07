@@ -56,6 +56,8 @@ export default function AutomatedFinancialReports({
   // Calculate date range
   const dateRange = useMemo(() => {
     const today = new Date();
+    const currentYear = today.getFullYear();
+    
     switch (selectedPeriod) {
       case "this_month":
         return { start: startOfMonth(today), end: endOfMonth(today), label: format(today, 'MMMM yyyy') };
@@ -66,6 +68,14 @@ export default function AutomatedFinancialReports({
         return { start: startOfMonth(subMonths(today, 2)), end: endOfMonth(today), label: "Last 3 Months" };
       case "this_year":
         return { start: startOfYear(today), end: endOfMonth(today), label: format(today, 'yyyy') };
+      case "last_year":
+        return { start: new Date(currentYear - 1, 0, 1), end: new Date(currentYear - 1, 11, 31), label: (currentYear - 1).toString() };
+      case "2024":
+        return { start: new Date(2024, 0, 1), end: new Date(2024, 11, 31), label: "2024" };
+      case "2023":
+        return { start: new Date(2023, 0, 1), end: new Date(2023, 11, 31), label: "2023" };
+      case "2022":
+        return { start: new Date(2022, 0, 1), end: new Date(2022, 11, 31), label: "2022" };
       default:
         return { start: startOfMonth(today), end: endOfMonth(today), label: format(today, 'MMMM yyyy') };
     }
@@ -297,6 +307,10 @@ Format your response in markdown with clear sections.`,
               <SelectItem value="last_month">Last Month</SelectItem>
               <SelectItem value="last_3_months">Last 3 Months</SelectItem>
               <SelectItem value="this_year">This Year</SelectItem>
+              <SelectItem value="last_year">Last Year</SelectItem>
+              <SelectItem value="2024">2024</SelectItem>
+              <SelectItem value="2023">2023</SelectItem>
+              <SelectItem value="2022">2022</SelectItem>
             </SelectContent>
           </Select>
           <Button
