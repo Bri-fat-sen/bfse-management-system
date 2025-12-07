@@ -439,7 +439,7 @@ export default function Layout({ children, currentPageName }) {
             <nav className="flex-1 overflow-y-auto p-3 space-y-1">
           {filteredMenuSections.map((section, sectionIndex) => (
             <div key={section.title}>
-              {sectionIndex > 0 && (!collapsedSections[section.title] || !sidebarOpen) && (
+              {sectionIndex > 0 && sidebarOpen && (
                 <div className="h-0.5 flex mx-3 my-3">
                   <div className="flex-1 bg-[#1EB053]/30" />
                   <div className="flex-1 bg-white/30" />
