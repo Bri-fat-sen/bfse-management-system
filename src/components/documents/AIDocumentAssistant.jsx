@@ -248,43 +248,76 @@ Provide realistic, professional values appropriate for Sierra Leone employment d
 
   return (
     <Dialog open={open} onOpenChange={(v) => { if (!v) resetWizard(); onOpenChange(v); }}>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-hidden flex flex-col p-0">
-        {/* Sierra Leone Flag Stripe */}
-        <div className="flex h-1 w-full">
-          <div className="flex-1 bg-[#1EB053]" />
-          <div className="flex-1 bg-white" />
-          <div className="flex-1 bg-[#0072C6]" />
+      <DialogContent className="max-w-4xl max-h-[90vh] overflow-hidden flex flex-col p-0 gap-0 bg-gradient-to-br from-slate-50 to-white">
+        {/* Premium Header with Sierra Leone Theme */}
+        <div className="relative overflow-hidden">
+          <div className="absolute inset-0 bg-gradient-to-r from-[#0F1F3C] via-[#1a3a6e] to-[#0F1F3C]" />
+          <div className="absolute inset-0 opacity-10">
+            <div className="absolute top-0 left-0 w-full h-full" style={{
+              backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.4'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`
+            }} />
+          </div>
+          <div className="relative px-8 py-6">
+            <div className="flex items-center gap-4">
+              <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center shadow-lg shadow-amber-500/20">
+                <Sparkles className="w-7 h-7 text-white" />
+              </div>
+              <div>
+                <h2 className="text-2xl font-bold text-white flex items-center gap-2">
+                  AI Document Generator
+                  <Wand2 className="w-5 h-5 text-amber-400" />
+                </h2>
+                <p className="text-white/70 text-sm">Intelligent document creation powered by AI</p>
+              </div>
+            </div>
+            
+            {/* Flag stripe accent */}
+            <div className="absolute bottom-0 left-0 right-0 h-1 flex">
+              <div className="flex-1 bg-[#1EB053]" />
+              <div className="flex-1 bg-white" />
+              <div className="flex-1 bg-[#0072C6]" />
+            </div>
+          </div>
         </div>
 
-        {/* Header */}
-        <DialogHeader className="px-6 py-4 border-b bg-gradient-to-r from-[#0F1F3C] via-[#1a3a6e] to-[#0F1F3C]">
-          <DialogTitle className="text-white flex items-center gap-2">
-            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center">
-              <Sparkles className="w-4 h-4 text-white" />
-            </div>
-            AI Document Generator
-          </DialogTitle>
-        </DialogHeader>
-
-        {/* Progress Steps */}
-        <div className="px-6 py-4 border-b bg-gray-50">
-          <div className="flex items-center justify-between max-w-lg mx-auto">
+        {/* Premium Steps Indicator */}
+        <div className="px-8 py-5 bg-white border-b">
+          <div className="flex items-center justify-between max-w-2xl mx-auto">
             {[
-              { num: 1, label: 'Template' },
-              { num: 2, label: 'Employee' },
-              { num: 3, label: 'Variables' },
-              { num: 4, label: 'Review' }
+              { num: 1, label: 'Template', icon: FileText },
+              { num: 2, label: 'Employee', icon: User },
+              { num: 3, label: 'AI Variables', icon: Sparkles },
+              { num: 4, label: 'Review & Send', icon: Send }
             ].map((s, idx) => (
               <React.Fragment key={s.num}>
-                <div className="flex flex-col items-center gap-1">
-                  <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium transition-all ${
-                    step > s.num ? 'bg-[#1EB053] text-white' : step === s.num ? 'bg-[#0072C6] text-white ring-4 ring-[#0072C6]/20' : 'bg-gray-200 text-gray-500'
+                <div className="flex flex-col items-center gap-2">
+                  <div className={`relative w-12 h-12 rounded-xl flex items-center justify-center transition-all duration-300 ${
+                    step > s.num 
+                      ? 'bg-gradient-to-br from-[#1EB053] to-[#15803d] text-white shadow-lg shadow-[#1EB053]/30' 
+                      : step === s.num 
+                        ? 'bg-gradient-to-br from-amber-400 to-orange-500 text-white shadow-lg shadow-amber-500/30 ring-4 ring-amber-400/20' 
+                        : 'bg-gray-100 text-gray-400'
                   }`}>
-                    {step > s.num ? <CheckCircle2 className="w-4 h-4" /> : s.num}
+                    {step > s.num ? (
+                      <CheckCircle2 className="w-6 h-6" />
+                    ) : (
+                      <s.icon className="w-5 h-5" />
+                    )}
+                    {step === s.num && (
+                      <span className="absolute -top-1 -right-1 w-3 h-3 bg-amber-400 rounded-full animate-pulse" />
+                    )}
                   </div>
-                  <span className="text-xs text-gray-600">{s.label}</span>
+                  <span className={`text-xs font-medium transition-colors ${
+                    step >= s.num ? 'text-[#0F1F3C]' : 'text-gray-400'
+                  }`}>
+                    {s.label}
+                  </span>
                 </div>
-                {idx < 3 && <div className={`flex-1 h-0.5 mx-2 ${step > s.num ? 'bg-[#1EB053]' : 'bg-gray-200'}`} />}
+                {idx < 3 && (
+                  <div className={`flex-1 h-0.5 mx-4 rounded-full transition-colors ${
+                    step > s.num ? 'bg-gradient-to-r from-[#1EB053] to-amber-400' : 'bg-gray-200'
+                  }`} />
+                )}
               </React.Fragment>
             ))}
           </div>
@@ -451,31 +484,53 @@ Provide realistic, professional values appropriate for Sierra Leone employment d
 
         {/* Footer */}
         {step === 4 && (
-          <DialogFooter className="px-6 py-4 border-t bg-white gap-2">
-            <div className="flex h-1.5 w-12 rounded-full overflow-hidden mr-auto">
-              <div className="flex-1 bg-[#1EB053]" />
-              <div className="flex-1 bg-white border" />
-              <div className="flex-1 bg-[#0072C6]" />
+          <div className="px-8 py-5 bg-white border-t flex items-center justify-between">
+            <div className="flex items-center gap-2 text-sm text-gray-500">
+              <div className="flex h-1.5 w-12 rounded-full overflow-hidden">
+                <div className="flex-1 bg-[#1EB053]" />
+                <div className="flex-1 bg-white border" />
+                <div className="flex-1 bg-[#0072C6]" />
+              </div>
+              <span>AI-Powered Document Creation</span>
             </div>
-            <Button variant="outline" onClick={() => setStep(3)}>
-              <RefreshCw className="w-4 h-4 mr-2" /> Edit Variables
-            </Button>
-            <Button variant="outline" onClick={() => createDocument(false)} disabled={isCreating}>
-              <Save className="w-4 h-4 mr-2" /> Save as Draft
-            </Button>
-            <Button onClick={() => createDocument(true)} disabled={isCreating} className="bg-gradient-to-r from-[#1EB053] to-[#0072C6] hover:from-[#178f43] hover:to-[#0062a6]">
-              {isCreating ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Send className="w-4 h-4 mr-2" />}
-              Send for Signature
-            </Button>
-          </DialogFooter>
+            
+            <div className="flex items-center gap-3">
+              <Button 
+                variant="outline" 
+                onClick={() => setStep(3)}
+                className="px-6"
+              >
+                Back
+              </Button>
+              <Button 
+                variant="outline" 
+                onClick={() => createDocument(false)} 
+                disabled={isCreating}
+                className="px-6"
+              >
+                <Save className="w-4 h-4 mr-2" /> 
+                Save Draft
+              </Button>
+              <Button 
+                onClick={() => createDocument(true)} 
+                disabled={isCreating} 
+                className="bg-gradient-to-r from-[#1EB053] to-[#0072C6] hover:from-[#178f43] hover:to-[#0062a6] px-8 shadow-lg shadow-[#1EB053]/20"
+              >
+                {isCreating ? (
+                  <>
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    Sending...
+                  </>
+                ) : (
+                  <>
+                    <Send className="w-4 h-4 mr-2" />
+                    Send for Signature
+                  </>
+                )}
+              </Button>
+            </div>
+          </div>
         )}
-
-        {/* Bottom Sierra Leone Flag Stripe */}
-        <div className="flex h-1 w-full">
-          <div className="flex-1 bg-[#1EB053]" />
-          <div className="flex-1 bg-white" />
-          <div className="flex-1 bg-[#0072C6]" />
-        </div>
       </DialogContent>
     </Dialog>
   );
