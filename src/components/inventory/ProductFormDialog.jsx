@@ -41,11 +41,9 @@ export default function ProductFormDialog({
   isLoading
 }) {
   const [selectedLocations, setSelectedLocations] = useState([]);
-  const [activeSection, setActiveSection] = useState('basic');
   const [category, setCategory] = useState('Other');
   const [unit, setUnit] = useState('piece');
-  const [isSerialized, setIsSerialized] = useState(false);
-  const [trackBatches, setTrackBatches] = useState(false);
+  const [showAdvanced, setShowAdvanced] = useState(false);
 
   const primaryColor = organisation?.primary_color || '#1EB053';
   const secondaryColor = organisation?.secondary_color || '#0072C6';
@@ -53,17 +51,14 @@ export default function ProductFormDialog({
   useEffect(() => {
     if (open) {
       setSelectedLocations(editingProduct?.location_ids || []);
-      setActiveSection('basic');
       setCategory(editingProduct?.category || 'Other');
       setUnit(editingProduct?.unit || 'piece');
-      setIsSerialized(editingProduct?.is_serialized || false);
-      setTrackBatches(editingProduct?.track_batches || false);
+      setShowAdvanced(false);
     } else {
       setSelectedLocations([]);
       setCategory('Other');
       setUnit('piece');
-      setIsSerialized(false);
-      setTrackBatches(false);
+      setShowAdvanced(false);
     }
   }, [open, editingProduct]);
 
@@ -72,9 +67,9 @@ export default function ProductFormDialog({
     const formData = new FormData(e.target);
     const data = {
       name: formData.get('name'),
-      sku: formData.get('sku'),
+      sku: formData.get('sku') || `SKU-${Date.now()}`,
       category: category,
-      description: formData.get('description'),
+      description: formData.get('description') || '',
       unit_price: parseFloat(formData.get('unit_price')) || 0,
       cost_price: parseFloat(formData.get('cost_price')) || 0,
       wholesale_price: parseFloat(formData.get('wholesale_price')) || 0,
@@ -83,8 +78,6 @@ export default function ProductFormDialog({
       reorder_point: parseInt(formData.get('reorder_point')) || 10,
       reorder_quantity: parseInt(formData.get('reorder_quantity')) || 50,
       lead_time_days: parseInt(formData.get('lead_time_days')) || 7,
-      is_serialized: isSerialized,
-      track_batches: trackBatches,
       unit: unit,
       location_ids: selectedLocations,
       is_active: true,
@@ -92,39 +85,43 @@ export default function ProductFormDialog({
     onSubmit(data);
   };
 
-  const sections = [
-    { id: 'basic', label: 'Basic Info', icon: Package },
-    { id: 'pricing', label: 'Pricing', icon: DollarSign },
-    { id: 'stock', label: 'Stock', icon: Layers },
-    { id: 'locations', label: 'Locations', icon: MapPin },
-  ];
+  // Keyboard shortcut: Ctrl/Cmd + Enter to submit
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (open && (e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+        e.preventDefault();
+        const form = document.querySelector('form');
+        if (form) form.requestSubmit();
+      }
+    };
+    
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [open]);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl max-h-[85vh] sm:max-h-[90vh] overflow-hidden p-0 w-[95vw] sm:w-full [&>button]:hidden">
-        {/* Sierra Leone Flag Header */}
-        <div className="h-2 flex">
+      <DialogContent className="max-w-3xl max-h-[90vh] overflow-hidden p-0 [&>button]:hidden">
+        {/* Flag Header */}
+        <div className="h-1.5 flex">
           <div className="flex-1" style={{ backgroundColor: primaryColor }} />
           <div className="flex-1 bg-white" />
           <div className="flex-1" style={{ backgroundColor: secondaryColor }} />
         </div>
 
-        {/* Header with gradient */}
-        <div 
-          className="px-4 sm:px-6 py-3 sm:py-4 text-white"
-          style={{ background: `linear-gradient(135deg, ${primaryColor} 0%, ${secondaryColor} 100%)` }}
-        >
+        {/* Header */}
+        <div className="px-6 py-4 border-b">
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2 sm:gap-3">
-              <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-white/20 flex items-center justify-center flex-shrink-0">
-                <Package className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-lg flex items-center justify-center" style={{ backgroundColor: `${primaryColor}20` }}>
+                <Package className="w-5 h-5" style={{ color: primaryColor }} />
               </div>
-              <div className="min-w-0">
-                <h2 className="text-lg sm:text-xl font-bold truncate">
-                  {editingProduct ? 'Edit Product' : 'New Product'}
+              <div>
+                <h2 className="text-xl font-bold text-gray-900">
+                  {editingProduct ? 'Edit Product' : 'Quick Add Product'}
                 </h2>
-                <p className="text-white/80 text-xs sm:text-sm truncate">
-                  {editingProduct ? `Updating: ${editingProduct.name}` : 'Add a new product'}
+                <p className="text-xs text-gray-500">
+                  Press <kbd className="px-1.5 py-0.5 bg-gray-100 rounded text-[10px] font-mono">Ctrl+Enter</kbd> to save
                 </p>
               </div>
             </div>
@@ -132,414 +129,276 @@ export default function ProductFormDialog({
               variant="ghost"
               size="icon"
               onClick={() => onOpenChange(false)}
-              className="text-white hover:bg-white/20 flex-shrink-0"
+              className="text-gray-400 hover:text-gray-600"
             >
               <X className="w-5 h-5" />
             </Button>
           </div>
-
-          {/* Section Tabs */}
-          <div className="flex gap-1 mt-3 sm:mt-4 overflow-x-auto pb-1 -mx-2 px-2">
-            {sections.map((section) => (
-              <button
-                key={section.id}
-                type="button"
-                onClick={() => setActiveSection(section.id)}
-                className={`flex items-center gap-1.5 sm:gap-2 px-2 sm:px-3 py-1.5 sm:py-2 rounded-lg text-xs sm:text-sm font-medium transition-all whitespace-nowrap ${
-                  activeSection === section.id
-                    ? 'bg-white text-gray-900'
-                    : 'bg-white/20 text-white hover:bg-white/30'
-                }`}
-              >
-                <section.icon className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-                <span className="hidden xs:inline">{section.label}</span>
-                <span className="xs:hidden">{section.label.split(' ')[0]}</span>
-              </button>
-            ))}
-          </div>
         </div>
 
-        {/* Form Content */}
-        <form onSubmit={handleSubmit} className="overflow-y-auto max-h-[calc(85vh-200px)] sm:max-h-[calc(90vh-220px)]">
-          <div className="p-4 sm:p-6 space-y-4 sm:space-y-6">
-            
-            {/* Basic Info Section */}
-            {activeSection === 'basic' && (
-              <div className="space-y-4">
-                <div className="flex items-center gap-2 mb-4">
-                  <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ backgroundColor: `${primaryColor}20` }}>
-                    <Package className="w-4 h-4" style={{ color: primaryColor }} />
-                  </div>
-                  <h3 className="font-semibold text-gray-900">Basic Information</h3>
-                </div>
+        {/* Form */}
+        <form onSubmit={handleSubmit} className="overflow-y-auto max-h-[calc(90vh-180px)]">
+          <div className="p-6 space-y-6">
+            {/* Essential Fields */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="sm:col-span-2">
+                <Label className="font-medium text-gray-900">Product Name *</Label>
+                <Input 
+                  name="name" 
+                  defaultValue={editingProduct?.name} 
+                  required 
+                  autoFocus
+                  className="mt-1.5 text-base"
+                  placeholder="e.g., Premium Water 500ml"
+                />
+              </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div className="sm:col-span-2">
-                    <Label className="text-gray-700 font-medium">Product Name *</Label>
+              <div className="grid grid-cols-2 gap-3 sm:col-span-2">
+                <div>
+                  <Label>Category</Label>
+                  <Select value={category} onValueChange={setCategory}>
+                    <SelectTrigger className="mt-1.5">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {categoryList.map(cat => (
+                        <SelectItem key={cat} value={cat}>{cat}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label>Unit</Label>
+                  <Select value={unit} onValueChange={setUnit}>
+                    <SelectTrigger className="mt-1.5">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="piece">Piece</SelectItem>
+                      <SelectItem value="kg">Kg</SelectItem>
+                      <SelectItem value="g">Gram</SelectItem>
+                      <SelectItem value="liter">Liter</SelectItem>
+                      <SelectItem value="ml">mL</SelectItem>
+                      <SelectItem value="box">Box</SelectItem>
+                      <SelectItem value="pack">Pack</SelectItem>
+                      <SelectItem value="carton">Carton</SelectItem>
+                      <SelectItem value="dozen">Dozen</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+            </div>
+
+            {/* Pricing - Highlighted */}
+            <div className="p-4 rounded-xl border-2 border-[#1EB053]/20 bg-[#1EB053]/5">
+              <h3 className="font-semibold text-gray-900 mb-3 flex items-center gap-2">
+                <DollarSign className="w-4 h-4" style={{ color: primaryColor }} />
+                Pricing (SLE)
+              </h3>
+              <div className="grid grid-cols-3 gap-3">(
+                <div>
+                  <Label className="text-xs">Retail *</Label>
+                  <div className="relative mt-1">
+                    <span className="absolute left-2 top-1/2 -translate-y-1/2 text-[#1EB053] font-bold text-xs">Le</span>
                     <Input 
-                      name="name" 
-                      defaultValue={editingProduct?.name} 
+                      name="unit_price" 
+                      type="number" 
+                      defaultValue={editingProduct?.unit_price} 
                       required 
-                      className="mt-1.5 border-gray-200 focus:border-[#1EB053] focus:ring-[#1EB053]/20"
-                      placeholder="e.g., Premium Bottled Water 500ml"
+                      className="pl-8 font-semibold"
+                      step="0.01"
+                      placeholder="0.00"
                     />
                   </div>
-                  
-                  <div>
-                    <Label className="text-gray-700 font-medium">SKU / Barcode</Label>
-                    <div className="relative mt-1.5">
-                      <Hash className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                      <Input 
-                        name="sku" 
-                        defaultValue={editingProduct?.sku} 
-                        className="pl-10 border-gray-200"
-                        placeholder="e.g., WAT-500-001"
-                      />
-                    </div>
-                  </div>
-                  
-                  <div>
-                    <Label className="text-gray-700 font-medium">Category</Label>
-                    <Select value={category} onValueChange={setCategory}>
-                      <SelectTrigger className="mt-1.5 border-gray-200">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {categoryList.map(cat => (
-                          <SelectItem key={cat} value={cat}>{cat}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  <div>
-                    <Label className="text-gray-700 font-medium">Unit of Measure</Label>
-                    <Select value={unit} onValueChange={setUnit}>
-                      <SelectTrigger className="mt-1.5 border-gray-200">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="piece">Piece</SelectItem>
-                        <SelectItem value="kg">Kilogram (kg)</SelectItem>
-                        <SelectItem value="g">Gram (g)</SelectItem>
-                        <SelectItem value="liter">Liter</SelectItem>
-                        <SelectItem value="ml">Milliliter (ml)</SelectItem>
-                        <SelectItem value="box">Box</SelectItem>
-                        <SelectItem value="pack">Pack</SelectItem>
-                        <SelectItem value="carton">Carton</SelectItem>
-                        <SelectItem value="dozen">Dozen</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  <div>
-                    <Label className="text-gray-700 font-medium">Initial Stock</Label>
+                </div>
+                <div>
+                  <Label className="text-xs">Wholesale</Label>
+                  <div className="relative mt-1">
+                    <span className="absolute left-2 top-1/2 -translate-y-1/2 text-[#0072C6] font-bold text-xs">Le</span>
                     <Input 
-                      name="stock_quantity" 
+                      name="wholesale_price" 
                       type="number" 
-                      defaultValue={editingProduct?.stock_quantity || 0} 
-                      className="mt-1.5 border-gray-200"
-                      min="0"
+                      defaultValue={editingProduct?.wholesale_price} 
+                      className="pl-8 font-semibold"
+                      step="0.01"
+                      placeholder="0.00"
                     />
                   </div>
-
-                  <div className="sm:col-span-2">
-                    <Label className="text-gray-700 font-medium">Description</Label>
-                    <Textarea 
-                      name="description" 
-                      defaultValue={editingProduct?.description} 
-                      className="mt-1.5 border-gray-200 min-h-[80px]"
-                      placeholder="Product description, features, etc."
+                </div>
+                <div>
+                  <Label className="text-xs">Cost</Label>
+                  <div className="relative mt-1">
+                    <span className="absolute left-2 top-1/2 -translate-y-1/2 text-gray-500 font-bold text-xs">Le</span>
+                    <Input 
+                      name="cost_price" 
+                      type="number" 
+                      defaultValue={editingProduct?.cost_price} 
+                      className="pl-8"
+                      step="0.01"
+                      placeholder="0.00"
                     />
-                  </div>
-
-                  {/* Tracking Options */}
-                  <div className="sm:col-span-2 p-4 bg-gray-50 rounded-xl border border-gray-100">
-                    <p className="text-sm font-medium text-gray-700 mb-3">Tracking Options</p>
-                    <div className="flex flex-wrap gap-4">
-                      <label className="flex items-center gap-2 cursor-pointer">
-                        <Checkbox 
-                          checked={isSerialized}
-                          onCheckedChange={setIsSerialized}
-                          className="data-[state=checked]:bg-[#1EB053] data-[state=checked]:border-[#1EB053]"
-                        />
-                        <span className="text-sm text-gray-600">Track Serial Numbers</span>
-                      </label>
-                      <label className="flex items-center gap-2 cursor-pointer">
-                        <Checkbox 
-                          checked={trackBatches}
-                          onCheckedChange={setTrackBatches}
-                          className="data-[state=checked]:bg-[#0072C6] data-[state=checked]:border-[#0072C6]"
-                        />
-                        <span className="text-sm text-gray-600">Track Batches/Lots</span>
-                      </label>
-                    </div>
                   </div>
                 </div>
               </div>
-            )}
+            </div>
 
-            {/* Pricing Section */}
-            {activeSection === 'pricing' && (
-              <div className="space-y-4">
-                <div className="flex items-center gap-2 mb-4">
-                  <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ backgroundColor: `${secondaryColor}20` }}>
-                    <DollarSign className="w-4 h-4" style={{ color: secondaryColor }} />
-                  </div>
-                  <h3 className="font-semibold text-gray-900">Pricing Information</h3>
+            {/* Stock & Quick Settings */}
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label>Initial Stock</Label>
+                <Input 
+                  name="stock_quantity" 
+                  type="number" 
+                  defaultValue={editingProduct?.stock_quantity || 0} 
+                  className="mt-1.5"
+                  min="0"
+                />
+              </div>
+              <div>
+                <Label>Low Stock Alert</Label>
+                <Input 
+                  name="low_stock_threshold" 
+                  type="number" 
+                  defaultValue={editingProduct?.low_stock_threshold || 10} 
+                  className="mt-1.5"
+                  min="0"
+                />
+              </div>
+            </div>
+
+            {/* Locations - Simplified */}
+            {allLocations.length > 0 && (
+              <div className="p-4 border rounded-xl bg-gray-50">
+                <Label className="font-medium text-gray-900 mb-3 flex items-center gap-2">
+                  <MapPin className="w-4 h-4" />
+                  Locations {selectedLocations.length > 0 && `(${selectedLocations.length})`}
+                </Label>
+                <div className="flex flex-wrap gap-2">
+                  {allLocations.map((location) => {
+                    const isSelected = selectedLocations.includes(location.id);
+                    return (
+                      <Button
+                        key={location.id}
+                        type="button"
+                        variant={isSelected ? "default" : "outline"}
+                        size="sm"
+                        onClick={() => {
+                          setSelectedLocations(prev => 
+                            isSelected 
+                              ? prev.filter(id => id !== location.id)
+                              : [...prev, location.id]
+                          );
+                        }}
+                        className={isSelected ? 'bg-[#1EB053] hover:bg-[#16803d]' : ''}
+                      >
+                        {location.type === 'warehouse' ? (
+                          <Warehouse className="w-3 h-3 mr-1" />
+                        ) : (
+                          <Truck className="w-3 h-3 mr-1" />
+                        )}
+                        {location.name}
+                      </Button>
+                    );
+                  })}
                 </div>
-
-                <div className="grid grid-cols-1 gap-3 sm:gap-4">
-                  <div className="p-3 sm:p-4 rounded-xl border-2 border-[#1EB053]/30 bg-[#1EB053]/5">
-                    <Label className="text-[#1EB053] font-medium text-sm">Retail Price (SLE) *</Label>
-                    <div className="relative mt-2">
-                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[#1EB053] font-bold text-sm">Le</span>
-                      <Input 
-                        name="unit_price" 
-                        type="number" 
-                        defaultValue={editingProduct?.unit_price} 
-                        required 
-                        className="pl-10 text-base sm:text-lg font-semibold border-[#1EB053]/30 focus:border-[#1EB053]"
-                        min="0"
-                        step="0.01"
-                      />
-                    </div>
-                    <p className="text-xs text-gray-500 mt-1">Standard selling price</p>
-                  </div>
-
-                  <div className="p-3 sm:p-4 rounded-xl border-2 border-[#0072C6]/30 bg-[#0072C6]/5">
-                    <Label className="text-[#0072C6] font-medium text-sm">Wholesale Price (SLE)</Label>
-                    <div className="relative mt-2">
-                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[#0072C6] font-bold text-sm">Le</span>
-                      <Input 
-                        name="wholesale_price" 
-                        type="number" 
-                        defaultValue={editingProduct?.wholesale_price} 
-                        className="pl-10 text-base sm:text-lg font-semibold border-[#0072C6]/30 focus:border-[#0072C6]"
-                        min="0"
-                        step="0.01"
-                      />
-                    </div>
-                    <p className="text-xs text-gray-500 mt-1">Bulk/wholesale price</p>
-                  </div>
-
-                  <div className="p-3 sm:p-4 rounded-xl border-2 border-gray-200 bg-gray-50">
-                    <Label className="text-gray-600 font-medium text-sm">Cost Price (SLE)</Label>
-                    <div className="relative mt-2">
-                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 font-bold text-sm">Le</span>
-                      <Input 
-                        name="cost_price" 
-                        type="number" 
-                        defaultValue={editingProduct?.cost_price} 
-                        className="pl-10 text-base sm:text-lg font-semibold border-gray-200"
-                        min="0"
-                        step="0.01"
-                      />
-                    </div>
-                    <p className="text-xs text-gray-500 mt-1">Your purchase cost</p>
-                  </div>
-                </div>
-
-                {/* Profit Preview */}
-                {editingProduct?.unit_price > 0 && editingProduct?.cost_price > 0 && (
-                  <div className="p-4 rounded-xl bg-gradient-to-r from-[#1EB053]/10 to-[#0072C6]/10 border border-[#1EB053]/20">
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm text-gray-600">Estimated Profit Margin</span>
-                      <span className="font-bold text-[#1EB053]">
-                        {(((editingProduct.unit_price - editingProduct.cost_price) / editingProduct.unit_price) * 100).toFixed(1)}%
-                      </span>
-                    </div>
-                  </div>
-                )}
+                <p className="text-xs text-gray-500 mt-2">Leave empty to make available at all locations</p>
               </div>
             )}
 
-            {/* Stock Management Section */}
-            {activeSection === 'stock' && (
-              <div className="space-y-4">
-                <div className="flex items-center gap-2 mb-4">
-                  <div className="w-8 h-8 rounded-lg bg-amber-100 flex items-center justify-center">
-                    <Layers className="w-4 h-4 text-amber-600" />
-                  </div>
-                  <h3 className="font-semibold text-gray-900">Stock Management</h3>
-                </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div className="p-4 rounded-xl border border-amber-200 bg-amber-50">
-                    <div className="flex items-center gap-2 mb-2">
-                      <AlertTriangle className="w-4 h-4 text-amber-600" />
-                      <Label className="text-amber-700 font-medium">Low Stock Alert</Label>
-                    </div>
+            {/* Advanced Options - Collapsible */}
+            <div className="border-t pt-4">
+              <button
+                type="button"
+                onClick={() => setShowAdvanced(!showAdvanced)}
+                className="flex items-center justify-between w-full text-sm font-medium text-gray-700 hover:text-gray-900"
+              >
+                <span>Advanced Options</span>
+                <span className="text-xs text-gray-400">{showAdvanced ? 'Hide' : 'Show'}</span>
+              </button>
+              
+              {showAdvanced && (
+                <div className="grid grid-cols-2 gap-4 mt-4">
+                  <div>
+                    <Label className="text-xs">SKU / Barcode</Label>
                     <Input 
-                      name="low_stock_threshold" 
-                      type="number" 
-                      defaultValue={editingProduct?.low_stock_threshold || 10} 
-                      className="border-amber-200 focus:border-amber-400"
-                      min="0"
+                      name="sku" 
+                      defaultValue={editingProduct?.sku} 
+                      className="mt-1.5"
+                      placeholder="Auto-generated"
                     />
-                    <p className="text-xs text-amber-600 mt-1">Alert when stock falls below this</p>
                   </div>
-
-                  <div className="p-4 rounded-xl border border-gray-200 bg-gray-50">
-                    <div className="flex items-center gap-2 mb-2">
-                      <Layers className="w-4 h-4 text-gray-600" />
-                      <Label className="text-gray-700 font-medium">Reorder Point</Label>
-                    </div>
+                  <div>
+                    <Label className="text-xs">Reorder Point</Label>
                     <Input 
                       name="reorder_point" 
                       type="number" 
                       defaultValue={editingProduct?.reorder_point || 10} 
-                      className="border-gray-200"
+                      className="mt-1.5"
                       min="0"
                     />
-                    <p className="text-xs text-gray-500 mt-1">Suggest reorder at this level</p>
                   </div>
-
-                  <div className="p-4 rounded-xl border border-gray-200 bg-gray-50">
-                    <div className="flex items-center gap-2 mb-2">
-                      <Package className="w-4 h-4 text-gray-600" />
-                      <Label className="text-gray-700 font-medium">Reorder Quantity</Label>
-                    </div>
+                  <div>
+                    <Label className="text-xs">Reorder Qty</Label>
                     <Input 
                       name="reorder_quantity" 
                       type="number" 
                       defaultValue={editingProduct?.reorder_quantity || 50} 
-                      className="border-gray-200"
+                      className="mt-1.5"
                       min="1"
                     />
-                    <p className="text-xs text-gray-500 mt-1">Default quantity to order</p>
                   </div>
-
-                  <div className="p-4 rounded-xl border border-gray-200 bg-gray-50">
-                    <div className="flex items-center gap-2 mb-2">
-                      <Clock className="w-4 h-4 text-gray-600" />
-                      <Label className="text-gray-700 font-medium">Lead Time (Days)</Label>
-                    </div>
+                  <div>
+                    <Label className="text-xs">Lead Time (Days)</Label>
                     <Input 
                       name="lead_time_days" 
                       type="number" 
                       defaultValue={editingProduct?.lead_time_days || 7} 
-                      className="border-gray-200"
+                      className="mt-1.5"
                       min="0"
                     />
-                    <p className="text-xs text-gray-500 mt-1">Supplier delivery time</p>
+                  </div>
+                  <div className="col-span-2">
+                    <Label className="text-xs">Description</Label>
+                    <Textarea 
+                      name="description" 
+                      defaultValue={editingProduct?.description} 
+                      className="mt-1.5 min-h-[60px]"
+                      placeholder="Optional notes about this product"
+                    />
                   </div>
                 </div>
-              </div>
-            )}
-
-            {/* Locations Section */}
-            {activeSection === 'locations' && (
-              <div className="space-y-4">
-                <div className="flex items-center gap-2 mb-4">
-                  <div className="w-8 h-8 rounded-lg bg-purple-100 flex items-center justify-center">
-                    <MapPin className="w-4 h-4 text-purple-600" />
-                  </div>
-                  <h3 className="font-semibold text-gray-900">Available Locations</h3>
-                </div>
-
-                <p className="text-sm text-gray-500">
-                  Select where this product is available for sale. Leave empty for all locations.
-                </p>
-
-                {allLocations.length === 0 ? (
-                  <div className="p-8 text-center bg-gray-50 rounded-xl border border-dashed border-gray-300">
-                    <MapPin className="w-12 h-12 text-gray-300 mx-auto mb-3" />
-                    <p className="text-gray-500">No locations available</p>
-                    <p className="text-sm text-gray-400">Add warehouses or vehicles first</p>
-                  </div>
-                ) : (
-                  <div className="space-y-2 max-h-64 overflow-y-auto p-1">
-                    {allLocations.map((location) => {
-                      const isSelected = selectedLocations.includes(location.id);
-                      const isWarehouse = location.type === 'warehouse';
-                      
-                      return (
-                        <div
-                          key={location.id}
-                          onClick={() => {
-                            setSelectedLocations(prev => 
-                              isSelected 
-                                ? prev.filter(id => id !== location.id)
-                                : [...prev, location.id]
-                            );
-                          }}
-                          className={`flex items-center gap-3 p-3 rounded-xl cursor-pointer transition-all ${
-                            isSelected 
-                              ? 'bg-gradient-to-r from-[#1EB053]/10 to-[#0072C6]/10 border-2 border-[#1EB053]' 
-                              : 'bg-gray-50 border-2 border-transparent hover:border-gray-200'
-                          }`}
-                        >
-                          <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${
-                            isWarehouse 
-                              ? 'bg-blue-100' 
-                              : 'bg-purple-100'
-                          }`}>
-                            {isWarehouse ? (
-                              <Warehouse className="w-5 h-5 text-blue-600" />
-                            ) : (
-                              <Truck className="w-5 h-5 text-purple-600" />
-                            )}
-                          </div>
-                          <div className="flex-1">
-                            <p className="font-medium text-gray-900">{location.name}</p>
-                            <p className="text-xs text-gray-500 capitalize">{location.type}</p>
-                          </div>
-                          <div className={`w-6 h-6 rounded-full flex items-center justify-center ${
-                            isSelected 
-                              ? 'bg-[#1EB053] text-white' 
-                              : 'bg-gray-200'
-                          }`}>
-                            {isSelected && <Check className="w-4 h-4" />}
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                )}
-
-                {selectedLocations.length > 0 && (
-                  <div className="flex items-center gap-2 p-3 bg-[#1EB053]/10 rounded-lg">
-                    <Check className="w-4 h-4 text-[#1EB053]" />
-                    <span className="text-sm text-[#1EB053] font-medium">
-                      {selectedLocations.length} location{selectedLocations.length > 1 ? 's' : ''} selected
-                    </span>
-                  </div>
-                )}
-              </div>
-            )}
+              )}
           </div>
 
           {/* Footer */}
-          <div className="sticky bottom-0 bg-white border-t p-3 sm:p-4 flex flex-col sm:flex-row gap-2 sm:gap-3">
+          <div className="sticky bottom-0 bg-white border-t px-6 py-4 flex gap-3">
             <Button 
               type="button" 
               variant="outline" 
-              onClick={() => onOpenChange(false)} 
-              className="w-full sm:w-auto"
+              onClick={() => onOpenChange(false)}
             >
               Cancel
             </Button>
             <Button 
               type="submit" 
               disabled={isLoading}
-              className="w-full sm:flex-1 text-white"
+              className="flex-1"
               style={{ background: `linear-gradient(135deg, ${primaryColor} 0%, ${secondaryColor} 100%)` }}
             >
               {isLoading ? (
-                <>Processing...</>
+                'Saving...'
               ) : (
                 <>
-                  <Check className="w-4 h-4 mr-2" />
-                  {editingProduct ? 'Update Product' : 'Create Product'}
+                  <Package className="w-4 h-4 mr-2" />
+                  {editingProduct ? 'Update' : 'Create Product'}
                 </>
               )}
             </Button>
           </div>
         </form>
 
-        {/* Bottom flag stripe */}
-        <div className="h-1 flex">
+        {/* Flag Footer */}
+        <div className="h-1.5 flex">
           <div className="flex-1" style={{ backgroundColor: primaryColor }} />
           <div className="flex-1 bg-white" />
           <div className="flex-1" style={{ backgroundColor: secondaryColor }} />
