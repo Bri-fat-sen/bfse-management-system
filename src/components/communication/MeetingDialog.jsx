@@ -96,144 +96,128 @@ export default function MeetingDialog({
     createMeetingMutation.mutate(data);
   };
 
+  const [showAdvanced, setShowAdvanced] = useState(false);
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto w-[95vw] sm:w-full">
-        <DialogHeader>
-          <div className="flex h-1 w-16 rounded-full overflow-hidden mb-3">
-            <div className="flex-1 bg-[#1EB053]" />
-            <div className="flex-1 bg-white border-y border-gray-200" />
-            <div className="flex-1 bg-[#0072C6]" />
-          </div>
-          <DialogTitle className="flex items-center gap-2">
-            <Calendar className="w-5 h-5 text-[#0072C6]" />
-            Schedule Meeting
-          </DialogTitle>
-        </DialogHeader>
+      <DialogContent className="max-w-lg max-h-[90vh] overflow-hidden p-0 w-[95vw] sm:w-full [&>button]:hidden">
+        <div className="h-2 flex">
+          <div className="flex-1 bg-[#1EB053]" />
+          <div className="flex-1 bg-white" />
+          <div className="flex-1 bg-[#0072C6]" />
+        </div>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <Label>Meeting Title</Label>
-            <Input name="title" placeholder="Weekly Team Sync" required className="mt-1" />
-          </div>
-
-          <div>
-            <Label>Description</Label>
-            <Textarea name="description" placeholder="Meeting agenda and notes..." className="mt-1" />
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            <div>
-              <Label>Date</Label>
-              <Input 
-                name="date" 
-                type="date" 
-                defaultValue={format(new Date(), 'yyyy-MM-dd')}
-                required 
-                className="mt-1" 
-              />
-            </div>
-            <div>
-              <Label>Start Time</Label>
-              <Input name="start_time" type="time" defaultValue="09:00" required className="mt-1" />
-            </div>
-            <div>
-              <Label>End Time</Label>
-              <Input name="end_time" type="time" defaultValue="10:00" className="mt-1" />
-            </div>
-          </div>
-
-          <div>
-            <Label>Meeting Type</Label>
-            <div className="grid grid-cols-3 gap-2 mt-2">
-              {[
-                { value: 'in_person', icon: Users, label: 'In Person' },
-                { value: 'video', icon: Video, label: 'Video' },
-                { value: 'audio', icon: Phone, label: 'Audio' },
-              ].map((type) => (
-                <Button
-                  key={type.value}
-                  type="button"
-                  variant={meetingType === type.value ? "default" : "outline"}
-                  className={`${meetingType === type.value ? "bg-gradient-to-r from-[#1EB053] to-[#0072C6]" : ""} text-xs sm:text-sm px-2 sm:px-4`}
-                  onClick={() => setMeetingType(type.value)}
-                >
-                  <type.icon className="w-4 h-4 sm:mr-1" />
-                  <span className="hidden sm:inline">{type.label}</span>
-                </Button>
-              ))}
-            </div>
-          </div>
-
-          {meetingType === 'in_person' ? (
-            <div>
-              <Label>Location</Label>
-              <div className="relative mt-1">
-                <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                <Input name="location" placeholder="Conference Room A" className="pl-10" />
+        <div className="px-6 py-4 text-white border-b border-white/20" style={{ background: 'linear-gradient(135deg, #1EB053 0%, #0072C6 100%)' }}>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center">
+                <Calendar className="w-5 h-5 text-white" />
+              </div>
+              <div>
+                <h2 className="text-lg font-bold">Quick Meeting</h2>
+                <p className="text-white/80 text-xs">Press Ctrl+Enter to save</p>
               </div>
             </div>
-          ) : (
+            <Button variant="ghost" size="icon" onClick={() => onOpenChange(false)} className="text-white hover:bg-white/20">
+              <X className="w-5 h-5" />
+            </Button>
+          </div>
+        </div>
+
+        <form onSubmit={handleSubmit} className="overflow-y-auto max-h-[calc(90vh-180px)]">
+          <div className="p-6 space-y-4">
             <div>
-              <Label>Meeting Link</Label>
-              <Input name="meeting_link" placeholder="https://meet.google.com/..." className="mt-1" />
+              <Label className="font-medium">Meeting Title *</Label>
+              <Input name="title" placeholder="Weekly Team Sync" required autoFocus className="mt-1.5" />
             </div>
-          )}
 
-          {/* Recurring Meeting */}
-          <RecurringMeetingForm
-            isRecurring={isRecurring}
-            setIsRecurring={setIsRecurring}
-            recurrence={recurrence}
-            setRecurrence={setRecurrence}
-          />
+            <div className="grid grid-cols-3 gap-2">
+              <div className="col-span-3 sm:col-span-1">
+                <Label className="text-sm">Date *</Label>
+                <Input name="date" type="date" defaultValue={format(new Date(), 'yyyy-MM-dd')} required className="mt-1.5" />
+              </div>
+              <div>
+                <Label className="text-sm">Start *</Label>
+                <Input name="start_time" type="time" defaultValue="09:00" required className="mt-1.5" />
+              </div>
+              <div>
+                <Label className="text-sm">End</Label>
+                <Input name="end_time" type="time" defaultValue="10:00" className="mt-1.5" />
+              </div>
+            </div>
 
-          {/* Reminders */}
-          <MeetingReminders reminders={reminders} setReminders={setReminders} />
+            <div>
+              <Label className="text-sm mb-2 block">Type</Label>
+              <div className="grid grid-cols-3 gap-2">
+                {[
+                  { value: 'in_person', icon: Users, label: 'In Person' },
+                  { value: 'video', icon: Video, label: 'Video' },
+                  { value: 'audio', icon: Phone, label: 'Phone' },
+                ].map((type) => (
+                  <Button key={type.value} type="button" variant={meetingType === type.value ? "default" : "outline"} className={meetingType === type.value ? "bg-gradient-to-r from-[#1EB053] to-[#0072C6]" : ""} onClick={() => setMeetingType(type.value)} size="sm">
+                    <type.icon className="w-4 h-4" />
+                  </Button>
+                ))}
+              </div>
+            </div>
 
-          <div>
-            <Label>Attendees</Label>
-            <ScrollArea className="h-40 mt-2 border rounded-lg p-2">
-              <div className="space-y-2">
-                {employees
-                  .filter(e => e.id !== currentEmployee?.id)
-                  .map((emp) => (
-                    <div
-                      key={emp.id}
-                      className="flex items-center gap-3 p-2 rounded-lg hover:bg-gray-50 cursor-pointer"
-                      onClick={() => toggleAttendee(emp.id)}
-                    >
+            {meetingType === 'in_person' ? (
+              <div>
+                <Label className="text-sm">Location</Label>
+                <Input name="location" placeholder="Conference Room" className="mt-1.5" />
+              </div>
+            ) : (
+              <div>
+                <Label className="text-sm">Meeting Link</Label>
+                <Input name="meeting_link" placeholder="https://..." className="mt-1.5" />
+              </div>
+            )}
+
+            <div>
+              <Label className="text-sm">Attendees ({selectedAttendees.length})</Label>
+              <ScrollArea className="h-32 mt-1.5 border rounded-lg p-2">
+                <div className="space-y-1">
+                  {employees.filter(e => e.id !== currentEmployee?.id).map((emp) => (
+                    <div key={emp.id} className="flex items-center gap-2 p-1.5 rounded hover:bg-gray-50 cursor-pointer" onClick={() => toggleAttendee(emp.id)}>
                       <Checkbox checked={selectedAttendees.includes(emp.id)} />
-                      <Avatar className="w-8 h-8">
-                        <AvatarImage src={emp.profile_photo} />
-                        <AvatarFallback className="bg-[#1EB053] text-white text-xs">
-                          {emp.full_name?.charAt(0)}
-                        </AvatarFallback>
-                      </Avatar>
-                      <div className="flex-1">
-                        <p className="text-sm font-medium">{emp.full_name}</p>
-                        <p className="text-xs text-gray-500">{emp.position || emp.department}</p>
-                      </div>
+                      <span className="text-sm flex-1">{emp.full_name}</span>
                     </div>
                   ))}
+                </div>
+              </ScrollArea>
+            </div>
+
+            <button type="button" onClick={() => setShowAdvanced(!showAdvanced)} className="w-full text-sm text-gray-600 hover:text-gray-900 text-left">
+              {showAdvanced ? '− Hide' : '+ Show'} More Options
+            </button>
+
+            {showAdvanced && (
+              <div className="space-y-3 pt-2 border-t">
+                <div>
+                  <Label className="text-sm">Description</Label>
+                  <Textarea name="description" placeholder="Agenda and notes..." className="mt-1.5" rows={2} />
+                </div>
+                <RecurringMeetingForm isRecurring={isRecurring} setIsRecurring={setIsRecurring} recurrence={recurrence} setRecurrence={setRecurrence} />
+                <MeetingReminders reminders={reminders} setReminders={setReminders} />
               </div>
-            </ScrollArea>
-            {selectedAttendees.length > 0 && (
-              <p className="text-xs text-gray-500 mt-1">
-                {selectedAttendees.length} attendee(s) selected
-              </p>
             )}
           </div>
 
-          <DialogFooter className="flex-col sm:flex-row gap-2">
-            <Button type="button" variant="outline" onClick={() => onOpenChange(false)} className="w-full sm:w-auto">
+          <div className="sticky bottom-0 bg-white border-t p-4 flex gap-2">
+            <Button type="button" variant="outline" onClick={() => onOpenChange(false)} className="flex-1 sm:flex-none sm:w-24">
               Cancel
             </Button>
-            <Button type="submit" className="bg-gradient-to-r from-[#1EB053] to-[#0072C6] hover:from-[#178f43] hover:to-[#005a9e] text-white shadow-lg w-full sm:w-auto" disabled={createMeetingMutation.isPending}>
-              {createMeetingMutation.isPending ? "Scheduling..." : "Schedule Meeting"}
+            <Button type="submit" disabled={createMeetingMutation.isPending} className="flex-1 text-white bg-gradient-to-r from-[#1EB053] to-[#0072C6]">
+              {createMeetingMutation.isPending ? 'Saving...' : <><Check className="w-4 h-4 mr-2" />Schedule</>}
             </Button>
-          </DialogFooter>
+          </div>
         </form>
+
+        <div className="h-1.5 flex">
+          <div className="flex-1 bg-[#1EB053]" />
+          <div className="flex-1 bg-white" />
+          <div className="flex-1 bg-[#0072C6]" />
+        </div>
       </DialogContent>
     </Dialog>
   );
