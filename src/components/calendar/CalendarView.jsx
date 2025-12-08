@@ -117,6 +117,15 @@ export default function CalendarView({
 
   // Generate calendar days
   const generateCalendarDays = () => {
+    if (view === "week") {
+      const weekStart = startOfWeek(currentDate, { weekStartsOn: 1 });
+      const days = [];
+      for (let i = 0; i < 7; i++) {
+        days.push(addDays(weekStart, i));
+      }
+      return days;
+    }
+
     const monthStart = startOfMonth(currentDate);
     const monthEnd = endOfMonth(monthStart);
     const startDate = startOfWeek(monthStart, { weekStartsOn: 1 });
@@ -276,97 +285,229 @@ export default function CalendarView({
             ))}
           </div>
 
-          {/* Calendar days */}
-          <div className="grid grid-cols-7 gap-2">
-            {calendarDays.map((day, idx) => {
-              const dayEvents = getEventsForDate(day);
-              const isToday = isSameDay(day, new Date());
-              const isCurrentMonth = isSameMonth(day, currentDate);
-              const dateStr = format(day, 'yyyy-MM-dd');
+          {/* Calendar days - Month View */}
+          {view === "month" && (
+            <div className="grid grid-cols-7 gap-2">
+              {calendarDays.map((day, idx) => {
+                const dayEvents = getEventsForDate(day);
+                const isToday = isSameDay(day, new Date());
+                const isCurrentMonth = isSameMonth(day, currentDate);
+                const dateStr = format(day, 'yyyy-MM-dd');
 
-              return (
-                <Droppable key={dateStr} droppableId={dateStr}>
-                  {(provided, snapshot) => (
-                    <div
-                      ref={provided.innerRef}
-                      {...provided.droppableProps}
-                      onClick={() => dayEvents.length === 0 && onAddTask?.(dateStr)}
-                      className={cn(
-                        "min-h-[90px] sm:min-h-[120px] p-2 sm:p-3 rounded-xl border-2 transition-all group cursor-pointer",
-                        !isCurrentMonth && "bg-gray-50/50 opacity-60 border-gray-100",
-                        isToday && "border-[#1EB053] bg-gradient-to-br from-green-50 to-emerald-50 shadow-lg ring-2 ring-[#1EB053]/20",
-                        snapshot.isDraggingOver && "bg-gradient-to-br from-blue-50 to-cyan-50 border-blue-400 shadow-lg scale-[1.02]",
-                        !isToday && isCurrentMonth && "border-gray-200 bg-white hover:border-gray-300 hover:shadow-md",
-                        "relative overflow-hidden"
-                      )}
-                    >
-                      {/* Date number */}
-                      <div className={cn(
-                        "text-sm sm:text-base font-bold mb-2 flex items-center justify-center w-7 h-7 sm:w-8 sm:h-8 rounded-lg transition-all",
-                        isToday && "bg-gradient-to-br from-[#1EB053] to-[#0e7f3d] text-white shadow-md",
-                        !isToday && !isCurrentMonth && "text-gray-400",
-                        !isToday && isCurrentMonth && "text-gray-700 group-hover:bg-gray-100"
-                      )}>
-                        {format(day, 'd')}
-                      </div>
-                      
-                      {/* Events */}
-                      <div className="space-y-1 max-h-[50px] sm:max-h-[70px] overflow-y-auto custom-scrollbar">
-                        {dayEvents.slice(0, view === "month" ? 3 : 10).map((event, eventIdx) => (
-                          <Draggable
-                            key={event.id}
-                            draggableId={event.id}
-                            index={eventIdx}
-                            isDragDisabled={!event.draggable}
-                          >
-                            {(provided, snapshot) => (
-                              <div
-                                ref={provided.innerRef}
-                                {...provided.draggableProps}
-                                {...provided.dragHandleProps}
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  onEventClick?.(event);
-                                }}
-                                className={cn(
-                                  "text-[10px] sm:text-xs px-2 py-1 rounded-lg cursor-pointer transition-all hover:shadow-md",
-                                  eventColors[event.category || event.type]?.bg,
-                                  eventColors[event.category || event.type]?.text,
-                                  "border-l-4 font-medium",
-                                  eventColors[event.category || event.type]?.border,
-                                  snapshot.isDragging && "shadow-2xl ring-2 ring-blue-500 scale-105 rotate-2",
-                                  event.status === 'completed' && "line-through opacity-60",
-                                  "flex items-center gap-1"
-                                )}
-                              >
-                                {event.time && (
-                                  <span className="font-bold opacity-75">{event.time}</span>
-                                )}
-                                <span className="truncate flex-1">{event.title}</span>
-                              </div>
-                            )}
-                          </Draggable>
-                        ))}
-                        {dayEvents.length > 3 && view === "month" && (
-                          <div className="text-[10px] text-gray-500 text-center font-medium bg-gray-100 rounded py-0.5">
-                            +{dayEvents.length - 3} more
+                return (
+                  <Droppable key={dateStr} droppableId={dateStr}>
+                    {(provided, snapshot) => (
+                      <div
+                        ref={provided.innerRef}
+                        {...provided.droppableProps}
+                        onClick={() => dayEvents.length === 0 && onAddTask?.(dateStr)}
+                        className={cn(
+                          "min-h-[90px] sm:min-h-[120px] p-2 sm:p-3 rounded-xl border-2 transition-all group cursor-pointer",
+                          !isCurrentMonth && "bg-gray-50/50 opacity-60 border-gray-100",
+                          isToday && "border-[#1EB053] bg-gradient-to-br from-green-50 to-emerald-50 shadow-lg ring-2 ring-[#1EB053]/20",
+                          snapshot.isDraggingOver && "bg-gradient-to-br from-blue-50 to-cyan-50 border-blue-400 shadow-lg scale-[1.02]",
+                          !isToday && isCurrentMonth && "border-gray-200 bg-white hover:border-gray-300 hover:shadow-md",
+                          "relative overflow-hidden"
+                        )}
+                      >
+                        <div className={cn(
+                          "text-sm sm:text-base font-bold mb-2 flex items-center justify-center w-7 h-7 sm:w-8 sm:h-8 rounded-lg transition-all",
+                          isToday && "bg-gradient-to-br from-[#1EB053] to-[#0e7f3d] text-white shadow-md",
+                          !isToday && !isCurrentMonth && "text-gray-400",
+                          !isToday && isCurrentMonth && "text-gray-700 group-hover:bg-gray-100"
+                        )}>
+                          {format(day, 'd')}
+                        </div>
+                        
+                        <div className="space-y-1 max-h-[50px] sm:max-h-[70px] overflow-y-auto custom-scrollbar">
+                          {dayEvents.slice(0, 3).map((event, eventIdx) => (
+                            <Draggable
+                              key={event.id}
+                              draggableId={event.id}
+                              index={eventIdx}
+                              isDragDisabled={!event.draggable}
+                            >
+                              {(provided, snapshot) => (
+                                <div
+                                  ref={provided.innerRef}
+                                  {...provided.draggableProps}
+                                  {...provided.dragHandleProps}
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    onEventClick?.(event);
+                                  }}
+                                  className={cn(
+                                    "text-[10px] sm:text-xs px-2 py-1 rounded-lg cursor-pointer transition-all hover:shadow-md",
+                                    eventColors[event.category || event.type]?.bg,
+                                    eventColors[event.category || event.type]?.text,
+                                    "border-l-4 font-medium",
+                                    eventColors[event.category || event.type]?.border,
+                                    snapshot.isDragging && "shadow-2xl ring-2 ring-blue-500 scale-105 rotate-2",
+                                    event.status === 'completed' && "line-through opacity-60",
+                                    "flex items-center gap-1"
+                                  )}
+                                >
+                                  {event.time && (
+                                    <span className="font-bold opacity-75">{event.time}</span>
+                                  )}
+                                  <span className="truncate flex-1">{event.title}</span>
+                                </div>
+                              )}
+                            </Draggable>
+                          ))}
+                          {dayEvents.length > 3 && (
+                            <div className="text-[10px] text-gray-500 text-center font-medium bg-gray-100 rounded py-0.5">
+                              +{dayEvents.length - 3} more
+                            </div>
+                          )}
+                        </div>
+                        {provided.placeholder}
+
+                        {dayEvents.length === 0 && isCurrentMonth && (
+                          <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                            <Plus className="w-6 h-6 text-gray-300" />
                           </div>
                         )}
                       </div>
-                      {provided.placeholder}
+                    )}
+                  </Droppable>
+                );
+              })}
+            </div>
+          )}
 
-                      {/* Add indicator on hover for empty days */}
-                      {dayEvents.length === 0 && isCurrentMonth && (
-                        <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                          <Plus className="w-6 h-6 text-gray-300" />
+          {/* Week View */}
+          {view === "week" && (
+            <div className="space-y-4">
+              <div className="grid grid-cols-7 gap-3">
+                {calendarDays.map((day) => {
+                  const dayEvents = getEventsForDate(day);
+                  const isToday = isSameDay(day, new Date());
+                  const dateStr = format(day, 'yyyy-MM-dd');
+
+                  return (
+                    <Droppable key={dateStr} droppableId={dateStr}>
+                      {(provided, snapshot) => (
+                        <div
+                          ref={provided.innerRef}
+                          {...provided.droppableProps}
+                          onClick={() => dayEvents.length === 0 && onAddTask?.(dateStr)}
+                          className={cn(
+                            "min-h-[400px] p-3 rounded-xl border-2 transition-all group cursor-pointer relative overflow-hidden",
+                            isToday && "border-[#1EB053] bg-gradient-to-br from-green-50 via-emerald-50 to-teal-50 shadow-xl ring-2 ring-[#1EB053]/30",
+                            snapshot.isDraggingOver && "bg-gradient-to-br from-blue-50 to-cyan-50 border-blue-400 shadow-xl scale-[1.02]",
+                            !isToday && "border-gray-200 bg-white hover:border-gray-300 hover:shadow-lg"
+                          )}
+                        >
+                          {/* Sierra Leone mini stripe for today */}
+                          {isToday && (
+                            <div className="absolute top-0 left-0 right-0 h-1 flex">
+                              <div className="flex-1 bg-[#1EB053]" />
+                              <div className="flex-1 bg-white" />
+                              <div className="flex-1 bg-[#0072C6]" />
+                            </div>
+                          )}
+
+                          {/* Date header */}
+                          <div className="mb-4 pb-3 border-b-2 border-dashed border-gray-200">
+                            <div className={cn(
+                              "text-xs font-medium text-gray-500 mb-1 uppercase tracking-wide",
+                              isToday && "text-[#1EB053]"
+                            )}>
+                              {format(day, 'EEE')}
+                            </div>
+                            <div className={cn(
+                              "text-3xl font-bold",
+                              isToday && "text-[#1EB053]",
+                              !isToday && "text-gray-900"
+                            )}>
+                              {format(day, 'd')}
+                            </div>
+                            {dayEvents.length > 0 && (
+                              <Badge className="mt-2 bg-gradient-to-r from-[#1EB053]/10 to-[#0072C6]/10 text-gray-700 border-0 text-xs">
+                                {dayEvents.length} event{dayEvents.length !== 1 ? 's' : ''}
+                              </Badge>
+                            )}
+                          </div>
+                          
+                          {/* Events list */}
+                          <div className="space-y-2 overflow-y-auto max-h-[320px]">
+                            {dayEvents.map((event, eventIdx) => (
+                              <Draggable
+                                key={event.id}
+                                draggableId={event.id}
+                                index={eventIdx}
+                                isDragDisabled={!event.draggable}
+                              >
+                                {(provided, snapshot) => (
+                                  <div
+                                    ref={provided.innerRef}
+                                    {...provided.draggableProps}
+                                    {...provided.dragHandleProps}
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      onEventClick?.(event);
+                                    }}
+                                    className={cn(
+                                      "p-3 rounded-xl cursor-pointer transition-all hover:shadow-lg border-l-4",
+                                      eventColors[event.category || event.type]?.bg,
+                                      eventColors[event.category || event.type]?.text,
+                                      eventColors[event.category || event.type]?.border,
+                                      snapshot.isDragging && "shadow-2xl ring-4 ring-blue-500/50 scale-105",
+                                      event.status === 'completed' && "opacity-60"
+                                    )}
+                                  >
+                                    <div className="flex items-start justify-between gap-2 mb-1">
+                                      <div className="flex items-center gap-2 flex-1">
+                                        {event.time && (
+                                          <Badge className="bg-white/50 text-xs px-2 py-0.5">
+                                            <Clock className="w-3 h-3 mr-1" />
+                                            {event.time}
+                                          </Badge>
+                                        )}
+                                        {event.status === 'completed' && (
+                                          <CheckCircle2 className="w-4 h-4 text-green-600" />
+                                        )}
+                                      </div>
+                                      {event.priority && (
+                                        <Badge className={cn("text-[10px] px-1.5 py-0.5", priorityColors[event.priority])}>
+                                          {event.priority}
+                                        </Badge>
+                                      )}
+                                    </div>
+                                    <p className={cn(
+                                      "font-semibold text-sm mb-1",
+                                      event.status === 'completed' && "line-through"
+                                    )}>
+                                      {event.title}
+                                    </p>
+                                    {event.attendees?.length > 0 && (
+                                      <div className="flex items-center gap-1 text-xs opacity-75 mt-2">
+                                        <Users className="w-3 h-3" />
+                                        <span>{event.attendees.length} attendee{event.attendees.length !== 1 ? 's' : ''}</span>
+                                      </div>
+                                    )}
+                                  </div>
+                                )}
+                              </Draggable>
+                            ))}
+                            {dayEvents.length === 0 && (
+                              <div className="flex flex-col items-center justify-center py-12 text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity">
+                                <Plus className="w-8 h-8 mb-2" />
+                                <p className="text-xs">Add event</p>
+                              </div>
+                            )}
+                          </div>
+                          {provided.placeholder}
                         </div>
                       )}
-                    </div>
-                  )}
-                </Droppable>
-              );
-            })}
-          </div>
+                    </Droppable>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+        </div>
         </div>
       </DragDropContext>
     </div>
