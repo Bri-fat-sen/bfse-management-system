@@ -98,175 +98,360 @@ export default function EmployeeSelfService() {
 
   return (
     <div className="space-y-6">
-      <PageHeader
-        title="My Portal"
-        subtitle="Manage your personal information and view your records"
-      >
-        <Button onClick={() => setShowPersonalInfoEditor(true)} className="bg-[#1EB053] hover:bg-[#178f43]">
-          <Edit className="w-4 h-4 mr-2" />
-          Update Info
-        </Button>
-      </PageHeader>
-
-      {/* Profile Summary Card */}
-      <Card className="overflow-hidden">
-        <div className="h-20 bg-gradient-to-r from-[#1EB053] to-[#0072C6]" />
-        <CardContent className="relative pt-0">
-          <div className="flex flex-col sm:flex-row sm:items-end gap-4 -mt-10">
-            <Avatar className="w-20 h-20 border-4 border-white shadow-lg">
-              <AvatarImage src={currentEmployee?.profile_photo} />
-              <AvatarFallback className="bg-gradient-to-br from-[#1EB053] to-[#0072C6] text-white text-2xl">
-                {currentEmployee?.full_name?.charAt(0) || 'E'}
-              </AvatarFallback>
-            </Avatar>
-            <div className="flex-1 pb-2">
-              <h2 className="text-xl font-bold">{currentEmployee?.full_name || user?.full_name}</h2>
-              <p className="text-gray-500">{currentEmployee?.position} • {currentEmployee?.department}</p>
-              <div className="flex flex-wrap items-center gap-2 mt-2">
-                <Badge className="bg-gradient-to-r from-[#1EB053] to-[#0072C6] text-white">
-                  {currentEmployee?.role?.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
-                </Badge>
-                <Badge variant="outline">{currentEmployee?.employee_code}</Badge>
-              </div>
-            </div>
-            <div className="hidden md:block text-right pb-2">
-              <p className="text-sm text-gray-500">{currentOrg?.name}</p>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Quick Stats */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <StatCard
-          title="Payslips"
-          value={payrolls.length}
-          subtitle="Available to view"
-          icon={DollarSign}
-          color="green"
-        />
-        <StatCard
-          title="Leave Requests"
-          value={`${pendingLeaves} Pending`}
-          subtitle={`${leaveRequests.length} total`}
-          icon={CalendarDays}
-          color="blue"
-        />
-        <StatCard
-          title="Performance"
-          value={latestReview?.overall_rating ? `${latestReview.overall_rating}/5` : "N/A"}
-          subtitle={latestReview?.review_period || "No reviews"}
-          icon={Star}
-          color="gold"
-        />
-        <StatCard
-          title="Trainings"
-          value={trainingCount}
-          subtitle="Completed"
-          icon={GraduationCap}
-          color="purple"
-        />
+      {/* Sierra Leone Stripe */}
+      <div className="h-1 w-full flex rounded-full overflow-hidden">
+        <div className="flex-1 bg-[#1EB053]" />
+        <div className="flex-1 bg-white border-y border-gray-200" />
+        <div className="flex-1 bg-[#0072C6]" />
       </div>
 
-      {/* Main Tabs */}
+      {/* Modern Header with Gradient */}
+      <div className="relative overflow-hidden rounded-2xl shadow-xl">
+        {/* Background Pattern */}
+        <div className="absolute inset-0 bg-gradient-to-br from-[#1EB053] via-[#0e7f3d] to-[#0072C6] opacity-95">
+          <div className="absolute inset-0 opacity-10" style={{
+            backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='1'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`
+          }} />
+        </div>
+
+        {/* Sierra Leone Flag Mini Stripe */}
+        <div className="absolute top-0 left-0 right-0 h-1 flex">
+          <div className="flex-1 bg-white opacity-40" />
+          <div className="flex-1 bg-white" />
+          <div className="flex-1 bg-white opacity-40" />
+        </div>
+
+        {/* Content */}
+        <div className="relative p-8">
+          <div className="flex flex-col lg:flex-row items-start lg:items-center gap-6">
+            {/* Avatar */}
+            <div className="relative">
+              <div className="absolute -inset-1 bg-white rounded-full blur-sm opacity-30" />
+              <Avatar className="relative w-28 h-28 border-4 border-white shadow-2xl ring-4 ring-white/20">
+                <AvatarImage src={currentEmployee?.profile_photo} />
+                <AvatarFallback className="bg-white text-[#1EB053] text-3xl font-bold">
+                  {currentEmployee?.full_name?.charAt(0) || 'E'}
+                </AvatarFallback>
+              </Avatar>
+              <div className="absolute -bottom-1 -right-1 w-8 h-8 bg-white rounded-full flex items-center justify-center shadow-lg">
+                <div className="w-6 h-6 rounded-full bg-gradient-to-br from-[#1EB053] to-[#0072C6] flex items-center justify-center">
+                  <Clock className="w-4 h-4 text-white" />
+                </div>
+              </div>
+            </div>
+
+            {/* Info */}
+            <div className="flex-1 text-white">
+              <div className="flex items-start justify-between gap-4 mb-2">
+                <div>
+                  <h1 className="text-3xl font-bold mb-1">{currentEmployee?.full_name || user?.full_name}</h1>
+                  <p className="text-white/90 text-lg">{currentEmployee?.position}</p>
+                </div>
+                <Button 
+                  onClick={() => setShowPersonalInfoEditor(true)} 
+                  className="bg-white text-[#1EB053] hover:bg-gray-100 shadow-lg"
+                >
+                  <Edit className="w-4 h-4 mr-2" />
+                  Edit Profile
+                </Button>
+              </div>
+              
+              <div className="flex flex-wrap items-center gap-3 mt-4">
+                <Badge className="bg-white/20 text-white border-white/30 backdrop-blur-sm px-3 py-1">
+                  <Building2 className="w-3 h-3 mr-1" />
+                  {currentEmployee?.department || 'N/A'}
+                </Badge>
+                <Badge className="bg-white/20 text-white border-white/30 backdrop-blur-sm px-3 py-1">
+                  <User className="w-3 h-3 mr-1" />
+                  {currentEmployee?.employee_code}
+                </Badge>
+                <Badge className="bg-white text-[#0072C6] px-3 py-1 font-semibold">
+                  {currentEmployee?.role?.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                </Badge>
+              </div>
+            </div>
+
+            {/* Organization Badge */}
+            {currentOrg && (
+              <div className="hidden lg:block bg-white/10 backdrop-blur-md rounded-xl p-4 border border-white/20">
+                <div className="flex items-center gap-3">
+                  <div className="w-2 h-12 rounded-full bg-gradient-to-b from-[#1EB053] via-white to-[#0072C6]" />
+                  <div className="text-white">
+                    <p className="text-xs opacity-75">Organization</p>
+                    <p className="font-semibold">{currentOrg.name}</p>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Bottom Stripe */}
+        <div className="h-1 flex">
+          <div className="flex-1 bg-white opacity-40" />
+          <div className="flex-1 bg-white" />
+          <div className="flex-1 bg-white opacity-40" />
+        </div>
+      </div>
+
+      {/* Modern Quick Stats */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <Card className="relative overflow-hidden border-0 shadow-lg hover:shadow-xl transition-all duration-300 group cursor-pointer">
+          <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-[#1EB053] to-[#16803d]" />
+          <CardContent className="p-6">
+            <div className="flex items-start justify-between mb-3">
+              <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-[#1EB053]/10 to-[#1EB053]/5 flex items-center justify-center group-hover:scale-110 transition-transform">
+                <DollarSign className="w-6 h-6 text-[#1EB053]" />
+              </div>
+            </div>
+            <h3 className="text-2xl font-bold text-gray-900 mb-1">{payrolls.length}</h3>
+            <p className="text-sm text-gray-600 font-medium">Payslips</p>
+            <p className="text-xs text-gray-500 mt-1">Available to view</p>
+          </CardContent>
+        </Card>
+
+        <Card className="relative overflow-hidden border-0 shadow-lg hover:shadow-xl transition-all duration-300 group cursor-pointer">
+          <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-[#0072C6] to-[#005a9e]" />
+          <CardContent className="p-6">
+            <div className="flex items-start justify-between mb-3">
+              <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-[#0072C6]/10 to-[#0072C6]/5 flex items-center justify-center group-hover:scale-110 transition-transform">
+                <CalendarDays className="w-6 h-6 text-[#0072C6]" />
+              </div>
+              {pendingLeaves > 0 && (
+                <Badge className="bg-amber-100 text-amber-700 animate-pulse">{pendingLeaves}</Badge>
+              )}
+            </div>
+            <h3 className="text-2xl font-bold text-gray-900 mb-1">{leaveRequests.length}</h3>
+            <p className="text-sm text-gray-600 font-medium">Leave Requests</p>
+            <p className="text-xs text-gray-500 mt-1">{pendingLeaves} pending approval</p>
+          </CardContent>
+        </Card>
+
+        <Card className="relative overflow-hidden border-0 shadow-lg hover:shadow-xl transition-all duration-300 group cursor-pointer">
+          <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-[#D4AF37] to-[#b8941e]" />
+          <CardContent className="p-6">
+            <div className="flex items-start justify-between mb-3">
+              <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-amber-500/10 to-amber-500/5 flex items-center justify-center group-hover:scale-110 transition-transform">
+                <Star className="w-6 h-6 text-[#D4AF37]" />
+              </div>
+            </div>
+            <h3 className="text-2xl font-bold text-gray-900 mb-1">
+              {latestReview?.overall_rating ? `${latestReview.overall_rating}/5` : "N/A"}
+            </h3>
+            <p className="text-sm text-gray-600 font-medium">Performance</p>
+            <p className="text-xs text-gray-500 mt-1">{latestReview?.review_period || "No reviews yet"}</p>
+          </CardContent>
+        </Card>
+
+        <Card className="relative overflow-hidden border-0 shadow-lg hover:shadow-xl transition-all duration-300 group cursor-pointer">
+          <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-purple-500 to-purple-600" />
+          <CardContent className="p-6">
+            <div className="flex items-start justify-between mb-3">
+              <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-purple-500/10 to-purple-500/5 flex items-center justify-center group-hover:scale-110 transition-transform">
+                <GraduationCap className="w-6 h-6 text-purple-600" />
+              </div>
+            </div>
+            <h3 className="text-2xl font-bold text-gray-900 mb-1">{trainingCount}</h3>
+            <p className="text-sm text-gray-600 font-medium">Training</p>
+            <p className="text-xs text-gray-500 mt-1">Courses completed</p>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Modern Tabs with Sierra Leone Design */}
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="bg-gray-100 p-1 flex-wrap h-auto">
-          <TabsTrigger value="profile" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#1EB053] data-[state=active]:to-[#0072C6] data-[state=active]:text-white">
-            <User className="w-4 h-4 mr-1" />
-            Profile
-          </TabsTrigger>
-          <TabsTrigger value="payslips" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#1EB053] data-[state=active]:to-[#0072C6] data-[state=active]:text-white">
-            <DollarSign className="w-4 h-4 mr-1" />
-            Payslips
-          </TabsTrigger>
-          <TabsTrigger value="leave" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#1EB053] data-[state=active]:to-[#0072C6] data-[state=active]:text-white">
-            <CalendarDays className="w-4 h-4 mr-1" />
-            Leave
-          </TabsTrigger>
-          <TabsTrigger value="performance" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#1EB053] data-[state=active]:to-[#0072C6] data-[state=active]:text-white">
-            <Star className="w-4 h-4 mr-1" />
-            Performance
-          </TabsTrigger>
-          <TabsTrigger value="training" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#1EB053] data-[state=active]:to-[#0072C6] data-[state=active]:text-white">
-            <GraduationCap className="w-4 h-4 mr-1" />
-            Training
-          </TabsTrigger>
-        </TabsList>
+        <div className="relative">
+          {/* Top Stripe */}
+          <div className="absolute top-0 left-0 right-0 h-0.5 flex">
+            <div className="flex-1 bg-[#1EB053]/30" />
+            <div className="flex-1 bg-white border-y border-gray-200" />
+            <div className="flex-1 bg-[#0072C6]/30" />
+          </div>
+          
+          <TabsList className="bg-white border shadow-sm p-1.5 flex-wrap h-auto gap-1 rounded-xl mt-2">
+            <TabsTrigger 
+              value="profile" 
+              className="relative rounded-lg data-[state=active]:bg-white data-[state=active]:shadow-md transition-all"
+            >
+              <div className="absolute top-0 left-0 right-0 h-0.5 flex opacity-0 data-[state=active]:opacity-100 transition-opacity rounded-t-lg overflow-hidden">
+                <div className="flex-1 bg-[#1EB053]" />
+                <div className="flex-1 bg-white" />
+                <div className="flex-1 bg-[#0072C6]" />
+              </div>
+              <User className="w-4 h-4 mr-2" />
+              Profile
+            </TabsTrigger>
+            <TabsTrigger 
+              value="payslips"
+              className="relative rounded-lg data-[state=active]:bg-white data-[state=active]:shadow-md transition-all"
+            >
+              <div className="absolute top-0 left-0 right-0 h-0.5 flex opacity-0 data-[state=active]:opacity-100 transition-opacity rounded-t-lg overflow-hidden">
+                <div className="flex-1 bg-[#1EB053]" />
+                <div className="flex-1 bg-white" />
+                <div className="flex-1 bg-[#0072C6]" />
+              </div>
+              <DollarSign className="w-4 h-4 mr-2" />
+              Payslips
+            </TabsTrigger>
+            <TabsTrigger 
+              value="leave"
+              className="relative rounded-lg data-[state=active]:bg-white data-[state=active]:shadow-md transition-all"
+            >
+              <div className="absolute top-0 left-0 right-0 h-0.5 flex opacity-0 data-[state=active]:opacity-100 transition-opacity rounded-t-lg overflow-hidden">
+                <div className="flex-1 bg-[#1EB053]" />
+                <div className="flex-1 bg-white" />
+                <div className="flex-1 bg-[#0072C6]" />
+              </div>
+              <CalendarDays className="w-4 h-4 mr-2" />
+              Leave
+            </TabsTrigger>
+            <TabsTrigger 
+              value="performance"
+              className="relative rounded-lg data-[state=active]:bg-white data-[state=active]:shadow-md transition-all"
+            >
+              <div className="absolute top-0 left-0 right-0 h-0.5 flex opacity-0 data-[state=active]:opacity-100 transition-opacity rounded-t-lg overflow-hidden">
+                <div className="flex-1 bg-[#1EB053]" />
+                <div className="flex-1 bg-white" />
+                <div className="flex-1 bg-[#0072C6]" />
+              </div>
+              <Star className="w-4 h-4 mr-2" />
+              Performance
+            </TabsTrigger>
+            <TabsTrigger 
+              value="training"
+              className="relative rounded-lg data-[state=active]:bg-white data-[state=active]:shadow-md transition-all"
+            >
+              <div className="absolute top-0 left-0 right-0 h-0.5 flex opacity-0 data-[state=active]:opacity-100 transition-opacity rounded-t-lg overflow-hidden">
+                <div className="flex-1 bg-[#1EB053]" />
+                <div className="flex-1 bg-white" />
+                <div className="flex-1 bg-[#0072C6]" />
+              </div>
+              <GraduationCap className="w-4 h-4 mr-2" />
+              Training
+            </TabsTrigger>
+          </TabsList>
+        </div>
 
         {/* Profile Tab */}
         <TabsContent value="profile" className="mt-6">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <Card>
+            <Card className="border-0 shadow-lg">
+              <div className="h-1 flex">
+                <div className="flex-1 bg-[#1EB053]" />
+                <div className="flex-1 bg-white" />
+                <div className="flex-1 bg-[#0072C6]" />
+              </div>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                  <User className="w-5 h-5 text-[#1EB053]" />
+                  <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#1EB053]/10 to-[#1EB053]/5 flex items-center justify-center">
+                    <User className="w-5 h-5 text-[#1EB053]" />
+                  </div>
                   Personal Information
                 </CardTitle>
               </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
-                  <Mail className="w-5 h-5 text-blue-500" />
-                  <div>
-                    <p className="text-xs text-gray-500">Email</p>
-                    <p className="font-medium">{currentEmployee?.email || user?.email}</p>
+              <CardContent className="space-y-3">
+                <div className="group p-4 bg-gradient-to-r from-blue-50 to-transparent rounded-xl border border-blue-100 hover:shadow-md transition-all">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-lg bg-blue-100 flex items-center justify-center group-hover:scale-110 transition-transform">
+                      <Mail className="w-5 h-5 text-blue-600" />
+                    </div>
+                    <div className="flex-1">
+                      <p className="text-xs text-blue-600 font-medium mb-0.5">Email Address</p>
+                      <p className="font-semibold text-gray-900">{currentEmployee?.email || user?.email}</p>
+                    </div>
                   </div>
                 </div>
-                <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
-                  <Phone className="w-5 h-5 text-green-500" />
-                  <div>
-                    <p className="text-xs text-gray-500">Phone</p>
-                    <p className="font-medium">{currentEmployee?.phone || 'Not set'}</p>
+                <div className="group p-4 bg-gradient-to-r from-green-50 to-transparent rounded-xl border border-green-100 hover:shadow-md transition-all">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-lg bg-green-100 flex items-center justify-center group-hover:scale-110 transition-transform">
+                      <Phone className="w-5 h-5 text-green-600" />
+                    </div>
+                    <div className="flex-1">
+                      <p className="text-xs text-green-600 font-medium mb-0.5">Phone Number</p>
+                      <p className="font-semibold text-gray-900">{currentEmployee?.phone || 'Not set'}</p>
+                    </div>
                   </div>
                 </div>
-                <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
-                  <MapPin className="w-5 h-5 text-red-500" />
-                  <div>
-                    <p className="text-xs text-gray-500">Address</p>
-                    <p className="font-medium">{currentEmployee?.address || 'Not set'}</p>
+                <div className="group p-4 bg-gradient-to-r from-red-50 to-transparent rounded-xl border border-red-100 hover:shadow-md transition-all">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-lg bg-red-100 flex items-center justify-center group-hover:scale-110 transition-transform">
+                      <MapPin className="w-5 h-5 text-red-600" />
+                    </div>
+                    <div className="flex-1">
+                      <p className="text-xs text-red-600 font-medium mb-0.5">Address</p>
+                      <p className="font-semibold text-gray-900">{currentEmployee?.address || 'Not set'}</p>
+                    </div>
                   </div>
                 </div>
-                <Button variant="outline" className="w-full" onClick={() => setShowPersonalInfoEditor(true)}>
+                <Button 
+                  variant="outline" 
+                  className="w-full mt-2 border-2 hover:bg-gradient-to-r hover:from-[#1EB053] hover:to-[#0072C6] hover:text-white hover:border-transparent transition-all" 
+                  onClick={() => setShowPersonalInfoEditor(true)}
+                >
                   <Edit className="w-4 h-4 mr-2" />
                   Edit Personal Info
                 </Button>
               </CardContent>
             </Card>
 
-            <Card>
+            <Card className="border-0 shadow-lg">
+              <div className="h-1 flex">
+                <div className="flex-1 bg-[#0072C6]" />
+                <div className="flex-1 bg-white" />
+                <div className="flex-1 bg-[#1EB053]" />
+              </div>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                  <Building2 className="w-5 h-5 text-[#0072C6]" />
+                  <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#0072C6]/10 to-[#0072C6]/5 flex items-center justify-center">
+                    <Building2 className="w-5 h-5 text-[#0072C6]" />
+                  </div>
                   Employment Details
                 </CardTitle>
               </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
-                  <Briefcase className="w-5 h-5 text-purple-500" />
-                  <div>
-                    <p className="text-xs text-gray-500">Position</p>
-                    <p className="font-medium">{currentEmployee?.position || 'Not set'}</p>
+              <CardContent className="space-y-3">
+                <div className="group p-4 bg-gradient-to-r from-purple-50 to-transparent rounded-xl border border-purple-100 hover:shadow-md transition-all">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-lg bg-purple-100 flex items-center justify-center group-hover:scale-110 transition-transform">
+                      <Briefcase className="w-5 h-5 text-purple-600" />
+                    </div>
+                    <div className="flex-1">
+                      <p className="text-xs text-purple-600 font-medium mb-0.5">Position</p>
+                      <p className="font-semibold text-gray-900">{currentEmployee?.position || 'Not set'}</p>
+                    </div>
                   </div>
                 </div>
-                <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
-                  <Building2 className="w-5 h-5 text-amber-500" />
-                  <div>
-                    <p className="text-xs text-gray-500">Department</p>
-                    <p className="font-medium">{currentEmployee?.department || 'Not set'}</p>
+                <div className="group p-4 bg-gradient-to-r from-amber-50 to-transparent rounded-xl border border-amber-100 hover:shadow-md transition-all">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-lg bg-amber-100 flex items-center justify-center group-hover:scale-110 transition-transform">
+                      <Building2 className="w-5 h-5 text-amber-600" />
+                    </div>
+                    <div className="flex-1">
+                      <p className="text-xs text-amber-600 font-medium mb-0.5">Department</p>
+                      <p className="font-semibold text-gray-900">{currentEmployee?.department || 'Not set'}</p>
+                    </div>
                   </div>
                 </div>
-                <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
-                  <Calendar className="w-5 h-5 text-teal-500" />
-                  <div>
-                    <p className="text-xs text-gray-500">Hire Date</p>
-                    <p className="font-medium">
-                      {currentEmployee?.hire_date ? format(new Date(currentEmployee.hire_date), 'MMMM d, yyyy') : 'Not set'}
-                    </p>
+                <div className="group p-4 bg-gradient-to-r from-teal-50 to-transparent rounded-xl border border-teal-100 hover:shadow-md transition-all">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-lg bg-teal-100 flex items-center justify-center group-hover:scale-110 transition-transform">
+                      <Calendar className="w-5 h-5 text-teal-600" />
+                    </div>
+                    <div className="flex-1">
+                      <p className="text-xs text-teal-600 font-medium mb-0.5">Hire Date</p>
+                      <p className="font-semibold text-gray-900">
+                        {currentEmployee?.hire_date ? format(new Date(currentEmployee.hire_date), 'MMMM d, yyyy') : 'Not set'}
+                      </p>
+                    </div>
                   </div>
                 </div>
-                <div className="p-3 bg-amber-50 border border-amber-200 rounded-lg">
-                  <p className="text-xs text-amber-600 font-medium mb-1">Emergency Contact</p>
-                  <p className="font-medium text-amber-800">{currentEmployee?.emergency_contact || 'Not set'}</p>
-                  <p className="text-sm text-amber-700">{currentEmployee?.emergency_phone || ''}</p>
+                <div className="relative overflow-hidden p-4 bg-gradient-to-br from-amber-50 via-orange-50 to-red-50 border-2 border-amber-200 rounded-xl">
+                  <div className="absolute top-0 right-0 w-20 h-20 bg-amber-200 rounded-full -mr-10 -mt-10 opacity-20" />
+                  <p className="text-xs text-amber-700 font-bold mb-2 flex items-center gap-1">
+                    <Clock className="w-3 h-3" />
+                    Emergency Contact
+                  </p>
+                  <p className="font-semibold text-gray-900">{currentEmployee?.emergency_contact || 'Not set'}</p>
+                  <p className="text-sm text-gray-700 mt-1">{currentEmployee?.emergency_phone || ''}</p>
                 </div>
               </CardContent>
             </Card>
