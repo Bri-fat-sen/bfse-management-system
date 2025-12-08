@@ -11,7 +11,7 @@ import {
 } from "lucide-react";
 import LoadingSpinner from "@/components/ui/LoadingSpinner";
 import { useToast } from "@/components/ui/Toast";
-import { ProtectedPage } from "@/components/permissions/ProtectedPage";
+import ProtectedPage from "@/components/permissions/ProtectedPage";
 import EmptyState from "@/components/ui/EmptyState";
 
 export default function UploadedDocuments() {
