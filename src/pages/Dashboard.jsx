@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery } from "@tanstack/react-query";
 import { format, differenceInDays } from "date-fns";
@@ -17,7 +17,11 @@ import {
   Activity,
   Layers,
   Bell,
-  XCircle
+  XCircle,
+  BarChart3,
+  PieChart,
+  TrendingDown,
+  Target
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -46,6 +50,8 @@ import PerformanceIndicators from "@/components/dashboard/PerformanceIndicators"
 import TopPerformers from "@/components/dashboard/TopPerformers";
 
 export default function Dashboard() {
+  const [activeTab, setActiveTab] = useState("overview");
+
   const { data: user } = useQuery({
     queryKey: ['currentUser'],
     queryFn: () => base44.auth.me(),
@@ -285,9 +291,9 @@ export default function Dashboard() {
   const netIncome = totalRevenue - totalExpenses;
 
   return (
-    <div className="space-y-6">
-      {/* Welcome Header with Sierra Leone Theme */}
-      <div className="relative overflow-hidden rounded-2xl shadow-2xl">
+    <div className="space-y-4">
+      {/* Welcome Header with Sierra Leone Theme - Compact */}
+      <div className="relative overflow-hidden rounded-xl shadow-lg">
         {/* Animated Flag stripe at top */}
         <div className="h-2 flex relative overflow-hidden">
           <div className="flex-1 bg-[#1EB053]" />
@@ -295,7 +301,7 @@ export default function Dashboard() {
           <div className="flex-1 bg-[#0072C6]" />
           <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent animate-pulse" />
         </div>
-        <div className="relative bg-gradient-to-br from-[#0F1F3C] via-[#1a3a5c] to-[#0F1F3C] p-4 sm:p-6 md:p-8 text-white overflow-hidden">
+        <div className="relative bg-gradient-to-br from-[#0F1F3C] via-[#1a3a5c] to-[#0F1F3C] p-4 sm:p-5 text-white overflow-hidden">
           {/* Decorative background patterns */}
           <div className="absolute inset-0 opacity-5">
             <div className="absolute top-0 left-0 w-full h-full" style={{
@@ -308,30 +314,22 @@ export default function Dashboard() {
           <div className="absolute bottom-0 left-0 w-48 h-48 bg-[#0072C6] rounded-full blur-[80px] opacity-20" />
           <div className="absolute top-1/2 left-1/2 w-32 h-32 bg-[#D4AF37] rounded-full blur-[60px] opacity-10" />
           
-          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 relative z-10">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 relative z-10">
             <div>
-              <div className="flex items-center gap-2 mb-2">
-                <div className="flex h-6 w-1.5 rounded-full overflow-hidden">
-                  <div className="w-full bg-gradient-to-b from-[#1EB053] via-white to-[#0072C6]" />
-                </div>
-                <p className="text-[#D4AF37] text-sm font-semibold tracking-wide">🇸🇱 BRI-FAT-SEN ENTERPRISE</p>
-              </div>
-              <h1 className="text-xl sm:text-2xl md:text-4xl font-bold bg-gradient-to-r from-white via-white to-[#D4AF37] bg-clip-text text-transparent">
-                Welcome, {user?.full_name?.split(' ')[0] || 'User'}!
+              <h1 className="text-2xl sm:text-3xl font-bold bg-gradient-to-r from-white via-white to-[#D4AF37] bg-clip-text text-transparent">
+                Welcome back, {user?.full_name?.split(' ')[0] || 'User'}
               </h1>
-              <p className="text-white/70 mt-2 flex items-center gap-2">
-                <Calendar className="w-4 h-4 text-[#1EB053]" />
+              <p className="text-white/70 mt-1 flex items-center gap-2 text-sm">
+                <Calendar className="w-3.5 h-3.5 text-[#1EB053]" />
                 {format(new Date(), 'EEEE, MMMM d, yyyy')}
               </p>
             </div>
-            <div className="flex items-center gap-3">
-              <Link to={createPageUrl("Sales")}>
-                <Button className="bg-gradient-to-r from-[#1EB053] to-[#0072C6] hover:from-[#178f43] hover:to-[#005a9e] text-white font-semibold shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 border-0">
-                  <ShoppingCart className="w-4 h-4 mr-2" />
-                  New Sale
-                </Button>
-              </Link>
-            </div>
+            <Link to={createPageUrl("Sales")}>
+              <Button className="bg-gradient-to-r from-[#1EB053] to-[#0072C6] hover:from-[#178f43] hover:to-[#005a9e] text-white font-semibold shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 border-0">
+                <ShoppingCart className="w-4 h-4 mr-2" />
+                New Sale
+              </Button>
+            </Link>
           </div>
           
           {/* Decorative cotton tree silhouette - larger and more prominent */}
@@ -352,16 +350,6 @@ export default function Dashboard() {
           <div className="flex-1 bg-[#0072C6]" />
         </div>
       </div>
-
-      {/* Performance Indicators - Compact */}
-      <PerformanceIndicators 
-        sales={sales}
-        expenses={expenses}
-        products={products}
-        attendance={attendance}
-        employees={employees}
-        trips={trips}
-      />
 
       {/* Enhanced Stats Grid with Trends */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
@@ -462,47 +450,47 @@ export default function Dashboard() {
 
       {/* Critical Alerts Banner */}
       {(lowStockProducts.length > 0 || expiredBatches.length > 0 || expiringBatches.length > 0 || outOfStock.length > 0) && (
-        <div className="relative overflow-hidden rounded-xl bg-gradient-to-r from-red-500 via-orange-500 to-amber-500 p-1 shadow-lg">
-          <div className="bg-white rounded-lg p-4">
-            <div className="flex items-center justify-between flex-wrap gap-3">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-red-500 to-orange-500 flex items-center justify-center animate-pulse">
-                  <Bell className="w-5 h-5 text-white" />
+        <div className="relative overflow-hidden rounded-lg bg-gradient-to-r from-red-500 via-orange-500 to-amber-500 p-0.5 shadow-lg">
+          <div className="bg-white rounded-lg p-3">
+            <div className="flex items-center justify-between flex-wrap gap-2">
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 rounded-full bg-gradient-to-br from-red-500 to-orange-500 flex items-center justify-center animate-pulse flex-shrink-0">
+                  <Bell className="w-4 h-4 text-white" />
                 </div>
                 <div>
-                  <p className="font-bold text-gray-900">Critical Alerts Detected</p>
-                  <p className="text-sm text-gray-600">Immediate attention required</p>
+                  <p className="font-bold text-sm text-gray-900">Critical Alerts</p>
+                  <p className="text-xs text-gray-600">Action required</p>
                 </div>
               </div>
-              <div className="flex flex-wrap gap-2">
+              <div className="flex flex-wrap gap-1.5">
                 {outOfStock.length > 0 && (
-                  <Badge className="bg-red-100 text-red-700 border-0">
+                  <Badge className="bg-red-100 text-red-700 border-0 text-xs">
                     <XCircle className="w-3 h-3 mr-1" />
-                    {outOfStock.length} Out of Stock
+                    {outOfStock.length} Out
                   </Badge>
                 )}
                 {expiredBatches.length > 0 && (
-                  <Badge className="bg-red-100 text-red-700 border-0">
+                  <Badge className="bg-red-100 text-red-700 border-0 text-xs">
                     <AlertTriangle className="w-3 h-3 mr-1" />
                     {expiredBatches.length} Expired
                   </Badge>
                 )}
                 {expiringBatches.length > 0 && (
-                  <Badge className="bg-orange-100 text-orange-700 border-0">
+                  <Badge className="bg-orange-100 text-orange-700 border-0 text-xs">
                     <Clock className="w-3 h-3 mr-1" />
-                    {expiringBatches.length} Expiring Soon
+                    {expiringBatches.length} Soon
                   </Badge>
                 )}
                 {lowStockProducts.length > 0 && (
-                  <Badge className="bg-amber-100 text-amber-700 border-0">
+                  <Badge className="bg-amber-100 text-amber-700 border-0 text-xs">
                     <Package className="w-3 h-3 mr-1" />
-                    {lowStockProducts.length} Low Stock
+                    {lowStockProducts.length} Low
                   </Badge>
                 )}
               </div>
               <Link to={createPageUrl("Inventory")}>
-                <Button size="sm" className="bg-gradient-to-r from-[#1EB053] to-[#0072C6]">
-                  View Details <ArrowRight className="w-4 h-4 ml-1" />
+                <Button size="sm" className="bg-gradient-to-r from-[#1EB053] to-[#0072C6] text-white">
+                  View <ArrowRight className="w-3 h-3 ml-1" />
                 </Button>
               </Link>
             </div>
@@ -510,99 +498,107 @@ export default function Dashboard() {
         </div>
       )}
 
-      {/* Modern Tabbed Analytics Interface */}
-      <Tabs defaultValue="overview" className="space-y-4">
-        <TabsList className="grid w-full grid-cols-5 lg:w-auto lg:inline-grid h-auto p-1 bg-white border shadow-sm">
-          <TabsTrigger value="overview" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#1EB053] data-[state=active]:to-[#0072C6] data-[state=active]:text-white">
-            <Activity className="w-4 h-4 mr-2" />
+      {/* Modern Tabbed Dashboard */}
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
+        <TabsList className="grid w-full grid-cols-5 lg:w-auto lg:inline-grid bg-gray-100 p-1 rounded-lg">
+          <TabsTrigger value="overview" className="data-[state=active]:bg-white">
+            <BarChart3 className="w-4 h-4 mr-2" />
             Overview
           </TabsTrigger>
-          <TabsTrigger value="sales" className="data-[state=active]:bg-[#1EB053] data-[state=active]:text-white">
+          <TabsTrigger value="sales" className="data-[state=active]:bg-white">
             <ShoppingCart className="w-4 h-4 mr-2" />
             Sales
           </TabsTrigger>
-          <TabsTrigger value="inventory" className="data-[state=active]:bg-[#8b5cf6] data-[state=active]:text-white">
+          <TabsTrigger value="inventory" className="data-[state=active]:bg-white">
             <Package className="w-4 h-4 mr-2" />
             Inventory
-            {(lowStockProducts.length > 0 || outOfStock.length > 0) && (
-              <Badge className="ml-2 bg-orange-500 text-white h-5 min-w-5 px-1.5">{lowStockProducts.length + outOfStock.length}</Badge>
-            )}
           </TabsTrigger>
-          <TabsTrigger value="hr" className="data-[state=active]:bg-[#0072C6] data-[state=active]:text-white">
-            <Users className="w-4 h-4 mr-2" />
-            HR
-          </TabsTrigger>
-          <TabsTrigger value="transport" className="data-[state=active]:bg-[#f59e0b] data-[state=active]:text-white">
+          <TabsTrigger value="operations" className="data-[state=active]:bg-white">
             <Truck className="w-4 h-4 mr-2" />
-            Transport
+            Operations
+          </TabsTrigger>
+          <TabsTrigger value="insights" className="data-[state=active]:bg-white">
+            <Target className="w-4 h-4 mr-2" />
+            Insights
           </TabsTrigger>
         </TabsList>
 
         {/* Overview Tab */}
-        <TabsContent value="overview" className="space-y-6">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <Card className="border-0 shadow-lg">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <DollarSign className="w-5 h-5 text-[#1EB053]" />
-                  Financial Summary
+        <TabsContent value="overview" className="space-y-4">
+          <PerformanceIndicators 
+            sales={sales}
+            expenses={expenses}
+            products={products}
+            attendance={attendance}
+            employees={employees}
+            trips={trips}
+          />
+
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            <SalesAnalytics sales={sales} organisation={organisation?.[0]} />
+            <FinanceOverview 
+              sales={sales}
+              expenses={expenses}
+              revenues={revenues}
+              trips={trips}
+            />
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+            <Card className="border-0 shadow-md">
+              <div className="h-1 bg-gradient-to-r from-[#0072C6] to-[#8b5cf6]" />
+              <CardHeader className="pb-3">
+                <CardTitle className="text-sm flex items-center gap-2">
+                  <Activity className="w-4 h-4 text-[#0072C6]" />
+                  Recent Activity
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <FinanceOverview 
-                  sales={sales}
-                  expenses={expenses}
-                  revenues={revenues}
-                  trips={trips}
-                />
+                <RecentActivity activities={recentActivity} />
               </CardContent>
             </Card>
 
-            <Card className="border-0 shadow-lg">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <TrendingUp className="w-5 h-5 text-[#D4AF37]" />
-                  Top Performers
+            <Card className="border-0 shadow-md">
+              <div className="h-1 bg-gradient-to-r from-[#8b5cf6] to-[#ec4899]" />
+              <CardHeader className="pb-3">
+                <CardTitle className="text-sm flex items-center gap-2">
+                  <Calendar className="w-4 h-4 text-[#8b5cf6]" />
+                  Upcoming Events
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <TopPerformers 
-                  sales={sales}
-                  employees={employees}
-                  trips={trips}
-                  products={products}
-                />
+                <UpcomingMeetings meetings={meetings} />
+              </CardContent>
+            </Card>
+
+            <Card className="border-0 shadow-md">
+              <div className="h-1 bg-gradient-to-r from-[#1EB053] to-[#0072C6]" />
+              <CardHeader className="pb-3">
+                <CardTitle className="text-sm flex items-center gap-2">
+                  <Clock className="w-4 h-4 text-[#1EB053]" />
+                  Today's Snapshot
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <TodayAttendance attendance={attendance} employees={employees} />
               </CardContent>
             </Card>
           </div>
-
-          <Card className="border-0 shadow-lg">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Activity className="w-5 h-5 text-[#8b5cf6]" />
-                AI-Powered Insights
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <AIInsightsPanel 
-                data={{
-                  sales: todaySales,
-                  attendance: attendance,
-                  products: products.slice(0, 20),
-                  trips: todayTrips,
-                  expenses: monthExpenses
-                }}
-                type="sales"
-                title=""
-                orgId={orgId}
-              />
-            </CardContent>
-          </Card>
         </TabsContent>
 
         {/* Sales Tab */}
         <TabsContent value="sales" className="space-y-4">
-          <SalesAnalytics sales={sales} organisation={organisation?.[0]} />
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+            <div className="lg:col-span-2">
+              <SalesAnalytics sales={sales} organisation={organisation?.[0]} />
+            </div>
+            <TopPerformers 
+              sales={sales}
+              employees={employees}
+              trips={trips}
+              products={products}
+            />
+          </div>
         </TabsContent>
 
         {/* Inventory Tab */}
@@ -614,136 +610,49 @@ export default function Dashboard() {
           />
         </TabsContent>
 
-        {/* HR Tab */}
-        <TabsContent value="hr" className="space-y-4">
-          <HRMetrics 
-            employees={employees} 
-            attendance={attendance}
-            leaveRequests={leaveRequests}
-          />
+        {/* Operations Tab */}
+        <TabsContent value="operations" className="space-y-4">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            <HRMetrics 
+              employees={employees} 
+              attendance={attendance}
+              leaveRequests={leaveRequests}
+            />
+            <TransportMetrics 
+              trips={trips}
+              vehicles={vehicles}
+              routes={routes}
+              truckContracts={truckContracts}
+            />
+          </div>
         </TabsContent>
 
-        {/* Transport Tab */}
-        <TabsContent value="transport" className="space-y-4">
-          <TransportMetrics 
-            trips={trips}
-            vehicles={vehicles}
-            routes={routes}
-            truckContracts={truckContracts}
+        {/* Insights Tab */}
+        <TabsContent value="insights" className="space-y-4">
+          <AIInsightsPanel 
+            data={{
+              sales: todaySales,
+              attendance: attendance,
+              products: products.slice(0, 20),
+              trips: todayTrips,
+              expenses: monthExpenses
+            }}
+            type="sales"
+            title="Smart Business Recommendations"
+            orgId={orgId}
           />
         </TabsContent>
       </Tabs>
 
-      {/* Activity Feed & Recent Transactions */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Recent Sales - 2 columns */}
-        <Card className="lg:col-span-2 border-0 shadow-lg overflow-hidden">
-          <div className="h-1 bg-gradient-to-r from-[#1EB053] via-white to-[#0072C6]" />
-          <CardHeader className="border-b bg-gray-50/50">
-            <div className="flex items-center justify-between">
-              <CardTitle className="text-base flex items-center gap-2">
-                <ShoppingCart className="w-5 h-5 text-[#1EB053]" />
-                Recent Sales
-                <Badge variant="secondary" className="ml-2">{todaySales.length} today</Badge>
-              </CardTitle>
-              <Link to={createPageUrl("Sales")}>
-                <Button size="sm" variant="outline" className="h-8">
-                  View All <ArrowRight className="w-3 h-3 ml-1" />
-                </Button>
-              </Link>
-            </div>
-          </CardHeader>
-          <CardContent className="p-0">
-            {todaySales.length === 0 ? (
-              <div className="text-center py-12 text-gray-400">
-                <ShoppingCart className="w-12 h-12 mx-auto mb-3 opacity-20" />
-                <p className="text-sm">No sales today</p>
-              </div>
-            ) : (
-              <div className="divide-y max-h-80 overflow-y-auto">
-                {todaySales.slice(0, 6).map((sale) => (
-                  <div key={sale.id} className="flex items-center justify-between p-3 hover:bg-gray-50 transition-colors">
-                    <div className="flex items-center gap-3 flex-1 min-w-0">
-                      <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-[#1EB053] to-[#0072C6] flex items-center justify-center flex-shrink-0">
-                        <ShoppingCart className="w-5 h-5 text-white" />
-                      </div>
-                      <div className="min-w-0 flex-1">
-                        <p className="font-medium text-sm truncate">{sale.customer_name || 'Walk-in Customer'}</p>
-                        <p className="text-xs text-gray-500 truncate">{sale.employee_name} • {format(new Date(sale.created_date), 'h:mm a')}</p>
-                      </div>
-                    </div>
-                    <div className="text-right flex-shrink-0 ml-3">
-                      <p className="font-bold text-[#1EB053]">Le {sale.total_amount?.toLocaleString()}</p>
-                      <Badge variant="outline" className="text-[10px] mt-0.5">{sale.payment_method?.replace('_', ' ')}</Badge>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </CardContent>
-        </Card>
-
-        {/* Activity & Events Column */}
-        <div className="space-y-4">
-          <Card className="border-0 shadow-lg overflow-hidden">
-            <div className="h-1 bg-gradient-to-r from-[#0072C6] to-[#8b5cf6]" />
-            <CardHeader className="border-b bg-gray-50/50 pb-3">
-              <CardTitle className="text-sm flex items-center gap-2">
-                <Activity className="w-4 h-4 text-[#0072C6]" />
-                Recent Activity
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="p-3">
-              <RecentActivity activities={recentActivity} />
-            </CardContent>
-          </Card>
-
-          <Card className="border-0 shadow-lg overflow-hidden">
-            <div className="h-1 bg-gradient-to-r from-[#8b5cf6] to-[#ec4899]" />
-            <CardHeader className="border-b bg-gray-50/50 pb-3">
-              <CardTitle className="text-sm flex items-center gap-2">
-                <Calendar className="w-4 h-4 text-[#8b5cf6]" />
-                Upcoming Events
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="p-3">
-              <UpcomingMeetings meetings={meetings} />
-            </CardContent>
-          </Card>
-
-          <Card className="border-0 shadow-lg overflow-hidden">
-            <div className="h-1 bg-gradient-to-r from-[#1EB053] to-[#0072C6]" />
-            <CardHeader className="border-b bg-gray-50/50 pb-3">
-              <CardTitle className="text-sm flex items-center gap-2">
-                <Clock className="w-4 h-4 text-[#1EB053]" />
-                Today's Attendance
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="p-3">
-              <TodayAttendance attendance={attendance} employees={employees} />
-            </CardContent>
-          </Card>
-        </div>
-      </div>
-
-      {/* Footer with Sierra Leone Pride */}
-      <div className="relative overflow-hidden rounded-xl bg-gradient-to-r from-[#0F1F3C] to-[#1a3a5c] p-4 mt-4">
-        <div className="absolute inset-0 opacity-10">
-          <div className="absolute top-0 right-0 w-32 h-32 bg-[#1EB053] rounded-full blur-[50px]" />
-          <div className="absolute bottom-0 left-0 w-24 h-24 bg-[#0072C6] rounded-full blur-[40px]" />
-        </div>
-        <div className="flex items-center justify-center gap-3 relative z-10">
-          <div className="flex h-6 w-12 rounded overflow-hidden shadow-lg">
+      {/* Footer with Sierra Leone Pride - Compact */}
+      <div className="relative overflow-hidden rounded-lg bg-gradient-to-r from-[#0F1F3C] to-[#1a3a5c] p-3">
+        <div className="flex items-center justify-center gap-2 relative z-10">
+          <div className="flex h-5 w-10 rounded overflow-hidden shadow">
             <div className="flex-1 bg-[#1EB053]" />
             <div className="flex-1 bg-white" />
             <div className="flex-1 bg-[#0072C6]" />
           </div>
-          <p className="text-sm text-white/80 font-medium">Proudly serving businesses in Sierra Leone</p>
-          <div className="flex h-6 w-12 rounded overflow-hidden shadow-lg">
-            <div className="flex-1 bg-[#1EB053]" />
-            <div className="flex-1 bg-white" />
-            <div className="flex-1 bg-[#0072C6]" />
-          </div>
+          <p className="text-xs text-white/80 font-medium">🇸🇱 Proudly serving Sierra Leone</p>
         </div>
       </div>
     </div>
