@@ -292,23 +292,42 @@ export default function Dashboard() {
 
   return (
     <div className="space-y-6">
-      {/* Modern Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">
-            Dashboard
-          </h1>
-          <p className="text-sm text-gray-500 mt-1">
-            {format(new Date(), 'EEEE, MMMM d, yyyy')} • Welcome, {user?.full_name?.split(' ')[0]}
-          </p>
+      {/* Sierra Leone Stripe Design */}
+      <div className="h-1 w-full flex rounded-full overflow-hidden">
+        <div className="flex-1 bg-[#1EB053]" />
+        <div className="flex-1 bg-white border-y border-gray-200" />
+        <div className="flex-1 bg-[#0072C6]" />
+      </div>
+
+      {/* Modern Header with Stripe */}
+      <div className="relative overflow-hidden rounded-xl border shadow-sm bg-white">
+        <div className="h-1 flex">
+          <div className="flex-1 bg-[#1EB053]" />
+          <div className="flex-1 bg-white" />
+          <div className="flex-1 bg-[#0072C6]" />
         </div>
-        <div className="flex items-center gap-2">
-          <Link to={createPageUrl("Sales")}>
-            <Button className="bg-gradient-to-r from-[#1EB053] to-[#0072C6] text-white shadow-sm hover:shadow-md transition-all">
-              <ShoppingCart className="w-4 h-4 mr-2" />
-              New Sale
-            </Button>
-          </Link>
+        <div className="p-4 sm:p-6 flex items-center justify-between">
+          <div>
+            <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">
+              Dashboard
+            </h1>
+            <p className="text-sm text-gray-500 mt-1">
+              {format(new Date(), 'EEEE, MMMM d, yyyy')} • Welcome, {user?.full_name?.split(' ')[0]}
+            </p>
+          </div>
+          <div className="flex items-center gap-2">
+            <Link to={createPageUrl("Sales")}>
+              <Button className="bg-gradient-to-r from-[#1EB053] to-[#0072C6] text-white shadow-sm hover:shadow-md transition-all">
+                <ShoppingCart className="w-4 h-4 mr-2" />
+                New Sale
+              </Button>
+            </Link>
+          </div>
+        </div>
+        <div className="h-1 flex">
+          <div className="flex-1 bg-[#1EB053]" />
+          <div className="flex-1 bg-white" />
+          <div className="flex-1 bg-[#0072C6]" />
         </div>
       </div>
 
