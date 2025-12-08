@@ -147,118 +147,102 @@ export default function PerformanceReviewDialog({
 
   const ratingLabel = getRatingLabel(overallRating);
 
+  const primaryColor = '#1EB053';
+  const secondaryColor = '#0072C6';
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto [&>button]:hidden">
-        <DialogHeader>
-          <div className="flex h-1 w-16 rounded-full overflow-hidden mb-3">
-            <div className="flex-1 bg-[#1EB053]" />
-            <div className="flex-1 bg-white border-y border-gray-200" />
-            <div className="flex-1 bg-[#0072C6]" />
-          </div>
-          <DialogTitle>
-            Performance Review - {employee?.full_name || `${employee?.first_name} ${employee?.last_name}`}
-          </DialogTitle>
-        </DialogHeader>
-        <form onSubmit={(e) => handleSubmit(e, "submitted")} className="space-y-6">
-          <div>
-            <Label>Review Period</Label>
-            <Select value={reviewPeriod} onValueChange={setReviewPeriod}>
-              <SelectTrigger className="mt-1">
-                <SelectValue placeholder="Select period" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="Q1 2024">Q1 2024</SelectItem>
-                <SelectItem value="Q2 2024">Q2 2024</SelectItem>
-                <SelectItem value="Q3 2024">Q3 2024</SelectItem>
-                <SelectItem value="Q4 2024">Q4 2024</SelectItem>
-                <SelectItem value="Annual 2024">Annual 2024</SelectItem>
-                <SelectItem value="Q1 2025">Q1 2025</SelectItem>
-                <SelectItem value="Q2 2025">Q2 2025</SelectItem>
-                <SelectItem value="Q3 2025">Q3 2025</SelectItem>
-                <SelectItem value="Q4 2025">Q4 2025</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
+      <DialogContent className="max-w-lg max-h-[90vh] overflow-hidden p-0 w-[95vw] sm:w-full [&>button]:hidden">
+        <div className="h-2 flex">
+          <div className="flex-1 bg-[#1EB053]" />
+          <div className="flex-1 bg-white" />
+          <div className="flex-1 bg-[#0072C6]" />
+        </div>
 
-          {/* Overall Rating Display */}
-          <div className="p-4 bg-gradient-to-r from-[#1EB053]/10 to-[#0072C6]/10 rounded-xl text-center">
-            <p className="text-sm text-gray-500 mb-1">Overall Rating</p>
-            <p className="text-4xl font-bold text-[#0072C6]">{overallRating.toFixed(1)}</p>
-            <p className={`text-sm font-medium ${ratingLabel.color}`}>{ratingLabel.text}</p>
+        <div className="px-6 py-4 text-white border-b border-white/20" style={{ background: `linear-gradient(135deg, ${primaryColor} 0%, ${secondaryColor} 100%)` }}>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center">
+                <Star className="w-5 h-5 text-white" />
+              </div>
+              <div>
+                <h2 className="text-lg font-bold">Performance Review</h2>
+                <p className="text-white/80 text-xs">{employee?.full_name}</p>
+              </div>
+            </div>
+            <Button variant="ghost" size="icon" onClick={() => onOpenChange(false)} className="text-white hover:bg-white/20">
+              <X className="w-5 h-5" />
+            </Button>
           </div>
+        </div>
+        <form onSubmit={(e) => handleSubmit(e, "submitted")} className="overflow-y-auto max-h-[calc(90vh-180px)]">
+          <div className="p-6 space-y-4">
+            <div>
+              <Label className="text-sm">Review Period *</Label>
+              <Select value={reviewPeriod} onValueChange={setReviewPeriod}>
+                <SelectTrigger className="mt-1.5">
+                  <SelectValue placeholder="Select period" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="Q1 2025">Q1 2025</SelectItem>
+                  <SelectItem value="Q2 2025">Q2 2025</SelectItem>
+                  <SelectItem value="Q3 2025">Q3 2025</SelectItem>
+                  <SelectItem value="Q4 2025">Q4 2025</SelectItem>
+                  <SelectItem value="Annual 2025">Annual 2025</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
 
-          {/* Rating Categories */}
-          <div className="space-y-4">
-            <Label>Performance Ratings</Label>
-            <div className="grid grid-cols-1 gap-3">
+            <div className="p-4 bg-gradient-to-r from-[#1EB053]/10 to-[#0072C6]/10 rounded-xl text-center">
+              <p className="text-xs text-gray-500">Overall Rating</p>
+              <p className="text-3xl font-bold text-[#0072C6]">{overallRating.toFixed(1)}</p>
+              <p className={`text-xs font-medium ${ratingLabel.color}`}>{ratingLabel.text}</p>
+            </div>
+
+            <div className="space-y-2">
+              <Label className="text-sm">Quick Ratings</Label>
               {RATING_CATEGORIES.map(category => (
-                <div key={category.key} className="flex flex-col sm:flex-row sm:items-center sm:justify-between p-3 bg-gray-50 rounded-lg gap-2">
-                  <span className="text-sm font-medium">{category.label}</span>
-                  <StarRating 
-                    value={ratings[category.key]} 
-                    onChange={(val) => handleRatingChange(category.key, val)} 
-                  />
+                <div key={category.key} className="flex items-center justify-between p-2 bg-gray-50 rounded-lg">
+                  <span className="text-xs font-medium">{category.label}</span>
+                  <StarRating value={ratings[category.key]} onChange={(val) => handleRatingChange(category.key, val)} />
                 </div>
               ))}
             </div>
+
+            <div>
+              <Label className="text-sm">Strengths</Label>
+              <Textarea value={strengths} onChange={(e) => setStrengths(e.target.value)} placeholder="Key strengths..." className="mt-1.5" rows={2} />
+            </div>
+
+            <div>
+              <Label className="text-sm">Areas for Improvement</Label>
+              <Textarea value={improvements} onChange={(e) => setImprovements(e.target.value)} placeholder="Development areas..." className="mt-1.5" rows={2} />
+            </div>
+
+            <div>
+              <Label className="text-sm">Goals</Label>
+              <Textarea value={goals} onChange={(e) => setGoals(e.target.value)} placeholder="Next period goals..." className="mt-1.5" rows={2} />
+            </div>
           </div>
 
-          <div>
-            <Label>Strengths</Label>
-            <Textarea 
-              value={strengths}
-              onChange={(e) => setStrengths(e.target.value)}
-              placeholder="What does this employee do well?"
-              className="mt-1"
-              rows={3}
-            />
-          </div>
-
-          <div>
-            <Label>Areas for Improvement</Label>
-            <Textarea 
-              value={improvements}
-              onChange={(e) => setImprovements(e.target.value)}
-              placeholder="What areas need development?"
-              className="mt-1"
-              rows={3}
-            />
-          </div>
-
-          <div>
-            <Label>Goals for Next Period</Label>
-            <Textarea 
-              value={goals}
-              onChange={(e) => setGoals(e.target.value)}
-              placeholder="What should this employee focus on?"
-              className="mt-1"
-              rows={3}
-            />
-          </div>
-
-          <DialogFooter className="flex-col sm:flex-row gap-2">
-            <Button type="button" variant="outline" onClick={() => onOpenChange(false)} className="w-full sm:w-auto">
+          <div className="sticky bottom-0 bg-white border-t p-4 flex gap-2">
+            <Button type="button" variant="outline" onClick={() => onOpenChange(false)} className="flex-1 sm:flex-none sm:w-24">
               Cancel
             </Button>
-            <Button 
-              type="button" 
-              variant="outline"
-              className="border-[#0072C6] text-[#0072C6] hover:bg-[#0072C6]/10 w-full sm:w-auto"
-              onClick={(e) => handleSubmit(e, "draft")}
-              disabled={createMutation.isPending || updateMutation.isPending}
-            >
-              Save as Draft
+            <Button type="button" variant="outline" onClick={(e) => handleSubmit(e, "draft")} disabled={createMutation.isPending || updateMutation.isPending} className="flex-1 sm:flex-none sm:w-24 border-[#0072C6] text-[#0072C6]">
+              Draft
             </Button>
-            <Button 
-              type="submit" 
-              className="bg-gradient-to-r from-[#1EB053] to-[#0072C6] hover:from-[#178f43] hover:to-[#005a9e] text-white shadow-lg w-full sm:w-auto"
-              disabled={createMutation.isPending || updateMutation.isPending}
-            >
-              Submit Review
+            <Button type="submit" className="flex-1 text-white" style={{ background: `linear-gradient(135deg, ${primaryColor} 0%, ${secondaryColor} 100%)` }} disabled={createMutation.isPending || updateMutation.isPending}>
+              {(createMutation.isPending || updateMutation.isPending) ? 'Saving...' : <><Check className="w-4 h-4 mr-2" />Submit</>}
             </Button>
-          </DialogFooter>
+          </div>
         </form>
+
+        <div className="h-1.5 flex">
+          <div className="flex-1 bg-[#1EB053]" />
+          <div className="flex-1 bg-white" />
+          <div className="flex-1 bg-[#0072C6]" />
+        </div>
       </DialogContent>
     </Dialog>
   );

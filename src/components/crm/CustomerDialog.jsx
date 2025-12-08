@@ -18,7 +18,7 @@ export default function CustomerDialog({ open, onOpenChange, customer, orgId, em
   const toast = useToast();
   const queryClient = useQueryClient();
   const [tagInput, setTagInput] = useState("");
-  const [activeSection, setActiveSection] = useState('basic');
+  const [showAdvanced, setShowAdvanced] = useState(false);
   const [formData, setFormData] = useState({
     name: "",
     email: "",
@@ -51,6 +51,7 @@ export default function CustomerDialog({ open, onOpenChange, customer, orgId, em
         ...customer,
         tags: customer.tags || []
       });
+      setShowAdvanced(true);
     } else {
       setFormData({
         name: "",
@@ -73,9 +74,7 @@ export default function CustomerDialog({ open, onOpenChange, customer, orgId, em
         assigned_sales_rep_name: "",
         birthday: ""
       });
-    }
-    if (open) {
-      setActiveSection('basic');
+      setShowAdvanced(false);
     }
   }, [customer, open]);
 
@@ -136,256 +135,119 @@ export default function CustomerDialog({ open, onOpenChange, customer, orgId, em
     });
   };
 
-  const sections = [
-    { id: 'basic', label: 'Basic Info', icon: Users },
-    { id: 'contact', label: 'Contact', icon: Phone },
-    { id: 'business', label: 'Business', icon: CreditCard },
-  ];
-
   const isPending = createMutation.isPending || updateMutation.isPending;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-hidden p-0 w-[95vw] sm:w-full [&>button]:hidden">
-        {/* Sierra Leone Flag Header */}
+      <DialogContent className="max-w-lg max-h-[90vh] overflow-hidden p-0 w-[95vw] sm:w-full [&>button]:hidden">
         <div className="h-2 flex">
           <div className="flex-1" style={{ backgroundColor: primaryColor }} />
           <div className="flex-1 bg-white" />
           <div className="flex-1" style={{ backgroundColor: secondaryColor }} />
         </div>
 
-        {/* Header with gradient */}
-        <div 
-          className="px-6 py-4 text-white"
-          style={{ background: `linear-gradient(135deg, ${primaryColor} 0%, ${secondaryColor} 100%)` }}
-        >
+        <div className="px-6 py-4 text-white border-b border-white/20" style={{ background: `linear-gradient(135deg, ${primaryColor} 0%, ${secondaryColor} 100%)` }}>
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className="w-12 h-12 rounded-xl bg-white/20 flex items-center justify-center">
-                <Users className="w-6 h-6 text-white" />
+              <div className="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center">
+                <Users className="w-5 h-5 text-white" />
               </div>
               <div>
-                <h2 className="text-xl font-bold">
-                  {customer ? 'Edit Customer' : 'Add New Customer'}
-                </h2>
-                <p className="text-white/80 text-sm">
-                  {customer ? `Updating: ${customer.name}` : 'Register a new customer'}
-                </p>
+                <h2 className="text-lg font-bold">{customer ? 'Edit Customer' : 'Add Customer'}</h2>
+                <p className="text-white/80 text-xs">Press Ctrl+Enter to save</p>
               </div>
             </div>
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => onOpenChange(false)}
-              className="text-white hover:bg-white/20"
-            >
+            <Button variant="ghost" size="icon" onClick={() => onOpenChange(false)} className="text-white hover:bg-white/20">
               <X className="w-5 h-5" />
             </Button>
           </div>
-
-          {/* Section Tabs */}
-          <div className="flex gap-1 mt-4 overflow-x-auto pb-1">
-            {sections.map((section) => (
-              <button
-                key={section.id}
-                type="button"
-                onClick={() => setActiveSection(section.id)}
-                className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-all whitespace-nowrap ${
-                  activeSection === section.id
-                    ? 'bg-white text-gray-900'
-                    : 'bg-white/20 text-white hover:bg-white/30'
-                }`}
-              >
-                <section.icon className="w-4 h-4" />
-                {section.label}
-              </button>
-            ))}
-          </div>
         </div>
 
-        {/* Form Content */}
-        <form onSubmit={handleSubmit} className="overflow-y-auto max-h-[calc(90vh-220px)]">
-          <div className="p-6 space-y-6">
-            
-            {/* Basic Info Section */}
-            {activeSection === 'basic' && (
-              <div className="space-y-4">
-                <div className="flex items-center gap-2 mb-4">
-                  <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ backgroundColor: `${primaryColor}20` }}>
-                    <Users className="w-4 h-4" style={{ color: primaryColor }} />
-                  </div>
-                  <h3 className="font-semibold text-gray-900">Customer Information</h3>
-                </div>
+        <form onSubmit={handleSubmit} className="overflow-y-auto max-h-[calc(90vh-180px)]">
+          <div className="p-6 space-y-4">
+            <div>
+              <Label className="font-medium">Customer Name *</Label>
+              <Input
+                value={formData.name}
+                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                required
+                autoFocus
+                placeholder="Full name or business"
+                className="mt-1.5"
+              />
+            </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div className="sm:col-span-2">
-                    <Label className="text-gray-700 font-medium">Customer Name *</Label>
-                    <Input
-                      value={formData.name}
-                      onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                      required
-                      className="mt-1.5 border-gray-200"
-                      placeholder="Full name or business name"
-                    />
-                  </div>
-                  <div>
-                    <Label className="text-gray-700 font-medium">Customer Type</Label>
-                    <Select value={formData.customer_type} onValueChange={(v) => setFormData({ ...formData, customer_type: v })}>
-                      <SelectTrigger className="mt-1.5 border-gray-200"><SelectValue /></SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="individual">Individual</SelectItem>
-                        <SelectItem value="business">Business</SelectItem>
-                        <SelectItem value="wholesale">Wholesale</SelectItem>
-                        <SelectItem value="retail">Retail</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div>
-                    <Label className="text-gray-700 font-medium">Source</Label>
-                    <Select value={formData.source} onValueChange={(v) => setFormData({ ...formData, source: v })}>
-                      <SelectTrigger className="mt-1.5 border-gray-200"><SelectValue /></SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="walk_in">Walk-in</SelectItem>
-                        <SelectItem value="referral">Referral</SelectItem>
-                        <SelectItem value="online">Online</SelectItem>
-                        <SelectItem value="marketing">Marketing</SelectItem>
-                        <SelectItem value="other">Other</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div>
-                    <Label className="text-gray-700 font-medium">Segment</Label>
-                    <Select value={formData.segment} onValueChange={(v) => setFormData({ ...formData, segment: v })}>
-                      <SelectTrigger className="mt-1.5 border-gray-200"><SelectValue /></SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="vip">VIP</SelectItem>
-                        <SelectItem value="regular">Regular</SelectItem>
-                        <SelectItem value="new">New</SelectItem>
-                        <SelectItem value="at_risk">At Risk</SelectItem>
-                        <SelectItem value="churned">Churned</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div>
-                    <Label className="text-gray-700 font-medium">Status</Label>
-                    <Select value={formData.status} onValueChange={(v) => setFormData({ ...formData, status: v })}>
-                      <SelectTrigger className="mt-1.5 border-gray-200"><SelectValue /></SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="active">Active</SelectItem>
-                        <SelectItem value="inactive">Inactive</SelectItem>
-                        <SelectItem value="blocked">Blocked</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <Label className="text-sm">Phone</Label>
+                <Input value={formData.phone} onChange={(e) => setFormData({ ...formData, phone: e.target.value })} placeholder="+232..." className="mt-1.5" />
               </div>
-            )}
-
-            {/* Contact Section */}
-            {activeSection === 'contact' && (
-              <div className="space-y-4">
-                <div className="flex items-center gap-2 mb-4">
-                  <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ backgroundColor: `${secondaryColor}20` }}>
-                    <Phone className="w-4 h-4" style={{ color: secondaryColor }} />
-                  </div>
-                  <h3 className="font-semibold text-gray-900">Contact Details</h3>
-                </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div>
-                    <Label className="text-gray-700 font-medium flex items-center gap-2">
-                      <Mail className="w-3 h-3" /> Email
-                    </Label>
-                    <Input type="email" value={formData.email} onChange={(e) => setFormData({ ...formData, email: e.target.value })} className="mt-1.5 border-gray-200" />
-                  </div>
-                  <div>
-                    <Label className="text-gray-700 font-medium">Phone</Label>
-                    <Input value={formData.phone} onChange={(e) => setFormData({ ...formData, phone: e.target.value })} className="mt-1.5 border-gray-200" />
-                  </div>
-                  <div>
-                    <Label className="text-gray-700 font-medium">Secondary Phone</Label>
-                    <Input value={formData.secondary_phone} onChange={(e) => setFormData({ ...formData, secondary_phone: e.target.value })} className="mt-1.5 border-gray-200" />
-                  </div>
-                  <div>
-                    <Label className="text-gray-700 font-medium flex items-center gap-2">
-                      <Calendar className="w-3 h-3" /> Birthday
-                    </Label>
-                    <Input type="date" value={formData.birthday} onChange={(e) => setFormData({ ...formData, birthday: e.target.value })} className="mt-1.5 border-gray-200" />
-                  </div>
-                  <div className="sm:col-span-2">
-                    <Label className="text-gray-700 font-medium flex items-center gap-2">
-                      <MapPin className="w-3 h-3" /> Address
-                    </Label>
-                    <Input value={formData.address} onChange={(e) => setFormData({ ...formData, address: e.target.value })} className="mt-1.5 border-gray-200" />
-                  </div>
-                  <div>
-                    <Label className="text-gray-700 font-medium">City</Label>
-                    <Input value={formData.city} onChange={(e) => setFormData({ ...formData, city: e.target.value })} className="mt-1.5 border-gray-200" />
-                  </div>
-                  <div>
-                    <Label className="text-gray-700 font-medium flex items-center gap-2">
-                      <UserCheck className="w-3 h-3" /> Assigned Sales Rep
-                    </Label>
-                    <Select value={formData.assigned_sales_rep_id} onValueChange={handleSalesRepChange}>
-                      <SelectTrigger className="mt-1.5 border-gray-200"><SelectValue placeholder="Select..." /></SelectTrigger>
-                      <SelectContent>
-                        {employees.map(emp => (
-                          <SelectItem key={emp.id} value={emp.id}>{emp.full_name}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
+              <div>
+                <Label className="text-sm">Email</Label>
+                <Input type="email" value={formData.email} onChange={(e) => setFormData({ ...formData, email: e.target.value })} placeholder="email@..." className="mt-1.5" />
               </div>
-            )}
+            </div>
 
-            {/* Business Section */}
-            {activeSection === 'business' && (
-              <div className="space-y-4">
-                <div className="flex items-center gap-2 mb-4">
-                  <div className="w-8 h-8 rounded-lg bg-purple-100 flex items-center justify-center">
-                    <CreditCard className="w-4 h-4 text-purple-600" />
-                  </div>
-                  <h3 className="font-semibold text-gray-900">Business & Billing</h3>
-                </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <Label className="text-sm">Type</Label>
+                <Select value={formData.customer_type} onValueChange={(v) => setFormData({ ...formData, customer_type: v })}>
+                  <SelectTrigger className="mt-1.5"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="individual">Individual</SelectItem>
+                    <SelectItem value="business">Business</SelectItem>
+                    <SelectItem value="wholesale">Wholesale</SelectItem>
+                    <SelectItem value="retail">Retail</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label className="text-sm">Segment</Label>
+                <Select value={formData.segment} onValueChange={(v) => setFormData({ ...formData, segment: v })}>
+                  <SelectTrigger className="mt-1.5"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="vip">VIP</SelectItem>
+                    <SelectItem value="regular">Regular</SelectItem>
+                    <SelectItem value="new">New</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <button type="button" onClick={() => setShowAdvanced(!showAdvanced)} className="w-full text-sm text-gray-600 hover:text-gray-900 text-left">
+              {showAdvanced ? '− Hide' : '+ Show'} More Options
+            </button>
+
+            {showAdvanced && (
+              <div className="space-y-3 pt-2 border-t">
+                <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <Label className="text-gray-700 font-medium flex items-center gap-2">
-                      <Building2 className="w-3 h-3" /> Company Name
-                    </Label>
-                    <Input value={formData.company_name} onChange={(e) => setFormData({ ...formData, company_name: e.target.value })} className="mt-1.5 border-gray-200" />
+                    <Label className="text-sm">Address</Label>
+                    <Input value={formData.address} onChange={(e) => setFormData({ ...formData, address: e.target.value })} className="mt-1.5" />
                   </div>
                   <div>
-                    <Label className="text-gray-700 font-medium">Tax ID</Label>
-                    <Input value={formData.tax_id} onChange={(e) => setFormData({ ...formData, tax_id: e.target.value })} className="mt-1.5 border-gray-200" />
+                    <Label className="text-sm">City</Label>
+                    <Input value={formData.city} onChange={(e) => setFormData({ ...formData, city: e.target.value })} className="mt-1.5" />
                   </div>
-                  <div className="p-4 rounded-xl border-2 border-[#1EB053]/30 bg-[#1EB053]/5">
-                    <Label className="text-[#1EB053] font-medium">Credit Limit (Le)</Label>
-                    <div className="relative mt-2">
-                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[#1EB053] font-bold">Le</span>
-                      <Input 
-                        type="number" 
-                        min="0"
-                        step="1000"
-                        value={formData.credit_limit} 
-                        onChange={(e) => {
-                          const value = e.target.value;
-                          if (value === '') {
-                            setFormData({ ...formData, credit_limit: 0 });
-                          } else {
-                            const parsed = parseFloat(value);
-                            setFormData({ ...formData, credit_limit: isNaN(parsed) ? 0 : Math.max(0, parsed) });
-                          }
-                        }}
-                        className="pl-10 border-[#1EB053]/30 bg-white"
-                      />
+                  <div>
+                    <Label className="text-sm">Company Name</Label>
+                    <Input value={formData.company_name} onChange={(e) => setFormData({ ...formData, company_name: e.target.value })} className="mt-1.5" />
+                  </div>
+                  <div>
+                    <Label className="text-sm">Tax ID</Label>
+                    <Input value={formData.tax_id} onChange={(e) => setFormData({ ...formData, tax_id: e.target.value })} className="mt-1.5" />
+                  </div>
+                  <div>
+                    <Label className="text-sm">Credit Limit</Label>
+                    <div className="relative mt-1.5">
+                      <span className="absolute left-2 top-1/2 -translate-y-1/2 text-gray-500 text-xs">Le</span>
+                      <Input type="number" value={formData.credit_limit} onChange={(e) => setFormData({ ...formData, credit_limit: parseFloat(e.target.value) || 0 })} className="pl-7" />
                     </div>
                   </div>
                   <div>
-                    <Label className="text-gray-700 font-medium">Payment Method</Label>
+                    <Label className="text-sm">Payment Method</Label>
                     <Select value={formData.preferred_payment_method} onValueChange={(v) => setFormData({ ...formData, preferred_payment_method: v })}>
-                      <SelectTrigger className="mt-1.5 border-gray-200"><SelectValue /></SelectTrigger>
+                      <SelectTrigger className="mt-1.5"><SelectValue /></SelectTrigger>
                       <SelectContent>
                         <SelectItem value="cash">Cash</SelectItem>
                         <SelectItem value="card">Card</SelectItem>
@@ -394,68 +256,45 @@ export default function CustomerDialog({ open, onOpenChange, customer, orgId, em
                       </SelectContent>
                     </Select>
                   </div>
-                  
-                  {/* Tags */}
-                  <div className="sm:col-span-2 p-4 bg-gray-50 rounded-xl border border-gray-100">
-                    <Label className="text-gray-700 font-medium flex items-center gap-2 mb-3">
-                      <Tag className="w-4 h-4" /> Tags
-                    </Label>
-                    <div className="flex gap-2 mb-3">
-                      <Input
-                        value={tagInput}
-                        onChange={(e) => setTagInput(e.target.value)}
-                        placeholder="Add tag..."
-                        onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), addTag())}
-                        className="border-gray-200"
-                      />
-                      <Button type="button" variant="outline" onClick={addTag}>Add</Button>
-                    </div>
-                    <div className="flex flex-wrap gap-2">
+                </div>
+
+                <div>
+                  <Label className="text-sm">Tags</Label>
+                  <div className="flex gap-2 mt-1.5">
+                    <Input value={tagInput} onChange={(e) => setTagInput(e.target.value)} placeholder="Add tag..." onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), addTag())} />
+                    <Button type="button" variant="outline" size="sm" onClick={addTag}>Add</Button>
+                  </div>
+                  {formData.tags.length > 0 && (
+                    <div className="flex flex-wrap gap-1 mt-2">
                       {formData.tags.map(tag => (
-                        <Badge key={tag} variant="secondary" className="gap-1 px-3 py-1">
+                        <Badge key={tag} variant="secondary" className="text-xs gap-1">
                           {tag}
-                          <X className="w-3 h-3 cursor-pointer hover:text-red-500" onClick={() => removeTag(tag)} />
+                          <X className="w-2.5 h-2.5 cursor-pointer hover:text-red-500" onClick={() => removeTag(tag)} />
                         </Badge>
                       ))}
                     </div>
-                  </div>
+                  )}
+                </div>
 
-                  <div className="sm:col-span-2">
-                    <Label className="text-gray-700 font-medium">Notes</Label>
-                    <Textarea value={formData.notes} onChange={(e) => setFormData({ ...formData, notes: e.target.value })} rows={3} className="mt-1.5 border-gray-200" />
-                  </div>
+                <div>
+                  <Label className="text-sm">Notes</Label>
+                  <Textarea value={formData.notes} onChange={(e) => setFormData({ ...formData, notes: e.target.value })} rows={2} className="mt-1.5" />
                 </div>
               </div>
             )}
           </div>
 
-          {/* Footer */}
-          <div className="sticky bottom-0 bg-white border-t p-4 flex flex-col sm:flex-row gap-3">
-            <Button 
-              type="button" 
-              variant="outline" 
-              onClick={() => onOpenChange(false)} 
-              className="w-full sm:w-auto"
-            >
+          <div className="sticky bottom-0 bg-white border-t p-4 flex gap-2">
+            <Button type="button" variant="outline" onClick={() => onOpenChange(false)} className="flex-1 sm:flex-none sm:w-24">
               Cancel
             </Button>
-            <Button 
-              type="submit" 
-              disabled={isPending}
-              className="w-full sm:flex-1 text-white"
-              style={{ background: `linear-gradient(135deg, ${primaryColor} 0%, ${secondaryColor} 100%)` }}
-            >
-              {isPending ? (
-                <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Processing...</>
-              ) : (
-                <><Check className="w-4 h-4 mr-2" />{customer ? 'Update' : 'Create'} Customer</>
-              )}
+            <Button type="submit" disabled={isPending} className="flex-1 text-white" style={{ background: `linear-gradient(135deg, ${primaryColor} 0%, ${secondaryColor} 100%)` }}>
+              {isPending ? 'Saving...' : <><Check className="w-4 h-4 mr-2" />{customer ? 'Update' : 'Add'}</>}
             </Button>
           </div>
         </form>
 
-        {/* Bottom flag stripe */}
-        <div className="h-1 flex">
+        <div className="h-1.5 flex">
           <div className="flex-1" style={{ backgroundColor: primaryColor }} />
           <div className="flex-1 bg-white" />
           <div className="flex-1" style={{ backgroundColor: secondaryColor }} />

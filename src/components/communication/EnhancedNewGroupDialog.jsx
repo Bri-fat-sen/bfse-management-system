@@ -191,28 +191,42 @@ export default function EnhancedNewGroupDialog({
     return groups;
   }, [filteredEmployees]);
 
+  const primaryColor = '#1EB053';
+  const secondaryColor = '#0072C6';
+
   return (
     <Dialog open={open} onOpenChange={handleClose}>
-      <DialogContent className="max-w-lg max-h-[85vh] overflow-hidden">
-        <DialogHeader>
-          <div className="flex h-1 w-16 rounded-full overflow-hidden mb-2">
-            <div className="flex-1 bg-[#1EB053]" />
-            <div className="flex-1 bg-white border-y border-gray-200" />
-            <div className="flex-1 bg-[#0072C6]" />
-          </div>
-          <DialogTitle className="flex items-center gap-2">
-            <Users className="w-5 h-5 text-[#0072C6]" />
-            Create Group Chat
-          </DialogTitle>
-          <DialogDescription>
-            {step === 'type' && "Choose how to create your group"}
-            {step === 'template' && "Select a team template"}
-            {step === 'custom' && "Customize your group"}
-          </DialogDescription>
-        </DialogHeader>
+      <DialogContent className="max-w-lg max-h-[90vh] overflow-hidden p-0 w-[95vw] sm:w-full [&>button]:hidden">
+        <div className="h-2 flex">
+          <div className="flex-1 bg-[#1EB053]" />
+          <div className="flex-1 bg-white" />
+          <div className="flex-1 bg-[#0072C6]" />
+        </div>
 
+        <div className="px-6 py-4 text-white border-b border-white/20" style={{ background: `linear-gradient(135deg, ${primaryColor} 0%, ${secondaryColor} 100%)` }}>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center">
+                <Users className="w-5 h-5 text-white" />
+              </div>
+              <div>
+                <h2 className="text-lg font-bold">New Group</h2>
+                <p className="text-white/80 text-xs">
+                  {step === 'type' && "Choose template or custom"}
+                  {step === 'template' && "Select team template"}
+                  {step === 'custom' && `${selectedMembers.length} members`}
+                </p>
+              </div>
+            </div>
+            <Button variant="ghost" size="icon" onClick={handleClose} className="text-white hover:bg-white/20">
+              <X className="w-5 h-5" />
+            </Button>
+          </div>
+        </div>
+
+        <div className="overflow-y-auto max-h-[calc(90vh-160px)]">
         {step === 'type' && (
-          <div className="space-y-3 py-4">
+          <div className="space-y-3 p-6">
             <Button
               variant="outline"
               className="w-full h-auto p-4 flex items-center justify-between"
@@ -250,7 +264,7 @@ export default function EnhancedNewGroupDialog({
         )}
 
         {step === 'template' && (
-          <div className="space-y-3 py-2">
+          <div className="space-y-3 p-6">
             <Button
               variant="ghost"
               size="sm"
@@ -295,7 +309,7 @@ export default function EnhancedNewGroupDialog({
         )}
 
         {step === 'custom' && (
-          <div className="space-y-4 overflow-hidden flex flex-col">
+          <div className="space-y-4 overflow-hidden flex flex-col p-6">
             {(step === 'custom' && !selectedTemplate) && (
               <Button
                 variant="ghost"
@@ -422,20 +436,26 @@ export default function EnhancedNewGroupDialog({
               </ScrollArea>
             </div>
 
-            <DialogFooter className="pt-2">
-              <Button variant="outline" onClick={handleClose}>
-                Cancel
-              </Button>
-              <Button 
-                onClick={handleCreate}
-                disabled={!groupName.trim() || selectedMembers.length === 0 || createGroupMutation.isPending}
-                className="bg-gradient-to-r from-[#1EB053] to-[#0072C6]"
-              >
-                {createGroupMutation.isPending ? 'Creating...' : `Create Group (${selectedMembers.length + 1})`}
-              </Button>
-            </DialogFooter>
           </div>
         )}
+        </div>
+
+        {step === 'custom' && (
+          <div className="sticky bottom-0 bg-white border-t p-4 flex gap-2">
+            <Button type="button" variant="outline" onClick={handleClose} className="flex-1 sm:flex-none sm:w-24">
+              Cancel
+            </Button>
+            <Button onClick={handleCreate} disabled={!groupName.trim() || selectedMembers.length === 0 || createGroupMutation.isPending} className="flex-1 text-white" style={{ background: `linear-gradient(135deg, ${primaryColor} 0%, ${secondaryColor} 100%)` }}>
+              {createGroupMutation.isPending ? 'Creating...' : <><Check className="w-4 h-4 mr-2" />Create ({selectedMembers.length + 1})</>}
+            </Button>
+          </div>
+        )}
+
+        <div className="h-1.5 flex">
+          <div className="flex-1 bg-[#1EB053]" />
+          <div className="flex-1 bg-white" />
+          <div className="flex-1 bg-[#0072C6]" />
+        </div>
       </DialogContent>
     </Dialog>
   );

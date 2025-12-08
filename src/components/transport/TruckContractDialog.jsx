@@ -55,6 +55,10 @@ export default function TruckContractDialog({
   });
   
   const [expenses, setExpenses] = useState([]);
+  const [showAdvanced, setShowAdvanced] = useState(false);
+
+  const primaryColor = '#1EB053';
+  const secondaryColor = '#0072C6';
 
   useEffect(() => {
     if (contract) {
@@ -75,6 +79,7 @@ export default function TruckContractDialog({
         notes: contract.notes || '',
       });
       setExpenses(contract.expenses || []);
+      setShowAdvanced(true);
     } else {
       setFormData({
         client_name: '',
@@ -93,6 +98,7 @@ export default function TruckContractDialog({
         notes: '',
       });
       setExpenses([]);
+      setShowAdvanced(false);
     }
   }, [contract, open]);
 
@@ -219,308 +225,155 @@ export default function TruckContractDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto [&>button]:hidden">
-        <DialogHeader>
-          <div className="flex h-1 w-16 rounded-full overflow-hidden mb-3">
-            <div className="flex-1 bg-[#1EB053]" />
-            <div className="flex-1 bg-white border-y border-gray-200" />
-            <div className="flex-1 bg-[#0072C6]" />
+      <DialogContent className="max-w-lg max-h-[90vh] overflow-hidden p-0 w-[95vw] sm:w-full [&>button]:hidden">
+        <div className="h-2 flex">
+          <div className="flex-1 bg-[#1EB053]" />
+          <div className="flex-1 bg-white" />
+          <div className="flex-1 bg-[#0072C6]" />
+        </div>
+
+        <div className="px-6 py-4 text-white border-b border-white/20" style={{ background: `linear-gradient(135deg, ${primaryColor} 0%, ${secondaryColor} 100%)` }}>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center">
+                <Truck className="w-5 h-5 text-white" />
+              </div>
+              <div>
+                <h2 className="text-lg font-bold">{isEditing ? 'Edit Contract' : 'Truck Contract'}</h2>
+                <p className="text-white/80 text-xs">Le {netRevenue.toLocaleString()} net</p>
+              </div>
+            </div>
+            <Button variant="ghost" size="icon" onClick={() => onOpenChange(false)} className="text-white hover:bg-white/20">
+              <X className="w-5 h-5" />
+            </Button>
           </div>
-          <DialogTitle>{isEditing ? 'Edit Contract' : 'New Truck Contract'}</DialogTitle>
-        </DialogHeader>
+        </div>
         
-        <form onSubmit={handleSubmit} className="space-y-6">
-          {/* Client Information */}
-          <div className="space-y-4">
-            <h3 className="font-semibold text-sm text-gray-700 border-b pb-2">Client Information</h3>
-            <div className="grid grid-cols-2 gap-4">
+        <form onSubmit={handleSubmit} className="overflow-y-auto max-h-[calc(90vh-180px)]">
+          <div className="p-6 space-y-4">
+            <div>
+              <Label className="font-medium">Client Name *</Label>
+              <Input value={formData.client_name} onChange={(e) => setFormData({...formData, client_name: e.target.value})} required autoFocus placeholder="Client/Company name" className="mt-1.5" />
+            </div>
+
+            <div className="grid grid-cols-2 gap-3">
               <div>
-                <Label>Client Name *</Label>
-                <Input 
-                  value={formData.client_name}
-                  onChange={(e) => setFormData({...formData, client_name: e.target.value})}
-                  required
-                  className="mt-1"
-                />
+                <Label className="text-sm">From</Label>
+                <Input value={formData.pickup_location} onChange={(e) => setFormData({...formData, pickup_location: e.target.value})} required placeholder="Pickup" className="mt-1.5" />
               </div>
               <div>
-                <Label>Client Phone</Label>
-                <Input 
-                  value={formData.client_phone}
-                  onChange={(e) => setFormData({...formData, client_phone: e.target.value})}
-                  className="mt-1"
-                />
+                <Label className="text-sm">To</Label>
+                <Input value={formData.delivery_location} onChange={(e) => setFormData({...formData, delivery_location: e.target.value})} required placeholder="Delivery" className="mt-1.5" />
               </div>
             </div>
-          </div>
 
-          {/* Route & Cargo */}
-          <div className="space-y-4">
-            <h3 className="font-semibold text-sm text-gray-700 border-b pb-2">Route & Cargo</h3>
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <Label>Pickup Location *</Label>
-                <Input 
-                  value={formData.pickup_location}
-                  onChange={(e) => setFormData({...formData, pickup_location: e.target.value})}
-                  required
-                  className="mt-1"
-                />
-              </div>
-              <div>
-                <Label>Delivery Location *</Label>
-                <Input 
-                  value={formData.delivery_location}
-                  onChange={(e) => setFormData({...formData, delivery_location: e.target.value})}
-                  required
-                  className="mt-1"
-                />
-              </div>
-              <div className="col-span-2">
-                <Label>Cargo Description</Label>
-                <Input 
-                  value={formData.cargo_description}
-                  onChange={(e) => setFormData({...formData, cargo_description: e.target.value})}
-                  placeholder="e.g., Building materials, Food supplies"
-                  className="mt-1"
-                />
-              </div>
-              <div>
-                <Label>Cargo Weight (kg)</Label>
-                <Input 
-                  type="number"
-                  value={formData.cargo_weight_kg}
-                  onChange={(e) => setFormData({...formData, cargo_weight_kg: e.target.value})}
-                  className="mt-1"
-                />
+            <div className="p-4 rounded-xl border-2 border-[#1EB053]/30 bg-[#1EB053]/5">
+              <Label className="text-[#1EB053] font-medium">Contract Amount *</Label>
+              <div className="relative mt-2">
+                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[#1EB053] font-bold">Le</span>
+                <Input type="number" value={formData.contract_amount} onChange={(e) => setFormData({...formData, contract_amount: e.target.value})} required className="pl-10 text-lg font-semibold border-[#1EB053]/30 bg-white" />
               </div>
             </div>
-          </div>
 
-          {/* Assignment & Dates */}
-          <div className="space-y-4">
-            <h3 className="font-semibold text-sm text-gray-700 border-b pb-2">Assignment & Dates</h3>
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <Label>Truck</Label>
-                <Select value={formData.vehicle_id} onValueChange={(v) => setFormData({...formData, vehicle_id: v})}>
-                  <SelectTrigger className="mt-1">
-                    <SelectValue placeholder="Select truck" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {trucks.map(v => (
-                      <SelectItem key={v.id} value={v.id}>
-                        {v.registration_number} - {v.brand} {v.model}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div>
-                <Label>Driver</Label>
-                <Select value={formData.driver_id} onValueChange={(v) => setFormData({...formData, driver_id: v})}>
-                  <SelectTrigger className="mt-1">
-                    <SelectValue placeholder="Select driver" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {drivers.map(d => (
-                      <SelectItem key={d.id} value={d.id}>
-                        {d.full_name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div>
-                <Label>Contract Date *</Label>
-                <Input 
-                  type="date"
-                  value={formData.contract_date}
-                  onChange={(e) => setFormData({...formData, contract_date: e.target.value})}
-                  required
-                  className="mt-1"
-                />
-              </div>
-              <div>
-                <Label>Delivery Date</Label>
-                <Input 
-                  type="date"
-                  value={formData.delivery_date}
-                  onChange={(e) => setFormData({...formData, delivery_date: e.target.value})}
-                  className="mt-1"
-                />
-              </div>
-            </div>
-          </div>
+            <button type="button" onClick={() => setShowAdvanced(!showAdvanced)} className="w-full text-sm text-gray-600 hover:text-gray-900 text-left">
+              {showAdvanced ? '− Hide' : '+ Show'} More Details
+            </button>
 
-          {/* Financials */}
-          <div className="space-y-4">
-            <h3 className="font-semibold text-sm text-gray-700 border-b pb-2">Financials</h3>
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <Label>Contract Amount (Le) *</Label>
-                <Input 
-                  type="number"
-                  value={formData.contract_amount}
-                  onChange={(e) => setFormData({...formData, contract_amount: e.target.value})}
-                  required
-                  className="mt-1"
-                />
-              </div>
-              <div className="grid grid-cols-2 gap-2">
-                <div>
-                  <Label>Status</Label>
-                  <Select value={formData.status} onValueChange={(v) => setFormData({...formData, status: v})}>
-                    <SelectTrigger className="mt-1">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="pending">Pending</SelectItem>
-                      <SelectItem value="in_progress">In Progress</SelectItem>
-                      <SelectItem value="completed">Completed</SelectItem>
-                      <SelectItem value="cancelled">Cancelled</SelectItem>
-                    </SelectContent>
-                  </Select>
+            {showAdvanced && (
+              <div className="space-y-3 pt-2 border-t">
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <Label className="text-sm">Truck</Label>
+                    <Select value={formData.vehicle_id} onValueChange={(v) => setFormData({...formData, vehicle_id: v})}>
+                      <SelectTrigger className="mt-1.5 text-xs h-9">
+                        <SelectValue placeholder="Select" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {trucks.map(v => (
+                          <SelectItem key={v.id} value={v.id} className="text-xs">{v.registration_number}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div>
+                    <Label className="text-sm">Driver</Label>
+                    <Select value={formData.driver_id} onValueChange={(v) => setFormData({...formData, driver_id: v})}>
+                      <SelectTrigger className="mt-1.5 text-xs h-9">
+                        <SelectValue placeholder="Select" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {drivers.map(d => (
+                          <SelectItem key={d.id} value={d.id} className="text-xs">{d.full_name}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div>
+                    <Label className="text-sm">Contract Date</Label>
+                    <Input type="date" value={formData.contract_date} onChange={(e) => setFormData({...formData, contract_date: e.target.value})} className="mt-1.5" />
+                  </div>
+                  <div>
+                    <Label className="text-sm">Delivery Date</Label>
+                    <Input type="date" value={formData.delivery_date} onChange={(e) => setFormData({...formData, delivery_date: e.target.value})} className="mt-1.5" />
+                  </div>
+                  <div>
+                    <Label className="text-sm">Cargo</Label>
+                    <Input value={formData.cargo_description} onChange={(e) => setFormData({...formData, cargo_description: e.target.value})} placeholder="Description" className="mt-1.5" />
+                  </div>
+                  <div>
+                    <Label className="text-sm">Weight (kg)</Label>
+                    <Input type="number" value={formData.cargo_weight_kg} onChange={(e) => setFormData({...formData, cargo_weight_kg: e.target.value})} placeholder="0" className="mt-1.5" />
+                  </div>
                 </div>
-                <div>
-                  <Label>Payment</Label>
-                  <Select value={formData.payment_status} onValueChange={(v) => setFormData({...formData, payment_status: v})}>
-                    <SelectTrigger className="mt-1">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="unpaid">Unpaid</SelectItem>
-                      <SelectItem value="partial">Partial</SelectItem>
-                      <SelectItem value="paid">Paid</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-            </div>
-          </div>
 
-          {/* Expenses */}
-          <div className="space-y-4">
-            <div className="flex items-center justify-between border-b pb-2">
-              <h3 className="font-semibold text-sm text-gray-700">Trip Expenses</h3>
-              <Button type="button" variant="outline" size="sm" onClick={addExpense}>
-                <Plus className="w-4 h-4 mr-1" />
-                Add Expense
-              </Button>
-            </div>
-            
-            {expenses.length === 0 ? (
-              <p className="text-sm text-gray-500 text-center py-4">No expenses added yet</p>
-            ) : (
-              <div className="space-y-3">
-                {expenses.map((exp, index) => (
-                  <div key={index} className="flex items-center gap-2 p-3 bg-gray-50 rounded-lg">
-                    <div className="flex-1">
-                      <Input 
-                        placeholder="Description"
-                        value={exp.description}
-                        onChange={(e) => updateExpense(index, 'description', e.target.value)}
-                        className="mb-2"
-                      />
-                      <div className="flex gap-2">
-                        <Select 
-                          value={exp.category} 
-                          onValueChange={(v) => updateExpense(index, 'category', v)}
-                        >
-                          <SelectTrigger className="flex-1">
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {expenseCategories.map(cat => (
-                              <SelectItem key={cat} value={cat}>
-                                {cat.charAt(0).toUpperCase() + cat.slice(1)}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                        <Input 
-                          type="number"
-                          placeholder="Amount"
-                          value={exp.amount}
-                          onChange={(e) => updateExpense(index, 'amount', e.target.value)}
-                          className="w-32"
-                        />
-                      </div>
-                    </div>
-                    <Button 
-                      type="button" 
-                      variant="ghost" 
-                      size="icon"
-                      onClick={() => removeExpense(index)}
-                      className="text-red-500 hover:text-red-700"
-                    >
-                      <Trash2 className="w-4 h-4" />
+                <div>
+                  <div className="flex items-center justify-between mb-2">
+                    <Label className="text-sm">Expenses</Label>
+                    <Button type="button" variant="outline" size="sm" onClick={addExpense} className="h-7 text-xs">
+                      <Plus className="w-3 h-3 mr-1" />Add
                     </Button>
                   </div>
-                ))}
+                  {expenses.map((exp, index) => (
+                    <div key={index} className="flex items-center gap-2 p-2 bg-gray-50 rounded mb-2">
+                      <Input placeholder="Desc" value={exp.description} onChange={(e) => updateExpense(index, 'description', e.target.value)} className="flex-1 h-8 text-xs" />
+                      <Input type="number" placeholder="0" value={exp.amount} onChange={(e) => updateExpense(index, 'amount', e.target.value)} className="w-20 h-8 text-xs" />
+                      <Button type="button" variant="ghost" size="icon" onClick={() => removeExpense(index)} className="h-7 w-7 text-red-500">
+                        <Trash2 className="w-3 h-3" />
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+
+                <div className="p-3 bg-gray-100 rounded space-y-1 text-xs">
+                  <div className="flex justify-between"><span>Contract:</span><span className="font-medium">Le {contractAmount.toLocaleString()}</span></div>
+                  <div className="flex justify-between text-red-600"><span>Expenses:</span><span>-Le {totalExpenses.toLocaleString()}</span></div>
+                  <div className="flex justify-between font-bold border-t pt-1"><span>Net:</span><span className={netRevenue >= 0 ? 'text-green-600' : 'text-red-600'}>Le {netRevenue.toLocaleString()}</span></div>
+                </div>
+
+                {isEditing && (
+                  <Button type="button" variant="destructive" onClick={handleDelete} disabled={isPending} className="w-full" size="sm">
+                    <Trash2 className="w-4 h-4 mr-2" />Delete Contract
+                  </Button>
+                )}
               </div>
             )}
-
-            {/* Summary */}
-            <div className="bg-gray-100 rounded-lg p-4 space-y-2">
-              <div className="flex justify-between text-sm">
-                <span>Contract Amount:</span>
-                <span className="font-medium">Le {(parseFloat(formData.contract_amount) || 0).toLocaleString()}</span>
-              </div>
-              <div className="flex justify-between text-sm text-red-600">
-                <span>Total Expenses:</span>
-                <span className="font-medium">-Le {totalExpenses.toLocaleString()}</span>
-              </div>
-              <div className="flex justify-between text-sm font-bold border-t pt-2">
-                <span>Net Revenue:</span>
-                <span className={netRevenue >= 0 ? 'text-green-600' : 'text-red-600'}>
-                  Le {netRevenue.toLocaleString()}
-                </span>
-              </div>
-            </div>
           </div>
 
-          {/* Notes */}
-          <div>
-            <Label>Notes</Label>
-            <Textarea 
-              value={formData.notes}
-              onChange={(e) => setFormData({...formData, notes: e.target.value})}
-              placeholder="Additional notes..."
-              className="mt-1"
-            />
+          <div className="sticky bottom-0 bg-white border-t p-4 flex gap-2">
+            <Button type="button" variant="outline" onClick={() => onOpenChange(false)} className="flex-1 sm:flex-none sm:w-24">
+              Cancel
+            </Button>
+            <Button type="submit" disabled={isPending} className="flex-1 text-white" style={{ background: `linear-gradient(135deg, ${primaryColor} 0%, ${secondaryColor} 100%)` }}>
+              {isPending ? 'Saving...' : <><Check className="w-4 h-4 mr-2" />{isEditing ? 'Update' : 'Create'}</>}
+            </Button>
           </div>
-
-          <DialogFooter className="flex justify-between">
-            <div>
-              {isEditing && (
-                <Button 
-                  type="button" 
-                  variant="destructive" 
-                  onClick={handleDelete}
-                  disabled={isPending}
-                >
-                  {deleteMutation.isPending && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
-                  <Trash2 className="w-4 h-4 mr-2" />
-                  Delete
-                </Button>
-              )}
-            </div>
-            <div className="flex gap-2">
-              <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
-                Cancel
-              </Button>
-              <Button 
-                type="submit" 
-                disabled={isPending}
-                className="bg-gradient-to-r from-[#1EB053] to-[#0072C6]"
-              >
-                {(createMutation.isPending || updateMutation.isPending) && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
-                {isEditing ? 'Update Contract' : 'Create Contract'}
-              </Button>
-            </div>
-          </DialogFooter>
         </form>
+
+        <div className="h-1.5 flex">
+          <div className="flex-1 bg-[#1EB053]" />
+          <div className="flex-1 bg-white" />
+          <div className="flex-1 bg-[#0072C6]" />
+        </div>
       </DialogContent>
     </Dialog>
   );
