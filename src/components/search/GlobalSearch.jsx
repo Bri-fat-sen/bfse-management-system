@@ -31,22 +31,20 @@ const entityConfig = {
 };
 
 export default function GlobalSearch({ orgId, isOpen, onClose }) {
-  const [query, setQuery] = useState("");
-  const [recentSearches, setRecentSearches] = useState([]);
-  const [activeFilter, setActiveFilter] = useState("all");
-  const inputRef = useRef(null);
+  const [query, setQuery] = React.useState("");
+  const [recentSearches, setRecentSearches] = React.useState([]);
+  const [activeFilter, setActiveFilter] = React.useState("all");
+  const inputRef = React.useRef(null);
 
-  useEffect(() => {
+  React.useEffect(() => {
     if (isOpen && inputRef.current) {
       setTimeout(() => inputRef.current?.focus(), 100);
     }
-    // Load recent searches from localStorage
     const saved = localStorage.getItem('recentSearches');
     if (saved) setRecentSearches(JSON.parse(saved));
   }, [isOpen]);
 
-  // Keyboard shortcuts
-  useEffect(() => {
+  React.useEffect(() => {
     const handleKeyDown = (e) => {
       if (isOpen && e.key === 'Escape') {
         onClose();
@@ -110,7 +108,6 @@ export default function GlobalSearch({ orgId, isOpen, onClose }) {
     enabled: !!orgId,
   });
 
-  // Enhanced filter results based on query
   const searchResults = query.length >= 2 ? {
     employees: employees.filter(e => 
       e.full_name?.toLowerCase().includes(query.toLowerCase()) ||
@@ -168,7 +165,6 @@ export default function GlobalSearch({ orgId, isOpen, onClose }) {
     ).slice(0, 5),
   } : { employees: [], products: [], sales: [], trips: [], expenses: [], customers: [], meetings: [], suppliers: [], vehicles: [] };
 
-  // Filter by active filter
   const filteredResults = activeFilter === "all" 
     ? searchResults 
     : { [activeFilter]: searchResults[activeFilter] };
@@ -183,21 +179,19 @@ export default function GlobalSearch({ orgId, isOpen, onClose }) {
   };
 
   const handleResultClick = (type, item) => {
-    saveRecentSearch({ id: item.id, type, name: item.full_name || item.name || item.sale_number });
+    saveRecentSearch({ id: item.id, type, name: item.full_name || item.name || item.sale_number || item.registration_number });
     onClose();
   };
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-3xl p-0 gap-0 overflow-hidden">
-        {/* Sierra Leone Flag Stripe */}
         <div className="h-1 flex">
           <div className="flex-1 bg-[#1EB053]" />
           <div className="flex-1 bg-white" />
           <div className="flex-1 bg-[#0072C6]" />
         </div>
 
-        {/* Search Input */}
         <div className="flex items-center gap-3 p-4 border-b">
           <Search className="w-5 h-5 text-gray-400" />
           <Input
@@ -214,9 +208,8 @@ export default function GlobalSearch({ orgId, isOpen, onClose }) {
           )}
         </div>
 
-        {/* Filter Tabs */}
         {query.length >= 2 && (
-          <div className="px-4 pt-3 border-b">
+          <div className="px-4 pt-3 pb-2 border-b">
             <Tabs value={activeFilter} onValueChange={setActiveFilter}>
               <TabsList className="w-full justify-start h-auto flex-wrap bg-transparent p-0 gap-1">
                 <TabsTrigger value="all" className="text-xs data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#1EB053] data-[state=active]:to-[#0072C6] data-[state=active]:text-white">
@@ -282,7 +275,6 @@ export default function GlobalSearch({ orgId, isOpen, onClose }) {
         )}
 
         <div className="max-h-[60vh] overflow-y-auto">
-          {/* Recent Searches */}
           {query.length < 2 && recentSearches.length > 0 && (
             <div className="p-4">
               <p className="text-xs font-medium text-gray-500 mb-2 flex items-center gap-1">
@@ -310,7 +302,6 @@ export default function GlobalSearch({ orgId, isOpen, onClose }) {
             </div>
           )}
 
-          {/* Search Results */}
           {query.length >= 2 && (
             <>
               {totalResults === 0 ? (
@@ -321,7 +312,6 @@ export default function GlobalSearch({ orgId, isOpen, onClose }) {
                 </div>
               ) : (
                 <div className="divide-y">
-                  {/* Employees */}
                   {filteredResults.employees?.length > 0 && (
                     <div className="p-4">
                       <p className="text-xs font-medium text-gray-500 mb-2">EMPLOYEES</p>
@@ -347,7 +337,6 @@ export default function GlobalSearch({ orgId, isOpen, onClose }) {
                     </div>
                   )}
 
-                  {/* Products */}
                   {filteredResults.products?.length > 0 && (
                     <div className="p-4">
                       <p className="text-xs font-medium text-gray-500 mb-2">PRODUCTS</p>
@@ -375,7 +364,6 @@ export default function GlobalSearch({ orgId, isOpen, onClose }) {
                     </div>
                   )}
 
-                  {/* Sales */}
                   {filteredResults.sales?.length > 0 && (
                     <div className="p-4">
                       <p className="text-xs font-medium text-gray-500 mb-2">SALES</p>
@@ -403,7 +391,6 @@ export default function GlobalSearch({ orgId, isOpen, onClose }) {
                     </div>
                   )}
 
-                  {/* Customers */}
                   {filteredResults.customers?.length > 0 && (
                     <div className="p-4">
                       <p className="text-xs font-medium text-gray-500 mb-2">CUSTOMERS</p>
@@ -429,7 +416,6 @@ export default function GlobalSearch({ orgId, isOpen, onClose }) {
                     </div>
                   )}
 
-                  {/* Expenses */}
                   {filteredResults.expenses?.length > 0 && (
                     <div className="p-4">
                       <p className="text-xs font-medium text-gray-500 mb-2">EXPENSES</p>
@@ -457,7 +443,6 @@ export default function GlobalSearch({ orgId, isOpen, onClose }) {
                     </div>
                   )}
 
-                  {/* Trips */}
                   {filteredResults.trips?.length > 0 && (
                     <div className="p-4">
                       <p className="text-xs font-medium text-gray-500 mb-2">TRIPS</p>
@@ -485,7 +470,6 @@ export default function GlobalSearch({ orgId, isOpen, onClose }) {
                     </div>
                   )}
 
-                  {/* Meetings */}
                   {filteredResults.meetings?.length > 0 && (
                     <div className="p-4">
                       <p className="text-xs font-medium text-gray-500 mb-2">MEETINGS</p>
@@ -511,7 +495,6 @@ export default function GlobalSearch({ orgId, isOpen, onClose }) {
                     </div>
                   )}
 
-                  {/* Suppliers */}
                   {filteredResults.suppliers?.length > 0 && (
                     <div className="p-4">
                       <p className="text-xs font-medium text-gray-500 mb-2">SUPPLIERS</p>
@@ -539,7 +522,6 @@ export default function GlobalSearch({ orgId, isOpen, onClose }) {
                     </div>
                   )}
 
-                  {/* Vehicles */}
                   {filteredResults.vehicles?.length > 0 && (
                     <div className="p-4">
                       <p className="text-xs font-medium text-gray-500 mb-2">VEHICLES</p>
@@ -572,7 +554,6 @@ export default function GlobalSearch({ orgId, isOpen, onClose }) {
           )}
         </div>
 
-        {/* Footer */}
         <div className="relative">
           <div className="h-1 flex">
             <div className="flex-1 bg-[#1EB053]" />
