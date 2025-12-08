@@ -544,46 +544,91 @@ export default function Dashboard() {
             />
           </div>
 
+          {/* Recent Sales & Activity */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-            <Card className="border-0 shadow-md">
-              <div className="h-1 bg-gradient-to-r from-[#0072C6] to-[#8b5cf6]" />
-              <CardHeader className="pb-3">
-                <CardTitle className="text-sm flex items-center gap-2">
-                  <Activity className="w-4 h-4 text-[#0072C6]" />
-                  Recent Activity
-                </CardTitle>
+            {/* Recent Sales - Takes 2 columns */}
+            <Card className="lg:col-span-2 border-0 shadow-md overflow-hidden">
+              <div className="h-1 bg-gradient-to-r from-[#1EB053] via-white to-[#0072C6]" />
+              <CardHeader className="border-b bg-gray-50/50">
+                <div className="flex items-center justify-between">
+                  <CardTitle className="text-sm flex items-center gap-2">
+                    <ShoppingCart className="w-4 h-4 text-[#1EB053]" />
+                    Recent Sales
+                    <Badge variant="secondary" className="ml-2 text-xs">{todaySales.length} today</Badge>
+                  </CardTitle>
+                  <Link to={createPageUrl("Sales")}>
+                    <Button size="sm" variant="outline" className="h-8 text-xs">
+                      View All <ArrowRight className="w-3 h-3 ml-1" />
+                    </Button>
+                  </Link>
+                </div>
               </CardHeader>
-              <CardContent>
-                <RecentActivity activities={recentActivity} />
+              <CardContent className="p-0">
+                {todaySales.length === 0 ? (
+                  <div className="text-center py-8 text-gray-400">
+                    <ShoppingCart className="w-10 h-10 mx-auto mb-2 opacity-20" />
+                    <p className="text-xs">No sales today</p>
+                  </div>
+                ) : (
+                  <div className="divide-y max-h-72 overflow-y-auto">
+                    {todaySales.slice(0, 6).map((sale) => (
+                      <div key={sale.id} className="flex items-center justify-between p-3 hover:bg-gray-50 transition-colors">
+                        <div className="flex items-center gap-2 flex-1 min-w-0">
+                          <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-[#1EB053] to-[#0072C6] flex items-center justify-center flex-shrink-0">
+                            <ShoppingCart className="w-4 h-4 text-white" />
+                          </div>
+                          <div className="min-w-0 flex-1">
+                            <p className="font-medium text-xs truncate">{sale.customer_name || 'Walk-in Customer'}</p>
+                            <p className="text-[10px] text-gray-500 truncate">{sale.employee_name} • {format(new Date(sale.created_date), 'h:mm a')}</p>
+                          </div>
+                        </div>
+                        <div className="text-right flex-shrink-0 ml-2">
+                          <p className="font-bold text-sm text-[#1EB053]">Le {sale.total_amount?.toLocaleString()}</p>
+                          <Badge variant="outline" className="text-[9px] mt-0.5">{sale.payment_method?.replace('_', ' ')}</Badge>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </CardContent>
             </Card>
 
-            <Card className="border-0 shadow-md">
-              <div className="h-1 bg-gradient-to-r from-[#8b5cf6] to-[#ec4899]" />
-              <CardHeader className="pb-3">
-                <CardTitle className="text-sm flex items-center gap-2">
-                  <Calendar className="w-4 h-4 text-[#8b5cf6]" />
-                  Upcoming Events
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <UpcomingMeetings meetings={meetings} />
-              </CardContent>
-            </Card>
+            {/* Activity & Events - Stacked */}
+            <div className="space-y-4">
+              <Card className="border-0 shadow-md">
+                <div className="h-1 bg-gradient-to-r from-[#0072C6] to-[#8b5cf6]" />
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-sm flex items-center gap-2">
+                    <Activity className="w-4 h-4 text-[#0072C6]" />
+                    Recent Activity
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <RecentActivity activities={recentActivity} />
+                </CardContent>
+              </Card>
 
-            <Card className="border-0 shadow-md">
-              <div className="h-1 bg-gradient-to-r from-[#1EB053] to-[#0072C6]" />
-              <CardHeader className="pb-3">
-                <CardTitle className="text-sm flex items-center gap-2">
-                  <Clock className="w-4 h-4 text-[#1EB053]" />
-                  Today's Snapshot
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <TodayAttendance attendance={attendance} employees={employees} />
-              </CardContent>
-            </Card>
+              <Card className="border-0 shadow-md">
+                <div className="h-1 bg-gradient-to-r from-[#8b5cf6] to-[#ec4899]" />
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-sm flex items-center gap-2">
+                    <Calendar className="w-4 h-4 text-[#8b5cf6]" />
+                    Upcoming Events
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <UpcomingMeetings meetings={meetings} />
+                </CardContent>
+              </Card>
+            </div>
           </div>
+
+          <TopPerformers 
+            sales={sales}
+            employees={employees}
+            trips={trips}
+            products={products}
+          />
         </TabsContent>
 
         {/* Sales Tab */}
