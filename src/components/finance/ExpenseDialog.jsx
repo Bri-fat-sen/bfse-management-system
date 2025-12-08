@@ -46,7 +46,7 @@ const paymentMethods = [
 export default function ExpenseDialog({ open, onOpenChange, orgId, currentEmployee, organisation }) {
   const queryClient = useQueryClient();
   const [uploading, setUploading] = useState(false);
-  const [activeSection, setActiveSection] = useState('details');
+  const [showAdvanced, setShowAdvanced] = useState(false);
 
   const primaryColor = organisation?.primary_color || '#1EB053';
   const secondaryColor = organisation?.secondary_color || '#0072C6';
@@ -115,7 +115,7 @@ export default function ExpenseDialog({ open, onOpenChange, orgId, currentEmploy
       receipt_url: '',
       notes: '',
     });
-    setActiveSection('details');
+    setShowAdvanced(false);
   };
 
   const handleReceiptUpload = async (e) => {
@@ -142,279 +142,164 @@ export default function ExpenseDialog({ open, onOpenChange, orgId, currentEmploy
     createExpenseMutation.mutate(formData);
   };
 
-  const sections = [
-    { id: 'details', label: 'Details', icon: Receipt },
-    { id: 'payment', label: 'Payment', icon: CreditCard },
-  ];
-
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-lg max-h-[90vh] overflow-hidden p-0 w-[95vw] sm:w-full [&>button]:hidden">
-        {/* Sierra Leone Flag Header */}
         <div className="h-2 flex">
           <div className="flex-1" style={{ backgroundColor: primaryColor }} />
           <div className="flex-1 bg-white" />
           <div className="flex-1" style={{ backgroundColor: secondaryColor }} />
         </div>
 
-        {/* Header with gradient */}
-        <div 
-          className="px-6 py-4 text-white"
-          style={{ background: `linear-gradient(135deg, #ef4444 0%, #dc2626 100%)` }}
-        >
+        <div className="px-6 py-4 text-white border-b border-white/20" style={{ background: 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)' }}>
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className="w-12 h-12 rounded-xl bg-white/20 flex items-center justify-center">
-                <Receipt className="w-6 h-6 text-white" />
+              <div className="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center">
+                <Receipt className="w-5 h-5 text-white" />
               </div>
               <div>
-                <h2 className="text-xl font-bold">Record Expense</h2>
-                <p className="text-white/80 text-sm">Track business expenditure</p>
+                <h2 className="text-lg font-bold">Quick Expense</h2>
+                <p className="text-white/80 text-xs">Press Ctrl+Enter to save</p>
               </div>
             </div>
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => onOpenChange(false)}
-              className="text-white hover:bg-white/20"
-            >
+            <Button variant="ghost" size="icon" onClick={() => onOpenChange(false)} className="text-white hover:bg-white/20">
               <X className="w-5 h-5" />
             </Button>
           </div>
-
-          {/* Section Tabs */}
-          <div className="flex gap-1 mt-4 overflow-x-auto pb-1">
-            {sections.map((section) => (
-              <button
-                key={section.id}
-                type="button"
-                onClick={() => setActiveSection(section.id)}
-                className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-all whitespace-nowrap ${
-                  activeSection === section.id
-                    ? 'bg-white text-gray-900'
-                    : 'bg-white/20 text-white hover:bg-white/30'
-                }`}
-              >
-                <section.icon className="w-4 h-4" />
-                {section.label}
-              </button>
-            ))}
-          </div>
         </div>
 
-        {/* Form Content */}
-        <form onSubmit={handleSubmit} className="overflow-y-auto max-h-[calc(90vh-220px)]">
-          <div className="p-6 space-y-6">
-            
-            {/* Details Section */}
-            {activeSection === 'details' && (
-              <div className="space-y-4">
-                <div className="flex items-center gap-2 mb-4">
-                  <div className="w-8 h-8 rounded-lg bg-red-100 flex items-center justify-center">
-                    <Receipt className="w-4 h-4 text-red-600" />
-                  </div>
-                  <h3 className="font-semibold text-gray-900">Expense Details</h3>
-                </div>
+        <form onSubmit={handleSubmit} className="overflow-y-auto max-h-[calc(90vh-180px)]">
+          <div className="p-6 space-y-4">
+            <QuickSuggestionChips type="expense" onSelect={handleQuickFill} />
 
-                {/* Quick Fill Chips */}
-                <div>
-                  <Label className="text-gray-500 text-xs mb-2 block">Quick Fill</Label>
-                  <QuickSuggestionChips type="expense" onSelect={handleQuickFill} />
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <Label className="text-sm">Category *</Label>
+                <Select value={formData.category} onValueChange={(v) => setFormData(prev => ({ ...prev, category: v }))}>
+                  <SelectTrigger className="mt-1.5">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {categories.map(cat => (
+                      <SelectItem key={cat.value} value={cat.value}>
+                        <span className="flex items-center gap-2"><span>{cat.icon}</span>{cat.label}</span>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="p-3 rounded-xl border-2 border-red-200 bg-red-50">
+                <Label className="text-red-700 font-medium text-xs">Amount *</Label>
+                <div className="relative mt-1.5">
+                  <span className="absolute left-2 top-1/2 -translate-y-1/2 text-red-600 font-bold text-xs">Le</span>
+                  <Input
+                    type="number"
+                    value={formData.amount}
+                    onChange={(e) => setFormData(prev => ({ ...prev, amount: e.target.value }))}
+                    placeholder="0.00"
+                    required
+                    autoFocus
+                    className="pl-8 text-base font-semibold border-red-200 bg-white"
+                    step="0.01"
+                  />
                 </div>
+              </div>
+            </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div>
-                    <Label className="text-gray-700 font-medium">Category *</Label>
-                    <Select
-                      value={formData.category}
-                      onValueChange={(v) => setFormData(prev => ({ ...prev, category: v }))}
-                    >
-                      <SelectTrigger className="mt-1.5 border-gray-200">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {categories.map(cat => (
-                          <SelectItem key={cat.value} value={cat.value}>
-                            <span className="flex items-center gap-2">
-                              <span>{cat.icon}</span>
-                              {cat.label}
-                            </span>
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div className="p-4 rounded-xl border-2 border-red-200 bg-red-50">
-                    <Label className="text-red-700 font-medium flex items-center gap-2">
-                      <DollarSign className="w-4 h-4" /> Amount (SLE) *
-                    </Label>
-                    <div className="relative mt-2">
-                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-red-600 font-bold">Le</span>
-                      <Input
-                        type="number"
-                        value={formData.amount}
-                        onChange={(e) => setFormData(prev => ({ ...prev, amount: e.target.value }))}
-                        placeholder="0.00"
-                        required
-                        className="pl-10 text-lg font-semibold border-red-200 bg-white"
-                      />
-                    </div>
-                  </div>
-                  <div className="sm:col-span-2">
-                    <Label className="text-gray-700 font-medium">Description *</Label>
-                    <Input
-                      value={formData.description}
-                      onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
-                      placeholder="What was this expense for?"
-                      required
-                      className="mt-1.5 border-gray-200"
-                    />
-                  </div>
-                  <div>
-                    <Label className="text-gray-700 font-medium flex items-center gap-2">
-                      <Building2 className="w-3 h-3" /> Vendor/Supplier
-                    </Label>
-                    <Input
-                      value={formData.vendor}
-                      onChange={(e) => setFormData(prev => ({ ...prev, vendor: e.target.value }))}
-                      placeholder="e.g. Freetown Fuel Station"
-                      className="mt-1.5 border-gray-200"
-                    />
-                  </div>
-                  <div>
-                    <Label className="text-gray-700 font-medium flex items-center gap-2">
-                      <Calendar className="w-3 h-3" /> Date
-                    </Label>
-                    <Input
-                      type="date"
-                      value={formData.date}
-                      onChange={(e) => setFormData(prev => ({ ...prev, date: e.target.value }))}
-                      className="mt-1.5 border-gray-200"
-                    />
-                  </div>
-                </div>
+            <div>
+              <Label className="text-sm">Description *</Label>
+              <Input
+                value={formData.description}
+                onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
+                placeholder="What was this for?"
+                required
+                className="mt-1.5"
+              />
+            </div>
 
-                {/* AI Form Assistant */}
-                <AIFormAssistant
-                  formType="expense"
-                  formData={formData}
-                  onSuggestion={handleAISuggestion}
-                  pastEntries={pastExpenses}
-                  categories={categories}
-                  className="mt-4"
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <Label className="text-sm">Vendor</Label>
+                <Input
+                  value={formData.vendor}
+                  onChange={(e) => setFormData(prev => ({ ...prev, vendor: e.target.value }))}
+                  placeholder="Supplier name"
+                  className="mt-1.5"
                 />
               </div>
-            )}
+              <div>
+                <Label className="text-sm">Date</Label>
+                <Input
+                  type="date"
+                  value={formData.date}
+                  onChange={(e) => setFormData(prev => ({ ...prev, date: e.target.value }))}
+                  className="mt-1.5"
+                />
+              </div>
+            </div>
 
-            {/* Payment Section */}
-            {activeSection === 'payment' && (
-              <div className="space-y-4">
-                <div className="flex items-center gap-2 mb-4">
-                  <div className="w-8 h-8 rounded-lg bg-purple-100 flex items-center justify-center">
-                    <CreditCard className="w-4 h-4 text-purple-600" />
-                  </div>
-                  <h3 className="font-semibold text-gray-900">Payment & Receipt</h3>
+            <button type="button" onClick={() => setShowAdvanced(!showAdvanced)} className="w-full text-sm text-gray-600 hover:text-gray-900 text-left">
+              {showAdvanced ? '− Hide' : '+ Show'} More Options
+            </button>
+
+            {showAdvanced && (
+              <div className="space-y-3 pt-2 border-t">
+                <div>
+                  <Label className="text-sm">Payment Method</Label>
+                  <Select value={formData.payment_method} onValueChange={(v) => setFormData(prev => ({ ...prev, payment_method: v }))}>
+                    <SelectTrigger className="mt-1.5">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {paymentMethods.map(method => (
+                        <SelectItem key={method.value} value={method.value}>{method.label}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
 
-                <div className="space-y-4">
-                  <div>
-                    <Label className="text-gray-700 font-medium">Payment Method</Label>
-                    <Select
-                      value={formData.payment_method}
-                      onValueChange={(v) => setFormData(prev => ({ ...prev, payment_method: v }))}
-                    >
-                      <SelectTrigger className="mt-1.5 border-gray-200">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {paymentMethods.map(method => (
-                          <SelectItem key={method.value} value={method.value}>{method.label}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  {/* Receipt Upload */}
-                  <div className="p-4 rounded-xl border border-gray-200 bg-gray-50">
-                    <Label className="text-gray-700 font-medium flex items-center gap-2 mb-3">
-                      <Upload className="w-4 h-4" /> Receipt (optional)
-                    </Label>
-                    {formData.receipt_url ? (
-                      <div className="flex items-center gap-3 p-3 bg-green-50 rounded-lg border border-green-200">
-                        <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
-                          <Check className="w-5 h-5 text-green-600" />
-                        </div>
-                        <div className="flex-1">
-                          <p className="text-sm font-medium text-green-700">Receipt uploaded</p>
-                          <p className="text-xs text-green-600">File attached successfully</p>
-                        </div>
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => setFormData(prev => ({ ...prev, receipt_url: '' }))}
-                          className="text-red-500 hover:text-red-600 hover:bg-red-50"
-                        >
-                          Remove
-                        </Button>
-                      </div>
-                    ) : (
-                      <div className="flex items-center gap-3">
-                        <Input
-                          type="file"
-                          accept="image/*,.pdf"
-                          onChange={handleReceiptUpload}
-                          disabled={uploading}
-                          className="border-gray-200"
-                        />
-                        {uploading && <Loader2 className="w-5 h-5 animate-spin text-gray-500" />}
-                      </div>
-                    )}
-                  </div>
-
-                  <div>
-                    <Label className="text-gray-700 font-medium flex items-center gap-2">
-                      <FileText className="w-3 h-3" /> Notes
-                    </Label>
-                    <Textarea
-                      value={formData.notes}
-                      onChange={(e) => setFormData(prev => ({ ...prev, notes: e.target.value }))}
-                      placeholder="Additional notes..."
-                      rows={3}
-                      className="mt-1.5 border-gray-200"
-                    />
-                  </div>
+                <div className="p-3 rounded-lg border bg-gray-50">
+                  <Label className="text-sm mb-2 block">Receipt (optional)</Label>
+                  {formData.receipt_url ? (
+                    <div className="flex items-center gap-2 p-2 bg-green-50 rounded border border-green-200">
+                      <Check className="w-4 h-4 text-green-600" />
+                      <span className="text-xs text-green-700 flex-1">Uploaded</span>
+                      <Button type="button" variant="ghost" size="sm" onClick={() => setFormData(prev => ({ ...prev, receipt_url: '' }))} className="h-6 text-red-500">
+                        Remove
+                      </Button>
+                    </div>
+                  ) : (
+                    <Input type="file" accept="image/*,.pdf" onChange={handleReceiptUpload} disabled={uploading} className="text-xs" />
+                  )}
                 </div>
+
+                <div>
+                  <Label className="text-sm">Notes</Label>
+                  <Textarea
+                    value={formData.notes}
+                    onChange={(e) => setFormData(prev => ({ ...prev, notes: e.target.value }))}
+                    placeholder="Additional notes..."
+                    rows={2}
+                    className="mt-1.5"
+                  />
+                </div>
+
+                <AIFormAssistant formType="expense" formData={formData} onSuggestion={handleAISuggestion} pastEntries={pastExpenses} categories={categories} />
               </div>
             )}
           </div>
 
-          {/* Footer */}
-          <div className="sticky bottom-0 bg-white border-t p-4 flex flex-col sm:flex-row gap-3">
-            <Button 
-              type="button" 
-              variant="outline" 
-              onClick={() => onOpenChange(false)} 
-              className="w-full sm:w-auto"
-            >
+          <div className="sticky bottom-0 bg-white border-t p-4 flex gap-2">
+            <Button type="button" variant="outline" onClick={() => onOpenChange(false)} className="flex-1 sm:flex-none sm:w-24">
               Cancel
             </Button>
-            <Button 
-              type="submit" 
-              disabled={createExpenseMutation.isPending}
-              className="w-full sm:flex-1 text-white bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700"
-            >
-              {createExpenseMutation.isPending ? (
-                <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Processing...</>
-              ) : (
-                <><Check className="w-4 h-4 mr-2" />Record Expense</>
-              )}
+            <Button type="submit" disabled={createExpenseMutation.isPending} className="flex-1 text-white bg-gradient-to-r from-red-500 to-red-600">
+              {createExpenseMutation.isPending ? 'Saving...' : <><Check className="w-4 h-4 mr-2" />Record</>}
             </Button>
           </div>
         </form>
 
-        {/* Bottom flag stripe */}
-        <div className="h-1 flex">
+        <div className="h-1.5 flex">
           <div className="flex-1" style={{ backgroundColor: primaryColor }} />
           <div className="flex-1 bg-white" />
           <div className="flex-1" style={{ backgroundColor: secondaryColor }} />

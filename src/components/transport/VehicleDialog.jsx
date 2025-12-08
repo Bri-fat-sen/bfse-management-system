@@ -39,7 +39,7 @@ const fuelTypes = [
 
 export default function VehicleDialog({ open, onOpenChange, orgId, drivers = [], editingVehicle = null, organisation }) {
   const queryClient = useQueryClient();
-  const [activeSection, setActiveSection] = useState('basic');
+  const [showAdvanced, setShowAdvanced] = useState(false);
 
   const primaryColor = organisation?.primary_color || '#1EB053';
   const secondaryColor = organisation?.secondary_color || '#0072C6';
@@ -75,11 +75,10 @@ export default function VehicleDialog({ open, onOpenChange, orgId, drivers = [],
         last_service_date: editingVehicle.last_service_date || '',
         notes: editingVehicle.notes || '',
       });
+      setShowAdvanced(true);
     } else {
       resetForm();
-    }
-    if (open) {
-      setActiveSection('basic');
+      setShowAdvanced(false);
     }
   }, [editingVehicle, open]);
 
@@ -148,203 +147,105 @@ export default function VehicleDialog({ open, onOpenChange, orgId, drivers = [],
 
   const isPending = createVehicleMutation.isPending || updateVehicleMutation.isPending;
 
-  const sections = [
-    { id: 'basic', label: 'Basic Info', icon: Car },
-    { id: 'specs', label: 'Specs', icon: Settings },
-    { id: 'service', label: 'Service', icon: Shield },
-  ];
-
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-hidden p-0 w-[95vw] sm:w-full [&>button]:hidden">
-        {/* Sierra Leone Flag Header */}
+      <DialogContent className="max-w-lg max-h-[90vh] overflow-hidden p-0 w-[95vw] sm:w-full [&>button]:hidden">
         <div className="h-2 flex">
           <div className="flex-1" style={{ backgroundColor: primaryColor }} />
           <div className="flex-1 bg-white" />
           <div className="flex-1" style={{ backgroundColor: secondaryColor }} />
         </div>
 
-        {/* Header with gradient */}
-        <div 
-          className="px-6 py-4 text-white"
-          style={{ background: `linear-gradient(135deg, ${primaryColor} 0%, ${secondaryColor} 100%)` }}
-        >
+        <div className="px-6 py-4 text-white border-b border-white/20" style={{ background: `linear-gradient(135deg, ${primaryColor} 0%, ${secondaryColor} 100%)` }}>
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className="w-12 h-12 rounded-xl bg-white/20 flex items-center justify-center">
-                <Truck className="w-6 h-6 text-white" />
+              <div className="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center">
+                <Truck className="w-5 h-5 text-white" />
               </div>
               <div>
-                <h2 className="text-xl font-bold">
-                  {editingVehicle ? 'Edit Vehicle' : 'Add New Vehicle'}
-                </h2>
-                <p className="text-white/80 text-sm">
-                  {editingVehicle ? `Updating: ${editingVehicle.registration_number}` : 'Register a new fleet vehicle'}
-                </p>
+                <h2 className="text-lg font-bold">{editingVehicle ? 'Edit Vehicle' : 'Add Vehicle'}</h2>
+                <p className="text-white/80 text-xs">Press Ctrl+Enter to save</p>
               </div>
             </div>
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => onOpenChange(false)}
-              className="text-white hover:bg-white/20"
-            >
+            <Button variant="ghost" size="icon" onClick={() => onOpenChange(false)} className="text-white hover:bg-white/20">
               <X className="w-5 h-5" />
             </Button>
           </div>
-
-          {/* Section Tabs */}
-          <div className="flex gap-1 mt-4 overflow-x-auto pb-1">
-            {sections.map((section) => (
-              <button
-                key={section.id}
-                type="button"
-                onClick={() => setActiveSection(section.id)}
-                className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-all whitespace-nowrap ${
-                  activeSection === section.id
-                    ? 'bg-white text-gray-900'
-                    : 'bg-white/20 text-white hover:bg-white/30'
-                }`}
-              >
-                <section.icon className="w-4 h-4" />
-                {section.label}
-              </button>
-            ))}
-          </div>
         </div>
 
-        {/* Form Content */}
-        <form onSubmit={handleSubmit} className="overflow-y-auto max-h-[calc(90vh-220px)]">
-          <div className="p-6 space-y-6">
-            
-            {/* Basic Info Section */}
-            {activeSection === 'basic' && (
-              <div className="space-y-4">
-                <div className="flex items-center gap-2 mb-4">
-                  <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ backgroundColor: `${primaryColor}20` }}>
-                    <Car className="w-4 h-4" style={{ color: primaryColor }} />
-                  </div>
-                  <h3 className="font-semibold text-gray-900">Vehicle Information</h3>
-                </div>
+        <form onSubmit={handleSubmit} className="overflow-y-auto max-h-[calc(90vh-180px)]">
+          <div className="p-6 space-y-4">
+            <div className="p-4 rounded-xl border-2 border-[#1EB053]/30 bg-[#1EB053]/5">
+              <Label className="text-[#1EB053] font-medium">Registration Number *</Label>
+              <Input
+                value={formData.registration_number}
+                onChange={(e) => setFormData(prev => ({ ...prev, registration_number: e.target.value.toUpperCase() }))}
+                placeholder="ABC 123"
+                required
+                autoFocus
+                className="mt-2 text-lg font-semibold border-[#1EB053]/30 bg-white"
+              />
+            </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div className="p-4 rounded-xl border-2 border-[#1EB053]/30 bg-[#1EB053]/5">
-                    <Label className="text-[#1EB053] font-medium">Registration Number *</Label>
-                    <Input
-                      value={formData.registration_number}
-                      onChange={(e) => setFormData(prev => ({ ...prev, registration_number: e.target.value.toUpperCase() }))}
-                      placeholder="ABC 123"
-                      required
-                      className="mt-2 text-lg font-semibold border-[#1EB053]/30"
-                    />
-                  </div>
-                  <div>
-                    <Label className="text-gray-700 font-medium">Vehicle Type</Label>
-                    <Select
-                      value={formData.vehicle_type}
-                      onValueChange={(v) => setFormData(prev => ({ ...prev, vehicle_type: v }))}
-                    >
-                      <SelectTrigger className="mt-1.5 border-gray-200">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {vehicleTypes.map(type => (
-                          <SelectItem key={type.value} value={type.value}>
-                            <span className="flex items-center gap-2">
-                              <span>{type.icon}</span>
-                              {type.label}
-                            </span>
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div>
-                    <Label className="text-gray-700 font-medium">Brand</Label>
-                    <Input
-                      value={formData.brand}
-                      onChange={(e) => setFormData(prev => ({ ...prev, brand: e.target.value }))}
-                      placeholder="Toyota"
-                      className="mt-1.5 border-gray-200"
-                    />
-                  </div>
-                  <div>
-                    <Label className="text-gray-700 font-medium">Model</Label>
-                    <Input
-                      value={formData.model}
-                      onChange={(e) => setFormData(prev => ({ ...prev, model: e.target.value }))}
-                      placeholder="Coaster"
-                      className="mt-1.5 border-gray-200"
-                    />
-                  </div>
-                  <div>
-                    <Label className="text-gray-700 font-medium flex items-center gap-2">
-                      <Calendar className="w-3 h-3" /> Year
-                    </Label>
-                    <Input
-                      type="number"
-                      value={formData.year}
-                      onChange={(e) => setFormData(prev => ({ ...prev, year: e.target.value }))}
-                      min="1990"
-                      max={new Date().getFullYear() + 1}
-                      className="mt-1.5 border-gray-200"
-                    />
-                  </div>
-                  <div>
-                    <Label className="text-gray-700 font-medium flex items-center gap-2">
-                      <User className="w-3 h-3" /> Assigned Driver
-                    </Label>
-                    <Select
-                      value={formData.assigned_driver_id}
-                      onValueChange={(v) => setFormData(prev => ({ ...prev, assigned_driver_id: v }))}
-                    >
-                      <SelectTrigger className="mt-1.5 border-gray-200">
-                        <SelectValue placeholder="Select driver" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value={null}>No driver assigned</SelectItem>
-                        {drivers.map(driver => (
-                          <SelectItem key={driver.id} value={driver.id}>{driver.full_name}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <Label className="text-sm">Type</Label>
+                <Select value={formData.vehicle_type} onValueChange={(v) => setFormData(prev => ({ ...prev, vehicle_type: v }))}>
+                  <SelectTrigger className="mt-1.5">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {vehicleTypes.map(type => (
+                      <SelectItem key={type.value} value={type.value}>
+                        <span className="flex items-center gap-2"><span>{type.icon}</span>{type.label}</span>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
-            )}
+              <div>
+                <Label className="text-sm">Driver</Label>
+                <Select value={formData.assigned_driver_id} onValueChange={(v) => setFormData(prev => ({ ...prev, assigned_driver_id: v }))}>
+                  <SelectTrigger className="mt-1.5">
+                    <SelectValue placeholder="None" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value={null}>None</SelectItem>
+                    {drivers.map(driver => (
+                      <SelectItem key={driver.id} value={driver.id}>{driver.full_name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
 
-            {/* Specs Section */}
-            {activeSection === 'specs' && (
-              <div className="space-y-4">
-                <div className="flex items-center gap-2 mb-4">
-                  <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ backgroundColor: `${secondaryColor}20` }}>
-                    <Settings className="w-4 h-4" style={{ color: secondaryColor }} />
-                  </div>
-                  <h3 className="font-semibold text-gray-900">Specifications</h3>
-                </div>
+            <button type="button" onClick={() => setShowAdvanced(!showAdvanced)} className="w-full text-sm text-gray-600 hover:text-gray-900 text-left">
+              {showAdvanced ? '− Hide' : '+ Show'} More Details
+            </button>
 
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                  <div className="p-4 rounded-xl border border-gray-200 bg-gray-50">
-                    <Label className="text-gray-700 font-medium flex items-center gap-2">
-                      <Users className="w-4 h-4" /> Capacity (seats)
-                    </Label>
-                    <Input
-                      type="number"
-                      value={formData.capacity}
-                      onChange={(e) => setFormData(prev => ({ ...prev, capacity: e.target.value }))}
-                      placeholder="30"
-                      className="mt-2 border-gray-200 bg-white"
-                    />
+            {showAdvanced && (
+              <div className="space-y-3 pt-2 border-t">
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <Label className="text-sm">Brand</Label>
+                    <Input value={formData.brand} onChange={(e) => setFormData(prev => ({ ...prev, brand: e.target.value }))} placeholder="Toyota" className="mt-1.5" />
                   </div>
-                  <div className="p-4 rounded-xl border border-gray-200 bg-gray-50">
-                    <Label className="text-gray-700 font-medium flex items-center gap-2">
-                      <Fuel className="w-4 h-4" /> Fuel Type
-                    </Label>
-                    <Select
-                      value={formData.fuel_type}
-                      onValueChange={(v) => setFormData(prev => ({ ...prev, fuel_type: v }))}
-                    >
-                      <SelectTrigger className="mt-2 border-gray-200 bg-white">
+                  <div>
+                    <Label className="text-sm">Model</Label>
+                    <Input value={formData.model} onChange={(e) => setFormData(prev => ({ ...prev, model: e.target.value }))} placeholder="Coaster" className="mt-1.5" />
+                  </div>
+                  <div>
+                    <Label className="text-sm">Year</Label>
+                    <Input type="number" value={formData.year} onChange={(e) => setFormData(prev => ({ ...prev, year: e.target.value }))} min="1990" max={new Date().getFullYear() + 1} className="mt-1.5" />
+                  </div>
+                  <div>
+                    <Label className="text-sm">Capacity</Label>
+                    <Input type="number" value={formData.capacity} onChange={(e) => setFormData(prev => ({ ...prev, capacity: e.target.value }))} placeholder="30" className="mt-1.5" />
+                  </div>
+                  <div>
+                    <Label className="text-sm">Fuel Type</Label>
+                    <Select value={formData.fuel_type} onValueChange={(v) => setFormData(prev => ({ ...prev, fuel_type: v }))}>
+                      <SelectTrigger className="mt-1.5">
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
@@ -354,100 +255,38 @@ export default function VehicleDialog({ open, onOpenChange, orgId, drivers = [],
                       </SelectContent>
                     </Select>
                   </div>
-                  <div className="p-4 rounded-xl border-2 border-[#0072C6]/30 bg-[#0072C6]/5">
-                    <Label className="text-[#0072C6] font-medium flex items-center gap-2">
-                      <Gauge className="w-4 h-4" /> Current Mileage
-                    </Label>
-                    <div className="relative mt-2">
-                      <Input
-                        type="number"
-                        value={formData.current_mileage}
-                        onChange={(e) => setFormData(prev => ({ ...prev, current_mileage: e.target.value }))}
-                        placeholder="0"
-                        className="pr-12 border-[#0072C6]/30 bg-white"
-                      />
-                      <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[#0072C6] text-sm font-medium">km</span>
-                    </div>
+                  <div>
+                    <Label className="text-sm">Mileage (km)</Label>
+                    <Input type="number" value={formData.current_mileage} onChange={(e) => setFormData(prev => ({ ...prev, current_mileage: e.target.value }))} placeholder="0" className="mt-1.5" />
                   </div>
-                </div>
-              </div>
-            )}
-
-            {/* Service Section */}
-            {activeSection === 'service' && (
-              <div className="space-y-4">
-                <div className="flex items-center gap-2 mb-4">
-                  <div className="w-8 h-8 rounded-lg bg-purple-100 flex items-center justify-center">
-                    <Shield className="w-4 h-4 text-purple-600" />
+                  <div>
+                    <Label className="text-sm">Insurance Expiry</Label>
+                    <Input type="date" value={formData.insurance_expiry} onChange={(e) => setFormData(prev => ({ ...prev, insurance_expiry: e.target.value }))} className="mt-1.5" />
                   </div>
-                  <h3 className="font-semibold text-gray-900">Service & Compliance</h3>
-                </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div className="p-4 rounded-xl border border-amber-200 bg-amber-50">
-                    <Label className="text-amber-700 font-medium flex items-center gap-2">
-                      <Shield className="w-4 h-4" /> Insurance Expiry
-                    </Label>
-                    <Input
-                      type="date"
-                      value={formData.insurance_expiry}
-                      onChange={(e) => setFormData(prev => ({ ...prev, insurance_expiry: e.target.value }))}
-                      className="mt-2 border-amber-200 bg-white"
-                    />
+                  <div>
+                    <Label className="text-sm">Last Service</Label>
+                    <Input type="date" value={formData.last_service_date} onChange={(e) => setFormData(prev => ({ ...prev, last_service_date: e.target.value }))} className="mt-1.5" />
                   </div>
-                  <div className="p-4 rounded-xl border border-gray-200 bg-gray-50">
-                    <Label className="text-gray-700 font-medium flex items-center gap-2">
-                      <Settings className="w-4 h-4" /> Last Service Date
-                    </Label>
-                    <Input
-                      type="date"
-                      value={formData.last_service_date}
-                      onChange={(e) => setFormData(prev => ({ ...prev, last_service_date: e.target.value }))}
-                      className="mt-2 border-gray-200 bg-white"
-                    />
-                  </div>
-                  <div className="sm:col-span-2">
-                    <Label className="text-gray-700 font-medium">Notes</Label>
-                    <Textarea
-                      value={formData.notes}
-                      onChange={(e) => setFormData(prev => ({ ...prev, notes: e.target.value }))}
-                      placeholder="Additional notes about this vehicle..."
-                      rows={3}
-                      className="mt-1.5 border-gray-200"
-                    />
+                  <div className="col-span-2">
+                    <Label className="text-sm">Notes</Label>
+                    <Textarea value={formData.notes} onChange={(e) => setFormData(prev => ({ ...prev, notes: e.target.value }))} placeholder="Notes..." rows={2} className="mt-1.5" />
                   </div>
                 </div>
               </div>
             )}
           </div>
 
-          {/* Footer */}
-          <div className="sticky bottom-0 bg-white border-t p-4 flex flex-col sm:flex-row gap-3">
-            <Button 
-              type="button" 
-              variant="outline" 
-              onClick={() => onOpenChange(false)} 
-              className="w-full sm:w-auto"
-            >
+          <div className="sticky bottom-0 bg-white border-t p-4 flex gap-2">
+            <Button type="button" variant="outline" onClick={() => onOpenChange(false)} className="flex-1 sm:flex-none sm:w-24">
               Cancel
             </Button>
-            <Button 
-              type="submit" 
-              disabled={isPending}
-              className="w-full sm:flex-1 text-white"
-              style={{ background: `linear-gradient(135deg, ${primaryColor} 0%, ${secondaryColor} 100%)` }}
-            >
-              {isPending ? (
-                <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Processing...</>
-              ) : (
-                <><Check className="w-4 h-4 mr-2" />{editingVehicle ? 'Update' : 'Add'} Vehicle</>
-              )}
+            <Button type="submit" disabled={isPending} className="flex-1 text-white" style={{ background: `linear-gradient(135deg, ${primaryColor} 0%, ${secondaryColor} 100%)` }}>
+              {isPending ? 'Saving...' : <><Check className="w-4 h-4 mr-2" />{editingVehicle ? 'Update' : 'Add'}</>}
             </Button>
           </div>
         </form>
 
-        {/* Bottom flag stripe */}
-        <div className="h-1 flex">
+        <div className="h-1.5 flex">
           <div className="flex-1" style={{ backgroundColor: primaryColor }} />
           <div className="flex-1 bg-white" />
           <div className="flex-1" style={{ backgroundColor: secondaryColor }} />
