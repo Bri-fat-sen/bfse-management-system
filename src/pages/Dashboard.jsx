@@ -36,6 +36,11 @@ import DriverDashboard from "@/components/dashboard/DriverDashboard";
 import SalesDashboard from "@/components/dashboard/SalesDashboard";
 import ManagerDashboard from "@/components/dashboard/ManagerDashboard";
 import AIInsightsPanel from "@/components/ai/AIInsightsPanel";
+import InventoryOverview from "@/components/dashboard/InventoryOverview";
+import SalesAnalytics from "@/components/dashboard/SalesAnalytics";
+import HRMetrics from "@/components/dashboard/HRMetrics";
+import TransportMetrics from "@/components/dashboard/TransportMetrics";
+import FinanceOverview from "@/components/dashboard/FinanceOverview";
 
 export default function Dashboard() {
   const { data: user } = useQuery({
@@ -185,6 +190,20 @@ export default function Dashboard() {
   const { data: maintenanceRecords = [] } = useQuery({
     queryKey: ['maintenanceRecords', orgId],
     queryFn: () => base44.entities.VehicleMaintenance.filter({ organisation_id: orgId }),
+    enabled: !!orgId,
+    ...queryConfig,
+  });
+
+  const { data: stockMovements = [] } = useQuery({
+    queryKey: ['stockMovements', orgId],
+    queryFn: () => base44.entities.StockMovement.filter({ organisation_id: orgId }, '-created_date', 100),
+    enabled: !!orgId,
+    ...queryConfig,
+  });
+
+  const { data: leaveRequests = [] } = useQuery({
+    queryKey: ['leaveRequests', orgId],
+    queryFn: () => base44.entities.LeaveRequest.filter({ organisation_id: orgId }),
     enabled: !!orgId,
     ...queryConfig,
   });
@@ -379,6 +398,39 @@ export default function Dashboard() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Sales Analytics */}
+      <SalesAnalytics sales={sales} organisation={organisation?.[0]} />
+
+      {/* Inventory Overview */}
+      <InventoryOverview 
+        products={products} 
+        stockMovements={stockMovements}
+        categories={[...new Set(products.map(p => p.category).filter(Boolean))]}
+      />
+
+      {/* HR Metrics */}
+      <HRMetrics 
+        employees={employees} 
+        attendance={attendance}
+        leaveRequests={leaveRequests}
+      />
+
+      {/* Transport Metrics */}
+      <TransportMetrics 
+        trips={trips}
+        vehicles={vehicles}
+        routes={routes}
+        truckContracts={truckContracts}
+      />
+
+      {/* Finance Overview */}
+      <FinanceOverview 
+        sales={sales}
+        expenses={expenses}
+        revenues={revenues}
+        trips={trips}
+      />
 
       {/* AI Insights */}
       <AIInsightsPanel 
