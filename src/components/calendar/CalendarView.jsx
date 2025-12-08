@@ -508,7 +508,6 @@ export default function CalendarView({
             </div>
           )}
         </div>
-        </div>
       </DragDropContext>
     </div>
   );
