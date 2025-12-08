@@ -10,6 +10,7 @@ import {
   Truck,
   DollarSign,
   TrendingUp,
+  TrendingDown,
   Clock,
   AlertTriangle,
   ArrowRight,
@@ -17,7 +18,8 @@ import {
   Activity,
   Layers,
   Bell,
-  XCircle
+  XCircle,
+  Navigation
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -244,15 +246,23 @@ export default function Dashboard() {
   }
 
   // Calculate statistics
-  const todaySales = sales.filter(s => 
-    s.created_date?.startsWith(format(new Date(), 'yyyy-MM-dd'))
-  );
+  const todayStr = format(new Date(), 'yyyy-MM-dd');
+  const todaySales = sales.filter(s => s.created_date?.startsWith(todayStr));
   const totalRevenue = todaySales.reduce((sum, s) => sum + (s.total_amount || 0), 0);
+  
+  const yesterdayStr = format(new Date(Date.now() - 86400000), 'yyyy-MM-dd');
+  const yesterdaySales = sales.filter(s => s.created_date?.startsWith(yesterdayStr));
+  const yesterdayRevenue = yesterdaySales.reduce((sum, s) => sum + (s.total_amount || 0), 0);
+  const revenueGrowth = yesterdayRevenue > 0 ? (((totalRevenue - yesterdayRevenue) / yesterdayRevenue) * 100).toFixed(1) : 0;
+  
   const lowStockProducts = products.filter(p => p.stock_quantity <= p.low_stock_threshold);
   const activeEmployees = employees.filter(e => e.status === 'active');
-  const todayTrips = trips.filter(t => t.date === format(new Date(), 'yyyy-MM-dd'));
+  const todayTrips = trips.filter(t => t.date === todayStr);
   const transportRevenue = todayTrips.reduce((sum, t) => sum + (t.total_revenue || 0), 0);
   const clockedIn = attendance.filter(a => a.clock_in_time && !a.clock_out_time);
+  
+  const totalInventoryValue = products.reduce((sum, p) => sum + (p.stock_quantity * p.cost_price), 0);
+  const thisMonthExpenses = expenses.filter(e => e.date?.startsWith(format(new Date(), 'yyyy-MM'))).reduce((sum, e) => sum + (e.amount || 0), 0);
 
   // Expiry tracking
   const today = new Date();
@@ -336,101 +346,174 @@ export default function Dashboard() {
         </div>
       </div>
 
-      {/* Stats Grid */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-4">
-        <Card className="border-l-4 border-l-[#1EB053]">
-          <CardContent className="p-3 sm:p-4">
-            <div className="flex items-center justify-between gap-2">
-              <div className="min-w-0 flex-1">
-                <p className="text-[10px] sm:text-xs text-gray-500 uppercase tracking-wide truncate">Today's Sales</p>
-                <p className="text-lg sm:text-2xl font-bold text-[#1EB053] truncate">Le {totalRevenue.toLocaleString()}</p>
-                <p className="text-[10px] sm:text-xs text-gray-500 mt-0.5 sm:mt-1 hidden sm:block">+12% from yesterday</p>
+      {/* Enhanced Stats Grid */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+        <Card className="border-0 shadow-lg overflow-hidden relative group hover:shadow-xl transition-shadow">
+          <div className="h-1 bg-gradient-to-r from-[#1EB053] to-[#0d8f3f]" />
+          <CardContent className="p-4">
+            <div className="flex items-start justify-between mb-3">
+              <div className="flex-1">
+                <p className="text-xs text-gray-500 uppercase tracking-wide mb-1">Today's Revenue</p>
+                <p className="text-2xl font-bold text-[#1EB053]">Le {totalRevenue.toLocaleString()}</p>
               </div>
-              <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-green-100 flex items-center justify-center flex-shrink-0">
-                <DollarSign className="w-5 h-5 sm:w-6 sm:h-6 text-[#1EB053]" />
+              <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-[#1EB053] to-[#0d8f3f] flex items-center justify-center shadow-lg">
+                <DollarSign className="w-6 h-6 text-white" />
               </div>
             </div>
+            <div className="flex items-center gap-2">
+              {revenueGrowth >= 0 ? (
+                <TrendingUp className="w-3 h-3 text-green-600" />
+              ) : (
+                <TrendingDown className="w-3 h-3 text-red-600" />
+              )}
+              <span className={`text-xs font-medium ${revenueGrowth >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                {revenueGrowth >= 0 ? '+' : ''}{revenueGrowth}%
+              </span>
+              <span className="text-xs text-gray-500">vs yesterday</span>
+            </div>
+            <div className="mt-2 text-xs text-gray-500">{todaySales.length} transactions</div>
           </CardContent>
         </Card>
 
-        <Card className="border-l-4 border-l-[#0072C6]">
-          <CardContent className="p-3 sm:p-4">
-            <div className="flex items-center justify-between gap-2">
-              <div className="min-w-0 flex-1">
-                <p className="text-[10px] sm:text-xs text-gray-500 uppercase tracking-wide truncate">Active Staff</p>
-                <p className="text-lg sm:text-2xl font-bold text-[#0072C6]">{activeEmployees.length}</p>
-                <p className="text-[10px] sm:text-xs text-gray-500 mt-0.5 sm:mt-1">{clockedIn.length} clocked in</p>
+        <Card className="border-0 shadow-lg overflow-hidden relative group hover:shadow-xl transition-shadow">
+          <div className="h-1 bg-gradient-to-r from-[#0072C6] to-[#005a9e]" />
+          <CardContent className="p-4">
+            <div className="flex items-start justify-between mb-3">
+              <div className="flex-1">
+                <p className="text-xs text-gray-500 uppercase tracking-wide mb-1">Attendance</p>
+                <p className="text-2xl font-bold text-[#0072C6]">{clockedIn.length}/{activeEmployees.length}</p>
               </div>
-              <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-blue-100 flex items-center justify-center flex-shrink-0">
-                <Users className="w-5 h-5 sm:w-6 sm:h-6 text-[#0072C6]" />
+              <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-[#0072C6] to-[#005a9e] flex items-center justify-center shadow-lg">
+                <Users className="w-6 h-6 text-white" />
               </div>
             </div>
+            <div className="flex items-center gap-2">
+              <Clock className="w-3 h-3 text-[#0072C6]" />
+              <span className="text-xs font-medium text-[#0072C6]">
+                {activeEmployees.length > 0 ? ((clockedIn.length / activeEmployees.length) * 100).toFixed(0) : 0}%
+              </span>
+              <span className="text-xs text-gray-500">present</span>
+            </div>
+            <div className="mt-2 text-xs text-gray-500">{activeEmployees.length} active employees</div>
           </CardContent>
         </Card>
 
-        <Card className="border-l-4 border-l-[#8b5cf6]">
-          <CardContent className="p-3 sm:p-4">
-            <div className="flex items-center justify-between gap-2">
-              <div className="min-w-0 flex-1">
-                <p className="text-[10px] sm:text-xs text-gray-500 uppercase tracking-wide truncate">Products</p>
-                <p className="text-lg sm:text-2xl font-bold text-[#8b5cf6]">{products.length}</p>
-                <p className="text-[10px] sm:text-xs text-gray-500 mt-0.5 sm:mt-1">{lowStockProducts.length} low stock</p>
+        <Card className="border-0 shadow-lg overflow-hidden relative group hover:shadow-xl transition-shadow">
+          <div className="h-1 bg-gradient-to-r from-[#8b5cf6] to-[#7c3aed]" />
+          <CardContent className="p-4">
+            <div className="flex items-start justify-between mb-3">
+              <div className="flex-1">
+                <p className="text-xs text-gray-500 uppercase tracking-wide mb-1">Inventory Value</p>
+                <p className="text-2xl font-bold text-[#8b5cf6]">Le {totalInventoryValue.toLocaleString()}</p>
               </div>
-              <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-purple-100 flex items-center justify-center flex-shrink-0">
-                <Package className="w-5 h-5 sm:w-6 sm:h-6 text-[#8b5cf6]" />
+              <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-[#8b5cf6] to-[#7c3aed] flex items-center justify-center shadow-lg">
+                <Package className="w-6 h-6 text-white" />
               </div>
             </div>
+            {lowStockProducts.length > 0 ? (
+              <div className="flex items-center gap-2">
+                <AlertTriangle className="w-3 h-3 text-orange-600" />
+                <span className="text-xs font-medium text-orange-600">{lowStockProducts.length} low stock</span>
+              </div>
+            ) : (
+              <div className="flex items-center gap-2">
+                <TrendingUp className="w-3 h-3 text-green-600" />
+                <span className="text-xs font-medium text-green-600">All stocked well</span>
+              </div>
+            )}
+            <div className="mt-2 text-xs text-gray-500">{products.length} total products</div>
           </CardContent>
         </Card>
 
-        <Card className="border-l-4 border-l-[#f59e0b]">
-          <CardContent className="p-3 sm:p-4">
-            <div className="flex items-center justify-between gap-2">
-              <div className="min-w-0 flex-1">
-                <p className="text-[10px] sm:text-xs text-gray-500 uppercase tracking-wide truncate">Transport</p>
-                <p className="text-lg sm:text-2xl font-bold text-[#f59e0b] truncate">Le {transportRevenue.toLocaleString()}</p>
-                <p className="text-[10px] sm:text-xs text-gray-500 mt-0.5 sm:mt-1">{todayTrips.length} trips</p>
+        <Card className="border-0 shadow-lg overflow-hidden relative group hover:shadow-xl transition-shadow">
+          <div className="h-1 bg-gradient-to-r from-[#f59e0b] to-[#d97706]" />
+          <CardContent className="p-4">
+            <div className="flex items-start justify-between mb-3">
+              <div className="flex-1">
+                <p className="text-xs text-gray-500 uppercase tracking-wide mb-1">Transport</p>
+                <p className="text-2xl font-bold text-[#f59e0b]">Le {transportRevenue.toLocaleString()}</p>
               </div>
-              <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-orange-100 flex items-center justify-center flex-shrink-0">
-                <Truck className="w-5 h-5 sm:w-6 sm:h-6 text-[#f59e0b]" />
+              <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-[#f59e0b] to-[#d97706] flex items-center justify-center shadow-lg">
+                <Truck className="w-6 h-6 text-white" />
               </div>
             </div>
+            <div className="flex items-center gap-2">
+              <Navigation className="w-3 h-3 text-[#f59e0b]" />
+              <span className="text-xs font-medium text-[#f59e0b]">{todayTrips.length} trips today</span>
+            </div>
+            <div className="mt-2 text-xs text-gray-500">{vehicles.filter(v => v.status === 'active').length} active vehicles</div>
           </CardContent>
         </Card>
       </div>
 
-      {/* Sales Analytics */}
-      <SalesAnalytics sales={sales} organisation={organisation?.[0]} />
+      {/* Quick Actions */}
+      <QuickActions />
 
-      {/* Inventory Overview */}
-      <InventoryOverview 
-        products={products} 
-        stockMovements={stockMovements}
-        categories={[...new Set(products.map(p => p.category).filter(Boolean))]}
-      />
+      {/* Module Analytics Section */}
+      <div className="space-y-6">
+        {/* Sales Analytics */}
+        <div>
+          <div className="flex items-center gap-2 mb-4">
+            <div className="h-8 w-1 rounded-full bg-gradient-to-b from-[#1EB053] to-[#0072C6]" />
+            <h2 className="text-lg font-bold text-gray-900">Sales Performance</h2>
+          </div>
+          <SalesAnalytics sales={sales} organisation={organisation?.[0]} />
+        </div>
 
-      {/* HR Metrics */}
-      <HRMetrics 
-        employees={employees} 
-        attendance={attendance}
-        leaveRequests={leaveRequests}
-      />
+        {/* Inventory Overview */}
+        <div>
+          <div className="flex items-center gap-2 mb-4">
+            <div className="h-8 w-1 rounded-full bg-gradient-to-b from-[#8b5cf6] to-[#1EB053]" />
+            <h2 className="text-lg font-bold text-gray-900">Inventory Insights</h2>
+          </div>
+          <InventoryOverview 
+            products={products} 
+            stockMovements={stockMovements}
+            categories={[...new Set(products.map(p => p.category).filter(Boolean))]}
+          />
+        </div>
 
-      {/* Transport Metrics */}
-      <TransportMetrics 
-        trips={trips}
-        vehicles={vehicles}
-        routes={routes}
-        truckContracts={truckContracts}
-      />
+        {/* HR Metrics */}
+        <div>
+          <div className="flex items-center gap-2 mb-4">
+            <div className="h-8 w-1 rounded-full bg-gradient-to-b from-[#0072C6] to-[#8b5cf6]" />
+            <h2 className="text-lg font-bold text-gray-900">Human Resources</h2>
+          </div>
+          <HRMetrics 
+            employees={employees} 
+            attendance={attendance}
+            leaveRequests={leaveRequests}
+          />
+        </div>
 
-      {/* Finance Overview */}
-      <FinanceOverview 
-        sales={sales}
-        expenses={expenses}
-        revenues={revenues}
-        trips={trips}
-      />
+        {/* Transport Metrics */}
+        <div>
+          <div className="flex items-center gap-2 mb-4">
+            <div className="h-8 w-1 rounded-full bg-gradient-to-b from-[#f59e0b] to-[#ef4444]" />
+            <h2 className="text-lg font-bold text-gray-900">Transport Operations</h2>
+          </div>
+          <TransportMetrics 
+            trips={trips}
+            vehicles={vehicles}
+            routes={routes}
+            truckContracts={truckContracts}
+          />
+        </div>
+
+        {/* Finance Overview */}
+        <div>
+          <div className="flex items-center gap-2 mb-4">
+            <div className="h-8 w-1 rounded-full bg-gradient-to-b from-[#1EB053] via-[#f59e0b] to-[#ef4444]" />
+            <h2 className="text-lg font-bold text-gray-900">Financial Overview</h2>
+          </div>
+          <FinanceOverview 
+            sales={sales}
+            expenses={expenses}
+            revenues={revenues}
+            trips={trips}
+          />
+        </div>
+      </div>
 
       {/* AI Insights */}
       <AIInsightsPanel 
@@ -445,48 +528,39 @@ export default function Dashboard() {
         orgId={orgId}
       />
 
-      {/* Main Content Grid */}
+      {/* Activity & Alerts Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Recent Sales */}
+        {/* Recent Activity - Wider */}
         <Card className="lg:col-span-2 border-0 shadow-lg overflow-hidden">
-          <div className="h-1 bg-gradient-to-r from-[#1EB053] via-white to-[#0072C6]" />
-          <CardHeader className="flex flex-row items-center justify-between bg-gradient-to-r from-gray-50 to-white">
+          <div className="h-1 bg-gradient-to-r from-[#0072C6] via-white to-[#1EB053]" />
+          <CardHeader className="bg-gradient-to-r from-gray-50 to-white">
             <div className="flex items-center gap-2">
               <div className="p-2 rounded-lg bg-gradient-to-br from-[#0072C6] to-[#1EB053]">
                 <Activity className="w-4 h-4 text-white" />
               </div>
-              <CardTitle className="text-lg font-semibold">Recent Sales</CardTitle>
+              <CardTitle className="text-lg font-semibold">Recent Activity</CardTitle>
             </div>
-            <Link to={createPageUrl("Sales")}>
-              <Button variant="ghost" size="sm">
-                View All <ArrowRight className="w-4 h-4 ml-1" />
-              </Button>
-            </Link>
           </CardHeader>
-          <CardContent>
-            {todaySales.length === 0 ? (
+          <CardContent className="p-4">
+            {recentActivity.length === 0 ? (
               <div className="text-center py-8 text-gray-500">
-                <ShoppingCart className="w-12 h-12 mx-auto mb-3 text-gray-300" />
-                <p>No sales recorded today</p>
+                <Activity className="w-12 h-12 mx-auto mb-3 text-gray-300" />
+                <p>No recent activity</p>
               </div>
             ) : (
-              <div className="space-y-3">
-                {todaySales.slice(0, 5).map((sale) => (
-                  <div key={sale.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[#1EB053] to-[#1D5FC3] flex items-center justify-center">
-                        <ShoppingCart className="w-5 h-5 text-white" />
-                      </div>
-                      <div>
-                        <p className="font-medium">{sale.sale_number || `Sale #${sale.id.slice(-6)}`}</p>
-                        <p className="text-sm text-gray-500">{sale.employee_name || 'Staff'}</p>
-                      </div>
+              <div className="space-y-2">
+                {recentActivity.map((activity) => (
+                  <div key={activity.id} className="flex items-start gap-3 p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
+                    <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-[#1EB053] to-[#0072C6] flex items-center justify-center flex-shrink-0">
+                      <Activity className="w-4 h-4 text-white" />
                     </div>
-                    <div className="text-right">
-                      <p className="font-semibold text-[#1EB053]">Le {sale.total_amount?.toLocaleString()}</p>
-                      <Badge variant="secondary" className="text-xs">
-                        {sale.payment_method}
-                      </Badge>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium text-gray-900 truncate">{activity.description}</p>
+                      <div className="flex items-center gap-2 mt-1">
+                        <span className="text-xs text-gray-500">{activity.employee_name || 'System'}</span>
+                        <span className="text-xs text-gray-400">•</span>
+                        <Badge variant="outline" className="text-xs">{activity.action_type}</Badge>
+                      </div>
                     </div>
                   </div>
                 ))}
@@ -495,101 +569,43 @@ export default function Dashboard() {
           </CardContent>
         </Card>
 
-        {/* Quick Actions & Alerts */}
-        <div className="space-y-6">
-          {/* Critical Alerts Section */}
+        {/* Alerts & Meetings */}
+        <div className="space-y-4">
           {(lowStockProducts.length > 0 || expiredBatches.length > 0 || expiringBatches.length > 0) && (
             <Card className="border-0 shadow-lg overflow-hidden">
-              <div className="h-1 bg-gradient-to-r from-red-500 via-orange-500 to-amber-500" />
-              <CardHeader className="pb-2 bg-gradient-to-r from-red-50 to-white">
-                <CardTitle className="text-lg font-semibold flex items-center gap-2">
-                  <div className="p-1.5 rounded-lg bg-gradient-to-br from-red-500 to-orange-500 animate-pulse">
-                    <Bell className="w-4 h-4 text-white" />
-                  </div>
-                  Critical Alerts
+              <div className="h-1 bg-gradient-to-r from-red-500 to-amber-500" />
+              <CardHeader className="pb-3 bg-red-50">
+                <CardTitle className="text-base flex items-center gap-2">
+                  <Bell className="w-4 h-4 text-red-600 animate-pulse" />
+                  <span className="text-red-700">Alerts</span>
                 </CardTitle>
               </CardHeader>
-              <CardContent className="space-y-4">
-                {/* Expired Batches */}
+              <CardContent className="p-3 space-y-2">
                 {expiredBatches.length > 0 && (
-                  <div className="p-3 bg-red-50 rounded-lg border border-red-200">
-                    <div className="flex items-center gap-2 text-red-700 font-medium text-sm mb-2">
-                      <XCircle className="w-4 h-4" />
-                      {expiredBatches.length} Expired Batch{expiredBatches.length > 1 ? 'es' : ''}
-                    </div>
-                    <div className="space-y-1">
-                      {expiredBatches.slice(0, 2).map((batch) => (
-                        <p key={batch.id} className="text-xs text-red-600 truncate">
-                          {batch.product_name} - Batch {batch.batch_number}
-                        </p>
-                      ))}
-                    </div>
+                  <div className="p-2 bg-red-100 rounded border border-red-300">
+                    <p className="text-xs font-semibold text-red-700">🚨 {expiredBatches.length} Expired</p>
                   </div>
                 )}
-
-                {/* Expiring Soon */}
                 {expiringBatches.length > 0 && (
-                  <div className="p-3 bg-orange-50 rounded-lg border border-orange-200">
-                    <div className="flex items-center gap-2 text-orange-700 font-medium text-sm mb-2">
-                      <AlertTriangle className="w-4 h-4" />
-                      {expiringBatches.length} Expiring Within 30 Days
-                    </div>
-                    <div className="space-y-1">
-                      {expiringBatches.slice(0, 2).map((batch) => (
-                        <p key={batch.id} className="text-xs text-orange-600 truncate">
-                          {batch.product_name} - {differenceInDays(new Date(batch.expiry_date), today)} days left
-                        </p>
-                      ))}
-                    </div>
+                  <div className="p-2 bg-orange-100 rounded border border-orange-300">
+                    <p className="text-xs font-semibold text-orange-700">⚠️ {expiringBatches.length} Expiring Soon</p>
                   </div>
                 )}
-
-                {/* Low Stock */}
                 {lowStockProducts.length > 0 && (
-                  <div className="p-3 bg-amber-50 rounded-lg border border-amber-200">
-                    <div className="flex items-center gap-2 text-amber-700 font-medium text-sm mb-2">
-                      <Package className="w-4 h-4" />
-                      {lowStockProducts.length} Low Stock Item{lowStockProducts.length > 1 ? 's' : ''}
-                    </div>
-                    <div className="space-y-1">
-                      {lowStockProducts.slice(0, 3).map((product) => (
-                        <div key={product.id} className="flex items-center justify-between text-xs">
-                          <span className="truncate flex-1 text-amber-600">{product.name}</span>
-                          <Badge variant="destructive" className="ml-2 text-xs">
-                            {product.stock_quantity}
-                          </Badge>
-                        </div>
-                      ))}
-                    </div>
+                  <div className="p-2 bg-amber-100 rounded border border-amber-300">
+                    <p className="text-xs font-semibold text-amber-700">📦 {lowStockProducts.length} Low Stock</p>
                   </div>
                 )}
-
                 <Link to={createPageUrl("Inventory")}>
-                  <Button variant="ghost" size="sm" className="w-full">
-                    View Inventory <ArrowRight className="w-4 h-4 ml-1" />
+                  <Button variant="outline" size="sm" className="w-full mt-2">
+                    Review Inventory
                   </Button>
                 </Link>
               </CardContent>
             </Card>
           )}
-
-          {/* Recent Activity */}
-          <RecentActivity activities={recentActivity} />
+          <UpcomingMeetings meetings={meetings} />
         </div>
-      </div>
-
-      {/* Quick Actions Grid */}
-      <div className="relative">
-        <div className="absolute -top-4 left-0 right-0 h-8 bg-gradient-to-b from-transparent to-gray-50/50 pointer-events-none" />
-        <QuickActions />
-      </div>
-
-      {/* Additional Dashboard Widgets */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
-        <TodayAttendance attendance={attendance} employees={employees} />
-        <UpcomingMeetings meetings={meetings} />
-        <TransportSummary trips={trips} vehicles={vehicles} routes={routes} />
-        <FinanceSummary sales={sales} expenses={expenses} trips={trips} truckContracts={truckContracts} revenues={revenues} maintenanceRecords={maintenanceRecords} />
       </div>
 
       {/* Footer with Sierra Leone Pride */}
