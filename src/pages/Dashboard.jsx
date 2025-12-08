@@ -256,22 +256,37 @@ export default function Dashboard() {
   const today = new Date();
   const todayStr = format(today, 'yyyy-MM-dd');
   const yesterdayStr = format(new Date(today.getTime() - 86400000), 'yyyy-MM-dd');
+  const thisMonth = format(today, 'yyyy-MM');
   
-  const todaySales = sales.filter(s => s.created_date?.startsWith(todayStr));
-  const yesterdaySales = sales.filter(s => s.created_date?.startsWith(yesterdayStr));
+  // Today's Sales
+  const todaySales = sales.filter(s => {
+    const saleDate = s.created_date ? s.created_date.split('T')[0] : '';
+    return saleDate === todayStr;
+  });
+  const yesterdaySales = sales.filter(s => {
+    const saleDate = s.created_date ? s.created_date.split('T')[0] : '';
+    return saleDate === yesterdayStr;
+  });
   const totalRevenue = todaySales.reduce((sum, s) => sum + (s.total_amount || 0), 0);
   const yesterdayRevenue = yesterdaySales.reduce((sum, s) => sum + (s.total_amount || 0), 0);
   const revenueChange = yesterdayRevenue > 0 ? ((totalRevenue - yesterdayRevenue) / yesterdayRevenue * 100).toFixed(1) : 0;
   
-  const lowStockProducts = products.filter(p => p.stock_quantity <= p.low_stock_threshold && p.is_active);
-  const outOfStock = products.filter(p => p.stock_quantity === 0 && p.is_active);
-  const totalInventoryValue = products.reduce((sum, p) => sum + (p.stock_quantity * (p.cost_price || 0)), 0);
+  // Inventory
+  const lowStockProducts = products.filter(p => p.stock_quantity <= p.low_stock_threshold && p.is_active !== false);
+  const outOfStock = products.filter(p => p.stock_quantity === 0 && p.is_active !== false);
+  const totalInventoryValue = products.reduce((sum, p) => sum + ((p.stock_quantity || 0) * (p.cost_price || 0)), 0);
   
+  // Employees & Attendance
   const activeEmployees = employees.filter(e => e.status === 'active');
-  const todayTrips = trips.filter(t => t.date === todayStr);
-  const transportRevenue = todayTrips.reduce((sum, t) => sum + (t.total_revenue || 0), 0);
   const clockedIn = attendance.filter(a => a.clock_in_time && !a.clock_out_time);
   const attendanceRate = activeEmployees.length > 0 ? (clockedIn.length / activeEmployees.length * 100).toFixed(0) : 0;
+  
+  // Transport
+  const todayTrips = trips.filter(t => {
+    const tripDate = t.date || (t.created_date ? t.created_date.split('T')[0] : '');
+    return tripDate === todayStr;
+  });
+  const transportRevenue = todayTrips.reduce((sum, t) => sum + (t.total_revenue || 0), 0);
 
   // Expiry tracking
   const expiringBatches = inventoryBatches.filter(batch => {
@@ -284,11 +299,18 @@ export default function Dashboard() {
     return differenceInDays(new Date(batch.expiry_date), today) < 0;
   });
   
-  // This month finances
-  const thisMonth = format(today, 'yyyy-MM');
-  const monthExpenses = expenses.filter(e => e.date?.startsWith(thisMonth));
+  // Monthly finances - proper calculation
+  const monthSales = sales.filter(s => {
+    const saleDate = s.created_date ? s.created_date.split('T')[0] : '';
+    return saleDate.startsWith(thisMonth);
+  });
+  const monthRevenue = monthSales.reduce((sum, s) => sum + (s.total_amount || 0), 0);
+  const monthExpenses = expenses.filter(e => {
+    const expenseDate = e.date || (e.created_date ? e.created_date.split('T')[0] : '');
+    return expenseDate.startsWith(thisMonth);
+  });
   const totalExpenses = monthExpenses.reduce((sum, e) => sum + (e.amount || 0), 0);
-  const netIncome = totalRevenue - totalExpenses;
+  const netIncome = monthRevenue - totalExpenses;
 
   return (
     <div className="space-y-6">
