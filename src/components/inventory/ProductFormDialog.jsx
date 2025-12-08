@@ -195,7 +195,7 @@ export default function ProductFormDialog({
                 <DollarSign className="w-4 h-4" style={{ color: primaryColor }} />
                 Pricing (SLE)
               </h3>
-              <div className="grid grid-cols-3 gap-3">(
+              <div className="grid grid-cols-3 gap-3">
                 <div>
                   <Label className="text-xs">Retail *</Label>
                   <div className="relative mt-1">
@@ -368,6 +368,7 @@ export default function ProductFormDialog({
                   </div>
                 </div>
               )}
+            </div>
           </div>
 
           {/* Footer */}
