@@ -10,7 +10,6 @@ import {
   Truck,
   DollarSign,
   TrendingUp,
-  TrendingDown,
   Clock,
   AlertTriangle,
   ArrowRight,
@@ -18,8 +17,7 @@ import {
   Activity,
   Layers,
   Bell,
-  XCircle,
-  Navigation
+  XCircle
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -43,6 +41,8 @@ import SalesAnalytics from "@/components/dashboard/SalesAnalytics";
 import HRMetrics from "@/components/dashboard/HRMetrics";
 import TransportMetrics from "@/components/dashboard/TransportMetrics";
 import FinanceOverview from "@/components/dashboard/FinanceOverview";
+import PerformanceIndicators from "@/components/dashboard/PerformanceIndicators";
+import TopPerformers from "@/components/dashboard/TopPerformers";
 
 export default function Dashboard() {
   const { data: user } = useQuery({
@@ -245,27 +245,28 @@ export default function Dashboard() {
     return <ManagerDashboard currentEmployee={currentEmployee} orgId={orgId} user={user} />;
   }
 
-  // Calculate statistics
-  const todayStr = format(new Date(), 'yyyy-MM-dd');
+  // Calculate statistics - Enhanced
+  const today = new Date();
+  const todayStr = format(today, 'yyyy-MM-dd');
+  const yesterdayStr = format(new Date(today.getTime() - 86400000), 'yyyy-MM-dd');
+  
   const todaySales = sales.filter(s => s.created_date?.startsWith(todayStr));
-  const totalRevenue = todaySales.reduce((sum, s) => sum + (s.total_amount || 0), 0);
-  
-  const yesterdayStr = format(new Date(Date.now() - 86400000), 'yyyy-MM-dd');
   const yesterdaySales = sales.filter(s => s.created_date?.startsWith(yesterdayStr));
+  const totalRevenue = todaySales.reduce((sum, s) => sum + (s.total_amount || 0), 0);
   const yesterdayRevenue = yesterdaySales.reduce((sum, s) => sum + (s.total_amount || 0), 0);
-  const revenueGrowth = yesterdayRevenue > 0 ? (((totalRevenue - yesterdayRevenue) / yesterdayRevenue) * 100).toFixed(1) : 0;
+  const revenueChange = yesterdayRevenue > 0 ? ((totalRevenue - yesterdayRevenue) / yesterdayRevenue * 100).toFixed(1) : 0;
   
-  const lowStockProducts = products.filter(p => p.stock_quantity <= p.low_stock_threshold);
+  const lowStockProducts = products.filter(p => p.stock_quantity <= p.low_stock_threshold && p.is_active);
+  const outOfStock = products.filter(p => p.stock_quantity === 0 && p.is_active);
+  const totalInventoryValue = products.reduce((sum, p) => sum + (p.stock_quantity * (p.cost_price || 0)), 0);
+  
   const activeEmployees = employees.filter(e => e.status === 'active');
   const todayTrips = trips.filter(t => t.date === todayStr);
   const transportRevenue = todayTrips.reduce((sum, t) => sum + (t.total_revenue || 0), 0);
   const clockedIn = attendance.filter(a => a.clock_in_time && !a.clock_out_time);
-  
-  const totalInventoryValue = products.reduce((sum, p) => sum + (p.stock_quantity * p.cost_price), 0);
-  const thisMonthExpenses = expenses.filter(e => e.date?.startsWith(format(new Date(), 'yyyy-MM'))).reduce((sum, e) => sum + (e.amount || 0), 0);
+  const attendanceRate = activeEmployees.length > 0 ? (clockedIn.length / activeEmployees.length * 100).toFixed(0) : 0;
 
   // Expiry tracking
-  const today = new Date();
   const expiringBatches = inventoryBatches.filter(batch => {
     if (!batch.expiry_date) return false;
     const daysUntilExpiry = differenceInDays(new Date(batch.expiry_date), today);
@@ -275,7 +276,12 @@ export default function Dashboard() {
     if (!batch.expiry_date) return false;
     return differenceInDays(new Date(batch.expiry_date), today) < 0;
   });
-  const activeAlerts = stockAlerts.filter(a => a.status === 'active');
+  
+  // This month finances
+  const thisMonth = format(today, 'yyyy-MM');
+  const monthExpenses = expenses.filter(e => e.date?.startsWith(thisMonth));
+  const totalExpenses = monthExpenses.reduce((sum, e) => sum + (e.amount || 0), 0);
+  const netIncome = totalRevenue - totalExpenses;
 
   return (
     <div className="space-y-6">
@@ -346,125 +352,289 @@ export default function Dashboard() {
         </div>
       </div>
 
-      {/* Enhanced Stats Grid */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
-        <Card className="border-0 shadow-lg overflow-hidden relative group hover:shadow-xl transition-shadow">
-          <div className="h-1 bg-gradient-to-r from-[#1EB053] to-[#0d8f3f]" />
-          <CardContent className="p-4">
-            <div className="flex items-start justify-between mb-3">
-              <div className="flex-1">
-                <p className="text-xs text-gray-500 uppercase tracking-wide mb-1">Today's Revenue</p>
-                <p className="text-2xl font-bold text-[#1EB053]">Le {totalRevenue.toLocaleString()}</p>
-              </div>
-              <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-[#1EB053] to-[#0d8f3f] flex items-center justify-center shadow-lg">
-                <DollarSign className="w-6 h-6 text-white" />
-              </div>
-            </div>
-            <div className="flex items-center gap-2">
-              {revenueGrowth >= 0 ? (
-                <TrendingUp className="w-3 h-3 text-green-600" />
-              ) : (
-                <TrendingDown className="w-3 h-3 text-red-600" />
-              )}
-              <span className={`text-xs font-medium ${revenueGrowth >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                {revenueGrowth >= 0 ? '+' : ''}{revenueGrowth}%
-              </span>
-              <span className="text-xs text-gray-500">vs yesterday</span>
-            </div>
-            <div className="mt-2 text-xs text-gray-500">{todaySales.length} transactions</div>
-          </CardContent>
-        </Card>
-
-        <Card className="border-0 shadow-lg overflow-hidden relative group hover:shadow-xl transition-shadow">
-          <div className="h-1 bg-gradient-to-r from-[#0072C6] to-[#005a9e]" />
-          <CardContent className="p-4">
-            <div className="flex items-start justify-between mb-3">
-              <div className="flex-1">
-                <p className="text-xs text-gray-500 uppercase tracking-wide mb-1">Attendance</p>
-                <p className="text-2xl font-bold text-[#0072C6]">{clockedIn.length}/{activeEmployees.length}</p>
-              </div>
-              <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-[#0072C6] to-[#005a9e] flex items-center justify-center shadow-lg">
-                <Users className="w-6 h-6 text-white" />
-              </div>
-            </div>
-            <div className="flex items-center gap-2">
-              <Clock className="w-3 h-3 text-[#0072C6]" />
-              <span className="text-xs font-medium text-[#0072C6]">
-                {activeEmployees.length > 0 ? ((clockedIn.length / activeEmployees.length) * 100).toFixed(0) : 0}%
-              </span>
-              <span className="text-xs text-gray-500">present</span>
-            </div>
-            <div className="mt-2 text-xs text-gray-500">{activeEmployees.length} active employees</div>
-          </CardContent>
-        </Card>
-
-        <Card className="border-0 shadow-lg overflow-hidden relative group hover:shadow-xl transition-shadow">
-          <div className="h-1 bg-gradient-to-r from-[#8b5cf6] to-[#7c3aed]" />
-          <CardContent className="p-4">
-            <div className="flex items-start justify-between mb-3">
-              <div className="flex-1">
-                <p className="text-xs text-gray-500 uppercase tracking-wide mb-1">Inventory Value</p>
-                <p className="text-2xl font-bold text-[#8b5cf6]">Le {totalInventoryValue.toLocaleString()}</p>
-              </div>
-              <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-[#8b5cf6] to-[#7c3aed] flex items-center justify-center shadow-lg">
-                <Package className="w-6 h-6 text-white" />
-              </div>
-            </div>
-            {lowStockProducts.length > 0 ? (
-              <div className="flex items-center gap-2">
-                <AlertTriangle className="w-3 h-3 text-orange-600" />
-                <span className="text-xs font-medium text-orange-600">{lowStockProducts.length} low stock</span>
-              </div>
-            ) : (
-              <div className="flex items-center gap-2">
-                <TrendingUp className="w-3 h-3 text-green-600" />
-                <span className="text-xs font-medium text-green-600">All stocked well</span>
-              </div>
-            )}
-            <div className="mt-2 text-xs text-gray-500">{products.length} total products</div>
-          </CardContent>
-        </Card>
-
-        <Card className="border-0 shadow-lg overflow-hidden relative group hover:shadow-xl transition-shadow">
-          <div className="h-1 bg-gradient-to-r from-[#f59e0b] to-[#d97706]" />
-          <CardContent className="p-4">
-            <div className="flex items-start justify-between mb-3">
-              <div className="flex-1">
-                <p className="text-xs text-gray-500 uppercase tracking-wide mb-1">Transport</p>
-                <p className="text-2xl font-bold text-[#f59e0b]">Le {transportRevenue.toLocaleString()}</p>
-              </div>
-              <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-[#f59e0b] to-[#d97706] flex items-center justify-center shadow-lg">
-                <Truck className="w-6 h-6 text-white" />
-              </div>
-            </div>
-            <div className="flex items-center gap-2">
-              <Navigation className="w-3 h-3 text-[#f59e0b]" />
-              <span className="text-xs font-medium text-[#f59e0b]">{todayTrips.length} trips today</span>
-            </div>
-            <div className="mt-2 text-xs text-gray-500">{vehicles.filter(v => v.status === 'active').length} active vehicles</div>
-          </CardContent>
-        </Card>
+      {/* Performance Indicators */}
+      <div className="space-y-3">
+        <div className="flex items-center gap-3">
+          <div className="h-8 w-1.5 rounded-full bg-gradient-to-b from-[#1EB053] via-[#D4AF37] to-[#0072C6]" />
+          <h2 className="text-xl font-bold text-gray-900">Performance Dashboard</h2>
+          <Badge className="bg-gradient-to-r from-[#1EB053] to-[#0072C6] text-white border-0">
+            <TrendingUp className="w-3 h-3 mr-1" />
+            Real-time KPIs
+          </Badge>
+        </div>
+        <PerformanceIndicators 
+          sales={sales}
+          expenses={expenses}
+          products={products}
+          attendance={attendance}
+          employees={employees}
+          trips={trips}
+        />
       </div>
 
-      {/* Quick Actions */}
-      <QuickActions />
+      {/* Enhanced Stats Grid with Trends */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+        <Link to={createPageUrl("Sales")} className="group">
+          <Card className="border-0 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 overflow-hidden cursor-pointer">
+            <div className="h-1.5 bg-gradient-to-r from-[#1EB053] to-[#0ea844]" />
+            <CardContent className="p-4">
+              <div className="flex items-start justify-between mb-3">
+                <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-[#1EB053] to-[#0ea844] flex items-center justify-center shadow-lg">
+                  <DollarSign className="w-6 h-6 text-white" />
+                </div>
+                {revenueChange !== 0 && (
+                  <Badge className={`${parseFloat(revenueChange) >= 0 ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'} border-0`}>
+                    {parseFloat(revenueChange) >= 0 ? <TrendingUp className="w-3 h-3 mr-1" /> : <TrendingUp className="w-3 h-3 mr-1 rotate-180" />}
+                    {Math.abs(revenueChange)}%
+                  </Badge>
+                )}
+              </div>
+              <p className="text-xs text-gray-500 uppercase tracking-wide mb-1">Today's Revenue</p>
+              <p className="text-2xl font-bold text-[#1EB053] mb-1">Le {totalRevenue.toLocaleString()}</p>
+              <div className="flex items-center justify-between text-xs mt-2">
+                <span className="text-gray-500">{todaySales.length} transactions</span>
+                <ArrowRight className="w-4 h-4 text-gray-400 group-hover:text-[#1EB053] transition-colors" />
+              </div>
+            </CardContent>
+          </Card>
+        </Link>
 
-      {/* Module Analytics Section */}
+        <Link to={createPageUrl("Inventory")} className="group">
+          <Card className="border-0 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 overflow-hidden cursor-pointer">
+            <div className="h-1.5 bg-gradient-to-r from-[#8b5cf6] to-[#7c3aed]" />
+            <CardContent className="p-4">
+              <div className="flex items-start justify-between mb-3">
+                <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-[#8b5cf6] to-[#7c3aed] flex items-center justify-center shadow-lg">
+                  <Package className="w-6 h-6 text-white" />
+                </div>
+                {lowStockProducts.length > 0 && (
+                  <Badge className="bg-orange-100 text-orange-700 border-0 animate-pulse">
+                    <AlertTriangle className="w-3 h-3 mr-1" />
+                    {lowStockProducts.length}
+                  </Badge>
+                )}
+              </div>
+              <p className="text-xs text-gray-500 uppercase tracking-wide mb-1">Inventory Value</p>
+              <p className="text-2xl font-bold text-[#8b5cf6] mb-1">Le {totalInventoryValue.toLocaleString()}</p>
+              <div className="flex items-center justify-between text-xs mt-2">
+                <span className="text-gray-500">{products.length} products</span>
+                <ArrowRight className="w-4 h-4 text-gray-400 group-hover:text-[#8b5cf6] transition-colors" />
+              </div>
+            </CardContent>
+          </Card>
+        </Link>
+
+        <Link to={createPageUrl("Attendance")} className="group">
+          <Card className="border-0 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 overflow-hidden cursor-pointer">
+            <div className="h-1.5 bg-gradient-to-r from-[#0072C6] to-[#005a9e]" />
+            <CardContent className="p-4">
+              <div className="flex items-start justify-between mb-3">
+                <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-[#0072C6] to-[#005a9e] flex items-center justify-center shadow-lg">
+                  <Clock className="w-6 h-6 text-white" />
+                </div>
+                <Badge className="bg-blue-100 text-blue-700 border-0">
+                  {attendanceRate}%
+                </Badge>
+              </div>
+              <p className="text-xs text-gray-500 uppercase tracking-wide mb-1">Attendance</p>
+              <p className="text-2xl font-bold text-[#0072C6] mb-1">{clockedIn.length}/{activeEmployees.length}</p>
+              <div className="flex items-center justify-between text-xs mt-2">
+                <span className="text-gray-500">Active today</span>
+                <ArrowRight className="w-4 h-4 text-gray-400 group-hover:text-[#0072C6] transition-colors" />
+              </div>
+            </CardContent>
+          </Card>
+        </Link>
+
+        <Link to={createPageUrl("Transport")} className="group">
+          <Card className="border-0 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 overflow-hidden cursor-pointer">
+            <div className="h-1.5 bg-gradient-to-r from-[#f59e0b] to-[#d97706]" />
+            <CardContent className="p-4">
+              <div className="flex items-start justify-between mb-3">
+                <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-[#f59e0b] to-[#d97706] flex items-center justify-center shadow-lg">
+                  <Truck className="w-6 h-6 text-white" />
+                </div>
+                <Badge className="bg-orange-100 text-orange-700 border-0">
+                  {todayTrips.length} trips
+                </Badge>
+              </div>
+              <p className="text-xs text-gray-500 uppercase tracking-wide mb-1">Transport Revenue</p>
+              <p className="text-2xl font-bold text-[#f59e0b] mb-1">Le {transportRevenue.toLocaleString()}</p>
+              <div className="flex items-center justify-between text-xs mt-2">
+                <span className="text-gray-500">{vehicles.filter(v => v.status === 'active').length} vehicles</span>
+                <ArrowRight className="w-4 h-4 text-gray-400 group-hover:text-[#f59e0b] transition-colors" />
+              </div>
+            </CardContent>
+          </Card>
+        </Link>
+      </div>
+
+      {/* Critical Alerts Banner */}
+      {(lowStockProducts.length > 0 || expiredBatches.length > 0 || expiringBatches.length > 0 || outOfStock.length > 0) && (
+        <div className="relative overflow-hidden rounded-xl bg-gradient-to-r from-red-500 via-orange-500 to-amber-500 p-1 shadow-lg">
+          <div className="bg-white rounded-lg p-4">
+            <div className="flex items-center justify-between flex-wrap gap-3">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-red-500 to-orange-500 flex items-center justify-center animate-pulse">
+                  <Bell className="w-5 h-5 text-white" />
+                </div>
+                <div>
+                  <p className="font-bold text-gray-900">Critical Alerts Detected</p>
+                  <p className="text-sm text-gray-600">Immediate attention required</p>
+                </div>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                {outOfStock.length > 0 && (
+                  <Badge className="bg-red-100 text-red-700 border-0">
+                    <XCircle className="w-3 h-3 mr-1" />
+                    {outOfStock.length} Out of Stock
+                  </Badge>
+                )}
+                {expiredBatches.length > 0 && (
+                  <Badge className="bg-red-100 text-red-700 border-0">
+                    <AlertTriangle className="w-3 h-3 mr-1" />
+                    {expiredBatches.length} Expired
+                  </Badge>
+                )}
+                {expiringBatches.length > 0 && (
+                  <Badge className="bg-orange-100 text-orange-700 border-0">
+                    <Clock className="w-3 h-3 mr-1" />
+                    {expiringBatches.length} Expiring Soon
+                  </Badge>
+                )}
+                {lowStockProducts.length > 0 && (
+                  <Badge className="bg-amber-100 text-amber-700 border-0">
+                    <Package className="w-3 h-3 mr-1" />
+                    {lowStockProducts.length} Low Stock
+                  </Badge>
+                )}
+              </div>
+              <Link to={createPageUrl("Inventory")}>
+                <Button size="sm" className="bg-gradient-to-r from-[#1EB053] to-[#0072C6]">
+                  View Details <ArrowRight className="w-4 h-4 ml-1" />
+                </Button>
+              </Link>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Sales Analytics Section */}
+      <div className="space-y-2">
+        <div className="flex items-center gap-2">
+          <div className="h-1 w-12 rounded-full bg-gradient-to-r from-[#1EB053] to-[#0072C6]" />
+          <h2 className="text-lg font-bold text-gray-900">Sales Analytics</h2>
+        </div>
+        <SalesAnalytics sales={sales} organisation={organisation?.[0]} />
+      </div>
+
+      {/* Inventory Overview Section */}
+      <div className="space-y-2">
+        <div className="flex items-center gap-2">
+          <div className="h-1 w-12 rounded-full bg-gradient-to-r from-[#8b5cf6] to-[#7c3aed]" />
+          <h2 className="text-lg font-bold text-gray-900">Inventory Overview</h2>
+        </div>
+        <InventoryOverview 
+          products={products} 
+          stockMovements={stockMovements}
+          categories={[...new Set(products.map(p => p.category).filter(Boolean))]}
+        />
+      </div>
+
+      {/* HR Metrics Section */}
+      <div className="space-y-2">
+        <div className="flex items-center gap-2">
+          <div className="h-1 w-12 rounded-full bg-gradient-to-r from-[#0072C6] to-[#005a9e]" />
+          <h2 className="text-lg font-bold text-gray-900">HR Metrics</h2>
+        </div>
+        <HRMetrics 
+          employees={employees} 
+          attendance={attendance}
+          leaveRequests={leaveRequests}
+        />
+      </div>
+
+      {/* Transport Metrics Section */}
+      <div className="space-y-2">
+        <div className="flex items-center gap-2">
+          <div className="h-1 w-12 rounded-full bg-gradient-to-r from-[#f59e0b] to-[#d97706]" />
+          <h2 className="text-lg font-bold text-gray-900">Transport Operations</h2>
+        </div>
+        <TransportMetrics 
+          trips={trips}
+          vehicles={vehicles}
+          routes={routes}
+          truckContracts={truckContracts}
+        />
+      </div>
+
+      {/* Finance Overview Section */}
+      <div className="space-y-2">
+        <div className="flex items-center gap-2">
+          <div className="h-1 w-12 rounded-full bg-gradient-to-r from-[#1EB053] to-[#ef4444]" />
+          <h2 className="text-lg font-bold text-gray-900">Financial Overview</h2>
+        </div>
+        <FinanceOverview 
+          sales={sales}
+          expenses={expenses}
+          revenues={revenues}
+          trips={trips}
+        />
+      </div>
+
+      {/* AI Insights */}
+      <AIInsightsPanel 
+        data={{
+          sales: todaySales,
+          attendance: attendance,
+          products: products.slice(0, 20),
+          trips: todayTrips,
+          expenses: monthExpenses
+        }}
+        type="sales"
+        title="AI Business Insights & Recommendations"
+        orgId={orgId}
+      />
+
+      {/* Main Content Grid */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      {/* Quick Actions with Visual Enhancement */}
+      <Card className="border-0 shadow-lg overflow-hidden">
+        <div className="h-1 bg-gradient-to-r from-[#1EB053] via-[#0072C6] to-[#8b5cf6]" />
+        <CardHeader className="bg-gradient-to-r from-gray-50 to-white pb-3">
+          <CardTitle className="text-base flex items-center gap-2">
+            <Layers className="w-4 h-4 text-[#1EB053]" />
+            Quick Actions
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <QuickActions />
+        </CardContent>
+      </Card>
+
+      {/* Module Sections with Better Organization */}
       <div className="space-y-6">
         {/* Sales Analytics */}
-        <div>
-          <div className="flex items-center gap-2 mb-4">
-            <div className="h-8 w-1 rounded-full bg-gradient-to-b from-[#1EB053] to-[#0072C6]" />
-            <h2 className="text-lg font-bold text-gray-900">Sales Performance</h2>
+        <div className="space-y-3">
+          <div className="flex items-center gap-3">
+            <div className="h-8 w-1.5 rounded-full bg-gradient-to-b from-[#1EB053] to-[#0ea844]" />
+            <h2 className="text-xl font-bold text-gray-900">Sales Analytics</h2>
+            <Badge className="bg-[#1EB053]/10 text-[#1EB053] border-0">Live Data</Badge>
           </div>
           <SalesAnalytics sales={sales} organisation={organisation?.[0]} />
         </div>
 
-        {/* Inventory Overview */}
-        <div>
-          <div className="flex items-center gap-2 mb-4">
-            <div className="h-8 w-1 rounded-full bg-gradient-to-b from-[#8b5cf6] to-[#1EB053]" />
-            <h2 className="text-lg font-bold text-gray-900">Inventory Insights</h2>
+        {/* Inventory Management */}
+        <div className="space-y-3">
+          <div className="flex items-center gap-3">
+            <div className="h-8 w-1.5 rounded-full bg-gradient-to-b from-[#8b5cf6] to-[#7c3aed]" />
+            <h2 className="text-xl font-bold text-gray-900">Inventory Management</h2>
+            {(lowStockProducts.length > 0 || outOfStock.length > 0) && (
+              <Badge className="bg-orange-100 text-orange-700 border-0 animate-pulse">
+                <AlertTriangle className="w-3 h-3 mr-1" />
+                {lowStockProducts.length + outOfStock.length} Alerts
+              </Badge>
+            )}
           </div>
           <InventoryOverview 
             products={products} 
@@ -473,11 +643,14 @@ export default function Dashboard() {
           />
         </div>
 
-        {/* HR Metrics */}
-        <div>
-          <div className="flex items-center gap-2 mb-4">
-            <div className="h-8 w-1 rounded-full bg-gradient-to-b from-[#0072C6] to-[#8b5cf6]" />
-            <h2 className="text-lg font-bold text-gray-900">Human Resources</h2>
+        {/* HR & Workforce */}
+        <div className="space-y-3">
+          <div className="flex items-center gap-3">
+            <div className="h-8 w-1.5 rounded-full bg-gradient-to-b from-[#0072C6] to-[#005a9e]" />
+            <h2 className="text-xl font-bold text-gray-900">Human Resources</h2>
+            <Badge className="bg-[#0072C6]/10 text-[#0072C6] border-0">
+              {clockedIn.length}/{activeEmployees.length} Present
+            </Badge>
           </div>
           <HRMetrics 
             employees={employees} 
@@ -486,11 +659,14 @@ export default function Dashboard() {
           />
         </div>
 
-        {/* Transport Metrics */}
-        <div>
-          <div className="flex items-center gap-2 mb-4">
-            <div className="h-8 w-1 rounded-full bg-gradient-to-b from-[#f59e0b] to-[#ef4444]" />
-            <h2 className="text-lg font-bold text-gray-900">Transport Operations</h2>
+        {/* Transport & Logistics */}
+        <div className="space-y-3">
+          <div className="flex items-center gap-3">
+            <div className="h-8 w-1.5 rounded-full bg-gradient-to-b from-[#f59e0b] to-[#d97706]" />
+            <h2 className="text-xl font-bold text-gray-900">Transport & Logistics</h2>
+            <Badge className="bg-[#f59e0b]/10 text-[#f59e0b] border-0">
+              {todayTrips.length} Trips Today
+            </Badge>
           </div>
           <TransportMetrics 
             trips={trips}
@@ -500,11 +676,15 @@ export default function Dashboard() {
           />
         </div>
 
-        {/* Finance Overview */}
-        <div>
-          <div className="flex items-center gap-2 mb-4">
-            <div className="h-8 w-1 rounded-full bg-gradient-to-b from-[#1EB053] via-[#f59e0b] to-[#ef4444]" />
-            <h2 className="text-lg font-bold text-gray-900">Financial Overview</h2>
+        {/* Financial Performance */}
+        <div className="space-y-3">
+          <div className="flex items-center gap-3">
+            <div className="h-8 w-1.5 rounded-full bg-gradient-to-b from-[#1EB053] via-white to-[#ef4444]" />
+            <h2 className="text-xl font-bold text-gray-900">Financial Performance</h2>
+            <Badge className={`border-0 ${netIncome >= 0 ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
+              {netIncome >= 0 ? <TrendingUp className="w-3 h-3 mr-1" /> : <TrendingUp className="w-3 h-3 mr-1 rotate-180" />}
+              Le {Math.abs(netIncome).toLocaleString()}
+            </Badge>
           </div>
           <FinanceOverview 
             sales={sales}
@@ -515,98 +695,32 @@ export default function Dashboard() {
         </div>
       </div>
 
-      {/* AI Insights */}
-      <AIInsightsPanel 
-        data={{
-          sales: todaySales,
-          attendance: attendance,
-          products: products.slice(0, 20),
-          trips: todayTrips
-        }}
-        type="sales"
-        title="AI Business Insights"
-        orgId={orgId}
-      />
-
-      {/* Activity & Alerts Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Recent Activity - Wider */}
-        <Card className="lg:col-span-2 border-0 shadow-lg overflow-hidden">
-          <div className="h-1 bg-gradient-to-r from-[#0072C6] via-white to-[#1EB053]" />
-          <CardHeader className="bg-gradient-to-r from-gray-50 to-white">
-            <div className="flex items-center gap-2">
-              <div className="p-2 rounded-lg bg-gradient-to-br from-[#0072C6] to-[#1EB053]">
-                <Activity className="w-4 h-4 text-white" />
-              </div>
-              <CardTitle className="text-lg font-semibold">Recent Activity</CardTitle>
-            </div>
-          </CardHeader>
-          <CardContent className="p-4">
-            {recentActivity.length === 0 ? (
-              <div className="text-center py-8 text-gray-500">
-                <Activity className="w-12 h-12 mx-auto mb-3 text-gray-300" />
-                <p>No recent activity</p>
-              </div>
-            ) : (
-              <div className="space-y-2">
-                {recentActivity.map((activity) => (
-                  <div key={activity.id} className="flex items-start gap-3 p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
-                    <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-[#1EB053] to-[#0072C6] flex items-center justify-center flex-shrink-0">
-                      <Activity className="w-4 h-4 text-white" />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-gray-900 truncate">{activity.description}</p>
-                      <div className="flex items-center gap-2 mt-1">
-                        <span className="text-xs text-gray-500">{activity.employee_name || 'System'}</span>
-                        <span className="text-xs text-gray-400">•</span>
-                        <Badge variant="outline" className="text-xs">{activity.action_type}</Badge>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </CardContent>
-        </Card>
-
-        {/* Alerts & Meetings */}
-        <div className="space-y-4">
-          {(lowStockProducts.length > 0 || expiredBatches.length > 0 || expiringBatches.length > 0) && (
-            <Card className="border-0 shadow-lg overflow-hidden">
-              <div className="h-1 bg-gradient-to-r from-red-500 to-amber-500" />
-              <CardHeader className="pb-3 bg-red-50">
-                <CardTitle className="text-base flex items-center gap-2">
-                  <Bell className="w-4 h-4 text-red-600 animate-pulse" />
-                  <span className="text-red-700">Alerts</span>
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="p-3 space-y-2">
-                {expiredBatches.length > 0 && (
-                  <div className="p-2 bg-red-100 rounded border border-red-300">
-                    <p className="text-xs font-semibold text-red-700">🚨 {expiredBatches.length} Expired</p>
-                  </div>
-                )}
-                {expiringBatches.length > 0 && (
-                  <div className="p-2 bg-orange-100 rounded border border-orange-300">
-                    <p className="text-xs font-semibold text-orange-700">⚠️ {expiringBatches.length} Expiring Soon</p>
-                  </div>
-                )}
-                {lowStockProducts.length > 0 && (
-                  <div className="p-2 bg-amber-100 rounded border border-amber-300">
-                    <p className="text-xs font-semibold text-amber-700">📦 {lowStockProducts.length} Low Stock</p>
-                  </div>
-                )}
-                <Link to={createPageUrl("Inventory")}>
-                  <Button variant="outline" size="sm" className="w-full mt-2">
-                    Review Inventory
-                  </Button>
-                </Link>
-              </CardContent>
-            </Card>
-          )}
-          <UpcomingMeetings meetings={meetings} />
+      {/* AI Insights with Enhanced Styling */}
+      <div className="space-y-3">
+        <div className="flex items-center gap-3">
+          <div className="h-8 w-1.5 rounded-full bg-gradient-to-b from-[#8b5cf6] to-[#ec4899]" />
+          <h2 className="text-xl font-bold text-gray-900">AI-Powered Insights</h2>
+          <Badge className="bg-gradient-to-r from-[#8b5cf6] to-[#ec4899] text-white border-0">
+            <Activity className="w-3 h-3 mr-1" />
+            Live Analysis
+          </Badge>
         </div>
+        <AIInsightsPanel 
+          data={{
+            sales: todaySales,
+            attendance: attendance,
+            products: products.slice(0, 20),
+            trips: todayTrips,
+            expenses: monthExpenses
+          }}
+          type="sales"
+          title="Smart Business Recommendations"
+          orgId={orgId}
+        />
       </div>
+
+      {/* Quick Overview Cards Grid */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
 
       {/* Footer with Sierra Leone Pride */}
       <div className="relative overflow-hidden rounded-xl bg-gradient-to-r from-[#0F1F3C] to-[#1a3a5c] p-4 mt-4">
