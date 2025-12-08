@@ -2,7 +2,7 @@ import React from "react";
 import { format, parseISO } from "date-fns";
 import { base44 } from "@/api/base44Client";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { toast } from "sonner";
+import { useToast } from "@/components/ui/Toast";
 import {
   Sheet,
   SheetContent,
@@ -50,16 +50,17 @@ export default function EventDetailSheet({
   onEdit 
 }) {
   const queryClient = useQueryClient();
+  const toast = useToast();
 
   const deleteTaskMutation = useMutation({
     mutationFn: (taskId) => base44.entities.Task.delete(taskId),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['tasks'] });
-      toast.success("Task deleted successfully");
+      toast.success("Task deleted", "Task removed successfully");
       onOpenChange(false);
     },
     onError: () => {
-      toast.error("Failed to delete task");
+      toast.error("Error", "Failed to delete task");
     },
   });
 
