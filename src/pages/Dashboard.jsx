@@ -291,161 +291,93 @@ export default function Dashboard() {
   const netIncome = totalRevenue - totalExpenses;
 
   return (
-    <div className="space-y-4">
-      {/* Welcome Header with Sierra Leone Theme - Compact */}
-      <div className="relative overflow-hidden rounded-xl shadow-lg">
-        {/* Animated Flag stripe at top */}
-        <div className="h-2 flex relative overflow-hidden">
-          <div className="flex-1 bg-[#1EB053]" />
-          <div className="flex-1 bg-white" />
-          <div className="flex-1 bg-[#0072C6]" />
-          <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent animate-pulse" />
+    <div className="space-y-6">
+      {/* Modern Header */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">
+            Dashboard
+          </h1>
+          <p className="text-sm text-gray-500 mt-1">
+            {format(new Date(), 'EEEE, MMMM d, yyyy')} • Welcome, {user?.full_name?.split(' ')[0]}
+          </p>
         </div>
-        <div className="relative bg-gradient-to-br from-[#0F1F3C] via-[#1a3a5c] to-[#0F1F3C] p-4 sm:p-5 text-white overflow-hidden">
-          {/* Decorative background patterns */}
-          <div className="absolute inset-0 opacity-5">
-            <div className="absolute top-0 left-0 w-full h-full" style={{
-              backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='1'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`
-            }} />
-          </div>
-          
-          {/* Glowing orbs */}
-          <div className="absolute top-0 right-0 w-64 h-64 bg-[#1EB053] rounded-full blur-[100px] opacity-20" />
-          <div className="absolute bottom-0 left-0 w-48 h-48 bg-[#0072C6] rounded-full blur-[80px] opacity-20" />
-          <div className="absolute top-1/2 left-1/2 w-32 h-32 bg-[#D4AF37] rounded-full blur-[60px] opacity-10" />
-          
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 relative z-10">
-            <div>
-              <h1 className="text-2xl sm:text-3xl font-bold bg-gradient-to-r from-white via-white to-[#D4AF37] bg-clip-text text-transparent">
-                Welcome back, {user?.full_name?.split(' ')[0] || 'User'}
-              </h1>
-              <p className="text-white/70 mt-1 flex items-center gap-2 text-sm">
-                <Calendar className="w-3.5 h-3.5 text-[#1EB053]" />
-                {format(new Date(), 'EEEE, MMMM d, yyyy')}
-              </p>
-            </div>
-            <Link to={createPageUrl("Sales")}>
-              <Button className="bg-gradient-to-r from-[#1EB053] to-[#0072C6] hover:from-[#178f43] hover:to-[#005a9e] text-white font-semibold shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 border-0">
-                <ShoppingCart className="w-4 h-4 mr-2" />
-                New Sale
-              </Button>
-            </Link>
-          </div>
-          
-          {/* Decorative cotton tree silhouette - larger and more prominent */}
-          <div className="absolute right-8 bottom-0 opacity-20">
-            <svg width="150" height="120" viewBox="0 0 120 100" fill="currentColor">
-              <path d="M60 100V60M60 60C60 60 40 50 40 35C40 20 50 15 60 15C70 15 80 20 80 35C80 50 60 60 60 60Z M60 15C60 15 45 10 45 5C45 0 52 0 60 0C68 0 75 0 75 5C75 10 60 15 60 15Z M40 35C40 35 25 30 20 35C15 40 25 50 40 45 M80 35C80 35 95 30 100 35C105 40 95 50 80 45"/>
-            </svg>
-          </div>
-          
-          {/* Diamond accent */}
-          <div className="absolute right-32 top-4 w-3 h-3 bg-[#D4AF37] rotate-45 opacity-60" />
-          <div className="absolute right-40 top-8 w-2 h-2 bg-[#1EB053] rotate-45 opacity-40" />
-        </div>
-        {/* Bottom flag stripe */}
-        <div className="h-1 flex">
-          <div className="flex-1 bg-[#1EB053]" />
-          <div className="flex-1 bg-white" />
-          <div className="flex-1 bg-[#0072C6]" />
+        <div className="flex items-center gap-2">
+          <Link to={createPageUrl("Sales")}>
+            <Button className="bg-gradient-to-r from-[#1EB053] to-[#0072C6] text-white shadow-sm hover:shadow-md transition-all">
+              <ShoppingCart className="w-4 h-4 mr-2" />
+              New Sale
+            </Button>
+          </Link>
         </div>
       </div>
 
-      {/* Enhanced Stats Grid with Trends */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
-        <Link to={createPageUrl("Sales")} className="group">
-          <Card className="border-0 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 overflow-hidden cursor-pointer">
-            <div className="h-1.5 bg-gradient-to-r from-[#1EB053] to-[#0ea844]" />
-            <CardContent className="p-4">
-              <div className="flex items-start justify-between mb-3">
-                <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-[#1EB053] to-[#0ea844] flex items-center justify-center shadow-lg">
-                  <DollarSign className="w-6 h-6 text-white" />
-                </div>
-                {revenueChange !== 0 && (
-                  <Badge className={`${parseFloat(revenueChange) >= 0 ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'} border-0`}>
-                    {parseFloat(revenueChange) >= 0 ? <TrendingUp className="w-3 h-3 mr-1" /> : <TrendingUp className="w-3 h-3 mr-1 rotate-180" />}
-                    {Math.abs(revenueChange)}%
-                  </Badge>
-                )}
-              </div>
-              <p className="text-xs text-gray-500 uppercase tracking-wide mb-1">Today's Revenue</p>
-              <p className="text-2xl font-bold text-[#1EB053] mb-1">Le {totalRevenue.toLocaleString()}</p>
-              <div className="flex items-center justify-between text-xs mt-2">
-                <span className="text-gray-500">{todaySales.length} transactions</span>
-                <ArrowRight className="w-4 h-4 text-gray-400 group-hover:text-[#1EB053] transition-colors" />
-              </div>
-            </CardContent>
-          </Card>
-        </Link>
+      {/* Clean Stats Grid */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <Card className="border shadow-sm hover:shadow-md transition-shadow">
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <CardTitle className="text-sm font-medium text-gray-600">Revenue Today</CardTitle>
+            <DollarSign className="w-4 h-4 text-[#1EB053]" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-gray-900">Le {totalRevenue.toLocaleString()}</div>
+            <div className="flex items-center gap-2 mt-1">
+              <Badge variant="secondary" className="text-xs">{todaySales.length} sales</Badge>
+              {revenueChange !== 0 && (
+                <span className={`text-xs flex items-center ${parseFloat(revenueChange) >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                  {parseFloat(revenueChange) >= 0 ? <TrendingUp className="w-3 h-3 mr-0.5" /> : <TrendingDown className="w-3 h-3 mr-0.5" />}
+                  {Math.abs(revenueChange)}%
+                </span>
+              )}
+            </div>
+          </CardContent>
+        </Card>
 
-        <Link to={createPageUrl("Inventory")} className="group">
-          <Card className="border-0 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 overflow-hidden cursor-pointer">
-            <div className="h-1.5 bg-gradient-to-r from-[#8b5cf6] to-[#7c3aed]" />
-            <CardContent className="p-4">
-              <div className="flex items-start justify-between mb-3">
-                <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-[#8b5cf6] to-[#7c3aed] flex items-center justify-center shadow-lg">
-                  <Package className="w-6 h-6 text-white" />
-                </div>
-                {lowStockProducts.length > 0 && (
-                  <Badge className="bg-orange-100 text-orange-700 border-0 animate-pulse">
-                    <AlertTriangle className="w-3 h-3 mr-1" />
-                    {lowStockProducts.length}
-                  </Badge>
-                )}
-              </div>
-              <p className="text-xs text-gray-500 uppercase tracking-wide mb-1">Inventory Value</p>
-              <p className="text-2xl font-bold text-[#8b5cf6] mb-1">Le {totalInventoryValue.toLocaleString()}</p>
-              <div className="flex items-center justify-between text-xs mt-2">
-                <span className="text-gray-500">{products.length} products</span>
-                <ArrowRight className="w-4 h-4 text-gray-400 group-hover:text-[#8b5cf6] transition-colors" />
-              </div>
-            </CardContent>
-          </Card>
-        </Link>
-
-        <Link to={createPageUrl("Attendance")} className="group">
-          <Card className="border-0 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 overflow-hidden cursor-pointer">
-            <div className="h-1.5 bg-gradient-to-r from-[#0072C6] to-[#005a9e]" />
-            <CardContent className="p-4">
-              <div className="flex items-start justify-between mb-3">
-                <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-[#0072C6] to-[#005a9e] flex items-center justify-center shadow-lg">
-                  <Clock className="w-6 h-6 text-white" />
-                </div>
-                <Badge className="bg-blue-100 text-blue-700 border-0">
-                  {attendanceRate}%
+        <Card className="border shadow-sm hover:shadow-md transition-shadow">
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <CardTitle className="text-sm font-medium text-gray-600">Inventory</CardTitle>
+            <Package className="w-4 h-4 text-[#8b5cf6]" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-gray-900">Le {totalInventoryValue.toLocaleString()}</div>
+            <div className="flex items-center gap-2 mt-1">
+              <Badge variant="secondary" className="text-xs">{products.length} items</Badge>
+              {(lowStockProducts.length > 0 || outOfStock.length > 0) && (
+                <Badge variant="destructive" className="text-xs animate-pulse">
+                  {lowStockProducts.length + outOfStock.length} alerts
                 </Badge>
-              </div>
-              <p className="text-xs text-gray-500 uppercase tracking-wide mb-1">Attendance</p>
-              <p className="text-2xl font-bold text-[#0072C6] mb-1">{clockedIn.length}/{activeEmployees.length}</p>
-              <div className="flex items-center justify-between text-xs mt-2">
-                <span className="text-gray-500">Active today</span>
-                <ArrowRight className="w-4 h-4 text-gray-400 group-hover:text-[#0072C6] transition-colors" />
-              </div>
-            </CardContent>
-          </Card>
-        </Link>
+              )}
+            </div>
+          </CardContent>
+        </Card>
 
-        <Link to={createPageUrl("Transport")} className="group">
-          <Card className="border-0 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 overflow-hidden cursor-pointer">
-            <div className="h-1.5 bg-gradient-to-r from-[#f59e0b] to-[#d97706]" />
-            <CardContent className="p-4">
-              <div className="flex items-start justify-between mb-3">
-                <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-[#f59e0b] to-[#d97706] flex items-center justify-center shadow-lg">
-                  <Truck className="w-6 h-6 text-white" />
-                </div>
-                <Badge className="bg-orange-100 text-orange-700 border-0">
-                  {todayTrips.length} trips
-                </Badge>
-              </div>
-              <p className="text-xs text-gray-500 uppercase tracking-wide mb-1">Transport Revenue</p>
-              <p className="text-2xl font-bold text-[#f59e0b] mb-1">Le {transportRevenue.toLocaleString()}</p>
-              <div className="flex items-center justify-between text-xs mt-2">
-                <span className="text-gray-500">{vehicles.filter(v => v.status === 'active').length} vehicles</span>
-                <ArrowRight className="w-4 h-4 text-gray-400 group-hover:text-[#f59e0b] transition-colors" />
-              </div>
-            </CardContent>
-          </Card>
-        </Link>
+        <Card className="border shadow-sm hover:shadow-md transition-shadow">
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <CardTitle className="text-sm font-medium text-gray-600">Attendance</CardTitle>
+            <Users className="w-4 h-4 text-[#0072C6]" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-gray-900">{clockedIn.length}/{activeEmployees.length}</div>
+            <div className="flex items-center gap-2 mt-1">
+              <Badge variant="secondary" className="text-xs">{attendanceRate}% rate</Badge>
+              <span className="text-xs text-gray-500">present today</span>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="border shadow-sm hover:shadow-md transition-shadow">
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <CardTitle className="text-sm font-medium text-gray-600">Transport</CardTitle>
+            <Truck className="w-4 h-4 text-[#f59e0b]" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-gray-900">Le {transportRevenue.toLocaleString()}</div>
+            <div className="flex items-center gap-2 mt-1">
+              <Badge variant="secondary" className="text-xs">{todayTrips.length} trips</Badge>
+              <span className="text-xs text-gray-500">today</span>
+            </div>
+          </CardContent>
+        </Card>
       </div>
 
       {/* Critical Alerts Banner */}
@@ -498,30 +430,33 @@ export default function Dashboard() {
         </div>
       )}
 
-      {/* Modern Tabbed Dashboard */}
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
-        <TabsList className="grid w-full grid-cols-5 lg:w-auto lg:inline-grid bg-gray-100 p-1 rounded-lg">
-          <TabsTrigger value="overview" className="data-[state=active]:bg-white">
-            <BarChart3 className="w-4 h-4 mr-2" />
-            Overview
-          </TabsTrigger>
-          <TabsTrigger value="sales" className="data-[state=active]:bg-white">
-            <ShoppingCart className="w-4 h-4 mr-2" />
-            Sales
-          </TabsTrigger>
-          <TabsTrigger value="inventory" className="data-[state=active]:bg-white">
-            <Package className="w-4 h-4 mr-2" />
-            Inventory
-          </TabsTrigger>
-          <TabsTrigger value="operations" className="data-[state=active]:bg-white">
-            <Truck className="w-4 h-4 mr-2" />
-            Operations
-          </TabsTrigger>
-          <TabsTrigger value="insights" className="data-[state=active]:bg-white">
-            <Target className="w-4 h-4 mr-2" />
-            Insights
-          </TabsTrigger>
-        </TabsList>
+      {/* Modern Tabbed Interface */}
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
+        <div className="flex items-center justify-between border-b pb-4">
+          <TabsList className="bg-white border shadow-sm">
+            <TabsTrigger value="overview" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#1EB053] data-[state=active]:to-[#0072C6] data-[state=active]:text-white">
+              <BarChart3 className="w-4 h-4 mr-2" />
+              Overview
+            </TabsTrigger>
+            <TabsTrigger value="sales" className="data-[state=active]:bg-[#1EB053] data-[state=active]:text-white">
+              <ShoppingCart className="w-4 h-4 mr-2" />
+              Sales
+            </TabsTrigger>
+            <TabsTrigger value="inventory" className="data-[state=active]:bg-[#8b5cf6] data-[state=active]:text-white">
+              <Package className="w-4 h-4 mr-2" />
+              Inventory
+            </TabsTrigger>
+            <TabsTrigger value="operations" className="data-[state=active]:bg-[#0072C6] data-[state=active]:text-white">
+              <Activity className="w-4 h-4 mr-2" />
+              Operations
+            </TabsTrigger>
+            <TabsTrigger value="insights" className="data-[state=active]:bg-[#f59e0b] data-[state=active]:text-white">
+              <Target className="w-4 h-4 mr-2" />
+              Insights
+            </TabsTrigger>
+          </TabsList>
+          <QuickActions />
+        </div>
 
         {/* Overview Tab */}
         <TabsContent value="overview" className="space-y-4">
@@ -544,91 +479,46 @@ export default function Dashboard() {
             />
           </div>
 
-          {/* Recent Sales & Activity */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-            {/* Recent Sales - Takes 2 columns */}
-            <Card className="lg:col-span-2 border-0 shadow-md overflow-hidden">
-              <div className="h-1 bg-gradient-to-r from-[#1EB053] via-white to-[#0072C6]" />
-              <CardHeader className="border-b bg-gray-50/50">
-                <div className="flex items-center justify-between">
-                  <CardTitle className="text-sm flex items-center gap-2">
-                    <ShoppingCart className="w-4 h-4 text-[#1EB053]" />
-                    Recent Sales
-                    <Badge variant="secondary" className="ml-2 text-xs">{todaySales.length} today</Badge>
-                  </CardTitle>
-                  <Link to={createPageUrl("Sales")}>
-                    <Button size="sm" variant="outline" className="h-8 text-xs">
-                      View All <ArrowRight className="w-3 h-3 ml-1" />
-                    </Button>
-                  </Link>
-                </div>
+            <Card className="border-0 shadow-md">
+              <div className="h-1 bg-gradient-to-r from-[#0072C6] to-[#8b5cf6]" />
+              <CardHeader className="pb-3">
+                <CardTitle className="text-sm flex items-center gap-2">
+                  <Activity className="w-4 h-4 text-[#0072C6]" />
+                  Recent Activity
+                </CardTitle>
               </CardHeader>
-              <CardContent className="p-0">
-                {todaySales.length === 0 ? (
-                  <div className="text-center py-8 text-gray-400">
-                    <ShoppingCart className="w-10 h-10 mx-auto mb-2 opacity-20" />
-                    <p className="text-xs">No sales today</p>
-                  </div>
-                ) : (
-                  <div className="divide-y max-h-72 overflow-y-auto">
-                    {todaySales.slice(0, 6).map((sale) => (
-                      <div key={sale.id} className="flex items-center justify-between p-3 hover:bg-gray-50 transition-colors">
-                        <div className="flex items-center gap-2 flex-1 min-w-0">
-                          <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-[#1EB053] to-[#0072C6] flex items-center justify-center flex-shrink-0">
-                            <ShoppingCart className="w-4 h-4 text-white" />
-                          </div>
-                          <div className="min-w-0 flex-1">
-                            <p className="font-medium text-xs truncate">{sale.customer_name || 'Walk-in Customer'}</p>
-                            <p className="text-[10px] text-gray-500 truncate">{sale.employee_name} • {format(new Date(sale.created_date), 'h:mm a')}</p>
-                          </div>
-                        </div>
-                        <div className="text-right flex-shrink-0 ml-2">
-                          <p className="font-bold text-sm text-[#1EB053]">Le {sale.total_amount?.toLocaleString()}</p>
-                          <Badge variant="outline" className="text-[9px] mt-0.5">{sale.payment_method?.replace('_', ' ')}</Badge>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
+              <CardContent>
+                <RecentActivity activities={recentActivity} />
               </CardContent>
             </Card>
 
-            {/* Activity & Events - Stacked */}
-            <div className="space-y-4">
-              <Card className="border-0 shadow-md">
-                <div className="h-1 bg-gradient-to-r from-[#0072C6] to-[#8b5cf6]" />
-                <CardHeader className="pb-3">
-                  <CardTitle className="text-sm flex items-center gap-2">
-                    <Activity className="w-4 h-4 text-[#0072C6]" />
-                    Recent Activity
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <RecentActivity activities={recentActivity} />
-                </CardContent>
-              </Card>
+            <Card className="border-0 shadow-md">
+              <div className="h-1 bg-gradient-to-r from-[#8b5cf6] to-[#ec4899]" />
+              <CardHeader className="pb-3">
+                <CardTitle className="text-sm flex items-center gap-2">
+                  <Calendar className="w-4 h-4 text-[#8b5cf6]" />
+                  Upcoming Events
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <UpcomingMeetings meetings={meetings} />
+              </CardContent>
+            </Card>
 
-              <Card className="border-0 shadow-md">
-                <div className="h-1 bg-gradient-to-r from-[#8b5cf6] to-[#ec4899]" />
-                <CardHeader className="pb-3">
-                  <CardTitle className="text-sm flex items-center gap-2">
-                    <Calendar className="w-4 h-4 text-[#8b5cf6]" />
-                    Upcoming Events
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <UpcomingMeetings meetings={meetings} />
-                </CardContent>
-              </Card>
-            </div>
+            <Card className="border-0 shadow-md">
+              <div className="h-1 bg-gradient-to-r from-[#1EB053] to-[#0072C6]" />
+              <CardHeader className="pb-3">
+                <CardTitle className="text-sm flex items-center gap-2">
+                  <Clock className="w-4 h-4 text-[#1EB053]" />
+                  Today's Snapshot
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <TodayAttendance attendance={attendance} employees={employees} />
+              </CardContent>
+            </Card>
           </div>
-
-          <TopPerformers 
-            sales={sales}
-            employees={employees}
-            trips={trips}
-            products={products}
-          />
         </TabsContent>
 
         {/* Sales Tab */}
@@ -689,17 +579,6 @@ export default function Dashboard() {
         </TabsContent>
       </Tabs>
 
-      {/* Footer with Sierra Leone Pride - Compact */}
-      <div className="relative overflow-hidden rounded-lg bg-gradient-to-r from-[#0F1F3C] to-[#1a3a5c] p-3">
-        <div className="flex items-center justify-center gap-2 relative z-10">
-          <div className="flex h-5 w-10 rounded overflow-hidden shadow">
-            <div className="flex-1 bg-[#1EB053]" />
-            <div className="flex-1 bg-white" />
-            <div className="flex-1 bg-[#0072C6]" />
-          </div>
-          <p className="text-xs text-white/80 font-medium">🇸🇱 Proudly serving Sierra Leone</p>
-        </div>
-      </div>
     </div>
   );
 }
