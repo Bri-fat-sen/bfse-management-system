@@ -21,7 +21,6 @@ const RECORD_TYPES = [
   { value: "revenue", label: "Revenue/Sales", icon: "📈", color: "green" },
   { value: "production", label: "Production Batches", icon: "🏭", color: "blue" },
   { value: "inventory", label: "Stock/Inventory", icon: "📦", color: "purple" },
-  { value: "stock_receipt", label: "Stock Receipt/Delivery", icon: "📦", color: "teal" },
   { value: "payroll", label: "Payroll Items", icon: "👥", color: "amber" },
 ];
 
@@ -83,14 +82,31 @@ export default function AdvancedDocumentExtractor({
       console.log("Starting document analysis...");
       
       const analysisResult = await base44.integrations.Core.InvokeLLM({
-        prompt: `Analyze this business document comprehensively.
+        prompt: `Analyze this business document comprehensively and determine its type.
 
 **Document Analysis:**
-1. Type Detection: Identify if invoice, receipt, expense report, sales report, inventory list, payroll sheet, etc.
-2. Record Type: Determine if this should be: expense, revenue, production, inventory, or payroll
+1. Type Detection: Identify the document type
+   - Expense/Invoice: Bills, invoices, receipts for purchases
+   - Revenue/Sales: Sales receipts, income records
+   - Production Batch: Production logs, manufacturing records, batch reports (often has batch numbers, production dates, quantities produced)
+   - Inventory/Stock Receipt: Stock delivery notes, goods received notes, inventory lists (often has product names, SKUs, quantities received)
+   - Payroll: Salary sheets, payroll records
+
+2. Record Type Classification: Based on the content, classify as one of:
+   - "expense" - for bills, invoices, expense reports
+   - "revenue" - for sales receipts, income records  
+   - "production" - for production batches, manufacturing logs (look for: batch numbers, production dates, quantities produced, raw materials)
+   - "inventory" or "stock_receipt" - for stock deliveries, goods received notes (look for: product lists, quantities received, delivery dates, suppliers)
+   - "payroll" - for salary sheets
+
 3. Structure: List ALL column headers found, count approximate rows, detect tables
 4. Metadata: Extract date, document number, issuer/vendor name, total amount, currency
 5. Quality: Rate readability (1-10), note any OCR challenges
+
+**Detection Hints:**
+- Production documents often contain: "batch", "produced", "manufacturing date", "raw materials", "output"
+- Stock receipt documents often contain: "received", "delivered", "goods", "delivery note", "GRN", "PO"
+- Expense documents often contain: "invoice", "bill", "payment", "expense"
 
 Be thorough and accurate.`,
         file_urls: [file_url],
@@ -100,7 +116,7 @@ Be thorough and accurate.`,
             document_type: { type: "string" },
             record_type: { 
               type: "string", 
-              enum: ["expense", "revenue", "production", "inventory", "payroll"],
+              enum: ["expense", "revenue", "production", "inventory", "stock_receipt", "payroll"],
             },
             confidence: { type: "number" },
             table_structure: {
@@ -696,39 +712,6 @@ Be thorough and accurate.`,
             
             console.log(`Creating revenue ${i + 1}:`, revenueData);
             const result = await base44.entities.Revenue.create(revenueData);
-            console.log(`✓ Success ${i + 1}:`, result);
-            created++;
-          } else if (recordType === "production") {
-            const productionData = {
-              organisation_id: orgId,
-              batch_number: `BATCH-${Date.now()}-${i}`,
-              product_name: item.description || item.vendor || 'Unnamed Product',
-              production_date: item.date || format(new Date(), 'yyyy-MM-dd'),
-              quantity_produced: parseFloat(item.quantity) || parseFloat(item.amount) || 0,
-              status: 'completed',
-              notes: item.notes || 'Imported via AI extraction'
-            };
-            
-            console.log(`Creating production batch ${i + 1}:`, productionData);
-            const result = await base44.entities.ProductionBatch.create(productionData);
-            console.log(`✓ Success ${i + 1}:`, result);
-            created++;
-          } else if (recordType === "inventory" || recordType === "stock_receipt") {
-            // For inventory uploads - create products if they don't exist
-            const productData = {
-              organisation_id: orgId,
-              name: item.description || item.vendor || 'New Product',
-              sku: item.vendor || `SKU-${Date.now()}-${i}`,
-              category: item.category || 'other',
-              unit_price: parseFloat(item.unit_price || item.amount) || 0,
-              cost_price: parseFloat(item.unit_price || item.amount) || 0,
-              stock_quantity: parseFloat(item.quantity) || 0,
-              unit: item.unit || 'piece',
-              is_active: true
-            };
-            
-            console.log(`Creating product ${i + 1}:`, productData);
-            const result = await base44.entities.Product.create(productData);
             console.log(`✓ Success ${i + 1}:`, result);
             created++;
           }
