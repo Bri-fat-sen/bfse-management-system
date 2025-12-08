@@ -317,9 +317,19 @@ export default function Dashboard() {
           </div>
           <div className="flex items-center gap-2">
             <Link to={createPageUrl("Sales")}>
-              <Button className="bg-gradient-to-r from-[#1EB053] to-[#0072C6] text-white shadow-sm hover:shadow-md transition-all">
+              <Button className="relative overflow-hidden bg-gradient-to-r from-[#1EB053] to-[#0072C6] text-white shadow-sm hover:shadow-md transition-all">
+                <div className="absolute top-0 left-0 right-0 h-0.5 flex">
+                  <div className="flex-1 bg-white/40" />
+                  <div className="flex-1 bg-white" />
+                  <div className="flex-1 bg-white/40" />
+                </div>
                 <ShoppingCart className="w-4 h-4 mr-2" />
                 New Sale
+                <div className="absolute bottom-0 left-0 right-0 h-0.5 flex">
+                  <div className="flex-1 bg-white/40" />
+                  <div className="flex-1 bg-white" />
+                  <div className="flex-1 bg-white/40" />
+                </div>
               </Button>
             </Link>
           </div>
@@ -452,26 +462,76 @@ export default function Dashboard() {
       {/* Modern Tabbed Interface */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
         <div className="flex items-center justify-between border-b pb-4">
-          <TabsList className="bg-white border shadow-sm">
-            <TabsTrigger value="overview" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#1EB053] data-[state=active]:to-[#0072C6] data-[state=active]:text-white">
+          <TabsList className="bg-white border shadow-sm p-1">
+            <TabsTrigger value="overview" className="relative overflow-hidden data-[state=active]:bg-white data-[state=active]:shadow-sm">
+              <div className="absolute top-0 left-0 right-0 h-0.5 flex data-[state=inactive]:opacity-0">
+                <div className="flex-1 bg-[#1EB053]" />
+                <div className="flex-1 bg-white" />
+                <div className="flex-1 bg-[#0072C6]" />
+              </div>
               <BarChart3 className="w-4 h-4 mr-2" />
               Overview
+              <div className="absolute bottom-0 left-0 right-0 h-0.5 flex data-[state=inactive]:opacity-0">
+                <div className="flex-1 bg-[#1EB053]" />
+                <div className="flex-1 bg-white" />
+                <div className="flex-1 bg-[#0072C6]" />
+              </div>
             </TabsTrigger>
-            <TabsTrigger value="sales" className="data-[state=active]:bg-[#1EB053] data-[state=active]:text-white">
+            <TabsTrigger value="sales" className="relative overflow-hidden data-[state=active]:bg-white data-[state=active]:shadow-sm">
+              <div className="absolute top-0 left-0 right-0 h-0.5 flex data-[state=inactive]:opacity-0">
+                <div className="flex-1 bg-[#1EB053]" />
+                <div className="flex-1 bg-white" />
+                <div className="flex-1 bg-[#0072C6]" />
+              </div>
               <ShoppingCart className="w-4 h-4 mr-2" />
               Sales
+              <div className="absolute bottom-0 left-0 right-0 h-0.5 flex data-[state=inactive]:opacity-0">
+                <div className="flex-1 bg-[#1EB053]" />
+                <div className="flex-1 bg-white" />
+                <div className="flex-1 bg-[#0072C6]" />
+              </div>
             </TabsTrigger>
-            <TabsTrigger value="inventory" className="data-[state=active]:bg-[#8b5cf6] data-[state=active]:text-white">
+            <TabsTrigger value="inventory" className="relative overflow-hidden data-[state=active]:bg-white data-[state=active]:shadow-sm">
+              <div className="absolute top-0 left-0 right-0 h-0.5 flex data-[state=inactive]:opacity-0">
+                <div className="flex-1 bg-[#1EB053]" />
+                <div className="flex-1 bg-white" />
+                <div className="flex-1 bg-[#0072C6]" />
+              </div>
               <Package className="w-4 h-4 mr-2" />
               Inventory
+              <div className="absolute bottom-0 left-0 right-0 h-0.5 flex data-[state=inactive]:opacity-0">
+                <div className="flex-1 bg-[#1EB053]" />
+                <div className="flex-1 bg-white" />
+                <div className="flex-1 bg-[#0072C6]" />
+              </div>
             </TabsTrigger>
-            <TabsTrigger value="operations" className="data-[state=active]:bg-[#0072C6] data-[state=active]:text-white">
+            <TabsTrigger value="operations" className="relative overflow-hidden data-[state=active]:bg-white data-[state=active]:shadow-sm">
+              <div className="absolute top-0 left-0 right-0 h-0.5 flex data-[state=inactive]:opacity-0">
+                <div className="flex-1 bg-[#1EB053]" />
+                <div className="flex-1 bg-white" />
+                <div className="flex-1 bg-[#0072C6]" />
+              </div>
               <Activity className="w-4 h-4 mr-2" />
               Operations
+              <div className="absolute bottom-0 left-0 right-0 h-0.5 flex data-[state=inactive]:opacity-0">
+                <div className="flex-1 bg-[#1EB053]" />
+                <div className="flex-1 bg-white" />
+                <div className="flex-1 bg-[#0072C6]" />
+              </div>
             </TabsTrigger>
-            <TabsTrigger value="insights" className="data-[state=active]:bg-[#f59e0b] data-[state=active]:text-white">
+            <TabsTrigger value="insights" className="relative overflow-hidden data-[state=active]:bg-white data-[state=active]:shadow-sm">
+              <div className="absolute top-0 left-0 right-0 h-0.5 flex data-[state=inactive]:opacity-0">
+                <div className="flex-1 bg-[#1EB053]" />
+                <div className="flex-1 bg-white" />
+                <div className="flex-1 bg-[#0072C6]" />
+              </div>
               <Target className="w-4 h-4 mr-2" />
               Insights
+              <div className="absolute bottom-0 left-0 right-0 h-0.5 flex data-[state=inactive]:opacity-0">
+                <div className="flex-1 bg-[#1EB053]" />
+                <div className="flex-1 bg-white" />
+                <div className="flex-1 bg-[#0072C6]" />
+              </div>
             </TabsTrigger>
           </TabsList>
           <QuickActions />
