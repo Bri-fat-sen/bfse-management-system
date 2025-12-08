@@ -326,7 +326,7 @@ export default function GlobalSearch({ orgId, isOpen, onClose }) {
                     <div className="p-4">
                       <p className="text-xs font-medium text-gray-500 mb-2">EMPLOYEES</p>
                       <div className="space-y-1">
-                        {searchResults.employees.map((emp) => (
+                        {filteredResults.employees.map((emp) => (
                           <Link
                             key={emp.id}
                             to={createPageUrl("HR")}
@@ -352,7 +352,7 @@ export default function GlobalSearch({ orgId, isOpen, onClose }) {
                     <div className="p-4">
                       <p className="text-xs font-medium text-gray-500 mb-2">PRODUCTS</p>
                       <div className="space-y-1">
-                        {searchResults.products.map((product) => (
+                        {filteredResults.products.map((product) => (
                           <Link
                             key={product.id}
                             to={createPageUrl("Inventory")}
