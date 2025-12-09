@@ -158,7 +158,7 @@ ${pastEntries.slice(0, 5).map(e => `- "${e.description}" → ${e.category} (Vend
 
   // Find similar past entries for auto-fill
   const similarEntries = useMemo(() => {
-    if (!formData.description || formData.description.length < 3) return [];
+    if (!formData?.description || formData.description.length < 3) return [];
     
     const descLower = formData.description.toLowerCase();
     const words = descLower.split(/\s+/).filter(w => w.length > 2);
@@ -177,11 +177,13 @@ ${pastEntries.slice(0, 5).map(e => `- "${e.description}" → ${e.category} (Vend
         ).length / words.length
       }))
       .sort((a, b) => b.matchScore - a.matchScore);
-  }, [formData.description, pastEntries]);
+  }, [formData?.description, pastEntries]);
 
   // Validate form data in real-time
   const realTimeValidation = useMemo(() => {
     const errors = [];
+    
+    if (!formData) return errors;
     
     // Amount validation
     if (formData.amount) {
@@ -222,13 +224,13 @@ ${pastEntries.slice(0, 5).map(e => `- "${e.description}" → ${e.category} (Vend
   // Trigger AI analysis when description changes
   useEffect(() => {
     const timer = setTimeout(() => {
-      if (formData.description && formData.description.length >= 5) {
+      if (formData?.description && formData.description.length >= 5) {
         analyzeDescription(formData.description);
       }
     }, 800);
 
     return () => clearTimeout(timer);
-  }, [formData.description]);
+  }, [formData?.description]);
 
   const applySuggestion = (suggestion) => {
     onSuggestion(suggestion.field, suggestion.value);
@@ -244,7 +246,7 @@ ${pastEntries.slice(0, 5).map(e => `- "${e.description}" → ${e.category} (Vend
   const allErrors = [...realTimeValidation, ...validationErrors.map(w => ({ message: w, severity: "warning" }))];
   const hasContent = suggestions.length > 0 || similarEntries.length > 0 || allErrors.length > 0 || isAnalyzing;
 
-  if (!hasContent && !formData.description) return null;
+  if (!hasContent && !formData?.description) return null;
 
   return (
     <div className={cn("rounded-xl border bg-gradient-to-r from-purple-50 to-blue-50 overflow-hidden", className)}>
