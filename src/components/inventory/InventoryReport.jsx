@@ -324,7 +324,7 @@ export default function InventoryReport({
               <CardContent className="p-4 text-center">
                 <p className="text-2xl font-bold text-[#1EB053]">
                   {typeof value === 'number' && key.toLowerCase().includes('value') 
-                    ? `SLE ${value.toLocaleString()}` 
+                    ? `Le ${value.toLocaleString()}` 
                     : value.toLocaleString()}
                 </p>
                 <p className="text-sm text-gray-500">
