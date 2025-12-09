@@ -894,6 +894,7 @@ Format your response in markdown with clear sections.`,
             bankDeposits={bankDeposits || []}
             products={products || []}
             dateRange={dateRange}
+            organisation={organisation}
           />
         </TabsContent>
 
@@ -906,6 +907,7 @@ Format your response in markdown with clear sections.`,
             bankDeposits={bankDeposits || []}
             trips={periodData.periodTrips}
             dateRange={dateRange}
+            organisation={organisation}
           />
         </TabsContent>
 

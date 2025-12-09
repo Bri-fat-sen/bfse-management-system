@@ -1,5 +1,7 @@
 import React, { useMemo } from "react";
+import { format } from "date-fns";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { 
   Building2, 
@@ -8,8 +10,11 @@ import {
   CreditCard,
   TrendingUp,
   Wallet,
-  Landmark
+  Landmark,
+  Download
 } from "lucide-react";
+import { printUnifiedPDF, getUnifiedPDFStyles, getUnifiedHeader, getUnifiedFooter } from "@/components/exports/UnifiedPDFStyles";
+import { useToast } from "@/components/ui/Toast";
 
 export default function BalanceSheetGenerator({ 
   sales = [],
@@ -17,8 +22,10 @@ export default function BalanceSheetGenerator({
   revenues = [],
   bankDeposits = [],
   products = [],
-  dateRange 
+  dateRange,
+  organisation
 }) {
+  const toast = useToast();
   const balanceSheet = useMemo(() => {
     // ASSETS
     // Current Assets
@@ -95,6 +102,179 @@ export default function BalanceSheetGenerator({
     };
   }, [sales, expenses, revenues, bankDeposits, products]);
 
+  const exportToPDF = () => {
+    const styles = getUnifiedPDFStyles();
+    const header = getUnifiedHeader(organisation, 'Balance Sheet');
+    const footer = getUnifiedFooter(organisation);
+
+    const content = `
+      <div class="statement-section">
+        <h2 class="section-title">As of ${dateRange.label}</h2>
+        <p class="text-muted text-center mb-4">Generated on ${format(new Date(), 'MMMM d, yyyy')}</p>
+      </div>
+
+      <div class="statement-section">
+        <div class="summary-grid">
+          <div class="summary-card" style="border-left: 4px solid var(--primary);">
+            <div class="summary-label">Total Assets</div>
+            <div class="summary-value">Le ${balanceSheet.assets.total.toLocaleString()}</div>
+          </div>
+          <div class="summary-card" style="border-left: 4px solid #ef4444;">
+            <div class="summary-label">Total Liabilities</div>
+            <div class="summary-value">Le ${balanceSheet.liabilities.total.toLocaleString()}</div>
+          </div>
+          <div class="summary-card" style="border-left: 4px solid #0072C6;">
+            <div class="summary-label">Total Equity</div>
+            <div class="summary-value">Le ${balanceSheet.equity.total.toLocaleString()}</div>
+          </div>
+          <div class="summary-card" style="border-left: 4px solid ${balanceSheet.isBalanced ? '#10b981' : '#ef4444'};">
+            <div class="summary-label">Balance Status</div>
+            <div class="summary-value">${balanceSheet.isBalanced ? '✓ Balanced' : '⚠ Unbalanced'}</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="statement-section">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th colspan="2" class="bg-success text-white">ASSETS</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr class="bg-gray-50">
+              <td class="font-bold" colspan="2">Current Assets</td>
+            </tr>
+            <tr>
+              <td class="pl-6">Cash on Hand</td>
+              <td class="text-right font-bold">Le ${balanceSheet.assets.current.cash.toLocaleString()}</td>
+            </tr>
+            <tr>
+              <td class="pl-6">Bank Accounts</td>
+              <td class="text-right font-bold">Le ${balanceSheet.assets.current.bank.toLocaleString()}</td>
+            </tr>
+            <tr>
+              <td class="pl-6">Accounts Receivable</td>
+              <td class="text-right font-bold">Le ${balanceSheet.assets.current.receivables.toLocaleString()}</td>
+            </tr>
+            <tr>
+              <td class="pl-6">Inventory</td>
+              <td class="text-right font-bold">Le ${balanceSheet.assets.current.inventory.toLocaleString()}</td>
+            </tr>
+            <tr class="bg-success-light">
+              <td class="font-bold">TOTAL ASSETS</td>
+              <td class="text-right font-bold text-success">Le ${balanceSheet.assets.total.toLocaleString()}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="statement-section">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th colspan="2" class="bg-danger text-white">LIABILITIES</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr class="bg-gray-50">
+              <td class="font-bold" colspan="2">Current Liabilities</td>
+            </tr>
+            <tr>
+              <td class="pl-6">Accounts Payable</td>
+              <td class="text-right font-bold">Le ${balanceSheet.liabilities.current.payables.toLocaleString()}</td>
+            </tr>
+            <tr class="bg-danger-light">
+              <td class="font-bold">TOTAL LIABILITIES</td>
+              <td class="text-right font-bold text-danger">Le ${balanceSheet.liabilities.total.toLocaleString()}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="statement-section">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th colspan="2" class="bg-primary text-white">EQUITY</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Owner Contributions</td>
+              <td class="text-right font-bold">Le ${balanceSheet.equity.contributions.toLocaleString()}</td>
+            </tr>
+            <tr>
+              <td>Retained Earnings</td>
+              <td class="text-right font-bold">Le ${balanceSheet.equity.retained.toLocaleString()}</td>
+            </tr>
+            <tr class="bg-blue-light">
+              <td class="font-bold">TOTAL EQUITY</td>
+              <td class="text-right font-bold" style="color: #0072C6;">Le ${balanceSheet.equity.total.toLocaleString()}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="statement-section">
+        <div class="summary-box ${balanceSheet.isBalanced ? 'profit' : 'loss'}">
+          <div class="balance-equation">
+            <div class="balance-side">
+              <div class="balance-label">Total Assets</div>
+              <div class="balance-value">Le ${balanceSheet.assets.total.toLocaleString()}</div>
+            </div>
+            <div class="balance-equals">${balanceSheet.isBalanced ? '=' : '≠'}</div>
+            <div class="balance-side">
+              <div class="balance-label">Liabilities + Equity</div>
+              <div class="balance-value">Le ${(balanceSheet.liabilities.total + balanceSheet.equity.total).toLocaleString()}</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    `;
+
+    const html = `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Balance Sheet - ${organisation?.name || 'Organisation'}</title>
+  <style>
+    ${styles}
+    .summary-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin: 24px 0; }
+    .summary-card { padding: 16px; border-radius: 8px; background: var(--gray-50); border-left: 4px solid var(--primary); }
+    .summary-label { font-size: 12px; text-transform: uppercase; color: var(--text-muted); margin-bottom: 8px; }
+    .summary-value { font-size: 20px; font-weight: bold; color: var(--gray-900); }
+    .summary-box { padding: 32px; background: var(--gray-50); border-radius: 12px; margin: 24px 0; }
+    .summary-box.profit { background: linear-gradient(135deg, rgba(30, 176, 83, 0.1), rgba(0, 114, 198, 0.1)); border: 2px solid var(--primary); }
+    .summary-box.loss { background: rgba(249, 115, 22, 0.1); border: 2px solid #f97316; }
+    .balance-equation { display: flex; align-items: center; justify-content: space-around; }
+    .balance-side { text-align: center; }
+    .balance-label { font-size: 14px; color: var(--text-muted); margin-bottom: 8px; }
+    .balance-value { font-size: 24px; font-weight: bold; }
+    .balance-equals { font-size: 32px; font-weight: bold; color: var(--primary); }
+    .pl-6 { padding-left: 24px; }
+    @media print {
+      .summary-grid { grid-template-columns: repeat(2, 1fr); page-break-inside: avoid; }
+      .statement-section { page-break-inside: avoid; }
+    }
+  </style>
+</head>
+<body>
+  <div class="document">
+    ${header}
+    <div class="content">
+      ${content}
+    </div>
+    ${footer}
+  </div>
+</body>
+</html>`;
+
+    printUnifiedPDF(html, `balance-sheet-${format(new Date(), 'yyyy-MM-dd')}.pdf`);
+    toast.success("PDF Generated", "Downloading balance sheet");
+  };
+
   return (
     <Card className="overflow-hidden">
       <div className="h-2 flex">
@@ -111,9 +291,15 @@ export default function BalanceSheetGenerator({
             </CardTitle>
             <CardDescription>{dateRange.label}</CardDescription>
           </div>
-          <Badge className={balanceSheet.isBalanced ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}>
-            {balanceSheet.isBalanced ? '✓ Balanced' : '⚠ Not Balanced'}
-          </Badge>
+          <div className="flex items-center gap-2">
+            <Badge className={balanceSheet.isBalanced ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}>
+              {balanceSheet.isBalanced ? '✓ Balanced' : '⚠ Not Balanced'}
+            </Badge>
+            <Button variant="outline" size="sm" onClick={exportToPDF}>
+              <Download className="w-4 h-4 mr-2" />
+              PDF
+            </Button>
+          </div>
         </div>
       </CardHeader>
       <CardContent className="space-y-6">
