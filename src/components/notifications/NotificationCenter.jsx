@@ -1,4 +1,4 @@
-import { useEffect, useState, useMemo } from "react";
+import React, { useEffect, useState } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { 
@@ -24,8 +24,7 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
-import { format, formatDistanceToNow } from "date-fns";
-import { toast } from "sonner";
+import { format } from "date-fns";
 import { Link } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 
@@ -43,7 +42,9 @@ const notificationIcons = {
 
 export default function NotificationCenter({ orgId, currentEmployee }) {
   const queryClient = useQueryClient();
+  const toast = useToast();
   const [open, setOpen] = useState(false);
+  const [approvalExpense, setApprovalExpense] = useState(null);
 
   // Fetch notifications - try by employee ID first, fall back to email
   const { data: notificationsByEmployee = [] } = useQuery({
@@ -65,7 +66,7 @@ export default function NotificationCenter({ orgId, currentEmployee }) {
   });
 
   // Combine and deduplicate notifications
-  const notifications = useMemo(() => {
+  const notifications = React.useMemo(() => {
     const allNotifications = [...notificationsByEmployee, ...notificationsByEmail];
     const uniqueIds = new Set();
     return allNotifications
