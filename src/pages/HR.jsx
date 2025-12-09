@@ -72,6 +72,8 @@ import StatutoryRateManager from "@/components/hr/StatutoryRateManager";
 import PayrollApprovalWorkflow from "@/components/hr/PayrollApprovalWorkflow";
 import OvertimePrediction from "@/components/hr/OvertimePrediction";
 import EmployeeEntryTemplate from "@/components/templates/EmployeeEntryTemplate";
+import AddEmployeeDialog from "@/components/hr/AddEmployeeDialog";
+import EmployeeCard from "@/components/hr/EmployeeCard";
 
 export default function HR() {
   const toast = useToast();
@@ -80,7 +82,12 @@ export default function HR() {
   const [payrollToDelete, setPayrollToDelete] = useState(null);
   const [showReverseConfirm, setShowReverseConfirm] = useState(false);
   const [payrollToReverse, setPayrollToReverse] = useState(null);
-  const [activeTab, setActiveTab] = useState("attendance");
+  const [activeTab, setActiveTab] = useState("employees");
+  const [searchTerm, setSearchTerm] = useState("");
+  const [statusFilter, setStatusFilter] = useState("all");
+  const [roleFilter, setRoleFilter] = useState("all");
+  const [showAddEmployeeDialog, setShowAddEmployeeDialog] = useState(false);
+  const [editingEmployee, setEditingEmployee] = useState(null);
   const [showPayrollDialog, setShowPayrollDialog] = useState(false);
   const [showLeaveDialog, setShowLeaveDialog] = useState(false);
   const [showPerformanceDialog, setShowPerformanceDialog] = useState(false);
@@ -197,6 +204,30 @@ export default function HR() {
   const activeEmployees = employees.filter(e => e.status === 'active');
   const presentToday = attendance.filter(a => a.clock_in_time);
 
+  // Filter employees
+  const filteredEmployees = employees.filter(emp => {
+    const matchesSearch = 
+      emp.full_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      emp.employee_code?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      emp.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      emp.phone?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      emp.position?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      emp.department?.toLowerCase().includes(searchTerm.toLowerCase());
+    
+    const matchesStatus = statusFilter === "all" || emp.status === statusFilter;
+    const matchesRole = roleFilter === "all" || emp.role === roleFilter;
+    
+    return matchesSearch && matchesStatus && matchesRole;
+  });
+
+  const deleteEmployeeMutation = useMutation({
+    mutationFn: (id) => base44.entities.Employee.delete(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['employees'] });
+      toast.success("Employee deleted successfully");
+    },
+  });
+
   if (!user) {
     return <LoadingSpinner message="Loading HR..." subtitle="Fetching employee data" fullScreen={true} />;
   }
@@ -244,7 +275,7 @@ export default function HR() {
             <p className="text-sm text-gray-500 mt-1">Manage employees and payroll</p>
           </div>
         </div>
-        <EmployeeEntryTemplate organisation={organisation?.[0]} />
+
       </div>
 
       {/* Stats */}
@@ -277,11 +308,17 @@ export default function HR() {
 
       <Tabs value={activeTab} onValueChange={setActiveTab}>
         <TabsList className="bg-gray-100 p-1 flex flex-wrap h-auto gap-1">
+          <TabsTrigger value="employees" className="text-xs sm:text-sm px-2 sm:px-3 data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#1EB053] data-[state=active]:to-[#0072C6] data-[state=active]:text-white">
+            <Users className="w-3 h-3 sm:w-4 sm:h-4 sm:mr-1" />
+            Employees
+          </TabsTrigger>
           <TabsTrigger value="attendance" className="text-xs sm:text-sm px-2 sm:px-3 data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#1EB053] data-[state=active]:to-[#0072C6] data-[state=active]:text-white">
-            Attendance
+            <Clock className="w-3 h-3 sm:w-4 sm:h-4 sm:mr-1" />
+            <span className="hidden sm:inline">Attendance</span>
           </TabsTrigger>
           <TabsTrigger value="payroll" className="text-xs sm:text-sm px-2 sm:px-3 data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#1EB053] data-[state=active]:to-[#0072C6] data-[state=active]:text-white">
-            Payroll
+            <DollarSign className="w-3 h-3 sm:w-4 sm:h-4 sm:mr-1" />
+            <span className="hidden sm:inline">Payroll</span>
           </TabsTrigger>
           <TabsTrigger value="leave" className="text-xs sm:text-sm px-2 sm:px-3 data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#1EB053] data-[state=active]:to-[#0072C6] data-[state=active]:text-white">
             <Calendar className="w-3 h-3 sm:w-4 sm:h-4 sm:mr-1" />
@@ -292,6 +329,108 @@ export default function HR() {
             <span className="hidden sm:inline">Perf.</span>
           </TabsTrigger>
         </TabsList>
+
+        {/* Employees Tab */}
+        <TabsContent value="employees" className="mt-6 space-y-4">
+          <Card>
+            <CardHeader>
+              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+                <CardTitle>Employee Directory</CardTitle>
+                <Button 
+                  onClick={() => {
+                    setEditingEmployee(null);
+                    setShowAddEmployeeDialog(true);
+                  }}
+                  className="bg-gradient-to-r from-[#1EB053] to-[#0072C6] hover:from-[#178f43] hover:to-[#005a9e] w-full sm:w-auto"
+                >
+                  <Plus className="w-4 h-4 mr-2" />
+                  Add Employee
+                </Button>
+              </div>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {/* Filters */}
+              <div className="flex flex-col sm:flex-row gap-3">
+                <div className="relative flex-1">
+                  <Input
+                    placeholder="Search employees by name, code, email, phone, position..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="pl-3"
+                  />
+                </div>
+                <Select value={statusFilter} onValueChange={setStatusFilter}>
+                  <SelectTrigger className="w-full sm:w-40">
+                    <SelectValue placeholder="Status" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Status</SelectItem>
+                    <SelectItem value="active">Active</SelectItem>
+                    <SelectItem value="inactive">Inactive</SelectItem>
+                    <SelectItem value="suspended">Suspended</SelectItem>
+                    <SelectItem value="terminated">Terminated</SelectItem>
+                  </SelectContent>
+                </Select>
+                <Select value={roleFilter} onValueChange={setRoleFilter}>
+                  <SelectTrigger className="w-full sm:w-40">
+                    <SelectValue placeholder="Role" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Roles</SelectItem>
+                    <SelectItem value="super_admin">Super Admin</SelectItem>
+                    <SelectItem value="org_admin">Org Admin</SelectItem>
+                    <SelectItem value="hr_admin">HR Admin</SelectItem>
+                    <SelectItem value="payroll_admin">Payroll Admin</SelectItem>
+                    <SelectItem value="warehouse_manager">Warehouse Manager</SelectItem>
+                    <SelectItem value="retail_cashier">Retail Cashier</SelectItem>
+                    <SelectItem value="vehicle_sales">Vehicle Sales</SelectItem>
+                    <SelectItem value="driver">Driver</SelectItem>
+                    <SelectItem value="accountant">Accountant</SelectItem>
+                    <SelectItem value="support_staff">Support Staff</SelectItem>
+                    <SelectItem value="read_only">Read Only</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="text-xs text-gray-500">
+                Showing {filteredEmployees.length} of {employees.length} employees
+              </div>
+
+              {/* Employee Grid */}
+              {filteredEmployees.length === 0 ? (
+                <EmptyState
+                  icon={Users}
+                  title="No Employees Found"
+                  description={searchTerm || statusFilter !== 'all' || roleFilter !== 'all' 
+                    ? "Try adjusting your filters" 
+                    : "Get started by adding your first employee"}
+                  action={!searchTerm && statusFilter === 'all' && roleFilter === 'all' ? (
+                    <Button onClick={() => setShowAddEmployeeDialog(true)} className="bg-gradient-to-r from-[#1EB053] to-[#0072C6]">
+                      <Plus className="w-4 h-4 mr-2" />
+                      Add Employee
+                    </Button>
+                  ) : undefined}
+                />
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {filteredEmployees.map(emp => (
+                    <EmployeeCard
+                      key={emp.id}
+                      employee={emp}
+                      onEdit={(e) => {
+                        setEditingEmployee(e);
+                        setShowAddEmployeeDialog(true);
+                      }}
+                      onDelete={(e) => deleteEmployeeMutation.mutate(e.id)}
+                      currentEmployee={currentEmployee}
+                      organisation={organisation?.[0]}
+                    />
+                  ))}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
 
         <TabsContent value="attendance" className="mt-6">
           <Card>
@@ -563,6 +702,23 @@ export default function HR() {
         onOpenChange={setShowLeaveDialog}
         currentEmployee={currentEmployee}
         orgId={orgId}
+      />
+
+      {/* Add/Edit Employee Dialog */}
+      <AddEmployeeDialog
+        open={showAddEmployeeDialog}
+        onOpenChange={(open) => {
+          setShowAddEmployeeDialog(open);
+          if (!open) setEditingEmployee(null);
+        }}
+        editingEmployee={editingEmployee}
+        orgId={orgId}
+        organisation={organisation?.[0]}
+        onSuccess={() => {
+          queryClient.invalidateQueries({ queryKey: ['employees'] });
+          setShowAddEmployeeDialog(false);
+          setEditingEmployee(null);
+        }}
       />
 
       {/* Performance Review Dialog */}
