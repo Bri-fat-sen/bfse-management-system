@@ -149,25 +149,59 @@ export default function CRM() {
   }
 
   return (
-    <div className="space-y-6">
-      <PageHeader
-        title="Customer Relationship Management"
-        subtitle="Manage customers, track interactions, and grow relationships"
-        action={handleNew}
-        actionLabel="Add Customer"
-        actionIcon={Plus}
-      />
+    <div className="space-y-4 sm:space-y-6">
+      {/* Sierra Leone Stripe */}
+      <div className="h-1 w-full flex rounded-full overflow-hidden">
+        <div className="flex-1 bg-[#1EB053]" />
+        <div className="flex-1 bg-white border-y border-gray-200" />
+        <div className="flex-1 bg-[#0072C6]" />
+      </div>
+
+      {/* Modern Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div className="flex items-center gap-4">
+          <div className="relative">
+            <div className="absolute -inset-1 bg-gradient-to-br from-[#1EB053] to-[#0072C6] rounded-2xl blur opacity-30" />
+            <div className="relative w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-gradient-to-br from-[#1EB053] to-[#0072C6] flex items-center justify-center shadow-xl">
+              <Users className="w-7 h-7 sm:w-8 sm:h-8 text-white" />
+            </div>
+          </div>
+          <div>
+            <h1 className="text-2xl sm:text-3xl font-bold bg-gradient-to-r from-[#1EB053] to-[#0072C6] bg-clip-text text-transparent">
+              Customer Management
+            </h1>
+            <p className="text-sm text-gray-500 mt-1">Track relationships and grow your business</p>
+          </div>
+        </div>
+        <Button
+          onClick={handleNew}
+          className="gap-2 bg-gradient-to-r from-[#1EB053] to-[#0072C6] hover:shadow-xl transition-all h-11 rounded-xl"
+        >
+          <Plus className="w-5 h-5" />
+          Add Customer
+        </Button>
+      </div>
 
       {/* Tabs for Customers and Analytics */}
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="bg-gray-100">
-          <TabsTrigger value="customers" className="data-[state=active]:bg-white">
-            <Users className="w-4 h-4 mr-2" /> Customers
-          </TabsTrigger>
-          <TabsTrigger value="analytics" className="data-[state=active]:bg-white">
-            <BarChart3 className="w-4 h-4 mr-2" /> Analytics
-          </TabsTrigger>
-        </TabsList>
+        <div className="relative mb-6">
+          <TabsList className="bg-white border-2 border-gray-200 p-1.5 w-full rounded-xl shadow-sm">
+            <TabsTrigger 
+              value="customers" 
+              className="flex-1 text-xs sm:text-sm rounded-lg data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#1EB053] data-[state=active]:to-[#0072C6] data-[state=active]:text-white data-[state=active]:shadow-lg transition-all"
+            >
+              <Users className="w-4 h-4 mr-2" /> 
+              Customers
+            </TabsTrigger>
+            <TabsTrigger 
+              value="analytics" 
+              className="flex-1 text-xs sm:text-sm rounded-lg data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#1EB053] data-[state=active]:to-[#0072C6] data-[state=active]:text-white data-[state=active]:shadow-lg transition-all"
+            >
+              <BarChart3 className="w-4 h-4 mr-2" /> 
+              Analytics
+            </TabsTrigger>
+          </TabsList>
+        </div>
 
         <TabsContent value="analytics" className="mt-6">
           <CRMAnalytics 
@@ -180,55 +214,55 @@ export default function CRM() {
 
         <TabsContent value="customers" className="mt-6 space-y-6">
           {/* Stats */}
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-            <Card className="border-l-4 border-l-[#1EB053]">
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+            <Card className="border-t-4 border-t-[#1EB053] shadow-lg hover:shadow-xl transition-all">
               <CardContent className="p-4">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-xs text-gray-500 uppercase tracking-wide">Total Customers</p>
-                    <p className="text-2xl font-bold text-[#1EB053]">{totalCustomers}</p>
+                    <p className="text-xs text-gray-500 uppercase tracking-wide font-semibold mb-2">Total Customers</p>
+                    <p className="text-3xl font-bold bg-gradient-to-r from-[#1EB053] to-[#0e7f3d] bg-clip-text text-transparent">{totalCustomers}</p>
                   </div>
-                  <div className="w-12 h-12 rounded-full bg-green-100 flex items-center justify-center">
-                    <Users className="w-6 h-6 text-[#1EB053]" />
+                  <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-[#1EB053]/10 to-[#0e7f3d]/10 flex items-center justify-center">
+                    <Users className="w-7 h-7 text-[#1EB053]" />
                   </div>
                 </div>
               </CardContent>
             </Card>
-            <Card className="border-l-4 border-l-[#f59e0b]">
+            <Card className="border-t-4 border-t-amber-500 shadow-lg hover:shadow-xl transition-all">
               <CardContent className="p-4">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-xs text-gray-500 uppercase tracking-wide">VIP Customers</p>
-                    <p className="text-2xl font-bold text-[#f59e0b]">{vipCustomers}</p>
+                    <p className="text-xs text-gray-500 uppercase tracking-wide font-semibold mb-2">VIP Customers</p>
+                    <p className="text-3xl font-bold text-amber-600">{vipCustomers}</p>
                   </div>
-                  <div className="w-12 h-12 rounded-full bg-orange-100 flex items-center justify-center">
-                    <Star className="w-6 h-6 text-[#f59e0b]" />
+                  <div className="w-14 h-14 rounded-2xl bg-amber-100 flex items-center justify-center">
+                    <Star className="w-7 h-7 text-amber-600 fill-amber-600" />
                   </div>
                 </div>
               </CardContent>
             </Card>
-            <Card className="border-l-4 border-l-[#0072C6]">
+            <Card className="border-t-4 border-t-[#0072C6] shadow-lg hover:shadow-xl transition-all">
               <CardContent className="p-4">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-xs text-gray-500 uppercase tracking-wide">Total Revenue</p>
-                    <p className="text-2xl font-bold text-[#0072C6]">Le {totalRevenue.toLocaleString()}</p>
+                    <p className="text-xs text-gray-500 uppercase tracking-wide font-semibold mb-2">Total Revenue</p>
+                    <p className="text-xl sm:text-2xl font-bold text-[#0072C6]">Le {totalRevenue.toLocaleString()}</p>
                   </div>
-                  <div className="w-12 h-12 rounded-full bg-blue-100 flex items-center justify-center">
-                    <DollarSign className="w-6 h-6 text-[#0072C6]" />
+                  <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-[#0072C6]/10 to-[#005a9e]/10 flex items-center justify-center">
+                    <DollarSign className="w-7 h-7 text-[#0072C6]" />
                   </div>
                 </div>
               </CardContent>
             </Card>
-            <Card className="border-l-4 border-l-[#10b981]">
+            <Card className="border-t-4 border-t-emerald-500 shadow-lg hover:shadow-xl transition-all">
               <CardContent className="p-4">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-xs text-gray-500 uppercase tracking-wide">Avg Value</p>
-                    <p className="text-2xl font-bold text-[#10b981]">Le {avgOrderValue.toLocaleString()}</p>
+                    <p className="text-xs text-gray-500 uppercase tracking-wide font-semibold mb-2">Avg Value</p>
+                    <p className="text-xl sm:text-2xl font-bold text-emerald-600">Le {avgOrderValue.toLocaleString()}</p>
                   </div>
-                  <div className="w-12 h-12 rounded-full bg-green-100 flex items-center justify-center">
-                    <TrendingUp className="w-6 h-6 text-[#10b981]" />
+                  <div className="w-14 h-14 rounded-2xl bg-emerald-100 flex items-center justify-center">
+                    <TrendingUp className="w-7 h-7 text-emerald-600" />
                   </div>
                 </div>
               </CardContent>
@@ -236,25 +270,28 @@ export default function CRM() {
           </div>
 
           {/* Filters */}
-          <Card>
+          <Card className="border-t-4 border-t-[#1EB053] shadow-lg">
             <CardContent className="p-4">
-              <div className="flex flex-col md:flex-row gap-4">
+              <div className="flex flex-col md:flex-row gap-3 sm:gap-4">
                 <div className="relative flex-1">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+                  <div className="absolute left-3 top-1/2 -translate-y-1/2 p-2 bg-gradient-to-br from-[#1EB053]/10 to-[#0072C6]/10 rounded-lg">
+                    <Search className="w-4 h-4 text-[#1EB053]" />
+                  </div>
                   <Input
-                    placeholder="Search customers..."
+                    placeholder="Search by name, email, or phone..."
                     value={search}
                     onChange={(e) => setSearch(e.target.value)}
-                    className="pl-10"
+                    className="pl-14 h-12 border-2 border-gray-200 focus:border-[#1EB053] rounded-xl shadow-sm"
                   />
                 </div>
                 <Select value={segmentFilter} onValueChange={setSegmentFilter}>
-                  <SelectTrigger className="w-[150px]">
+                  <SelectTrigger className="w-full md:w-[180px] h-12 border-2 border-gray-200 rounded-xl">
+                    <Filter className="w-4 h-4 mr-2 text-gray-500" />
                     <SelectValue placeholder="Segment" />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">All Segments</SelectItem>
-                    <SelectItem value="vip">VIP</SelectItem>
+                    <SelectItem value="vip">⭐ VIP</SelectItem>
                     <SelectItem value="regular">Regular</SelectItem>
                     <SelectItem value="new">New</SelectItem>
                     <SelectItem value="at_risk">At Risk</SelectItem>
@@ -262,7 +299,8 @@ export default function CRM() {
                   </SelectContent>
                 </Select>
                 <Select value={typeFilter} onValueChange={setTypeFilter}>
-                  <SelectTrigger className="w-[150px]">
+                  <SelectTrigger className="w-full md:w-[180px] h-12 border-2 border-gray-200 rounded-xl">
+                    <Filter className="w-4 h-4 mr-2 text-gray-500" />
                     <SelectValue placeholder="Type" />
                   </SelectTrigger>
                   <SelectContent>
@@ -278,19 +316,33 @@ export default function CRM() {
           </Card>
 
           {/* Customer List */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-lg flex items-center gap-2">
-                <UserCheck className="w-5 h-5 text-[#1EB053]" />
-                Customers ({filteredCustomers.length})
+          <Card className="border-t-4 border-t-[#0072C6] shadow-lg">
+            <CardHeader className="bg-gradient-to-br from-gray-50 to-white border-b">
+              <CardTitle className="text-lg flex items-center gap-3">
+                <div className="p-2 bg-gradient-to-br from-[#1EB053]/10 to-[#0072C6]/10 rounded-xl">
+                  <UserCheck className="w-5 h-5 text-[#0072C6]" />
+                </div>
+                <div>
+                  <span className="text-gray-900">Customer Directory</span>
+                  <p className="text-xs font-normal text-gray-500 mt-0.5">{filteredCustomers.length} customers found</p>
+                </div>
               </CardTitle>
             </CardHeader>
-            <CardContent>
+            <CardContent className="p-4">
               {filteredCustomers.length === 0 ? (
-                <div className="text-center py-12 text-gray-500">
-                  <Users className="w-12 h-12 mx-auto mb-3 text-gray-300" />
-                  <p>No customers found</p>
-                  <Button className="mt-4 bg-[#1EB053]" onClick={handleNew}>
+                <div className="text-center py-16">
+                  <div className="relative mb-4">
+                    <div className="absolute inset-0 bg-gradient-to-br from-[#1EB053]/10 to-[#0072C6]/10 rounded-full blur-xl" />
+                    <div className="relative w-20 h-20 mx-auto bg-gradient-to-br from-gray-100 to-gray-200 rounded-full flex items-center justify-center">
+                      <Users className="w-10 h-10 text-gray-400" />
+                    </div>
+                  </div>
+                  <p className="text-sm font-semibold text-gray-700 mb-1">No customers found</p>
+                  <p className="text-xs text-gray-500 mb-6">Start building your customer base</p>
+                  <Button 
+                    className="bg-gradient-to-r from-[#1EB053] to-[#0072C6] hover:shadow-xl transition-all" 
+                    onClick={handleNew}
+                  >
                     <Plus className="w-4 h-4 mr-2" /> Add First Customer
                   </Button>
                 </div>
@@ -299,34 +351,61 @@ export default function CRM() {
                   {filteredCustomers.map(customer => (
                     <div
                       key={customer.id}
-                      className="flex items-center justify-between p-4 bg-gray-50 rounded-xl hover:bg-gray-100 transition-colors cursor-pointer group"
+                      className="group flex items-center justify-between p-4 bg-gradient-to-br from-gray-50 to-white border-2 border-gray-200 rounded-xl hover:border-[#1EB053] hover:shadow-lg transition-all cursor-pointer"
                       onClick={() => setViewCustomer(customer)}
                     >
                       <div className="flex items-center gap-4">
-                        <Avatar className="w-12 h-12">
-                          <AvatarFallback className="bg-gradient-to-br from-[#1EB053] to-[#0072C6] text-white">
-                            {customer.name?.charAt(0)}
-                          </AvatarFallback>
-                        </Avatar>
+                        <div className="relative">
+                          <div className="absolute -inset-0.5 bg-gradient-to-br from-[#1EB053] to-[#0072C6] rounded-full opacity-0 group-hover:opacity-20 blur transition-opacity" />
+                          <Avatar className="w-14 h-14 relative border-2 border-white shadow-md">
+                            <AvatarFallback className="bg-gradient-to-br from-[#1EB053] to-[#0072C6] text-white text-lg font-bold">
+                              {customer.name?.charAt(0)}
+                            </AvatarFallback>
+                          </Avatar>
+                        </div>
                         <div>
-                          <div className="flex items-center gap-2">
-                            <p className="font-semibold">{customer.name}</p>
-                            {customer.segment === 'vip' && <Star className="w-4 h-4 text-amber-500 fill-amber-500" />}
+                          <div className="flex items-center gap-2 mb-1">
+                            <p className="font-bold text-gray-900">{customer.name}</p>
+                            {customer.segment === 'vip' && (
+                              <Badge className="bg-gradient-to-r from-amber-400 to-amber-600 text-white border-0 shadow-sm">
+                                <Star className="w-3 h-3 mr-1 fill-white" />
+                                VIP
+                              </Badge>
+                            )}
                           </div>
-                          <div className="flex items-center gap-3 text-sm text-gray-500">
-                            {customer.phone && <span className="flex items-center gap-1"><Phone className="w-3 h-3" /> {customer.phone}</span>}
-                            {customer.email && <span className="flex items-center gap-1"><Mail className="w-3 h-3" /> {customer.email}</span>}
+                          <div className="flex items-center gap-3 text-sm text-gray-600">
+                            {customer.phone && (
+                              <span className="flex items-center gap-1.5">
+                                <Phone className="w-3.5 h-3.5 text-gray-400" /> 
+                                {customer.phone}
+                              </span>
+                            )}
+                            {customer.email && (
+                              <span className="flex items-center gap-1.5">
+                                <Mail className="w-3.5 h-3.5 text-gray-400" /> 
+                                {customer.email}
+                              </span>
+                            )}
                           </div>
                         </div>
                       </div>
                       <div className="flex items-center gap-4">
                         <div className="text-right hidden md:block">
-                          <p className="font-semibold text-[#1EB053]">Le {(customer.total_spent || 0).toLocaleString()}</p>
-                          <p className="text-sm text-gray-500">{customer.total_purchases || 0} orders</p>
+                          <p className="font-bold text-lg bg-gradient-to-r from-[#1EB053] to-[#0e7f3d] bg-clip-text text-transparent">
+                            Le {(customer.total_spent || 0).toLocaleString()}
+                          </p>
+                          <p className="text-sm text-gray-500 flex items-center gap-1 justify-end">
+                            <ShoppingCart className="w-3 h-3" />
+                            {customer.total_purchases || 0} orders
+                          </p>
                         </div>
-                        <div className="flex gap-2">
-                          <Badge className={segmentColors[customer.segment]}>{customer.segment}</Badge>
-                          <Badge variant="outline">{customer.customer_type}</Badge>
+                        <div className="flex flex-col gap-2">
+                          <Badge className={cn("font-medium", segmentColors[customer.segment])}>
+                            {customer.segment}
+                          </Badge>
+                          <Badge variant="outline" className="border-gray-300">
+                            {customer.customer_type}
+                          </Badge>
                         </div>
                       </div>
                     </div>
