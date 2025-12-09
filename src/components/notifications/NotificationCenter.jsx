@@ -24,9 +24,10 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
-import { format } from "date-fns";
+import { format, formatDistanceToNow } from "date-fns";
 import { Link } from "react-router-dom";
 import { createPageUrl } from "@/utils";
+import { useToast } from "@/components/ui/Toast";
 
 const notificationIcons = {
   low_stock: { icon: Package, color: "text-amber-500", bg: "bg-amber-100" },
