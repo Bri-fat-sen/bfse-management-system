@@ -1,7 +1,6 @@
 import Dashboard from './pages/Dashboard';
 import Sales from './pages/Sales';
 import Inventory from './pages/Inventory';
-import HR from './pages/HR';
 import Transport from './pages/Transport';
 import Communication from './pages/Communication';
 import Finance from './pages/Finance';
@@ -40,7 +39,6 @@ export const PAGES = {
     "Dashboard": Dashboard,
     "Sales": Sales,
     "Inventory": Inventory,
-    "HR": HR,
     "Transport": Transport,
     "Communication": Communication,
     "Finance": Finance,
