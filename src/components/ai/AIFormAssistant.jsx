@@ -382,7 +382,7 @@ ${pastEntries.slice(0, 5).map(e => `- "${e.description}" → ${e.category} (Vend
           )}
 
           {/* All Good State */}
-          {!isAnalyzing && suggestions.length === 0 && allErrors.length === 0 && formData.description && formData.description.length >= 5 && (
+          {!isAnalyzing && suggestions.length === 0 && allErrors.length === 0 && formData?.description && formData.description.length >= 5 && (
             <div className="flex items-center gap-2 p-2 bg-green-50 rounded-lg text-green-700 text-sm border border-green-200">
               <CheckCircle className="w-4 h-4" />
               <span>Looking good! No issues detected.</span>
