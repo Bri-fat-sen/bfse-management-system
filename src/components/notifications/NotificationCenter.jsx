@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useMemo } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { 
@@ -67,7 +67,7 @@ export default function NotificationCenter({ orgId, currentEmployee }) {
   });
 
   // Combine and deduplicate notifications
-  const notifications = React.useMemo(() => {
+  const notifications = useMemo(() => {
     const allNotifications = [...notificationsByEmployee, ...notificationsByEmail];
     const uniqueIds = new Set();
     return allNotifications
