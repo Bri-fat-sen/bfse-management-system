@@ -7,6 +7,13 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import {
   Select,
   SelectContent,
   SelectItem,
@@ -14,6 +21,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Label } from "@/components/ui/label";
 import {
   FileText,
   TrendingUp,
@@ -31,15 +40,15 @@ import {
   Eye,
   Printer,
   Send,
-  Landmark,
-  Wallet
+  FileSpreadsheet,
+  FileBarChart,
+  Wallet,
+  Building2,
+  Receipt
 } from "lucide-react";
 import { useToast } from "@/components/ui/Toast";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend, LineChart, Line, Area, AreaChart } from "recharts";
 import ReactMarkdown from "react-markdown";
-import BalanceSheetReport from "./BalanceSheetReport";
-import CashFlowStatement from "./CashFlowStatement";
-import ReportExporter from "./ReportExporter";
 
 export default function AutomatedFinancialReports({ 
   orgId, 
@@ -57,24 +66,15 @@ export default function AutomatedFinancialReports({
   const [generatingReport, setGeneratingReport] = useState(false);
   const [aiAnalysis, setAiAnalysis] = useState(null);
   const [activeReportTab, setActiveReportTab] = useState("pl");
-
-  // Fetch assets and liabilities
-  const { data: assets = [] } = useQuery({
-    queryKey: ['assets', orgId],
-    queryFn: () => base44.entities.Asset.filter({ organisation_id: orgId }),
-    enabled: !!orgId,
-  });
-
-  const { data: liabilities = [] } = useQuery({
-    queryKey: ['liabilities', orgId],
-    queryFn: () => base44.entities.Liability.filter({ organisation_id: orgId }),
-    enabled: !!orgId,
-  });
-
-  const { data: payrolls = [] } = useQuery({
-    queryKey: ['payrolls', orgId],
-    queryFn: () => base44.entities.Payroll.filter({ organisation_id: orgId }, '-period_start', 200),
-    enabled: !!orgId,
+  const [showExportDialog, setShowExportDialog] = useState(false);
+  const [selectedReportType, setSelectedReportType] = useState("pl_statement");
+  const [exportFormat, setExportFormat] = useState("pdf");
+  const [exportOptions, setExportOptions] = useState({
+    includeLogo: true,
+    includeCharts: true,
+    includeAIAnalysis: true,
+    includeComparative: false,
+    includeNotes: true,
   });
 
   // Calculate date range
@@ -206,6 +206,88 @@ export default function AutomatedFinancialReports({
     return data;
   }, [sales, trips, expenses]);
 
+  // Balance Sheet calculations
+  const balanceSheet = useMemo(() => {
+    const { periodSales, periodExpenses, periodRevenues, periodContracts } = periodData;
+    
+    // Assets
+    const cashFromSales = periodSales.reduce((sum, s) => sum + (s.total_amount || 0), 0);
+    const cashFromTransport = periodData.periodTrips.reduce((sum, t) => sum + (t.total_revenue || 0), 0);
+    const cashFromContracts = periodContracts.filter(c => c.status === 'completed').reduce((sum, c) => sum + (c.contract_amount || 0), 0);
+    const cashFromRevenues = periodRevenues.reduce((sum, r) => sum + (r.amount || 0), 0);
+    const totalExpenses = profitLoss.expenses.totalExpenses;
+    const cashAndEquivalents = cashFromSales + cashFromTransport + cashFromContracts + cashFromRevenues - totalExpenses;
+    
+    // Simplified balance sheet for demonstration
+    const totalAssets = Math.max(0, cashAndEquivalents);
+    const totalLiabilities = 0; // Placeholder - can be extended with actual liabilities
+    const equity = totalAssets - totalLiabilities;
+
+    return {
+      assets: {
+        currentAssets: {
+          cashAndEquivalents: Math.max(0, cashAndEquivalents),
+          accountsReceivable: 0, // Placeholder
+        },
+        fixedAssets: {
+          vehicles: 0, // Placeholder
+          equipment: 0,
+        },
+        totalAssets
+      },
+      liabilities: {
+        currentLiabilities: {
+          accountsPayable: 0, // Placeholder
+        },
+        longTermLiabilities: {
+          loans: 0, // Placeholder
+        },
+        totalLiabilities
+      },
+      equity: {
+        retainedEarnings: equity,
+        totalEquity: equity
+      }
+    };
+  }, [periodData, profitLoss]);
+
+  // Cash Flow Statement
+  const cashFlowStatement = useMemo(() => {
+    const { periodSales, periodExpenses, periodTrips, periodRevenues } = periodData;
+
+    // Operating Activities
+    const cashFromOperations = periodSales.reduce((sum, s) => sum + (s.total_amount || 0), 0);
+    const cashFromTransport = periodTrips.reduce((sum, t) => sum + (t.total_revenue || 0), 0);
+    const cashPaidToSuppliers = periodExpenses.reduce((sum, e) => sum + (e.amount || 0), 0);
+    const netOperatingCash = cashFromOperations + cashFromTransport - cashPaidToSuppliers;
+
+    // Investing Activities
+    const investingCash = 0; // Placeholder - can track asset purchases
+
+    // Financing Activities
+    const financingCash = periodRevenues.reduce((sum, r) => sum + (r.amount || 0), 0);
+
+    const netCashFlow = netOperatingCash + investingCash + financingCash;
+
+    return {
+      operating: {
+        cashFromSales: cashFromOperations,
+        cashFromTransport,
+        cashPaidToSuppliers: -cashPaidToSuppliers,
+        netOperatingCash
+      },
+      investing: {
+        assetPurchases: 0,
+        netInvestingCash: investingCash
+      },
+      financing: {
+        ownerContributions: financingCash,
+        netFinancingCash: financingCash
+      },
+      netCashFlow
+    };
+  }, [periodData]);
+
   // Generate AI Analysis
   const generateAIAnalysis = async () => {
     setGeneratingReport(true);
@@ -305,53 +387,214 @@ Format your response in markdown with clear sections.`,
     { name: 'Other', value: profitLoss.revenue.otherRevenue }
   ].filter(item => item.value > 0);
 
-  // Prepare export data for different report types
-  const exportData = useMemo(() => {
-    return {
-      profit_loss: {
-        revenue: profitLoss.revenue,
-        expenses: profitLoss.expenses,
-        netProfit: profitLoss.netProfit,
-        profitMargin: profitLoss.profitMargin
-      },
-      balance_sheet: {
-        assets: {
-          current: assets.filter(a => a.asset_type === 'current' && a.status === 'active').reduce((sum, a) => sum + (a.value || 0), 0),
-          fixed: assets.filter(a => a.asset_type === 'fixed' && a.status === 'active').reduce((sum, a) => sum + (a.value || 0), 0),
-          total: assets.filter(a => a.status === 'active').reduce((sum, a) => sum + (a.value || 0), 0)
-        },
-        liabilities: {
-          current: liabilities.filter(l => l.liability_type === 'current' && l.status === 'active').reduce((sum, l) => sum + (l.amount || 0), 0),
-          longTerm: liabilities.filter(l => l.liability_type === 'long_term' && l.status === 'active').reduce((sum, l) => sum + (l.amount || 0), 0),
-          total: liabilities.filter(l => l.status === 'active').reduce((sum, l) => sum + (l.amount || 0), 0)
-        },
-        equity: {
-          total: assets.filter(a => a.status === 'active').reduce((sum, a) => sum + (a.value || 0), 0) - 
-                 liabilities.filter(l => l.status === 'active').reduce((sum, l) => sum + (l.amount || 0), 0)
-        }
-      },
-      cash_flow: {
-        operating: {
-          salesRevenue: profitLoss.revenue.salesRevenue,
-          transportRevenue: profitLoss.revenue.transportRevenue,
-          operatingExpenses: profitLoss.expenses.recordedExpenses,
-          fuelCosts: profitLoss.expenses.fuelCosts,
-          total: profitLoss.revenue.salesRevenue + profitLoss.revenue.transportRevenue - profitLoss.expenses.recordedExpenses - profitLoss.expenses.fuelCosts
-        },
-        investing: {
-          assetPurchases: periodData.periodExpenses.filter(e => ['equipment', 'vehicles', 'buildings'].includes(e.category)).reduce((sum, e) => sum + (e.amount || 0), 0),
-          total: -periodData.periodExpenses.filter(e => ['equipment', 'vehicles', 'buildings'].includes(e.category)).reduce((sum, e) => sum + (e.amount || 0), 0)
-        },
-        financing: {
-          ownerContributions: profitLoss.revenue.otherRevenue,
-          total: profitLoss.revenue.otherRevenue
-        },
-        netCashChange: (profitLoss.revenue.salesRevenue + profitLoss.revenue.transportRevenue - profitLoss.expenses.totalExpenses) + profitLoss.revenue.otherRevenue
-      }
-    };
-  }, [profitLoss, assets, liabilities, periodData]);
+  // Export to CSV
+  const exportToCSV = (reportType) => {
+    let csvContent = "";
+    let filename = "";
 
-  const riskLevelColors = {
+    if (reportType === "pl_statement") {
+      filename = `PL_Statement_${dateRange.label.replace(/\s/g, '_')}.csv`;
+      csvContent = "Profit & Loss Statement\n";
+      csvContent += `Period,${dateRange.label}\n`;
+      csvContent += `Organisation,${organisation?.name || 'N/A'}\n\n`;
+      csvContent += "Category,Description,Amount (Le)\n";
+      csvContent += "REVENUE,Sales Revenue," + profitLoss.revenue.salesRevenue + "\n";
+      csvContent += "REVENUE,Transport Revenue," + profitLoss.revenue.transportRevenue + "\n";
+      csvContent += "REVENUE,Contract Revenue," + profitLoss.revenue.contractRevenue + "\n";
+      csvContent += "REVENUE,Other Revenue," + profitLoss.revenue.otherRevenue + "\n";
+      csvContent += "REVENUE,Total Revenue," + profitLoss.revenue.totalRevenue + "\n\n";
+      csvContent += "EXPENSES,Recorded Expenses," + profitLoss.expenses.recordedExpenses + "\n";
+      csvContent += "EXPENSES,Fuel Costs," + profitLoss.expenses.fuelCosts + "\n";
+      csvContent += "EXPENSES,Trip Costs," + profitLoss.expenses.tripOtherCosts + "\n";
+      csvContent += "EXPENSES,Contract Expenses," + profitLoss.expenses.contractExpenses + "\n";
+      csvContent += "EXPENSES,Maintenance," + profitLoss.expenses.maintenanceCosts + "\n";
+      csvContent += "EXPENSES,Total Expenses," + profitLoss.expenses.totalExpenses + "\n\n";
+      csvContent += "PROFIT,Net Profit," + profitLoss.netProfit + "\n";
+      csvContent += "PROFIT,Profit Margin (%)," + profitLoss.profitMargin.toFixed(2) + "\n";
+    } else if (reportType === "balance_sheet") {
+      filename = `Balance_Sheet_${dateRange.label.replace(/\s/g, '_')}.csv`;
+      csvContent = "Balance Sheet\n";
+      csvContent += `As of,${format(dateRange.end, 'MMM dd yyyy')}\n`;
+      csvContent += `Organisation,${organisation?.name || 'N/A'}\n\n`;
+      csvContent += "Category,Account,Amount (Le)\n";
+      csvContent += "ASSETS,Cash and Equivalents," + balanceSheet.assets.currentAssets.cashAndEquivalents + "\n";
+      csvContent += "ASSETS,Total Assets," + balanceSheet.assets.totalAssets + "\n\n";
+      csvContent += "LIABILITIES,Total Liabilities," + balanceSheet.liabilities.totalLiabilities + "\n\n";
+      csvContent += "EQUITY,Retained Earnings," + balanceSheet.equity.retainedEarnings + "\n";
+      csvContent += "EQUITY,Total Equity," + balanceSheet.equity.totalEquity + "\n";
+    } else if (reportType === "cash_flow") {
+      filename = `Cash_Flow_${dateRange.label.replace(/\s/g, '_')}.csv`;
+      csvContent = "Cash Flow Statement\n";
+      csvContent += `Period,${dateRange.label}\n`;
+      csvContent += `Organisation,${organisation?.name || 'N/A'}\n\n`;
+      csvContent += "Activity,Description,Amount (Le)\n";
+      csvContent += "OPERATING,Cash from Sales," + cashFlowStatement.operating.cashFromSales + "\n";
+      csvContent += "OPERATING,Cash from Transport," + cashFlowStatement.operating.cashFromTransport + "\n";
+      csvContent += "OPERATING,Cash Paid to Suppliers," + cashFlowStatement.operating.cashPaidToSuppliers + "\n";
+      csvContent += "OPERATING,Net Operating Cash," + cashFlowStatement.operating.netOperatingCash + "\n\n";
+      csvContent += "INVESTING,Net Investing Cash," + cashFlowStatement.investing.netInvestingCash + "\n\n";
+      csvContent += "FINANCING,Owner Contributions," + cashFlowStatement.financing.ownerContributions + "\n";
+      csvContent += "FINANCING,Net Financing Cash," + cashFlowStatement.financing.netFinancingCash + "\n\n";
+      csvContent += "TOTAL,Net Cash Flow," + cashFlowStatement.netCashFlow + "\n";
+    }
+
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement("a");
+    const url = URL.createObjectURL(blob);
+    link.setAttribute("href", url);
+    link.setAttribute("download", filename);
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    
+    toast.success("CSV exported", `Downloaded ${filename}`);
+  };
+
+  // Export to PDF (using backend function)
+  const exportToPDF = async (reportType) => {
+    toast.loading("Generating PDF", "Please wait...");
+    
+    try {
+      let reportData = {};
+      let title = "";
+
+      if (reportType === "pl_statement") {
+        title = "Profit & Loss Statement";
+        reportData = {
+          title,
+          period: dateRange.label,
+          organisation,
+          sections: [
+            {
+              title: "REVENUE",
+              items: [
+                { label: "Sales Revenue", amount: profitLoss.revenue.salesRevenue },
+                { label: "Transport Revenue", amount: profitLoss.revenue.transportRevenue },
+                { label: "Contract Revenue", amount: profitLoss.revenue.contractRevenue },
+                { label: "Other Revenue", amount: profitLoss.revenue.otherRevenue },
+              ],
+              total: { label: "Total Revenue", amount: profitLoss.revenue.totalRevenue, highlight: true }
+            },
+            {
+              title: "EXPENSES",
+              items: [
+                { label: "Recorded Expenses", amount: profitLoss.expenses.recordedExpenses },
+                { label: "Fuel Costs", amount: profitLoss.expenses.fuelCosts },
+                { label: "Trip Expenses", amount: profitLoss.expenses.tripOtherCosts },
+                { label: "Contract Expenses", amount: profitLoss.expenses.contractExpenses },
+                { label: "Maintenance", amount: profitLoss.expenses.maintenanceCosts },
+              ],
+              total: { label: "Total Expenses", amount: profitLoss.expenses.totalExpenses, highlight: true }
+            }
+          ],
+          netProfit: profitLoss.netProfit,
+          profitMargin: profitLoss.profitMargin
+        };
+      } else if (reportType === "balance_sheet") {
+        title = "Balance Sheet";
+        reportData = {
+          title,
+          asOf: format(dateRange.end, 'MMMM dd, yyyy'),
+          organisation,
+          sections: [
+            {
+              title: "ASSETS",
+              subsections: [
+                {
+                  title: "Current Assets",
+                  items: [
+                    { label: "Cash and Cash Equivalents", amount: balanceSheet.assets.currentAssets.cashAndEquivalents },
+                  ]
+                }
+              ],
+              total: { label: "Total Assets", amount: balanceSheet.assets.totalAssets, highlight: true }
+            },
+            {
+              title: "LIABILITIES",
+              items: [],
+              total: { label: "Total Liabilities", amount: balanceSheet.liabilities.totalLiabilities, highlight: true }
+            },
+            {
+              title: "EQUITY",
+              items: [
+                { label: "Retained Earnings", amount: balanceSheet.equity.retainedEarnings },
+              ],
+              total: { label: "Total Equity", amount: balanceSheet.equity.totalEquity, highlight: true }
+            }
+          ]
+        };
+      } else if (reportType === "cash_flow") {
+        title = "Cash Flow Statement";
+        reportData = {
+          title,
+          period: dateRange.label,
+          organisation,
+          sections: [
+            {
+              title: "OPERATING ACTIVITIES",
+              items: [
+                { label: "Cash from Sales", amount: cashFlowStatement.operating.cashFromSales },
+                { label: "Cash from Transport", amount: cashFlowStatement.operating.cashFromTransport },
+                { label: "Cash Paid to Suppliers", amount: cashFlowStatement.operating.cashPaidToSuppliers },
+              ],
+              total: { label: "Net Operating Cash", amount: cashFlowStatement.operating.netOperatingCash }
+            },
+            {
+              title: "INVESTING ACTIVITIES",
+              items: [],
+              total: { label: "Net Investing Cash", amount: cashFlowStatement.investing.netInvestingCash }
+            },
+            {
+              title: "FINANCING ACTIVITIES",
+              items: [
+                { label: "Owner/CEO Contributions", amount: cashFlowStatement.financing.ownerContributions },
+              ],
+              total: { label: "Net Financing Cash", amount: cashFlowStatement.financing.netFinancingCash }
+            }
+          ],
+          netCashFlow: cashFlowStatement.netCashFlow
+        };
+      }
+
+      // Call backend function to generate PDF
+      const response = await base44.functions.invoke('generateFinancialReportPDF', {
+        reportData,
+        reportType,
+        exportOptions,
+        aiAnalysis: exportOptions.includeAIAnalysis ? aiAnalysis : null,
+        monthlyTrend: exportOptions.includeCharts ? monthlyTrend : null
+      });
+
+      // Download the PDF
+      const blob = new Blob([response.data], { type: 'application/pdf' });
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `${title.replace(/\s/g, '_')}_${dateRange.label.replace(/\s/g, '_')}.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+
+      toast.success("PDF generated", "Report downloaded successfully");
+    } catch (error) {
+      console.error("PDF generation error:", error);
+      toast.error("PDF generation failed", error.message);
+    }
+  };
+
+  // Handle export based on format
+  const handleExport = () => {
+    if (exportFormat === "csv") {
+      exportToCSV(selectedReportType);
+    } else if (exportFormat === "pdf") {
+      exportToPDF(selectedReportType);
+    }
+    setShowExportDialog(false);
+  };
+
+  // Generate AI Analysis
     low: { bg: 'bg-green-50', text: 'text-green-700', border: 'border-green-200' },
     medium: { bg: 'bg-amber-50', text: 'text-amber-700', border: 'border-amber-200' },
     high: { bg: 'bg-red-50', text: 'text-red-700', border: 'border-red-200' }
@@ -364,17 +607,11 @@ Format your response in markdown with clear sections.`,
         <div>
           <h2 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
             <Sparkles className="w-6 h-6 text-[#1EB053]" />
-            Advanced Financial Reports
+            Automated Financial Reports
           </h2>
-          <p className="text-sm text-gray-500">Comprehensive financial statements with AI insights & multi-format export</p>
+          <p className="text-sm text-gray-500">AI-powered insights and comprehensive financial analysis</p>
         </div>
         <div className="flex gap-2 flex-wrap">
-          <ReportExporter
-            reportData={exportData[activeReportTab === 'pl' ? 'profit_loss' : activeReportTab === 'balance' ? 'balance_sheet' : 'cash_flow']}
-            reportType={activeReportTab === 'pl' ? 'profit_loss' : activeReportTab === 'balance' ? 'balance_sheet' : 'cash_flow'}
-            organisation={organisation}
-            dateRange={dateRange}
-          />
           <Select value={selectedPeriod} onValueChange={setSelectedPeriod}>
             <SelectTrigger className="w-48">
               <Calendar className="w-4 h-4 mr-2" />
@@ -392,6 +629,14 @@ Format your response in markdown with clear sections.`,
               <SelectItem value="2022">2022</SelectItem>
             </SelectContent>
           </Select>
+          <Button
+            variant="outline"
+            onClick={() => setShowExportDialog(true)}
+            className="border-[#0072C6] text-[#0072C6] hover:bg-[#0072C6]/10"
+          >
+            <Download className="w-4 h-4 mr-2" />
+            Export Reports
+          </Button>
           <Button
             onClick={generateAIAnalysis}
             disabled={generatingReport}
@@ -599,38 +844,38 @@ Format your response in markdown with clear sections.`,
             <div className="flex-1 bg-white" />
             <div className="flex-1 bg-[#0072C6]" />
           </div>
-          <TabsList className="bg-gray-100 p-1 w-full justify-start">
+          <TabsList className="bg-gray-100 p-1 w-full justify-start overflow-x-auto flex-nowrap">
             <TabsTrigger 
               value="pl" 
-              className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#1EB053] data-[state=active]:to-[#0072C6] data-[state=active]:text-white"
+              className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#1EB053] data-[state=active]:to-[#0072C6] data-[state=active]:text-white whitespace-nowrap"
             >
               <FileText className="w-4 h-4 mr-1" />
               P&L Statement
             </TabsTrigger>
             <TabsTrigger 
-              value="expenses" 
-              className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#1EB053] data-[state=active]:to-[#0072C6] data-[state=active]:text-white"
+              value="balance_sheet" 
+              className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#1EB053] data-[state=active]:to-[#0072C6] data-[state=active]:text-white whitespace-nowrap"
             >
-              <PieIcon className="w-4 h-4 mr-1" />
-              Expense Analysis
-            </TabsTrigger>
-            <TabsTrigger 
-              value="balance" 
-              className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#1EB053] data-[state=active]:to-[#0072C6] data-[state=active]:text-white"
-            >
-              <Landmark className="w-4 h-4 mr-1" />
+              <Building2 className="w-4 h-4 mr-1" />
               Balance Sheet
             </TabsTrigger>
             <TabsTrigger 
-              value="cashflow" 
-              className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#1EB053] data-[state=active]:to-[#0072C6] data-[state=active]:text-white"
+              value="cash_flow" 
+              className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#1EB053] data-[state=active]:to-[#0072C6] data-[state=active]:text-white whitespace-nowrap"
             >
               <Wallet className="w-4 h-4 mr-1" />
               Cash Flow
             </TabsTrigger>
             <TabsTrigger 
+              value="expenses" 
+              className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#1EB053] data-[state=active]:to-[#0072C6] data-[state=active]:text-white whitespace-nowrap"
+            >
+              <PieIcon className="w-4 h-4 mr-1" />
+              Expense Analysis
+            </TabsTrigger>
+            <TabsTrigger 
               value="trends" 
-              className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#1EB053] data-[state=active]:to-[#0072C6] data-[state=active]:text-white"
+              className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#1EB053] data-[state=active]:to-[#0072C6] data-[state=active]:text-white whitespace-nowrap"
             >
               <BarChart3 className="w-4 h-4 mr-1" />
               Trends
@@ -775,30 +1020,202 @@ Format your response in markdown with clear sections.`,
         </TabsContent>
 
         {/* Balance Sheet */}
-        <TabsContent value="balance" className="mt-6">
-          <BalanceSheetReport
-            assets={assets}
-            liabilities={liabilities}
-            revenues={revenues}
-            expenses={expenses}
-            dateRange={dateRange}
-            organisation={organisation}
-          />
+        <TabsContent value="balance_sheet" className="mt-6">
+          <Card className="overflow-hidden">
+            <div className="h-1 flex">
+              <div className="flex-1 bg-[#1EB053]" />
+              <div className="flex-1 bg-white" />
+              <div className="flex-1 bg-[#0072C6]" />
+            </div>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Building2 className="w-5 h-5 text-[#0072C6]" />
+                Balance Sheet
+              </CardTitle>
+              <CardDescription>As of {format(dateRange.end, 'MMMM dd, yyyy')}</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-6">
+                {/* Assets */}
+                <div>
+                  <div className="flex items-center justify-between py-2 border-b-2 border-[#1EB053] bg-green-50 px-3 rounded-t-lg">
+                    <span className="font-bold text-green-800">ASSETS</span>
+                  </div>
+                  <div className="space-y-3 mt-3">
+                    <div>
+                      <p className="text-sm font-semibold text-gray-700 mb-2 px-3">Current Assets</p>
+                      <div className="flex justify-between px-3 py-2 bg-gray-50">
+                        <span className="text-gray-600">Cash and Cash Equivalents</span>
+                        <span className="font-medium">Le {balanceSheet.assets.currentAssets.cashAndEquivalents.toLocaleString()}</span>
+                      </div>
+                    </div>
+                    <div className="flex justify-between px-3 py-3 bg-green-100 rounded-lg font-bold text-green-800">
+                      <span>Total Assets</span>
+                      <span>Le {balanceSheet.assets.totalAssets.toLocaleString()}</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Liabilities */}
+                <div>
+                  <div className="flex items-center justify-between py-2 border-b-2 border-red-200 bg-red-50 px-3 rounded-t-lg">
+                    <span className="font-bold text-red-800">LIABILITIES</span>
+                  </div>
+                  <div className="space-y-2 mt-2">
+                    <div className="flex justify-between px-3 py-3 bg-red-100 rounded-lg font-bold text-red-800">
+                      <span>Total Liabilities</span>
+                      <span>Le {balanceSheet.liabilities.totalLiabilities.toLocaleString()}</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Equity */}
+                <div>
+                  <div className="flex items-center justify-between py-2 border-b-2 border-[#0072C6] bg-blue-50 px-3 rounded-t-lg">
+                    <span className="font-bold text-blue-800">EQUITY</span>
+                  </div>
+                  <div className="space-y-2 mt-2">
+                    <div className="flex justify-between px-3 py-2 bg-gray-50">
+                      <span className="text-gray-600">Retained Earnings</span>
+                      <span className="font-medium">Le {balanceSheet.equity.retainedEarnings.toLocaleString()}</span>
+                    </div>
+                    <div className="flex justify-between px-3 py-3 bg-blue-100 rounded-lg font-bold text-blue-800">
+                      <span>Total Equity</span>
+                      <span>Le {balanceSheet.equity.totalEquity.toLocaleString()}</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Equation Check */}
+                <div className="p-4 bg-gradient-to-r from-[#1EB053]/10 to-[#0072C6]/10 rounded-lg border-2 border-[#1EB053]">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm font-semibold text-gray-700">Accounting Equation</p>
+                      <p className="text-xs text-gray-600">Assets = Liabilities + Equity</p>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-lg font-bold text-[#0072C6]">
+                        Le {balanceSheet.assets.totalAssets.toLocaleString()} = Le {(balanceSheet.liabilities.totalLiabilities + balanceSheet.equity.totalEquity).toLocaleString()}
+                      </p>
+                      {Math.abs(balanceSheet.assets.totalAssets - (balanceSheet.liabilities.totalLiabilities + balanceSheet.equity.totalEquity)) < 1 ? (
+                        <Badge className="bg-green-100 text-green-700">
+                          <CheckCircle className="w-3 h-3 mr-1" />
+                          Balanced
+                        </Badge>
+                      ) : (
+                        <Badge className="bg-red-100 text-red-700">
+                          <AlertTriangle className="w-3 h-3 mr-1" />
+                          Unbalanced
+                        </Badge>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
         </TabsContent>
 
         {/* Cash Flow Statement */}
-        <TabsContent value="cashflow" className="mt-6">
-          <CashFlowStatement
-            sales={periodData.periodSales}
-            expenses={periodData.periodExpenses}
-            trips={periodData.periodTrips}
-            revenues={periodData.periodRevenues}
-            assets={assets}
-            liabilities={liabilities}
-            payrolls={payrolls}
-            dateRange={dateRange}
-            organisation={organisation}
-          />
+        <TabsContent value="cash_flow" className="mt-6">
+          <Card className="overflow-hidden">
+            <div className="h-1 flex">
+              <div className="flex-1 bg-[#1EB053]" />
+              <div className="flex-1 bg-white" />
+              <div className="flex-1 bg-[#0072C6]" />
+            </div>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Wallet className="w-5 h-5 text-[#1EB053]" />
+                Cash Flow Statement
+              </CardTitle>
+              <CardDescription>{dateRange.label}</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-6">
+                {/* Operating Activities */}
+                <div>
+                  <div className="flex items-center justify-between py-2 border-b-2 border-blue-200 bg-blue-50 px-3 rounded-t-lg">
+                    <span className="font-bold text-blue-800">OPERATING ACTIVITIES</span>
+                  </div>
+                  <div className="space-y-2 mt-2">
+                    <div className="flex justify-between px-3 py-2">
+                      <span className="text-gray-600">Cash from Sales</span>
+                      <span className="font-medium text-green-600">+Le {cashFlowStatement.operating.cashFromSales.toLocaleString()}</span>
+                    </div>
+                    <div className="flex justify-between px-3 py-2 bg-gray-50">
+                      <span className="text-gray-600">Cash from Transport</span>
+                      <span className="font-medium text-green-600">+Le {cashFlowStatement.operating.cashFromTransport.toLocaleString()}</span>
+                    </div>
+                    <div className="flex justify-between px-3 py-2">
+                      <span className="text-gray-600">Cash Paid to Suppliers</span>
+                      <span className="font-medium text-red-600">Le {cashFlowStatement.operating.cashPaidToSuppliers.toLocaleString()}</span>
+                    </div>
+                    <div className="flex justify-between px-3 py-3 bg-blue-100 rounded-lg font-bold text-blue-800">
+                      <span>Net Operating Cash</span>
+                      <span>Le {cashFlowStatement.operating.netOperatingCash.toLocaleString()}</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Investing Activities */}
+                <div>
+                  <div className="flex items-center justify-between py-2 border-b-2 border-purple-200 bg-purple-50 px-3 rounded-t-lg">
+                    <span className="font-bold text-purple-800">INVESTING ACTIVITIES</span>
+                  </div>
+                  <div className="space-y-2 mt-2">
+                    <div className="flex justify-between px-3 py-3 bg-purple-100 rounded-lg font-bold text-purple-800">
+                      <span>Net Investing Cash</span>
+                      <span>Le {cashFlowStatement.investing.netInvestingCash.toLocaleString()}</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Financing Activities */}
+                <div>
+                  <div className="flex items-center justify-between py-2 border-b-2 border-green-200 bg-green-50 px-3 rounded-t-lg">
+                    <span className="font-bold text-green-800">FINANCING ACTIVITIES</span>
+                  </div>
+                  <div className="space-y-2 mt-2">
+                    <div className="flex justify-between px-3 py-2">
+                      <span className="text-gray-600">Owner/CEO Contributions</span>
+                      <span className="font-medium text-green-600">+Le {cashFlowStatement.financing.ownerContributions.toLocaleString()}</span>
+                    </div>
+                    <div className="flex justify-between px-3 py-3 bg-green-100 rounded-lg font-bold text-green-800">
+                      <span>Net Financing Cash</span>
+                      <span>Le {cashFlowStatement.financing.netFinancingCash.toLocaleString()}</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Net Cash Flow */}
+                <div className={`p-4 rounded-lg ${cashFlowStatement.netCashFlow >= 0 ? 'bg-gradient-to-r from-[#1EB053]/10 to-[#0072C6]/10 border-2 border-[#1EB053]' : 'bg-orange-50 border-2 border-orange-300'}`}>
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <span className="text-lg font-bold text-gray-900">NET CASH FLOW</span>
+                      <p className="text-sm text-gray-600">Change in cash position</p>
+                    </div>
+                    <div className="text-right">
+                      <p className={`text-3xl font-bold ${cashFlowStatement.netCashFlow >= 0 ? 'text-[#0072C6]' : 'text-orange-600'}`}>
+                        Le {cashFlowStatement.netCashFlow.toLocaleString()}
+                      </p>
+                      {cashFlowStatement.netCashFlow >= 0 ? (
+                        <Badge className="bg-green-100 text-green-700">
+                          <TrendingUp className="w-3 h-3 mr-1" />
+                          Positive
+                        </Badge>
+                      ) : (
+                        <Badge className="bg-orange-100 text-orange-700">
+                          <TrendingDown className="w-3 h-3 mr-1" />
+                          Negative
+                        </Badge>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
         </TabsContent>
 
         {/* Trends */}
@@ -906,6 +1323,200 @@ Format your response in markdown with clear sections.`,
           </Card>
         </TabsContent>
       </Tabs>
+
+      {/* Export Dialog */}
+      <Dialog open={showExportDialog} onOpenChange={setShowExportDialog}>
+        <DialogContent className="max-w-2xl w-[95vw] [&>button]:hidden">
+          <div className="h-2 flex">
+            <div className="flex-1 bg-[#1EB053]" />
+            <div className="flex-1 bg-white" />
+            <div className="flex-1 bg-[#0072C6]" />
+          </div>
+          <DialogHeader>
+            <DialogTitle className="text-2xl flex items-center gap-3">
+              <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-[#1EB053] to-[#0072C6] flex items-center justify-center">
+                <Download className="w-6 h-6 text-white" />
+              </div>
+              Export Financial Reports
+            </DialogTitle>
+          </DialogHeader>
+
+          <div className="space-y-6 py-4">
+            {/* Report Type Selection */}
+            <div>
+              <Label className="text-sm font-semibold mb-3 block">Select Report Type</Label>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                <button
+                  onClick={() => setSelectedReportType("pl_statement")}
+                  className={`p-4 rounded-lg border-2 transition-all ${
+                    selectedReportType === "pl_statement"
+                      ? 'border-[#1EB053] bg-green-50'
+                      : 'border-gray-200 hover:border-gray-300'
+                  }`}
+                >
+                  <FileText className={`w-8 h-8 mx-auto mb-2 ${selectedReportType === "pl_statement" ? 'text-[#1EB053]' : 'text-gray-400'}`} />
+                  <p className="font-semibold text-sm">P&L Statement</p>
+                  <p className="text-xs text-gray-500 mt-1">Income & Expenses</p>
+                </button>
+
+                <button
+                  onClick={() => setSelectedReportType("balance_sheet")}
+                  className={`p-4 rounded-lg border-2 transition-all ${
+                    selectedReportType === "balance_sheet"
+                      ? 'border-[#0072C6] bg-blue-50'
+                      : 'border-gray-200 hover:border-gray-300'
+                  }`}
+                >
+                  <Building2 className={`w-8 h-8 mx-auto mb-2 ${selectedReportType === "balance_sheet" ? 'text-[#0072C6]' : 'text-gray-400'}`} />
+                  <p className="font-semibold text-sm">Balance Sheet</p>
+                  <p className="text-xs text-gray-500 mt-1">Assets & Equity</p>
+                </button>
+
+                <button
+                  onClick={() => setSelectedReportType("cash_flow")}
+                  className={`p-4 rounded-lg border-2 transition-all ${
+                    selectedReportType === "cash_flow"
+                      ? 'border-purple-500 bg-purple-50'
+                      : 'border-gray-200 hover:border-gray-300'
+                  }`}
+                >
+                  <Wallet className={`w-8 h-8 mx-auto mb-2 ${selectedReportType === "cash_flow" ? 'text-purple-600' : 'text-gray-400'}`} />
+                  <p className="font-semibold text-sm">Cash Flow</p>
+                  <p className="text-xs text-gray-500 mt-1">Cash Movement</p>
+                </button>
+              </div>
+            </div>
+
+            {/* Export Format */}
+            <div>
+              <Label className="text-sm font-semibold mb-3 block">Export Format</Label>
+              <div className="grid grid-cols-2 gap-3">
+                <button
+                  onClick={() => setExportFormat("pdf")}
+                  className={`p-4 rounded-lg border-2 transition-all flex items-center gap-3 ${
+                    exportFormat === "pdf"
+                      ? 'border-red-500 bg-red-50'
+                      : 'border-gray-200 hover:border-gray-300'
+                  }`}
+                >
+                  <FileBarChart className={`w-6 h-6 ${exportFormat === "pdf" ? 'text-red-600' : 'text-gray-400'}`} />
+                  <div className="text-left">
+                    <p className="font-semibold text-sm">PDF Document</p>
+                    <p className="text-xs text-gray-500">Professional format</p>
+                  </div>
+                </button>
+
+                <button
+                  onClick={() => setExportFormat("csv")}
+                  className={`p-4 rounded-lg border-2 transition-all flex items-center gap-3 ${
+                    exportFormat === "csv"
+                      ? 'border-green-500 bg-green-50'
+                      : 'border-gray-200 hover:border-gray-300'
+                  }`}
+                >
+                  <FileSpreadsheet className={`w-6 h-6 ${exportFormat === "csv" ? 'text-green-600' : 'text-gray-400'}`} />
+                  <div className="text-left">
+                    <p className="font-semibold text-sm">CSV Spreadsheet</p>
+                    <p className="text-xs text-gray-500">Excel compatible</p>
+                  </div>
+                </button>
+              </div>
+            </div>
+
+            {/* Export Options (PDF only) */}
+            {exportFormat === "pdf" && (
+              <div>
+                <Label className="text-sm font-semibold mb-3 block">PDF Options</Label>
+                <div className="space-y-3 p-4 bg-gray-50 rounded-lg border">
+                  <div className="flex items-center gap-2">
+                    <Checkbox
+                      id="includeLogo"
+                      checked={exportOptions.includeLogo}
+                      onCheckedChange={(checked) => setExportOptions(prev => ({ ...prev, includeLogo: checked }))}
+                    />
+                    <Label htmlFor="includeLogo" className="text-sm cursor-pointer">
+                      Include organization logo and branding
+                    </Label>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Checkbox
+                      id="includeCharts"
+                      checked={exportOptions.includeCharts}
+                      onCheckedChange={(checked) => setExportOptions(prev => ({ ...prev, includeCharts: checked }))}
+                    />
+                    <Label htmlFor="includeCharts" className="text-sm cursor-pointer">
+                      Include charts and visualizations
+                    </Label>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Checkbox
+                      id="includeAIAnalysis"
+                      checked={exportOptions.includeAIAnalysis}
+                      onCheckedChange={(checked) => setExportOptions(prev => ({ ...prev, includeAIAnalysis: checked }))}
+                      disabled={!aiAnalysis}
+                    />
+                    <Label htmlFor="includeAIAnalysis" className="text-sm cursor-pointer">
+                      Include AI insights and recommendations {!aiAnalysis && "(Generate AI report first)"}
+                    </Label>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Checkbox
+                      id="includeNotes"
+                      checked={exportOptions.includeNotes}
+                      onCheckedChange={(checked) => setExportOptions(prev => ({ ...prev, includeNotes: checked }))}
+                    />
+                    <Label htmlFor="includeNotes" className="text-sm cursor-pointer">
+                      Include notes and additional details
+                    </Label>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Preview */}
+            <div className="p-4 bg-blue-50 rounded-lg border border-blue-200">
+              <div className="flex items-start gap-3">
+                <Eye className="w-5 h-5 text-blue-600 mt-0.5" />
+                <div>
+                  <p className="font-semibold text-blue-900 text-sm">Export Preview</p>
+                  <p className="text-xs text-blue-700 mt-1">
+                    {selectedReportType === "pl_statement" && "Profit & Loss Statement"}
+                    {selectedReportType === "balance_sheet" && "Balance Sheet"}
+                    {selectedReportType === "cash_flow" && "Cash Flow Statement"}
+                    {" - "}
+                    {dateRange.label}
+                    {" - "}
+                    {exportFormat.toUpperCase()} format
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <DialogFooter className="flex-col sm:flex-row gap-2">
+            <Button 
+              variant="outline" 
+              onClick={() => setShowExportDialog(false)}
+              className="w-full sm:w-auto"
+            >
+              Cancel
+            </Button>
+            <Button 
+              onClick={handleExport}
+              className="bg-gradient-to-r from-[#1EB053] to-[#0072C6] w-full sm:w-auto"
+            >
+              <Download className="w-4 h-4 mr-2" />
+              Export {exportFormat.toUpperCase()}
+            </Button>
+          </DialogFooter>
+
+          <div className="h-1 flex">
+            <div className="flex-1 bg-[#1EB053]" />
+            <div className="flex-1 bg-white" />
+            <div className="flex-1 bg-[#0072C6]" />
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
