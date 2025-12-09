@@ -39,7 +39,6 @@ import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContaine
 import ReactMarkdown from "react-markdown";
 import BalanceSheetGenerator from "./BalanceSheetGenerator";
 import CashFlowStatement from "./CashFlowStatement";
-import FinancialReportExporter from "./FinancialReportExporter";
 
 export default function AutomatedFinancialReports({ 
   orgId, 
@@ -292,6 +291,42 @@ Format your response in markdown with clear sections.`,
     low: { bg: 'bg-green-50', text: 'text-green-700', border: 'border-green-200' },
     medium: { bg: 'bg-amber-50', text: 'text-amber-700', border: 'border-amber-200' },
     high: { bg: 'bg-red-50', text: 'text-red-700', border: 'border-red-200' }
+  };
+
+  const exportToCSV = (reportType) => {
+    const orgName = organisation?.name || 'Organisation';
+    let csvContent = `${orgName}\n${reportType}\nPeriod: ${dateRange.label}\nGenerated: ${format(new Date(), 'MMM d, yyyy')}\n\n`;
+    
+    csvContent += `REVENUE\n`;
+    csvContent += `Sales Revenue,Le ${profitLoss.revenue.salesRevenue.toLocaleString()}\n`;
+    csvContent += `Transport Revenue,Le ${profitLoss.revenue.transportRevenue.toLocaleString()}\n`;
+    csvContent += `Contract Revenue,Le ${profitLoss.revenue.contractRevenue.toLocaleString()}\n`;
+    csvContent += `Other Revenue,Le ${profitLoss.revenue.otherRevenue.toLocaleString()}\n`;
+    csvContent += `Total Revenue,Le ${profitLoss.revenue.totalRevenue.toLocaleString()}\n\n`;
+    
+    csvContent += `EXPENSES\n`;
+    csvContent += `Recorded Expenses,Le ${profitLoss.expenses.recordedExpenses.toLocaleString()}\n`;
+    csvContent += `Fuel Costs,Le ${profitLoss.expenses.fuelCosts.toLocaleString()}\n`;
+    csvContent += `Trip Expenses,Le ${profitLoss.expenses.tripOtherCosts.toLocaleString()}\n`;
+    csvContent += `Contract Expenses,Le ${profitLoss.expenses.contractExpenses.toLocaleString()}\n`;
+    csvContent += `Maintenance,Le ${profitLoss.expenses.maintenanceCosts.toLocaleString()}\n`;
+    csvContent += `Total Expenses,Le ${profitLoss.expenses.totalExpenses.toLocaleString()}\n\n`;
+    
+    csvContent += `NET PROFIT,Le ${profitLoss.netProfit.toLocaleString()}\n`;
+    csvContent += `Profit Margin,${profitLoss.profitMargin.toFixed(1)}%\n`;
+
+    const blob = new Blob([csvContent], { type: 'text/csv' });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = `${reportType.replace(/\s+/g, '_')}_${format(new Date(), 'yyyy-MM-dd')}.csv`;
+    link.click();
+    URL.revokeObjectURL(link.href);
+    toast.success("CSV exported");
+  };
+
+  const exportToPDF = (reportType) => {
+    window.print();
+    toast.success("Print dialog opened");
   };
 
   return (
