@@ -193,6 +193,13 @@ export default function Finance() {
     refetchOnWindowFocus: true,
   });
 
+  const { data: products = [] } = useQuery({
+    queryKey: ['products', orgId],
+    queryFn: () => base44.entities.Product.filter({ organisation_id: orgId }),
+    enabled: !!orgId,
+    staleTime: 5 * 60 * 1000,
+  });
+
   const createExpenseMutation = useMutation({
     mutationFn: (data) => base44.entities.Expense.create(data),
     onSuccess: () => {
@@ -1704,7 +1711,7 @@ export default function Finance() {
               truckContracts={truckContracts}
               maintenanceRecords={maintenanceRecords}
               organisation={organisation?.[0]}
-              products={[]}
+              products={products}
               bankDeposits={bankDeposits}
             />
           </TabsContent>
