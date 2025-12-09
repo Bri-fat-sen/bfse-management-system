@@ -139,6 +139,20 @@ export default function OrphanedData() {
     enabled: !!orgId,
   });
 
+  // Fetch ALL employees to find ones with missing org_id
+  const { data: allEmployeesRaw = [] } = useQuery({
+    queryKey: ['allEmployeesRaw'],
+    queryFn: () => base44.entities.Employee.list(),
+    staleTime: 60000,
+  });
+
+  // Fetch all organisations
+  const { data: allOrganisations = [] } = useQuery({
+    queryKey: ['allOrganisations'],
+    queryFn: () => base44.entities.Organisation.list(),
+    staleTime: 60000,
+  });
+
   const { data: products = [] } = useQuery({
     queryKey: ['allProducts', orgId],
     queryFn: () => base44.entities.Product.filter({ organisation_id: orgId }),
@@ -182,6 +196,12 @@ export default function OrphanedData() {
   const supplierIds = useMemo(() => new Set(suppliers.map(s => s.id)), [suppliers]);
   const customerIds = useMemo(() => new Set(customers.map(c => c.id)), [customers]);
   const routeIds = useMemo(() => new Set(routes.map(r => r.id)), [routes]);
+  const organisationIds = useMemo(() => new Set(allOrganisations.map(o => o.id)), [allOrganisations]);
+
+  // Find employees with missing or invalid organisation_id
+  const orphanedEmployees = useMemo(() => {
+    return allEmployeesRaw.filter(emp => !emp.organisation_id || !organisationIds.has(emp.organisation_id));
+  }, [allEmployeesRaw, organisationIds]);
 
   // Fetch data for each entity type
   const entityQueries = ENTITY_CONFIG.map(config => {
@@ -361,6 +381,62 @@ export default function OrphanedData() {
           </div>
         </div>
 
+        {/* Orphaned Employees Alert */}
+        {orphanedEmployees.length > 0 && (
+          <Card className="bg-red-50 border-red-200">
+            <CardContent className="p-4">
+              <div className="flex items-start justify-between gap-4">
+                <div className="flex items-start gap-3">
+                  <Users className="w-6 h-6 text-red-600 flex-shrink-0 mt-0.5" />
+                  <div>
+                    <p className="font-semibold text-red-800">Employees with missing organisation</p>
+                    <p className="text-sm text-red-700 mb-3">
+                      {orphanedEmployees.length} employee{orphanedEmployees.length !== 1 ? 's' : ''} found without valid organisation_id
+                    </p>
+                    <div className="space-y-2">
+                      {orphanedEmployees.map(emp => (
+                        <div key={emp.id} className="bg-white rounded-lg p-3 border border-red-200">
+                          <div className="flex items-center justify-between">
+                            <div>
+                              <p className="font-medium text-gray-900">{emp.full_name || emp.first_name + ' ' + emp.last_name}</p>
+                              <p className="text-sm text-gray-600">{emp.email || emp.user_email}</p>
+                              <p className="text-xs text-gray-500 mt-1">
+                                Employee Code: {emp.employee_code} | Role: {emp.role?.replace(/_/g, ' ')}
+                              </p>
+                              <p className="text-xs text-red-600 mt-1">
+                                {!emp.organisation_id ? 'Missing organisation_id' : 'Invalid organisation_id: ' + emp.organisation_id}
+                              </p>
+                            </div>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="text-red-600 border-red-200 hover:bg-red-50"
+                              onClick={() => {
+                                const confirmDelete = window.confirm(`Delete employee ${emp.full_name || emp.email}?`);
+                                if (confirmDelete) {
+                                  base44.entities.Employee.delete(emp.id).then(() => {
+                                    queryClient.invalidateQueries();
+                                    toast.success("Employee deleted");
+                                  }).catch(err => {
+                                    toast.error("Delete failed", err.message);
+                                  });
+                                }
+                              }}
+                            >
+                              <Trash2 className="w-4 h-4 mr-1" />
+                              Delete
+                            </Button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
         {/* Summary Cards */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <Card className="border-l-4 border-l-amber-500">
@@ -368,7 +444,7 @@ export default function OrphanedData() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-xs text-gray-500 uppercase">Total Orphaned</p>
-                  <p className="text-3xl font-bold text-amber-600">{totalOrphaned}</p>
+                  <p className="text-3xl font-bold text-amber-600">{totalOrphaned + orphanedEmployees.length}</p>
                 </div>
                 <AlertTriangle className="w-10 h-10 text-amber-500" />
               </div>
