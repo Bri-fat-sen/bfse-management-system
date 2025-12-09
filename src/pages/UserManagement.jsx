@@ -955,6 +955,66 @@ export default function UserManagement() {
           </DialogHeader>
           {editingEmployee && (
             <form onSubmit={handleEmployeeSubmit} className="space-y-4">
+              {/* User Linking Section */}
+              {isPlatformAdmin && (
+                <div className="p-3 bg-blue-50 rounded-lg border border-blue-200">
+                  <Label className="text-xs text-blue-700 flex items-center gap-1 mb-2">
+                    <Link2 className="w-3 h-3" /> User Account Link
+                  </Label>
+                  {editingEmployee.user_email ? (
+                    <div className="flex items-center justify-between bg-white rounded p-2 border border-blue-200">
+                      <div className="flex items-center gap-2">
+                        <CheckCircle2 className="w-4 h-4 text-green-500" />
+                        <span className="text-sm">{editingEmployee.user_email}</span>
+                      </div>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => {
+                          if (confirm('Unlink this user from employee?')) {
+                            unlinkEmployeeMutation.mutate(editingEmployee.id);
+                            setShowEmployeeDialog(false);
+                          }
+                        }}
+                        className="text-red-600 hover:text-red-700"
+                      >
+                        <Unlink className="w-4 h-4 mr-1" />
+                        Unlink
+                      </Button>
+                    </div>
+                  ) : (
+                    <Select 
+                      value={editingEmployee.user_email || ""}
+                      onValueChange={(email) => {
+                        if (email && confirm(`Link ${email} to this employee?`)) {
+                          linkEmployeeMutation.mutate({
+                            userId: null,
+                            employeeId: editingEmployee.id,
+                            userEmail: email
+                          });
+                          setShowEmployeeDialog(false);
+                        }
+                      }}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select user to link..." />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {usersWithEmployeeStatus.filter(u => !u.isLinked).map(user => (
+                          <SelectItem key={user.id} value={user.email}>
+                            <div className="flex items-center gap-2">
+                              <span>{user.full_name}</span>
+                              <span className="text-xs text-gray-500">({user.email})</span>
+                            </div>
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  )}
+                </div>
+              )}
+              
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <Label>First Name</Label>
