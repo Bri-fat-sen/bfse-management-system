@@ -2,6 +2,7 @@ import React, { useState, useMemo } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { format, startOfMonth, endOfMonth, subMonths, startOfYear } from "date-fns";
+import { printUnifiedPDF, getUnifiedPDFStyles, getUnifiedHeader, getUnifiedFooter } from "@/components/exports/UnifiedPDFStyles";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -324,8 +325,175 @@ Format your response in markdown with clear sections.`,
   };
 
   const exportToPDF = (reportType) => {
-    window.print();
-    toast.success("Print dialog opened");
+    const styles = getUnifiedPDFStyles();
+    const header = getUnifiedHeader(organisation, 'Profit & Loss Statement');
+    const footer = getUnifiedFooter(organisation);
+
+    const content = `
+      <div class="statement-section">
+        <h2 class="section-title">Financial Period: ${dateRange.label}</h2>
+        <p class="text-muted text-center mb-4">Generated on ${format(new Date(), 'MMMM d, yyyy')}</p>
+      </div>
+
+      <div class="statement-section">
+        <div class="summary-grid">
+          <div class="summary-card" style="border-left: 4px solid var(--primary);">
+            <div class="summary-label">Total Revenue</div>
+            <div class="summary-value">Le ${profitLoss.revenue.totalRevenue.toLocaleString()}</div>
+          </div>
+          <div class="summary-card" style="border-left: 4px solid #ef4444;">
+            <div class="summary-label">Total Expenses</div>
+            <div class="summary-value">Le ${profitLoss.expenses.totalExpenses.toLocaleString()}</div>
+          </div>
+          <div class="summary-card" style="border-left: 4px solid ${profitLoss.netProfit >= 0 ? '#0072C6' : '#f97316'};">
+            <div class="summary-label">Net Profit</div>
+            <div class="summary-value">${profitLoss.netProfit >= 0 ? '+' : ''}Le ${profitLoss.netProfit.toLocaleString()}</div>
+          </div>
+          <div class="summary-card" style="border-left: 4px solid #D4AF37;">
+            <div class="summary-label">Profit Margin</div>
+            <div class="summary-value">${profitLoss.profitMargin.toFixed(1)}%</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="statement-section">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th colspan="2" class="bg-success text-white">REVENUE BREAKDOWN</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Sales Revenue</td>
+              <td class="text-right font-bold">Le ${profitLoss.revenue.salesRevenue.toLocaleString()}</td>
+            </tr>
+            <tr>
+              <td>Transport Revenue</td>
+              <td class="text-right font-bold">Le ${profitLoss.revenue.transportRevenue.toLocaleString()}</td>
+            </tr>
+            <tr>
+              <td>Contract Revenue</td>
+              <td class="text-right font-bold">Le ${profitLoss.revenue.contractRevenue.toLocaleString()}</td>
+            </tr>
+            <tr>
+              <td>Other Revenue</td>
+              <td class="text-right font-bold">Le ${profitLoss.revenue.otherRevenue.toLocaleString()}</td>
+            </tr>
+            <tr class="bg-success-light">
+              <td class="font-bold">TOTAL REVENUE</td>
+              <td class="text-right font-bold text-success">Le ${profitLoss.revenue.totalRevenue.toLocaleString()}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="statement-section">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th colspan="2" class="bg-danger text-white">EXPENSE BREAKDOWN</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Recorded Expenses</td>
+              <td class="text-right font-bold">Le ${profitLoss.expenses.recordedExpenses.toLocaleString()}</td>
+            </tr>
+            <tr>
+              <td>Fuel Costs</td>
+              <td class="text-right font-bold">Le ${profitLoss.expenses.fuelCosts.toLocaleString()}</td>
+            </tr>
+            <tr>
+              <td>Trip Expenses</td>
+              <td class="text-right font-bold">Le ${profitLoss.expenses.tripOtherCosts.toLocaleString()}</td>
+            </tr>
+            <tr>
+              <td>Contract Expenses</td>
+              <td class="text-right font-bold">Le ${profitLoss.expenses.contractExpenses.toLocaleString()}</td>
+            </tr>
+            <tr>
+              <td>Maintenance Costs</td>
+              <td class="text-right font-bold">Le ${profitLoss.expenses.maintenanceCosts.toLocaleString()}</td>
+            </tr>
+            <tr class="bg-danger-light">
+              <td class="font-bold">TOTAL EXPENSES</td>
+              <td class="text-right font-bold text-danger">Le ${profitLoss.expenses.totalExpenses.toLocaleString()}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="statement-section">
+        <div class="summary-box ${profitLoss.netProfit >= 0 ? 'profit' : 'loss'}">
+          <div class="text-center">
+            <h3 class="section-title mb-2">NET ${profitLoss.netProfit >= 0 ? 'PROFIT' : 'LOSS'}</h3>
+            <div class="amount-large">${profitLoss.netProfit >= 0 ? '+' : ''}Le ${profitLoss.netProfit.toLocaleString()}</div>
+            <p class="text-muted">Profit Margin: ${profitLoss.profitMargin.toFixed(1)}%</p>
+          </div>
+        </div>
+      </div>
+
+      ${expenseBreakdownData.length > 0 ? `
+      <div class="statement-section">
+        <h2 class="section-title">Expense Category Analysis</h2>
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Category</th>
+              <th class="text-right">Amount</th>
+              <th class="text-right">Percentage</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${expenseBreakdownData.map(item => `
+              <tr>
+                <td>${item.name}</td>
+                <td class="text-right">Le ${item.value.toLocaleString()}</td>
+                <td class="text-right">${item.percentage}%</td>
+              </tr>
+            `).join('')}
+          </tbody>
+        </table>
+      </div>
+      ` : ''}
+    `;
+
+    const html = `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Profit & Loss Statement - ${organisation?.name || 'Organisation'}</title>
+  <style>
+    ${styles}
+    .summary-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin: 24px 0; }
+    .summary-card { padding: 16px; border-radius: 8px; background: var(--gray-50); border-left: 4px solid var(--primary); }
+    .summary-label { font-size: 12px; text-transform: uppercase; color: var(--text-muted); margin-bottom: 8px; }
+    .summary-value { font-size: 20px; font-weight: bold; color: var(--gray-900); }
+    .summary-box { padding: 32px; background: var(--gray-50); border-radius: 12px; margin: 24px 0; }
+    .summary-box.profit { background: linear-gradient(135deg, rgba(30, 176, 83, 0.1), rgba(0, 114, 198, 0.1)); border: 2px solid var(--primary); }
+    .summary-box.loss { background: rgba(249, 115, 22, 0.1); border: 2px solid #f97316; }
+    .amount-large { font-size: 36px; font-weight: bold; margin: 16px 0; }
+    @media print {
+      .summary-grid { grid-template-columns: repeat(2, 1fr); page-break-inside: avoid; }
+      .statement-section { page-break-inside: avoid; }
+    }
+  </style>
+</head>
+<body>
+  <div class="document">
+    ${header}
+    <div class="content">
+      ${content}
+    </div>
+    ${footer}
+  </div>
+</body>
+</html>`;
+
+    printUnifiedPDF(html, `profit-loss-statement-${format(new Date(), 'yyyy-MM-dd')}.pdf`);
+    toast.success("PDF Generated", "Downloading consolidated report");
   };
 
   return (
