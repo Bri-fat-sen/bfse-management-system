@@ -223,6 +223,7 @@ export default function ExpenseManagement() {
   const [bulkDeleteLoading, setBulkDeleteLoading] = useState(false);
   const [showExpenseDialog, setShowExpenseDialog] = useState(false);
   const [showAICategorizerDialog, setShowAICategorizerDialog] = useState(false);
+  const [approvalExpense, setApprovalExpense] = useState(null);
 
   const { data: user } = useQuery({
     queryKey: ['currentUser'],
@@ -341,13 +342,26 @@ export default function ExpenseManagement() {
   };
 
   const createExpenseMutation = useMutation({
-    mutationFn: (data) => base44.entities.Expense.create(data),
+    mutationFn: async (data) => {
+      const expense = await base44.entities.Expense.create(data);
+      
+      // Notify approvers if expense is pending
+      if (data.status === 'pending') {
+        try {
+          await base44.functions.invoke('notifyExpenseApprovers', { expense_id: expense.id });
+        } catch (notifyError) {
+          console.error('Failed to notify approvers:', notifyError);
+        }
+      }
+      
+      return expense;
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['allExpenses', orgId] });
       queryClient.invalidateQueries({ queryKey: ['expenses', orgId] });
       setShowExpenseDialog(false);
       setEditingExpense(null);
-      toast.success("Expense recorded", "Expense has been added");
+      toast.success("Expense recorded", "Expense has been added and approvers notified");
     },
     onError: (error) => {
       toast.error("Failed to record expense", error.message);
@@ -670,18 +684,11 @@ export default function ExpenseManagement() {
                                 <Button
                                   variant="ghost"
                                   size="icon"
-                                  className="h-8 w-8 text-green-600 hover:bg-green-50"
-                                  onClick={() => handleApprove(expense)}
+                                  className="h-8 w-8 text-[#1EB053] hover:bg-green-50"
+                                  onClick={() => setApprovalExpense(expense)}
+                                  title="Review and Approve/Reject"
                                 >
                                   <CheckCircle className="w-4 h-4" />
-                                </Button>
-                                <Button
-                                  variant="ghost"
-                                  size="icon"
-                                  className="h-8 w-8 text-red-600 hover:bg-red-50"
-                                  onClick={() => handleReject(expense)}
-                                >
-                                  <XCircle className="w-4 h-4" />
                                 </Button>
                               </>
                             )}
@@ -768,19 +775,11 @@ export default function ExpenseManagement() {
                             <>
                               <Button
                                 size="sm"
-                                className="flex-1 bg-green-600 hover:bg-green-700 text-white"
-                                onClick={() => handleApprove(expense)}
+                                className="flex-1 bg-[#1EB053] hover:bg-[#178f43] text-white"
+                                onClick={() => setApprovalExpense(expense)}
                               >
                                 <CheckCircle className="w-4 h-4 mr-1" />
-                                Approve
-                              </Button>
-                              <Button
-                                size="sm"
-                                className="flex-1 bg-red-600 hover:bg-red-700 text-white"
-                                onClick={() => handleReject(expense)}
-                              >
-                                <XCircle className="w-4 h-4 mr-1" />
-                                Reject
+                                Review
                               </Button>
                             </>
                           )}
@@ -863,29 +862,19 @@ export default function ExpenseManagement() {
                   <p className="text-sm bg-gray-50 p-3 rounded-lg">{selectedExpense.notes}</p>
                 </div>
               )}
-              {selectedExpense.status === 'pending' && (
-                <div className="flex gap-2 pt-4">
-                  <Button
-                    className="flex-1 bg-green-600 hover:bg-green-700"
-                    onClick={() => {
-                      handleApprove(selectedExpense);
-                      setShowDetailDialog(false);
-                    }}
-                  >
-                    <CheckCircle className="w-4 h-4 mr-2" />
-                    Approve
-                  </Button>
-                  <Button
-                    className="flex-1 bg-red-600 hover:bg-red-700"
-                    onClick={() => {
-                      handleReject(selectedExpense);
-                      setShowDetailDialog(false);
-                    }}
-                  >
-                    <XCircle className="w-4 h-4 mr-2" />
-                    Reject
-                  </Button>
-                </div>
+              {selectedExpense.status === 'pending' && isAdmin && (
+               <div className="pt-4">
+                 <Button
+                   className="w-full bg-[#1EB053] hover:bg-[#178f43]"
+                   onClick={() => {
+                     setApprovalExpense(selectedExpense);
+                     setShowDetailDialog(false);
+                   }}
+                 >
+                   <CheckCircle className="w-4 h-4 mr-2" />
+                   Review & Approve/Reject
+                 </Button>
+               </div>
               )}
             </div>
           )}
@@ -963,6 +952,13 @@ export default function ExpenseManagement() {
         categories={EXPENSE_CATEGORIES}
         orgId={orgId}
         currentEmployee={currentEmployee}
+      />
+
+      {/* Quick Expense Approval */}
+      <QuickExpenseApproval
+        expense={approvalExpense}
+        open={!!approvalExpense}
+        onOpenChange={(open) => !open && setApprovalExpense(null)}
       />
 
       {/* Bulk Delete Confirmation Dialog */}
