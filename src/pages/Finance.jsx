@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import ProtectedPage from "@/components/permissions/ProtectedPage";
@@ -171,6 +171,18 @@ export default function Finance() {
     enabled: !!orgId,
   });
 
+  const { data: assets = [] } = useQuery({
+    queryKey: ['assets', orgId],
+    queryFn: () => base44.entities.Asset.filter({ organisation_id: orgId }),
+    enabled: !!orgId,
+  });
+
+  const { data: liabilities = [] } = useQuery({
+    queryKey: ['liabilities', orgId],
+    queryFn: () => base44.entities.Liability.filter({ organisation_id: orgId }),
+    enabled: !!orgId,
+  });
+
   const { data: organisation } = useQuery({
     queryKey: ['organisation', orgId],
     queryFn: () => base44.entities.Organisation.filter({ id: orgId }),
@@ -191,13 +203,6 @@ export default function Finance() {
     enabled: !!orgId,
     staleTime: 0,
     refetchOnWindowFocus: true,
-  });
-
-  const { data: products = [] } = useQuery({
-    queryKey: ['products', orgId],
-    queryFn: () => base44.entities.Product.filter({ organisation_id: orgId }),
-    enabled: !!orgId,
-    staleTime: 5 * 60 * 1000,
   });
 
   const createExpenseMutation = useMutation({
@@ -1711,8 +1716,9 @@ export default function Finance() {
               truckContracts={truckContracts}
               maintenanceRecords={maintenanceRecords}
               organisation={organisation?.[0]}
-              products={products}
-              bankDeposits={bankDeposits}
+              assets={assets}
+              liabilities={liabilities}
+              payrolls={payrolls}
             />
           </TabsContent>
 
