@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect } from "react";
 import {
   Dialog,
   DialogContent,
@@ -536,7 +536,10 @@ export default function VideoCallDialog({
                     <Tooltip>
                       <TooltipTrigger asChild>
                         <div className={`flex items-center gap-1.5 px-2 py-1 rounded-full bg-black/40 ${getQualityLevel(networkQuality.downlink).color}`}>
-                          {React.createElement(getQualityLevel(networkQuality.downlink).icon, { className: "w-4 h-4" })}
+                          {(() => {
+                            const QualityIcon = getQualityLevel(networkQuality.downlink).icon;
+                            return <QualityIcon className="w-4 h-4" />;
+                          })()}
                           <span className="text-xs font-medium">{getQualityLevel(networkQuality.downlink).label}</span>
                         </div>
                       </TooltipTrigger>
