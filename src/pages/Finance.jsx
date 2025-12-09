@@ -610,70 +610,26 @@ export default function Finance() {
   return (
     <ProtectedPage module="finance">
       <div className="space-y-4 sm:space-y-6">
-        {/* Hero Header with Sierra Leone Design */}
-        <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-[#1EB053] via-[#0072C6] to-[#0F1F3C] p-8 shadow-2xl">
-          {/* Animated Background Pattern */}
-          <div className="absolute inset-0 opacity-10">
-            <div className="absolute inset-0" style={{
-              backgroundImage: `repeating-linear-gradient(
-                45deg,
-                #1EB053 0px,
-                #1EB053 20px,
-                transparent 20px,
-                transparent 40px,
-                #FFFFFF 40px,
-                #FFFFFF 60px,
-                transparent 60px,
-                transparent 80px,
-                #0072C6 80px,
-                #0072C6 100px,
-                transparent 100px,
-                transparent 120px
-              )`
-            }} />
-          </div>
+        {/* Sierra Leone Stripe */}
+        <div className="h-1 w-full flex rounded-full overflow-hidden">
+          <div className="flex-1 bg-[#1EB053]" />
+          <div className="flex-1 bg-white border-y border-gray-200" />
+          <div className="flex-1 bg-[#0072C6]" />
+        </div>
 
-          {/* Sierra Leone Flag Stripe - Top */}
-          <div className="absolute top-0 left-0 right-0 h-2 flex">
-            <div className="flex-1 bg-[#1EB053]" />
-            <div className="flex-1 bg-white" />
-            <div className="flex-1 bg-[#0072C6]" />
-          </div>
-
-          <div className="relative flex items-center justify-between flex-wrap gap-6">
-            <div className="flex items-center gap-5">
-              <div className="relative">
-                <div className="absolute -inset-2 bg-white/30 rounded-3xl blur-xl" />
-                <div className="relative w-20 h-20 rounded-3xl bg-white/20 backdrop-blur-xl border border-white/30 flex items-center justify-center shadow-2xl">
-                  <DollarSign className="w-10 h-10 text-white drop-shadow-lg" />
-                </div>
-              </div>
-              <div>
-                <h1 className="text-3xl sm:text-4xl font-bold text-white drop-shadow-lg mb-1">
-                  Financial Management
-                </h1>
-                <p className="text-white/90 text-sm sm:text-base">
-                  Complete financial overview & insights
-                </p>
-              </div>
-            </div>
-
-            <div className="flex items-center gap-3">
-              <div className="flex h-16 w-2 rounded-full overflow-hidden shadow-lg">
-                <div className="w-full bg-gradient-to-b from-[#1EB053] via-white to-[#0072C6]" />
-              </div>
-              <div className="text-white/90 text-right">
-                <p className="text-xs font-medium opacity-80">🇸🇱 Sierra Leone</p>
-                <p className="text-2xl font-bold">Le</p>
-              </div>
+        {/* Modern Header */}
+        <div className="flex items-center gap-4">
+          <div className="relative">
+            <div className="absolute -inset-1 bg-gradient-to-br from-[#1EB053] to-[#0072C6] rounded-2xl blur opacity-30" />
+            <div className="relative w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-gradient-to-br from-[#1EB053] to-[#0072C6] flex items-center justify-center shadow-xl">
+              <DollarSign className="w-7 h-7 sm:w-8 sm:h-8 text-white" />
             </div>
           </div>
-
-          {/* Sierra Leone Flag Stripe - Bottom */}
-          <div className="absolute bottom-0 left-0 right-0 h-2 flex">
-            <div className="flex-1 bg-[#1EB053]" />
-            <div className="flex-1 bg-white" />
-            <div className="flex-1 bg-[#0072C6]" />
+          <div>
+            <h1 className="text-2xl sm:text-3xl font-bold bg-gradient-to-r from-[#1EB053] to-[#0072C6] bg-clip-text text-transparent">
+              Financial Management
+            </h1>
+            <p className="text-sm text-gray-500 mt-1">Track revenue, expenses, and cash flow</p>
           </div>
         </div>
 
@@ -702,95 +658,65 @@ export default function Finance() {
           </Select>
         </div>
 
-        {/* Key Metrics - Modern Cards */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
-          <Card className="relative overflow-hidden group hover:shadow-2xl transition-all duration-300 border-0">
-            <div className="absolute top-0 left-0 right-0 h-1.5 flex">
-              <div className="flex-1 bg-[#1EB053]" />
-              <div className="flex-1 bg-white" />
-              <div className="flex-1 bg-[#0072C6]" />
-            </div>
-            <div className="absolute inset-0 bg-gradient-to-br from-[#1EB053]/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-            <CardContent className="p-4 sm:p-5 relative">
-              <div className="flex items-start justify-between gap-3">
-                <div className="min-w-0 flex-1">
-                  <div className="flex items-center gap-2 mb-2">
-                    <div className="w-2 h-2 rounded-full bg-[#1EB053] animate-pulse" />
-                    <p className="text-[10px] sm:text-xs text-gray-500 uppercase tracking-wider font-semibold">Revenue</p>
-                  </div>
-                  <p className="text-xl sm:text-3xl font-bold bg-gradient-to-br from-[#1EB053] to-[#16803d] bg-clip-text text-transparent truncate">
-                    Le {financials.totalRevenue.toLocaleString()}
-                  </p>
-                  <p className="text-[10px] sm:text-xs text-gray-500 mt-1 font-medium">{financials.transactionCount + financials.tripCount} transactions</p>
+        {/* Key Metrics */}
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-4">
+          <Card className="border-l-4 border-l-[#1EB053]">
+            <CardContent className="p-3 sm:p-4">
+              <div className="flex items-center justify-between gap-2">
+                <div className="min-w-0">
+                  <p className="text-[10px] sm:text-xs text-gray-500 uppercase tracking-wide truncate">Revenue</p>
+                  <p className="text-base sm:text-2xl font-bold text-[#1EB053] truncate">Le {financials.totalRevenue.toLocaleString()}</p>
+                  <p className="text-[9px] sm:text-xs text-gray-500 mt-0.5 sm:mt-1 truncate">{financials.transactionCount + financials.tripCount} txns</p>
                 </div>
-                <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-gradient-to-br from-[#1EB053] to-[#16803d] flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform flex-shrink-0">
-                  <TrendingUp className="w-5 h-5 sm:w-7 sm:h-7 text-white" />
+                <div className="w-8 h-8 sm:w-12 sm:h-12 rounded-full bg-green-100 flex items-center justify-center flex-shrink-0">
+                  <TrendingUp className="w-4 h-4 sm:w-6 sm:h-6 text-[#1EB053]" />
                 </div>
               </div>
             </CardContent>
           </Card>
 
-          <Card className="relative overflow-hidden group hover:shadow-2xl transition-all duration-300 border-0">
-            <div className="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-red-500 to-orange-500" />
-            <div className="absolute inset-0 bg-gradient-to-br from-red-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-            <CardContent className="p-4 sm:p-5 relative">
-              <div className="flex items-start justify-between gap-3">
-                <div className="min-w-0 flex-1">
-                  <div className="flex items-center gap-2 mb-2">
-                    <div className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
-                    <p className="text-[10px] sm:text-xs text-gray-500 uppercase tracking-wider font-semibold">Expenses</p>
-                  </div>
-                  <p className="text-xl sm:text-3xl font-bold bg-gradient-to-br from-red-500 to-red-600 bg-clip-text text-transparent truncate">
-                    Le {financials.totalExpenses.toLocaleString()}
-                  </p>
-                  <p className="text-[10px] sm:text-xs text-gray-500 mt-1 font-medium">{filteredExpenses.length} records</p>
+          <Card className="border-l-4 border-l-red-500">
+            <CardContent className="p-3 sm:p-4">
+              <div className="flex items-center justify-between gap-2">
+                <div className="min-w-0">
+                  <p className="text-[10px] sm:text-xs text-gray-500 uppercase tracking-wide truncate">Expenses</p>
+                  <p className="text-base sm:text-2xl font-bold text-red-500 truncate">Le {financials.totalExpenses.toLocaleString()}</p>
+                  <p className="text-[9px] sm:text-xs text-gray-500 mt-0.5 sm:mt-1 truncate">{filteredExpenses.length} records</p>
                 </div>
-                <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-gradient-to-br from-red-500 to-red-600 flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform flex-shrink-0">
-                  <TrendingDown className="w-5 h-5 sm:w-7 sm:h-7 text-white" />
+                <div className="w-8 h-8 sm:w-12 sm:h-12 rounded-full bg-red-100 flex items-center justify-center flex-shrink-0">
+                  <TrendingDown className="w-4 h-4 sm:w-6 sm:h-6 text-red-500" />
                 </div>
               </div>
             </CardContent>
           </Card>
 
-          <Card className={`relative overflow-hidden group hover:shadow-2xl transition-all duration-300 border-0`}>
-            <div className={`absolute top-0 left-0 right-0 h-1.5 ${financials.netProfit >= 0 ? 'bg-gradient-to-r from-[#0072C6] to-[#1EB053]' : 'bg-gradient-to-r from-orange-500 to-red-500'}`} />
-            <div className={`absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity ${financials.netProfit >= 0 ? 'bg-gradient-to-br from-[#0072C6]/5 to-transparent' : 'bg-gradient-to-br from-orange-500/5 to-transparent'}`} />
-            <CardContent className="p-4 sm:p-5 relative">
-              <div className="flex items-start justify-between gap-3">
-                <div className="min-w-0 flex-1">
-                  <div className="flex items-center gap-2 mb-2">
-                    <div className={`w-2 h-2 rounded-full animate-pulse ${financials.netProfit >= 0 ? 'bg-[#0072C6]' : 'bg-orange-500'}`} />
-                    <p className="text-[10px] sm:text-xs text-gray-500 uppercase tracking-wider font-semibold">Net Profit</p>
-                  </div>
-                  <p className={`text-xl sm:text-3xl font-bold truncate ${financials.netProfit >= 0 ? 'bg-gradient-to-br from-[#0072C6] to-[#1EB053] bg-clip-text text-transparent' : 'bg-gradient-to-br from-orange-500 to-red-500 bg-clip-text text-transparent'}`}>
+          <Card className={`border-l-4 ${financials.netProfit >= 0 ? 'border-l-[#0072C6]' : 'border-l-orange-500'}`}>
+            <CardContent className="p-3 sm:p-4">
+              <div className="flex items-center justify-between gap-2">
+                <div className="min-w-0">
+                  <p className="text-[10px] sm:text-xs text-gray-500 uppercase tracking-wide truncate">Net Profit</p>
+                  <p className={`text-base sm:text-2xl font-bold truncate ${financials.netProfit >= 0 ? 'text-[#0072C6]' : 'text-orange-500'}`}>
                     Le {financials.netProfit.toLocaleString()}
                   </p>
-                  <p className="text-[10px] sm:text-xs text-gray-500 mt-1 font-medium">{financials.profitMargin}% margin</p>
+                  <p className="text-[9px] sm:text-xs text-gray-500 mt-0.5 sm:mt-1">{financials.profitMargin}%</p>
                 </div>
-                <div className={`w-12 h-12 sm:w-14 sm:h-14 rounded-2xl flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform flex-shrink-0 ${financials.netProfit >= 0 ? 'bg-gradient-to-br from-[#0072C6] to-[#1EB053]' : 'bg-gradient-to-br from-orange-500 to-red-500'}`}>
-                  <DollarSign className="w-5 h-5 sm:w-7 sm:h-7 text-white" />
+                <div className={`w-8 h-8 sm:w-12 sm:h-12 rounded-full flex items-center justify-center flex-shrink-0 ${financials.netProfit >= 0 ? 'bg-blue-100' : 'bg-orange-100'}`}>
+                  <DollarSign className={`w-4 h-4 sm:w-6 sm:h-6 ${financials.netProfit >= 0 ? 'text-[#0072C6]' : 'text-orange-500'}`} />
                 </div>
               </div>
             </CardContent>
           </Card>
 
-          <Card className="relative overflow-hidden group hover:shadow-2xl transition-all duration-300 border-0">
-            <div className="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-[#D4AF37] to-amber-500" />
-            <div className="absolute inset-0 bg-gradient-to-br from-[#D4AF37]/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-            <CardContent className="p-4 sm:p-5 relative">
-              <div className="flex items-start justify-between gap-3">
-                <div className="min-w-0 flex-1">
-                  <div className="flex items-center gap-2 mb-2">
-                    <div className="w-2 h-2 rounded-full bg-[#D4AF37] animate-pulse" />
-                    <p className="text-[10px] sm:text-xs text-gray-500 uppercase tracking-wider font-semibold">Pending</p>
-                  </div>
-                  <p className="text-xl sm:text-3xl font-bold bg-gradient-to-br from-[#D4AF37] to-amber-600 bg-clip-text text-transparent">
-                    {expenses.filter(e => e.status === 'pending').length}
-                  </p>
-                  <p className="text-[10px] sm:text-xs text-gray-500 mt-1 font-medium">awaiting approval</p>
+          <Card className="border-l-4 border-l-[#D4AF37]">
+            <CardContent className="p-3 sm:p-4">
+              <div className="flex items-center justify-between gap-2">
+                <div className="min-w-0">
+                  <p className="text-[10px] sm:text-xs text-gray-500 uppercase tracking-wide truncate">Pending</p>
+                  <p className="text-base sm:text-2xl font-bold text-[#D4AF37]">{expenses.filter(e => e.status === 'pending').length}</p>
+                  <p className="text-[9px] sm:text-xs text-gray-500 mt-0.5 sm:mt-1">expenses</p>
                 </div>
-                <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-gradient-to-br from-[#D4AF37] to-amber-600 flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform flex-shrink-0">
-                  <Clock className="w-5 h-5 sm:w-7 sm:h-7 text-white" />
+                <div className="w-8 h-8 sm:w-12 sm:h-12 rounded-full bg-amber-100 flex items-center justify-center flex-shrink-0">
+                  <Clock className="w-4 h-4 sm:w-6 sm:h-6 text-[#D4AF37]" />
                 </div>
               </div>
             </CardContent>
@@ -798,40 +724,40 @@ export default function Finance() {
         </div>
 
         <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <div className="rounded-2xl overflow-hidden border-0 shadow-xl bg-white">
-            <div className="h-2 flex">
+          <div className="rounded-lg overflow-hidden border">
+            <div className="h-1 flex">
               <div className="flex-1 bg-[#1EB053]" />
               <div className="flex-1 bg-white" />
               <div className="flex-1 bg-[#0072C6]" />
             </div>
-            <TabsList className="bg-gradient-to-r from-gray-50 to-gray-100 p-2 flex flex-wrap h-auto gap-2 rounded-none border-b border-gray-200">
-            <TabsTrigger value="dashboard" className="text-xs sm:text-sm data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#1EB053] data-[state=active]:to-[#0072C6] data-[state=active]:text-white">
+            <TabsList className="bg-gray-100 p-1 flex flex-wrap h-auto gap-1 rounded-none">
+            <TabsTrigger value="dashboard" className="text-xs sm:text-sm rounded-lg data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#1EB053] data-[state=active]:to-[#0072C6] data-[state=active]:text-white data-[state=active]:shadow-lg transition-all font-medium">
               Dashboard
             </TabsTrigger>
-            <TabsTrigger value="revenue" className="text-xs sm:text-sm data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#1EB053] data-[state=active]:to-[#0072C6] data-[state=active]:text-white">
+            <TabsTrigger value="revenue" className="text-xs sm:text-sm rounded-lg data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#1EB053] data-[state=active]:to-[#0072C6] data-[state=active]:text-white data-[state=active]:shadow-lg transition-all font-medium">
               Revenue
             </TabsTrigger>
-            <TabsTrigger value="expenses" className="text-xs sm:text-sm data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#1EB053] data-[state=active]:to-[#0072C6] data-[state=active]:text-white">
+            <TabsTrigger value="expenses" className="text-xs sm:text-sm rounded-lg data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#1EB053] data-[state=active]:to-[#0072C6] data-[state=active]:text-white data-[state=active]:shadow-lg transition-all font-medium">
               Expenses
             </TabsTrigger>
-            <TabsTrigger value="contributions" className="text-xs sm:text-sm data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#1EB053] data-[state=active]:to-[#0072C6] data-[state=active]:text-white">
+            <TabsTrigger value="contributions" className="text-xs sm:text-sm rounded-lg data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#1EB053] data-[state=active]:to-[#0072C6] data-[state=active]:text-white data-[state=active]:shadow-lg transition-all font-medium">
               Owner/CEO
             </TabsTrigger>
-            <TabsTrigger value="cashflow" className="text-xs sm:text-sm data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#1EB053] data-[state=active]:to-[#0072C6] data-[state=active]:text-white">
+            <TabsTrigger value="cashflow" className="text-xs sm:text-sm rounded-lg data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#1EB053] data-[state=active]:to-[#0072C6] data-[state=active]:text-white data-[state=active]:shadow-lg transition-all font-medium">
               Cash Flow
             </TabsTrigger>
-            <TabsTrigger value="banking" className="text-xs sm:text-sm data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#1EB053] data-[state=active]:to-[#0072C6] data-[state=active]:text-white">
+            <TabsTrigger value="banking" className="text-xs sm:text-sm rounded-lg data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#1EB053] data-[state=active]:to-[#0072C6] data-[state=active]:text-white data-[state=active]:shadow-lg transition-all font-medium">
               <Landmark className="w-4 h-4 mr-1" />
               Banking
             </TabsTrigger>
-            <TabsTrigger value="budgeting" className="text-xs sm:text-sm data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#1EB053] data-[state=active]:to-[#0072C6] data-[state=active]:text-white">
+            <TabsTrigger value="budgeting" className="text-xs sm:text-sm rounded-lg data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#1EB053] data-[state=active]:to-[#0072C6] data-[state=active]:text-white data-[state=active]:shadow-lg transition-all font-medium">
               Budgeting
             </TabsTrigger>
-            <TabsTrigger value="ai-analysis" className="text-xs sm:text-sm data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#1EB053] data-[state=active]:to-[#0072C6] data-[state=active]:text-white">
+            <TabsTrigger value="ai-analysis" className="text-xs sm:text-sm rounded-lg data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#1EB053] data-[state=active]:to-[#0072C6] data-[state=active]:text-white data-[state=active]:shadow-lg transition-all font-medium">
               <Sparkles className="w-4 h-4 mr-1" />
               AI Analysis
             </TabsTrigger>
-            <TabsTrigger value="automated-reports" className="text-xs sm:text-sm data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#1EB053] data-[state=active]:to-[#0072C6] data-[state=active]:text-white">
+            <TabsTrigger value="automated-reports" className="text-xs sm:text-sm rounded-lg data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#1EB053] data-[state=active]:to-[#0072C6] data-[state=active]:text-white data-[state=active]:shadow-lg transition-all font-medium">
               <FileText className="w-4 h-4 mr-1" />
               Auto Reports
             </TabsTrigger>
@@ -870,7 +796,7 @@ export default function Finance() {
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">
               {/* Revenue & Expenses Trend */}
-              <Card className="overflow-hidden relative">
+              <Card className="overflow-hidden relative border-0 shadow-xl">
                 {/* Sierra Leone Pattern Background */}
                 <div className="absolute inset-0 opacity-[0.03] pointer-events-none">
                   <div className="absolute inset-0" style={{
@@ -888,17 +814,19 @@ export default function Finance() {
                   }} />
                 </div>
                 
-                <div className="h-1.5 flex">
+                <div className="h-2 flex">
                   <div className="flex-1 bg-[#1EB053]" />
                   <div className="flex-1 bg-white" />
                   <div className="flex-1 bg-[#0072C6]" />
                 </div>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <BarChart3 className="w-5 h-5 text-[#1EB053]" />
+                <CardHeader className="pb-4">
+                  <CardTitle className="flex items-center gap-2 text-xl">
+                    <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#1EB053] to-[#0072C6] flex items-center justify-center">
+                      <BarChart3 className="w-5 h-5 text-white" />
+                    </div>
                     Financial Trend (6 Months)
                   </CardTitle>
-                  <CardDescription className="text-xs">Revenue vs Expenses comparison</CardDescription>
+                  <CardDescription className="text-xs ml-12">Revenue vs Expenses comparison</CardDescription>
                 </CardHeader>
                 <CardContent className="relative">
                   <ResponsiveContainer width="100%" height={340}>
@@ -965,7 +893,7 @@ export default function Finance() {
               </Card>
 
               {/* Profit Trend */}
-              <Card className="overflow-hidden relative">
+              <Card className="overflow-hidden relative border-0 shadow-xl">
                 {/* Sierra Leone Pattern Background */}
                 <div className="absolute inset-0 opacity-[0.03] pointer-events-none">
                   <div className="absolute inset-0" style={{
@@ -983,17 +911,19 @@ export default function Finance() {
                   }} />
                 </div>
 
-                <div className="h-1.5 flex">
+                <div className="h-2 flex">
                   <div className="flex-1 bg-[#1EB053]" />
                   <div className="flex-1 bg-white" />
                   <div className="flex-1 bg-[#0072C6]" />
                 </div>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <TrendingUp className="w-5 h-5 text-[#0072C6]" />
+                <CardHeader className="pb-4">
+                  <CardTitle className="flex items-center gap-2 text-xl">
+                    <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#0072C6] to-[#1EB053] flex items-center justify-center">
+                      <TrendingUp className="w-5 h-5 text-white" />
+                    </div>
                     Profit Trend
                   </CardTitle>
-                  <CardDescription className="text-xs">Net profit margin over time</CardDescription>
+                  <CardDescription className="text-xs ml-12">Net profit margin over time</CardDescription>
                 </CardHeader>
                 <CardContent className="relative">
                   <ResponsiveContainer width="100%" height={340}>
@@ -1157,14 +1087,19 @@ export default function Finance() {
             </div>
 
             {/* Payment Methods */}
-            <Card className="overflow-hidden">
-              <div className="h-1 flex">
+            <Card className="overflow-hidden border-0 shadow-xl">
+              <div className="h-2 flex">
                 <div className="flex-1 bg-[#1EB053]" />
                 <div className="flex-1 bg-white" />
                 <div className="flex-1 bg-[#0072C6]" />
               </div>
               <CardHeader>
-                <CardTitle>Payment Methods</CardTitle>
+                <CardTitle className="flex items-center gap-2 text-xl">
+                  <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#1EB053] to-[#0072C6] flex items-center justify-center">
+                    <CreditCard className="w-5 h-5 text-white" />
+                  </div>
+                  Payment Methods
+                </CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
@@ -1803,14 +1738,19 @@ export default function Finance() {
               </Card>
             </div>
 
-            <Card className="overflow-hidden">
-              <div className="h-1 flex">
+            <Card className="overflow-hidden border-0 shadow-xl">
+              <div className="h-2 flex">
                 <div className="flex-1 bg-[#1EB053]" />
                 <div className="flex-1 bg-white" />
                 <div className="flex-1 bg-[#0072C6]" />
               </div>
               <CardHeader>
-                <CardTitle>Monthly Cash Flow</CardTitle>
+                <CardTitle className="flex items-center gap-2 text-xl">
+                  <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#1EB053] to-[#0072C6] flex items-center justify-center">
+                    <BarChart3 className="w-5 h-5 text-white" />
+                  </div>
+                  Monthly Cash Flow
+                </CardTitle>
               </CardHeader>
               <CardContent>
                 <ResponsiveContainer width="100%" height={350}>
@@ -1856,13 +1796,18 @@ export default function Finance() {
         {/* Add Expense Dialog */}
         <Dialog open={showExpenseDialog} onOpenChange={setShowExpenseDialog}>
           <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto w-[95vw] sm:w-full [&>button]:hidden">
+            <div className="h-2 flex mb-4">
+              <div className="flex-1 bg-[#1EB053]" />
+              <div className="flex-1 bg-white" />
+              <div className="flex-1 bg-[#0072C6]" />
+            </div>
             <DialogHeader>
-              <div className="flex h-1 w-16 rounded-full overflow-hidden mb-3">
-                <div className="flex-1 bg-[#1EB053]" />
-                <div className="flex-1 bg-white border-y border-gray-200" />
-                <div className="flex-1 bg-[#0072C6]" />
-              </div>
-              <DialogTitle>{editingExpense ? 'Edit Expense' : 'Record New Expense'}</DialogTitle>
+              <DialogTitle className="text-2xl flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-red-500 to-red-600 flex items-center justify-center">
+                  <Receipt className="w-5 h-5 text-white" />
+                </div>
+                {editingExpense ? 'Edit Expense' : 'Record New Expense'}
+              </DialogTitle>
             </DialogHeader>
             <form onSubmit={handleExpenseSubmit} className="space-y-4">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -1969,13 +1914,16 @@ export default function Finance() {
         {/* Add Revenue Dialog */}
         <Dialog open={showRevenueDialog} onOpenChange={setShowRevenueDialog}>
           <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto w-[95vw] sm:w-full [&>button]:hidden">
+            <div className="h-2 flex mb-4">
+              <div className="flex-1 bg-[#1EB053]" />
+              <div className="flex-1 bg-white" />
+              <div className="flex-1 bg-[#0072C6]" />
+            </div>
             <DialogHeader>
-              <div className="flex h-1 w-16 rounded-full overflow-hidden mb-3">
-                <div className="flex-1 bg-[#1EB053]" />
-                <div className="flex-1 bg-white border-y border-gray-200" />
-                <div className="flex-1 bg-[#0072C6]" />
-              </div>
-              <DialogTitle>
+              <DialogTitle className="text-2xl flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#1EB053] to-[#0072C6] flex items-center justify-center">
+                  <Users className="w-5 h-5 text-white" />
+                </div>
                 {editingRevenue ? 'Edit Owner/CEO Contribution' : 'Record Owner/CEO Contribution'}
               </DialogTitle>
             </DialogHeader>
@@ -2247,14 +2195,16 @@ export default function Finance() {
         {/* Bank Deposit Dialog */}
         <Dialog open={showBankDepositDialog} onOpenChange={setShowBankDepositDialog}>
           <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto w-[95vw] sm:w-full [&>button]:hidden">
+            <div className="h-2 flex mb-4">
+              <div className="flex-1 bg-[#1EB053]" />
+              <div className="flex-1 bg-white" />
+              <div className="flex-1 bg-[#0072C6]" />
+            </div>
             <DialogHeader>
-              <div className="flex h-1 w-16 rounded-full overflow-hidden mb-3">
-                <div className="flex-1 bg-[#1EB053]" />
-                <div className="flex-1 bg-white border-y border-gray-200" />
-                <div className="flex-1 bg-[#0072C6]" />
-              </div>
-              <DialogTitle className="flex items-center gap-2">
-                <Landmark className="w-5 h-5 text-[#0072C6]" />
+              <DialogTitle className="text-2xl flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#0072C6] to-[#1EB053] flex items-center justify-center">
+                  <Landmark className="w-5 h-5 text-white" />
+                </div>
                 Record Bank Deposit
               </DialogTitle>
             </DialogHeader>
