@@ -1704,6 +1704,8 @@ export default function Finance() {
               truckContracts={truckContracts}
               maintenanceRecords={maintenanceRecords}
               organisation={organisation?.[0]}
+              products={[]}
+              bankDeposits={bankDeposits}
             />
           </TabsContent>
 
