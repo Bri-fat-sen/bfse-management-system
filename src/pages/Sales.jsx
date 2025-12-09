@@ -168,7 +168,7 @@ export default function Sales() {
   ).slice(0, 5);
 
   // Create a map of product stock at selected location
-  const locationStockMap = React.useMemo(() => {
+  const locationStockMap = useMemo(() => {
     const map = {};
     stockLevels.forEach(sl => {
       // Use quantity if available_quantity is 0 or undefined
@@ -205,7 +205,7 @@ export default function Sales() {
   const selectedLocationData = locationOptions.find(l => l.id === selectedLocation);
 
   // Auto-setup sale type and location based on employee role and assigned location
-  React.useEffect(() => {
+  useEffect(() => {
     if (autoSetupDone || !currentEmployee) return;
     
     const role = currentEmployee.role;
@@ -242,7 +242,7 @@ export default function Sales() {
   }, [currentEmployee, autoSetupDone]);
 
   // Auto-select location if only one option available (after initial setup)
-  React.useEffect(() => {
+  useEffect(() => {
     if (!autoSetupDone || !saleType) return;
     
     const options = getLocationOptions();
@@ -253,7 +253,7 @@ export default function Sales() {
   }, [locationOptions, selectedLocation, autoSetupDone, saleType]);
 
   // Reset location and cart when sale type changes (but not on initial setup)
-  React.useEffect(() => {
+  useEffect(() => {
     if (!autoSetupDone || !saleType) return;
     
     const options = getLocationOptions();
@@ -276,7 +276,7 @@ export default function Sales() {
   }, [saleType, warehouses.length, vehicles.length]);
 
   // Clear cart when location changes (stock is location-specific)
-  React.useEffect(() => {
+  useEffect(() => {
     if (cart.length > 0) {
       setCart([]);
     }
@@ -455,7 +455,7 @@ export default function Sales() {
   };
 
   // Filter products and add location-specific stock
-  const filteredProducts = React.useMemo(() => {
+  const filteredProducts = useMemo(() => {
     return (products || [])
       .filter(p => p && (
         p.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
