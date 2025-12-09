@@ -1,7 +1,8 @@
-import React, { useState, useMemo } from "react";
+import { useState, useMemo } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { format, startOfMonth, endOfMonth, subMonths, startOfYear } from "date-fns";
+import { printUnifiedPDF, getUnifiedPDFStyles, getUnifiedHeader, getUnifiedFooter } from "@/components/exports/UnifiedPDFStyles";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -30,7 +31,11 @@ import {
   RefreshCw,
   Eye,
   Printer,
-  Send
+  Send,
+  Sheet,
+  FileSpreadsheet,
+  Wallet,
+  Building2
 } from "lucide-react";
 import { useToast } from "@/components/ui/Toast";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend, LineChart, Line, Area, AreaChart } from "recharts";
@@ -52,11 +57,21 @@ export default function AutomatedFinancialReports({
   const [generatingReport, setGeneratingReport] = useState(false);
   const [aiAnalysis, setAiAnalysis] = useState(null);
   const [activeReportTab, setActiveReportTab] = useState("pl");
+  const [customStartDate, setCustomStartDate] = useState(format(startOfMonth(new Date()), 'yyyy-MM-dd'));
+  const [customEndDate, setCustomEndDate] = useState(format(new Date(), 'yyyy-MM-dd'));
 
   // Calculate date range
   const dateRange = useMemo(() => {
     const today = new Date();
     const currentYear = today.getFullYear();
+    
+    if (selectedPeriod === "custom") {
+      return { 
+        start: new Date(customStartDate), 
+        end: new Date(customEndDate), 
+        label: `${format(new Date(customStartDate), 'MMM d, yyyy')} - ${format(new Date(customEndDate), 'MMM d, yyyy')}` 
+      };
+    }
     
     switch (selectedPeriod) {
       case "all_time":
@@ -81,7 +96,7 @@ export default function AutomatedFinancialReports({
       default:
         return { start: startOfMonth(today), end: endOfMonth(today), label: format(today, 'MMMM yyyy') };
     }
-  }, [selectedPeriod]);
+  }, [selectedPeriod, customStartDate, customEndDate]);
 
   // Filter data by period
   const periodData = useMemo(() => {
@@ -287,6 +302,270 @@ Format your response in markdown with clear sections.`,
     high: { bg: 'bg-red-50', text: 'text-red-700', border: 'border-red-200' }
   };
 
+  // Export to CSV
+  const exportToCSV = (reportType) => {
+    let csvContent = '';
+    const orgName = organisation?.name || 'Organisation';
+    
+    if (reportType === 'pl') {
+      csvContent = `${orgName} - Profit & Loss Statement\nPeriod: ${dateRange.label}\nGenerated: ${format(new Date(), 'MMM d, yyyy h:mm a')}\n\n`;
+      csvContent += `Category,Amount (Le)\n`;
+      csvContent += `\nREVENUE,\n`;
+      csvContent += `Sales Revenue,${profitLoss.revenue.salesRevenue}\n`;
+      csvContent += `Transport Revenue,${profitLoss.revenue.transportRevenue}\n`;
+      csvContent += `Contract Revenue,${profitLoss.revenue.contractRevenue}\n`;
+      csvContent += `Other Revenue,${profitLoss.revenue.otherRevenue}\n`;
+      csvContent += `Total Revenue,${profitLoss.revenue.totalRevenue}\n`;
+      csvContent += `\nEXPENSES,\n`;
+      csvContent += `Recorded Expenses,${profitLoss.expenses.recordedExpenses}\n`;
+      csvContent += `Fuel Costs,${profitLoss.expenses.fuelCosts}\n`;
+      csvContent += `Trip Expenses,${profitLoss.expenses.tripOtherCosts}\n`;
+      csvContent += `Contract Expenses,${profitLoss.expenses.contractExpenses}\n`;
+      csvContent += `Maintenance,${profitLoss.expenses.maintenanceCosts}\n`;
+      csvContent += `Total Expenses,${profitLoss.expenses.totalExpenses}\n`;
+      csvContent += `\nPROFIT,\n`;
+      csvContent += `Net Profit,${profitLoss.netProfit}\n`;
+      csvContent += `Profit Margin,${profitLoss.profitMargin.toFixed(1)}%\n`;
+    } else if (reportType === 'cashflow') {
+      csvContent = `${orgName} - Cash Flow Statement\nPeriod: ${dateRange.label}\n\n`;
+      csvContent += `Category,Amount (Le)\n`;
+      csvContent += `\nCASH INFLOWS,\n`;
+      csvContent += `From Sales,${profitLoss.revenue.salesRevenue}\n`;
+      csvContent += `From Transport,${profitLoss.revenue.transportRevenue}\n`;
+      csvContent += `From Contracts,${profitLoss.revenue.contractRevenue}\n`;
+      csvContent += `From Other Sources,${profitLoss.revenue.otherRevenue}\n`;
+      csvContent += `Total Inflows,${profitLoss.revenue.totalRevenue}\n`;
+      csvContent += `\nCASH OUTFLOWS,\n`;
+      csvContent += `Operating Expenses,${profitLoss.expenses.recordedExpenses}\n`;
+      csvContent += `Fuel Costs,${profitLoss.expenses.fuelCosts}\n`;
+      csvContent += `Trip Costs,${profitLoss.expenses.tripOtherCosts}\n`;
+      csvContent += `Contract Costs,${profitLoss.expenses.contractExpenses}\n`;
+      csvContent += `Maintenance,${profitLoss.expenses.maintenanceCosts}\n`;
+      csvContent += `Total Outflows,${profitLoss.expenses.totalExpenses}\n`;
+      csvContent += `\nNET CASH FLOW,${profitLoss.netProfit}\n`;
+    } else if (reportType === 'balance') {
+      const totalAssets = profitLoss.revenue.totalRevenue;
+      const totalLiabilities = profitLoss.expenses.totalExpenses;
+      const equity = profitLoss.netProfit;
+      
+      csvContent = `${orgName} - Balance Sheet\nAs of: ${format(dateRange.end, 'MMM d, yyyy')}\n\n`;
+      csvContent += `Category,Amount (Le)\n`;
+      csvContent += `\nASSETS,\n`;
+      csvContent += `Cash & Bank (Approximated),${totalAssets}\n`;
+      csvContent += `Total Assets,${totalAssets}\n`;
+      csvContent += `\nLIABILITIES,\n`;
+      csvContent += `Operating Liabilities,${totalLiabilities}\n`;
+      csvContent += `Total Liabilities,${totalLiabilities}\n`;
+      csvContent += `\nEQUITY,\n`;
+      csvContent += `Retained Earnings,${equity}\n`;
+      csvContent += `Total Equity,${equity}\n`;
+      csvContent += `\nTotal Liabilities + Equity,${totalLiabilities + equity}\n`;
+    }
+    
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `${reportType}-statement-${format(new Date(), 'yyyy-MM-dd')}.csv`;
+    link.click();
+    URL.revokeObjectURL(url);
+    
+    toast.success("Exported to CSV", `${reportType.toUpperCase()} statement downloaded`);
+  };
+
+  // Export to PDF
+  const exportToPDF = (reportType) => {
+    const orgName = organisation?.name || 'Organisation';
+    const styles = getUnifiedPDFStyles(organisation, 'statement');
+    const header = getUnifiedHeader(organisation, getReportTitle(reportType), `RPT-${Date.now().toString(36).toUpperCase()}`, format(new Date(), 'MMM d, yyyy'), 'statement');
+    const footer = getUnifiedFooter(organisation);
+    
+    let content = '';
+    
+    if (reportType === 'pl') {
+      content = `
+        <div class="statement-section">
+          <h2 class="section-title">
+            <div class="icon">📊</div>
+            Revenue
+          </h2>
+          <table class="data-table">
+            <tbody>
+              <tr><td>Sales Revenue</td><td class="amount">Le ${profitLoss.revenue.salesRevenue.toLocaleString()}</td></tr>
+              <tr><td>Transport Revenue</td><td class="amount">Le ${profitLoss.revenue.transportRevenue.toLocaleString()}</td></tr>
+              <tr><td>Contract Revenue</td><td class="amount">Le ${profitLoss.revenue.contractRevenue.toLocaleString()}</td></tr>
+              <tr><td>Other Revenue</td><td class="amount">Le ${profitLoss.revenue.otherRevenue.toLocaleString()}</td></tr>
+              <tr class="total-row"><td><strong>Total Revenue</strong></td><td class="amount"><strong>Le ${profitLoss.revenue.totalRevenue.toLocaleString()}</strong></td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="statement-section">
+          <h2 class="section-title">
+            <div class="icon">💰</div>
+            Expenses
+          </h2>
+          <table class="data-table">
+            <tbody>
+              <tr><td>Recorded Expenses</td><td class="amount">Le ${profitLoss.expenses.recordedExpenses.toLocaleString()}</td></tr>
+              <tr><td>Fuel Costs</td><td class="amount">Le ${profitLoss.expenses.fuelCosts.toLocaleString()}</td></tr>
+              <tr><td>Trip Expenses</td><td class="amount">Le ${profitLoss.expenses.tripOtherCosts.toLocaleString()}</td></tr>
+              <tr><td>Contract Expenses</td><td class="amount">Le ${profitLoss.expenses.contractExpenses.toLocaleString()}</td></tr>
+              <tr><td>Maintenance</td><td class="amount">Le ${profitLoss.expenses.maintenanceCosts.toLocaleString()}</td></tr>
+              <tr class="total-row"><td><strong>Total Expenses</strong></td><td class="amount"><strong>Le ${profitLoss.expenses.totalExpenses.toLocaleString()}</strong></td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="statement-section">
+          <div class="summary-box ${profitLoss.netProfit >= 0 ? 'profit' : 'loss'}">
+            <h2><strong>NET PROFIT</strong></h2>
+            <p class="amount-large">Le ${profitLoss.netProfit.toLocaleString()}</p>
+            <p>Profit Margin: ${profitLoss.profitMargin.toFixed(1)}%</p>
+          </div>
+        </div>`;
+    } else if (reportType === 'cashflow') {
+      content = `
+        <div class="statement-section">
+          <h2 class="section-title">
+            <div class="icon">💵</div>
+            Cash Inflows
+          </h2>
+          <table class="data-table">
+            <tbody>
+              <tr><td>From Sales Activities</td><td class="amount">Le ${profitLoss.revenue.salesRevenue.toLocaleString()}</td></tr>
+              <tr><td>From Transport Operations</td><td class="amount">Le ${profitLoss.revenue.transportRevenue.toLocaleString()}</td></tr>
+              <tr><td>From Contracts</td><td class="amount">Le ${profitLoss.revenue.contractRevenue.toLocaleString()}</td></tr>
+              <tr><td>From Other Sources</td><td class="amount">Le ${profitLoss.revenue.otherRevenue.toLocaleString()}</td></tr>
+              <tr class="total-row"><td><strong>Total Cash Inflows</strong></td><td class="amount"><strong>Le ${profitLoss.revenue.totalRevenue.toLocaleString()}</strong></td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="statement-section">
+          <h2 class="section-title">
+            <div class="icon">💸</div>
+            Cash Outflows
+          </h2>
+          <table class="data-table">
+            <tbody>
+              <tr><td>Operating Expenses</td><td class="amount">Le ${profitLoss.expenses.recordedExpenses.toLocaleString()}</td></tr>
+              <tr><td>Fuel Costs</td><td class="amount">Le ${profitLoss.expenses.fuelCosts.toLocaleString()}</td></tr>
+              <tr><td>Trip Costs</td><td class="amount">Le ${profitLoss.expenses.tripOtherCosts.toLocaleString()}</td></tr>
+              <tr><td>Contract Expenses</td><td class="amount">Le ${profitLoss.expenses.contractExpenses.toLocaleString()}</td></tr>
+              <tr><td>Maintenance & Repairs</td><td class="amount">Le ${profitLoss.expenses.maintenanceCosts.toLocaleString()}</td></tr>
+              <tr class="total-row"><td><strong>Total Cash Outflows</strong></td><td class="amount"><strong>Le ${profitLoss.expenses.totalExpenses.toLocaleString()}</strong></td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="statement-section">
+          <div class="summary-box ${profitLoss.netProfit >= 0 ? 'profit' : 'loss'}">
+            <h2><strong>NET CASH FLOW</strong></h2>
+            <p class="amount-large">Le ${profitLoss.netProfit.toLocaleString()}</p>
+            <p>${profitLoss.netProfit >= 0 ? 'Positive Cash Position' : 'Negative Cash Position'}</p>
+          </div>
+        </div>`;
+    } else if (reportType === 'balance') {
+      const totalAssets = profitLoss.revenue.totalRevenue;
+      const totalLiabilities = profitLoss.expenses.totalExpenses;
+      const equity = profitLoss.netProfit;
+      
+      content = `
+        <div class="statement-section">
+          <h2 class="section-title">
+            <div class="icon">🏦</div>
+            Assets
+          </h2>
+          <table class="data-table">
+            <tbody>
+              <tr><td>Cash & Cash Equivalents</td><td class="amount">Le ${totalAssets.toLocaleString()}</td></tr>
+              <tr class="total-row"><td><strong>Total Assets</strong></td><td class="amount"><strong>Le ${totalAssets.toLocaleString()}</strong></td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="statement-section">
+          <h2 class="section-title">
+            <div class="icon">📋</div>
+            Liabilities
+          </h2>
+          <table class="data-table">
+            <tbody>
+              <tr><td>Operating Liabilities</td><td class="amount">Le ${totalLiabilities.toLocaleString()}</td></tr>
+              <tr class="total-row"><td><strong>Total Liabilities</strong></td><td class="amount"><strong>Le ${totalLiabilities.toLocaleString()}</strong></td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="statement-section">
+          <h2 class="section-title">
+            <div class="icon">💼</div>
+            Equity
+          </h2>
+          <table class="data-table">
+            <tbody>
+              <tr><td>Retained Earnings</td><td class="amount">Le ${equity.toLocaleString()}</td></tr>
+              <tr class="total-row"><td><strong>Total Equity</strong></td><td class="amount"><strong>Le ${equity.toLocaleString()}</strong></td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="statement-section">
+          <div class="summary-box">
+            <p><strong>Total Liabilities + Equity:</strong> Le ${(totalLiabilities + equity).toLocaleString()}</p>
+            <p style="font-size: 11px; color: var(--gray-600); margin-top: 8px;">
+              Note: Balance sheet based on period activities. For complete balance sheet, consult with accountant.
+            </p>
+          </div>
+        </div>`;
+    }
+    
+    const html = `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>${getReportTitle(reportType)} - ${orgName}</title>
+  <style>
+    ${styles}
+    .statement-section { margin-bottom: 32px; page-break-inside: avoid; }
+    .summary-box { 
+      padding: 24px; 
+      background: var(--gray-50); 
+      border-radius: 8px; 
+      border-left: 4px solid var(--primary); 
+      text-align: center;
+    }
+    .summary-box.profit { border-left-color: var(--primary); background: var(--success-bg); }
+    .summary-box.loss { border-left-color: var(--danger); background: var(--danger-bg); }
+    .amount-large { font-size: 28px; font-weight: bold; margin: 12px 0; color: var(--gray-900); }
+  </style>
+</head>
+<body>
+  <div class="document">
+    ${header}
+    <div class="content">
+      ${content}
+    </div>
+    ${footer}
+  </div>
+</body>
+</html>`;
+    
+    printUnifiedPDF(html, `${reportType}-statement-${format(new Date(), 'yyyy-MM-dd')}.pdf`);
+    toast.success("Exported to PDF", `${getReportTitle(reportType)} downloaded`);
+  };
+
+  const getReportTitle = (type) => {
+    switch(type) {
+      case 'pl': return 'Profit & Loss Statement';
+      case 'cashflow': return 'Cash Flow Statement';
+      case 'balance': return 'Balance Sheet';
+      default: return 'Financial Statement';
+    }
+  };
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -298,7 +577,7 @@ Format your response in markdown with clear sections.`,
           </h2>
           <p className="text-sm text-gray-500">AI-powered insights and comprehensive financial analysis</p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex gap-2 flex-wrap">
           <Select value={selectedPeriod} onValueChange={setSelectedPeriod}>
             <SelectTrigger className="w-48">
               <Calendar className="w-4 h-4 mr-2" />
@@ -314,6 +593,7 @@ Format your response in markdown with clear sections.`,
               <SelectItem value="2024">2024</SelectItem>
               <SelectItem value="2023">2023</SelectItem>
               <SelectItem value="2022">2022</SelectItem>
+              <SelectItem value="custom">Custom Range</SelectItem>
             </SelectContent>
           </Select>
           <Button
@@ -335,6 +615,34 @@ Format your response in markdown with clear sections.`,
           </Button>
         </div>
       </div>
+
+      {/* Custom Date Range */}
+      {selectedPeriod === 'custom' && (
+        <Card className="bg-blue-50 border-blue-200">
+          <CardContent className="p-4">
+            <div className="flex flex-col sm:flex-row gap-4 items-center">
+              <div className="flex-1 w-full">
+                <label className="text-xs font-medium text-blue-900 mb-1 block">Start Date</label>
+                <input
+                  type="date"
+                  value={customStartDate}
+                  onChange={(e) => setCustomStartDate(e.target.value)}
+                  className="w-full px-3 py-2 border border-blue-300 rounded-lg text-sm"
+                />
+              </div>
+              <div className="flex-1 w-full">
+                <label className="text-xs font-medium text-blue-900 mb-1 block">End Date</label>
+                <input
+                  type="date"
+                  value={customEndDate}
+                  onChange={(e) => setCustomEndDate(e.target.value)}
+                  className="w-full px-3 py-2 border border-blue-300 rounded-lg text-sm"
+                />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Quick Summary Cards */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
@@ -523,13 +831,27 @@ Format your response in markdown with clear sections.`,
             <div className="flex-1 bg-white" />
             <div className="flex-1 bg-[#0072C6]" />
           </div>
-          <TabsList className="bg-gray-100 p-1 w-full justify-start">
+          <TabsList className="bg-gray-100 p-1 w-full justify-start flex-wrap h-auto">
             <TabsTrigger 
               value="pl" 
               className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#1EB053] data-[state=active]:to-[#0072C6] data-[state=active]:text-white"
             >
               <FileText className="w-4 h-4 mr-1" />
               P&L Statement
+            </TabsTrigger>
+            <TabsTrigger 
+              value="cashflow" 
+              className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#1EB053] data-[state=active]:to-[#0072C6] data-[state=active]:text-white"
+            >
+              <Wallet className="w-4 h-4 mr-1" />
+              Cash Flow
+            </TabsTrigger>
+            <TabsTrigger 
+              value="balance" 
+              className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#1EB053] data-[state=active]:to-[#0072C6] data-[state=active]:text-white"
+            >
+              <Building2 className="w-4 h-4 mr-1" />
+              Balance Sheet
             </TabsTrigger>
             <TabsTrigger 
               value="expenses" 
@@ -557,8 +879,22 @@ Format your response in markdown with clear sections.`,
               <div className="flex-1 bg-[#0072C6]" />
             </div>
             <CardHeader>
-              <CardTitle>Profit & Loss Statement</CardTitle>
-              <CardDescription>{dateRange.label}</CardDescription>
+              <div className="flex items-center justify-between">
+                <div>
+                  <CardTitle>Profit & Loss Statement</CardTitle>
+                  <CardDescription>{dateRange.label}</CardDescription>
+                </div>
+                <div className="flex gap-2">
+                  <Button variant="outline" size="sm" onClick={() => exportToPDF('pl')}>
+                    <Download className="w-4 h-4 mr-2" />
+                    PDF
+                  </Button>
+                  <Button variant="outline" size="sm" onClick={() => exportToCSV('pl')}>
+                    <FileSpreadsheet className="w-4 h-4 mr-2" />
+                    CSV
+                  </Button>
+                </div>
+              </div>
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
@@ -648,6 +984,208 @@ Format your response in markdown with clear sections.`,
           </Card>
         </TabsContent>
 
+        {/* Cash Flow Statement */}
+        <TabsContent value="cashflow" className="mt-6">
+          <Card className="overflow-hidden">
+            <div className="h-1 flex">
+              <div className="flex-1 bg-[#1EB053]" />
+              <div className="flex-1 bg-white" />
+              <div className="flex-1 bg-[#0072C6]" />
+            </div>
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <div>
+                  <CardTitle>Cash Flow Statement</CardTitle>
+                  <CardDescription>{dateRange.label}</CardDescription>
+                </div>
+                <div className="flex gap-2">
+                  <Button variant="outline" size="sm" onClick={() => exportToPDF('cashflow')}>
+                    <Download className="w-4 h-4 mr-2" />
+                    PDF
+                  </Button>
+                  <Button variant="outline" size="sm" onClick={() => exportToCSV('cashflow')}>
+                    <FileSpreadsheet className="w-4 h-4 mr-2" />
+                    CSV
+                  </Button>
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-6">
+                {/* Cash Inflows */}
+                <div>
+                  <div className="flex items-center justify-between py-2 border-b-2 border-green-200 bg-green-50 px-3 rounded-t-lg">
+                    <span className="font-bold text-green-800">CASH INFLOWS</span>
+                  </div>
+                  <div className="space-y-2 mt-2">
+                    <div className="flex justify-between px-3 py-2">
+                      <span className="text-gray-600">From Sales Activities</span>
+                      <span className="font-medium text-green-600">+Le {profitLoss.revenue.salesRevenue.toLocaleString()}</span>
+                    </div>
+                    <div className="flex justify-between px-3 py-2 bg-gray-50">
+                      <span className="text-gray-600">From Transport Operations</span>
+                      <span className="font-medium text-green-600">+Le {profitLoss.revenue.transportRevenue.toLocaleString()}</span>
+                    </div>
+                    <div className="flex justify-between px-3 py-2">
+                      <span className="text-gray-600">From Contracts</span>
+                      <span className="font-medium text-green-600">+Le {profitLoss.revenue.contractRevenue.toLocaleString()}</span>
+                    </div>
+                    <div className="flex justify-between px-3 py-2 bg-gray-50">
+                      <span className="text-gray-600">From Other Sources</span>
+                      <span className="font-medium text-green-600">+Le {profitLoss.revenue.otherRevenue.toLocaleString()}</span>
+                    </div>
+                    <div className="flex justify-between px-3 py-3 bg-green-100 rounded-lg font-bold text-green-800">
+                      <span>Total Cash Inflows</span>
+                      <span>Le {profitLoss.revenue.totalRevenue.toLocaleString()}</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Cash Outflows */}
+                <div>
+                  <div className="flex items-center justify-between py-2 border-b-2 border-red-200 bg-red-50 px-3 rounded-t-lg">
+                    <span className="font-bold text-red-800">CASH OUTFLOWS</span>
+                  </div>
+                  <div className="space-y-2 mt-2">
+                    <div className="flex justify-between px-3 py-2">
+                      <span className="text-gray-600">Operating Expenses</span>
+                      <span className="font-medium text-red-600">-Le {profitLoss.expenses.recordedExpenses.toLocaleString()}</span>
+                    </div>
+                    <div className="flex justify-between px-3 py-2 bg-gray-50">
+                      <span className="text-gray-600">Fuel Costs</span>
+                      <span className="font-medium text-red-600">-Le {profitLoss.expenses.fuelCosts.toLocaleString()}</span>
+                    </div>
+                    <div className="flex justify-between px-3 py-2">
+                      <span className="text-gray-600">Trip Costs</span>
+                      <span className="font-medium text-red-600">-Le {profitLoss.expenses.tripOtherCosts.toLocaleString()}</span>
+                    </div>
+                    <div className="flex justify-between px-3 py-2 bg-gray-50">
+                      <span className="text-gray-600">Contract Expenses</span>
+                      <span className="font-medium text-red-600">-Le {profitLoss.expenses.contractExpenses.toLocaleString()}</span>
+                    </div>
+                    <div className="flex justify-between px-3 py-2">
+                      <span className="text-gray-600">Maintenance & Repairs</span>
+                      <span className="font-medium text-red-600">-Le {profitLoss.expenses.maintenanceCosts.toLocaleString()}</span>
+                    </div>
+                    <div className="flex justify-between px-3 py-3 bg-red-100 rounded-lg font-bold text-red-800">
+                      <span>Total Cash Outflows</span>
+                      <span>Le {profitLoss.expenses.totalExpenses.toLocaleString()}</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Net Cash Flow */}
+                <div className={`p-4 rounded-lg ${profitLoss.netProfit >= 0 ? 'bg-gradient-to-r from-[#1EB053]/10 to-[#0072C6]/10 border-2 border-[#1EB053]' : 'bg-orange-50 border-2 border-orange-300'}`}>
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <span className="text-lg font-bold text-gray-900">NET CASH FLOW</span>
+                      <p className="text-sm text-gray-600">{profitLoss.netProfit >= 0 ? 'Positive Cash Position' : 'Negative Cash Position'}</p>
+                    </div>
+                    <div className="text-right">
+                      <p className={`text-3xl font-bold ${profitLoss.netProfit >= 0 ? 'text-[#0072C6]' : 'text-orange-600'}`}>
+                        Le {profitLoss.netProfit.toLocaleString()}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* Balance Sheet */}
+        <TabsContent value="balance" className="mt-6">
+          <Card className="overflow-hidden">
+            <div className="h-1 flex">
+              <div className="flex-1 bg-[#1EB053]" />
+              <div className="flex-1 bg-white" />
+              <div className="flex-1 bg-[#0072C6]" />
+            </div>
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <div>
+                  <CardTitle>Balance Sheet</CardTitle>
+                  <CardDescription>As of {format(dateRange.end, 'MMM d, yyyy')}</CardDescription>
+                </div>
+                <div className="flex gap-2">
+                  <Button variant="outline" size="sm" onClick={() => exportToPDF('balance')}>
+                    <Download className="w-4 h-4 mr-2" />
+                    PDF
+                  </Button>
+                  <Button variant="outline" size="sm" onClick={() => exportToCSV('balance')}>
+                    <FileSpreadsheet className="w-4 h-4 mr-2" />
+                    CSV
+                  </Button>
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="grid md:grid-cols-2 gap-6">
+                {/* Assets */}
+                <div>
+                  <div className="flex items-center justify-between py-2 border-b-2 border-[#1EB053] bg-green-50 px-3 rounded-t-lg mb-3">
+                    <span className="font-bold text-green-800">ASSETS</span>
+                  </div>
+                  <div className="space-y-2">
+                    <div className="flex justify-between px-3 py-2">
+                      <span className="text-gray-600">Cash & Cash Equivalents</span>
+                      <span className="font-medium">Le {profitLoss.revenue.totalRevenue.toLocaleString()}</span>
+                    </div>
+                    <div className="flex justify-between px-3 py-3 bg-green-100 rounded-lg font-bold text-green-800 mt-3">
+                      <span>Total Assets</span>
+                      <span>Le {profitLoss.revenue.totalRevenue.toLocaleString()}</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Liabilities & Equity */}
+                <div>
+                  {/* Liabilities */}
+                  <div className="flex items-center justify-between py-2 border-b-2 border-red-200 bg-red-50 px-3 rounded-t-lg mb-3">
+                    <span className="font-bold text-red-800">LIABILITIES</span>
+                  </div>
+                  <div className="space-y-2 mb-6">
+                    <div className="flex justify-between px-3 py-2">
+                      <span className="text-gray-600">Operating Liabilities</span>
+                      <span className="font-medium">Le {profitLoss.expenses.totalExpenses.toLocaleString()}</span>
+                    </div>
+                    <div className="flex justify-between px-3 py-3 bg-red-100 rounded-lg font-bold text-red-800">
+                      <span>Total Liabilities</span>
+                      <span>Le {profitLoss.expenses.totalExpenses.toLocaleString()}</span>
+                    </div>
+                  </div>
+
+                  {/* Equity */}
+                  <div className="flex items-center justify-between py-2 border-b-2 border-[#0072C6] bg-blue-50 px-3 rounded-t-lg mb-3">
+                    <span className="font-bold text-blue-800">EQUITY</span>
+                  </div>
+                  <div className="space-y-2">
+                    <div className="flex justify-between px-3 py-2">
+                      <span className="text-gray-600">Retained Earnings</span>
+                      <span className="font-medium">Le {profitLoss.netProfit.toLocaleString()}</span>
+                    </div>
+                    <div className="flex justify-between px-3 py-3 bg-blue-100 rounded-lg font-bold text-blue-800">
+                      <span>Total Equity</span>
+                      <span>Le {profitLoss.netProfit.toLocaleString()}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Balance Check */}
+              <div className="mt-6 p-4 bg-gray-50 rounded-lg border border-gray-200">
+                <div className="flex items-center justify-between">
+                  <span className="font-semibold text-gray-700">Total Liabilities + Equity</span>
+                  <span className="font-bold text-gray-900">Le {(profitLoss.expenses.totalExpenses + profitLoss.netProfit).toLocaleString()}</span>
+                </div>
+                <p className="text-xs text-gray-500 mt-2">
+                  ⓘ Balance sheet based on period activities. For complete asset valuation, consult with accountant.
+                </p>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
         {/* Expense Analysis */}
         <TabsContent value="expenses" className="mt-6">
           <Card className="overflow-hidden">
@@ -657,8 +1195,22 @@ Format your response in markdown with clear sections.`,
               <div className="flex-1 bg-[#0072C6]" />
             </div>
             <CardHeader>
-              <CardTitle>Expense Breakdown Analysis</CardTitle>
-              <CardDescription>Detailed view of expenses by category</CardDescription>
+              <div className="flex items-center justify-between">
+                <div>
+                  <CardTitle>Expense Breakdown Analysis</CardTitle>
+                  <CardDescription>Detailed view of expenses by category</CardDescription>
+                </div>
+                <div className="flex gap-2">
+                  <Button variant="outline" size="sm" onClick={() => exportToPDF('expenses')}>
+                    <Download className="w-4 h-4 mr-2" />
+                    PDF
+                  </Button>
+                  <Button variant="outline" size="sm" onClick={() => exportToCSV('expenses')}>
+                    <FileSpreadsheet className="w-4 h-4 mr-2" />
+                    CSV
+                  </Button>
+                </div>
+              </div>
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
