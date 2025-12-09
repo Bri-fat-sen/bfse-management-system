@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { 
@@ -24,7 +24,8 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
-import { format } from "date-fns";
+import { format, formatDistanceToNow } from "date-fns";
+import { toast } from "sonner";
 import { Link } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 
@@ -64,7 +65,7 @@ export default function NotificationCenter({ orgId, currentEmployee }) {
   });
 
   // Combine and deduplicate notifications
-  const notifications = React.useMemo(() => {
+  const notifications = useMemo(() => {
     const allNotifications = [...notificationsByEmployee, ...notificationsByEmail];
     const uniqueIds = new Set();
     return allNotifications

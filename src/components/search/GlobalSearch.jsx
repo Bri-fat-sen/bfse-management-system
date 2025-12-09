@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery } from "@tanstack/react-query";
 import { Input } from "@/components/ui/input";
@@ -31,12 +31,12 @@ const entityConfig = {
 };
 
 export default function GlobalSearch({ orgId, isOpen, onClose }) {
-  const [query, setQuery] = React.useState("");
-  const [recentSearches, setRecentSearches] = React.useState([]);
-  const [activeFilter, setActiveFilter] = React.useState("all");
-  const inputRef = React.useRef(null);
+  const [query, setQuery] = useState("");
+  const [recentSearches, setRecentSearches] = useState([]);
+  const [activeFilter, setActiveFilter] = useState("all");
+  const inputRef = useRef(null);
 
-  React.useEffect(() => {
+  useEffect(() => {
     if (isOpen && inputRef.current) {
       setTimeout(() => inputRef.current?.focus(), 100);
     }
@@ -44,7 +44,7 @@ export default function GlobalSearch({ orgId, isOpen, onClose }) {
     if (saved) setRecentSearches(JSON.parse(saved));
   }, [isOpen]);
 
-  React.useEffect(() => {
+  useEffect(() => {
     const handleKeyDown = (e) => {
       if (isOpen && e.key === 'Escape') {
         onClose();
