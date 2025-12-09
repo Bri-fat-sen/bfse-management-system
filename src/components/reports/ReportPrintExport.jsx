@@ -5,9 +5,9 @@ import { generateProfessionalReport, downloadProfessionalReportAsPDF } from "@/c
 export function printSalesReport({ salesAnalytics = {}, filters = {}, organisation, filteredSales = [] }) {
   const analytics = salesAnalytics || {};
   const summaryCards = [
-    { label: "Total Revenue", value: `SLE ${(analytics.totalRevenue || 0).toLocaleString()}`, subtext: 'Gross sales revenue' },
+    { label: "Total Revenue", value: `Le ${(analytics.totalRevenue || 0).toLocaleString()}`, subtext: 'Gross sales revenue' },
     { label: "Transactions", value: analytics.totalTransactions || 0, subtext: 'Total orders' },
-    { label: "Avg Transaction", value: `SLE ${Math.round(analytics.avgTransaction || 0).toLocaleString()}`, subtext: 'Per order' },
+    { label: "Avg Transaction", value: `Le ${Math.round(analytics.avgTransaction || 0).toLocaleString()}`, subtext: 'Per order' },
     { label: "Top Channel", value: analytics.byChannel?.[0]?.name || 'N/A', subtext: 'Best performer' }
   ];
 
@@ -38,9 +38,9 @@ export function printSalesReport({ salesAnalytics = {}, filters = {}, organisati
             s.employee_name || '-',
             (s.payment_method || 'cash').replace(/_/g, ' ').charAt(0).toUpperCase() + (s.payment_method || 'cash').replace(/_/g, ' ').slice(1),
             s.payment_status || 'paid',
-            `SLE ${(s.total_amount || 0).toLocaleString()}`
+            `Le ${(s.total_amount || 0).toLocaleString()}`
           ]),
-          ['GRAND TOTAL', '', '', '', '', '', `SLE ${(analytics.totalRevenue || 0).toLocaleString()}`]
+          ['GRAND TOTAL', '', '', '', '', '', `Le ${(analytics.totalRevenue || 0).toLocaleString()}`]
         ]
       }
     }
@@ -78,7 +78,7 @@ export function printSalesReport({ salesAnalytics = {}, filters = {}, organisati
 export function printExpenseReport({ expenseAnalytics = {}, filters = {}, organisation, filteredExpenses = [] }) {
   const analytics = expenseAnalytics || {};
   const summaryCards = [
-    { label: "Total Expenses", value: `SLE ${(analytics.totalExpenses || 0).toLocaleString()}`, subtext: 'All categories', highlight: 'red' },
+    { label: "Total Expenses", value: `Le ${(analytics.totalExpenses || 0).toLocaleString()}`, subtext: 'All categories', highlight: 'red' },
     { label: "Categories", value: analytics.byCategory?.length || 0, subtext: 'Expense types' },
     { label: "Records", value: filteredExpenses.length, subtext: 'Total entries' },
     { label: "Highest Category", value: analytics.byCategory?.[0]?.name || 'N/A', subtext: 'Top expense' }
@@ -88,7 +88,7 @@ export function printExpenseReport({ expenseAnalytics = {}, filters = {}, organi
   const categoryBreakdown = {};
   (analytics.byCategory || []).forEach(c => {
     if (c?.name) {
-      const name = c.name.replace(/_/g, ' ').split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+      const name = c.name.replace(/_/g, ' ').charAt(0).toUpperCase() + c.name.replace(/_/g, ' ').slice(1);
       categoryBreakdown[name] = c.value || 0;
     }
   });
@@ -110,14 +110,14 @@ export function printExpenseReport({ expenseAnalytics = {}, filters = {}, organi
             const formattedDate = expDate ? format(new Date(expDate), 'MMM d, yyyy') : '-';
             return [
             formattedDate,
-            (e.category || 'other').replace(/_/g, ' ').split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' '),
+            (e.category || 'other').replace(/_/g, ' ').charAt(0).toUpperCase() + (e.category || 'other').replace(/_/g, ' ').slice(1),
             e.description || '-',
             e.vendor || '-',
             (e.payment_method || 'cash').replace(/_/g, ' ').charAt(0).toUpperCase() + (e.payment_method || 'cash').replace(/_/g, ' ').slice(1),
             e.status || 'pending',
-            `SLE ${(e.amount || 0).toLocaleString()}`
+            `Le ${(e.amount || 0).toLocaleString()}`
           ]; }),
-          ['GRAND TOTAL', '', '', '', '', '', `SLE ${(analytics.totalExpenses || 0).toLocaleString()}`]
+          ['GRAND TOTAL', '', '', '', '', '', `Le ${(analytics.totalExpenses || 0).toLocaleString()}`]
         ]
       }
     }
@@ -145,10 +145,10 @@ export function printExpenseReport({ expenseAnalytics = {}, filters = {}, organi
 export function printTransportReport({ transportAnalytics = {}, filters = {}, organisation, filteredTrips = [] }) {
   const analytics = transportAnalytics || {};
   const summaryCards = [
-    { label: "Total Revenue", value: `SLE ${(analytics.totalRevenue || 0).toLocaleString()}`, subtext: 'Gross revenue' },
+    { label: "Total Revenue", value: `Le ${(analytics.totalRevenue || 0).toLocaleString()}`, subtext: 'Gross revenue' },
     { label: "Total Trips", value: analytics.totalTrips || 0, subtext: 'Completed trips' },
     { label: "Passengers", value: analytics.totalPassengers || 0, subtext: 'Total carried' },
-    { label: "Net Revenue", value: `SLE ${(analytics.netRevenue || 0).toLocaleString()}`, subtext: 'After fuel costs', highlight: (analytics.netRevenue || 0) >= 0 ? 'green' : 'red' }
+    { label: "Net Revenue", value: `Le ${(analytics.netRevenue || 0).toLocaleString()}`, subtext: 'After fuel costs', highlight: (analytics.netRevenue || 0) >= 0 ? 'green' : 'red' }
   ];
 
   // Route breakdown
@@ -180,15 +180,15 @@ export function printTransportReport({ transportAnalytics = {}, filters = {}, or
             t.vehicle_registration || '-',
             t.driver_name || '-',
             t.passengers_count || 0,
-            `SLE ${(t.total_revenue || 0).toLocaleString()}`,
-            `SLE ${(t.fuel_cost || 0).toLocaleString()}`,
-            `SLE ${(t.net_revenue || 0).toLocaleString()}`
+            `Le ${(t.total_revenue || 0).toLocaleString()}`,
+            `Le ${(t.fuel_cost || 0).toLocaleString()}`,
+            `Le ${(t.net_revenue || 0).toLocaleString()}`
           ]; }),
           ['GRAND TOTAL', '', '', '', 
             analytics.totalPassengers || 0,
-            `SLE ${(analytics.totalRevenue || 0).toLocaleString()}`,
-            `SLE ${(analytics.totalFuelCost || 0).toLocaleString()}`,
-            `SLE ${(analytics.netRevenue || 0).toLocaleString()}`
+            `Le ${(analytics.totalRevenue || 0).toLocaleString()}`,
+            `Le ${(analytics.totalFuelCost || 0).toLocaleString()}`,
+            `Le ${(analytics.netRevenue || 0).toLocaleString()}`
           ]
         ]
       }
@@ -224,7 +224,7 @@ export function printInventoryReport({ products = [], organisation }) {
     { label: "Total Products", value: totalProducts, subtext: 'Active items' },
     { label: "Low Stock Items", value: lowStock, subtext: 'Need restocking', highlight: lowStock > 0 ? 'red' : 'green' },
     { label: "Out of Stock", value: outOfStock, subtext: 'Unavailable', highlight: outOfStock > 0 ? 'red' : 'green' },
-    { label: "Stock Value", value: `SLE ${totalValue.toLocaleString()}`, subtext: 'Total inventory value' }
+    { label: "Stock Value", value: `Le ${totalValue.toLocaleString()}`, subtext: 'Total inventory value' }
   ];
 
   // Category breakdown
@@ -271,12 +271,12 @@ export function printInventoryReport({ products = [], organisation }) {
             p.name || '-',
             p.category || 'Uncategorized',
             qty,
-            `SLE ${(p.unit_price || 0).toLocaleString()}`,
-            `SLE ${(qty * (p.unit_price || 0)).toLocaleString()}`,
+            `Le ${(p.unit_price || 0).toLocaleString()}`,
+            `Le ${(qty * (p.unit_price || 0)).toLocaleString()}`,
             status
           ];
         }),
-        ['GRAND TOTAL', '', '', products.reduce((s, p) => s + (p.stock_quantity || 0), 0), '', `SLE ${totalValue.toLocaleString()}`, '']
+        ['GRAND TOTAL', '', '', products.reduce((s, p) => s + (p.stock_quantity || 0), 0), '', `Le ${totalValue.toLocaleString()}`, '']
       ]
     }
   });
@@ -301,9 +301,9 @@ export function printProfitLossReport({ profitLoss = {}, salesAnalytics = {}, tr
   const expenses = expenseAnalytics || {};
   
   const summaryCards = [
-    { label: "Total Revenue", value: `SLE ${(pl.revenue || 0).toLocaleString()}`, subtext: 'All income sources' },
-    { label: "Total Expenses", value: `SLE ${(pl.expenses || 0).toLocaleString()}`, subtext: 'All expenditures', highlight: 'red' },
-    { label: "Net Profit/Loss", value: `SLE ${(pl.profit || 0).toLocaleString()}`, subtext: (pl.profit || 0) >= 0 ? 'Profitable ✓' : 'Operating at loss', highlight: (pl.profit || 0) >= 0 ? 'green' : 'red' },
+    { label: "Total Revenue", value: `Le ${(pl.revenue || 0).toLocaleString()}`, subtext: 'All income sources' },
+    { label: "Total Expenses", value: `Le ${(pl.expenses || 0).toLocaleString()}`, subtext: 'All expenditures', highlight: 'red' },
+    { label: "Net Profit/Loss", value: `Le ${(pl.profit || 0).toLocaleString()}`, subtext: (pl.profit || 0) >= 0 ? 'Profitable ✓' : 'Operating at loss', highlight: (pl.profit || 0) >= 0 ? 'green' : 'red' },
     { label: "Profit Margin", value: `${pl.margin || 0}%`, subtext: 'Efficiency ratio' }
   ];
 
@@ -315,7 +315,7 @@ export function printProfitLossReport({ profitLoss = {}, salesAnalytics = {}, tr
   const expenseBreakdown = {};
   (expenses.byCategory || []).forEach(c => {
     if (c?.name) {
-      const name = c.name.replace(/_/g, ' ').split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+      const name = c.name.replace(/_/g, ' ').charAt(0).toUpperCase() + c.name.replace(/_/g, ' ').slice(1);
       expenseBreakdown[name] = c.value || 0;
     }
   });
@@ -335,18 +335,18 @@ export function printProfitLossReport({ profitLoss = {}, salesAnalytics = {}, tr
       title: 'Profit & Loss Summary',
       icon: '📊',
       table: {
-        columns: ["Category", "Type", "Amount (SLE)"],
+        columns: ["Category", "Type", "Amount"],
         rows: [
-          ["Sales Revenue", "Income", `SLE ${(sales.totalRevenue || 0).toLocaleString()}`],
-          ["Transport Revenue", "Income", `SLE ${(transport.totalRevenue || 0).toLocaleString()}`],
+          ["Sales Revenue", "Income", `Le ${(sales.totalRevenue || 0).toLocaleString()}`],
+          ["Transport Revenue", "Income", `Le ${(transport.totalRevenue || 0).toLocaleString()}`],
           ...(expenses.byCategory || []).map(c => [
             (c?.name || 'Other').replace(/_/g, ' ').split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' '),
             "Expense",
-            `SLE ${(c?.value || 0).toLocaleString()}`
+            `Le ${(c?.value || 0).toLocaleString()}`
           ]),
-          ["Total Revenue", "Subtotal", `SLE ${(pl.revenue || 0).toLocaleString()}`],
-          ["Total Expenses", "Subtotal", `SLE ${(pl.expenses || 0).toLocaleString()}`],
-          ["NET PROFIT/LOSS", "Total", `SLE ${(pl.profit || 0).toLocaleString()}`]
+          ["Total Revenue", "Subtotal", `Le ${(pl.revenue || 0).toLocaleString()}`],
+          ["Total Expenses", "Subtotal", `Le ${(pl.expenses || 0).toLocaleString()}`],
+          ["NET PROFIT/LOSS", "Total", `Le ${(pl.profit || 0).toLocaleString()}`]
         ]
       }
     },
