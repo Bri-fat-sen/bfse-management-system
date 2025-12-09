@@ -164,35 +164,61 @@ export default function InventoryReport({
   const exportCSV = () => {
     exportCSVUtil(
       reportData.columns,
-      reportData.rows.map(row => Object.values(row)),
-      `${reportType}_${format(new Date(), 'yyyy-MM-dd')}.csv`
+      reportData.rows.map(row => Object.values(row).map(v => 
+        typeof v === 'string' ? v.replace('SLE', 'Le') : v
+      )),
+      `${reportType}_${format(new Date(), 'yyyy-MM-dd')}.csv`,
+      organisation
     );
   };
 
   const printReport = () => {
-    // Convert summary object to array format
     const summaryCards = Object.entries(reportData.summary).map(([key, value]) => ({
       label: key.replace(/([A-Z])/g, ' $1').trim(),
       value: typeof value === 'number' && key.toLowerCase().includes('value') 
-        ? `SLE ${value.toLocaleString()}` 
+        ? `Le ${value.toLocaleString()}` 
         : value.toLocaleString(),
       highlight: key.toLowerCase().includes('out') || key.toLowerCase().includes('critical') ? 'red' : 
                  key.toLowerCase().includes('profit') ? 'green' : undefined
     }));
 
+    const sections = [{
+      title: 'Inventory Details',
+      icon: '📦',
+      table: { 
+        columns: reportData.columns, 
+        rows: reportData.rows.map(row => Object.values(row)) 
+      }
+    }];
+
+    if (reportType === 'low_stock' && reportData.rows.length > 0) {
+      sections.push({
+        title: '',
+        content: `
+          <div class="totals-box">
+            <div class="totals-row">
+              <span>Items Requiring Reorder</span>
+              <span>${reportData.rows.length}</span>
+            </div>
+            <div class="totals-row grand">
+              <span>Critical Items (Stock ≤ 5)</span>
+              <span>${reportData.rows.filter(r => r.currentStock <= 5).length}</span>
+            </div>
+          </div>
+        `
+      });
+    }
+
     const html = generateUnifiedPDF({
       documentType: 'report',
       title: reportData.title,
       organisation: organisation,
+      infoBar: [{ label: 'Generated', value: format(new Date(), 'MMMM d, yyyy h:mm a') }],
       summaryCards: summaryCards,
-      sections: [{
-        title: 'Report Details',
-        icon: '📦',
-        table: { 
-          columns: reportData.columns, 
-          rows: reportData.rows.map(row => Object.values(row)) 
-        }
-      }]
+      sections,
+      notes: reportType === 'low_stock' && reportData.rows.length > 0 
+        ? 'Action Required: These items are at or below minimum stock levels and should be reordered.'
+        : undefined
     });
     
     printUnifiedPDF(html, `${reportType}_${format(new Date(), 'yyyy-MM-dd')}.pdf`);

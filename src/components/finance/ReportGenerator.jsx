@@ -207,34 +207,64 @@ export default function ReportGenerator({ sales = [], expenses = [], employees =
   const handleExportPDF = () => {
     if (!reportData) return;
     
-    // Convert summary to cards format
     const summaryCards = reportData.summary.map(item => ({
       label: item.label,
-      value: item.value,
+      value: item.value.toString().replace('SLE', 'Le'),
       highlight: item.highlight === 'green' ? 'green' : item.highlight === 'red' ? 'red' : undefined
     }));
 
-    // Build sections
     const sections = [];
     
-    // Add category breakdown if exists
     if (reportData.categoryBreakdown && Object.keys(reportData.categoryBreakdown).length > 0) {
       sections.push({
-        title: 'By Category',
+        title: 'Category Breakdown',
         icon: '📊',
         breakdown: reportData.categoryBreakdown
       });
     }
     
-    // Add data table
     sections.push({
-      title: 'Details',
+      title: 'Transaction Details',
       icon: '📋',
       table: {
         columns: reportData.columns,
-        rows: reportData.rows
+        rows: reportData.rows.map(row => row.map(cell => 
+          typeof cell === 'string' ? cell.replace('SLE', 'Le') : cell
+        ))
       }
     });
+
+    if (reportType === 'profit_loss') {
+      const totalRev = reportData.rows.filter(r => r[1] === 'Income').reduce((s, r) => {
+        const amt = r[2].replace(/[^\d.-]/g, '');
+        return s + parseFloat(amt || 0);
+      }, 0);
+      const totalExp = reportData.rows.filter(r => r[1] === 'Expense').reduce((s, r) => {
+        const amt = r[2].replace(/[^\d.-]/g, '');
+        return s + parseFloat(amt || 0);
+      }, 0);
+      const netProfit = totalRev - totalExp;
+
+      sections.push({
+        title: '',
+        content: `
+          <div class="totals-box">
+            <div class="totals-row">
+              <span>Total Revenue</span>
+              <span>Le ${totalRev.toLocaleString()}</span>
+            </div>
+            <div class="totals-row">
+              <span>Total Expenses</span>
+              <span>Le ${totalExp.toLocaleString()}</span>
+            </div>
+            <div class="totals-row grand">
+              <span>Net Profit/Loss</span>
+              <span>${netProfit >= 0 ? '+' : ''}Le ${netProfit.toLocaleString()}</span>
+            </div>
+          </div>
+        `
+      });
+    }
 
     const html = generateUnifiedPDF({
       documentType: 'report',
@@ -246,7 +276,7 @@ export default function ReportGenerator({ sales = [], expenses = [], employees =
     });
     
     printUnifiedPDF(html, `${reportType}_report_${format(new Date(), 'yyyy-MM-dd')}.pdf`);
-    toast({ title: "Report printed" });
+    toast({ title: "Report downloaded" });
   };
 
   return (
