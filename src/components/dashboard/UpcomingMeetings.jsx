@@ -1,4 +1,4 @@
-import React from "react";
+import { } from "react";
 import { format, isToday, isTomorrow, parseISO } from "date-fns";
 import { Calendar, Clock, Users, Video, MapPin } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
