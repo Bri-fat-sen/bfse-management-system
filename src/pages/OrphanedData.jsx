@@ -62,6 +62,17 @@ const ENTITY_CONFIG = [
   { name: "ActivityLog", icon: Clock, parentField: "employee_id", parentEntity: "Employee" },
   { name: "BankDeposit", icon: DollarSign, parentField: "deposited_by", parentEntity: "Employee" },
   { name: "PayrollAudit", icon: DollarSign, parentField: "employee_id", parentEntity: "Employee" },
+  { name: "WorkSchedule", icon: Clock, parentField: "employee_id", parentEntity: "Employee" },
+  { name: "TruckContract", icon: Truck, parentField: "driver_id", parentEntity: "Employee" },
+  { name: "VehicleMaintenance", icon: Truck, parentField: "performed_by", parentEntity: "Employee" },
+  { name: "ProductionBatch", icon: Package, parentField: "supervisor_id", parentEntity: "Employee" },
+  { name: "SavedReport", icon: FileText, parentField: "created_by_id", parentEntity: "Employee" },
+  { name: "Budget", icon: DollarSign, parentField: "assigned_to_id", parentEntity: "Employee" },
+  { name: "Budget", icon: DollarSign, parentField: "created_by_id", parentEntity: "Employee", secondCheck: true },
+  { name: "PayrollRun", icon: DollarSign, parentField: "created_by_id", parentEntity: "Employee" },
+  { name: "PayrollRun", icon: DollarSign, parentField: "submitted_by_id", parentEntity: "Employee", secondCheck: true },
+  { name: "PayrollRun", icon: DollarSign, parentField: "reviewed_by_id", parentEntity: "Employee", thirdCheck: true },
+  { name: "PayrollRun", icon: DollarSign, parentField: "approved_by_id", parentEntity: "Employee", fourthCheck: true },
   
   // Product references
   { name: "StockMovement", icon: Package, parentField: "product_id", parentEntity: "Product" },
@@ -72,14 +83,18 @@ const ENTITY_CONFIG = [
   { name: "ReorderSuggestion", icon: Package, parentField: "product_id", parentEntity: "Product" },
   { name: "StockAlert", icon: Package, parentField: "product_id", parentEntity: "Product" },
   { name: "InventoryAudit", icon: Package, parentField: "product_id", parentEntity: "Product" },
+  { name: "ProductionBatch", icon: Package, parentField: "product_id", parentEntity: "Product", secondCheck: true },
   
   // Warehouse references
   { name: "StockLevel", icon: Package, parentField: "warehouse_id", parentEntity: "Warehouse", secondCheck: true },
   { name: "StockMovement", icon: Package, parentField: "warehouse_id", parentEntity: "Warehouse", secondCheck: true },
   { name: "Vehicle", icon: Truck, parentField: "parent_warehouse_id", parentEntity: "Warehouse" },
+  { name: "Budget", icon: DollarSign, parentField: "location_id", parentEntity: "Warehouse", thirdCheck: true },
   
   // Vehicle references
   { name: "Trip", icon: Truck, parentField: "vehicle_id", parentEntity: "Vehicle", secondCheck: true },
+  { name: "TruckContract", icon: Truck, parentField: "vehicle_id", parentEntity: "Vehicle", secondCheck: true },
+  { name: "VehicleMaintenance", icon: Truck, parentField: "vehicle_id", parentEntity: "Vehicle", secondCheck: true },
   
   // Supplier references
   { name: "SupplierProduct", icon: Package, parentField: "supplier_id", parentEntity: "Supplier", secondCheck: true },
