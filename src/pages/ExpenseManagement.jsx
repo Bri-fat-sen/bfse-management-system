@@ -38,7 +38,8 @@ import {
   Upload,
   Plus,
   Edit2,
-  Printer
+  Printer,
+  Sparkles
 } from "lucide-react";
 import { useToast } from "@/components/ui/Toast";
 import LoadingSpinner from "@/components/ui/LoadingSpinner";
@@ -219,6 +220,7 @@ export default function ExpenseManagement() {
   const [showBulkDeleteDialog, setShowBulkDeleteDialog] = useState(false);
   const [bulkDeleteLoading, setBulkDeleteLoading] = useState(false);
   const [showExpenseDialog, setShowExpenseDialog] = useState(false);
+  const [showAICategorizerDialog, setShowAICategorizerDialog] = useState(false);
 
   const { data: user } = useQuery({
     queryKey: ['currentUser'],
@@ -436,6 +438,14 @@ export default function ExpenseManagement() {
         </div>
         <div className="flex gap-2 flex-wrap">
           <PrintFormsButtons organisation={organisation?.[0]} />
+          <Button
+            variant="outline"
+            onClick={() => setShowAICategorizerDialog(true)}
+            className="border-purple-500 text-purple-600 hover:bg-purple-50"
+          >
+            <Sparkles className="w-4 h-4 mr-2" />
+            AI Categorize
+          </Button>
           {filteredExpenses.length > 0 && (
             <Button
               variant="outline"
@@ -942,6 +952,16 @@ export default function ExpenseManagement() {
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* AI Expense Categorizer */}
+      <AIExpenseCategorizer
+        open={showAICategorizerDialog}
+        onOpenChange={setShowAICategorizerDialog}
+        expenses={expenses}
+        categories={EXPENSE_CATEGORIES}
+        orgId={orgId}
+        currentEmployee={currentEmployee}
+      />
 
       {/* Bulk Delete Confirmation Dialog */}
       <Dialog open={showBulkDeleteDialog} onOpenChange={setShowBulkDeleteDialog}>

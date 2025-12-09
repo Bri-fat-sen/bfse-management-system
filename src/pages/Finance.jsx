@@ -78,6 +78,7 @@ import AIFinancialAnalysis from "@/components/finance/AIFinancialAnalysis";
 import DocumentUploadExtractor from "@/components/finance/DocumentUploadExtractor";
 import CategoryBreakdownChart from "@/components/finance/CategoryBreakdownChart";
 import AutomatedFinancialReports from "@/components/finance/AutomatedFinancialReports";
+import AIExpenseCategorizer from "@/components/finance/AIExpenseCategorizer";
 
 const expenseCategories = [
   "fuel", "maintenance", "utilities", "supplies", "rent", 
@@ -110,6 +111,7 @@ export default function Finance() {
   const [showBulkDeleteExpenses, setShowBulkDeleteExpenses] = useState(false);
   const [showBulkDeleteRevenues, setShowBulkDeleteRevenues] = useState(false);
   const [bulkDeleteLoading, setBulkDeleteLoading] = useState(false);
+  const [showAICategorizerDialog, setShowAICategorizerDialog] = useState(false);
 
   const { data: user } = useQuery({
     queryKey: ['currentUser'],
@@ -1194,6 +1196,15 @@ export default function Finance() {
               <CardHeader className="flex flex-row items-center justify-between flex-wrap gap-2">
                 <CardTitle>Expense Records</CardTitle>
                 <div className="flex items-center gap-2 flex-wrap">
+                  <Button
+                    variant="outline"
+                    onClick={() => setShowAICategorizerDialog(true)}
+                    className="border-purple-500 text-purple-600 hover:bg-purple-50"
+                    size="sm"
+                  >
+                    <Sparkles className="w-4 h-4 mr-2" />
+                    AI Categorize
+                  </Button>
                   <Select value={categoryFilter} onValueChange={setCategoryFilter}>
                     <SelectTrigger className="w-40">
                       <Filter className="w-4 h-4 mr-2" />
@@ -1792,6 +1803,16 @@ export default function Finance() {
             </Card>
           </TabsContent>
         </Tabs>
+
+        {/* AI Expense Categorizer */}
+        <AIExpenseCategorizer
+          open={showAICategorizerDialog}
+          onOpenChange={setShowAICategorizerDialog}
+          expenses={expenses}
+          categories={expenseCategories.map(cat => ({ value: cat, label: cat.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase()) }))}
+          orgId={orgId}
+          currentEmployee={currentEmployee}
+        />
 
         {/* Add Expense Dialog */}
         <Dialog open={showExpenseDialog} onOpenChange={setShowExpenseDialog}>
