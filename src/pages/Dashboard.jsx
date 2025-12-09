@@ -1,4 +1,4 @@
-import { useState } from "react";
+import React, { useState } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery } from "@tanstack/react-query";
 import { format, differenceInDays } from "date-fns";
@@ -48,6 +48,7 @@ import TransportMetrics from "@/components/dashboard/TransportMetrics";
 import FinanceOverview from "@/components/dashboard/FinanceOverview";
 import PerformanceIndicators from "@/components/dashboard/PerformanceIndicators";
 import TopPerformers from "@/components/dashboard/TopPerformers";
+import PendingApprovalsWidget from "@/components/finance/PendingApprovalsWidget";
 
 export default function Dashboard() {
   const [activeTab, setActiveTab] = useState("overview");
@@ -620,6 +621,8 @@ export default function Dashboard() {
               </CardContent>
             </Card>
           </div>
+
+          <PendingApprovalsWidget orgId={orgId} currentEmployee={currentEmployee} />
         </TabsContent>
 
         {/* Sales Tab */}
