@@ -636,48 +636,76 @@ export default function Sales() {
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <PageHeader
-          title="Sales & POS"
-          subtitle="Process sales and view transactions"
-        />
+    <div className="space-y-4 sm:space-y-6">
+      {/* Sierra Leone Stripe */}
+      <div className="h-1 w-full flex rounded-full overflow-hidden">
+        <div className="flex-1 bg-[#1EB053]" />
+        <div className="flex-1 bg-white border-y border-gray-200" />
+        <div className="flex-1 bg-[#0072C6]" />
+      </div>
+
+      {/* Modern Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div className="flex items-center gap-4">
+          <div className="relative">
+            <div className="absolute -inset-1 bg-gradient-to-br from-[#1EB053] to-[#0072C6] rounded-2xl blur opacity-30" />
+            <div className="relative w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-gradient-to-br from-[#1EB053] to-[#0072C6] flex items-center justify-center shadow-xl">
+              <ShoppingCart className="w-7 h-7 sm:w-8 sm:h-8 text-white" />
+            </div>
+          </div>
+          <div>
+            <h1 className="text-2xl sm:text-3xl font-bold bg-gradient-to-r from-[#1EB053] to-[#0072C6] bg-clip-text text-transparent">
+              Point of Sale
+            </h1>
+            <p className="text-sm text-gray-500 mt-1">Process sales and manage transactions</p>
+          </div>
+        </div>
         <div className="flex gap-2">
           <Button
             onClick={() => setShowFormsDialog(true)}
             variant="outline"
-            className="gap-2"
+            className="gap-2 border-gray-300 hover:border-[#0072C6] hover:bg-[#0072C6]/5"
           >
             <Printer className="w-4 h-4" />
-            <span className="hidden sm:inline">Print Forms</span>
+            <span className="hidden sm:inline">Forms</span>
           </Button>
           <Button
             onClick={() => setShowUploadDialog(true)}
-            variant="outline"
-            className="gap-2"
+            className="gap-2 bg-gradient-to-r from-[#1EB053] to-[#0072C6] hover:shadow-lg transition-all"
           >
             <Upload className="w-4 h-4" />
-            <span className="hidden sm:inline">Upload Sales</span>
+            <span className="hidden sm:inline">Upload</span>
           </Button>
         </div>
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="mb-6 bg-gray-100 p-1 w-full">
-          <TabsTrigger value="pos" className="flex-1 text-xs sm:text-sm data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#1EB053] data-[state=active]:to-[#0072C6] data-[state=active]:text-white">
-            POS
-          </TabsTrigger>
-          <TabsTrigger value="history" className="flex-1 text-xs sm:text-sm data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#1EB053] data-[state=active]:to-[#0072C6] data-[state=active]:text-white">
-            History
-          </TabsTrigger>
-        </TabsList>
+        <div className="relative mb-6">
+          <TabsList className="bg-white border-2 border-gray-200 p-1.5 w-full rounded-xl shadow-sm">
+            <TabsTrigger 
+              value="pos" 
+              className="flex-1 text-xs sm:text-sm rounded-lg data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#1EB053] data-[state=active]:to-[#0072C6] data-[state=active]:text-white data-[state=active]:shadow-lg transition-all"
+            >
+              <ShoppingCart className="w-4 h-4 mr-2" />
+              Point of Sale
+            </TabsTrigger>
+            <TabsTrigger 
+              value="history" 
+              className="flex-1 text-xs sm:text-sm rounded-lg data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#1EB053] data-[state=active]:to-[#0072C6] data-[state=active]:text-white data-[state=active]:shadow-lg transition-all"
+            >
+              <Receipt className="w-4 h-4 mr-2" />
+              Sales History
+            </TabsTrigger>
+          </TabsList>
+        </div>
 
         <TabsContent value="pos">
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
             {/* Products Grid */}
             <div className="lg:col-span-2 space-y-3 sm:space-y-4">
               {/* Sale Type & Location Selection */}
-              <div className="bg-white rounded-xl p-3 sm:p-4 border shadow-sm mb-3 sm:mb-4">
+              <Card className="border-t-4 border-t-[#1EB053] shadow-lg">
+                <CardContent className="p-3 sm:p-4">
                 <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
                   <div className="flex-1">
                     <label className="text-xs font-medium text-gray-500 uppercase mb-1 block">Sale Type</label>
@@ -743,23 +771,31 @@ export default function Sales() {
                   </div>
                 </div>
                 {selectedLocationData && (
-                  <div className="mt-3 p-2 bg-green-50 rounded-lg flex items-center gap-2 text-sm text-green-700">
-                    {saleType === 'vehicle' && <Truck className="w-4 h-4" />}
-                    {saleType === 'warehouse' && <Warehouse className="w-4 h-4" />}
-                    {saleType === 'retail' && <Store className="w-4 h-4" />}
-                    <span>Selling from: <strong>{selectedLocationData.name}</strong></span>
+                  <div className="mt-3 p-3 bg-gradient-to-r from-[#1EB053]/10 to-[#0072C6]/10 border border-[#1EB053]/30 rounded-xl flex items-center gap-2 text-sm">
+                    <div className="p-2 bg-white rounded-lg">
+                      {saleType === 'vehicle' && <Truck className="w-4 h-4 text-purple-600" />}
+                      {saleType === 'warehouse' && <Warehouse className="w-4 h-4 text-blue-600" />}
+                      {saleType === 'retail' && <Store className="w-4 h-4 text-green-600" />}
+                    </div>
+                    <div>
+                      <p className="text-xs text-gray-500 font-medium">Selling from</p>
+                      <p className="font-bold text-gray-900">{selectedLocationData.name}</p>
+                    </div>
                   </div>
                 )}
-              </div>
+                </CardContent>
+              </Card>
 
               {/* Search */}
               <div className="relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                <div className="absolute left-3 top-1/2 -translate-y-1/2 p-2 bg-gradient-to-br from-[#1EB053]/10 to-[#0072C6]/10 rounded-lg">
+                  <Search className="w-4 h-4 text-[#1EB053]" />
+                </div>
                 <Input
-                  placeholder="Search products..."
+                  placeholder="Search products by name or SKU..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10"
+                  className="pl-14 h-12 border-2 border-gray-200 focus:border-[#1EB053] rounded-xl shadow-sm"
                 />
               </div>
 
@@ -776,43 +812,68 @@ export default function Sales() {
                   description="Add products to your inventory to start selling"
                 />
               ) : (
-                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2 sm:gap-4">
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 sm:gap-4">
                   {filteredProducts.map((product) => {
                     const stockAtLocation = product.location_stock;
                     const isOutOfStock = stockAtLocation < 1;
+                    const isLowStock = stockAtLocation > 0 && stockAtLocation <= (product.low_stock_threshold || 10);
                     
                     return (
                       <Card
                         key={product.id}
-                        className={`cursor-pointer hover:shadow-lg transition-all hover:scale-105 ${
-                          isOutOfStock ? 'opacity-50' : ''
-                        }`}
+                        className={cn(
+                          "group cursor-pointer transition-all hover:shadow-xl border-2",
+                          isOutOfStock ? 'opacity-50 border-red-200 bg-red-50/30' : 
+                          isLowStock ? 'border-amber-200 bg-amber-50/30' : 
+                          'border-gray-200 hover:border-[#1EB053] hover:-translate-y-1'
+                        )}
                         onClick={() => addToCart(product)}
                       >
-                        <CardContent className="p-2 sm:p-4">
-                          {product.image_url ? (
-                            <img
-                              src={product.image_url}
-                              alt={product.name}
-                              className="w-full h-14 sm:h-20 object-cover rounded-lg mb-2"
-                            />
-                          ) : (
-                            <div className="w-full h-14 sm:h-20 bg-gradient-to-br from-[#1EB053]/20 to-[#1D5FC3]/20 rounded-lg mb-2 flex items-center justify-center">
-                              <Package className="w-6 h-6 sm:w-8 sm:h-8 text-[#1D5FC3]" />
+                        <CardContent className="p-3 sm:p-4">
+                          <div className="relative mb-3">
+                            {product.image_url ? (
+                              <img
+                                src={product.image_url}
+                                alt={product.name}
+                                className="w-full h-16 sm:h-24 object-cover rounded-xl"
+                              />
+                            ) : (
+                              <div className="w-full h-16 sm:h-24 bg-gradient-to-br from-[#1EB053]/20 via-white to-[#0072C6]/20 rounded-xl flex items-center justify-center group-hover:from-[#1EB053]/30 group-hover:to-[#0072C6]/30 transition-all">
+                                <Package className="w-8 h-8 sm:w-10 sm:h-10 text-[#0072C6]" />
+                              </div>
+                            )}
+                            <div className="absolute top-2 right-2">
+                              <Badge 
+                                className={cn(
+                                  "text-[10px] font-bold shadow-lg",
+                                  isOutOfStock ? "bg-red-500" : 
+                                  isLowStock ? "bg-amber-500" : 
+                                  "bg-gradient-to-r from-[#1EB053] to-[#0e7f3d]"
+                                )}
+                                title={selectedLocation ? "Stock at this location" : "Total stock"}
+                              >
+                                {stockAtLocation}
+                              </Badge>
                             </div>
-                          )}
-                          <h3 className="font-medium text-xs sm:text-sm truncate">{product.name}</h3>
-                          <div className="flex items-center justify-between mt-1">
-                            <p className="text-[#1EB053] font-bold text-xs sm:text-sm">
-                              Le {(saleType === 'warehouse' ? (product.wholesale_price || product.unit_price) : product.unit_price)?.toLocaleString()}
-                            </p>
-                            <Badge 
-                              variant={stockAtLocation > 0 ? "secondary" : "destructive"} 
-                              className="text-[10px] sm:text-xs"
-                              title={selectedLocation ? "Stock at this location" : "Total stock"}
+                          </div>
+                          <h3 className="font-semibold text-xs sm:text-sm truncate text-gray-900 mb-2">{product.name}</h3>
+                          <div className="flex items-center justify-between">
+                            <div>
+                              <p className="text-xs text-gray-500 font-medium">Price</p>
+                              <p className="font-bold text-sm sm:text-base bg-gradient-to-r from-[#1EB053] to-[#0e7f3d] bg-clip-text text-transparent">
+                                Le {(saleType === 'warehouse' ? (product.wholesale_price || product.unit_price) : product.unit_price)?.toLocaleString()}
+                              </p>
+                            </div>
+                            <Button 
+                              size="icon" 
+                              className="h-8 w-8 rounded-full bg-gradient-to-r from-[#1EB053] to-[#0072C6] opacity-0 group-hover:opacity-100 transition-all shadow-lg"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                addToCart(product);
+                              }}
                             >
-                              {stockAtLocation}
-                            </Badge>
+                              <Plus className="w-4 h-4" />
+                            </Button>
                           </div>
                         </CardContent>
                       </Card>
@@ -823,83 +884,112 @@ export default function Sales() {
             </div>
 
             {/* Cart */}
-            <Card className="h-fit sticky top-20 lg:top-24">
-              <CardHeader className="border-b p-3 sm:p-6">
-                <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
-                  <ShoppingCart className="w-4 h-4 sm:w-5 sm:h-5" />
-                  Cart ({cart.length})
-                </CardTitle>
+            <Card className="h-fit sticky top-20 lg:top-24 border-t-4 border-t-[#0072C6] shadow-xl">
+              <CardHeader className="border-b bg-gradient-to-br from-gray-50 to-white p-4 sm:p-6">
+                <div className="flex items-center justify-between">
+                  <CardTitle className="flex items-center gap-3 text-base sm:text-lg">
+                    <div className="p-2 bg-gradient-to-br from-[#1EB053]/10 to-[#0072C6]/10 rounded-xl">
+                      <ShoppingCart className="w-5 h-5 text-[#0072C6]" />
+                    </div>
+                    <div>
+                      <span className="block text-gray-900">Shopping Cart</span>
+                      <span className="text-xs text-gray-500 font-normal">{cart.length} {cart.length === 1 ? 'item' : 'items'}</span>
+                    </div>
+                  </CardTitle>
+                  {cart.length > 0 && (
+                    <Badge className="bg-gradient-to-r from-[#1EB053] to-[#0072C6] text-white">
+                      {cart.length}
+                    </Badge>
+                  )}
+                </div>
               </CardHeader>
-              <CardContent className="p-3 sm:p-4">
+              <CardContent className="p-4">
                 {cart.length === 0 ? (
-                  <div className="text-center py-6 sm:py-8 text-gray-500">
-                    <ShoppingCart className="w-10 h-10 sm:w-12 sm:h-12 mx-auto mb-2 sm:mb-3 text-gray-300" />
-                    <p className="text-sm">Cart is empty</p>
-                    <p className="text-xs sm:text-sm">Click products to add</p>
+                  <div className="text-center py-12">
+                    <div className="relative mb-4">
+                      <div className="absolute inset-0 bg-gradient-to-br from-[#1EB053]/10 to-[#0072C6]/10 rounded-full blur-xl" />
+                      <div className="relative w-20 h-20 mx-auto bg-gradient-to-br from-gray-100 to-gray-200 rounded-full flex items-center justify-center">
+                        <ShoppingCart className="w-10 h-10 text-gray-400" />
+                      </div>
+                    </div>
+                    <p className="text-sm font-semibold text-gray-700 mb-1">Your cart is empty</p>
+                    <p className="text-xs text-gray-500">Add products to get started</p>
                   </div>
                 ) : (
-                  <div className="space-y-2 sm:space-y-3 max-h-64 sm:max-h-80 overflow-y-auto">
-                    {cart.map((item) => (
-                      <div key={item.product_id} className="flex items-center gap-3 p-2 bg-gray-50 rounded-lg">
-                        <div className="flex-1 min-w-0">
-                          <p className="font-medium text-sm truncate">{item.product_name}</p>
-                          <p className="text-xs text-gray-500">Le {item.unit_price.toLocaleString()} each</p>
+                  <>
+                    <div className="space-y-2 max-h-72 overflow-y-auto mb-4 pr-1">
+                      {cart.map((item) => (
+                        <div key={item.product_id} className="group p-3 bg-gradient-to-br from-gray-50 to-white border border-gray-200 rounded-xl hover:shadow-md transition-all">
+                          <div className="flex items-start gap-3">
+                            <div className="flex-1 min-w-0">
+                              <p className="font-semibold text-sm truncate text-gray-900">{item.product_name}</p>
+                              <p className="text-xs text-gray-500 mt-0.5">Le {item.unit_price.toLocaleString()} × {item.quantity}</p>
+                              <p className="text-sm font-bold text-[#1EB053] mt-1">Le {item.total.toLocaleString()}</p>
+                            </div>
+                            <div className="flex items-center gap-1">
+                              <Button
+                                variant="outline"
+                                size="icon"
+                                className="h-8 w-8 rounded-lg border-gray-300"
+                                onClick={() => updateQuantity(item.product_id, -1)}
+                              >
+                                <Minus className="w-3 h-3" />
+                              </Button>
+                              <div className="w-10 h-8 flex items-center justify-center bg-white border border-gray-300 rounded-lg">
+                                <span className="font-bold text-sm">{item.quantity}</span>
+                              </div>
+                              <Button
+                                variant="outline"
+                                size="icon"
+                                className="h-8 w-8 rounded-lg border-gray-300"
+                                onClick={() => updateQuantity(item.product_id, 1)}
+                              >
+                                <Plus className="w-3 h-3" />
+                              </Button>
+                            </div>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-8 w-8 text-red-500 hover:bg-red-50 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity"
+                              onClick={() => removeFromCart(item.product_id)}
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </Button>
+                          </div>
                         </div>
-                        <div className="flex items-center gap-1">
-                          <Button
-                            variant="outline"
-                            size="icon"
-                            className="h-7 w-7"
-                            onClick={() => updateQuantity(item.product_id, -1)}
-                          >
-                            <Minus className="w-3 h-3" />
-                          </Button>
-                          <span className="w-8 text-center font-medium">{item.quantity}</span>
-                          <Button
-                            variant="outline"
-                            size="icon"
-                            className="h-7 w-7"
-                            onClick={() => updateQuantity(item.product_id, 1)}
-                          >
-                            <Plus className="w-3 h-3" />
-                          </Button>
-                        </div>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-7 w-7 text-red-500"
-                          onClick={() => removeFromCart(item.product_id)}
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </Button>
-                      </div>
-                    ))}
-                  </div>
-                )}
-
-                {cart.length > 0 && (
-                  <div className="mt-4 pt-4 border-t space-y-4">
-                    <div className="flex items-center justify-between text-lg font-bold">
-                      <span>Total</span>
-                      <span className="text-[#1EB053]">Le {cartTotal.toLocaleString()}</span>
+                      ))}
                     </div>
-                    <Button
-                      className="w-full sl-gradient"
-                      size="lg"
-                      onClick={() => setShowCheckout(true)}
-                    >
-                      <Receipt className="w-4 h-4 mr-2" />
-                      Checkout
-                    </Button>
-                    <Button
-                      variant="outline"
-                      className="w-full border-[#0072C6] text-[#0072C6] hover:bg-[#0072C6]/10"
-                      onClick={() => setShowInvoice(true)}
-                    >
-                      <FileText className="w-4 h-4 mr-2" />
-                      Create Invoice
-                    </Button>
-                  </div>
+
+                    <div className="space-y-3 pt-4 border-t-2 border-dashed border-gray-200">
+                      <div className="p-4 bg-gradient-to-br from-[#1EB053]/5 to-[#0072C6]/5 rounded-xl border border-[#1EB053]/20">
+                        <div className="flex items-center justify-between mb-1">
+                          <span className="text-sm text-gray-600">Subtotal</span>
+                          <span className="text-sm font-semibold">Le {cartTotal.toLocaleString()}</span>
+                        </div>
+                        <div className="flex items-center justify-between pt-2 border-t border-gray-200">
+                          <span className="text-base font-bold text-gray-900">Total</span>
+                          <span className="text-xl font-bold bg-gradient-to-r from-[#1EB053] to-[#0e7f3d] bg-clip-text text-transparent">
+                            Le {cartTotal.toLocaleString()}
+                          </span>
+                        </div>
+                      </div>
+                      <Button
+                        className="w-full h-12 bg-gradient-to-r from-[#1EB053] to-[#0072C6] hover:shadow-xl transition-all text-base font-semibold"
+                        onClick={() => setShowCheckout(true)}
+                      >
+                        <Receipt className="w-5 h-5 mr-2" />
+                        Proceed to Checkout
+                      </Button>
+                      <Button
+                        variant="outline"
+                        className="w-full h-11 border-2 border-[#0072C6] text-[#0072C6] hover:bg-[#0072C6]/5 font-semibold"
+                        onClick={() => setShowInvoice(true)}
+                      >
+                        <FileText className="w-4 h-4 mr-2" />
+                        Generate Invoice
+                      </Button>
+                    </div>
+                  </>
                 )}
               </CardContent>
             </Card>
