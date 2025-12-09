@@ -130,7 +130,7 @@ export default function FinanceSummary({ sales = [], expenses = [], trips = [], 
                   <Badge className={`capitalize ${categoryColors[category] || categoryColors.other}`}>
                     {category.replace('_', ' ')}
                   </Badge>
-                  <span className="text-sm font-medium">SLE {amount.toLocaleString()}</span>
+                  <span className="text-sm font-medium">Le {amount.toLocaleString()}</span>
                 </div>
               ))}
             </div>
