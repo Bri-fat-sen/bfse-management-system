@@ -1,4 +1,4 @@
-import React from "react";
+import { } from "react";
 import { format } from "date-fns";
 import { Truck, Route, Users, Fuel, TrendingUp } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
