@@ -56,6 +56,7 @@ import AdvancedDocumentExtractor from "@/components/finance/AdvancedDocumentExtr
 import ExpenseEntryTemplate from "@/components/templates/ExpenseEntryTemplate";
 import PrintFormsButtons from "@/components/finance/PrintFormsButtons";
 import AIExpenseCategorizer from "@/components/finance/AIExpenseCategorizer";
+import QuickExpenseApproval from "@/components/finance/QuickExpenseApproval";
 
 const EXPENSE_CATEGORIES = [
   { value: "fuel", label: "Fuel" },
