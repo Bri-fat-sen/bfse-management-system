@@ -96,7 +96,12 @@ export default function Locations() {
 
   const { data: warehouses = [], isLoading: loadingWarehouses } = useQuery({
     queryKey: ['warehouses', orgId],
-    queryFn: () => base44.entities.Warehouse.filter({ organisation_id: orgId }),
+    queryFn: async () => {
+      if (!orgId) return [];
+      const allWarehouses = await base44.entities.Warehouse.filter({ organisation_id: orgId });
+      console.log('Fetched warehouses:', allWarehouses, 'for orgId:', orgId);
+      return allWarehouses;
+    },
     enabled: !!orgId,
   });
 
