@@ -13,7 +13,6 @@ import {
   Download
 } from "lucide-react";
 import { printUnifiedPDF, getUnifiedPDFStyles, getUnifiedHeader, getUnifiedFooter } from "@/components/exports/UnifiedPDFStyles";
-import { useToast } from "@/components/ui/Toast";
 
 export default function CashFlowStatement({ 
   sales = [],
@@ -24,7 +23,6 @@ export default function CashFlowStatement({
   dateRange,
   organisation
 }) {
-  const toast = useToast();
   const cashFlow = useMemo(() => {
     // OPERATING ACTIVITIES
     const cashFromSales = sales
@@ -235,7 +233,6 @@ export default function CashFlowStatement({
 </html>`;
 
     printUnifiedPDF(html, `cash-flow-statement-${format(new Date(), 'yyyy-MM-dd')}.pdf`);
-    toast.success("PDF Generated", "Downloading cash flow statement");
   };
 
   return (

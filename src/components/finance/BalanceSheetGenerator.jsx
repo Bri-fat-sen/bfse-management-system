@@ -14,7 +14,6 @@ import {
   Download
 } from "lucide-react";
 import { printUnifiedPDF, getUnifiedPDFStyles, getUnifiedHeader, getUnifiedFooter } from "@/components/exports/UnifiedPDFStyles";
-import { useToast } from "@/components/ui/Toast";
 
 export default function BalanceSheetGenerator({ 
   sales = [],
@@ -25,7 +24,6 @@ export default function BalanceSheetGenerator({
   dateRange,
   organisation
 }) {
-  const toast = useToast();
   const balanceSheet = useMemo(() => {
     // ASSETS
     // Current Assets
@@ -272,7 +270,6 @@ export default function BalanceSheetGenerator({
 </html>`;
 
     printUnifiedPDF(html, `balance-sheet-${format(new Date(), 'yyyy-MM-dd')}.pdf`);
-    toast.success("PDF Generated", "Downloading balance sheet");
   };
 
   return (
