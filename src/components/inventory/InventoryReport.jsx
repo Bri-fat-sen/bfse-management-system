@@ -164,9 +164,7 @@ export default function InventoryReport({
   const exportCSV = () => {
     exportCSVUtil(
       reportData.columns,
-      reportData.rows.map(row => Object.values(row).map(v => 
-        typeof v === 'string' ? v.replace('SLE', 'Le') : v
-      )),
+      reportData.rows.map(row => Object.values(row)),
       `${reportType}_${format(new Date(), 'yyyy-MM-dd')}.csv`,
       organisation
     );

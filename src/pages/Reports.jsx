@@ -272,14 +272,14 @@ export default function Reports() {
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         <StatCard 
           label="Monthly Revenue" 
-          value={`SLE ${stats.revenue.toLocaleString()}`}
+          value={`Le ${stats.revenue.toLocaleString()}`}
           change={stats.revenueChange}
           icon={TrendingUp}
           color="green"
         />
         <StatCard 
           label="Net Profit" 
-          value={`SLE ${stats.netProfit.toLocaleString()}`}
+          value={`Le ${stats.netProfit.toLocaleString()}`}
           icon={DollarSign}
           color={stats.netProfit >= 0 ? "blue" : "red"}
         />
