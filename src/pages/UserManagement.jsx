@@ -24,8 +24,7 @@ import {
   Star,
   Filter,
   Package,
-  MapPin,
-  Plus
+  MapPin
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -469,6 +468,35 @@ export default function UserManagement() {
       {/* Employees Tab */}
       {activeTab === 'employees' && (
         <>
+          {/* Unlinked Employees Alert */}
+          {unlinkedEmployees.length > 0 && (
+            <Card className="bg-amber-50 border-amber-200">
+              <CardContent className="p-4">
+                <div className="flex items-start gap-3">
+                  <AlertCircle className="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" />
+                  <div className="flex-1">
+                    <p className="font-semibold text-amber-800">Unlinked Employee Records</p>
+                    <p className="text-sm text-amber-700 mb-3">
+                      {unlinkedEmployees.length} employee{unlinkedEmployees.length !== 1 ? 's' : ''} without user account link
+                    </p>
+                    <div className="flex flex-wrap gap-2">
+                      {unlinkedEmployees.slice(0, 5).map(emp => (
+                        <Badge key={emp.id} variant="outline" className="text-xs bg-white">
+                          {emp.full_name} ({emp.employee_code})
+                        </Badge>
+                      ))}
+                      {unlinkedEmployees.length > 5 && (
+                        <Badge variant="outline" className="text-xs bg-white">
+                          +{unlinkedEmployees.length - 5} more
+                        </Badge>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
           {/* Filters */}
           <Card>
             <CardContent className="p-4">
@@ -543,6 +571,17 @@ export default function UserManagement() {
                         <Phone className="w-4 h-4 flex-shrink-0" />
                         <span className="truncate">{emp.phone || 'No phone'}</span>
                       </div>
+                      {emp.user_email ? (
+                        <div className="flex items-center gap-2 text-green-600">
+                          <Link2 className="w-4 h-4 flex-shrink-0" />
+                          <span className="truncate text-xs">Linked to user</span>
+                        </div>
+                      ) : (
+                        <div className="flex items-center gap-2 text-amber-600">
+                          <Unlink className="w-4 h-4 flex-shrink-0" />
+                          <span className="truncate text-xs">Not linked</span>
+                        </div>
+                      )}
                     </div>
 
                     <div className="mt-4 pt-4 border-t flex items-center justify-between">
