@@ -1,4 +1,4 @@
-import React from "react";
+import { } from "react";
 import { format, startOfMonth, endOfMonth, isWithinInterval } from "date-fns";
 import { DollarSign, TrendingUp, TrendingDown, PieChart, ArrowUpRight, ArrowDownRight } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
