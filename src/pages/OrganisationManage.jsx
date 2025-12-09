@@ -103,14 +103,14 @@ export default function OrganisationManage() {
   const orgId = currentEmployee?.organisation_id;
   const isAdmin = ['super_admin', 'org_admin'].includes(currentEmployee?.role);
 
-  const { data: organisation, isLoading } = useQuery({
-    queryKey: ['organisation', orgId],
-    queryFn: async () => {
-      const orgs = await base44.entities.Organisation.filter({ id: orgId });
-      return orgs[0];
-    },
-    enabled: !!orgId,
+  const { data: organisations, isLoading } = useQuery({
+    queryKey: ['organisations'],
+    queryFn: () => base44.entities.Organisation.list(),
+    staleTime: 10 * 60 * 1000,
+    refetchOnWindowFocus: false,
   });
+  
+  const organisation = organisations?.find(org => org.id === orgId);
 
   const { data: employees = [] } = useQuery({
     queryKey: ['orgEmployees', orgId],
@@ -291,16 +291,9 @@ export default function OrganisationManage() {
   }
 
   return (
-    <div className="space-y-4 sm:space-y-6">
-      {/* Sierra Leone Stripe */}
-      <div className="h-1 w-full flex rounded-full overflow-hidden">
-        <div className="flex-1 bg-[#1EB053]" />
-        <div className="flex-1 bg-white border-y border-gray-200" />
-        <div className="flex-1 bg-[#0072C6]" />
-      </div>
-
+    <div className="space-y-6">
       {/* Hero Header */}
-      <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-[#0F1F3C] via-[#1a3a5c] to-[#0F1F3C] p-6 md:p-8 shadow-xl">
+      <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-[#0F1F3C] via-[#1a3a5c] to-[#0F1F3C] p-6 md:p-8">
         <div className="absolute inset-0 opacity-10">
           <div className="absolute top-0 left-0 w-40 h-40 bg-[#1EB053] rounded-full blur-3xl" />
           <div className="absolute bottom-0 right-0 w-60 h-60 bg-[#0072C6] rounded-full blur-3xl" />

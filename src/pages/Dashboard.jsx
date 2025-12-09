@@ -72,13 +72,14 @@ export default function Dashboard() {
   const orgId = currentEmployee?.organisation_id;
   const userRole = currentEmployee?.role || 'read_only';
 
-  const { data: organisation } = useQuery({
-    queryKey: ['organisation', orgId],
-    queryFn: () => base44.entities.Organisation.filter({ id: orgId }),
-    enabled: !!orgId,
+  const { data: organisations } = useQuery({
+    queryKey: ['organisations'],
+    queryFn: () => base44.entities.Organisation.list(),
     staleTime: 10 * 60 * 1000, // 10 minutes
     refetchOnWindowFocus: false,
   });
+  
+  const organisation = organisations ? [organisations.find(org => org.id === orgId)] : [];
 
   // Role-based dashboard routing
   const isDriver = userRole === 'driver';

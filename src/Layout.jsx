@@ -211,15 +211,14 @@ export default function Layout({ children, currentPageName }) {
   const userRole = (actualRole === 'super_admin' && previewRole) ? previewRole : actualRole;
   const orgId = currentEmployee?.organisation_id;
 
-  const { data: organisation } = useQuery({
-    queryKey: ['organisation', orgId],
-    queryFn: () => base44.entities.Organisation.filter({ id: orgId }),
-    enabled: !!orgId,
+  const { data: organisations } = useQuery({
+    queryKey: ['organisations'],
+    queryFn: () => base44.entities.Organisation.list(),
     staleTime: 10 * 60 * 1000,
     refetchOnWindowFocus: false,
   });
 
-  const currentOrg = organisation?.[0];
+  const currentOrg = organisations?.find(org => org.id === orgId);
 
   const { data: chatRooms = [] } = useQuery({
     queryKey: ['chatRooms', orgId, currentEmployee?.id],
