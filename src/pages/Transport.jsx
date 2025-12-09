@@ -841,6 +841,7 @@ export default function Transport() {
         currentEmployee={currentEmployee}
         orgId={orgId}
         preselectedVehicleId={selectedVehicleForMaintenance}
+        organisation={organisation?.[0]}
       />
 
       {/* Truck Contract Dialog */}
