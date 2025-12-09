@@ -2,7 +2,6 @@ import React, { useState, useMemo } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { format, startOfMonth, endOfMonth, subMonths, startOfYear } from "date-fns";
-import { printUnifiedPDF, getUnifiedPDFStyles, getUnifiedHeader, getUnifiedFooter } from "@/components/exports/UnifiedPDFStyles";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -32,13 +31,15 @@ import {
   Eye,
   Printer,
   Send,
-  Building2,
-  Activity
+  Landmark,
+  Wallet
 } from "lucide-react";
 import { useToast } from "@/components/ui/Toast";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend, LineChart, Line, Area, AreaChart } from "recharts";
-import BalanceSheetGenerator from "./BalanceSheetGenerator";
+import ReactMarkdown from "react-markdown";
+import BalanceSheetReport from "./BalanceSheetReport";
 import CashFlowStatement from "./CashFlowStatement";
+import ReportExporter from "./ReportExporter";
 
 export default function AutomatedFinancialReports({ 
   orgId, 
@@ -48,9 +49,7 @@ export default function AutomatedFinancialReports({
   revenues = [],
   truckContracts = [],
   maintenanceRecords = [],
-  organisation,
-  products = [],
-  bankDeposits = []
+  organisation 
 }) {
   const toast = useToast();
   const queryClient = useQueryClient();
@@ -58,6 +57,25 @@ export default function AutomatedFinancialReports({
   const [generatingReport, setGeneratingReport] = useState(false);
   const [aiAnalysis, setAiAnalysis] = useState(null);
   const [activeReportTab, setActiveReportTab] = useState("pl");
+
+  // Fetch assets and liabilities
+  const { data: assets = [] } = useQuery({
+    queryKey: ['assets', orgId],
+    queryFn: () => base44.entities.Asset.filter({ organisation_id: orgId }),
+    enabled: !!orgId,
+  });
+
+  const { data: liabilities = [] } = useQuery({
+    queryKey: ['liabilities', orgId],
+    queryFn: () => base44.entities.Liability.filter({ organisation_id: orgId }),
+    enabled: !!orgId,
+  });
+
+  const { data: payrolls = [] } = useQuery({
+    queryKey: ['payrolls', orgId],
+    queryFn: () => base44.entities.Payroll.filter({ organisation_id: orgId }, '-period_start', 200),
+    enabled: !!orgId,
+  });
 
   // Calculate date range
   const dateRange = useMemo(() => {
@@ -287,213 +305,56 @@ Format your response in markdown with clear sections.`,
     { name: 'Other', value: profitLoss.revenue.otherRevenue }
   ].filter(item => item.value > 0);
 
+  // Prepare export data for different report types
+  const exportData = useMemo(() => {
+    return {
+      profit_loss: {
+        revenue: profitLoss.revenue,
+        expenses: profitLoss.expenses,
+        netProfit: profitLoss.netProfit,
+        profitMargin: profitLoss.profitMargin
+      },
+      balance_sheet: {
+        assets: {
+          current: assets.filter(a => a.asset_type === 'current' && a.status === 'active').reduce((sum, a) => sum + (a.value || 0), 0),
+          fixed: assets.filter(a => a.asset_type === 'fixed' && a.status === 'active').reduce((sum, a) => sum + (a.value || 0), 0),
+          total: assets.filter(a => a.status === 'active').reduce((sum, a) => sum + (a.value || 0), 0)
+        },
+        liabilities: {
+          current: liabilities.filter(l => l.liability_type === 'current' && l.status === 'active').reduce((sum, l) => sum + (l.amount || 0), 0),
+          longTerm: liabilities.filter(l => l.liability_type === 'long_term' && l.status === 'active').reduce((sum, l) => sum + (l.amount || 0), 0),
+          total: liabilities.filter(l => l.status === 'active').reduce((sum, l) => sum + (l.amount || 0), 0)
+        },
+        equity: {
+          total: assets.filter(a => a.status === 'active').reduce((sum, a) => sum + (a.value || 0), 0) - 
+                 liabilities.filter(l => l.status === 'active').reduce((sum, l) => sum + (l.amount || 0), 0)
+        }
+      },
+      cash_flow: {
+        operating: {
+          salesRevenue: profitLoss.revenue.salesRevenue,
+          transportRevenue: profitLoss.revenue.transportRevenue,
+          operatingExpenses: profitLoss.expenses.recordedExpenses,
+          fuelCosts: profitLoss.expenses.fuelCosts,
+          total: profitLoss.revenue.salesRevenue + profitLoss.revenue.transportRevenue - profitLoss.expenses.recordedExpenses - profitLoss.expenses.fuelCosts
+        },
+        investing: {
+          assetPurchases: periodData.periodExpenses.filter(e => ['equipment', 'vehicles', 'buildings'].includes(e.category)).reduce((sum, e) => sum + (e.amount || 0), 0),
+          total: -periodData.periodExpenses.filter(e => ['equipment', 'vehicles', 'buildings'].includes(e.category)).reduce((sum, e) => sum + (e.amount || 0), 0)
+        },
+        financing: {
+          ownerContributions: profitLoss.revenue.otherRevenue,
+          total: profitLoss.revenue.otherRevenue
+        },
+        netCashChange: (profitLoss.revenue.salesRevenue + profitLoss.revenue.transportRevenue - profitLoss.expenses.totalExpenses) + profitLoss.revenue.otherRevenue
+      }
+    };
+  }, [profitLoss, assets, liabilities, periodData]);
+
   const riskLevelColors = {
     low: { bg: 'bg-green-50', text: 'text-green-700', border: 'border-green-200' },
     medium: { bg: 'bg-amber-50', text: 'text-amber-700', border: 'border-amber-200' },
     high: { bg: 'bg-red-50', text: 'text-red-700', border: 'border-red-200' }
-  };
-
-  const exportToCSV = (reportType) => {
-    const orgName = organisation?.name || 'Organisation';
-    let csvContent = `${orgName}\n${reportType}\nPeriod: ${dateRange.label}\nGenerated: ${format(new Date(), 'MMM d, yyyy')}\n\n`;
-    
-    csvContent += `REVENUE\n`;
-    csvContent += `Sales Revenue,Le ${profitLoss.revenue.salesRevenue.toLocaleString()}\n`;
-    csvContent += `Transport Revenue,Le ${profitLoss.revenue.transportRevenue.toLocaleString()}\n`;
-    csvContent += `Contract Revenue,Le ${profitLoss.revenue.contractRevenue.toLocaleString()}\n`;
-    csvContent += `Other Revenue,Le ${profitLoss.revenue.otherRevenue.toLocaleString()}\n`;
-    csvContent += `Total Revenue,Le ${profitLoss.revenue.totalRevenue.toLocaleString()}\n\n`;
-    
-    csvContent += `EXPENSES\n`;
-    csvContent += `Recorded Expenses,Le ${profitLoss.expenses.recordedExpenses.toLocaleString()}\n`;
-    csvContent += `Fuel Costs,Le ${profitLoss.expenses.fuelCosts.toLocaleString()}\n`;
-    csvContent += `Trip Expenses,Le ${profitLoss.expenses.tripOtherCosts.toLocaleString()}\n`;
-    csvContent += `Contract Expenses,Le ${profitLoss.expenses.contractExpenses.toLocaleString()}\n`;
-    csvContent += `Maintenance,Le ${profitLoss.expenses.maintenanceCosts.toLocaleString()}\n`;
-    csvContent += `Total Expenses,Le ${profitLoss.expenses.totalExpenses.toLocaleString()}\n\n`;
-    
-    csvContent += `NET PROFIT,Le ${profitLoss.netProfit.toLocaleString()}\n`;
-    csvContent += `Profit Margin,${profitLoss.profitMargin.toFixed(1)}%\n`;
-
-    const blob = new Blob([csvContent], { type: 'text/csv' });
-    const link = document.createElement('a');
-    link.href = URL.createObjectURL(blob);
-    link.download = `${reportType.replace(/\s+/g, '_')}_${format(new Date(), 'yyyy-MM-dd')}.csv`;
-    link.click();
-    URL.revokeObjectURL(link.href);
-    toast.success("CSV exported");
-  };
-
-  const exportToPDF = (reportType) => {
-    const styles = getUnifiedPDFStyles();
-    const header = getUnifiedHeader(organisation, 'Profit & Loss Statement');
-    const footer = getUnifiedFooter(organisation);
-
-    const content = `
-      <div class="statement-section">
-        <h2 class="section-title">Financial Period: ${dateRange.label}</h2>
-        <p class="text-muted text-center mb-4">Generated on ${format(new Date(), 'MMMM d, yyyy')}</p>
-      </div>
-
-      <div class="statement-section">
-        <div class="summary-grid">
-          <div class="summary-card" style="border-left: 4px solid var(--primary);">
-            <div class="summary-label">Total Revenue</div>
-            <div class="summary-value">Le ${profitLoss.revenue.totalRevenue.toLocaleString()}</div>
-          </div>
-          <div class="summary-card" style="border-left: 4px solid #ef4444;">
-            <div class="summary-label">Total Expenses</div>
-            <div class="summary-value">Le ${profitLoss.expenses.totalExpenses.toLocaleString()}</div>
-          </div>
-          <div class="summary-card" style="border-left: 4px solid ${profitLoss.netProfit >= 0 ? '#0072C6' : '#f97316'};">
-            <div class="summary-label">Net Profit</div>
-            <div class="summary-value">${profitLoss.netProfit >= 0 ? '+' : ''}Le ${profitLoss.netProfit.toLocaleString()}</div>
-          </div>
-          <div class="summary-card" style="border-left: 4px solid #D4AF37;">
-            <div class="summary-label">Profit Margin</div>
-            <div class="summary-value">${profitLoss.profitMargin.toFixed(1)}%</div>
-          </div>
-        </div>
-      </div>
-
-      <div class="statement-section">
-        <table class="data-table">
-          <thead>
-            <tr>
-              <th colspan="2" class="bg-success text-white">REVENUE BREAKDOWN</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td>Sales Revenue</td>
-              <td class="text-right font-bold">Le ${profitLoss.revenue.salesRevenue.toLocaleString()}</td>
-            </tr>
-            <tr>
-              <td>Transport Revenue</td>
-              <td class="text-right font-bold">Le ${profitLoss.revenue.transportRevenue.toLocaleString()}</td>
-            </tr>
-            <tr>
-              <td>Contract Revenue</td>
-              <td class="text-right font-bold">Le ${profitLoss.revenue.contractRevenue.toLocaleString()}</td>
-            </tr>
-            <tr>
-              <td>Other Revenue</td>
-              <td class="text-right font-bold">Le ${profitLoss.revenue.otherRevenue.toLocaleString()}</td>
-            </tr>
-            <tr class="bg-success-light">
-              <td class="font-bold">TOTAL REVENUE</td>
-              <td class="text-right font-bold text-success">Le ${profitLoss.revenue.totalRevenue.toLocaleString()}</td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-
-      <div class="statement-section">
-        <table class="data-table">
-          <thead>
-            <tr>
-              <th colspan="2" class="bg-danger text-white">EXPENSE BREAKDOWN</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td>Recorded Expenses</td>
-              <td class="text-right font-bold">Le ${profitLoss.expenses.recordedExpenses.toLocaleString()}</td>
-            </tr>
-            <tr>
-              <td>Fuel Costs</td>
-              <td class="text-right font-bold">Le ${profitLoss.expenses.fuelCosts.toLocaleString()}</td>
-            </tr>
-            <tr>
-              <td>Trip Expenses</td>
-              <td class="text-right font-bold">Le ${profitLoss.expenses.tripOtherCosts.toLocaleString()}</td>
-            </tr>
-            <tr>
-              <td>Contract Expenses</td>
-              <td class="text-right font-bold">Le ${profitLoss.expenses.contractExpenses.toLocaleString()}</td>
-            </tr>
-            <tr>
-              <td>Maintenance Costs</td>
-              <td class="text-right font-bold">Le ${profitLoss.expenses.maintenanceCosts.toLocaleString()}</td>
-            </tr>
-            <tr class="bg-danger-light">
-              <td class="font-bold">TOTAL EXPENSES</td>
-              <td class="text-right font-bold text-danger">Le ${profitLoss.expenses.totalExpenses.toLocaleString()}</td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-
-      <div class="statement-section">
-        <div class="summary-box ${profitLoss.netProfit >= 0 ? 'profit' : 'loss'}">
-          <div class="text-center">
-            <h3 class="section-title mb-2">NET ${profitLoss.netProfit >= 0 ? 'PROFIT' : 'LOSS'}</h3>
-            <div class="amount-large">${profitLoss.netProfit >= 0 ? '+' : ''}Le ${profitLoss.netProfit.toLocaleString()}</div>
-            <p class="text-muted">Profit Margin: ${profitLoss.profitMargin.toFixed(1)}%</p>
-          </div>
-        </div>
-      </div>
-
-      ${expenseBreakdownData.length > 0 ? `
-      <div class="statement-section">
-        <h2 class="section-title">Expense Category Analysis</h2>
-        <table class="data-table">
-          <thead>
-            <tr>
-              <th>Category</th>
-              <th class="text-right">Amount</th>
-              <th class="text-right">Percentage</th>
-            </tr>
-          </thead>
-          <tbody>
-            ${expenseBreakdownData.map(item => `
-              <tr>
-                <td>${item.name}</td>
-                <td class="text-right">Le ${item.value.toLocaleString()}</td>
-                <td class="text-right">${item.percentage}%</td>
-              </tr>
-            `).join('')}
-          </tbody>
-        </table>
-      </div>
-      ` : ''}
-    `;
-
-    const html = `
-<!DOCTYPE html>
-<html>
-<head>
-  <meta charset="UTF-8">
-  <title>Profit & Loss Statement - ${organisation?.name || 'Organisation'}</title>
-  <style>
-    ${styles}
-    .summary-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin: 24px 0; }
-    .summary-card { padding: 16px; border-radius: 8px; background: var(--gray-50); border-left: 4px solid var(--primary); }
-    .summary-label { font-size: 12px; text-transform: uppercase; color: var(--text-muted); margin-bottom: 8px; }
-    .summary-value { font-size: 20px; font-weight: bold; color: var(--gray-900); }
-    .summary-box { padding: 32px; background: var(--gray-50); border-radius: 12px; margin: 24px 0; }
-    .summary-box.profit { background: linear-gradient(135deg, rgba(30, 176, 83, 0.1), rgba(0, 114, 198, 0.1)); border: 2px solid var(--primary); }
-    .summary-box.loss { background: rgba(249, 115, 22, 0.1); border: 2px solid #f97316; }
-    .amount-large { font-size: 36px; font-weight: bold; margin: 16px 0; }
-    @media print {
-      .summary-grid { grid-template-columns: repeat(2, 1fr); page-break-inside: avoid; }
-      .statement-section { page-break-inside: avoid; }
-    }
-  </style>
-</head>
-<body>
-  <div class="document">
-    ${header}
-    <div class="content">
-      ${content}
-    </div>
-    ${footer}
-  </div>
-</body>
-</html>`;
-
-    printUnifiedPDF(html, `profit-loss-statement-${format(new Date(), 'yyyy-MM-dd')}.pdf`);
-    toast.success("PDF Generated", "Downloading consolidated report");
   };
 
   return (
@@ -503,11 +364,17 @@ Format your response in markdown with clear sections.`,
         <div>
           <h2 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
             <Sparkles className="w-6 h-6 text-[#1EB053]" />
-            Automated Financial Reports
+            Advanced Financial Reports
           </h2>
-          <p className="text-sm text-gray-500">AI-powered insights and comprehensive financial analysis</p>
+          <p className="text-sm text-gray-500">Comprehensive financial statements with AI insights & multi-format export</p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex gap-2 flex-wrap">
+          <ReportExporter
+            reportData={exportData[activeReportTab === 'pl' ? 'profit_loss' : activeReportTab === 'balance' ? 'balance_sheet' : 'cash_flow']}
+            reportType={activeReportTab === 'pl' ? 'profit_loss' : activeReportTab === 'balance' ? 'balance_sheet' : 'cash_flow'}
+            organisation={organisation}
+            dateRange={dateRange}
+          />
           <Select value={selectedPeriod} onValueChange={setSelectedPeriod}>
             <SelectTrigger className="w-48">
               <Calendar className="w-4 h-4 mr-2" />
@@ -741,25 +608,25 @@ Format your response in markdown with clear sections.`,
               P&L Statement
             </TabsTrigger>
             <TabsTrigger 
-              value="balance_sheet" 
-              className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#1EB053] data-[state=active]:to-[#0072C6] data-[state=active]:text-white"
-            >
-              <Building2 className="w-4 h-4 mr-1" />
-              Balance Sheet
-            </TabsTrigger>
-            <TabsTrigger 
-              value="cash_flow" 
-              className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#1EB053] data-[state=active]:to-[#0072C6] data-[state=active]:text-white"
-            >
-              <Activity className="w-4 h-4 mr-1" />
-              Cash Flow
-            </TabsTrigger>
-            <TabsTrigger 
               value="expenses" 
               className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#1EB053] data-[state=active]:to-[#0072C6] data-[state=active]:text-white"
             >
               <PieIcon className="w-4 h-4 mr-1" />
               Expense Analysis
+            </TabsTrigger>
+            <TabsTrigger 
+              value="balance" 
+              className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#1EB053] data-[state=active]:to-[#0072C6] data-[state=active]:text-white"
+            >
+              <Landmark className="w-4 h-4 mr-1" />
+              Balance Sheet
+            </TabsTrigger>
+            <TabsTrigger 
+              value="cashflow" 
+              className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#1EB053] data-[state=active]:to-[#0072C6] data-[state=active]:text-white"
+            >
+              <Wallet className="w-4 h-4 mr-1" />
+              Cash Flow
             </TabsTrigger>
             <TabsTrigger 
               value="trends" 
@@ -780,22 +647,8 @@ Format your response in markdown with clear sections.`,
               <div className="flex-1 bg-[#0072C6]" />
             </div>
             <CardHeader>
-              <div className="flex items-center justify-between">
-                <div>
-                  <CardTitle>Profit & Loss Statement</CardTitle>
-                  <CardDescription>{dateRange.label}</CardDescription>
-                </div>
-                <div className="flex gap-2">
-                  <Button variant="outline" size="sm" onClick={() => exportToPDF('pl')}>
-                    <Download className="w-4 h-4 mr-2" />
-                    PDF
-                  </Button>
-                  <Button variant="outline" size="sm" onClick={() => exportToCSV('pl')}>
-                    <Download className="w-4 h-4 mr-2" />
-                    CSV
-                  </Button>
-                </div>
-              </div>
+              <CardTitle>Profit & Loss Statement</CardTitle>
+              <CardDescription>{dateRange.label}</CardDescription>
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
@@ -885,32 +738,6 @@ Format your response in markdown with clear sections.`,
           </Card>
         </TabsContent>
 
-        {/* Balance Sheet */}
-        <TabsContent value="balance_sheet" className="mt-6">
-          <BalanceSheetGenerator
-            sales={periodData.periodSales}
-            expenses={periodData.periodExpenses}
-            revenues={periodData.periodRevenues}
-            bankDeposits={bankDeposits || []}
-            products={products || []}
-            dateRange={dateRange}
-            organisation={organisation}
-          />
-        </TabsContent>
-
-        {/* Cash Flow Statement */}
-        <TabsContent value="cash_flow" className="mt-6">
-          <CashFlowStatement
-            sales={periodData.periodSales}
-            expenses={periodData.periodExpenses}
-            revenues={periodData.periodRevenues}
-            bankDeposits={bankDeposits || []}
-            trips={periodData.periodTrips}
-            dateRange={dateRange}
-            organisation={organisation}
-          />
-        </TabsContent>
-
         {/* Expense Analysis */}
         <TabsContent value="expenses" className="mt-6">
           <Card className="overflow-hidden">
@@ -945,6 +772,33 @@ Format your response in markdown with clear sections.`,
               </div>
             </CardContent>
           </Card>
+        </TabsContent>
+
+        {/* Balance Sheet */}
+        <TabsContent value="balance" className="mt-6">
+          <BalanceSheetReport
+            assets={assets}
+            liabilities={liabilities}
+            revenues={revenues}
+            expenses={expenses}
+            dateRange={dateRange}
+            organisation={organisation}
+          />
+        </TabsContent>
+
+        {/* Cash Flow Statement */}
+        <TabsContent value="cashflow" className="mt-6">
+          <CashFlowStatement
+            sales={periodData.periodSales}
+            expenses={periodData.periodExpenses}
+            trips={periodData.periodTrips}
+            revenues={periodData.periodRevenues}
+            assets={assets}
+            liabilities={liabilities}
+            payrolls={payrolls}
+            dateRange={dateRange}
+            organisation={organisation}
+          />
         </TabsContent>
 
         {/* Trends */}
