@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from "react";
+import { useState, useMemo } from "react";
 import { format, startOfMonth, endOfMonth, startOfWeek, endOfWeek, addDays, isSameMonth, isSameDay, addMonths, subMonths, parseISO, isWithinInterval } from "date-fns";
 import { ChevronLeft, ChevronRight, Plus, Calendar as CalendarIcon, Clock, Users, Briefcase, AlertCircle, CheckCircle2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
