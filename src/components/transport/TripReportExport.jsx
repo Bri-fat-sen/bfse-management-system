@@ -182,7 +182,7 @@ export default function TripReportExport({ trips = [], routes = [], vehicles = [
               </div>
               <div>
                 <h2 className="text-xl font-bold">Trip Report</h2>
-                <p className="text-white/80 text-sm">{trips.length} trips • SLE {netRevenue.toLocaleString()} net</p>
+                <p className="text-white/80 text-sm">{trips.length} trips • Le {netRevenue.toLocaleString()} net</p>
               </div>
             </div>
           </div>
