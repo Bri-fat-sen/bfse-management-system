@@ -68,18 +68,37 @@ export default function Profile() {
   }
 
   return (
-    <div className="space-y-6">
-      <PageHeader
-        title="My Profile"
-        subtitle="View and manage your profile information"
-      >
+    <div className="space-y-4 sm:space-y-6">
+      {/* Sierra Leone Stripe */}
+      <div className="h-1 w-full flex rounded-full overflow-hidden">
+        <div className="flex-1 bg-[#1EB053]" />
+        <div className="flex-1 bg-white border-y border-gray-200" />
+        <div className="flex-1 bg-[#0072C6]" />
+      </div>
+
+      {/* Modern Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div className="flex items-center gap-4">
+          <div className="relative">
+            <div className="absolute -inset-1 bg-gradient-to-br from-[#1EB053] to-[#0072C6] rounded-2xl blur opacity-30" />
+            <div className="relative w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-gradient-to-br from-[#1EB053] to-[#0072C6] flex items-center justify-center shadow-xl">
+              <User className="w-7 h-7 sm:w-8 sm:h-8 text-white" />
+            </div>
+          </div>
+          <div>
+            <h1 className="text-2xl sm:text-3xl font-bold bg-gradient-to-r from-[#1EB053] to-[#0072C6] bg-clip-text text-transparent">
+              My Profile
+            </h1>
+            <p className="text-sm text-gray-500 mt-1">View and manage your information</p>
+          </div>
+        </div>
         <Link to={createPageUrl("Settings")}>
-          <Button variant="outline">
+          <Button variant="outline" className="border-gray-300 hover:border-[#0072C6] hover:bg-[#0072C6]/5">
             <Edit className="w-4 h-4 mr-2" />
             Edit Profile
           </Button>
         </Link>
-      </PageHeader>
+      </div>
 
       {/* Profile Header */}
       <Card className="overflow-hidden">
