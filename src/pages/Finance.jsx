@@ -609,11 +609,29 @@ export default function Finance() {
 
   return (
     <ProtectedPage module="finance">
-      <div className="space-y-6">
-        <PageHeader
-          title="Finance"
-          subtitle="Complete financial overview and management"
-        />
+      <div className="space-y-4 sm:space-y-6">
+        {/* Sierra Leone Stripe */}
+        <div className="h-1 w-full flex rounded-full overflow-hidden">
+          <div className="flex-1 bg-[#1EB053]" />
+          <div className="flex-1 bg-white border-y border-gray-200" />
+          <div className="flex-1 bg-[#0072C6]" />
+        </div>
+
+        {/* Modern Header */}
+        <div className="flex items-center gap-4">
+          <div className="relative">
+            <div className="absolute -inset-1 bg-gradient-to-br from-[#1EB053] to-[#0072C6] rounded-2xl blur opacity-30" />
+            <div className="relative w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-gradient-to-br from-[#1EB053] to-[#0072C6] flex items-center justify-center shadow-xl">
+              <DollarSign className="w-7 h-7 sm:w-8 sm:h-8 text-white" />
+            </div>
+          </div>
+          <div>
+            <h1 className="text-2xl sm:text-3xl font-bold bg-gradient-to-r from-[#1EB053] to-[#0072C6] bg-clip-text text-transparent">
+              Financial Management
+            </h1>
+            <p className="text-sm text-gray-500 mt-1">Track revenue, expenses, and cash flow</p>
+          </div>
+        </div>
 
         {/* Date Filter */}
         <div className="flex items-center gap-4 flex-wrap">

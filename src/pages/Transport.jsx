@@ -290,22 +290,47 @@ export default function Transport() {
   };
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <PageHeader
-          title="Transport & Drivers"
-          subtitle="Manage vehicles, routes, and driver trips"
-          action={() => setShowTripDialog(true)}
-          actionLabel="Record Trip"
-        />
-        <Button
-          onClick={() => setShowFormsDialog(true)}
-          variant="outline"
-          className="gap-2"
-        >
-          <Printer className="w-4 h-4" />
-          <span className="hidden sm:inline">Print Forms</span>
-        </Button>
+    <div className="space-y-4 sm:space-y-6">
+      {/* Sierra Leone Stripe */}
+      <div className="h-1 w-full flex rounded-full overflow-hidden">
+        <div className="flex-1 bg-[#1EB053]" />
+        <div className="flex-1 bg-white border-y border-gray-200" />
+        <div className="flex-1 bg-[#0072C6]" />
+      </div>
+
+      {/* Modern Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div className="flex items-center gap-4">
+          <div className="relative">
+            <div className="absolute -inset-1 bg-gradient-to-br from-[#1EB053] to-[#0072C6] rounded-2xl blur opacity-30" />
+            <div className="relative w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-gradient-to-br from-[#1EB053] to-[#0072C6] flex items-center justify-center shadow-xl">
+              <Truck className="w-7 h-7 sm:w-8 sm:h-8 text-white" />
+            </div>
+          </div>
+          <div>
+            <h1 className="text-2xl sm:text-3xl font-bold bg-gradient-to-r from-[#1EB053] to-[#0072C6] bg-clip-text text-transparent">
+              Fleet Management
+            </h1>
+            <p className="text-sm text-gray-500 mt-1">Manage vehicles, trips, and routes</p>
+          </div>
+        </div>
+        <div className="flex gap-2">
+          <Button
+            onClick={() => setShowFormsDialog(true)}
+            variant="outline"
+            className="gap-2 border-gray-300 hover:border-[#0072C6] hover:bg-[#0072C6]/5"
+          >
+            <Printer className="w-4 h-4" />
+            <span className="hidden sm:inline">Forms</span>
+          </Button>
+          <Button
+            onClick={() => setShowTripDialog(true)}
+            className="gap-2 bg-gradient-to-r from-[#1EB053] to-[#0072C6] hover:shadow-xl transition-all"
+          >
+            <Plus className="w-5 h-5" />
+            <span className="hidden sm:inline">Record Trip</span>
+          </Button>
+        </div>
       </div>
 
       {/* AI Route Optimization */}
