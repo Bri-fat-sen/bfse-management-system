@@ -340,7 +340,7 @@ export function printProfitLossReport({ profitLoss = {}, salesAnalytics = {}, tr
           ["Sales Revenue", "Income", `Le ${(sales.totalRevenue || 0).toLocaleString()}`],
           ["Transport Revenue", "Income", `Le ${(transport.totalRevenue || 0).toLocaleString()}`],
           ...(expenses.byCategory || []).map(c => [
-            (c?.name || 'Other').replace(/_/g, ' ').split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' '),
+            (c?.name || 'Other').replace(/_/g, ' ').charAt(0).toUpperCase() + (c?.name || 'Other').replace(/_/g, ' ').slice(1),
             "Expense",
             `Le ${(c?.value || 0).toLocaleString()}`
           ]),
