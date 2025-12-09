@@ -32,7 +32,7 @@ import ConfirmDialog from "@/components/ui/ConfirmDialog";
 import { 
   FileText, Search, MoreVertical, 
   Eye, Trash2, Clock, CheckCircle2, XCircle,
-  AlertCircle, Bell, FileCheck, Users, History
+  AlertCircle, Bell, FileCheck, Users, History, Plus
 } from "lucide-react";
 import { format } from "date-fns";
 import PageHeader from "@/components/ui/PageHeader";
@@ -235,64 +235,35 @@ export default function Documents() {
   }
 
   return (
-    <div className="space-y-4 sm:space-y-6">
-      {/* Sierra Leone Stripe */}
-      <div className="h-1 w-full flex rounded-full overflow-hidden">
+    <div className="space-y-6">
+      {/* Sierra Leone Flag Stripe */}
+      <div className="flex h-1.5 w-full rounded-full overflow-hidden shadow-sm">
         <div className="flex-1 bg-[#1EB053]" />
         <div className="flex-1 bg-white border-y border-gray-200" />
         <div className="flex-1 bg-[#0072C6]" />
       </div>
 
-      {/* Modern Header */}
       {isAdmin ? (
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <div className="flex items-center gap-4">
-            <div className="relative">
-              <div className="absolute -inset-1 bg-gradient-to-br from-[#1EB053] to-[#0072C6] rounded-2xl blur opacity-30" />
-              <div className="relative w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-gradient-to-br from-[#1EB053] to-[#0072C6] flex items-center justify-center shadow-xl">
-                <FileText className="w-7 h-7 sm:w-8 sm:h-8 text-white" />
-              </div>
-            </div>
-            <div>
-              <h1 className="text-2xl sm:text-3xl font-bold bg-gradient-to-r from-[#1EB053] to-[#0072C6] bg-clip-text text-transparent">
-                HR Documents
-              </h1>
-              <p className="text-sm text-gray-500 mt-1">Create and send professional documents</p>
-            </div>
-          </div>
-          <div className="flex items-center gap-2">
-            <Button 
-              onClick={() => setShowCreateDialog(true)}
-              className="bg-gradient-to-r from-[#1EB053] to-[#0072C6] hover:shadow-xl transition-all"
-            >
-              <Plus className="w-4 h-4 mr-2" />
-              Create Document
-            </Button>
-            <Button 
-              onClick={() => setShowBulkDialog(true)}
-              variant="outline"
-              className="border-gray-300 hover:border-[#1EB053] hover:bg-[#1EB053]/5"
-            >
-              <Users className="w-4 h-4 mr-2" />
-              <span className="hidden sm:inline">Bulk Send</span>
-            </Button>
-          </div>
-        </div>
+        <PageHeader
+          title="HR Documents"
+          subtitle="Create and send professional employment documents for signature"
+          action={() => setShowCreateDialog(true)}
+          actionLabel="Create Document"
+        >
+          <Button 
+            onClick={() => setShowBulkDialog(true)}
+            variant="outline"
+            className="border-[#1EB053] text-[#1EB053] hover:bg-[#1EB053]/10"
+          >
+            <Users className="w-4 h-4 mr-2" />
+            Bulk Send
+          </Button>
+        </PageHeader>
       ) : (
-        <div className="flex items-center gap-4">
-          <div className="relative">
-            <div className="absolute -inset-1 bg-gradient-to-br from-[#1EB053] to-[#0072C6] rounded-2xl blur opacity-30" />
-            <div className="relative w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-gradient-to-br from-[#1EB053] to-[#0072C6] flex items-center justify-center shadow-xl">
-              <FileText className="w-7 h-7 sm:w-8 sm:h-8 text-white" />
-            </div>
-          </div>
-          <div>
-            <h1 className="text-2xl sm:text-3xl font-bold bg-gradient-to-r from-[#1EB053] to-[#0072C6] bg-clip-text text-transparent">
-              My Documents
-            </h1>
-            <p className="text-sm text-gray-500 mt-1">View and sign your documents</p>
-          </div>
-        </div>
+        <PageHeader
+          title="My Documents"
+          subtitle="View and sign your employment documents"
+        />
       )}
 
       {/* Pending documents alert */}
