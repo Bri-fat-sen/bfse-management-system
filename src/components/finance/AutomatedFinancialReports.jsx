@@ -36,7 +36,6 @@ import {
 } from "lucide-react";
 import { useToast } from "@/components/ui/Toast";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend, LineChart, Line, Area, AreaChart } from "recharts";
-import ReactMarkdown from "react-markdown";
 import BalanceSheetGenerator from "./BalanceSheetGenerator";
 import CashFlowStatement from "./CashFlowStatement";
 
