@@ -58,7 +58,10 @@ export default function AutomatedFinancialReports({
   revenues = [],
   truckContracts = [],
   maintenanceRecords = [],
-  organisation 
+  organisation,
+  assets = [],
+  liabilities = [],
+  payrolls = []
 }) {
   const toast = useToast();
   const queryClient = useQueryClient();
