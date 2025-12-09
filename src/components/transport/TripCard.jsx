@@ -1,4 +1,4 @@
-import React from "react";
+import { } from "react";
 import { format } from "date-fns";
 import { Truck, MapPin, Clock, Users, DollarSign, Fuel } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
