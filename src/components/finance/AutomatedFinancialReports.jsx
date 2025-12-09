@@ -583,12 +583,16 @@ Format your response in markdown with clear sections.`,
                   <CardTitle>Profit & Loss Statement</CardTitle>
                   <CardDescription>{dateRange.label}</CardDescription>
                 </div>
-                <FinancialReportExporter
-                  reportType="Profit & Loss Statement"
-                  reportData={profitLoss}
-                  dateRange={dateRange}
-                  organisation={organisation}
-                />
+                <div className="flex gap-2">
+                  <Button variant="outline" size="sm" onClick={() => exportToPDF('pl')}>
+                    <Download className="w-4 h-4 mr-2" />
+                    PDF
+                  </Button>
+                  <Button variant="outline" size="sm" onClick={() => exportToCSV('pl')}>
+                    <Download className="w-4 h-4 mr-2" />
+                    CSV
+                  </Button>
+                </div>
               </div>
             </CardHeader>
             <CardContent>
@@ -681,35 +685,6 @@ Format your response in markdown with clear sections.`,
 
         {/* Balance Sheet */}
         <TabsContent value="balance_sheet" className="mt-6">
-          <div className="flex justify-end mb-4">
-            <FinancialReportExporter
-              reportType="Balance Sheet"
-              reportData={{
-                assets: {
-                  current: {
-                    cash: periodData.periodSales.reduce((sum, s) => sum + (s.total_amount || 0), 0) - 
-                          (bankDeposits || []).filter(d => d.status === 'confirmed').reduce((sum, d) => sum + (d.amount || 0), 0),
-                    bank: (bankDeposits || []).filter(d => d.status === 'confirmed').reduce((sum, d) => sum + (d.amount || 0), 0),
-                    receivables: periodData.periodSales.filter(s => s.payment_status === 'pending').reduce((sum, s) => sum + (s.total_amount || 0), 0),
-                    inventory: (products || []).reduce((sum, p) => sum + ((p.stock_quantity || 0) * (p.cost_price || 0)), 0)
-                  },
-                  total: 0 // Will be calculated
-                },
-                liabilities: {
-                  current: {
-                    payables: periodData.periodExpenses.filter(e => e.status === 'pending').reduce((sum, e) => sum + (e.amount || 0), 0)
-                  },
-                  total: 0
-                },
-                equity: {
-                  contributions: periodData.periodRevenues.reduce((sum, r) => sum + (r.amount || 0), 0),
-                  retained: 0
-                },
-              }}
-              dateRange={dateRange}
-              organisation={organisation}
-            />
-          </div>
           <BalanceSheetGenerator
             sales={periodData.periodSales}
             expenses={periodData.periodExpenses}
@@ -722,37 +697,6 @@ Format your response in markdown with clear sections.`,
 
         {/* Cash Flow Statement */}
         <TabsContent value="cash_flow" className="mt-6">
-          <div className="flex justify-end mb-4">
-            <FinancialReportExporter
-              reportType="Cash Flow Statement"
-              reportData={{
-                operating: {
-                  inflows: {
-                    sales: periodData.periodSales.filter(s => s.payment_method !== 'credit').reduce((sum, s) => sum + (s.total_amount || 0), 0),
-                    transport: periodData.periodTrips.reduce((sum, t) => sum + (t.total_revenue || 0), 0)
-                  },
-                  outflows: {
-                    suppliers: periodData.periodExpenses.filter(e => ['cash', 'mobile_money'].includes(e.payment_method)).reduce((sum, e) => sum + (e.amount || 0), 0)
-                  },
-                  net: 0
-                },
-                financing: {
-                  inflows: {
-                    investments: periodData.periodRevenues.filter(r => ['owner_contribution', 'ceo_contribution', 'investor_funding'].includes(r.source)).reduce((sum, r) => sum + (r.amount || 0), 0),
-                    loans: periodData.periodRevenues.filter(r => r.source === 'loan').reduce((sum, r) => sum + (r.amount || 0), 0)
-                  },
-                  net: 0
-                },
-                summary: {
-                  beginning: 0,
-                  netChange: 0,
-                  ending: 0
-                }
-              }}
-              dateRange={dateRange}
-              organisation={organisation}
-            />
-          </div>
           <CashFlowStatement
             sales={periodData.periodSales}
             expenses={periodData.periodExpenses}
