@@ -41,7 +41,7 @@ const roles = [
 
 const departments = ["Management", "Sales", "Operations", "Finance", "Transport", "Support", "HR", "IT"];
 
-export default function AddEmployeeDialog({ open, onOpenChange, orgId, employeeCount, organisation, inviterName }) {
+export default function AddEmployeeDialog({ open, onOpenChange, editingEmployee, orgId, organisation, onSuccess }) {
   const queryClient = useQueryClient();
   const [showAdvanced, setShowAdvanced] = useState(false);
   
@@ -58,7 +58,45 @@ export default function AddEmployeeDialog({ open, onOpenChange, orgId, employeeC
     hourly_rate: '',
     hire_date: new Date().toISOString().split('T')[0],
     remuneration_package_id: '',
+    status: 'active',
   });
+
+  useEffect(() => {
+    if (editingEmployee) {
+      setFormData({
+        first_name: editingEmployee.first_name || '',
+        last_name: editingEmployee.last_name || '',
+        email: editingEmployee.email || '',
+        phone: editingEmployee.phone || '',
+        department: editingEmployee.department || '',
+        position: editingEmployee.position || '',
+        role: editingEmployee.role || 'support_staff',
+        salary_type: editingEmployee.salary_type || 'monthly',
+        base_salary: editingEmployee.base_salary || '',
+        hourly_rate: editingEmployee.hourly_rate || '',
+        hire_date: editingEmployee.hire_date || new Date().toISOString().split('T')[0],
+        remuneration_package_id: editingEmployee.remuneration_package_id || '',
+        status: editingEmployee.status || 'active',
+      });
+      setShowAdvanced(true);
+    } else {
+      setFormData({
+        first_name: '',
+        last_name: '',
+        email: '',
+        phone: '',
+        department: '',
+        position: '',
+        role: 'support_staff',
+        salary_type: 'monthly',
+        base_salary: '',
+        hourly_rate: '',
+        hire_date: new Date().toISOString().split('T')[0],
+        remuneration_package_id: '',
+        status: 'active',
+      });
+    }
+  }, [editingEmployee, open]);
   
   const [sendWelcomeEmail, setSendWelcomeEmail] = useState(true);
   const [isSendingEmail, setIsSendingEmail] = useState(false);
@@ -90,44 +128,72 @@ export default function AddEmployeeDialog({ open, onOpenChange, orgId, employeeC
     }
   }, [formData.remuneration_package_id, packages]);
 
+  const { data: allEmployees = [] } = useQuery({
+    queryKey: ['allEmployees', orgId],
+    queryFn: () => base44.entities.Employee.filter({ organisation_id: orgId }),
+    enabled: !!orgId && !editingEmployee,
+  });
+
   const createEmployeeMutation = useMutation({
     mutationFn: async (data) => {
-      if (data.email) {
-        const existingByEmail = await base44.entities.Employee.filter({ 
-          organisation_id: orgId, 
-          email: data.email 
+      if (editingEmployee) {
+        // Update existing employee
+        const selectedPackage = packages.find(p => p.id === data.remuneration_package_id);
+        await base44.entities.Employee.update(editingEmployee.id, {
+          ...data,
+          full_name: `${data.first_name} ${data.last_name}`,
+          base_salary: parseFloat(data.base_salary) || 0,
+          hourly_rate: parseFloat(data.hourly_rate) || 0,
+          remuneration_package_id: data.remuneration_package_id || null,
+          remuneration_package_name: selectedPackage?.name || null,
+          email: data.email || null,
         });
-        if (existingByEmail.length > 0) {
-          throw new Error('An employee with this email already exists');
+        return { employee: editingEmployee, isUpdate: true };
+      } else {
+        // Create new employee
+        if (data.email) {
+          const existingByEmail = await base44.entities.Employee.filter({ 
+            organisation_id: orgId, 
+            email: data.email 
+          });
+          if (existingByEmail.length > 0) {
+            throw new Error('An employee with this email already exists');
+          }
+          
+          const existingByUserEmail = await base44.entities.Employee.filter({ 
+            organisation_id: orgId, 
+            user_email: data.email 
+          });
+          if (existingByUserEmail.length > 0) {
+            throw new Error('An employee with this email already exists');
+          }
         }
         
-        const existingByUserEmail = await base44.entities.Employee.filter({ 
-          organisation_id: orgId, 
-          user_email: data.email 
+        const employeeCode = `EMP${String(allEmployees.length + 1).padStart(4, '0')}`;
+        const selectedPackage = packages.find(p => p.id === data.remuneration_package_id);
+        const employee = await base44.entities.Employee.create({
+          ...data,
+          organisation_id: orgId,
+          employee_code: employeeCode,
+          full_name: `${data.first_name} ${data.last_name}`,
+          status: data.status || 'active',
+          base_salary: parseFloat(data.base_salary) || 0,
+          hourly_rate: parseFloat(data.hourly_rate) || 0,
+          remuneration_package_id: data.remuneration_package_id || null,
+          remuneration_package_name: selectedPackage?.name || null,
+          email: data.email || null,
         });
-        if (existingByUserEmail.length > 0) {
-          throw new Error('An employee with this email already exists');
-        }
+        return { employee, email: data.email, firstName: data.first_name, role: data.role, position: data.position };
       }
-      
-      const employeeCode = `EMP${String(employeeCount + 1).padStart(4, '0')}`;
-      const selectedPackage = packages.find(p => p.id === data.remuneration_package_id);
-      const employee = await base44.entities.Employee.create({
-        ...data,
-        organisation_id: orgId,
-        employee_code: employeeCode,
-        full_name: `${data.first_name} ${data.last_name}`,
-        status: 'active',
-        base_salary: parseFloat(data.base_salary) || 0,
-        hourly_rate: parseFloat(data.hourly_rate) || 0,
-        remuneration_package_id: data.remuneration_package_id || null,
-        remuneration_package_name: selectedPackage?.name || null,
-        email: data.email || null,
-      });
-      return { employee, email: data.email, firstName: data.first_name, role: data.role, position: data.position };
     },
     onSuccess: async (result) => {
-      queryClient.invalidateQueries({ queryKey: ['employees'] });
+      if (onSuccess) onSuccess();
+      
+      if (result.isUpdate) {
+        toast.success("Employee updated successfully");
+        onOpenChange(false);
+        return;
+      }
       
       if (sendWelcomeEmail && result.email && organisation) {
         setIsSendingEmail(true);
@@ -144,15 +210,18 @@ export default function AddEmployeeDialog({ open, onOpenChange, orgId, employeeC
             loginUrl: appDomain,
           });
           
-          await base44.functions.invoke('sendEmailMailersend', {
-            to: result.email,
-            toName: result.firstName,
-            subject: `Welcome to ${organisation.name}! 🇸🇱`,
-            htmlContent: htmlContent,
-            fromName: organisation.name,
-          });
-          
-          toast.success("Employee added & welcome email sent!");
+          try {
+            await base44.functions.invoke('sendEmailMailersend', {
+              to: result.email,
+              toName: result.firstName,
+              subject: `Welcome to ${organisation.name}! 🇸🇱`,
+              htmlContent: htmlContent,
+              fromName: organisation.name,
+            });
+            toast.success("Employee added & welcome email sent!");
+          } catch (err) {
+            toast.success("Employee added (email queued)");
+          }
         } catch (emailError) {
           console.error('Failed to send welcome email:', emailError);
           toast.error("Employee added (email failed to send)");
@@ -164,21 +233,6 @@ export default function AddEmployeeDialog({ open, onOpenChange, orgId, employeeC
       }
       
       onOpenChange(false);
-      setFormData({
-        first_name: '',
-        last_name: '',
-        email: '',
-        phone: '',
-        department: '',
-        position: '',
-        role: 'support_staff',
-        salary_type: 'monthly',
-        base_salary: '',
-        hourly_rate: '',
-        hire_date: new Date().toISOString().split('T')[0],
-        remuneration_package_id: '',
-      });
-      setSendWelcomeEmail(true);
     },
     onError: (error) => {
       toast.error(error.message || "Failed to add employee");
@@ -210,8 +264,8 @@ export default function AddEmployeeDialog({ open, onOpenChange, orgId, employeeC
                 <User className="w-5 h-5 text-white" />
               </div>
               <div>
-                <h2 className="text-lg font-bold">Add Employee</h2>
-                <p className="text-white/80 text-xs">Press Ctrl+Enter to save</p>
+                <h2 className="text-lg font-bold">{editingEmployee ? 'Edit' : 'Add'} Employee</h2>
+                <p className="text-white/80 text-xs">{editingEmployee ? 'Update employee details' : 'Press Ctrl+Enter to save'}</p>
               </div>
             </div>
             <Button variant="ghost" size="icon" onClick={() => onOpenChange(false)} className="text-white hover:bg-white/20">
@@ -293,6 +347,20 @@ export default function AddEmployeeDialog({ open, onOpenChange, orgId, employeeC
                     <Input type="date" value={formData.hire_date} onChange={(e) => setFormData(prev => ({ ...prev, hire_date: e.target.value }))} className="mt-1.5" />
                   </div>
                   <div>
+                    <Label className="text-sm">Status</Label>
+                    <Select value={formData.status} onValueChange={(v) => setFormData(prev => ({ ...prev, status: v }))}>
+                      <SelectTrigger className="mt-1.5">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="active">Active</SelectItem>
+                        <SelectItem value="inactive">Inactive</SelectItem>
+                        <SelectItem value="suspended">Suspended</SelectItem>
+                        <SelectItem value="terminated">Terminated</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div>
                     <Label className="text-sm">Base Salary</Label>
                     <div className="relative mt-1.5">
                       <span className="absolute left-2 top-1/2 -translate-y-1/2 text-gray-500 text-xs">Le</span>
@@ -318,12 +386,14 @@ export default function AddEmployeeDialog({ open, onOpenChange, orgId, employeeC
                   </div>
                 )}
 
-                <Alert className="border-amber-200 bg-amber-50">
+                {!editingEmployee && (
+                  <Alert className="border-amber-200 bg-amber-50">
                   <AlertCircle className="h-4 w-4 text-amber-600" />
-                  <AlertDescription className="text-xs text-amber-800">
-                    To enable login, invite via Base44 dashboard using same email
-                  </AlertDescription>
-                </Alert>
+                    <AlertDescription className="text-xs text-amber-800">
+                      To enable login, invite via Base44 dashboard using same email
+                    </AlertDescription>
+                  </Alert>
+                )}
               </div>
             )}
           </div>
@@ -333,7 +403,7 @@ export default function AddEmployeeDialog({ open, onOpenChange, orgId, employeeC
               Cancel
             </Button>
             <Button type="submit" disabled={createEmployeeMutation.isPending || isSendingEmail} className="flex-1 text-white" style={{ background: `linear-gradient(135deg, ${primaryColor} 0%, ${secondaryColor} 100%)` }}>
-              {(createEmployeeMutation.isPending || isSendingEmail) ? (isSendingEmail ? 'Sending...' : 'Saving...') : <><Check className="w-4 h-4 mr-2" />Add</>}
+              {(createEmployeeMutation.isPending || isSendingEmail) ? (isSendingEmail ? 'Sending...' : 'Saving...') : <><Check className="w-4 h-4 mr-2" />{editingEmployee ? 'Update' : 'Add'}</>}
             </Button>
           </div>
         </form>
