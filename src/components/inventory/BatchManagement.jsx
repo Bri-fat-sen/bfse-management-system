@@ -102,6 +102,7 @@ export default function BatchManagement({ products = [], warehouses = [], vehicl
       queryClient.invalidateQueries({ queryKey: ['inventoryBatches'] });
       queryClient.invalidateQueries({ queryKey: ['products'] });
       setShowBatchDialog(false);
+      setEditingBatch(null);
       toast.success("Batch created", "Batch and product stock updated");
     },
     onError: (error) => {
@@ -613,8 +614,10 @@ export default function BatchManagement({ products = [], warehouses = [], vehicl
               </div>
             </div>
             <DialogFooter className="flex-col sm:flex-row gap-2">
-              <Button type="button" variant="outline" onClick={() => setShowBatchDialog(false)} className="w-full sm:w-auto">Cancel</Button>
-              <Button type="submit" className="bg-[#1EB053] w-full sm:w-auto">{editingBatch ? 'Update' : 'Create'} Batch</Button>
+              <Button type="button" variant="outline" onClick={() => setShowBatchDialog(false)} className="w-full sm:w-auto" disabled={createMutation.isPending || updateMutation.isPending}>Cancel</Button>
+              <Button type="submit" className="bg-[#1EB053] w-full sm:w-auto" disabled={createMutation.isPending || updateMutation.isPending}>
+                {createMutation.isPending || updateMutation.isPending ? 'Saving...' : (editingBatch ? 'Update' : 'Create') + ' Batch'}
+              </Button>
             </DialogFooter>
           </form>
         </DialogContent>
