@@ -155,12 +155,15 @@ export default function BatchManagement({ products = [], warehouses = [], vehicl
         }
       }
       
-      // Update or delete stock levels at each location
+      // Fetch fresh stock levels from database and update or delete them
       for (const [_, update] of locationStockUpdates) {
-        const stockLevel = stockLevels.find(
-          sl => sl.product_id === update.product_id && sl.warehouse_id === update.warehouse_id
-        );
+        const locationStocks = await base44.entities.StockLevel.filter({
+          organisation_id: orgId,
+          product_id: update.product_id,
+          warehouse_id: update.warehouse_id
+        });
         
+        const stockLevel = locationStocks[0];
         if (stockLevel) {
           const newQty = Math.max(0, (stockLevel.quantity || 0) - update.quantity);
           if (newQty === 0) {
