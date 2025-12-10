@@ -74,14 +74,7 @@ export default function BatchManagement({ products = [], warehouses = [], vehicl
     mutationFn: async (data) => {
       const result = await base44.entities.InventoryBatch.create(data);
       
-      // Update product stock_quantity when batch is created
-      const product = products.find(p => p.id === data.product_id);
-      if (product) {
-        const newStockQty = (product.stock_quantity || 0) + data.quantity;
-        await base44.entities.Product.update(product.id, {
-          stock_quantity: newStockQty
-        });
-      }
+      // Don't update product stock_quantity - stock is only updated when batch is allocated to locations
       
       await logInventoryAudit({
         orgId,
@@ -93,17 +86,16 @@ export default function BatchManagement({ products = [], warehouses = [], vehicl
         performedByName: currentEmployee?.full_name,
         batchNumber: data.batch_number,
         quantityChanged: data.quantity,
-        notes: `Created batch ${data.batch_number} with ${data.quantity} units and updated product stock`,
+        notes: `Created batch ${data.batch_number} with ${data.quantity} units (not yet allocated to locations)`,
         newValues: { quantity: data.quantity, status: data.status }
       });
       return result;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['inventoryBatches'] });
-      queryClient.invalidateQueries({ queryKey: ['products'] });
       setShowBatchDialog(false);
       setEditingBatch(null);
-      toast.success("Batch created", "Batch and product stock updated");
+      toast.success("Batch created", "Allocate stock to locations to make it available");
     },
     onError: (error) => {
       console.error('Create batch error:', error);
@@ -187,16 +179,8 @@ export default function BatchManagement({ products = [], warehouses = [], vehicl
         await Promise.all(batchMovements.map(sm => base44.entities.StockMovement.delete(sm.id)));
       }
       
-      // Update product stock quantity by subtracting the deleted batch quantity
-      if (batch?.product_id) {
-        const product = products.find(p => p.id === batch.product_id);
-        if (product) {
-          const newStockQty = Math.max(0, (product.stock_quantity || 0) - (batch.quantity || 0));
-          await base44.entities.Product.update(product.id, {
-            stock_quantity: newStockQty
-          });
-        }
-      }
+      // Product stock_quantity is automatically correct from location-based StockLevel records
+      // No need to manually adjust product stock when batch is deleted
       
       // Log audit before deletion
       await logInventoryAudit({
