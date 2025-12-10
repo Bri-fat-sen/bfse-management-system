@@ -40,7 +40,6 @@ import {
 } from "lucide-react";
 import PinLockScreen from "@/components/auth/PinLockScreen";
 import SetPinDialog from "@/components/auth/SetPinDialog";
-import { cn } from "@/lib/utils";
 import { PermissionsProvider } from "@/components/permissions/PermissionsContext";
 import { DEFAULT_ROLE_PERMISSIONS } from "@/components/permissions/PermissionsContext";
 import { Button } from "@/components/ui/button";
