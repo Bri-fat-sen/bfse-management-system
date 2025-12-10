@@ -69,6 +69,52 @@ const generateFormHTML = (formType, org) => {
     <style>
       ${unifiedStyles}
       
+      @page {
+        margin: 0.5in 0.5in;
+        size: A4;
+        @top-left {
+          content: '';
+          background: linear-gradient(to right, #1EB053 33.33%, #FFFFFF 33.33%, #FFFFFF 66.66%, #0072C6 66.66%);
+          height: 8px;
+          width: 100%;
+        }
+        @top-center {
+          content: '${FORM_TEMPLATES.find(f => f.id === formType)?.name || 'Form'}';
+          font-family: -apple-system, system-ui, sans-serif;
+          font-size: 10px;
+          color: #0F1F3C;
+          font-weight: 600;
+          padding-top: 12px;
+        }
+        @top-right {
+          content: '${orgName}';
+          font-family: -apple-system, system-ui, sans-serif;
+          font-size: 10px;
+          color: #64748b;
+          padding-top: 12px;
+        }
+        @bottom-left {
+          content: 'Page ' counter(page) ' of ' counter(pages);
+          font-family: -apple-system, system-ui, sans-serif;
+          font-size: 10px;
+          color: #64748b;
+          padding-bottom: 12px;
+        }
+        @bottom-center {
+          content: 'Printed: ${today}';
+          font-family: -apple-system, system-ui, sans-serif;
+          font-size: 10px;
+          color: #64748b;
+          padding-bottom: 12px;
+        }
+        @bottom-right {
+          content: '';
+          background: linear-gradient(to right, #1EB053 33.33%, #FFFFFF 33.33%, #FFFFFF 66.66%, #0072C6 66.66%);
+          height: 8px;
+          width: 100%;
+        }
+      }
+      
       .instructions {
         background: var(--gray-50);
         padding: 16px 20px;
