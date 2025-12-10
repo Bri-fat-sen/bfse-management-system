@@ -187,6 +187,16 @@ export default function Suppliers() {
     }
   });
 
+  const sendEmailMutation = useMutation({
+    mutationFn: (purchaseOrderId) => base44.functions.invoke('sendPurchaseOrder', { purchaseOrderId }),
+    onSuccess: (response) => {
+      toast.success("Email sent", response.data.message);
+    },
+    onError: (error) => {
+      toast.error("Failed to send email", error.response?.data?.error || error.message);
+    }
+  });
+
   // Stats
   const activeSuppliers = suppliers.filter(s => s.status === 'active').length;
   const pendingOrders = purchaseOrders.filter(po => ['pending', 'approved', 'ordered'].includes(po.status)).length;
@@ -635,13 +645,18 @@ export default function Suppliers() {
                                         </Button>
                                       </DropdownMenuTrigger>
                                       <DropdownMenuContent align="end">
-                                        <DropdownMenuItem onClick={() => {
-                                          setEditingPO(po);
-                                          setShowPODialog(true);
-                                        }}>
-                                          <Edit className="w-4 h-4 mr-2" />
-                                          Edit
-                                        </DropdownMenuItem>
+                                       <DropdownMenuItem onClick={() => sendEmailMutation.mutate(po.id)}>
+                                         <Mail className="w-4 h-4 mr-2" />
+                                         Send to Supplier
+                                       </DropdownMenuItem>
+                                       <DropdownMenuSeparator />
+                                       <DropdownMenuItem onClick={() => {
+                                         setEditingPO(po);
+                                         setShowPODialog(true);
+                                       }}>
+                                         <Edit className="w-4 h-4 mr-2" />
+                                         Edit
+                                       </DropdownMenuItem>
                                         {po.status !== 'cancelled' && po.status !== 'received' && (
                                           <DropdownMenuItem 
                                             className="text-red-600"
@@ -754,6 +769,11 @@ export default function Suppliers() {
                                 </Button>
                               </DropdownMenuTrigger>
                               <DropdownMenuContent align="end">
+                                <DropdownMenuItem onClick={() => sendEmailMutation.mutate(po.id)}>
+                                  <Mail className="w-4 h-4 mr-2" />
+                                  Send to Supplier
+                                </DropdownMenuItem>
+                                <DropdownMenuSeparator />
                                 <DropdownMenuItem onClick={() => {
                                   setEditingPO(po);
                                   setShowPODialog(true);
