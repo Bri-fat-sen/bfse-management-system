@@ -29,28 +29,112 @@ export default function StockMovementsList({ movements, products, locations }) {
   };
 
   const deleteMovementMutation = useMutation({
-    mutationFn: (id) => base44.entities.StockMovement.delete(id),
+    mutationFn: async (movement) => {
+      // If this movement was from a sale, restore the sale
+      if (movement.reference_type === 'sale' && movement.reference_id) {
+        const saleNumber = movement.reference_id;
+        
+        // Check if sale was deleted
+        const existingSale = await base44.entities.Sale.filter({ sale_number: saleNumber });
+        
+        if (existingSale.length === 0) {
+          // Sale was deleted, reverse the stock movement
+          const product = await base44.entities.Product.filter({ id: movement.product_id });
+          const productData = product?.[0];
+          
+          if (productData) {
+            // Reverse the movement
+            if (movement.movement_type === 'out') {
+              // This was a sale that reduced stock, so we need to restore it
+              const newStock = (productData.stock_quantity || 0) + movement.quantity;
+              await base44.entities.Product.update(movement.product_id, {
+                stock_quantity: newStock
+              });
+              
+              // Update stock level at location
+              const stockLevel = await base44.entities.StockLevel.filter({
+                product_id: movement.product_id,
+                warehouse_id: movement.warehouse_id
+              });
+              
+              if (stockLevel?.[0]) {
+                const newLocationStock = (stockLevel[0].quantity || 0) + movement.quantity;
+                await base44.entities.StockLevel.update(stockLevel[0].id, {
+                  quantity: newLocationStock,
+                  available_quantity: newLocationStock
+                });
+              }
+            }
+          }
+        }
+      }
+      
+      // Delete the movement
+      await base44.entities.StockMovement.delete(movement.id);
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['stockMovements'] });
-      toast.success("Movement deleted", "Stock movement removed successfully");
+      queryClient.invalidateQueries({ queryKey: ['products'] });
+      queryClient.invalidateQueries({ queryKey: ['stockLevels'] });
+      toast.success("Stock movement deleted and inventory adjusted");
     },
     onError: (error) => {
-      toast.error("Delete failed", error.message);
+      toast.error("Failed to delete movement");
     }
   });
 
   const bulkDeleteMutation = useMutation({
     mutationFn: async (ids) => {
+      const movementsToDelete = movements.filter(m => ids.includes(m.id));
+      
+      // Process each movement
+      for (const movement of movementsToDelete) {
+        // If this movement was from a sale, restore stock
+        if (movement.reference_type === 'sale' && movement.reference_id) {
+          const saleNumber = movement.reference_id;
+          const existingSale = await base44.entities.Sale.filter({ sale_number: saleNumber });
+          
+          if (existingSale.length === 0) {
+            // Sale was deleted, reverse the stock movement
+            const product = await base44.entities.Product.filter({ id: movement.product_id });
+            const productData = product?.[0];
+            
+            if (productData && movement.movement_type === 'out') {
+              const newStock = (productData.stock_quantity || 0) + movement.quantity;
+              await base44.entities.Product.update(movement.product_id, {
+                stock_quantity: newStock
+              });
+              
+              const stockLevel = await base44.entities.StockLevel.filter({
+                product_id: movement.product_id,
+                warehouse_id: movement.warehouse_id
+              });
+              
+              if (stockLevel?.[0]) {
+                const newLocationStock = (stockLevel[0].quantity || 0) + movement.quantity;
+                await base44.entities.StockLevel.update(stockLevel[0].id, {
+                  quantity: newLocationStock,
+                  available_quantity: newLocationStock
+                });
+              }
+            }
+          }
+        }
+      }
+      
+      // Delete all movements
       await Promise.all(ids.map(id => base44.entities.StockMovement.delete(id)));
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['stockMovements'] });
-      toast.success("Movements deleted", `${selectedIds.length} movements removed successfully`);
+      queryClient.invalidateQueries({ queryKey: ['products'] });
+      queryClient.invalidateQueries({ queryKey: ['stockLevels'] });
+      toast.success(`${selectedIds.length} movements deleted and inventory adjusted`);
       setSelectedIds([]);
       setShowBulkDeleteConfirm(false);
     },
     onError: (error) => {
-      toast.error("Bulk delete failed", error.message);
+      toast.error("Bulk delete failed");
     }
   });
   if (movements.length === 0) {
@@ -146,8 +230,8 @@ export default function StockMovementsList({ movements, products, locations }) {
                     variant="ghost"
                     size="icon"
                     onClick={() => {
-                      if (confirm('Delete this stock movement?')) {
-                        deleteMovementMutation.mutate(movement.id);
+                      if (confirm('Delete this stock movement? Stock will be adjusted automatically.')) {
+                        deleteMovementMutation.mutate(movement);
                       }
                     }}
                     className="hover:bg-red-50 hover:text-red-500"
