@@ -377,21 +377,25 @@ export default function Layout({ children, currentPageName }) {
           {sidebarOpen ? (
             <div className="flex items-center gap-2 min-w-0 flex-1">
               {currentOrg?.logo_url && (
-                <img 
-                  src={currentOrg.logo_url} 
-                  alt={currentOrg.name} 
-                  className="max-h-10 max-w-[120px] object-contain flex-shrink-0"
-                />
+                <div className="bg-white p-2 rounded-lg flex-shrink-0">
+                  <img 
+                    src={currentOrg.logo_url} 
+                    alt={currentOrg.name} 
+                    className="max-h-10 max-w-[120px] object-contain"
+                  />
+                </div>
               )}
               <p className="font-bold text-base text-white leading-tight line-clamp-2 min-w-0">{currentOrg?.name || 'Loading...'}</p>
             </div>
           ) : (
             currentOrg?.logo_url ? (
-              <img 
-                src={currentOrg.logo_url} 
-                alt={currentOrg.name} 
-                className="max-h-10 max-w-[60px] object-contain mx-auto"
-              />
+              <div className="bg-white p-2 rounded-lg mx-auto">
+                <img 
+                  src={currentOrg.logo_url} 
+                  alt={currentOrg.name} 
+                  className="max-h-10 max-w-[60px] object-contain"
+                />
+              </div>
             ) : (
               <p className="font-bold text-xs text-white text-center">{currentOrg?.name?.charAt(0) || '?'}</p>
             )
