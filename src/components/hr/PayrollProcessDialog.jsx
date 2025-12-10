@@ -48,7 +48,8 @@ import {
   ROLE_BONUS_CONFIG,
   OVERTIME_MULTIPLIERS,
   SL_TAX_BRACKETS,
-  PAYROLL_FREQUENCIES
+  PAYROLL_FREQUENCIES,
+  applyTemplates
 } from "./PayrollCalculator";
 import { safeNumber, safeInt, formatNumber } from "@/components/utils/calculations";
 
@@ -231,6 +232,23 @@ export default function PayrollProcessDialog({
           reason: 'Individual payroll processing'
         });
       }
+
+      // Send payslip email to employee
+      const employee = employees.find(e => e.id === data.employee_id);
+      if (employee && (employee.email || employee.user_email)) {
+        try {
+          await base44.functions.invoke('sendPayslipEmail', {
+            payroll,
+            employee,
+            organisation: { id: orgId },
+            recipientEmail: employee.email || employee.user_email,
+            subject: `Your Payslip - ${format(new Date(data.period_start), 'MMMM yyyy')}`,
+            message: `Dear ${employee.full_name},\n\nYour payroll has been processed. Please find your payslip attached.\n\nNet Pay: Le ${data.net_pay?.toLocaleString()}\n\nIf you have any questions, please contact HR.\n\nBest regards`
+          });
+        } catch (error) {
+          console.error('Failed to send payslip email:', error);
+        }
+      }
       
       return payroll;
     },
@@ -239,7 +257,7 @@ export default function PayrollProcessDialog({
       queryClient.invalidateQueries({ queryKey: ['payrollAudit'] });
       onOpenChange(false);
       resetForm();
-      toast.success("Payroll processed", "Payroll has been created successfully");
+      toast.success("Payroll processed", "Payroll created and payslip sent via email");
     },
     onError: (error) => {
       console.error('Create payroll error:', error);

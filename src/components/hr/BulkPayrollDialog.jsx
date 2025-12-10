@@ -363,6 +363,30 @@ export default function BulkPayrollDialog({
       }
     }
 
+    // Send payslip emails to all successful payrolls
+    const successfulResults = processedResults.filter(r => r.status === 'success');
+    for (const result of successfulResults) {
+      const employee = employees.find(e => e.full_name === result.employee);
+      if (employee && (employee.email || employee.user_email)) {
+        try {
+          // Get the full payroll record
+          const payroll = await base44.entities.Payroll.filter({ id: result.payrollId });
+          if (payroll?.[0]) {
+            await base44.functions.invoke('sendPayslipEmail', {
+              payroll: payroll[0],
+              employee,
+              organisation: { id: orgId }, // Minimal org data - function will handle
+              recipientEmail: employee.email || employee.user_email,
+              subject: `Your Payslip - ${format(new Date(periodStart), 'MMMM yyyy')}`,
+              message: `Dear ${employee.full_name},\n\nYour payroll has been processed. Please find your payslip attached.\n\nNet Pay: Le ${result.netPay?.toLocaleString()}\n\nIf you have any questions, please contact HR.\n\nBest regards`
+            });
+          }
+        } catch (error) {
+          console.error(`Failed to send payslip email to ${result.employee}:`, error);
+        }
+      }
+    }
+
     setResults(processedResults);
     setShowResults(true);
     setProcessing(false);
@@ -374,7 +398,7 @@ export default function BulkPayrollDialog({
     const failureCount = processedResults.length - successCount;
     
     if (failureCount === 0) {
-      toast.success("Bulk payroll completed", `Successfully processed ${successCount} payrolls`);
+      toast.success("Bulk payroll completed", `Successfully processed ${successCount} payrolls. Payslips sent via email.`);
     } else {
       toast.warning("Bulk payroll completed with errors", `${successCount} succeeded, ${failureCount} failed`);
     }
