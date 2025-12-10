@@ -40,6 +40,12 @@ export default function SupplierProductsDialog({
     enabled: !!supplier?.id,
   });
 
+  const { data: stockLevels = [] } = useQuery({
+    queryKey: ['stockLevels', orgId],
+    queryFn: () => base44.entities.StockLevel.filter({ organisation_id: orgId }),
+    enabled: !!orgId,
+  });
+
   const createMutation = useMutation({
     mutationFn: (data) => base44.entities.SupplierProduct.create(data),
     onSuccess: () => {
@@ -151,34 +157,55 @@ export default function SupplierProductsDialog({
 
               {!showAddForm && !editingProduct && (
                 <div className="space-y-2">
-                  {supplierProducts.map((sp) => (
-                    <Card key={sp.id} className="hover:shadow-md transition-shadow">
-                      <CardContent className="p-4">
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-3">
-                            <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-[#1EB053]/20 to-[#0072C6]/20 flex items-center justify-center">
-                              <Package className="w-5 h-5 text-[#0072C6]" />
-                            </div>
-                            <div>
-                              <div className="flex items-center gap-2">
-                                <span className="font-medium">{sp.product_name}</span>
-                                {sp.is_preferred && (
-                                  <Badge className="bg-[#D4AF37] text-white text-xs">
-                                    <Star className="w-3 h-3 mr-1" />
-                                    Preferred
-                                  </Badge>
-                                )}
+                  {supplierProducts.map((sp) => {
+                    const product = products.find(p => p.id === sp.product_id);
+                    const productStock = product?.stock_quantity || 0;
+                    const totalLocationStock = stockLevels
+                      .filter(sl => sl.product_id === sp.product_id)
+                      .reduce((sum, sl) => sum + (sl.quantity || 0), 0);
+                    const isLowStock = productStock < (product?.low_stock_threshold || 10);
+                    
+                    return (
+                      <Card key={sp.id} className="hover:shadow-md transition-shadow">
+                        <CardContent className="p-4">
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-3">
+                              <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-[#1EB053]/20 to-[#0072C6]/20 flex items-center justify-center">
+                                <Package className="w-5 h-5 text-[#0072C6]" />
                               </div>
-                              <p className="text-sm text-gray-500">
-                                SKU: {sp.supplier_sku || '-'} • MOQ: {sp.minimum_order_quantity} • Lead: {sp.lead_time_days} days
-                              </p>
+                              <div>
+                                <div className="flex items-center gap-2">
+                                  <span className="font-medium">{sp.product_name}</span>
+                                  {sp.is_preferred && (
+                                    <Badge className="bg-[#D4AF37] text-white text-xs">
+                                      <Star className="w-3 h-3 mr-1" />
+                                      Preferred
+                                    </Badge>
+                                  )}
+                                  {isLowStock && (
+                                    <Badge className="bg-red-100 text-red-700 text-xs">Low Stock</Badge>
+                                  )}
+                                </div>
+                                <p className="text-sm text-gray-500">
+                                  SKU: {sp.supplier_sku || '-'} • MOQ: {sp.minimum_order_quantity} • Lead: {sp.lead_time_days} days
+                                </p>
+                                <p className="text-xs text-gray-600 mt-1">
+                                  <span className={`font-medium ${isLowStock ? 'text-red-600' : 'text-green-600'}`}>
+                                    Stock: {productStock}
+                                  </span>
+                                  {totalLocationStock !== productStock && (
+                                    <span className="text-gray-400 ml-2">
+                                      (Locations: {totalLocationStock})
+                                    </span>
+                                  )}
+                                </p>
+                              </div>
                             </div>
-                          </div>
-                          <div className="flex items-center gap-4">
-                            <div className="text-right">
-                              <p className="font-bold text-[#1EB053]">Le {sp.unit_cost?.toLocaleString()}</p>
-                              <p className="text-xs text-gray-500">per unit</p>
-                            </div>
+                            <div className="flex items-center gap-4">
+                              <div className="text-right">
+                                <p className="font-bold text-[#1EB053]">Le {sp.unit_cost?.toLocaleString()}</p>
+                                <p className="text-xs text-gray-500">per unit</p>
+                              </div>
                             <div className="flex gap-1">
                               {!sp.is_preferred && (
                                 <Button
@@ -213,7 +240,8 @@ export default function SupplierProductsDialog({
                         </div>
                       </CardContent>
                     </Card>
-                  ))}
+                    );
+                  })}
                 </div>
               )}
             </>
