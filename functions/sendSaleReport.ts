@@ -116,12 +116,32 @@ Deno.serve(async (req) => {
             </html>
         `;
 
-        // Send email to all admins
+        // Send email to all admins using MailerSend
+        const mailersendApiKey = Deno.env.get('MAILERSEND_API_KEY');
+        
         const emailPromises = adminEmployees.map(admin => 
-            base44.integrations.Core.SendEmail({
-                to: admin.email,
-                subject: `💰 New Sale: Le ${sale.total_amount?.toLocaleString()} - ${organisation?.name || 'BFSE'}`,
-                body: emailBody
+            fetch('https://api.mailersend.com/v1/email', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${mailersendApiKey}`
+                },
+                body: JSON.stringify({
+                    from: {
+                        email: 'noreply@brifatsensystems.com',
+                        name: organisation?.name || 'Sales Alert'
+                    },
+                    to: [{
+                        email: admin.email,
+                        name: admin.full_name || admin.first_name
+                    }],
+                    reply_to: {
+                        email: organisation?.email || 'noreply@brifatsensystems.com',
+                        name: organisation?.name || 'Sales Alert'
+                    },
+                    subject: `💰 New Sale: Le ${sale.total_amount?.toLocaleString()} - ${organisation?.name || 'BFSE'}`,
+                    html: emailBody
+                })
             })
         );
 

@@ -112,12 +112,38 @@ Deno.serve(async (req) => {
             </html>
         `;
 
-        // Send email using Core integration
-        await base44.integrations.Core.SendEmail({
-            to: customerEmail,
-            subject: `Your Receipt from ${organisation?.name || 'BRI-FAT-SEN ENTERPRISE'} - #${sale.sale_number || sale.id}`,
-            body: emailBody
+        // Send email using MailerSend
+        const mailersendApiKey = Deno.env.get('MAILERSEND_API_KEY');
+        
+        const response = await fetch('https://api.mailersend.com/v1/email', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${mailersendApiKey}`
+            },
+            body: JSON.stringify({
+                from: {
+                    email: 'noreply@brifatsensystems.com',
+                    name: organisation?.name || 'Sales Receipt'
+                },
+                to: [{
+                    email: customerEmail,
+                    name: customerName || sale.customer_name || 'Customer'
+                }],
+                reply_to: {
+                    email: organisation?.email || 'noreply@brifatsensystems.com',
+                    name: organisation?.name || 'Sales Receipt'
+                },
+                subject: `Your Receipt from ${organisation?.name || 'BRI-FAT-SEN ENTERPRISE'} - #${sale.sale_number || sale.id}`,
+                html: emailBody
+            })
         });
+
+        if (!response.ok) {
+            const error = await response.text();
+            console.error('MailerSend error:', error);
+            return Response.json({ error: 'Failed to send email', details: error }, { status: 500 });
+        }
 
         return Response.json({ success: true, message: 'Receipt sent successfully' });
     } catch (error) {
