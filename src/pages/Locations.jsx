@@ -75,6 +75,8 @@ export default function Locations() {
   const [locationToDelete, setLocationToDelete] = useState(null);
   const [locationType, setLocationType] = useState("warehouse");
   const [allowedSaleTypes, setAllowedSaleTypes] = useState([]);
+  const [selectedLocationIds, setSelectedLocationIds] = useState([]);
+  const [showBulkDeleteDialog, setShowBulkDeleteDialog] = useState(false);
 
   const { data: user } = useQuery({
     queryKey: ['currentUser'],
@@ -220,6 +222,24 @@ export default function Locations() {
       queryClient.invalidateQueries({ queryKey: ['vehicles'] });
       toast.success("Vehicle deleted successfully");
     },
+  });
+
+  const bulkDeleteLocationsMutation = useMutation({
+    mutationFn: async (locationData) => {
+      await Promise.all(locationData.map(({ id, isVehicle }) => 
+        isVehicle ? base44.entities.Vehicle.delete(id) : base44.entities.Warehouse.delete(id)
+      ));
+    },
+    onSuccess: (_, locationData) => {
+      queryClient.invalidateQueries({ queryKey: ['warehouses'] });
+      queryClient.invalidateQueries({ queryKey: ['vehicles'] });
+      toast.success("Locations deleted", `${locationData.length} locations removed successfully`);
+      setSelectedLocationIds([]);
+      setShowBulkDeleteDialog(false);
+    },
+    onError: (error) => {
+      toast.error("Failed to delete locations", error.message);
+    }
   });
 
   const updateEmployeeMutation = useMutation({
@@ -412,10 +432,21 @@ export default function Locations() {
       : null;
     
     return (
-      <Card className="hover:shadow-lg transition-all">
+      <Card className={`hover:shadow-lg transition-all ${selectedLocationIds.includes(location.id) ? 'ring-2 ring-blue-500' : ''}`}>
         <CardContent className="p-5">
           <div className="flex items-start justify-between mb-4">
             <div className="flex items-center gap-3">
+              <input
+                type="checkbox"
+                checked={selectedLocationIds.includes(location.id)}
+                onChange={(e) => {
+                  e.stopPropagation();
+                  setSelectedLocationIds(prev =>
+                    prev.includes(location.id) ? prev.filter(id => id !== location.id) : [...prev, location.id]
+                  );
+                }}
+                className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500 mt-1"
+              />
               <div className={`p-3 rounded-xl ${
                 type === 'vehicle' ? 'bg-purple-100' : 
                 type === 'store' ? 'bg-green-100' : 'bg-blue-100'
@@ -610,6 +641,30 @@ export default function Locations() {
         </div>
 
         <TabsContent value="warehouses">
+          {selectedLocationIds.length > 0 && (
+            <div className="flex items-center justify-between p-3 bg-blue-50 border border-blue-200 rounded-lg mb-4">
+              <span className="text-sm font-medium text-blue-900">
+                {selectedLocationIds.length} location(s) selected
+              </span>
+              <div className="flex gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setSelectedLocationIds([])}
+                >
+                  Clear
+                </Button>
+                <Button
+                  variant="destructive"
+                  size="sm"
+                  onClick={() => setShowBulkDeleteDialog(true)}
+                >
+                  <Trash2 className="w-4 h-4 mr-2" />
+                  Delete Selected
+                </Button>
+              </div>
+            </div>
+          )}
           {warehouses.length === 0 ? (
             <EmptyState
               icon={Warehouse}
@@ -628,6 +683,30 @@ export default function Locations() {
         </TabsContent>
 
         <TabsContent value="vehicles">
+          {selectedLocationIds.length > 0 && (
+            <div className="flex items-center justify-between p-3 bg-blue-50 border border-blue-200 rounded-lg mb-4">
+              <span className="text-sm font-medium text-blue-900">
+                {selectedLocationIds.length} vehicle(s) selected
+              </span>
+              <div className="flex gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setSelectedLocationIds([])}
+                >
+                  Clear
+                </Button>
+                <Button
+                  variant="destructive"
+                  size="sm"
+                  onClick={() => setShowBulkDeleteDialog(true)}
+                >
+                  <Trash2 className="w-4 h-4 mr-2" />
+                  Delete Selected
+                </Button>
+              </div>
+            </div>
+          )}
           {vehicles.length === 0 ? (
             <EmptyState
               icon={Truck}
@@ -940,6 +1019,25 @@ export default function Locations() {
         variant="danger"
         onConfirm={handleDeleteLocation}
         isLoading={deleteWarehouseMutation.isPending || deleteVehicleMutation.isPending}
+      />
+
+      <ConfirmDialog
+        open={showBulkDeleteDialog}
+        onOpenChange={setShowBulkDeleteDialog}
+        title="Delete Multiple Locations"
+        description={`Are you sure you want to delete ${selectedLocationIds.length} location(s)? This action cannot be undone.`}
+        confirmLabel="Delete All"
+        variant="danger"
+        onConfirm={() => {
+          const locationsData = [...warehouses, ...vehicles]
+            .filter(loc => selectedLocationIds.includes(loc.id))
+            .map(loc => ({ 
+              id: loc.id, 
+              isVehicle: !!loc.registration_number 
+            }));
+          bulkDeleteLocationsMutation.mutate(locationsData);
+        }}
+        isLoading={bulkDeleteLocationsMutation.isPending}
       />
     </div>
   );
