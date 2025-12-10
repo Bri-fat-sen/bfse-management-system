@@ -1478,17 +1478,74 @@ export default function Finance() {
 
           {/* Upload Documents Tab */}
           <TabsContent value="upload" className="mt-6">
-            <DocumentUploadExtractor
-              open={showDocumentExtractor}
-              onOpenChange={setShowDocumentExtractor}
-              orgId={orgId}
-              currentEmployee={currentEmployee}
-              onSuccess={() => {
-                queryClient.invalidateQueries({ queryKey: ['expenses', orgId] });
-                queryClient.invalidateQueries({ queryKey: ['revenues', orgId] });
-              }}
-            />
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Upload className="w-5 h-5 text-purple-600" />
+                  Upload Financial Documents
+                </CardTitle>
+                <CardDescription>Upload receipts, invoices, or spreadsheets to extract financial data automatically</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="border-2 border-dashed border-gray-300 rounded-xl p-6 sm:p-8 text-center hover:border-purple-500 transition-colors">
+                    <button onClick={() => setShowDocumentExtractor(true)} className="w-full">
+                      <div className="flex flex-col items-center gap-3">
+                        <div className="w-12 h-12 sm:w-16 sm:h-16 rounded-full bg-purple-100 flex items-center justify-center">
+                          <Upload className="w-6 h-6 sm:w-8 sm:h-8 text-purple-600" />
+                        </div>
+                        <div>
+                          <p className="text-sm sm:text-base text-gray-700 font-medium">Upload from Computer</p>
+                          <p className="text-xs sm:text-sm text-gray-500 mt-1">PDF, CSV, or images</p>
+                        </div>
+                      </div>
+                    </button>
+                  </div>
+
+                  <Button
+                    onClick={() => setShowDocumentExtractor(true)}
+                    variant="outline"
+                    className="border-2 border-dashed border-gray-300 rounded-xl p-6 sm:p-8 text-center hover:border-purple-500 transition-colors h-auto w-full"
+                  >
+                    <div className="flex flex-col items-center gap-3">
+                      <div className="w-12 h-12 sm:w-16 sm:h-16 rounded-full bg-blue-100 flex items-center justify-center">
+                        <FileText className="w-6 h-6 sm:w-8 sm:h-8 text-blue-600" />
+                      </div>
+                      <div>
+                        <p className="text-sm sm:text-base text-gray-700 font-medium">Upload & Extract Data</p>
+                        <p className="text-xs sm:text-sm text-gray-500 mt-1">Advanced extraction tools</p>
+                      </div>
+                    </div>
+                  </Button>
+                </div>
+
+                <div className="bg-blue-50 rounded-xl p-3 sm:p-4 border border-blue-200">
+                  <h4 className="font-semibold text-blue-900 mb-2 flex items-center gap-2 text-sm sm:text-base">
+                    <AlertCircle className="w-4 h-4 sm:w-5 sm:h-5" />
+                    What you can upload:
+                  </h4>
+                  <ul className="text-xs sm:text-sm text-blue-800 space-y-1 ml-6 list-disc">
+                    <li>Expense receipts and invoices</li>
+                    <li>Revenue records and sales reports</li>
+                    <li>Bank statements and deposit slips</li>
+                    <li>Spreadsheets with financial data</li>
+                  </ul>
+                </div>
+              </CardContent>
+            </Card>
           </TabsContent>
+
+          {/* Document Extractor Modal */}
+          <DocumentUploadExtractor
+            open={showDocumentExtractor}
+            onOpenChange={setShowDocumentExtractor}
+            orgId={orgId}
+            currentEmployee={currentEmployee}
+            onSuccess={() => {
+              queryClient.invalidateQueries({ queryKey: ['expenses', orgId] });
+              queryClient.invalidateQueries({ queryKey: ['revenues', orgId] });
+            }}
+          />
 
           {/* Cash Flow Tab */}
           <TabsContent value="cashflow" className="mt-6 space-y-6">
