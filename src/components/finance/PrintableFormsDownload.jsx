@@ -73,6 +73,11 @@ const generateFormHTML = (formType, org) => {
       @media print {
         @page {
           margin: 0.5in;
+          counter-increment: pageNumber;
+        }
+        
+        @page :first {
+          counter-reset: pageNumber 1;
         }
         
         .print-header-first-page {
@@ -98,10 +103,6 @@ const generateFormHTML = (formType, org) => {
         .document {
           margin-top: 60px;
           margin-bottom: 50px;
-        }
-        
-        .page-number {
-          content: counter(page);
         }
       }
       
@@ -190,7 +191,11 @@ const generateFormHTML = (formType, org) => {
       }
       
       .page-counter::before {
-        content: "Page " counter(page);
+        content: "Page " counter(pageNumber);
+      }
+      
+      .total-pages::before {
+        content: " of " attr(data-total);
       }
       
       .instructions {
@@ -1335,7 +1340,7 @@ const generateFormHTML = (formType, org) => {
       
       <div class="print-footer">
         <div class="print-footer-content">
-          <span class="page-counter"></span>
+          <span><span class="page-counter"></span><span class="total-pages" data-total=""></span></span>
           <span>Printed: ${today}</span>
         </div>
         <div class="print-footer-stripe">
@@ -1344,6 +1349,21 @@ const generateFormHTML = (formType, org) => {
           <div></div>
         </div>
       </div>
+      
+      <script>
+        function calculatePages() {
+          const pageHeight = 11 * 96 - (0.5 * 96 * 2); // Letter size minus margins (in pixels at 96 DPI)
+          const contentHeight = document.querySelector('.document').scrollHeight;
+          return Math.ceil(contentHeight / pageHeight);
+        }
+        
+        window.addEventListener('beforeprint', () => {
+          const totalPages = calculatePages();
+          document.querySelectorAll('.total-pages').forEach(el => {
+            el.setAttribute('data-total', totalPages);
+          });
+        });
+      </script>
       
       <div class="document">
         ${forms[formType] || ''}
