@@ -191,16 +191,12 @@ const generateFormHTML = (formType, org) => {
         background: #0072C6;
       }
       
-      body {
-        counter-reset: pageNumber 0;
+      @page {
+        counter-increment: page;
       }
-      
-      .print-footer {
-        counter-increment: pageNumber;
-      }
-      
-      .page-counter::before {
-        content: "Page " counter(pageNumber);
+
+      .page-counter::after {
+        content: counter(page);
       }
       
       .total-pages::before {
@@ -1349,7 +1345,7 @@ const generateFormHTML = (formType, org) => {
       
       <div class="print-footer">
         <div class="print-footer-content">
-          <span><span class="page-counter"></span><span class="total-pages" data-total="${totalPages}"></span></span>
+          <span>Page <span class="page-counter"></span> of ${totalPages}</span>
           <span>Printed: ${today}</span>
         </div>
         <div class="print-footer-stripe">
@@ -1399,8 +1395,22 @@ export default function PrintableFormsDownload({ open, onOpenChange, organisatio
       
       iframe.onload = () => {
         setTimeout(() => {
-          iframe.contentWindow.focus();
-          iframe.contentWindow.print();
+          // Add print event listeners to update page numbers
+          const iframeWindow = iframe.contentWindow;
+          let currentPage = 1;
+
+          iframeWindow.addEventListener('beforeprint', () => {
+            const footer = iframeWindow.document.querySelector('.print-footer-content');
+            if (footer) {
+              const pageCounter = footer.querySelector('.page-counter');
+              if (pageCounter) {
+                pageCounter.textContent = `Page ${currentPage}`;
+              }
+            }
+          });
+
+          iframeWindow.focus();
+          iframeWindow.print();
           setTimeout(() => {
             if (document.body.contains(iframe)) {
               document.body.removeChild(iframe);
