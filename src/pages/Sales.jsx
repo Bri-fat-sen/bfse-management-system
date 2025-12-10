@@ -481,7 +481,7 @@ export default function Sales() {
     mutationFn: async (sale) => {
       // Restore stock for each item
       if (sale.items && sale.items.length > 0) {
-        const locationId = sale.vehicle_id || sale.location;
+        const locationId = sale.vehicle_id || sale.warehouse_id;
         
         for (const item of sale.items) {
           const product = await base44.entities.Product.filter({ id: item.product_id });
@@ -568,7 +568,7 @@ export default function Sales() {
       // Restore stock for each sale
       for (const sale of salesToDelete) {
         if (sale.items && sale.items.length > 0) {
-          const locationId = sale.vehicle_id || sale.location;
+          const locationId = sale.vehicle_id || sale.warehouse_id;
           
           for (const item of sale.items) {
             const product = await base44.entities.Product.filter({ id: item.product_id });
@@ -759,6 +759,7 @@ export default function Sales() {
       payment_method: paymentMethod,
       payment_status: "paid",
       vehicle_id: saleType === 'vehicle' ? selectedLocation : null,
+      warehouse_id: saleType !== 'vehicle' ? selectedLocation : null,
       location: selectedLocationData?.name || '',
       // Pass these for stock updates
       selectedLocation: selectedLocation,
