@@ -697,6 +697,23 @@ export default function Sales() {
     }));
   };
 
+  const setQuantityDirect = (productId, value) => {
+    const product = filteredProducts.find(p => p.id === productId);
+    const availableStock = product?.location_stock ?? 0;
+    const qty = parseInt(value) || 1;
+    
+    setCart(cart.map(item => {
+      if (item.product_id === productId) {
+        const newQty = Math.max(1, Math.min(qty, availableStock));
+        if (qty > availableStock) {
+          toast.error(`Only ${availableStock} available at this location`);
+        }
+        return { ...item, quantity: newQty, total: newQty * item.unit_price };
+      }
+      return item;
+    }));
+  };
+
   const removeFromCart = (productId) => {
     setCart(cart.filter(item => item.product_id !== productId));
   };
@@ -1094,9 +1111,13 @@ export default function Sales() {
                               >
                                 <Minus className="w-3 h-3" />
                               </Button>
-                              <div className="w-10 h-8 flex items-center justify-center bg-white border border-gray-300 rounded-lg">
-                                <span className="font-bold text-sm">{item.quantity}</span>
-                              </div>
+                              <Input
+                                type="number"
+                                min="1"
+                                value={item.quantity}
+                                onChange={(e) => setQuantityDirect(item.product_id, e.target.value)}
+                                className="w-14 h-8 text-center font-bold text-sm p-1"
+                              />
                               <Button
                                 variant="outline"
                                 size="icon"
