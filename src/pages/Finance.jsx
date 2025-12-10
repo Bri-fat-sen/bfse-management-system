@@ -38,7 +38,8 @@ import {
   Sparkles,
   Edit2,
   Trash2,
-  AlertTriangle
+  AlertTriangle,
+  Info
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -99,6 +100,7 @@ export default function Finance() {
   const [showExpenseDialog, setShowExpenseDialog] = useState(false);
   const [showRevenueDialog, setShowRevenueDialog] = useState(false);
   const [showBankDepositDialog, setShowBankDepositDialog] = useState(false);
+  const [showDocumentExtractor, setShowDocumentExtractor] = useState(false);
   const [editingRevenue, setEditingRevenue] = useState(null);
   const [editingExpense, setEditingExpense] = useState(null);
   const [categoryFilter, setCategoryFilter] = useState("all");
@@ -1515,9 +1517,10 @@ export default function Finance() {
                     </label>
                   </div>
 
-                  <button
+                  <Button
                     onClick={() => setShowDocumentExtractor(true)}
-                    className="border-2 border-dashed border-gray-300 rounded-xl p-8 text-center hover:border-purple-500 transition-colors"
+                    variant="outline"
+                    className="border-2 border-dashed border-gray-300 rounded-xl p-8 text-center hover:border-purple-500 transition-colors h-auto w-full"
                   >
                     <div className="flex flex-col items-center gap-3">
                       <div className="w-16 h-16 rounded-full bg-blue-100 flex items-center justify-center">
@@ -1528,12 +1531,12 @@ export default function Finance() {
                         <p className="text-sm text-gray-500 mt-1">Advanced extraction tools</p>
                       </div>
                     </div>
-                  </button>
+                  </Button>
                 </div>
 
                 <div className="bg-blue-50 rounded-xl p-4 border border-blue-200">
                   <h4 className="font-semibold text-blue-900 mb-2 flex items-center gap-2">
-                    <Info className="w-5 h-5" />
+                    <AlertCircle className="w-5 h-5" />
                     What you can upload:
                   </h4>
                   <ul className="text-sm text-blue-800 space-y-1 ml-6 list-disc">
@@ -1543,6 +1546,18 @@ export default function Finance() {
                     <li>Spreadsheets with financial data</li>
                   </ul>
                 </div>
+
+                {/* Document Extractor Modal */}
+                <DocumentUploadExtractor
+                  open={showDocumentExtractor}
+                  onOpenChange={setShowDocumentExtractor}
+                  orgId={orgId}
+                  currentEmployee={currentEmployee}
+                  onSuccess={() => {
+                    queryClient.invalidateQueries({ queryKey: ['expenses', orgId] });
+                    queryClient.invalidateQueries({ queryKey: ['revenues', orgId] });
+                  }}
+                />
               </CardContent>
             </Card>
           </TabsContent>
