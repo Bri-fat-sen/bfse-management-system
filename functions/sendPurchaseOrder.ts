@@ -61,36 +61,62 @@ Deno.serve(async (req) => {
     doc.setDrawColor(30, 176, 83);
     doc.setLineWidth(0.5);
     doc.setFillColor(248, 250, 252);
-    doc.roundedRect(15, yPos, 85, 35, 3, 3, 'FD');
+    doc.roundedRect(15, yPos, 88, 40, 3, 3, 'FD');
     
     doc.setTextColor(15, 31, 60);
     doc.setFontSize(10);
     doc.setFont(undefined, 'bold');
     doc.text('FROM:', 20, yPos + 8);
     doc.setFont(undefined, 'normal');
-    doc.setFontSize(9);
-    doc.text(org?.name || 'N/A', 20, yPos + 14);
-    if (org?.address) doc.text(org.address, 20, yPos + 20, { maxWidth: 75 });
-    if (org?.phone) doc.text(`Tel: ${org.phone}`, 20, yPos + 26);
-    if (org?.email) doc.text(`Email: ${org.email}`, 20, yPos + 32);
+    doc.setFontSize(8);
+    const orgNameLines = doc.splitTextToSize(org?.name || 'N/A', 78);
+    doc.text(orgNameLines, 20, yPos + 14);
+    
+    let orgY = yPos + 14 + (orgNameLines.length * 4);
+    if (org?.address) {
+      const addressLines = doc.splitTextToSize(org.address, 78);
+      doc.text(addressLines, 20, orgY);
+      orgY += addressLines.length * 4;
+    }
+    if (org?.phone) {
+      doc.text(`Tel: ${org.phone}`, 20, orgY);
+      orgY += 4;
+    }
+    if (org?.email) {
+      const emailLines = doc.splitTextToSize(`Email: ${org.email}`, 78);
+      doc.text(emailLines, 20, orgY);
+    }
 
     // Supplier Info Box
     doc.setDrawColor(0, 114, 198);
     doc.setFillColor(248, 250, 252);
-    doc.roundedRect(110, yPos, 85, 35, 3, 3, 'FD');
+    doc.roundedRect(108, yPos, 88, 40, 3, 3, 'FD');
     
     doc.setTextColor(15, 31, 60);
     doc.setFontSize(10);
     doc.setFont(undefined, 'bold');
-    doc.text('TO:', 115, yPos + 8);
+    doc.text('TO:', 113, yPos + 8);
     doc.setFont(undefined, 'normal');
-    doc.setFontSize(9);
-    doc.text(supplier.name, 115, yPos + 14);
-    if (supplier.contact_person) doc.text(supplier.contact_person, 115, yPos + 20);
-    if (supplier.phone) doc.text(`Tel: ${supplier.phone}`, 115, yPos + 26);
-    if (supplier.email) doc.text(`Email: ${supplier.email}`, 115, yPos + 32);
+    doc.setFontSize(8);
+    const supplierNameLines = doc.splitTextToSize(supplier.name, 78);
+    doc.text(supplierNameLines, 113, yPos + 14);
+    
+    let supplierY = yPos + 14 + (supplierNameLines.length * 4);
+    if (supplier.contact_person) {
+      const contactLines = doc.splitTextToSize(supplier.contact_person, 78);
+      doc.text(contactLines, 113, supplierY);
+      supplierY += contactLines.length * 4;
+    }
+    if (supplier.phone) {
+      doc.text(`Tel: ${supplier.phone}`, 113, supplierY);
+      supplierY += 4;
+    }
+    if (supplier.email) {
+      const emailLines = doc.splitTextToSize(`Email: ${supplier.email}`, 78);
+      doc.text(emailLines, 113, supplierY);
+    }
 
-    yPos = 115;
+    yPos = 120;
 
     // Order Details
     doc.setFillColor(243, 244, 246);
