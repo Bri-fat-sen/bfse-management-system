@@ -109,18 +109,51 @@ export default function DocumentUploadExtractor({
   const [driveLoading, setDriveLoading] = useState(false);
   const [currentFolderId, setCurrentFolderId] = useState(null);
   const [folderPath, setFolderPath] = useState([{ id: null, name: 'My Drive' }]);
+  const [appFolderId, setAppFolderId] = useState(null);
+  const [appFolderLink, setAppFolderLink] = useState(null);
 
   const baseCategories = type === "expense" ? DEFAULT_EXPENSE_CATEGORIES : DEFAULT_REVENUE_SOURCES;
   const categories = useMemo(() => {
     return [...(customCategories || baseCategories), ...dynamicCategories];
   }, [customCategories, baseCategories, dynamicCategories]);
 
+  const setupAppFolder = async () => {
+    try {
+      const { data } = await base44.functions.invoke('googleDriveFileOperations', {
+        action: 'findOrCreateFolder',
+        folderName: 'Business Management Uploads'
+      });
+      
+      if (data.folderId) {
+        setAppFolderId(data.folderId);
+        setAppFolderLink(data.webViewLink);
+        
+        if (!data.existed) {
+          toast.success("Folder Created", "Business Management Uploads folder created in your Drive");
+        }
+        
+        return data.folderId;
+      }
+    } catch (error) {
+      console.error("Failed to setup app folder:", error);
+      return null;
+    }
+  };
+
   const loadDriveFiles = async (folderId = null) => {
     setDriveLoading(true);
     try {
+      // First time opening, setup app folder
+      if (!appFolderId && !folderId) {
+        const setupFolderId = await setupAppFolder();
+        if (setupFolderId) {
+          folderId = setupFolderId;
+        }
+      }
+      
       const payload = { 
         action: 'list',
-        folderId: folderId || null
+        folderId: folderId || appFolderId || null
       };
       
       const { data } = await base44.functions.invoke('googleDriveFileOperations', payload);
@@ -1700,19 +1733,19 @@ IMPORTANT FOR BATCH ENTRY FORMS:
               <Cloud className="w-6 h-6 text-blue-600" />
               <div className="flex-1">
                 <h3 className="text-lg font-bold">Select from Google Drive</h3>
-                <div className="flex items-center gap-1 text-xs text-gray-500 mt-1 flex-wrap">
-                  {folderPath.map((folder, idx) => (
-                    <React.Fragment key={folder.id || 'root'}>
-                      <button
-                        onClick={() => navigateBack(idx)}
-                        className="hover:text-blue-600 hover:underline"
-                      >
-                        {folder.name}
-                      </button>
-                      {idx < folderPath.length - 1 && <span>/</span>}
-                    </React.Fragment>
-                  ))}
-                </div>
+                {appFolderLink && (
+                  <a
+                    href={appFolderLink}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-xs text-blue-600 hover:underline mt-1 inline-block"
+                  >
+                    📁 Open "Business Management Uploads" folder
+                  </a>
+                )}
+                <p className="text-xs text-gray-500 mt-1">
+                  Transfer your files to "Business Management Uploads" folder to access them here
+                </p>
               </div>
             </div>
 
