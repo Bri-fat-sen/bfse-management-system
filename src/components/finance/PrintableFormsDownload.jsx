@@ -72,7 +72,12 @@ const generateFormHTML = (formType, org) => {
       
       @media print {
         @page {
-          margin: 0.5in;
+          margin: 1.2in 0.5in 1in 0.5in;
+          counter-increment: page;
+        }
+        
+        @page :first {
+          margin-top: 1.2in;
         }
         
         .print-header-first-page {
@@ -90,7 +95,11 @@ const generateFormHTML = (formType, org) => {
         }
         
         .document {
-          margin-top: 100px;
+          margin-top: 0;
+        }
+        
+        .page-number::after {
+          content: counter(page);
         }
       }
       
@@ -1304,18 +1313,6 @@ const generateFormHTML = (formType, org) => {
     <head>
       <title>${formName}</title>
       ${commonStyles}
-      <script>
-        let pageNum = 1;
-        window.addEventListener('beforeprint', () => {
-          document.querySelectorAll('.page-number').forEach(el => {
-            el.textContent = pageNum;
-            pageNum++;
-          });
-        });
-        window.addEventListener('afterprint', () => {
-          pageNum = 1;
-        });
-      </script>
     </head>
     <body>
       <div class="print-header-first-page">
@@ -1332,7 +1329,7 @@ const generateFormHTML = (formType, org) => {
       
       <div class="print-footer">
         <div class="print-footer-content">
-          <span>Page <span class="page-number">1</span></span>
+          <span>Page <span class="page-number"></span></span>
           <span>Printed: ${today}</span>
         </div>
         <div class="print-footer-stripe">
