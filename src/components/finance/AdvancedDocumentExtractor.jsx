@@ -257,10 +257,12 @@ Be thorough and accurate.`,
   const loadDriveFiles = async (folderId = null) => {
     setDriveLoading(true);
     try {
-      const { data } = await base44.functions.invoke('googleDriveFileOperations', { 
+      const payload = { 
         action: 'list',
-        folderId
-      });
+        folderId: folderId || null
+      };
+      
+      const { data } = await base44.functions.invoke('googleDriveFileOperations', payload);
       
       if (data.error) {
         toast.error("Drive Error", data.error);
