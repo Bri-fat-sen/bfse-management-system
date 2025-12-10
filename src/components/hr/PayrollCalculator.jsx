@@ -49,18 +49,124 @@ export const OVERTIME_MULTIPLIERS = {
 };
 
 // Sierra Leone Public Holidays (for payroll calculations)
+// Per Public Holidays Act and subsequent amendments
 export const SL_PUBLIC_HOLIDAYS_2025 = [
   { date: "2025-01-01", name: "New Year's Day" },
   { date: "2025-03-08", name: "International Women's Day" },
   { date: "2025-03-29", name: "Eid ul-Fitr" }, // Approximate - varies by moon sighting
   { date: "2025-04-18", name: "Good Friday" },
   { date: "2025-04-21", name: "Easter Monday" },
-  { date: "2025-04-27", name: "Independence Day" },
-  { date: "2025-06-05", name: "Eid ul-Adha" }, // Approximate - varies by moon sighting
-  { date: "2025-08-12", name: "Maulid-un-Nabi" }, // Prophet's Birthday
+  { date: "2025-04-27", name: "Independence Day (National Day)" },
+  { date: "2025-06-05", name: "Eid ul-Adha (Tabaski)" }, // Approximate - varies by moon sighting
+  { date: "2025-08-12", name: "Maulid-un-Nabi (Prophet's Birthday)" }, // Approximate
   { date: "2025-12-25", name: "Christmas Day" },
   { date: "2025-12-26", name: "Boxing Day" }
 ];
+
+// Severance Pay Calculator - Per Employment Act 2023 Section 41
+// Employee entitled to severance pay after 5 years continuous service
+export const calculateSeverancePay = (yearsOfService, monthlyBasicSalary) => {
+  const years = safeNum(yearsOfService);
+  const salary = safeNum(monthlyBasicSalary);
+  
+  // Severance only applies after 5 years of continuous service
+  if (years < 5) {
+    return {
+      amount: 0,
+      weeks: 0,
+      yearsConsidered: 0,
+      explanation: "Severance pay only applicable after 5 years of continuous service"
+    };
+  }
+  
+  // Per Employment Act 2023: One week's basic pay per year of service
+  // Week = monthly salary / 4.33 (average weeks per month)
+  const weeklyPay = salary / 4.33;
+  const weeksOwed = years;
+  const severanceAmount = Math.round(weeklyPay * weeksOwed);
+  
+  return {
+    amount: severanceAmount,
+    weeks: weeksOwed,
+    yearsConsidered: years,
+    weeklyBasicPay: Math.round(weeklyPay),
+    explanation: `${years} years × 1 week's basic pay = ${weeksOwed} weeks at Le ${Math.round(weeklyPay)}/week`
+  };
+};
+
+// Gratuity Calculator - Common in SL private sector
+// Typically 1 month salary per year of service (not statutory, but common practice)
+export const calculateGratuity = (yearsOfService, monthlyBasicSalary) => {
+  const years = safeNum(yearsOfService);
+  const salary = safeNum(monthlyBasicSalary);
+  
+  // Gratuity typically applies after 1 year of service
+  if (years < 1) {
+    return {
+      amount: 0,
+      monthsOwed: 0,
+      explanation: "Gratuity typically applicable after 1 year of service"
+    };
+  }
+  
+  // Common practice: 1 month's salary per completed year
+  const monthsOwed = Math.floor(years);
+  const gratuityAmount = Math.round(salary * monthsOwed);
+  
+  return {
+    amount: gratuityAmount,
+    monthsOwed,
+    yearsConsidered: years,
+    explanation: `${monthsOwed} completed years × 1 month's salary = ${monthsOwed} months at Le ${Math.round(salary)}/month`
+  };
+};
+
+// Terminal Benefits Calculator (Severance + Accrued Leave + Notice Pay)
+export const calculateTerminalBenefits = (employeeData) => {
+  const {
+    yearsOfService,
+    monthlyBasicSalary,
+    accruedLeaveDays = 0,
+    noticePeriodDays = 0,
+    reasonForTermination = 'resignation' // resignation, dismissal, redundancy, retirement
+  } = employeeData;
+  
+  const salary = safeNum(monthlyBasicSalary);
+  const dailyRate = salary / 22; // 22 working days per month
+  
+  // Calculate severance (only for redundancy/retrenchment, not resignation or dismissal)
+  const severance = ['redundancy', 'retrenchment'].includes(reasonForTermination) 
+    ? calculateSeverancePay(yearsOfService, salary)
+    : { amount: 0, explanation: 'Severance not applicable for ' + reasonForTermination };
+  
+  // Calculate accrued leave pay (always applicable)
+  const accruedLeavePay = Math.round(safeNum(accruedLeaveDays) * dailyRate);
+  
+  // Calculate notice pay (if not served or paid in lieu)
+  const noticePay = Math.round(safeNum(noticePeriodDays) * dailyRate);
+  
+  // Gratuity (if company policy includes it)
+  const gratuity = calculateGratuity(yearsOfService, salary);
+  
+  const totalBenefits = severance.amount + accruedLeavePay + noticePay + gratuity.amount;
+  
+  return {
+    severance,
+    accruedLeavePay: {
+      amount: accruedLeavePay,
+      days: accruedLeaveDays,
+      dailyRate: Math.round(dailyRate)
+    },
+    noticePay: {
+      amount: noticePay,
+      days: noticePeriodDays,
+      dailyRate: Math.round(dailyRate)
+    },
+    gratuity,
+    totalBenefits,
+    breakdown: `Severance: Le ${severance.amount.toLocaleString()} + Leave: Le ${accruedLeavePay.toLocaleString()} + Notice: Le ${noticePay.toLocaleString()} + Gratuity: Le ${gratuity.amount.toLocaleString()}`
+  };
+};
 
 // Sierra Leone Minimum Wage (as of 2024) - in NLE (New Leone)
 // Per Minimum Wage Act and subsequent amendments
