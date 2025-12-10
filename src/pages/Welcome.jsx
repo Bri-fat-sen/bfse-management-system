@@ -18,6 +18,7 @@ import {
 export default function Welcome() {
   const [user, setUser] = React.useState(null);
   const [loading, setLoading] = React.useState(true);
+  const [countdown, setCountdown] = React.useState(5);
 
   React.useEffect(() => {
     const loadUser = async () => {
@@ -34,6 +35,24 @@ export default function Welcome() {
     };
     loadUser();
   }, []);
+
+  // Auto-redirect after 5 seconds
+  React.useEffect(() => {
+    if (!loading && user) {
+      const timer = setInterval(() => {
+        setCountdown((prev) => {
+          if (prev <= 1) {
+            clearInterval(timer);
+            window.location.href = createPageUrl("Dashboard");
+            return 0;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+
+      return () => clearInterval(timer);
+    }
+  }, [loading, user]);
 
   const handleContinue = () => {
     window.location.href = createPageUrl("Dashboard");
@@ -155,18 +174,18 @@ export default function Welcome() {
             </div>
           </div>
 
-          {/* Continue Button */}
+          {/* Continue Button with Countdown */}
           <Button
             size="lg"
             onClick={handleContinue}
             className="bg-gradient-to-r from-[#1EB053] to-[#0072C6] hover:opacity-90 text-white text-lg px-12 py-6 h-auto shadow-xl"
           >
-            Continue to App
+            Continue to App {countdown > 0 && `(${countdown}s)`}
             <ArrowRight className="ml-2 w-6 h-6" />
           </Button>
 
           <p className="text-white/50 text-sm mt-4">
-            Click above to access your dashboard and start managing your business
+            {countdown > 0 ? `Redirecting in ${countdown} seconds...` : 'Redirecting...'}
           </p>
         </div>
 
