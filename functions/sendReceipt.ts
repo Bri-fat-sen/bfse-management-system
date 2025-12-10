@@ -178,7 +178,7 @@ Deno.serve(async (req) => {
                     <!-- Header with Sierra Leone colors -->
                     <div style="height: 6px; display: flex;">
                         <div style="flex: 1; background-color: #1EB053;"></div>
-                        <div style="flex: 1; background-color: #FFFFFF;"></div>
+                        <div style="flex: 1; background-color: #FFFFFF; border-top: 1px solid #e5e7eb; border-bottom: 1px solid #e5e7eb;"></div>
                         <div style="flex: 1; background-color: #0072C6;"></div>
                     </div>
                     
@@ -251,7 +251,7 @@ Deno.serve(async (req) => {
 
                     <div style="height: 6px; display: flex;">
                         <div style="flex: 1; background-color: #1EB053;"></div>
-                        <div style="flex: 1; background-color: #FFFFFF;"></div>
+                        <div style="flex: 1; background-color: #FFFFFF; border-top: 1px solid #e5e7eb; border-bottom: 1px solid #e5e7eb;"></div>
                         <div style="flex: 1; background-color: #0072C6;"></div>
                     </div>
                 </div>
