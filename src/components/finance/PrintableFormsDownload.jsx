@@ -71,9 +71,12 @@ const generateFormHTML = (formType, org) => {
       ${unifiedStyles}
       
       @media print {
+        body {
+          counter-reset: page 1;
+        }
+        
         @page {
           margin: 1.2in 0.5in 1in 0.5in;
-          counter-increment: page;
         }
         
         @page :first {
@@ -86,20 +89,17 @@ const generateFormHTML = (formType, org) => {
         
         .print-footer {
           display: block !important;
-          position: fixed;
-          bottom: 0;
-          left: 0;
-          right: 0;
-          z-index: 9999;
-          background: white;
+          position: running(footer);
+        }
+        
+        @page {
+          @bottom-center {
+            content: element(footer);
+          }
         }
         
         .document {
           margin-top: 0;
-        }
-        
-        .page-number::after {
-          content: counter(page);
         }
       }
       
@@ -1329,7 +1329,7 @@ const generateFormHTML = (formType, org) => {
       
       <div class="print-footer">
         <div class="print-footer-content">
-          <span>Page <span class="page-number"></span></span>
+          <span>Page <span id="pageNumber"></span></span>
           <span>Printed: ${today}</span>
         </div>
         <div class="print-footer-stripe">
@@ -1338,6 +1338,18 @@ const generateFormHTML = (formType, org) => {
           <div></div>
         </div>
       </div>
+      
+      <script>
+        if (window.matchMedia('print').matches) {
+          let pageNum = 1;
+          const style = document.createElement('style');
+          style.innerHTML = \`
+            @page { counter-increment: page; }
+            #pageNumber::after { content: counter(page); }
+          \`;
+          document.head.appendChild(style);
+        }
+      </script>
       
       <div class="document">
         ${forms[formType] || ''}
