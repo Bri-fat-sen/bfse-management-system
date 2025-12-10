@@ -700,6 +700,15 @@ export default function Sales() {
   const setQuantityDirect = (productId, value) => {
     const product = filteredProducts.find(p => p.id === productId);
     const availableStock = product?.location_stock ?? 0;
+    
+    // Allow empty value temporarily while typing
+    if (value === '') {
+      setCart(cart.map(item => 
+        item.product_id === productId ? { ...item, quantity: '' } : item
+      ));
+      return;
+    }
+    
     const qty = parseInt(value) || 1;
     
     setCart(cart.map(item => {
@@ -709,6 +718,15 @@ export default function Sales() {
           toast.error(`Only ${availableStock} available at this location`);
         }
         return { ...item, quantity: newQty, total: newQty * item.unit_price };
+      }
+      return item;
+    }));
+  };
+
+  const validateQuantity = (productId) => {
+    setCart(cart.map(item => {
+      if (item.product_id === productId && (item.quantity === '' || item.quantity < 1)) {
+        return { ...item, quantity: 1, total: item.unit_price };
       }
       return item;
     }));
@@ -1116,6 +1134,7 @@ export default function Sales() {
                                 min="1"
                                 value={item.quantity}
                                 onChange={(e) => setQuantityDirect(item.product_id, e.target.value)}
+                                onBlur={() => validateQuantity(item.product_id)}
                                 className="w-14 h-8 text-center font-bold text-sm p-1"
                               />
                               <Button
