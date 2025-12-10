@@ -16,6 +16,145 @@ Deno.serve(async (req) => {
             return Response.json({ error: 'Sale data and customer email are required' }, { status: 400 });
         }
 
+        // Generate PDF
+        const doc = new jsPDF();
+        const pageWidth = doc.internal.pageSize.getWidth();
+        let yPos = 15;
+
+        // Sierra Leone flag stripe at top
+        doc.setFillColor(30, 176, 83);
+        doc.rect(0, 0, pageWidth / 3, 8, 'F');
+        doc.setFillColor(255, 255, 255);
+        doc.rect(pageWidth / 3, 0, pageWidth / 3, 8, 'F');
+        doc.setFillColor(0, 114, 198);
+        doc.rect((pageWidth / 3) * 2, 0, pageWidth / 3, 8, 'F');
+
+        yPos = 20;
+
+        // Header
+        doc.setFillColor(30, 176, 83);
+        doc.rect(0, yPos, pageWidth, 40, 'F');
+        doc.setTextColor(255, 255, 255);
+        doc.setFontSize(24);
+        doc.setFont(undefined, 'bold');
+        doc.text('SALES RECEIPT', pageWidth / 2, yPos + 15, { align: 'center' });
+        doc.setFontSize(16);
+        doc.text(`#${sale.sale_number || sale.id}`, pageWidth / 2, yPos + 28, { align: 'center' });
+
+        yPos = 70;
+
+        // Receipt Info Box
+        doc.setDrawColor(30, 176, 83);
+        doc.setLineWidth(0.5);
+        doc.setFillColor(248, 250, 252);
+        doc.roundedRect(15, yPos, pageWidth - 30, 40, 3, 3, 'FD');
+        
+        doc.setTextColor(15, 31, 60);
+        doc.setFontSize(10);
+        doc.setFont(undefined, 'bold');
+        doc.text('RECEIPT DETAILS:', 20, yPos + 8);
+        doc.setFont(undefined, 'normal');
+        doc.setFontSize(9);
+        doc.text(`Date: ${new Date(sale.created_date || Date.now()).toLocaleString()}`, 20, yPos + 16);
+        doc.text(`Customer: ${customerName || sale.customer_name || 'Walk-in Customer'}`, 20, yPos + 23);
+        doc.text(`Payment: ${sale.payment_method?.toUpperCase() || 'CASH'}`, 20, yPos + 30);
+
+        yPos = 120;
+
+        // Items Table Header
+        doc.setFillColor(30, 176, 83);
+        doc.rect(15, yPos, pageWidth - 30, 10, 'F');
+        doc.setTextColor(255, 255, 255);
+        doc.setFontSize(9);
+        doc.setFont(undefined, 'bold');
+        doc.text('ITEM', 20, yPos + 7);
+        doc.text('QTY', 110, yPos + 7);
+        doc.text('PRICE', 135, yPos + 7);
+        doc.text('TOTAL', 170, yPos + 7, { align: 'right' });
+
+        yPos += 10;
+
+        // Items
+        doc.setFont(undefined, 'normal');
+        doc.setTextColor(31, 41, 55);
+        doc.setFontSize(8);
+
+        sale.items.forEach((item, idx) => {
+            if (yPos > 250) {
+                doc.addPage();
+                yPos = 20;
+            }
+
+            const bgColor = idx % 2 === 0 ? [255, 255, 255] : [249, 250, 251];
+            doc.setFillColor(...bgColor);
+            doc.rect(15, yPos, pageWidth - 30, 12, 'F');
+            doc.setDrawColor(229, 231, 235);
+            doc.line(15, yPos + 12, pageWidth - 15, yPos + 12);
+
+            doc.text(item.product_name, 20, yPos + 8, { maxWidth: 85 });
+            doc.text(`${item.quantity}`, 110, yPos + 8);
+            doc.text(`Le ${item.unit_price?.toLocaleString() || 0}`, 135, yPos + 8);
+            doc.setFont(undefined, 'bold');
+            doc.text(`Le ${item.total?.toLocaleString() || 0}`, 195, yPos + 8, { align: 'right' });
+            doc.setFont(undefined, 'normal');
+
+            yPos += 12;
+        });
+
+        yPos += 5;
+
+        // Totals
+        doc.setDrawColor(30, 176, 83);
+        doc.setLineWidth(2);
+        doc.line(125, yPos, pageWidth - 15, yPos);
+        yPos += 8;
+
+        doc.setFontSize(9);
+        doc.setTextColor(107, 114, 128);
+        doc.text('Subtotal:', 130, yPos);
+        doc.setTextColor(15, 31, 60);
+        doc.text(`Le ${(sale.subtotal || sale.total_amount)?.toLocaleString() || 0}`, 195, yPos, { align: 'right' });
+        yPos += 7;
+
+        if (sale.tax > 0) {
+            doc.setTextColor(107, 114, 128);
+            doc.text('Tax:', 130, yPos);
+            doc.setTextColor(15, 31, 60);
+            doc.text(`Le ${sale.tax?.toLocaleString()}`, 195, yPos, { align: 'right' });
+            yPos += 7;
+        }
+
+        if (sale.discount > 0) {
+            doc.setTextColor(107, 114, 128);
+            doc.text('Discount:', 130, yPos);
+            doc.setTextColor(15, 31, 60);
+            doc.text(`-Le ${sale.discount?.toLocaleString()}`, 195, yPos, { align: 'right' });
+            yPos += 7;
+        }
+
+        doc.setDrawColor(30, 176, 83);
+        doc.setLineWidth(1);
+        doc.line(125, yPos, pageWidth - 15, yPos);
+        yPos += 8;
+
+        doc.setFontSize(11);
+        doc.setFont(undefined, 'bold');
+        doc.setTextColor(30, 176, 83);
+        doc.text('TOTAL AMOUNT:', 130, yPos);
+        doc.setFontSize(13);
+        doc.text(`Le ${sale.total_amount?.toLocaleString() || 0}`, 195, yPos, { align: 'right' });
+
+        // Footer stripe
+        const footerY = doc.internal.pageSize.getHeight() - 8;
+        doc.setFillColor(30, 176, 83);
+        doc.rect(0, footerY, pageWidth / 3, 8, 'F');
+        doc.setFillColor(255, 255, 255);
+        doc.rect(pageWidth / 3, footerY, pageWidth / 3, 8, 'F');
+        doc.setFillColor(0, 114, 198);
+        doc.rect((pageWidth / 3) * 2, footerY, pageWidth / 3, 8, 'F');
+
+        const pdfBase64 = doc.output('datauristring').split(',')[1];
+
         // Format items for email
         const itemsHTML = sale.items?.map(item => `
             <tr>
