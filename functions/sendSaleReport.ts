@@ -44,6 +44,11 @@ Deno.serve(async (req) => {
                 <style>
                     body { font-family: Arial, sans-serif; margin: 0; padding: 0; background: #f5f5f5; }
                     .container { max-width: 600px; margin: 0 auto; background: white; }
+                    .flag-stripe { height: 6px; display: flex; }
+                    .flag-stripe div { flex: 1; }
+                    .green { background: #1EB053; }
+                    .white { background: #FFFFFF; }
+                    .blue { background: #0072C6; }
                     .header { background: #0F1F3C; color: white; padding: 20px; }
                     .alert-banner { background: linear-gradient(135deg, #1EB053, #0072C6); color: white; padding: 15px; text-align: center; }
                     .content { padding: 25px; }
@@ -57,6 +62,11 @@ Deno.serve(async (req) => {
             </head>
             <body>
                 <div class="container">
+                    <div class="flag-stripe">
+                        <div class="green"></div>
+                        <div class="white"></div>
+                        <div class="blue"></div>
+                    </div>
                     <div class="header">
                         <h2 style="margin: 0;">🔔 New Sale Alert</h2>
                     </div>
@@ -95,6 +105,11 @@ Deno.serve(async (req) => {
                     <div class="footer">
                         <p>🇸🇱 ${organisation?.name || 'BRI-FAT-SEN ENTERPRISE'} - Auto Sale Report</p>
                         <p>This is an automated notification from your management system.</p>
+                    </div>
+                    <div class="flag-stripe">
+                        <div class="green"></div>
+                        <div class="white"></div>
+                        <div class="blue"></div>
                     </div>
                 </div>
             </body>

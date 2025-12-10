@@ -102,6 +102,11 @@ Deno.serve(async (req) => {
                         <p style="margin: 0;">🇸🇱 Proudly serving Sierra Leone</p>
                         <p style="margin: 5px 0 0 0; font-size: 12px; opacity: 0.8;">${organisation?.address || 'Freetown, Sierra Leone'} | ${organisation?.phone || ''}</p>
                     </div>
+                    <div class="flag-stripe">
+                        <div class="green"></div>
+                        <div class="white"></div>
+                        <div class="blue"></div>
+                    </div>
                 </div>
             </body>
             </html>
