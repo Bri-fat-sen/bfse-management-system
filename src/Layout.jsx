@@ -377,11 +377,11 @@ export default function Layout({ children, currentPageName }) {
           {sidebarOpen ? (
             <div className="flex items-center gap-2 min-w-0 flex-1">
               {currentOrg?.logo_url && (
-                <div className="bg-white p-2 rounded-lg flex-shrink-0">
+                <div className="bg-white p-1.5 rounded-lg flex-shrink-0 inline-flex">
                   <img 
                     src={currentOrg.logo_url} 
                     alt={currentOrg.name} 
-                    className="max-h-10 max-w-[120px] object-contain"
+                    className="h-8 w-auto object-contain"
                   />
                 </div>
               )}
@@ -389,11 +389,11 @@ export default function Layout({ children, currentPageName }) {
             </div>
           ) : (
             currentOrg?.logo_url ? (
-              <div className="bg-white p-2 rounded-lg mx-auto">
+              <div className="bg-white p-1.5 rounded-lg mx-auto inline-flex">
                 <img 
                   src={currentOrg.logo_url} 
                   alt={currentOrg.name} 
-                  className="max-h-10 max-w-[60px] object-contain"
+                  className="h-8 w-auto object-contain"
                 />
               </div>
             ) : (
