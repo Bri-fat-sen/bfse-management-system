@@ -473,7 +473,7 @@ export default function Sales() {
     },
     onError: (error) => {
       console.error('Create sale error:', error);
-      toast.error("Failed to complete sale", error.message);
+      toast.error("Failed to complete sale");
     }
   });
 
@@ -482,10 +482,11 @@ export default function Sales() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['sales', orgId] });
       toast.success("Sale deleted successfully");
+      setShowDeleteConfirm(false);
     },
     onError: (error) => {
       console.error('Delete sale error:', error);
-      toast.error("Failed to delete sale", error.message);
+      toast.error("Failed to delete sale");
     }
   });
 
@@ -495,12 +496,12 @@ export default function Sales() {
     },
     onSuccess: (_, saleIds) => {
       queryClient.invalidateQueries({ queryKey: ['sales', orgId] });
-      toast.success("Sales deleted", `${saleIds.length} sales removed successfully`);
+      toast.success(`${saleIds.length} sales deleted successfully`);
       setSelectedSaleIds([]);
       setShowBulkDeleteDialog(false);
     },
     onError: (error) => {
-      toast.error("Failed to delete sales", error.message);
+      toast.error("Failed to delete sales");
     }
   });
 
@@ -537,7 +538,7 @@ export default function Sales() {
 
   const addToCart = (product) => {
     if (!selectedLocation) {
-      toast.error("Select Location", `Please select a ${saleType === 'vehicle' ? 'vehicle' : saleType === 'warehouse' ? 'warehouse' : 'store'} first.`);
+      toast.error(`Please select a ${saleType === 'vehicle' ? 'vehicle' : saleType === 'warehouse' ? 'warehouse' : 'store'} first`);
       return;
     }
 
@@ -546,7 +547,7 @@ export default function Sales() {
     
     if (existing) {
       if (existing.quantity >= availableStock) {
-        toast.error("Stock Limit", `Only ${availableStock} available at this location.`);
+        toast.error(`Only ${availableStock} available at this location`);
         return;
       }
       setCart(cart.map(item => 
@@ -556,7 +557,7 @@ export default function Sales() {
       ));
     } else {
       if (availableStock < 1) {
-        toast.error("Out of Stock", "This product is not available at this location.");
+        toast.error("This product is not available at this location");
         return;
       }
       setCart([...cart, {
@@ -577,7 +578,7 @@ export default function Sales() {
       if (item.product_id === productId) {
         const newQty = Math.max(1, item.quantity + delta);
         if (newQty > availableStock) {
-          toast.error("Stock Limit", `Only ${availableStock} available at this location.`);
+          toast.error(`Only ${availableStock} available at this location`);
           return item;
         }
         return { ...item, quantity: newQty, total: newQty * item.unit_price };
@@ -594,7 +595,7 @@ export default function Sales() {
 
   const completeSale = async () => {
     if (!selectedLocation) {
-      toast.error("Location Required", `Please select a ${saleType === 'vehicle' ? 'vehicle' : saleType === 'warehouse' ? 'warehouse' : 'store'} for this sale.`);
+      toast.error(`Please select a ${saleType === 'vehicle' ? 'vehicle' : saleType === 'warehouse' ? 'warehouse' : 'store'} for this sale`);
       return;
     }
 

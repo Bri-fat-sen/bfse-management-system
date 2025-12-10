@@ -211,11 +211,11 @@ export default function Finance() {
       queryClient.invalidateQueries({ queryKey: ['expenses', orgId] });
       setShowExpenseDialog(false);
       setEditingExpense(null);
-      toast.success("Expense recorded", "Expense has been added");
+      toast.success("Expense recorded successfully");
     },
     onError: (error) => {
       console.error('Create expense error:', error);
-      toast.error("Failed to record expense", error.message);
+      toast.error("Failed to record expense");
     }
   });
 
@@ -225,10 +225,10 @@ export default function Finance() {
       queryClient.invalidateQueries({ queryKey: ['expenses', orgId] });
       setShowExpenseDialog(false);
       setEditingExpense(null);
-      toast.success("Expense updated");
+      toast.success("Expense updated successfully");
     },
     onError: (error) => {
-      toast.error("Failed to update expense", error.message);
+      toast.error("Failed to update expense");
     }
   });
 
@@ -236,10 +236,10 @@ export default function Finance() {
     mutationFn: (id) => base44.entities.Expense.delete(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['expenses', orgId] });
-      toast.success("Expense deleted");
+      toast.success("Expense deleted successfully");
     },
     onError: (error) => {
-      toast.error("Failed to delete expense", error.message);
+      toast.error("Failed to delete expense");
     }
   });
 
@@ -249,11 +249,11 @@ export default function Finance() {
       queryClient.invalidateQueries({ queryKey: ['revenues', orgId] });
       setShowRevenueDialog(false);
       setEditingRevenue(null);
-      toast.success("Revenue recorded", "Contribution has been added");
+      toast.success("Revenue recorded successfully");
     },
     onError: (error) => {
       console.error('Create revenue error:', error);
-      toast.error("Failed to record revenue", error.message);
+      toast.error("Failed to record revenue");
     }
   });
 
@@ -263,10 +263,10 @@ export default function Finance() {
       queryClient.invalidateQueries({ queryKey: ['revenues', orgId] });
       setShowRevenueDialog(false);
       setEditingRevenue(null);
-      toast.success("Revenue updated");
+      toast.success("Revenue updated successfully");
     },
     onError: (error) => {
-      toast.error("Failed to update revenue", error.message);
+      toast.error("Failed to update revenue");
     }
   });
 
@@ -274,10 +274,10 @@ export default function Finance() {
     mutationFn: (id) => base44.entities.Revenue.delete(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['revenues', orgId] });
-      toast.success("Revenue deleted");
+      toast.success("Revenue deleted successfully");
     },
     onError: (error) => {
-      toast.error("Failed to delete revenue", error.message);
+      toast.error("Failed to delete revenue");
     }
   });
 
@@ -286,11 +286,11 @@ export default function Finance() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['bankDeposits', orgId] });
       setShowBankDepositDialog(false);
-      toast.success("Deposit recorded", "Bank deposit has been added");
+      toast.success("Bank deposit recorded successfully");
     },
     onError: (error) => {
       console.error('Create bank deposit error:', error);
-      toast.error("Failed to record deposit", error.message);
+      toast.error("Failed to record deposit");
     }
   });
 
@@ -298,11 +298,11 @@ export default function Finance() {
     mutationFn: ({ id, data }) => base44.entities.BankDeposit.update(id, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['bankDeposits', orgId] });
-      toast.success("Deposit updated");
+      toast.success("Deposit updated successfully");
     },
     onError: (error) => {
       console.error('Update bank deposit error:', error);
-      toast.error("Failed to update deposit", error.message);
+      toast.error("Failed to update deposit");
     }
   });
 
@@ -544,10 +544,10 @@ export default function Finance() {
       }
       queryClient.invalidateQueries({ queryKey: ['expenses', orgId] });
       queryClient.invalidateQueries({ queryKey: ['allExpenses', orgId] });
-      toast.success("Bulk delete complete", `Deleted ${expensesToDelete.length} expense(s)`);
+      toast.success(`Deleted ${expensesToDelete.length} expense(s) successfully`);
       setShowBulkDeleteExpenses(false);
     } catch (error) {
-      toast.error("Bulk delete failed", error.message);
+      toast.error("Bulk delete failed");
     } finally {
       setBulkDeleteLoading(false);
     }
@@ -561,10 +561,10 @@ export default function Finance() {
         await base44.entities.Revenue.delete(revenue.id);
       }
       queryClient.invalidateQueries({ queryKey: ['revenues', orgId] });
-      toast.success("Bulk delete complete", `Deleted ${revenuesToDelete.length} revenue(s)`);
+      toast.success(`Deleted ${revenuesToDelete.length} revenue(s) successfully`);
       setShowBulkDeleteRevenues(false);
     } catch (error) {
-      toast.error("Bulk delete failed", error.message);
+      toast.error("Bulk delete failed");
     } finally {
       setBulkDeleteLoading(false);
     }
