@@ -105,18 +105,22 @@ export default function DocumentUploadExtractor({
   const [pendingFile, setPendingFile] = useState(null);
   const [showDrivePicker, setShowDrivePicker] = useState(false);
   const [driveFiles, setDriveFiles] = useState([]);
+  const [driveFolders, setDriveFolders] = useState([]);
   const [driveLoading, setDriveLoading] = useState(false);
+  const [currentFolderId, setCurrentFolderId] = useState(null);
+  const [folderPath, setFolderPath] = useState([{ id: null, name: 'My Drive' }]);
 
   const baseCategories = type === "expense" ? DEFAULT_EXPENSE_CATEGORIES : DEFAULT_REVENUE_SOURCES;
   const categories = useMemo(() => {
     return [...(customCategories || baseCategories), ...dynamicCategories];
   }, [customCategories, baseCategories, dynamicCategories]);
 
-  const loadDriveFiles = async () => {
+  const loadDriveFiles = async (folderId = null) => {
     setDriveLoading(true);
     try {
       const { data } = await base44.functions.invoke('googleDriveFileOperations', { 
-        action: 'list' 
+        action: 'list',
+        folderId
       });
       
       if (data.error) {
@@ -124,13 +128,26 @@ export default function DocumentUploadExtractor({
         return;
       }
       
+      setDriveFolders(data.folders || []);
       setDriveFiles(data.files || []);
+      setCurrentFolderId(folderId);
       setShowDrivePicker(true);
     } catch (error) {
       toast.error("Failed to load Drive files", error.message);
     } finally {
       setDriveLoading(false);
     }
+  };
+
+  const navigateToFolder = (folder) => {
+    setFolderPath(prev => [...prev, { id: folder.id, name: folder.name }]);
+    loadDriveFiles(folder.id);
+  };
+
+  const navigateBack = (index) => {
+    const newPath = folderPath.slice(0, index + 1);
+    setFolderPath(newPath);
+    loadDriveFiles(newPath[newPath.length - 1].id);
   };
 
   const handleDriveFileSelect = async (driveFile) => {
@@ -1679,36 +1696,73 @@ IMPORTANT FOR BATCH ENTRY FORMS:
           <div className="space-y-4">
             <div className="flex items-center gap-3 pb-3 border-b">
               <Cloud className="w-6 h-6 text-blue-600" />
-              <div>
+              <div className="flex-1">
                 <h3 className="text-lg font-bold">Select from Google Drive</h3>
-                <p className="text-sm text-gray-500">Choose a document to import</p>
+                <div className="flex items-center gap-1 text-xs text-gray-500 mt-1 flex-wrap">
+                  {folderPath.map((folder, idx) => (
+                    <React.Fragment key={folder.id || 'root'}>
+                      <button
+                        onClick={() => navigateBack(idx)}
+                        className="hover:text-blue-600 hover:underline"
+                      >
+                        {folder.name}
+                      </button>
+                      {idx < folderPath.length - 1 && <span>/</span>}
+                    </React.Fragment>
+                  ))}
+                </div>
               </div>
             </div>
 
             <div className="overflow-y-auto max-h-[60vh] space-y-2">
-              {driveFiles.length === 0 ? (
-                <div className="text-center py-8 text-gray-500">
-                  <Cloud className="w-12 h-12 mx-auto mb-2 opacity-50" />
-                  <p>No files found in your Drive</p>
+              {driveLoading ? (
+                <div className="text-center py-8">
+                  <Loader2 className="w-8 h-8 mx-auto mb-2 animate-spin text-blue-600" />
+                  <p className="text-sm text-gray-500">Loading...</p>
                 </div>
               ) : (
-                driveFiles.map(file => (
-                  <button
-                    key={file.id}
-                    onClick={() => handleDriveFileSelect(file)}
-                    className="w-full p-3 rounded-lg border hover:border-blue-500 hover:bg-blue-50 transition-colors text-left"
-                  >
-                    <div className="flex items-center gap-3">
-                      <FileText className="w-8 h-8 text-blue-600 flex-shrink-0" />
-                      <div className="flex-1 min-w-0">
-                        <p className="font-medium text-sm truncate">{file.name}</p>
-                        <p className="text-xs text-gray-500">
-                          {new Date(file.modifiedTime).toLocaleDateString()} • {file.size ? `${Math.round(file.size / 1024)} KB` : 'Unknown size'}
-                        </p>
+                <>
+                  {driveFolders.map(folder => (
+                    <button
+                      key={folder.id}
+                      onClick={() => navigateToFolder(folder)}
+                      className="w-full p-3 rounded-lg border hover:border-blue-500 hover:bg-blue-50 transition-colors text-left"
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className="w-8 h-8 text-yellow-500 flex-shrink-0">📁</div>
+                        <div className="flex-1 min-w-0">
+                          <p className="font-medium text-sm truncate">{folder.name}</p>
+                          <p className="text-xs text-gray-500">Folder</p>
+                        </div>
                       </div>
+                    </button>
+                  ))}
+                  
+                  {driveFiles.length === 0 && driveFolders.length === 0 ? (
+                    <div className="text-center py-8 text-gray-500">
+                      <Cloud className="w-12 h-12 mx-auto mb-2 opacity-50" />
+                      <p>No files or folders found</p>
                     </div>
-                  </button>
-                ))
+                  ) : (
+                    driveFiles.map(file => (
+                      <button
+                        key={file.id}
+                        onClick={() => handleDriveFileSelect(file)}
+                        className="w-full p-3 rounded-lg border hover:border-blue-500 hover:bg-blue-50 transition-colors text-left"
+                      >
+                        <div className="flex items-center gap-3">
+                          <FileText className="w-8 h-8 text-blue-600 flex-shrink-0" />
+                          <div className="flex-1 min-w-0">
+                            <p className="font-medium text-sm truncate">{file.name}</p>
+                            <p className="text-xs text-gray-500">
+                              {new Date(file.modifiedTime).toLocaleDateString()} • {file.size ? `${Math.round(file.size / 1024)} KB` : 'Unknown size'}
+                            </p>
+                          </div>
+                        </div>
+                      </button>
+                    ))
+                  )}
+                </>
               )}
             </div>
 

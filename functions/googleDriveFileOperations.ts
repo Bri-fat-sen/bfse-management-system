@@ -22,9 +22,15 @@ Deno.serve(async (req) => {
     }
 
     if (action === 'list') {
-      // List recent files that the user can access
+      // List files and folders in a specific folder (or root if no folderId)
+      const { folderId } = await req.json();
+      
+      let query = folderId 
+        ? `'${folderId}' in parents and trashed = false`
+        : `'root' in parents and trashed = false`;
+      
       const listResponse = await fetch(
-        'https://www.googleapis.com/drive/v3/files?pageSize=20&orderBy=modifiedTime desc&fields=files(id,name,mimeType,modifiedTime,size,thumbnailLink)',
+        `https://www.googleapis.com/drive/v3/files?q=${encodeURIComponent(query)}&pageSize=50&orderBy=folder,modifiedTime desc&fields=files(id,name,mimeType,modifiedTime,size,thumbnailLink,parents)`,
         {
           headers: {
             'Authorization': `Bearer ${accessToken}`,
@@ -38,7 +44,12 @@ Deno.serve(async (req) => {
       }
       
       const data = await listResponse.json();
-      return Response.json({ files: data.files || [] });
+      
+      // Separate folders and files
+      const folders = data.files?.filter(f => f.mimeType === 'application/vnd.google-apps.folder') || [];
+      const files = data.files?.filter(f => f.mimeType !== 'application/vnd.google-apps.folder') || [];
+      
+      return Response.json({ folders, files });
     }
 
     if (action === 'download') {
