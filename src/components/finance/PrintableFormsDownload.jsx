@@ -170,7 +170,7 @@ const generateFormHTML = (formType, org) => {
       }
 
       .page-counter::before {
-        content: "Page " counter(pageNum) " of ${totalPages}";
+        content: "Page " counter(page) " of ${totalPages}";
       }
       
       .print-footer-stripe {
@@ -195,12 +195,8 @@ const generateFormHTML = (formType, org) => {
         background: #0072C6;
       }
       
-      body {
-        counter-reset: pageNum 0;
-      }
-
-      .print-footer {
-        counter-increment: pageNum;
+      @page {
+        counter-increment: page;
       }
       
       .total-pages::before {
