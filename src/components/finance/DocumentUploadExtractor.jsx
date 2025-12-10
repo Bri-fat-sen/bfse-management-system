@@ -30,7 +30,9 @@ import {
   FileUp,
   CheckCircle,
   Hammer,
-  MapPin
+  MapPin,
+  Cloud,
+  FileText
 } from "lucide-react";
 import { useToast } from "@/components/ui/Toast";
 
@@ -101,11 +103,199 @@ export default function DocumentUploadExtractor({
   const [currencyMode, setCurrencyMode] = useState(null); // null = not set, 'sle', 'sll'
   const [showCurrencyDialog, setShowCurrencyDialog] = useState(false);
   const [pendingFile, setPendingFile] = useState(null);
+  const [showDrivePicker, setShowDrivePicker] = useState(false);
+  const [driveFiles, setDriveFiles] = useState([]);
+  const [driveLoading, setDriveLoading] = useState(false);
 
   const baseCategories = type === "expense" ? DEFAULT_EXPENSE_CATEGORIES : DEFAULT_REVENUE_SOURCES;
   const categories = useMemo(() => {
     return [...(customCategories || baseCategories), ...dynamicCategories];
   }, [customCategories, baseCategories, dynamicCategories]);
+
+  const loadDriveFiles = async () => {
+    setDriveLoading(true);
+    try {
+      const { data } = await base44.functions.invoke('googleDriveFileOperations', { 
+        action: 'list' 
+      });
+      
+      if (data.error) {
+        toast.error("Drive Error", data.error);
+        return;
+      }
+      
+      setDriveFiles(data.files || []);
+      setShowDrivePicker(true);
+    } catch (error) {
+      toast.error("Failed to load Drive files", error.message);
+    } finally {
+      setDriveLoading(false);
+    }
+  };
+
+  const handleDriveFileSelect = async (driveFile) => {
+    setShowDrivePicker(false);
+    
+    if (currencyMode === null) {
+      setPendingFile({ isDriveFile: true, driveFile });
+      setShowCurrencyDialog(true);
+      return;
+    }
+    
+    await processDriveFile(driveFile);
+  };
+
+  const processDriveFile = async (driveFile) => {
+    setUploadLoading(true);
+    setExtractedData([]);
+    setExtractedColumns([]);
+    setDocumentSummary(null);
+    setDetectedType(type === "auto" ? null : type);
+
+    try {
+      toast.info("Downloading from Drive...", driveFile.name);
+      
+      const { data } = await base44.functions.invoke('googleDriveFileOperations', {
+        action: 'download',
+        fileId: driveFile.id,
+        fileName: driveFile.name,
+        mimeType: driveFile.mimeType
+      });
+      
+      if (data.error) {
+        throw new Error(data.error);
+      }
+
+      const file_url = data.file_url;
+
+      // Continue with normal document processing flow...
+      await base44.entities.UploadedDocument.create({
+        organisation_id: orgId,
+        file_name: driveFile.name,
+        file_url: file_url,
+        file_type: driveFile.mimeType || driveFile.name.split('.').pop(),
+        file_size: driveFile.size || 0,
+        category: type === "auto" ? "other" : type === "revenue" ? "revenue" : "expense",
+        uploaded_by_id: currentEmployee?.id,
+        uploaded_by_name: currentEmployee?.full_name,
+        description: `Imported from Google Drive`
+      });
+
+      // Rest of the processing is the same as local file upload
+      // (copying the analysis and extraction logic from processFile)
+      const analysisResult = await base44.integrations.Core.InvokeLLM({
+        prompt: `Analyze this document and determine what type of business records should be created from it.
+
+Available record types:
+1. EXPENSE - Operating costs, purchases, bills, invoices for things bought, petty cash, maintenance costs
+   → Look for: "EXPENSE ENTRY FORM" in header/title
+2. REVENUE - Sales receipts, income records, contributions, funding received, customer payments
+   → Look for: "REVENUE ENTRY FORM" in header/title
+3. PRODUCTION - Manufacturing records, production batches, batch numbers, product runs with quantities
+   → Look for: "BATCH ENTRY FORM" or "PRODUCTION BATCH ENTRY FORM" in header/title
+   → Fields: Batch Number, Manufacturing Date, Expiry Date, Quantity Produced, Rolls, Weight (kg)
+4. INVENTORY - Stock receipts, goods received notes, inventory counts, stock adjustments
+   → Look for: "STOCK ADJUSTMENT FORM" or "INVENTORY" in header/title
+   → Fields: Stock In, Stock Out, Warehouse/Location
+5. PAYROLL - Salary sheets, payroll records, employee payments, bonus lists, deduction schedules
+   → Look for: "EMPLOYEE ENTRY FORM" or "EMPLOYEE ONBOARDING FORM" in header/title
+   → Fields: Employee Code, Position, Salary, Hire Date
+
+Analyze the document content, headers, columns, and data to determine the record type.`,
+        file_urls: [file_url],
+        response_json_schema: {
+          type: "object",
+          properties: {
+            detected_type: { 
+              type: "string", 
+              enum: ["expense", "revenue", "production", "inventory", "payroll"]
+            },
+            confidence: { type: "string", enum: ["high", "medium", "low"] },
+            summary: { type: "string" },
+            reasoning: { type: "string" },
+            key_columns: { type: "array", items: { type: "string" } },
+            document_date: { type: "string" },
+            total_rows_estimate: { type: "number" }
+          }
+        }
+      });
+
+      setDocumentSummary(analysisResult);
+      const docType = type === "auto" ? analysisResult.detected_type : type;
+      setDetectedType(docType);
+      
+      toast.info(
+        `${RECORD_TYPES.find(r => r.value === docType)?.icon || '📄'} ${RECORD_TYPES.find(r => r.value === docType)?.label || docType} detected`,
+        "From Google Drive"
+      );
+
+      // Continue with extraction...
+      const extractionSchema = {
+        type: "object",
+        properties: {
+          document_info: {
+            type: "object",
+            properties: {
+              date: { type: "string" },
+              title: { type: "string" },
+              type: { type: "string" },
+              reference: { type: "string" }
+            }
+          },
+          table_columns: { type: "array", items: { type: "string" } },
+          rows: { type: "array", items: { type: "object" } }
+        }
+      };
+
+      let result;
+      let items = [];
+      let extractedDocDate = analysisResult.document_date || format(new Date(), 'yyyy-MM-dd');
+      let columnHeaders = analysisResult.key_columns || [];
+
+      try {
+        const extractResult = await base44.integrations.Core.ExtractDataFromUploadedFile({
+          file_url: file_url,
+          json_schema: extractionSchema
+        });
+
+        if (extractResult.status === 'success' && extractResult.output) {
+          result = extractResult.output;
+          items = result.rows || [];
+          extractedDocDate = result.document_info?.date || extractedDocDate;
+          columnHeaders = result.table_columns || columnHeaders;
+        }
+      } catch {
+        // Fallback to LLM extraction if needed
+        result = { rows: [], document_info: {} };
+      }
+
+      setExtractedColumns(columnHeaders);
+
+      if (items.length > 0) {
+        const conversionFactor = currencyMode === 'sll' ? 1000 : 1;
+        
+        const mappedData = items.map((item, idx) => ({
+          id: `temp-${idx}`,
+          selected: true,
+          description: item.details || item.description || '',
+          amount: (parseFloat(item.amount) || 0) / conversionFactor,
+          date: extractedDocDate,
+          category: 'other',
+          vendor: item.vendor || ''
+        }));
+
+        setExtractedData(mappedData);
+        toast.success("Data extracted", `Found ${mappedData.length} items from Drive`);
+      } else {
+        toast.warning("No data found", "Could not find table data in the document");
+      }
+    } catch (error) {
+      console.error("Drive upload error:", error);
+      toast.error("Upload failed", error.message);
+    } finally {
+      setUploadLoading(false);
+    }
+  };
 
   const handleFileUpload = async (e) => {
     const file = e.target.files?.[0];
@@ -911,33 +1101,51 @@ IMPORTANT FOR BATCH ENTRY FORMS:
 
           {extractedData.length === 0 && (
             <div className="space-y-4">
-              <div className="border-2 border-dashed border-gray-300 rounded-xl p-8 text-center hover:border-[#0072C6] transition-colors">
-                <input
-                  type="file"
-                  accept=".pdf,.csv,.png,.jpg,.jpeg"
-                  onChange={handleFileUpload}
-                  className="hidden"
-                  id="doc-upload-finance"
-                  disabled={uploadLoading}
-                />
-                <label htmlFor="doc-upload-finance" className="cursor-pointer">
-                  {uploadLoading ? (
-                    <div className="flex flex-col items-center gap-3">
-                      <Loader2 className="w-12 h-12 text-[#0072C6] animate-spin" />
-                      <p className="text-gray-600">Analyzing document & extracting data...</p>
-                      <p className="text-sm text-gray-400">AI is detecting the record type automatically</p>
-                    </div>
-                  ) : (
-                    <div className="flex flex-col items-center gap-3">
-                      <div className="w-16 h-16 rounded-full bg-[#0072C6]/10 flex items-center justify-center">
-                        <Upload className="w-8 h-8 text-[#0072C6]" />
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="border-2 border-dashed border-gray-300 rounded-xl p-6 text-center hover:border-[#0072C6] transition-colors">
+                  <input
+                    type="file"
+                    accept=".pdf,.csv,.png,.jpg,.jpeg"
+                    onChange={handleFileUpload}
+                    className="hidden"
+                    id="doc-upload-finance"
+                    disabled={uploadLoading}
+                  />
+                  <label htmlFor="doc-upload-finance" className="cursor-pointer">
+                    {uploadLoading ? (
+                      <div className="flex flex-col items-center gap-3">
+                        <Loader2 className="w-12 h-12 text-[#0072C6] animate-spin" />
+                        <p className="text-gray-600 text-sm">Processing...</p>
                       </div>
-                      <p className="text-gray-600 font-medium">Click to upload document</p>
-                      <p className="text-sm text-gray-400">AI will automatically detect what records to create</p>
-                      <p className="text-xs text-gray-400 mt-1">Supports PDF, CSV, and images (PNG, JPG)</p>
+                    ) : (
+                      <div className="flex flex-col items-center gap-3">
+                        <div className="w-14 h-14 rounded-full bg-[#0072C6]/10 flex items-center justify-center">
+                          <Upload className="w-7 h-7 text-[#0072C6]" />
+                        </div>
+                        <p className="text-gray-700 font-medium">Upload from Computer</p>
+                        <p className="text-xs text-gray-500">PDF, CSV, or images</p>
+                      </div>
+                    )}
+                  </label>
+                </div>
+
+                <button
+                  onClick={loadDriveFiles}
+                  disabled={uploadLoading || driveLoading}
+                  className="border-2 border-dashed border-gray-300 rounded-xl p-6 text-center hover:border-[#0072C6] transition-colors disabled:opacity-50"
+                >
+                  <div className="flex flex-col items-center gap-3">
+                    <div className="w-14 h-14 rounded-full bg-blue-100 flex items-center justify-center">
+                      {driveLoading ? (
+                        <Loader2 className="w-7 h-7 text-blue-600 animate-spin" />
+                      ) : (
+                        <Cloud className="w-7 h-7 text-blue-600" />
+                      )}
                     </div>
-                  )}
-                </label>
+                    <p className="text-gray-700 font-medium">Import from Drive</p>
+                    <p className="text-xs text-gray-500">Select from Google Drive</p>
+                  </div>
+                </button>
               </div>
               
               {/* Record type hints */}
@@ -1402,7 +1610,11 @@ IMPORTANT FOR BATCH ENTRY FORMS:
                 className="w-full h-auto py-4 px-6 text-left hover:border-green-500 hover:bg-green-50"
                 onClick={() => {
                   setCurrencyMode('sle');
-                  if (pendingFile) processFile(pendingFile);
+                  if (pendingFile?.isDriveFile) {
+                    processDriveFile(pendingFile.driveFile);
+                  } else if (pendingFile) {
+                    processFile(pendingFile);
+                  }
                 }}
               >
                 <div className="flex items-start gap-3">
@@ -1425,7 +1637,11 @@ IMPORTANT FOR BATCH ENTRY FORMS:
                 className="w-full h-auto py-4 px-6 text-left hover:border-blue-500 hover:bg-blue-50"
                 onClick={() => {
                   setCurrencyMode('sll');
-                  if (pendingFile) processFile(pendingFile);
+                  if (pendingFile?.isDriveFile) {
+                    processDriveFile(pendingFile.driveFile);
+                  } else if (pendingFile) {
+                    processFile(pendingFile);
+                  }
                 }}
               >
                 <div className="flex items-start gap-3">
@@ -1450,6 +1666,56 @@ IMPORTANT FOR BATCH ENTRY FORMS:
                 setShowCurrencyDialog(false);
                 setPendingFile(null);
               }}
+            >
+              Cancel
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Google Drive File Picker */}
+      <Dialog open={showDrivePicker} onOpenChange={setShowDrivePicker}>
+        <DialogContent className="max-w-2xl max-h-[80vh] overflow-hidden">
+          <div className="space-y-4">
+            <div className="flex items-center gap-3 pb-3 border-b">
+              <Cloud className="w-6 h-6 text-blue-600" />
+              <div>
+                <h3 className="text-lg font-bold">Select from Google Drive</h3>
+                <p className="text-sm text-gray-500">Choose a document to import</p>
+              </div>
+            </div>
+
+            <div className="overflow-y-auto max-h-[60vh] space-y-2">
+              {driveFiles.length === 0 ? (
+                <div className="text-center py-8 text-gray-500">
+                  <Cloud className="w-12 h-12 mx-auto mb-2 opacity-50" />
+                  <p>No files found in your Drive</p>
+                </div>
+              ) : (
+                driveFiles.map(file => (
+                  <button
+                    key={file.id}
+                    onClick={() => handleDriveFileSelect(file)}
+                    className="w-full p-3 rounded-lg border hover:border-blue-500 hover:bg-blue-50 transition-colors text-left"
+                  >
+                    <div className="flex items-center gap-3">
+                      <FileText className="w-8 h-8 text-blue-600 flex-shrink-0" />
+                      <div className="flex-1 min-w-0">
+                        <p className="font-medium text-sm truncate">{file.name}</p>
+                        <p className="text-xs text-gray-500">
+                          {new Date(file.modifiedTime).toLocaleDateString()} • {file.size ? `${Math.round(file.size / 1024)} KB` : 'Unknown size'}
+                        </p>
+                      </div>
+                    </div>
+                  </button>
+                ))
+              )}
+            </div>
+
+            <Button
+              variant="outline"
+              className="w-full"
+              onClick={() => setShowDrivePicker(false)}
             >
               Cancel
             </Button>

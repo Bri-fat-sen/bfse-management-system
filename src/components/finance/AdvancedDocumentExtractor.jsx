@@ -15,7 +15,6 @@ import {
   FileText, Table as TableIcon, ChevronRight, Trash2, Eye, AlertTriangle, Cloud
 } from "lucide-react";
 import { useToast } from "@/components/ui/Toast";
-import GoogleDrivePicker from "./GoogleDrivePicker";
 
 const RECORD_TYPES = [
   { value: "expense", label: "Expenses", icon: "💰", color: "red" },
@@ -71,13 +70,15 @@ export default function AdvancedDocumentExtractor({
   const [showCurrencyDialog, setShowCurrencyDialog] = useState(false);
   const [pendingFile, setPendingFile] = useState(null);
   const [dynamicCategories, setDynamicCategories] = useState([...EXPENSE_CATEGORIES]);
+  const [showDrivePicker, setShowDrivePicker] = useState(false);
+  const [driveFiles, setDriveFiles] = useState([]);
+  const [driveLoading, setDriveLoading] = useState(false);
   
   // Batch processing state
   const [batchMode, setBatchMode] = useState(false);
   const [fileQueue, setFileQueue] = useState([]);
   const [processingIndex, setProcessingIndex] = useState(null);
   const [batchResults, setBatchResults] = useState([]);
-  const [showGoogleDrivePicker, setShowGoogleDrivePicker] = useState(false);
 
   const analyzeDocument = async (file_url) => {
     try {
@@ -250,49 +251,63 @@ Be thorough and accurate.`,
     }
   };
 
-  const handleFileUpload = async (e) => {
-    const files = Array.from(e.target.files || []);
-    if (files.length === 0) return;
-
-    if (currencyMode === null) {
-      if (files.length === 1) {
-        setPendingFile(files[0]);
-      } else {
-        setPendingFile(files);
-      }
-      setShowCurrencyDialog(true);
-      return;
-    }
-
-    if (files.length === 1) {
-      await processFile(files[0]);
-    } else {
-      await startBatchProcessing(files);
-    }
-  };
-
-  const handleGoogleDriveFileSelected = async ({ file_url, fileName, mimeType }) => {
-    if (currencyMode === null) {
-      setPendingFile({ file_url, fileName, mimeType, isGoogleDrive: true });
-      setShowCurrencyDialog(true);
-      return;
-    }
-
-    await processGoogleDriveFile(file_url, fileName, mimeType);
-  };
-
-  const processGoogleDriveFile = async (file_url, fileName, mimeType) => {
-    setUploadLoading(true);
-    setShowCurrencyDialog(false);
-    setFileName(fileName);
-    setFileType(mimeType);
-    
+  const loadDriveFiles = async () => {
+    setDriveLoading(true);
     try {
-      setFileUrl(file_url);
+      const { data } = await base44.functions.invoke('googleDriveFileOperations', { 
+        action: 'list' 
+      });
+      
+      if (data.error) {
+        toast.error("Drive Error", data.error);
+        return;
+      }
+      
+      setDriveFiles(data.files || []);
+      setShowDrivePicker(true);
+    } catch (error) {
+      toast.error("Failed to load Drive files", error.message);
+    } finally {
+      setDriveLoading(false);
+    }
+  };
+
+  const handleDriveFileSelect = async (driveFile) => {
+    setShowDrivePicker(false);
+    
+    if (currencyMode === null) {
+      setPendingFile({ isDriveFile: true, driveFile });
+      setShowCurrencyDialog(true);
+      return;
+    }
+    
+    await processDriveFile(driveFile);
+  };
+
+  const processDriveFile = async (driveFile) => {
+    setUploadLoading(true);
+    try {
+      toast.info("Downloading from Drive...", driveFile.name);
+      
+      const { data } = await base44.functions.invoke('googleDriveFileOperations', {
+        action: 'download',
+        fileId: driveFile.id,
+        fileName: driveFile.name,
+        mimeType: driveFile.mimeType
+      });
+      
+      if (data.error) {
+        throw new Error(data.error);
+      }
+      
+      setFileUrl(data.file_url);
+      setFileName(data.fileName);
+      setFileType(driveFile.mimeType);
+      setPendingFile({ isDriveFile: true, driveFile });
       setUploadStage("analyzing");
 
       toast.info("Analyzing document...", "AI is reading the document structure");
-      const analysis = await analyzeDocument(file_url);
+      const analysis = await analyzeDocument(data.file_url);
       
       if (!analysis) {
         throw new Error("No analysis result returned");
@@ -305,7 +320,7 @@ Be thorough and accurate.`,
       setConfidenceScore(analysis.confidence || 0);
 
       toast.info("Extracting data...", "Reading all rows from the document");
-      const rawExtraction = await extractDocumentData(file_url, analysis);
+      const rawExtraction = await extractDocumentData(data.file_url, analysis);
 
       if (!rawExtraction?.rows) {
         throw new Error("No rows returned from extraction");
@@ -412,17 +427,37 @@ Be thorough and accurate.`,
       
       toast.success(
         "Extraction complete", 
-        `${mappedData.length} rows extracted from Google Drive and ready for review`
+        `${mappedData.length} rows extracted from Drive file`
       );
 
     } catch (error) {
-      console.error("Processing error:", error);
-      toast.error("Processing failed", error.message || "Failed to process document from Google Drive.");
+      console.error("Drive file processing error:", error);
+      toast.error("Processing failed", error.message);
       setUploadStage("upload");
-      setFileUrl(null);
-      setExtractedData([]);
+      setPendingFile(null);
     } finally {
       setUploadLoading(false);
+    }
+  };
+
+  const handleFileUpload = async (e) => {
+    const files = Array.from(e.target.files || []);
+    if (files.length === 0) return;
+
+    if (currencyMode === null) {
+      if (files.length === 1) {
+        setPendingFile(files[0]);
+      } else {
+        setPendingFile(files);
+      }
+      setShowCurrencyDialog(true);
+      return;
+    }
+
+    if (files.length === 1) {
+      await processFile(files[0]);
+    } else {
+      await startBatchProcessing(files);
     }
   };
 
@@ -1012,7 +1047,6 @@ Be thorough and accurate.`,
             {uploadStage === "upload" && (
               <div className="space-y-4">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {/* Local Upload */}
                   <div className="border-2 border-dashed border-gray-300 rounded-xl p-8 text-center hover:border-[#0072C6] transition-colors">
                     <input
                       type="file"
@@ -1033,9 +1067,9 @@ Be thorough and accurate.`,
                             Upload from Computer
                           </p>
                           <p className="text-xs text-gray-500">
-                            PDF, CSV, PNG, JPG
+                            Select files from your device
                           </p>
-                          <p className="text-xs text-[#0072C6] mt-2 font-medium">
+                          <p className="text-xs text-[#0072C6] mt-1 font-medium">
                             ✨ Multiple files supported
                           </p>
                         </div>
@@ -1043,30 +1077,44 @@ Be thorough and accurate.`,
                     </label>
                   </div>
 
-                  {/* Google Drive Upload */}
-                  <div className="border-2 border-dashed border-blue-300 rounded-xl p-8 text-center hover:border-blue-500 transition-colors bg-blue-50/30">
-                    <button
-                      onClick={() => setShowGoogleDrivePicker(true)}
-                      disabled={uploadLoading}
-                      className="w-full cursor-pointer disabled:opacity-50"
-                    >
-                      <div className="flex flex-col items-center gap-3">
-                        <div className="w-16 h-16 rounded-full bg-blue-100 flex items-center justify-center">
+                  <button
+                    onClick={loadDriveFiles}
+                    disabled={uploadLoading || driveLoading}
+                    className="border-2 border-dashed border-gray-300 rounded-xl p-8 text-center hover:border-[#0072C6] transition-colors disabled:opacity-50"
+                  >
+                    <div className="flex flex-col items-center gap-3">
+                      <div className="w-16 h-16 rounded-full bg-gradient-to-br from-blue-100 to-blue-200 flex items-center justify-center">
+                        {driveLoading ? (
+                          <Loader2 className="w-8 h-8 text-blue-600 animate-spin" />
+                        ) : (
                           <Cloud className="w-8 h-8 text-blue-600" />
-                        </div>
-                        <div>
-                          <p className="text-base font-semibold text-gray-700 mb-1">
-                            Import from Google Drive
-                          </p>
-                          <p className="text-xs text-gray-500">
-                            Select files from your Drive
-                          </p>
-                          <p className="text-xs text-blue-600 mt-2 font-medium">
-                            🔗 Direct integration
-                          </p>
-                        </div>
+                        )}
                       </div>
-                    </button>
+                      <div>
+                        <p className="text-base font-semibold text-gray-700 mb-1">
+                          Import from Google Drive
+                        </p>
+                        <p className="text-xs text-gray-500">
+                          Select files from your Drive
+                        </p>
+                        <p className="text-xs text-blue-600 mt-1 font-medium">
+                          ☁️ Cloud storage integration
+                        </p>
+                      </div>
+                    </div>
+                  </button>
+                </div>
+
+                <div className="text-center">
+                  <p className="text-sm text-gray-500">
+                    AI will analyze structure, extract data, and validate accuracy
+                  </p>
+                  <div className="flex gap-2 flex-wrap justify-center mt-2">
+                    {RECORD_TYPES.map(rt => (
+                      <Badge key={rt.value} variant="outline" className="text-xs">
+                        {rt.icon} {rt.label}
+                      </Badge>
+                    ))}
                   </div>
                 </div>
 
@@ -1718,10 +1766,10 @@ Be thorough and accurate.`,
                 className="w-full h-auto py-4 text-left hover:border-green-500 hover:bg-green-50"
                 onClick={() => {
                   setCurrencyMode('sle');
-                  if (Array.isArray(pendingFile)) {
+                  if (pendingFile?.isDriveFile) {
+                    processDriveFile(pendingFile.driveFile);
+                  } else if (Array.isArray(pendingFile)) {
                     startBatchProcessing(pendingFile);
-                  } else if (pendingFile?.isGoogleDrive) {
-                    processGoogleDriveFile(pendingFile.file_url, pendingFile.fileName, pendingFile.mimeType);
                   } else if (pendingFile) {
                     processFile(pendingFile);
                   }
@@ -1746,10 +1794,10 @@ Be thorough and accurate.`,
                 className="w-full h-auto py-4 text-left hover:border-blue-500 hover:bg-blue-50"
                 onClick={() => {
                   setCurrencyMode('sll');
-                  if (Array.isArray(pendingFile)) {
+                  if (pendingFile?.isDriveFile) {
+                    processDriveFile(pendingFile.driveFile);
+                  } else if (Array.isArray(pendingFile)) {
                     startBatchProcessing(pendingFile);
-                  } else if (pendingFile?.isGoogleDrive) {
-                    processGoogleDriveFile(pendingFile.file_url, pendingFile.fileName, pendingFile.mimeType);
                   } else if (pendingFile) {
                     processFile(pendingFile);
                   }
@@ -1772,11 +1820,54 @@ Be thorough and accurate.`,
         </DialogContent>
       </Dialog>
 
-      <GoogleDrivePicker
-        open={showGoogleDrivePicker}
-        onOpenChange={setShowGoogleDrivePicker}
-        onFileSelected={handleGoogleDriveFileSelected}
-      />
+      <Dialog open={showDrivePicker} onOpenChange={setShowDrivePicker}>
+        <DialogContent className="max-w-2xl max-h-[80vh] overflow-hidden [&>button]:hidden">
+          <div className="space-y-4">
+            <div className="flex items-center gap-3 pb-3 border-b">
+              <Cloud className="w-6 h-6 text-blue-600" />
+              <div>
+                <h3 className="text-lg font-bold">Select from Google Drive</h3>
+                <p className="text-sm text-gray-500">Choose a document to import</p>
+              </div>
+            </div>
+
+            <div className="overflow-y-auto max-h-[60vh] space-y-2">
+              {driveFiles.length === 0 ? (
+                <div className="text-center py-8 text-gray-500">
+                  <Cloud className="w-12 h-12 mx-auto mb-2 opacity-50" />
+                  <p>No files found in your Drive</p>
+                </div>
+              ) : (
+                driveFiles.map(file => (
+                  <button
+                    key={file.id}
+                    onClick={() => handleDriveFileSelect(file)}
+                    className="w-full p-3 rounded-lg border hover:border-blue-500 hover:bg-blue-50 transition-colors text-left"
+                  >
+                    <div className="flex items-center gap-3">
+                      <FileText className="w-8 h-8 text-blue-600 flex-shrink-0" />
+                      <div className="flex-1 min-w-0">
+                        <p className="font-medium text-sm truncate">{file.name}</p>
+                        <p className="text-xs text-gray-500">
+                          {new Date(file.modifiedTime).toLocaleDateString()} • {file.size ? `${Math.round(file.size / 1024)} KB` : 'Unknown size'}
+                        </p>
+                      </div>
+                    </div>
+                  </button>
+                ))
+              )}
+            </div>
+
+            <Button
+              variant="outline"
+              className="w-full"
+              onClick={() => setShowDrivePicker(false)}
+            >
+              Cancel
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </>
   );
 }
