@@ -73,12 +73,13 @@ const generateFormHTML = (formType, org) => {
       ${unifiedStyles}
       
       @media print {
-        @page :first {
-          counter-reset: pageNumber 1;
-        }
-        
         @page {
           margin: 0.5in;
+          counter-increment: pageNumber;
+        }
+        
+        body {
+          counter-reset: pageNumber 0;
         }
         
         .print-header-first-page {
@@ -189,14 +190,6 @@ const generateFormHTML = (formType, org) => {
       .print-footer-stripe > div:nth-child(3) {
         flex: 1;
         background: #0072C6;
-      }
-      
-      body {
-        counter-reset: pageNumber 0;
-      }
-      
-      .print-footer {
-        counter-increment: pageNumber;
       }
       
       .page-counter::before {
