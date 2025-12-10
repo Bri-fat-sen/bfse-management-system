@@ -1,16 +1,60 @@
 import { Package, Edit, Trash2, MapPin, Warehouse, Truck } from "lucide-react";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Checkbox } from "@/components/ui/checkbox";
+import { useState } from "react";
 
-export default function ProductTable({ products, locations, onEdit, onDelete }) {
+export default function ProductTable({ products, locations, onEdit, onDelete, onBulkDelete }) {
+  const [selectedIds, setSelectedIds] = useState([]);
+
+  const toggleSelection = (id) => {
+    setSelectedIds(prev => 
+      prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]
+    );
+  };
+
+  const toggleSelectAll = () => {
+    setSelectedIds(prev => 
+      prev.length === products.length ? [] : products.map(p => p.id)
+    );
+  };
+
+  const handleBulkDelete = () => {
+    if (confirm(`Delete ${selectedIds.length} selected product(s)?`)) {
+      onBulkDelete(selectedIds);
+      setSelectedIds([]);
+    }
+  };
+
   return (
     <Card>
+      <CardHeader>
+        <div className="flex items-center justify-between">
+          <CardTitle>Products</CardTitle>
+          {selectedIds.length > 0 && (
+            <Button
+              variant="destructive"
+              size="sm"
+              onClick={handleBulkDelete}
+            >
+              <Trash2 className="w-4 h-4 mr-2" />
+              Delete {selectedIds.length} Selected
+            </Button>
+          )}
+        </div>
+      </CardHeader>
       <CardContent className="p-0">
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead className="bg-gradient-to-r from-[#1EB053]/10 to-[#0072C6]/10 border-b-2 border-[#1EB053]">
               <tr>
+                <th className="text-left p-4 font-semibold text-gray-700 w-12">
+                  <Checkbox
+                    checked={selectedIds.length === products.length && products.length > 0}
+                    onCheckedChange={toggleSelectAll}
+                  />
+                </th>
                 <th className="text-left p-4 font-semibold text-gray-700">Product</th>
                 <th className="text-left p-4 font-semibold text-gray-700">SKU</th>
                 <th className="text-left p-4 font-semibold text-gray-700">Category</th>
@@ -34,6 +78,12 @@ export default function ProductTable({ products, locations, onEdit, onDelete }) 
 
                 return (
                   <tr key={product.id} className="border-b hover:bg-gray-50 transition-colors">
+                    <td className="p-4">
+                      <Checkbox
+                        checked={selectedIds.includes(product.id)}
+                        onCheckedChange={() => toggleSelection(product.id)}
+                      />
+                    </td>
                     <td className="p-4">
                       <div className="flex items-center gap-3">
                         {product.image_url ? (
