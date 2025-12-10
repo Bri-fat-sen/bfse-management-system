@@ -198,6 +198,10 @@ const generateFormHTML = (formType, org) => {
       @page {
         counter-increment: page;
       }
+
+      body {
+        counter-reset: page 0;
+      }
       
       .total-pages::before {
         content: " of " attr(data-total);
