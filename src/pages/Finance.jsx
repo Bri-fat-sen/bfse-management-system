@@ -307,6 +307,7 @@ export default function Finance() {
     const currentYear = today.getFullYear();
     
     switch (dateRange) {
+      case "all_time": return { start: new Date(2020, 0, 1), end: today };
       case "today": return { start: today, end: today };
       case "this_week": return { start: startOfWeek(today), end: today };
       case "this_month": return { start: startOfMonth(today), end: today };
@@ -632,6 +633,7 @@ export default function Finance() {
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
+              <SelectItem value="all_time">All Time</SelectItem>
               <SelectItem value="today">Today</SelectItem>
               <SelectItem value="this_week">This Week</SelectItem>
               <SelectItem value="this_month">This Month</SelectItem>
