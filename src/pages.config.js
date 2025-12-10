@@ -32,6 +32,7 @@ import OrphanedData from './pages/OrphanedData';
 import ConstructionExpense from './pages/ConstructionExpense';
 import ExpenseManagement from './pages/ExpenseManagement';
 import UploadedDocuments from './pages/UploadedDocuments';
+import HRManagement from './pages/HRManagement';
 import __Layout from './Layout.jsx';
 
 
@@ -70,6 +71,7 @@ export const PAGES = {
     "ConstructionExpense": ConstructionExpense,
     "ExpenseManagement": ExpenseManagement,
     "UploadedDocuments": UploadedDocuments,
+    "HRManagement": HRManagement,
 }
 
 export const pagesConfig = {
