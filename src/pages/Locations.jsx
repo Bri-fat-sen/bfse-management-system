@@ -59,6 +59,7 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useToast } from "@/components/ui/Toast";
 import ConfirmDialog from "@/components/ui/ConfirmDialog";
+import { createNotification } from "@/components/notifications/notificationHelper";
 import PageHeader from "@/components/ui/PageHeader";
 import EmptyState from "@/components/ui/EmptyState";
 import LoadingSpinner from "@/components/ui/LoadingSpinner";
@@ -289,17 +290,36 @@ export default function Locations() {
   const handleAssignStaff = async (employeeId) => {
     if (!selectedLocation) return;
     
+    const employee = employees.find(e => e.id === employeeId);
+    const locationName = selectedLocation.name || selectedLocation.registration_number;
+    
     await updateEmployeeMutation.mutateAsync({
       id: employeeId,
       data: {
         assigned_location_id: selectedLocation.id,
-        assigned_location_name: selectedLocation.name || selectedLocation.registration_number,
+        assigned_location_name: locationName,
         assigned_location_type: selectedLocation.type,
       }
     });
+    
+    // Notify the employee about assignment
+    if (employee?.user_email) {
+      await createNotification({
+        orgId,
+        recipientId: employee.id,
+        recipientEmail: employee.user_email,
+        type: 'hr',
+        title: 'New Location Assignment',
+        message: `You have been assigned to ${locationName}`,
+        priority: 'normal'
+      }).catch(err => console.log('Assignment notification failed:', err));
+    }
   };
 
   const handleUnassignStaff = async (employeeId) => {
+    const employee = employees.find(e => e.id === employeeId);
+    const previousLocation = employee?.assigned_location_name;
+    
     await updateEmployeeMutation.mutateAsync({
       id: employeeId,
       data: {
@@ -308,6 +328,19 @@ export default function Locations() {
         assigned_location_type: null,
       }
     });
+    
+    // Notify the employee about unassignment
+    if (employee?.user_email && previousLocation) {
+      await createNotification({
+        orgId,
+        recipientId: employee.id,
+        recipientEmail: employee.user_email,
+        type: 'hr',
+        title: 'Location Assignment Removed',
+        message: `You have been unassigned from ${previousLocation}`,
+        priority: 'normal'
+      }).catch(err => console.log('Unassignment notification failed:', err));
+    }
   };
 
   const openAddLocation = (type) => {

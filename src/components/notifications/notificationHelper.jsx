@@ -1,3 +1,4 @@
+
 import { base44 } from "@/api/base44Client";
 
 /**
@@ -68,7 +69,8 @@ export async function notifyAdmins({
   title,
   message,
   link = null,
-  priority = 'normal'
+  priority = 'normal',
+  sendEmail = false
 }) {
   const admins = employees.filter(e => 
     ['super_admin', 'org_admin', 'hr_admin', 'warehouse_manager'].includes(e.role)
@@ -83,4 +85,18 @@ export async function notifyAdmins({
     link,
     priority
   });
+  
+  // Send email for critical alerts
+  if (sendEmail && (priority === 'high' || priority === 'urgent')) {
+    try {
+      await base44.functions.invoke('sendNotificationEmail', {
+        recipients: admins.map(a => a.user_email || a.email).filter(Boolean),
+        title,
+        message,
+        priority
+      });
+    } catch (error) {
+      console.error('Failed to send notification email:', error);
+    }
+  }
 }

@@ -392,6 +392,19 @@ export default function Sales() {
                 threshold_quantity: threshold,
                 status: 'active'
               });
+              
+              // Notify warehouse managers
+              if (employees.length > 0) {
+                await notifyAdmins({
+                  orgId,
+                  employees,
+                  type: 'low_stock',
+                  title: 'Low Stock Alert',
+                  message: `${item.product_name} is running low at ${saleData.locationName} - Only ${newLocationStock} remaining`,
+                  priority: 'high',
+                  sendEmail: true
+                }).catch(err => console.log('Stock alert notification failed:', err));
+              }
             }
           } else if (newLocationStock === 0) {
             const existingAlerts = await base44.entities.StockAlert.filter({
@@ -412,6 +425,19 @@ export default function Sales() {
                 threshold_quantity: threshold,
                 status: 'active'
               });
+              
+              // Notify warehouse managers - URGENT
+              if (employees.length > 0) {
+                await notifyAdmins({
+                  orgId,
+                  employees,
+                  type: 'alert',
+                  title: 'OUT OF STOCK - Urgent',
+                  message: `${item.product_name} is OUT OF STOCK at ${saleData.locationName}`,
+                  priority: 'urgent',
+                  sendEmail: true
+                }).catch(err => console.log('Out of stock notification failed:', err));
+              }
             }
           }
         }
