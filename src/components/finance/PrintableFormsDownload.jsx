@@ -168,6 +168,10 @@ const generateFormHTML = (formType, org) => {
         color: #64748b;
         padding: 8px 0.5in;
       }
+
+      .page-counter::before {
+        content: "Page " counter(pageNum) " of ${totalPages}";
+      }
       
       .print-footer-stripe {
         height: 6px;
@@ -1348,11 +1352,6 @@ const generateFormHTML = (formType, org) => {
           <span class="page-counter"></span>
           <span>Printed: ${today}</span>
         </div>
-        <style>
-          .page-counter::before {
-            content: "Page " counter(pageNum) " of ${totalPages}";
-          }
-        </style>
         <div class="print-footer-stripe">
           <div></div>
           <div></div>
