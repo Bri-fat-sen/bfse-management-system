@@ -79,28 +79,6 @@ const generateFormHTML = (formType, org) => {
           margin-top: 1.2in;
         }
         
-        body {
-          counter-reset: page;
-        }
-        
-        .print-header {
-          display: block !important;
-          position: fixed;
-          top: 0;
-          left: 0;
-          right: 0;
-          z-index: 9999;
-          background: white;
-        }
-        
-        .document {
-          page-break-after: always;
-        }
-        
-        .document::before {
-          counter-increment: page;
-        }
-        
         .print-header-first-page {
           display: block !important;
           position: fixed;
@@ -121,7 +99,7 @@ const generateFormHTML = (formType, org) => {
           background: white;
         }
         
-        .page-number::after {
+        .page-number::before {
           content: counter(page);
         }
       }
