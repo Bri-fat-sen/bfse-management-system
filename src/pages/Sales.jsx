@@ -478,10 +478,81 @@ export default function Sales() {
   });
 
   const deleteSaleMutation = useMutation({
-    mutationFn: (saleId) => base44.entities.Sale.delete(saleId),
+    mutationFn: async (sale) => {
+      // Restore stock for each item
+      if (sale.items && sale.items.length > 0) {
+        const locationId = sale.vehicle_id || sale.location;
+        
+        for (const item of sale.items) {
+          const product = await base44.entities.Product.filter({ id: item.product_id });
+          const productData = product?.[0];
+          
+          if (productData) {
+            // Find stock level at the location
+            const stockLevel = await base44.entities.StockLevel.filter({
+              organisation_id: orgId,
+              product_id: item.product_id,
+              warehouse_id: locationId
+            });
+            
+            const existingStock = stockLevel?.[0];
+            const currentLocationStock = existingStock?.quantity || 0;
+            const newLocationStock = currentLocationStock + item.quantity;
+            
+            // Update stock level at location
+            if (existingStock) {
+              await base44.entities.StockLevel.update(existingStock.id, {
+                quantity: newLocationStock,
+                available_quantity: newLocationStock
+              });
+            } else {
+              // Create stock level if it doesn't exist
+              await base44.entities.StockLevel.create({
+                organisation_id: orgId,
+                product_id: item.product_id,
+                product_name: item.product_name,
+                warehouse_id: locationId,
+                warehouse_name: sale.location,
+                quantity: item.quantity,
+                available_quantity: item.quantity
+              });
+            }
+            
+            // Update product total stock
+            const newTotalStock = (productData.stock_quantity || 0) + item.quantity;
+            await base44.entities.Product.update(item.product_id, {
+              stock_quantity: newTotalStock
+            });
+            
+            // Create stock movement record
+            await base44.entities.StockMovement.create({
+              organisation_id: orgId,
+              product_id: item.product_id,
+              product_name: item.product_name,
+              warehouse_id: locationId,
+              warehouse_name: sale.location,
+              movement_type: "in",
+              quantity: item.quantity,
+              previous_stock: currentLocationStock,
+              new_stock: newLocationStock,
+              reference_type: "manual",
+              reference_id: sale.sale_number,
+              recorded_by: currentEmployee?.id,
+              recorded_by_name: currentEmployee?.full_name,
+              notes: `Stock returned from deleted sale ${sale.sale_number}`
+            });
+          }
+        }
+      }
+      
+      // Delete the sale
+      await base44.entities.Sale.delete(sale.id);
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['sales', orgId] });
-      toast.success("Sale deleted successfully");
+      queryClient.invalidateQueries({ queryKey: ['products', orgId] });
+      queryClient.invalidateQueries({ queryKey: ['stockLevels', orgId] });
+      toast.success("Sale deleted and stock restored successfully");
       setShowDeleteConfirm(false);
     },
     onError: (error) => {
@@ -492,6 +563,45 @@ export default function Sales() {
 
   const bulkDeleteSalesMutation = useMutation({
     mutationFn: async (saleIds) => {
+      const salesToDelete = sales.filter(s => saleIds.includes(s.id));
+      
+      // Restore stock for each sale
+      for (const sale of salesToDelete) {
+        if (sale.items && sale.items.length > 0) {
+          const locationId = sale.vehicle_id || sale.location;
+          
+          for (const item of sale.items) {
+            const product = await base44.entities.Product.filter({ id: item.product_id });
+            const productData = product?.[0];
+            
+            if (productData) {
+              const stockLevel = await base44.entities.StockLevel.filter({
+                organisation_id: orgId,
+                product_id: item.product_id,
+                warehouse_id: locationId
+              });
+              
+              const existingStock = stockLevel?.[0];
+              const currentLocationStock = existingStock?.quantity || 0;
+              const newLocationStock = currentLocationStock + item.quantity;
+              
+              if (existingStock) {
+                await base44.entities.StockLevel.update(existingStock.id, {
+                  quantity: newLocationStock,
+                  available_quantity: newLocationStock
+                });
+              }
+              
+              const newTotalStock = (productData.stock_quantity || 0) + item.quantity;
+              await base44.entities.Product.update(item.product_id, {
+                stock_quantity: newTotalStock
+              });
+            }
+          }
+        }
+      }
+      
+      // Delete all sales
       await Promise.all(saleIds.map(id => base44.entities.Sale.delete(id)));
     },
     onSuccess: (_, saleIds) => {
@@ -1320,7 +1430,7 @@ export default function Sales() {
         variant="danger"
         onConfirm={() => {
           if (saleToDelete) {
-            deleteSaleMutation.mutate(saleToDelete.id);
+            deleteSaleMutation.mutate(saleToDelete);
             setSaleToDelete(null);
           }
         }}
