@@ -120,11 +120,7 @@ export default function ProductCard({ product, locations, onEdit, onDelete }) {
               variant="outline"
               size="sm"
               className="flex-1 hover:bg-red-500 hover:text-white hover:border-red-500"
-              onClick={() => {
-                if (confirm(`Delete ${product.name}?`)) {
-                  onDelete(product);
-                }
-              }}
+              onClick={() => onDelete(product)}
             >
               <Trash2 className="w-3 h-3 mr-1" />
               Delete

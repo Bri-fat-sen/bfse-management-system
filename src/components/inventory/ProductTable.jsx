@@ -21,12 +21,8 @@ export default function ProductTable({ products, locations, onEdit, onDelete, on
   };
 
   const handleBulkDelete = () => {
-    const selectedProducts = products.filter(p => selectedIds.includes(p.id));
-    const productNames = selectedProducts.map(p => p.name).join(', ');
-    if (confirm(`Delete ${selectedIds.length} selected product(s)?\n\n${productNames.substring(0, 200)}${productNames.length > 200 ? '...' : ''}`)) {
-      onBulkDelete(selectedIds);
-      setSelectedIds([]);
-    }
+    onBulkDelete(selectedIds);
+    setSelectedIds([]);
   };
 
   return (
@@ -158,11 +154,7 @@ export default function ProductTable({ products, locations, onEdit, onDelete, on
                         <Button
                           variant="ghost"
                           size="icon"
-                          onClick={() => {
-                            if (confirm(`Delete ${product.name}?`)) {
-                              onDelete(product);
-                            }
-                          }}
+                          onClick={() => onDelete(product)}
                           className="hover:bg-red-50 hover:text-red-500"
                         >
                           <Trash2 className="w-4 h-4" />

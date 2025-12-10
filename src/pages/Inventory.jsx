@@ -2,6 +2,7 @@ import { useState, useMemo } from "react";
 import { base44 } from "@/api/base44Client";
 import { useToast } from "@/components/ui/Toast";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import ConfirmDialog from "@/components/ui/ConfirmDialog";
 import {
   Package,
   Search,
@@ -54,6 +55,10 @@ export default function Inventory() {
   const [activeTab, setActiveTab] = useState("products");
   const [showQuickAdjust, setShowQuickAdjust] = useState(false);
   const [showQuickTransfer, setShowQuickTransfer] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [productToDelete, setProductToDelete] = useState(null);
+  const [showBulkDeleteConfirm, setShowBulkDeleteConfirm] = useState(false);
+  const [productsToDelete, setProductsToDelete] = useState([]);
 
   // Fetch current user and employee
   const { data: user } = useQuery({
@@ -443,7 +448,10 @@ export default function Inventory() {
                     setEditingProduct(p);
                     setShowProductDialog(true);
                   }}
-                  onDelete={(p) => deleteProductMutation.mutate(p.id)}
+                  onDelete={(p) => {
+                    setProductToDelete(p);
+                    setShowDeleteConfirm(true);
+                  }}
                 />
               ))}
             </div>
@@ -455,7 +463,14 @@ export default function Inventory() {
                 setEditingProduct(p);
                 setShowProductDialog(true);
               }}
-              onDelete={(p) => deleteProductMutation.mutate(p.id)}
+              onDelete={(p) => {
+                setProductToDelete(p);
+                setShowDeleteConfirm(true);
+              }}
+              onBulkDelete={(ids) => {
+                setProductsToDelete(ids);
+                setShowBulkDeleteConfirm(true);
+              }}
             />
           )}
         </TabsContent>
@@ -537,6 +552,36 @@ export default function Inventory() {
         orgId={orgId}
         currentEmployee={currentEmployee}
         organisation={currentOrg}
+      />
+
+      <ConfirmDialog
+        open={showDeleteConfirm}
+        onOpenChange={setShowDeleteConfirm}
+        title="Delete Product"
+        description={`Are you sure you want to delete "${productToDelete?.name}"? This action cannot be undone.`}
+        confirmLabel="Delete"
+        variant="danger"
+        onConfirm={() => {
+          if (productToDelete) {
+            deleteProductMutation.mutate(productToDelete.id);
+            setProductToDelete(null);
+          }
+        }}
+        isLoading={deleteProductMutation.isPending}
+      />
+
+      <ConfirmDialog
+        open={showBulkDeleteConfirm}
+        onOpenChange={setShowBulkDeleteConfirm}
+        title="Delete Multiple Products"
+        description={`Are you sure you want to delete ${productsToDelete.length} product(s)? This action cannot be undone.`}
+        confirmLabel="Delete All"
+        variant="danger"
+        onConfirm={async () => {
+          await Promise.all(productsToDelete.map(id => deleteProductMutation.mutateAsync(id)));
+          setProductsToDelete([]);
+        }}
+        isLoading={deleteProductMutation.isPending}
       />
     </div>
   );
