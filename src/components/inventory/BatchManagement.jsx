@@ -144,24 +144,45 @@ export default function BatchManagement({ products = [], warehouses = [], vehicl
     mutationFn: async (batchId) => {
       const batch = batches.find(b => b.id === batchId);
       
-      // Delete all stock level allocations for this batch
-      const batchAllocations = await base44.entities.StockLevel.filter({ 
-        organisation_id: orgId, 
-        batch_id: batchId 
-      });
-      
-      // Calculate total allocated stock to subtract from product
-      const totalAllocatedStock = batchAllocations.reduce((sum, sl) => sum + (sl.quantity || 0), 0);
-      
-      if (batchAllocations.length > 0) {
-        await Promise.all(batchAllocations.map(sl => base44.entities.StockLevel.delete(sl.id)));
-      }
-      
-      // Delete all stock movements for this batch
+      // Find all stock movements with this batch number
       const batchMovements = await base44.entities.StockMovement.filter({ 
         organisation_id: orgId, 
         batch_number: batch?.batch_number 
       });
+      
+      // For each location that received stock from this batch, reduce their stock levels
+      const locationStockUpdates = new Map();
+      for (const movement of batchMovements) {
+        if (movement.movement_type === 'in' && movement.reference_type === 'batch_allocation') {
+          const key = `${movement.product_id}_${movement.warehouse_id}`;
+          locationStockUpdates.set(key, {
+            product_id: movement.product_id,
+            warehouse_id: movement.warehouse_id,
+            quantity: (locationStockUpdates.get(key)?.quantity || 0) + movement.quantity
+          });
+        }
+      }
+      
+      // Update or delete stock levels at each location
+      for (const [_, update] of locationStockUpdates) {
+        const stockLevel = stockLevels.find(
+          sl => sl.product_id === update.product_id && sl.warehouse_id === update.warehouse_id
+        );
+        
+        if (stockLevel) {
+          const newQty = Math.max(0, (stockLevel.quantity || 0) - update.quantity);
+          if (newQty === 0) {
+            await base44.entities.StockLevel.delete(stockLevel.id);
+          } else {
+            await base44.entities.StockLevel.update(stockLevel.id, {
+              quantity: newQty,
+              available_quantity: newQty
+            });
+          }
+        }
+      }
+      
+      // Delete all stock movements for this batch
       if (batchMovements.length > 0) {
         await Promise.all(batchMovements.map(sm => base44.entities.StockMovement.delete(sm.id)));
       }
@@ -188,7 +209,7 @@ export default function BatchManagement({ products = [], warehouses = [], vehicl
         performedByName: currentEmployee?.full_name,
         batchNumber: batch?.batch_number,
         quantityChanged: -(batch?.quantity || 0),
-        notes: `Deleted batch ${batch?.batch_number} with ${batch?.quantity} units. Removed ${batchAllocations.length} allocations (${totalAllocatedStock} units) and ${batchMovements.length} movements. Updated product stock.`,
+        notes: `Deleted batch ${batch?.batch_number} with ${batch?.quantity} units. Removed ${locationStockUpdates.size} location allocations and ${batchMovements.length} movements. Updated product stock.`,
         previousValues: { quantity: batch?.quantity, allocated: batch?.allocated_quantity }
       });
       
@@ -200,7 +221,7 @@ export default function BatchManagement({ products = [], warehouses = [], vehicl
       queryClient.invalidateQueries({ queryKey: ['stockLevels'] });
       queryClient.invalidateQueries({ queryKey: ['stockMovements'] });
       queryClient.invalidateQueries({ queryKey: ['products'] });
-      toast.success("Batch deleted", "Batch, stock allocations, and product stock updated");
+      toast.success("Batch deleted", "All related stock allocations and movements removed");
     },
     onError: (error) => {
       console.error('Delete batch error:', error);
