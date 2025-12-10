@@ -1400,38 +1400,8 @@ export default function PrintableFormsDownload({ open, onOpenChange, organisatio
       
       iframe.onload = () => {
         setTimeout(() => {
-          const iframeWindow = iframe.contentWindow;
-          const iframeDoc = iframeWindow.document;
-
-          // Calculate actual number of pages based on content height
-          const contentHeight = iframeDoc.body.scrollHeight;
-          const pageHeight = 11 * 96; // Letter size in pixels (11 inches * 96 DPI)
-          const calculatedPages = Math.ceil(contentHeight / pageHeight);
-          const actualPages = Math.max(calculatedPages, ${totalPages});
-
-          // Create page counters for each page
-          const content = iframeDoc.querySelector('.document');
-          if (content) {
-            // Split content into pages and add page numbers
-            for (let i = 1; i <= actualPages; i++) {
-              const pageBreak = iframeDoc.createElement('div');
-              pageBreak.className = 'page-number-marker';
-              pageBreak.setAttribute('data-page', i);
-              pageBreak.style.pageBreakAfter = i < actualPages ? 'always' : 'auto';
-              pageBreak.style.visibility = 'hidden';
-              pageBreak.style.height = '0';
-              content.appendChild(pageBreak);
-            }
-
-            // Update footer with calculated pages
-            const pageCountSpan = iframeDoc.querySelector('.page-counter');
-            if (pageCountSpan) {
-              pageCountSpan.setAttribute('data-total-pages', actualPages);
-            }
-          }
-
-          iframeWindow.focus();
-          iframeWindow.print();
+          iframe.contentWindow.focus();
+          iframe.contentWindow.print();
           setTimeout(() => {
             if (document.body.contains(iframe)) {
               document.body.removeChild(iframe);
