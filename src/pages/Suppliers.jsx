@@ -177,6 +177,18 @@ export default function Suppliers() {
     }
   });
 
+  const deletePOMutation = useMutation({
+    mutationFn: (id) => base44.entities.PurchaseOrder.delete(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['purchaseOrders', orgId] });
+      toast.success("Purchase order deleted");
+    },
+    onError: (error) => {
+      console.error('Delete PO error:', error);
+      toast.error("Failed to delete purchase order", error.message);
+    }
+  });
+
   const updatePOMutation = useMutation({
     mutationFn: ({ id, data }) => base44.entities.PurchaseOrder.update(id, data),
     onSuccess: () => {
