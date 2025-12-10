@@ -1484,16 +1484,65 @@ export default function Finance() {
                 </CardTitle>
                 <CardDescription>Upload receipts, invoices, or spreadsheets to extract financial data automatically</CardDescription>
               </CardHeader>
-              <CardContent>
-                <DocumentUploadExtractor
-                  orgId={orgId}
-                  currentEmployee={currentEmployee}
-                  onDataExtracted={() => {
-                    queryClient.invalidateQueries({ queryKey: ['expenses', orgId] });
-                    queryClient.invalidateQueries({ queryKey: ['revenues', orgId] });
-                    toast.success("Data extracted successfully");
-                  }}
-                />
+              <CardContent className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="border-2 border-dashed border-gray-300 rounded-xl p-8 text-center hover:border-purple-500 transition-colors">
+                    <input
+                      type="file"
+                      accept=".pdf,.csv,.png,.jpg,.jpeg"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (file) {
+                          setShowDocumentExtractor(true);
+                          setTimeout(() => {
+                            document.getElementById('doc-upload-input')?.click();
+                          }, 100);
+                        }
+                      }}
+                      className="hidden"
+                      id="finance-file-upload"
+                    />
+                    <label htmlFor="finance-file-upload" className="cursor-pointer block">
+                      <div className="flex flex-col items-center gap-3">
+                        <div className="w-16 h-16 rounded-full bg-purple-100 flex items-center justify-center">
+                          <Upload className="w-8 h-8 text-purple-600" />
+                        </div>
+                        <div>
+                          <p className="text-gray-700 font-medium">Upload from Computer</p>
+                          <p className="text-sm text-gray-500 mt-1">PDF, CSV, or images</p>
+                        </div>
+                      </div>
+                    </label>
+                  </div>
+
+                  <button
+                    onClick={() => setShowDocumentExtractor(true)}
+                    className="border-2 border-dashed border-gray-300 rounded-xl p-8 text-center hover:border-purple-500 transition-colors"
+                  >
+                    <div className="flex flex-col items-center gap-3">
+                      <div className="w-16 h-16 rounded-full bg-blue-100 flex items-center justify-center">
+                        <FileText className="w-8 h-8 text-blue-600" />
+                      </div>
+                      <div>
+                        <p className="text-gray-700 font-medium">Upload & Extract Data</p>
+                        <p className="text-sm text-gray-500 mt-1">Advanced extraction tools</p>
+                      </div>
+                    </div>
+                  </button>
+                </div>
+
+                <div className="bg-blue-50 rounded-xl p-4 border border-blue-200">
+                  <h4 className="font-semibold text-blue-900 mb-2 flex items-center gap-2">
+                    <Info className="w-5 h-5" />
+                    What you can upload:
+                  </h4>
+                  <ul className="text-sm text-blue-800 space-y-1 ml-6 list-disc">
+                    <li>Expense receipts and invoices</li>
+                    <li>Revenue records and sales reports</li>
+                    <li>Bank statements and deposit slips</li>
+                    <li>Spreadsheets with financial data</li>
+                  </ul>
+                </div>
               </CardContent>
             </Card>
           </TabsContent>
