@@ -281,7 +281,7 @@ Deno.serve(async (req) => {
           </div>
 
           <div style="padding: 30px;">
-            <div style="margin-bottom: 25px; padding: 20px; background-color: #f3f4f6; border-radius: 8px;">
+            <div style="margin-bottom: 25px; padding: 20px; background-color: #f3f4f6; border-radius: 8px; border-left: 4px solid #1EB053;">
               <h2 style="margin: 0 0 15px; font-size: 18px; color: #0F1F3C;">Order Details</h2>
               <table style="width: 100%; font-size: 14px;">
                 <tr>
@@ -322,7 +322,7 @@ Deno.serve(async (req) => {
               </tbody>
             </table>
 
-            <div style="background: linear-gradient(to right, rgba(30, 176, 83, 0.05), rgba(0, 114, 198, 0.05)); padding: 20px; border-radius: 8px; margin-top: 20px;">
+            <div style="background-color: #f3f4f6; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
               <table style="width: 100%; font-size: 14px;">
                 <tr>
                   <td style="padding: 6px 0; color: #6b7280;">Subtotal:</td>
@@ -338,11 +338,12 @@ Deno.serve(async (req) => {
                   <td style="padding: 6px 0; color: #6b7280;">Tax:</td>
                   <td style="padding: 6px 0; text-align: right;">Le ${po.tax_amount?.toLocaleString()}</td>
                 </tr>` : ''}
-                <tr style="border-top: 2px solid #1EB053;">
-                  <td style="padding: 12px 0 0; font-size: 18px; font-weight: bold; color: #0F1F3C;">Total Amount:</td>
-                  <td style="padding: 12px 0 0; text-align: right; font-size: 20px; font-weight: bold; color: #1EB053;">Le ${po.total_amount?.toLocaleString()}</td>
-                </tr>
               </table>
+            </div>
+
+            <div style="background: linear-gradient(135deg, #1EB053 0%, #0072C6 100%); padding: 25px; border-radius: 8px; text-align: center; color: white; margin-bottom: 20px;">
+              <p style="margin: 0 0 8px; opacity: 0.9; font-size: 14px;">Order Total</p>
+              <div style="font-size: 32px; font-weight: bold;">Le ${po.total_amount?.toLocaleString()}</div>
             </div>
 
             ${po.notes ? `
