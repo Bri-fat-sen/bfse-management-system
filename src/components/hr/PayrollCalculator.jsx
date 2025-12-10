@@ -311,18 +311,21 @@ export const COMMON_ALLOWANCES = [
   { name: "Night Shift Allowance", description: "Night work differential (8pm-6am per Employment Act 2023)" }
 ];
 
-// Common deduction types
+// Common deduction types - Sierra Leone specific
 export const COMMON_DEDUCTIONS = [
   { name: "NASSIT Employee (5%)", type: "statutory", description: "National Social Security contribution" },
-  { name: "PAYE Tax", type: "statutory", description: "Pay As You Earn income tax" },
+  { name: "PAYE Tax", type: "statutory", description: "Pay As You Earn income tax (NRA)" },
   { name: "Loan Repayment", type: "loan", description: "Staff loan repayment" },
   { name: "Salary Advance", type: "advance", description: "Advance salary deduction" },
   { name: "Equipment Damage", type: "other", description: "Damage to company property" },
-  { name: "Unauthorized Absence", type: "other", description: "Unpaid leave deduction" },
-  { name: "Union Dues", type: "voluntary", description: "Trade union membership" },
-  { name: "Cooperative Savings", type: "voluntary", description: "Staff cooperative contribution" },
-  { name: "Health Insurance", type: "voluntary", description: "Optional health coverage" },
-  { name: "Pension Top-up", type: "voluntary", description: "Additional pension contribution" }
+  { name: "Unauthorized Absence", type: "other", description: "Unpaid leave deduction (per Employment Act)" },
+  { name: "Union Dues", type: "voluntary", description: "Trade union membership (e.g. SLCTU)" },
+  { name: "Cooperative Savings", type: "voluntary", description: "Staff cooperative/credit union contribution" },
+  { name: "Health Insurance", type: "voluntary", description: "Private health coverage premium" },
+  { name: "Pension Top-up", type: "voluntary", description: "Additional voluntary pension contribution" },
+  { name: "SACCO Contribution", type: "voluntary", description: "Savings and Credit Cooperative contribution" },
+  { name: "Court Order Deduction", type: "statutory", description: "Court-ordered garnishment" },
+  { name: "Company Housing", type: "other", description: "Company-provided accommodation deduction" }
 ];
 
 // Sierra Leone Leave Entitlements - Per Employment Act 2023
