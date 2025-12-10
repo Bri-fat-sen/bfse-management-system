@@ -10,8 +10,50 @@ import ConfirmDialog from "@/components/ui/ConfirmDialog";
 
 export default function LocationStockView({ stockLevels, products, warehouses, vehicles, orgId }) {
   const [deleteConfirm, setDeleteConfirm] = useState(null);
+  const [isCleaningUp, setIsCleaningUp] = useState(false);
   const queryClient = useQueryClient();
   const toast = useToast();
+
+  // Cleanup orphaned stock (stock without active batches)
+  const cleanupOrphanedStock = async () => {
+    setIsCleaningUp(true);
+    try {
+      const allBatches = await base44.entities.InventoryBatch.filter({ 
+        organisation_id: orgId,
+        status: 'active'
+      });
+      
+      const batchProductIds = new Set(allBatches.map(b => b.product_id));
+      const orphanedStocks = stockLevels.filter(sl => !batchProductIds.has(sl.product_id));
+      
+      if (orphanedStocks.length === 0) {
+        toast.info('No Orphaned Stock', 'All stock levels have active batches');
+        setIsCleaningUp(false);
+        return;
+      }
+      
+      // Delete orphaned stocks
+      await Promise.all(orphanedStocks.map(sl => base44.entities.StockLevel.delete(sl.id)));
+      
+      // Update product stocks
+      const affectedProducts = new Set(orphanedStocks.map(sl => sl.product_id));
+      for (const productId of affectedProducts) {
+        const remainingStock = await base44.entities.StockLevel.filter({
+          organisation_id: orgId,
+          product_id: productId
+        });
+        const totalStock = remainingStock.reduce((sum, sl) => sum + (sl.quantity || 0), 0);
+        await base44.entities.Product.update(productId, { stock_quantity: totalStock });
+      }
+      
+      queryClient.invalidateQueries(['stockLevels']);
+      queryClient.invalidateQueries(['products']);
+      toast.success('Cleanup Complete', `Removed ${orphanedStocks.length} orphaned stock records`);
+    } catch (error) {
+      toast.error('Cleanup Failed', error.message);
+    }
+    setIsCleaningUp(false);
+  };
 
   const deleteStockMutation = useMutation({
     mutationFn: async (stockLevel) => {
@@ -70,7 +112,26 @@ export default function LocationStockView({ stockLevels, products, warehouses, v
   }
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+    <>
+      <div className="mb-4 flex justify-end">
+        <Button
+          variant="outline"
+          onClick={cleanupOrphanedStock}
+          disabled={isCleaningUp}
+          className="text-red-600 border-red-200 hover:bg-red-50"
+        >
+          {isCleaningUp ? (
+            <>Processing...</>
+          ) : (
+            <>
+              <Trash2 className="w-4 h-4 mr-2" />
+              Cleanup Orphaned Stock
+            </>
+          )}
+        </Button>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
       {allLocations.map(location => {
         const locationStock = stockLevels.filter(sl => sl.warehouse_id === location.id);
         const totalItems = locationStock.reduce((sum, sl) => sum + (sl.quantity || 0), 0);
@@ -138,6 +199,7 @@ export default function LocationStockView({ stockLevels, products, warehouses, v
         onConfirm={() => deleteStockMutation.mutate(deleteConfirm)}
         isLoading={deleteStockMutation.isPending}
       />
-    </div>
+      </div>
+    </>
   );
 }
