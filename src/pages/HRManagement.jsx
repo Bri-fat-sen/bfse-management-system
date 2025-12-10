@@ -66,6 +66,8 @@ import SendInviteEmailDialog from "@/components/email/SendInviteEmailDialog";
 import EmployeeDocuments from "@/components/hr/EmployeeDocuments";
 import PerformanceReviewDialog from "@/components/hr/PerformanceReviewDialog";
 import ConfirmDialog from "@/components/ui/ConfirmDialog";
+import PayslipGenerator from "@/components/hr/PayslipGenerator";
+import EmailPayslipDialog from "@/components/hr/EmailPayslipDialog";
 import { format } from "date-fns";
 
 export default function HRManagement() {
@@ -92,6 +94,8 @@ export default function HRManagement() {
   const [showBulkDeleteDialog, setShowBulkDeleteDialog] = useState(false);
   const [showDeletePayrollDialog, setShowDeletePayrollDialog] = useState(false);
   const [payrollToDelete, setPayrollToDelete] = useState(null);
+  const [showEmailPayslipDialog, setShowEmailPayslipDialog] = useState(false);
+  const [payrollForEmail, setPayrollForEmail] = useState(null);
 
   const { data: user } = useQuery({
     queryKey: ['currentUser'],
@@ -387,6 +391,11 @@ export default function HRManagement() {
                               {payroll.status?.replace('_', ' ')}
                             </Badge>
                           </div>
+                          <PayslipGenerator
+                            payroll={payroll}
+                            employee={employees.find(e => e.id === payroll.employee_id)}
+                            organisation={organisation}
+                          />
                           {isAdmin && (
                             <DropdownMenu>
                               <DropdownMenuTrigger asChild>
@@ -395,6 +404,16 @@ export default function HRManagement() {
                                 </Button>
                               </DropdownMenuTrigger>
                               <DropdownMenuContent align="end">
+                                <DropdownMenuItem onClick={() => {
+                                  const emp = employees.find(e => e.id === payroll.employee_id);
+                                  if (emp) {
+                                    setPayrollForEmail({ payroll, employee: emp });
+                                    setShowEmailPayslipDialog(true);
+                                  }
+                                }}>
+                                  <Send className="w-4 h-4 mr-2" />
+                                  Email Payslip
+                                </DropdownMenuItem>
                                 <DropdownMenuItem onClick={() => {
                                   setPayrollToDelete(payroll);
                                   setShowDeletePayrollDialog(true);
@@ -729,6 +748,11 @@ export default function HRManagement() {
                       } className="text-[10px] sm:text-xs">
                         {payroll.status?.replace('_', ' ')}
                       </Badge>
+                      <PayslipGenerator
+                        payroll={payroll}
+                        employee={employees.find(e => e.id === payroll.employee_id)}
+                        organisation={organisation}
+                      />
                       {isAdmin && (
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
@@ -737,6 +761,16 @@ export default function HRManagement() {
                             </Button>
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end">
+                            <DropdownMenuItem onClick={() => {
+                              const emp = employees.find(e => e.id === payroll.employee_id);
+                              if (emp) {
+                                setPayrollForEmail({ payroll, employee: emp });
+                                setShowEmailPayslipDialog(true);
+                              }
+                            }}>
+                              <Send className="w-4 h-4 mr-2" />
+                              Email Payslip
+                            </DropdownMenuItem>
                             <DropdownMenuItem onClick={() => {
                               setPayrollToDelete(payroll);
                               setShowDeletePayrollDialog(true);
@@ -868,6 +902,19 @@ export default function HRManagement() {
         onConfirm={() => deletePayrollMutation.mutate(payrollToDelete.id)}
         isLoading={deletePayrollMutation.isPending}
       />
+
+      {payrollForEmail && (
+        <EmailPayslipDialog
+          open={showEmailPayslipDialog}
+          onOpenChange={(open) => {
+            setShowEmailPayslipDialog(open);
+            if (!open) setPayrollForEmail(null);
+          }}
+          payroll={payrollForEmail.payroll}
+          employee={payrollForEmail.employee}
+          organisation={organisation}
+        />
+      )}
     </div>
   );
 }
