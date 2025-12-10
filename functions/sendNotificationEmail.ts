@@ -29,7 +29,7 @@ Deno.serve(async (req) => {
         <!-- Sierra Leone Flag Header -->
         <div style="height: 8px; display: flex;">
           <div style="flex: 1; background: #1EB053;"></div>
-          <div style="flex: 1; background: #FFFFFF;"></div>
+          <div style="flex: 1; background: #FFFFFF; border-top: 1px solid #e5e7eb; border-bottom: 1px solid #e5e7eb;"></div>
           <div style="flex: 1; background: #0072C6;"></div>
         </div>
         
@@ -61,7 +61,7 @@ Deno.serve(async (req) => {
         <!-- Sierra Leone Flag Footer -->
         <div style="height: 6px; display: flex;">
           <div style="flex: 1; background: #1EB053;"></div>
-          <div style="flex: 1; background: #FFFFFF;"></div>
+          <div style="flex: 1; background: #FFFFFF; border-top: 1px solid #e5e7eb; border-bottom: 1px solid #e5e7eb;"></div>
           <div style="flex: 1; background: #0072C6;"></div>
         </div>
       </div>
