@@ -768,41 +768,41 @@ Provide executive summary, key insights, anomalies, recommendations, cash flow a
 
       {/* Export Dialog */}
       <Dialog open={showExportDialog} onOpenChange={setShowExportDialog}>
-        <DialogContent className="max-w-2xl w-[95vw] [&>button]:hidden">
-          <div className="h-2 flex">
+        <DialogContent className="max-w-lg w-[95vw] max-h-[85vh] overflow-y-auto [&>button]:hidden">
+          <div className="h-1.5 flex">
             <div className="flex-1 bg-[#1EB053]" />
             <div className="flex-1 bg-white" />
             <div className="flex-1 bg-[#0072C6]" />
           </div>
           <DialogHeader>
-            <DialogTitle className="text-2xl flex items-center gap-3">
-              <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-[#1EB053] to-[#0072C6] flex items-center justify-center">
-                <Download className="w-6 h-6 text-white" />
+            <DialogTitle className="text-lg sm:text-xl flex items-center gap-2">
+              <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-[#1EB053] to-[#0072C6] flex items-center justify-center">
+                <Download className="w-5 h-5 text-white" />
               </div>
-              Export Financial Report
+              Export Report
             </DialogTitle>
           </DialogHeader>
 
-          <div className="space-y-6 py-4">
+          <div className="space-y-4 py-2">
             {/* Report Type */}
             <div>
-              <Label className="text-sm font-semibold mb-3 block">Select Report</Label>
-              <div className="grid grid-cols-2 gap-3">
+              <Label className="text-xs sm:text-sm font-semibold mb-2 block">Select Report</Label>
+              <div className="grid grid-cols-2 gap-2">
                 {[
-                  { value: "pl_statement", label: "P&L Statement", icon: FileText, color: "green" },
-                  { value: "cash_flow", label: "Cash Flow", icon: Wallet, color: "blue" }
+                  { value: "pl_statement", label: "P&L", icon: FileText },
+                  { value: "cash_flow", label: "Cash Flow", icon: Wallet }
                 ].map(report => (
                   <button
                     key={report.value}
                     onClick={() => setSelectedReportType(report.value)}
-                    className={`p-4 rounded-lg border-2 transition-all ${
+                    className={`p-3 rounded-lg border-2 transition-all ${
                       selectedReportType === report.value
-                        ? `border-${report.color}-500 bg-${report.color}-50`
-                        : 'border-gray-200 hover:border-gray-300'
+                        ? 'border-[#1EB053] bg-green-50'
+                        : 'border-gray-200'
                     }`}
                   >
-                    <report.icon className={`w-8 h-8 mx-auto mb-2 ${selectedReportType === report.value ? `text-${report.color}-600` : 'text-gray-400'}`} />
-                    <p className="font-semibold text-sm">{report.label}</p>
+                    <report.icon className={`w-6 h-6 mx-auto mb-1 ${selectedReportType === report.value ? 'text-[#1EB053]' : 'text-gray-400'}`} />
+                    <p className="font-semibold text-xs">{report.label}</p>
                   </button>
                 ))}
               </div>
@@ -810,31 +810,25 @@ Provide executive summary, key insights, anomalies, recommendations, cash flow a
 
             {/* Format */}
             <div>
-              <Label className="text-sm font-semibold mb-3 block">Export Format</Label>
-              <div className="grid grid-cols-2 gap-3">
+              <Label className="text-xs sm:text-sm font-semibold mb-2 block">Format</Label>
+              <div className="grid grid-cols-2 gap-2">
                 <button
                   onClick={() => setExportFormat("pdf")}
-                  className={`p-4 rounded-lg border-2 transition-all flex items-center gap-3 ${
+                  className={`p-3 rounded-lg border-2 transition-all ${
                     exportFormat === "pdf" ? 'border-red-500 bg-red-50' : 'border-gray-200'
                   }`}
                 >
-                  <FileBarChart className={`w-6 h-6 ${exportFormat === "pdf" ? 'text-red-600' : 'text-gray-400'}`} />
-                  <div className="text-left">
-                    <p className="font-semibold text-sm">PDF</p>
-                    <p className="text-xs text-gray-500">Professional</p>
-                  </div>
+                  <FileBarChart className={`w-6 h-6 mx-auto mb-1 ${exportFormat === "pdf" ? 'text-red-600' : 'text-gray-400'}`} />
+                  <p className="font-semibold text-xs">PDF</p>
                 </button>
                 <button
                   onClick={() => setExportFormat("csv")}
-                  className={`p-4 rounded-lg border-2 transition-all flex items-center gap-3 ${
+                  className={`p-3 rounded-lg border-2 transition-all ${
                     exportFormat === "csv" ? 'border-green-500 bg-green-50' : 'border-gray-200'
                   }`}
                 >
-                  <FileSpreadsheet className={`w-6 h-6 ${exportFormat === "csv" ? 'text-green-600' : 'text-gray-400'}`} />
-                  <div className="text-left">
-                    <p className="font-semibold text-sm">CSV</p>
-                    <p className="text-xs text-gray-500">Spreadsheet</p>
-                  </div>
+                  <FileSpreadsheet className={`w-6 h-6 mx-auto mb-1 ${exportFormat === "csv" ? 'text-green-600' : 'text-gray-400'}`} />
+                  <p className="font-semibold text-xs">CSV</p>
                 </button>
               </div>
             </div>
@@ -842,13 +836,13 @@ Provide executive summary, key insights, anomalies, recommendations, cash flow a
             {/* PDF Options */}
             {exportFormat === "pdf" && (
               <div>
-                <Label className="text-sm font-semibold mb-3 block">PDF Options</Label>
-                <div className="space-y-3 p-4 bg-gray-50 rounded-lg border">
+                <Label className="text-xs sm:text-sm font-semibold mb-2 block">Options</Label>
+                <div className="space-y-2 p-3 bg-gray-50 rounded-lg border">
                   {[
-                    { id: 'includeLogo', label: 'Include logo and branding', key: 'includeLogo' },
-                    { id: 'includeCharts', label: 'Include charts', key: 'includeCharts' },
-                    { id: 'includeAIAnalysis', label: 'Include AI insights', key: 'includeAIAnalysis', disabled: !aiAnalysis },
-                    { id: 'includeNotes', label: 'Include notes', key: 'includeNotes' }
+                    { id: 'includeLogo', label: 'Logo & branding', key: 'includeLogo' },
+                    { id: 'includeCharts', label: 'Charts', key: 'includeCharts' },
+                    { id: 'includeAIAnalysis', label: 'AI insights', key: 'includeAIAnalysis', disabled: !aiAnalysis },
+                    { id: 'includeNotes', label: 'Notes', key: 'includeNotes' }
                   ].map(option => (
                     <div key={option.id} className="flex items-center gap-2">
                       <Checkbox
@@ -857,37 +851,23 @@ Provide executive summary, key insights, anomalies, recommendations, cash flow a
                         onCheckedChange={(checked) => setExportOptions(prev => ({ ...prev, [option.key]: checked }))}
                         disabled={option.disabled}
                       />
-                      <Label htmlFor={option.id} className="text-sm cursor-pointer">
-                        {option.label} {option.disabled && "(Generate AI report first)"}
+                      <Label htmlFor={option.id} className="text-xs cursor-pointer">
+                        {option.label}
                       </Label>
                     </div>
                   ))}
                 </div>
               </div>
             )}
-
-            {/* Preview */}
-            <div className="p-4 bg-blue-50 rounded-lg border border-blue-200">
-              <div className="flex items-start gap-3">
-                <Eye className="w-5 h-5 text-blue-600 mt-0.5" />
-                <div>
-                  <p className="font-semibold text-blue-900 text-sm">Export Preview</p>
-                  <p className="text-xs text-blue-700 mt-1">
-                    {selectedReportType === "pl_statement" ? "P&L Statement" : "Cash Flow Statement"}
-                    {" - "}{dateRange.label}{" - "}{exportFormat.toUpperCase()}
-                  </p>
-                </div>
-              </div>
-            </div>
           </div>
 
-          <DialogFooter className="flex-col sm:flex-row gap-2">
-            <Button variant="outline" onClick={() => setShowExportDialog(false)} className="w-full sm:w-auto">
-              Cancel
-            </Button>
-            <Button onClick={handleExport} className="bg-gradient-to-r from-[#1EB053] to-[#0072C6] w-full sm:w-auto">
+          <DialogFooter className="flex-col gap-2">
+            <Button onClick={handleExport} className="bg-gradient-to-r from-[#1EB053] to-[#0072C6] w-full">
               <Download className="w-4 h-4 mr-2" />
               Export {exportFormat.toUpperCase()}
+            </Button>
+            <Button variant="outline" onClick={() => setShowExportDialog(false)} className="w-full">
+              Cancel
             </Button>
           </DialogFooter>
         </DialogContent>
