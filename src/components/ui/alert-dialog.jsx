@@ -17,7 +17,21 @@ const AlertDialogOverlay = React.forwardRef(({ className, ...props }, ref) => (
       className
     )}
     style={{
-      background: 'linear-gradient(135deg, rgba(30, 176, 83, 0.4) 0%, rgba(30, 176, 83, 0.3) 33.33%, rgba(255, 255, 255, 0.2) 33.33%, rgba(255, 255, 255, 0.2) 66.66%, rgba(0, 114, 198, 0.3) 66.66%, rgba(0, 114, 198, 0.4) 100%), rgba(0, 0, 0, 0.5)'
+      background: `
+        linear-gradient(135deg, 
+          rgba(30, 176, 83, 0.25) 0%, 
+          rgba(30, 176, 83, 0.25) 20%, 
+          rgba(255, 255, 255, 0.15) 20%, 
+          rgba(255, 255, 255, 0.15) 40%, 
+          rgba(0, 114, 198, 0.25) 40%, 
+          rgba(0, 114, 198, 0.25) 60%,
+          rgba(30, 176, 83, 0.25) 60%, 
+          rgba(30, 176, 83, 0.25) 80%, 
+          rgba(255, 255, 255, 0.15) 80%, 
+          rgba(255, 255, 255, 0.15) 100%
+        ),
+        rgba(15, 31, 60, 0.75)
+      `
     }}
     {...props}
     ref={ref}
