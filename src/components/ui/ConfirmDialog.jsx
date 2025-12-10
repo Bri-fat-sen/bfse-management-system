@@ -1,4 +1,4 @@
-import { } from "react";
+import React from "react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -68,11 +68,11 @@ export default function ConfirmDialog({
 
   return (
     <AlertDialog open={open} onOpenChange={onOpenChange}>
-      <AlertDialogContent className="p-0 overflow-hidden border-0 max-w-md">
+      <AlertDialogContent className="p-0 overflow-hidden border-0 max-w-md shadow-2xl">
         {/* Sierra Leone Flag Stripe - Top */}
-        <div className="h-1.5 flex">
+        <div className="h-2 flex">
           <div className="flex-1 bg-[#1EB053]" />
-          <div className="flex-1 bg-white border-y border-gray-100" />
+          <div className="flex-1 bg-white" />
           <div className="flex-1 bg-[#0072C6]" />
         </div>
 
