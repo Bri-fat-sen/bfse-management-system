@@ -169,11 +169,12 @@ export default function Suppliers() {
     mutationFn: (id) => base44.entities.Supplier.delete(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['suppliers', orgId] });
-      toast.success("Supplier deleted");
+      toast.success("Supplier deleted successfully");
+      setShowDeleteConfirm(false);
     },
     onError: (error) => {
       console.error('Delete supplier error:', error);
-      toast.error("Failed to delete supplier", error.message);
+      toast.error("Failed to delete supplier");
     }
   });
 
@@ -181,11 +182,12 @@ export default function Suppliers() {
     mutationFn: (id) => base44.entities.PurchaseOrder.delete(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['purchaseOrders', orgId] });
-      toast.success("Purchase order deleted");
+      toast.success("Purchase order deleted successfully");
+      setShowDeletePOConfirm(false);
     },
     onError: (error) => {
       console.error('Delete PO error:', error);
-      toast.error("Failed to delete purchase order", error.message);
+      toast.error("Failed to delete purchase order");
     }
   });
 
@@ -193,23 +195,22 @@ export default function Suppliers() {
     mutationFn: ({ id, data }) => base44.entities.PurchaseOrder.update(id, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['purchaseOrders', orgId] });
-      toast.success("Purchase order updated");
+      toast.success("Purchase order updated successfully");
     },
     onError: (error) => {
       console.error('Update PO error:', error);
-      toast.error("Failed to update purchase order", error.message);
+      toast.error("Failed to update purchase order");
     }
   });
 
   const sendEmailMutation = useMutation({
     mutationFn: (purchaseOrderId) => base44.functions.invoke('sendPurchaseOrder', { purchaseOrderId }),
     onSuccess: (response) => {
-      toast.success("Email sent", response.data.message);
+      toast.success("Purchase order sent to supplier successfully");
     },
     onError: (error) => {
       console.error('Send email error:', error);
-      const errorMsg = error.response?.data?.details || error.response?.data?.error || error.message;
-      toast.error("Failed to send email", errorMsg);
+      toast.error("Failed to send email to supplier");
     }
   });
 
