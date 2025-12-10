@@ -72,7 +72,6 @@ import AIFormAssistant, { QuickSuggestionChips } from "@/components/ai/AIFormAss
 import BankAccountsSummary from "@/components/finance/BankAccountsSummary";
 import BudgetingModule from "@/components/finance/BudgetingModule";
 import DocumentUploadExtractor from "@/components/finance/DocumentUploadExtractor";
-import CategoryBreakdownChart from "@/components/finance/CategoryBreakdownChart";
 import AIExpenseCategorizer from "@/components/finance/AIExpenseCategorizer";
 import UnifiedFinancialReports from "@/components/finance/UnifiedFinancialReports";
 
@@ -483,28 +482,7 @@ export default function Finance() {
     return data;
   }, [sales, trips, expenses]);
 
-  // Expense pie chart data - sorted by value (highest first)
-  const expensePieData = useMemo(() => {
-    return Object.entries(financials.expensesByCategory)
-      .filter(([_, value]) => value > 0)
-      .sort((a, b) => b[1] - a[1])
-      .map(([name, value]) => ({
-        name: name.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase()),
-        value
-      }));
-  }, [financials.expensesByCategory]);
 
-  // Revenue breakdown for pie
-  const revenuePieData = useMemo(() => {
-    const data = [];
-    if (financials.retailSales > 0) data.push({ name: 'Retail Sales', value: financials.retailSales });
-    if (financials.wholesaleSales > 0) data.push({ name: 'Wholesale', value: financials.wholesaleSales });
-    if (financials.vehicleSales > 0) data.push({ name: 'Vehicle Sales', value: financials.vehicleSales });
-    if (financials.transportRevenue > 0) data.push({ name: 'Transport', value: financials.transportRevenue });
-    if (financials.contractRevenue > 0) data.push({ name: 'Contracts', value: financials.contractRevenue });
-    if (financials.ownerContributions > 0) data.push({ name: 'Owner/CEO', value: financials.ownerContributions });
-    return data;
-  }, [financials]);
 
   const handleExpenseSubmit = (e) => {
     e.preventDefault();
@@ -770,221 +748,48 @@ export default function Finance() {
           </TabsList>
           </div>
 
-          {/* Dashboard Tab */}
+          {/* Dashboard Tab - Quick Actions */}
           <TabsContent value="dashboard" className="mt-6">
             <div className="space-y-6">
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              {/* Revenue & Expenses Trend */}
-              <Card className="overflow-hidden relative border-0 shadow-xl">
-                {/* Sierra Leone Pattern Background */}
-                <div className="absolute inset-0 opacity-[0.03] pointer-events-none">
-                  <div className="absolute inset-0" style={{
-                    backgroundImage: `repeating-linear-gradient(
-                      0deg,
-                      #1EB053 0px,
-                      #1EB053 8px,
-                      #FFFFFF 8px,
-                      #FFFFFF 16px,
-                      #0072C6 16px,
-                      #0072C6 24px,
-                      transparent 24px,
-                      transparent 48px
-                    )`
-                  }} />
-                </div>
-                
-                <div className="h-2 flex">
-                  <div className="flex-1 bg-[#1EB053]" />
-                  <div className="flex-1 bg-white" />
-                  <div className="flex-1 bg-[#0072C6]" />
-                </div>
-                <CardHeader className="pb-4">
-                  <CardTitle className="flex items-center gap-2 text-xl">
-                    <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#1EB053] to-[#0072C6] flex items-center justify-center">
-                      <BarChart3 className="w-5 h-5 text-white" />
-                    </div>
-                    Financial Trend (6 Months)
-                  </CardTitle>
-                  <CardDescription className="text-xs ml-12">Revenue vs Expenses comparison</CardDescription>
+              <Card>
+                <CardHeader>
+                  <CardTitle>Quick Actions</CardTitle>
+                  <CardDescription>Manage your financial records</CardDescription>
                 </CardHeader>
-                <CardContent className="relative">
-                  <ResponsiveContainer width="100%" height={340}>
-                    <BarChart 
-                      data={monthlyTrend}
-                      margin={{ top: 20, right: 30, left: 20, bottom: 20 }}
-                    >
-                      <defs>
-                        <linearGradient id="revenueGradient" x1="0" y1="0" x2="0" y2="1">
-                          <stop offset="0%" stopColor="#1EB053" stopOpacity={0.9} />
-                          <stop offset="100%" stopColor="#1EB053" stopOpacity={0.6} />
-                        </linearGradient>
-                        <linearGradient id="expenseGradient" x1="0" y1="0" x2="0" y2="1">
-                          <stop offset="0%" stopColor="#ef4444" stopOpacity={0.9} />
-                          <stop offset="100%" stopColor="#ef4444" stopOpacity={0.6} />
-                        </linearGradient>
-                      </defs>
-                      <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" vertical={false} />
-                      <XAxis 
-                        dataKey="month" 
-                        stroke="#9ca3af"
-                        style={{ fontSize: '12px', fontWeight: '500' }}
-                        axisLine={{ stroke: '#d1d5db', strokeWidth: 2 }}
-                      />
-                      <YAxis 
-                        tickFormatter={(v) => `Le ${(v/1000).toFixed(0)}k`}
-                        stroke="#9ca3af"
-                        style={{ fontSize: '11px' }}
-                        axisLine={{ stroke: '#d1d5db', strokeWidth: 2 }}
-                      />
-                      <Tooltip 
-                        formatter={(value, name) => [`Le ${value.toLocaleString()}`, name === 'revenue' ? 'Revenue' : 'Expenses']}
-                        contentStyle={{ 
-                          backgroundColor: 'white', 
-                          border: '2px solid #1EB053',
-                          borderRadius: '12px',
-                          padding: '12px 16px',
-                          boxShadow: '0 4px 16px rgba(0,0,0,0.12)'
-                        }}
-                        labelStyle={{ fontWeight: 'bold', color: '#0F1F3C', marginBottom: '6px', fontSize: '13px' }}
-                        cursor={{ fill: 'rgba(30, 176, 83, 0.05)' }}
-                      />
-                      <Legend 
-                        wrapperStyle={{ paddingTop: '20px' }}
-                        iconType="circle"
-                      />
-                      <Bar 
-                        dataKey="revenue" 
-                        fill="url(#revenueGradient)" 
-                        radius={[8, 8, 0, 0]}
-                        name="Revenue"
-                        maxBarSize={50}
-                      />
-                      <Bar 
-                        dataKey="expenses" 
-                        fill="url(#expenseGradient)" 
-                        radius={[8, 8, 0, 0]}
-                        name="Expenses"
-                        maxBarSize={50}
-                      />
-                    </BarChart>
-                  </ResponsiveContainer>
+                <CardContent>
+                  <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                    <Button onClick={() => setShowExpenseDialog(true)} variant="outline" className="h-20 flex-col gap-2">
+                      <Receipt className="w-6 h-6 text-red-500" />
+                      <span className="text-sm">Add Expense</span>
+                    </Button>
+                    <Button onClick={() => setShowRevenueDialog(true)} variant="outline" className="h-20 flex-col gap-2">
+                      <DollarSign className="w-6 h-6 text-[#1EB053]" />
+                      <span className="text-sm">Add Contribution</span>
+                    </Button>
+                    <Button onClick={() => setShowBankDepositDialog(true)} variant="outline" className="h-20 flex-col gap-2">
+                      <Landmark className="w-6 h-6 text-[#0072C6]" />
+                      <span className="text-sm">Record Deposit</span>
+                    </Button>
+                  </div>
                 </CardContent>
               </Card>
 
-              {/* Profit Trend */}
-              <Card className="overflow-hidden relative border-0 shadow-xl">
-                {/* Sierra Leone Pattern Background */}
-                <div className="absolute inset-0 opacity-[0.03] pointer-events-none">
-                  <div className="absolute inset-0" style={{
-                    backgroundImage: `repeating-linear-gradient(
-                      90deg,
-                      #1EB053 0px,
-                      #1EB053 8px,
-                      #FFFFFF 8px,
-                      #FFFFFF 16px,
-                      #0072C6 16px,
-                      #0072C6 24px,
-                      transparent 24px,
-                      transparent 48px
-                    )`
-                  }} />
-                </div>
-
-                <div className="h-2 flex">
-                  <div className="flex-1 bg-[#1EB053]" />
-                  <div className="flex-1 bg-white" />
-                  <div className="flex-1 bg-[#0072C6]" />
-                </div>
-                <CardHeader className="pb-4">
-                  <CardTitle className="flex items-center gap-2 text-xl">
-                    <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#0072C6] to-[#1EB053] flex items-center justify-center">
-                      <TrendingUp className="w-5 h-5 text-white" />
-                    </div>
-                    Profit Trend
-                  </CardTitle>
-                  <CardDescription className="text-xs ml-12">Net profit margin over time</CardDescription>
+              <Card>
+                <CardHeader>
+                  <CardTitle>Upload Documents</CardTitle>
+                  <CardDescription>Extract data from financial documents</CardDescription>
                 </CardHeader>
-                <CardContent className="relative">
-                  <ResponsiveContainer width="100%" height={340}>
-                    <AreaChart 
-                      data={monthlyTrend}
-                      margin={{ top: 20, right: 30, left: 20, bottom: 20 }}
-                    >
-                      <defs>
-                        <linearGradient id="profitAreaGradient" x1="0" y1="0" x2="0" y2="1">
-                          <stop offset="0%" stopColor="#0072C6" stopOpacity={0.4} />
-                          <stop offset="50%" stopColor="#1EB053" stopOpacity={0.2} />
-                          <stop offset="100%" stopColor="#1EB053" stopOpacity={0.05} />
-                        </linearGradient>
-                        <linearGradient id="profitLineGradient" x1="0" y1="0" x2="1" y2="0">
-                          <stop offset="0%" stopColor="#1EB053" />
-                          <stop offset="50%" stopColor="#0072C6" />
-                          <stop offset="100%" stopColor="#1EB053" />
-                        </linearGradient>
-                      </defs>
-                      <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" vertical={false} />
-                      <XAxis 
-                        dataKey="month" 
-                        stroke="#9ca3af"
-                        style={{ fontSize: '12px', fontWeight: '500' }}
-                        axisLine={{ stroke: '#d1d5db', strokeWidth: 2 }}
-                      />
-                      <YAxis 
-                        tickFormatter={(v) => `Le ${(v/1000).toFixed(0)}k`}
-                        stroke="#9ca3af"
-                        style={{ fontSize: '11px' }}
-                        axisLine={{ stroke: '#d1d5db', strokeWidth: 2 }}
-                      />
-                      <Tooltip 
-                        formatter={(value) => [`Le ${value.toLocaleString()}`, 'Net Profit']}
-                        contentStyle={{ 
-                          backgroundColor: 'white', 
-                          border: '2px solid #0072C6',
-                          borderRadius: '12px',
-                          padding: '12px 16px',
-                          boxShadow: '0 4px 16px rgba(0,0,0,0.12)'
-                        }}
-                        labelStyle={{ fontWeight: 'bold', color: '#0F1F3C', marginBottom: '6px', fontSize: '13px' }}
-                        cursor={{ strokeDasharray: '3 3', stroke: '#0072C6' }}
-                      />
-                      <Area 
-                        type="monotone" 
-                        dataKey="profit" 
-                        stroke="url(#profitLineGradient)"
-                        strokeWidth={3}
-                        fill="url(#profitAreaGradient)"
-                        dot={{ 
-                          fill: '#0072C6', 
-                          strokeWidth: 2, 
-                          r: 5,
-                          stroke: 'white'
-                        }}
-                        activeDot={{ r: 7, strokeWidth: 3, stroke: '#1EB053' }}
-                        name="Net Profit"
-                      />
-                    </AreaChart>
-                  </ResponsiveContainer>
+                <CardContent>
+                  <DocumentUploadExtractor
+                    orgId={orgId}
+                    currentEmployee={currentEmployee}
+                    onDataExtracted={() => {
+                      queryClient.invalidateQueries({ queryKey: ['expenses', orgId] });
+                      queryClient.invalidateQueries({ queryKey: ['revenues', orgId] });
+                    }}
+                  />
                 </CardContent>
               </Card>
-
-              {/* Revenue Sources */}
-              <CategoryBreakdownChart
-                data={revenuePieData}
-                title="Revenue Breakdown"
-                valueFormatter={(val) => `Le ${val.toLocaleString()}`}
-                icon={PieChart}
-                iconColor="text-[#1EB053]"
-              />
-
-              {/* Expense Breakdown */}
-              <CategoryBreakdownChart
-                data={expensePieData}
-                title="Expense Breakdown"
-                valueFormatter={(val) => `Le ${val.toLocaleString()}`}
-                icon={Receipt}
-                iconColor="text-red-500"
-              />
-              </div>
             </div>
           </TabsContent>
 
