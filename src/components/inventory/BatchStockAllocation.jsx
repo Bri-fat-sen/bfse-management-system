@@ -175,10 +175,9 @@ export default function BatchStockAllocation({
         }
       }
 
+      // Don't update product stock - it was already updated when batches were created
+      // FIFO allocation just distributes existing stock to locations
       const totalAllocatedNow = fifoQuantity - remainingToAllocate;
-      await base44.entities.Product.update(product.id, {
-        stock_quantity: (product.stock_quantity || 0) + totalAllocatedNow
-      });
 
       await logInventoryAudit({
         orgId,
@@ -263,10 +262,8 @@ export default function BatchStockAllocation({
         });
       }
 
-      const newTotalStock = (product?.stock_quantity || 0) + totalAllocated;
-      await base44.entities.Product.update(batch.product_id, {
-        stock_quantity: newTotalStock
-      });
+      // Don't update product stock - it was already updated when batch was created
+      // Stock allocation just distributes existing stock to different locations
 
       const newAllocatedQty = (batch.allocated_quantity || 0) + totalAllocated;
       await base44.entities.InventoryBatch.update(batch.id, {
