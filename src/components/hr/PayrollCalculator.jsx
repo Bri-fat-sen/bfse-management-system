@@ -293,22 +293,26 @@ export const ROLE_BONUS_CONFIG = {
 // Common allowances - Per Employment Act 2023 Section 5
 // Workers entitled to: rent, transport, medical, relocation, risk allowances
 export const COMMON_ALLOWANCES = [
-  { name: "Transport Allowance", description: "Monthly transport to work (per Employment Act 2023)" },
-  { name: "Housing/Rent Allowance", description: "Accommodation support (per Employment Act 2023)" },
-  { name: "Medical Allowance", description: "Health care support (per Employment Act 2023)" },
-  { name: "Risk Allowance", description: "For hazardous work conditions (per Employment Act 2023)" },
-  { name: "Relocation Allowance", description: "For transferred employees (per Employment Act 2023)" },
-  { name: "Meal Allowance", description: "Daily meal/subsistence subsidy" },
-  { name: "Communication Allowance", description: "Phone/internet allowance" },
-  { name: "Leave Allowance", description: "Annual leave bonus" },
-  { name: "Fuel Allowance", description: "Vehicle fuel support" },
+  { name: "Transport Allowance", description: "Monthly transport to work (per Employment Act 2023 Sec 5)" },
+  { name: "Housing/Rent Allowance", description: "Accommodation support (per Employment Act 2023 Sec 5)" },
+  { name: "Medical Allowance", description: "Health care support (per Employment Act 2023 Sec 5)" },
+  { name: "Risk Allowance", description: "Hazardous work conditions (per Employment Act 2023 Sec 5)" },
+  { name: "Relocation Allowance", description: "For transferred employees (per Employment Act 2023 Sec 5)" },
+  { name: "Meal/Lunch Allowance", description: "Daily meal/subsistence (Freetown: Le 15-30/day typical)" },
+  { name: "Communication Allowance", description: "Phone/internet for work (SL Telecom costs)" },
+  { name: "Leave Allowance", description: "Annual leave travel/bonus payment" },
+  { name: "Fuel/Petrol Allowance", description: "Vehicle fuel support (SL fuel prices)" },
   { name: "Responsibility Allowance", description: "Management/supervisory responsibility" },
-  { name: "Professional Allowance", description: "Professional certification/qualification" },
-  { name: "Hardship Allowance", description: "Remote/difficult location posting" },
-  { name: "Acting Allowance", description: "Temporarily performing higher duties (per Employment Act 2023)" },
-  { name: "Uniform Allowance", description: "Work uniform maintenance" },
-  { name: "Entertainment Allowance", description: "Client entertainment (management)" },
-  { name: "Night Shift Allowance", description: "Night work differential (8pm-6am per Employment Act 2023)" }
+  { name: "Professional Allowance", description: "Professional certification (ICSL, SLIIT, etc.)" },
+  { name: "Hardship Allowance", description: "Provincial/difficult location posting (upcountry)" },
+  { name: "Acting Allowance", description: "Performing higher duties (per Employment Act 2023 Sec 5)" },
+  { name: "Uniform Allowance", description: "Work uniform provision/maintenance" },
+  { name: "Entertainment Allowance", description: "Client entertainment (management level)" },
+  { name: "Night Shift Allowance", description: "Night work 8pm-6am (per Employment Act 2023 Sec 42)" },
+  { name: "Education Allowance", description: "Children's education support" },
+  { name: "Generator Allowance", description: "Power supply compensation (due to EDSA outages)" },
+  { name: "Security Allowance", description: "High-risk area posting or security duties" },
+  { name: "Tool Allowance", description: "Personal tools/equipment for skilled workers" }
 ];
 
 // Common deduction types - Sierra Leone specific
