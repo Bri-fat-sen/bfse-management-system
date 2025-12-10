@@ -70,57 +70,59 @@ const generateFormHTML = (formType, org) => {
     <style>
       ${unifiedStyles}
       
-      @page {
-        margin: 0.75in 0.5in;
-        size: A4;
-      }
-      
       @media print {
-        @page {
-          margin-top: 0.75in;
-          margin-bottom: 0.75in;
-        }
-        
-        body::before {
-          content: '';
-          position: fixed;
-          top: 0.25in;
-          left: 0;
-          right: 0;
-          height: 6px;
-          background: linear-gradient(to right, #1EB053 33.33%, #FFFFFF 33.33%, #FFFFFF 66.66%, #0072C6 66.66%);
-          z-index: 9999;
-        }
-        
-        body::after {
-          content: '';
-          position: fixed;
-          bottom: 0.25in;
-          left: 0;
-          right: 0;
-          height: 6px;
-          background: linear-gradient(to right, #1EB053 33.33%, #FFFFFF 33.33%, #FFFFFF 66.66%, #0072C6 66.66%);
-          z-index: 9999;
-        }
-        
         .print-header {
           display: block !important;
-          position: fixed;
-          top: 0.35in;
-          left: 0.5in;
-          right: 0.5in;
-          padding: 12px 0;
-          border-bottom: 1px solid #e5e7eb;
+          position: running(header);
         }
         
         .print-footer {
           display: block !important;
-          position: fixed;
-          bottom: 0.35in;
-          left: 0.5in;
-          right: 0.5in;
-          padding: 12px 0;
-          border-top: 1px solid #e5e7eb;
+          position: running(footer);
+        }
+        
+        @page {
+          margin: 1in 0.5in;
+          
+          @top-left-corner {
+            content: '';
+          }
+          
+          @top-left {
+            content: element(header);
+            vertical-align: top;
+            padding-top: 0.15in;
+          }
+          
+          @top-center {
+            content: element(header);
+            vertical-align: top;
+            padding-top: 0.15in;
+          }
+          
+          @top-right {
+            content: element(header);
+            vertical-align: top;
+            padding-top: 0.15in;
+          }
+          
+          @bottom-left {
+            content: element(footer);
+            vertical-align: bottom;
+            padding-bottom: 0.15in;
+          }
+          
+          @bottom-center {
+            content: element(footer);
+            vertical-align: bottom;
+            padding-bottom: 0.15in;
+          }
+          
+          @bottom-right {
+            content: element(footer);
+            vertical-align: bottom;
+            padding-bottom: 0.15in;
+          }
         }
       }
       
@@ -132,11 +134,35 @@ const generateFormHTML = (formType, org) => {
         display: none;
       }
       
+      .print-header-stripe {
+        height: 6px;
+        display: flex;
+        margin-bottom: 10px;
+      }
+      
+      .print-header-stripe > div:nth-child(1) {
+        flex: 1;
+        background: #1EB053;
+      }
+      
+      .print-header-stripe > div:nth-child(2) {
+        flex: 1;
+        background: #FFFFFF;
+        border-top: 1px solid #e5e7eb;
+        border-bottom: 1px solid #e5e7eb;
+      }
+      
+      .print-header-stripe > div:nth-child(3) {
+        flex: 1;
+        background: #0072C6;
+      }
+      
       .print-header-content {
         display: flex;
         justify-content: space-between;
         align-items: center;
         font-size: 10px;
+        padding: 0 0.5in;
       }
       
       .print-header-title {
@@ -156,6 +182,30 @@ const generateFormHTML = (formType, org) => {
         align-items: center;
         font-size: 10px;
         color: #64748b;
+        padding: 0 0.5in;
+        margin-bottom: 10px;
+      }
+      
+      .print-footer-stripe {
+        height: 6px;
+        display: flex;
+      }
+      
+      .print-footer-stripe > div:nth-child(1) {
+        flex: 1;
+        background: #1EB053;
+      }
+      
+      .print-footer-stripe > div:nth-child(2) {
+        flex: 1;
+        background: #FFFFFF;
+        border-top: 1px solid #e5e7eb;
+        border-bottom: 1px solid #e5e7eb;
+      }
+      
+      .print-footer-stripe > div:nth-child(3) {
+        flex: 1;
+        background: #0072C6;
       }
       
       .instructions {
@@ -1287,6 +1337,11 @@ const generateFormHTML = (formType, org) => {
     </head>
     <body>
       <div class="print-header">
+        <div class="print-header-stripe">
+          <div></div>
+          <div></div>
+          <div></div>
+        </div>
         <div class="print-header-content">
           <span class="print-header-title">${formName}</span>
           <span class="print-header-org">${orgName}</span>
@@ -1295,23 +1350,19 @@ const generateFormHTML = (formType, org) => {
       
       <div class="print-footer">
         <div class="print-footer-content">
-          <span>Page <span class="page-number"></span></span>
+          <span>Page 1</span>
           <span>Printed: ${today}</span>
+        </div>
+        <div class="print-footer-stripe">
+          <div></div>
+          <div></div>
+          <div></div>
         </div>
       </div>
       
       <div class="document">
         ${forms[formType] || ''}
       </div>
-      
-      <script>
-        window.onload = function() {
-          const pageNumbers = document.querySelectorAll('.page-number');
-          pageNumbers.forEach(el => {
-            el.textContent = '1';
-          });
-        };
-      </script>
     </body>
     </html>
   `;
