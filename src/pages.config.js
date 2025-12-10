@@ -33,6 +33,7 @@ import ConstructionExpense from './pages/ConstructionExpense';
 import ExpenseManagement from './pages/ExpenseManagement';
 import UploadedDocuments from './pages/UploadedDocuments';
 import HRManagement from './pages/HRManagement';
+import Welcome from './pages/Welcome';
 import __Layout from './Layout.jsx';
 
 
@@ -72,6 +73,7 @@ export const PAGES = {
     "ExpenseManagement": ExpenseManagement,
     "UploadedDocuments": UploadedDocuments,
     "HRManagement": HRManagement,
+    "Welcome": Welcome,
 }
 
 export const pagesConfig = {
