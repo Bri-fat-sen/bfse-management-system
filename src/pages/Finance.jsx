@@ -1486,55 +1486,21 @@ export default function Finance() {
                 </CardTitle>
                 <CardDescription>Upload receipts, invoices, or spreadsheets to extract financial data automatically</CardDescription>
               </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="border-2 border-dashed border-gray-300 rounded-xl p-8 text-center hover:border-purple-500 transition-colors">
-                    <input
-                      type="file"
-                      accept=".pdf,.csv,.png,.jpg,.jpeg"
-                      onChange={(e) => {
-                        const file = e.target.files?.[0];
-                        if (file) {
-                          setShowDocumentExtractor(true);
-                          setTimeout(() => {
-                            document.getElementById('doc-upload-input')?.click();
-                          }, 100);
-                        }
-                      }}
-                      className="hidden"
-                      id="finance-file-upload"
-                    />
-                    <label htmlFor="finance-file-upload" className="cursor-pointer block">
-                      <div className="flex flex-col items-center gap-3">
-                        <div className="w-16 h-16 rounded-full bg-purple-100 flex items-center justify-center">
-                          <Upload className="w-8 h-8 text-purple-600" />
-                        </div>
-                        <div>
-                          <p className="text-gray-700 font-medium">Upload from Computer</p>
-                          <p className="text-sm text-gray-500 mt-1">PDF, CSV, or images</p>
-                        </div>
-                      </div>
-                    </label>
-                  </div>
-
-                  <Button
-                    onClick={() => setShowDocumentExtractor(true)}
-                    variant="outline"
-                    className="border-2 border-dashed border-gray-300 rounded-xl p-8 text-center hover:border-purple-500 transition-colors h-auto w-full"
-                  >
-                    <div className="flex flex-col items-center gap-3">
-                      <div className="w-16 h-16 rounded-full bg-blue-100 flex items-center justify-center">
-                        <FileText className="w-8 h-8 text-blue-600" />
-                      </div>
-                      <div>
-                        <p className="text-gray-700 font-medium">Upload & Extract Data</p>
-                        <p className="text-sm text-gray-500 mt-1">Advanced extraction tools</p>
-                      </div>
+              <CardContent>
+                <Button
+                  onClick={() => setShowDocumentExtractor(true)}
+                  className="w-full bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 h-32"
+                >
+                  <div className="flex flex-col items-center gap-3">
+                    <Upload className="w-12 h-12" />
+                    <div>
+                      <p className="text-lg font-semibold">Upload Documents</p>
+                      <p className="text-sm opacity-90">PDF, CSV, or images</p>
                     </div>
-                  </Button>
-                </div>
+                  </div>
+                </Button>
 
-                <div className="bg-blue-50 rounded-xl p-4 border border-blue-200">
+                <div className="mt-4 bg-blue-50 rounded-xl p-4 border border-blue-200">
                   <h4 className="font-semibold text-blue-900 mb-2 flex items-center gap-2">
                     <AlertCircle className="w-5 h-5" />
                     What you can upload:
@@ -1546,21 +1512,21 @@ export default function Finance() {
                     <li>Spreadsheets with financial data</li>
                   </ul>
                 </div>
-
-                {/* Document Extractor Modal */}
-                <DocumentUploadExtractor
-                  open={showDocumentExtractor}
-                  onOpenChange={setShowDocumentExtractor}
-                  orgId={orgId}
-                  currentEmployee={currentEmployee}
-                  onSuccess={() => {
-                    queryClient.invalidateQueries({ queryKey: ['expenses', orgId] });
-                    queryClient.invalidateQueries({ queryKey: ['revenues', orgId] });
-                  }}
-                />
               </CardContent>
             </Card>
           </TabsContent>
+
+          {/* Document Extractor Modal */}
+          <DocumentUploadExtractor
+            open={showDocumentExtractor}
+            onOpenChange={setShowDocumentExtractor}
+            orgId={orgId}
+            currentEmployee={currentEmployee}
+            onSuccess={() => {
+              queryClient.invalidateQueries({ queryKey: ['expenses', orgId] });
+              queryClient.invalidateQueries({ queryKey: ['revenues', orgId] });
+            }}
+          />
 
           {/* Cash Flow Tab */}
           <TabsContent value="cashflow" className="mt-6 space-y-6">
