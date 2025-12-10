@@ -65,6 +65,11 @@ export default function ProductFormDialog({
   const handleSubmit = (e) => {
     e.preventDefault();
     const formData = new FormData(e.target);
+    
+    const tags = formData.get('tags') 
+      ? formData.get('tags').split(',').map(t => t.trim()).filter(Boolean)
+      : [];
+    
     const data = {
       name: formData.get('name'),
       sku: formData.get('sku') || `SKU-${Date.now()}`,
@@ -83,6 +88,17 @@ export default function ProductFormDialog({
       unit: unit,
       location_ids: selectedLocations,
       is_active: true,
+      tags: tags,
+      specifications: {
+        brand: formData.get('brand') || '',
+        model: formData.get('model') || '',
+        weight: formData.get('weight') || '',
+        dimensions: formData.get('dimensions') || '',
+        color: formData.get('color') || '',
+        material: formData.get('material') || '',
+        warranty: formData.get('warranty') || '',
+        custom: []
+      }
     };
     onSubmit(data);
     if (!editingProduct) {
@@ -307,6 +323,82 @@ export default function ProductFormDialog({
                       defaultValue={editingProduct?.description} 
                       className="mt-1 border-gray-200 min-h-[60px] text-sm"
                       placeholder="Optional details..."
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <Label className="text-gray-600 text-xs">Brand</Label>
+                      <Input 
+                        name="brand" 
+                        defaultValue={editingProduct?.specifications?.brand} 
+                        className="mt-1 border-gray-200 text-sm"
+                        placeholder="e.g., Sony"
+                      />
+                    </div>
+                    <div>
+                      <Label className="text-gray-600 text-xs">Model</Label>
+                      <Input 
+                        name="model" 
+                        defaultValue={editingProduct?.specifications?.model} 
+                        className="mt-1 border-gray-200 text-sm"
+                        placeholder="e.g., X-100"
+                      />
+                    </div>
+                    <div>
+                      <Label className="text-gray-600 text-xs">Weight</Label>
+                      <Input 
+                        name="weight" 
+                        defaultValue={editingProduct?.specifications?.weight} 
+                        className="mt-1 border-gray-200 text-sm"
+                        placeholder="e.g., 500g"
+                      />
+                    </div>
+                    <div>
+                      <Label className="text-gray-600 text-xs">Dimensions</Label>
+                      <Input 
+                        name="dimensions" 
+                        defaultValue={editingProduct?.specifications?.dimensions} 
+                        className="mt-1 border-gray-200 text-sm"
+                        placeholder="e.g., 10x5x3 cm"
+                      />
+                    </div>
+                    <div>
+                      <Label className="text-gray-600 text-xs">Color</Label>
+                      <Input 
+                        name="color" 
+                        defaultValue={editingProduct?.specifications?.color} 
+                        className="mt-1 border-gray-200 text-sm"
+                        placeholder="e.g., Blue"
+                      />
+                    </div>
+                    <div>
+                      <Label className="text-gray-600 text-xs">Material</Label>
+                      <Input 
+                        name="material" 
+                        defaultValue={editingProduct?.specifications?.material} 
+                        className="mt-1 border-gray-200 text-sm"
+                        placeholder="e.g., Plastic"
+                      />
+                    </div>
+                    <div className="col-span-2">
+                      <Label className="text-gray-600 text-xs">Warranty</Label>
+                      <Input 
+                        name="warranty" 
+                        defaultValue={editingProduct?.specifications?.warranty} 
+                        className="mt-1 border-gray-200 text-sm"
+                        placeholder="e.g., 1 year"
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <Label className="text-gray-600 text-xs">Tags (comma separated)</Label>
+                    <Input 
+                      name="tags" 
+                      defaultValue={(editingProduct?.tags || []).join(', ')} 
+                      className="mt-1 border-gray-200 text-sm"
+                      placeholder="e.g., new, popular, featured"
                     />
                   </div>
 

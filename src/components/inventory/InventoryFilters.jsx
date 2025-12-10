@@ -1,6 +1,7 @@
-import { Filter, Package, MapPin, X } from "lucide-react";
+import { Filter, Package, MapPin, X, Tag } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
 import {
   Select,
   SelectContent,
@@ -9,11 +10,13 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
-export default function InventoryFilters({ filters, onFiltersChange, categories, locations }) {
+export default function InventoryFilters({ filters, onFiltersChange, categories, locations, allTags = [] }) {
   const hasActiveFilters = 
     filters.category !== 'all' || 
     filters.stockStatus !== 'all' || 
-    filters.location !== 'all';
+    filters.location !== 'all' ||
+    filters.tag !== 'all' ||
+    filters.brand !== 'all';
 
   return (
     <div className="space-y-3">
@@ -67,11 +70,35 @@ export default function InventoryFilters({ filters, onFiltersChange, categories,
           </SelectContent>
         </Select>
 
+        <Select 
+          value={filters.tag || 'all'} 
+          onValueChange={(value) => onFiltersChange({ ...filters, tag: value })}
+        >
+          <SelectTrigger className="w-[130px] h-9 text-xs">
+            <Tag className="w-3 h-3 mr-1" />
+            <SelectValue placeholder="All Tags" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All Tags</SelectItem>
+            {allTags.map(tag => (
+              <SelectItem key={tag} value={tag}>{tag}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+
+        <Input
+          type="text"
+          placeholder="Filter by brand..."
+          value={filters.brand || ''}
+          onChange={(e) => onFiltersChange({ ...filters, brand: e.target.value })}
+          className="w-[150px] h-9 text-xs"
+        />
+
         {hasActiveFilters && (
           <Button
             variant="ghost"
             size="sm"
-            onClick={() => onFiltersChange({ category: 'all', stockStatus: 'all', location: 'all' })}
+            onClick={() => onFiltersChange({ category: 'all', stockStatus: 'all', location: 'all', tag: 'all', brand: '' })}
             className="h-9 text-xs"
           >
             <X className="w-3 h-3 mr-1" />
@@ -108,6 +135,24 @@ export default function InventoryFilters({ filters, onFiltersChange, categories,
               <X 
                 className="w-3 h-3 ml-1 cursor-pointer" 
                 onClick={() => onFiltersChange({ ...filters, location: 'all' })}
+              />
+            </Badge>
+          )}
+          {filters.tag && filters.tag !== 'all' && (
+            <Badge variant="secondary" className="text-xs">
+              {filters.tag}
+              <X 
+                className="w-3 h-3 ml-1 cursor-pointer" 
+                onClick={() => onFiltersChange({ ...filters, tag: 'all' })}
+              />
+            </Badge>
+          )}
+          {filters.brand && (
+            <Badge variant="secondary" className="text-xs">
+              Brand: {filters.brand}
+              <X 
+                className="w-3 h-3 ml-1 cursor-pointer" 
+                onClick={() => onFiltersChange({ ...filters, brand: '' })}
               />
             </Badge>
           )}
