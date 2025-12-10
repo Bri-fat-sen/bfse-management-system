@@ -112,7 +112,8 @@ export default function PurchaseOrderDialog({
       is_inventory_item: isInventory,
       description: "",
       quantity_ordered: 1, 
-      quantity_received: 0, 
+      quantity_received: 0,
+      unit: "piece",
       unit_cost: 0, 
       total: 0 
     }]);
@@ -262,7 +263,7 @@ export default function PurchaseOrderDialog({
                     <div key={index} className={`p-3 rounded-lg border ${item.is_inventory_item ? 'bg-gray-50' : 'bg-purple-50 border-purple-200'}`}>
                       <div className="grid grid-cols-12 gap-2 items-end">
                         {item.is_inventory_item ? (
-                          <div className="col-span-6">
+                          <div className="col-span-5">
                             <Label className="text-xs">Product</Label>
                             <Select value={item.product_id} onValueChange={(val) => updateItem(index, 'product_id', val)}>
                               <SelectTrigger className="mt-1 bg-white text-xs h-9">
@@ -276,7 +277,7 @@ export default function PurchaseOrderDialog({
                             </Select>
                           </div>
                         ) : (
-                          <div className="col-span-6">
+                          <div className="col-span-5">
                             <Label className="text-xs text-purple-700">Item Name</Label>
                             <Input 
                               placeholder="e.g. Office supplies, Service" 
@@ -288,9 +289,27 @@ export default function PurchaseOrderDialog({
                         )}
                         <div className="col-span-2">
                           <Label className="text-xs">Qty</Label>
-                          <Input type="number" min="1" value={item.quantity_ordered} onChange={(e) => updateItem(index, 'quantity_ordered', parseInt(e.target.value) || 0)} className="mt-1 bg-white text-xs h-9" />
+                          <Input type="number" step="0.01" min="0.01" value={item.quantity_ordered} onChange={(e) => updateItem(index, 'quantity_ordered', parseFloat(e.target.value) || 0)} className="mt-1 bg-white text-xs h-9" />
                         </div>
-                        <div className="col-span-3">
+                        <div className="col-span-2">
+                          <Label className="text-xs">Unit</Label>
+                          <Select value={item.unit || "piece"} onValueChange={(val) => updateItem(index, 'unit', val)}>
+                            <SelectTrigger className="mt-1 bg-white text-xs h-9">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="piece" className="text-xs">Piece</SelectItem>
+                              <SelectItem value="kg" className="text-xs">Kg</SelectItem>
+                              <SelectItem value="litre" className="text-xs">Litre</SelectItem>
+                              <SelectItem value="dozen" className="text-xs">Dozen</SelectItem>
+                              <SelectItem value="box" className="text-xs">Box</SelectItem>
+                              <SelectItem value="bag" className="text-xs">Bag</SelectItem>
+                              <SelectItem value="tonne" className="text-xs">Tonne</SelectItem>
+                              <SelectItem value="metre" className="text-xs">Metre</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        <div className="col-span-2">
                           <Label className="text-xs">Cost</Label>
                           <Input type="number" step="0.01" value={item.unit_cost} onChange={(e) => updateItem(index, 'unit_cost', parseFloat(e.target.value) || 0)} className="mt-1 bg-white text-xs h-9" />
                         </div>

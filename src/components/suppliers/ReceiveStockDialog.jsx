@@ -256,12 +256,12 @@ export default function ReceiveStockDialog({
                           </div>
                           {item.description && <p className="text-xs text-gray-500 mt-0.5">{item.description}</p>}
                           <div className="flex items-center gap-2 text-sm text-gray-500">
-                            <span>Ordered: {item.quantity_ordered}</span>
+                            <span>Ordered: {item.quantity_ordered} {item.unit || 'piece'}</span>
                             <span>•</span>
-                            <span>Received: {item.quantity_received || 0}</span>
+                            <span>Received: {item.quantity_received || 0} {item.unit || 'piece'}</span>
                             <span>•</span>
                             <span className={remaining > 0 ? 'text-amber-600 font-medium' : 'text-green-600'}>
-                              {remaining > 0 ? `Pending: ${remaining}` : 'Complete'}
+                              {remaining > 0 ? `Pending: ${remaining.toFixed(2)}` : 'Complete'}
                             </span>
                           </div>
                         </div>
@@ -271,16 +271,17 @@ export default function ReceiveStockDialog({
                           <p className="text-sm text-gray-500">Unit Cost</p>
                           <p className="font-medium">Le {item.unit_cost?.toLocaleString()}</p>
                         </div>
-                        <div className="w-24">
-                          <Label className="text-xs">Receiving</Label>
+                        <div className="w-28">
+                          <Label className="text-xs">Receiving ({item.unit || 'piece'})</Label>
                           <Input
                             type="number"
+                            step="0.01"
                             min="0"
                             max={remaining}
                             value={item.receiving_quantity}
                             onChange={(e) => {
                               const newItems = [...receivedItems];
-                              const qty = parseInt(e.target.value) || 0;
+                              const qty = parseFloat(e.target.value) || 0;
                               newItems[index] = { 
                                 ...newItems[index], 
                                 receiving_quantity: Math.max(0, Math.min(qty, remaining))
