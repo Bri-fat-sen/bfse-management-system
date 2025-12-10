@@ -1478,55 +1478,17 @@ export default function Finance() {
 
           {/* Upload Documents Tab */}
           <TabsContent value="upload" className="mt-6">
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Upload className="w-5 h-5 text-purple-600" />
-                  Upload Financial Documents
-                </CardTitle>
-                <CardDescription>Upload receipts, invoices, or spreadsheets to extract financial data automatically</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <Button
-                  onClick={() => setShowDocumentExtractor(true)}
-                  className="w-full bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 h-32"
-                >
-                  <div className="flex flex-col items-center gap-3">
-                    <Upload className="w-12 h-12" />
-                    <div>
-                      <p className="text-lg font-semibold">Upload Documents</p>
-                      <p className="text-sm opacity-90">PDF, CSV, or images</p>
-                    </div>
-                  </div>
-                </Button>
-
-                <div className="mt-4 bg-blue-50 rounded-xl p-4 border border-blue-200">
-                  <h4 className="font-semibold text-blue-900 mb-2 flex items-center gap-2">
-                    <AlertCircle className="w-5 h-5" />
-                    What you can upload:
-                  </h4>
-                  <ul className="text-sm text-blue-800 space-y-1 ml-6 list-disc">
-                    <li>Expense receipts and invoices</li>
-                    <li>Revenue records and sales reports</li>
-                    <li>Bank statements and deposit slips</li>
-                    <li>Spreadsheets with financial data</li>
-                  </ul>
-                </div>
-              </CardContent>
-            </Card>
+            <DocumentUploadExtractor
+              open={showDocumentExtractor}
+              onOpenChange={setShowDocumentExtractor}
+              orgId={orgId}
+              currentEmployee={currentEmployee}
+              onSuccess={() => {
+                queryClient.invalidateQueries({ queryKey: ['expenses', orgId] });
+                queryClient.invalidateQueries({ queryKey: ['revenues', orgId] });
+              }}
+            />
           </TabsContent>
-
-          {/* Document Extractor Modal */}
-          <DocumentUploadExtractor
-            open={showDocumentExtractor}
-            onOpenChange={setShowDocumentExtractor}
-            orgId={orgId}
-            currentEmployee={currentEmployee}
-            onSuccess={() => {
-              queryClient.invalidateQueries({ queryKey: ['expenses', orgId] });
-              queryClient.invalidateQueries({ queryKey: ['revenues', orgId] });
-            }}
-          />
 
           {/* Cash Flow Tab */}
           <TabsContent value="cashflow" className="mt-6 space-y-6">
