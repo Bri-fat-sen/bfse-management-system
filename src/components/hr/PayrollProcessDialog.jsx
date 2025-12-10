@@ -49,7 +49,12 @@ import {
   OVERTIME_MULTIPLIERS,
   SL_TAX_BRACKETS,
   PAYROLL_FREQUENCIES,
-  applyTemplates
+  applyTemplates,
+  checkMinimumWageCompliance,
+  SL_MINIMUM_WAGE,
+  SL_LEAVE_ENTITLEMENTS,
+  calculateTransportAllowance,
+  calculateMealAllowance
 } from "./PayrollCalculator";
 import { safeNumber, safeInt, formatNumber } from "@/components/utils/calculations";
 
@@ -388,24 +393,85 @@ export default function PayrollProcessDialog({
               {/* Employee Info Card */}
               <Card className="bg-gradient-to-r from-[#1EB053]/10 to-[#0072C6]/10 border-0">
                 <CardContent className="p-4">
-                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                    <div>
-                      <p className="font-semibold text-lg">{selectedEmployee.full_name}</p>
-                      <div className="flex items-center gap-2 mt-1">
-                        <Badge variant="secondary">{selectedEmployee.role?.replace('_', ' ')}</Badge>
-                        <span className="text-sm text-gray-600">{selectedEmployee.department}</span>
-                        {selectedEmployee.assigned_location_name && (
-                          <span className="text-sm text-gray-500">• {selectedEmployee.assigned_location_name}</span>
-                        )}
+                  <div className="flex flex-col gap-4">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <p className="font-semibold text-lg">{selectedEmployee.full_name}</p>
+                          <span className="text-xl">🇸🇱</span>
+                        </div>
+                        <div className="flex items-center gap-2 mt-1 flex-wrap">
+                          <Badge variant="secondary">{selectedEmployee.role?.replace('_', ' ')}</Badge>
+                          <span className="text-sm text-gray-600">{selectedEmployee.department}</span>
+                          {selectedEmployee.assigned_location_name && (
+                            <span className="text-sm text-gray-500">• {selectedEmployee.assigned_location_name}</span>
+                          )}
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <p className="text-sm text-gray-500">Base Salary ({selectedEmployee.salary_type || 'monthly'})</p>
+                        <p className="text-2xl font-bold text-[#1EB053]">{formatSLE(selectedEmployee.base_salary)}</p>
+                        <p className="text-xs text-gray-400">
+                          {payrollFrequency !== 'monthly' && `Prorated: ${formatSLE(payrollData.prorated_salary)} | `}
+                          Hourly: {formatSLE(payrollData.calculation_details.hourly_rate)}
+                        </p>
                       </div>
                     </div>
-                    <div className="text-right">
-                      <p className="text-sm text-gray-500">Base Salary ({selectedEmployee.salary_type || 'monthly'})</p>
-                      <p className="text-2xl font-bold text-[#1EB053]">{formatSLE(selectedEmployee.base_salary)}</p>
-                      <p className="text-xs text-gray-400">
-                        {payrollFrequency !== 'monthly' && `Prorated: ${formatSLE(payrollData.prorated_salary)} | `}
-                        Hourly: {formatSLE(payrollData.calculation_details.hourly_rate)}
-                      </p>
+                    
+                    {/* SL Labor Law Compliance Indicators */}
+                    <div className="flex items-center gap-2 pt-2 border-t border-gray-200">
+                      <TooltipProvider>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <div className="flex items-center gap-1 text-xs">
+                              {checkMinimumWageCompliance(selectedEmployee.base_salary, selectedEmployee.salary_type || 'monthly').isCompliant ? (
+                                <CheckCircle2 className="w-4 h-4 text-green-600" />
+                              ) : (
+                                <AlertCircle className="w-4 h-4 text-red-600" />
+                              )}
+                              <span className="text-gray-600">Min. Wage</span>
+                            </div>
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            <p className="text-xs font-medium">Sierra Leone Minimum Wage:</p>
+                            <p className="text-xs">Monthly: {formatSLE(SL_MINIMUM_WAGE.monthly)}</p>
+                            <p className="text-xs">Daily: {formatSLE(SL_MINIMUM_WAGE.daily)}</p>
+                            <p className="text-xs">Hourly: {formatSLE(SL_MINIMUM_WAGE.hourly)}</p>
+                          </TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
+                      
+                      <TooltipProvider>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <div className="flex items-center gap-1 text-xs">
+                              <CheckCircle2 className="w-4 h-4 text-green-600" />
+                              <span className="text-gray-600">NASSIT Registered</span>
+                            </div>
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            <p className="text-xs">Employee: 5% | Employer: 10%</p>
+                            <p className="text-xs font-medium mt-1">Per NASSIT Act</p>
+                          </TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
+                      
+                      <TooltipProvider>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <div className="flex items-center gap-1 text-xs">
+                              <CheckCircle2 className="w-4 h-4 text-green-600" />
+                              <span className="text-gray-600">Leave Entitled</span>
+                            </div>
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            <p className="text-xs font-medium">Employment Act 2023:</p>
+                            <p className="text-xs">• {SL_LEAVE_ENTITLEMENTS.annual.days} days annual leave</p>
+                            <p className="text-xs">• {SL_LEAVE_ENTITLEMENTS.sick.days} days sick leave</p>
+                            <p className="text-xs">• {SL_LEAVE_ENTITLEMENTS.maternity.days} days maternity</p>
+                          </TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
                     </div>
                   </div>
                 </CardContent>
@@ -722,21 +788,31 @@ export default function PayrollProcessDialog({
               <div className="p-4 bg-blue-50 rounded-lg border border-blue-200">
                 <div className="flex items-center gap-2 mb-3">
                   <span className="text-lg">🇸🇱</span>
-                  <h4 className="font-semibold text-[#0072C6]">Sierra Leone Statutory Deductions</h4>
+                  <h4 className="font-semibold text-[#0072C6]">Sierra Leone Statutory Compliance</h4>
+                  <Badge variant="outline" className="text-xs">Employment Act 2023</Badge>
                   <TooltipProvider>
                     <Tooltip>
                       <TooltipTrigger>
                         <Info className="w-4 h-4 text-gray-400" />
                       </TooltipTrigger>
                       <TooltipContent className="max-w-xs">
-                        <p className="text-xs font-medium mb-1">NASSIT Rates:</p>
+                        <p className="text-xs font-bold mb-2">🇸🇱 Sierra Leone Labor Laws</p>
+                        <p className="text-xs font-medium mb-1">NASSIT (Social Security):</p>
                         <p className="text-xs">Employee: 5% | Employer: 10%</p>
-                        <p className="text-xs font-medium mt-2 mb-1">PAYE Tax Brackets (Annual):</p>
-                        {SL_TAX_BRACKETS.map((b, i) => (
+                        <p className="text-xs text-gray-500">Mandatory for all formal employees</p>
+                        
+                        <p className="text-xs font-medium mt-2 mb-1">PAYE Tax (Income Tax):</p>
+                        <p className="text-xs">First Le 6,000/year: Tax-free</p>
+                        {SL_TAX_BRACKETS.slice(1).map((b, i) => (
                           <p key={i} className="text-xs">
-                            {formatSLE(b.min)} - {b.max === Infinity ? '∞' : formatSLE(b.max)}: {b.label}
+                            {formatSLE(b.min)} - {b.max === Infinity ? '∞' : formatSLE(b.max)}: {b.rate * 100}%
                           </p>
                         ))}
+                        
+                        <p className="text-xs font-medium mt-2 mb-1">Working Hours:</p>
+                        <p className="text-xs">Max 8 hours/day, 40 hours/week</p>
+                        <p className="text-xs">Overtime: 1.5x regular rate</p>
+                        <p className="text-xs">Weekend: 2.0x | Holiday: 2.5x</p>
                       </TooltipContent>
                     </Tooltip>
                   </TooltipProvider>

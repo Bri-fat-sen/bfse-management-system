@@ -49,124 +49,18 @@ export const OVERTIME_MULTIPLIERS = {
 };
 
 // Sierra Leone Public Holidays (for payroll calculations)
-// Per Public Holidays Act and subsequent amendments
 export const SL_PUBLIC_HOLIDAYS_2025 = [
   { date: "2025-01-01", name: "New Year's Day" },
   { date: "2025-03-08", name: "International Women's Day" },
   { date: "2025-03-29", name: "Eid ul-Fitr" }, // Approximate - varies by moon sighting
   { date: "2025-04-18", name: "Good Friday" },
   { date: "2025-04-21", name: "Easter Monday" },
-  { date: "2025-04-27", name: "Independence Day (National Day)" },
-  { date: "2025-06-05", name: "Eid ul-Adha (Tabaski)" }, // Approximate - varies by moon sighting
-  { date: "2025-08-12", name: "Maulid-un-Nabi (Prophet's Birthday)" }, // Approximate
+  { date: "2025-04-27", name: "Independence Day" },
+  { date: "2025-06-05", name: "Eid ul-Adha" }, // Approximate - varies by moon sighting
+  { date: "2025-08-12", name: "Maulid-un-Nabi" }, // Prophet's Birthday
   { date: "2025-12-25", name: "Christmas Day" },
   { date: "2025-12-26", name: "Boxing Day" }
 ];
-
-// Severance Pay Calculator - Per Employment Act 2023 Section 41
-// Employee entitled to severance pay after 5 years continuous service
-export const calculateSeverancePay = (yearsOfService, monthlyBasicSalary) => {
-  const years = safeNum(yearsOfService);
-  const salary = safeNum(monthlyBasicSalary);
-  
-  // Severance only applies after 5 years of continuous service
-  if (years < 5) {
-    return {
-      amount: 0,
-      weeks: 0,
-      yearsConsidered: 0,
-      explanation: "Severance pay only applicable after 5 years of continuous service"
-    };
-  }
-  
-  // Per Employment Act 2023: One week's basic pay per year of service
-  // Week = monthly salary / 4.33 (average weeks per month)
-  const weeklyPay = salary / 4.33;
-  const weeksOwed = years;
-  const severanceAmount = Math.round(weeklyPay * weeksOwed);
-  
-  return {
-    amount: severanceAmount,
-    weeks: weeksOwed,
-    yearsConsidered: years,
-    weeklyBasicPay: Math.round(weeklyPay),
-    explanation: `${years} years × 1 week's basic pay = ${weeksOwed} weeks at Le ${Math.round(weeklyPay)}/week`
-  };
-};
-
-// Gratuity Calculator - Common in SL private sector
-// Typically 1 month salary per year of service (not statutory, but common practice)
-export const calculateGratuity = (yearsOfService, monthlyBasicSalary) => {
-  const years = safeNum(yearsOfService);
-  const salary = safeNum(monthlyBasicSalary);
-  
-  // Gratuity typically applies after 1 year of service
-  if (years < 1) {
-    return {
-      amount: 0,
-      monthsOwed: 0,
-      explanation: "Gratuity typically applicable after 1 year of service"
-    };
-  }
-  
-  // Common practice: 1 month's salary per completed year
-  const monthsOwed = Math.floor(years);
-  const gratuityAmount = Math.round(salary * monthsOwed);
-  
-  return {
-    amount: gratuityAmount,
-    monthsOwed,
-    yearsConsidered: years,
-    explanation: `${monthsOwed} completed years × 1 month's salary = ${monthsOwed} months at Le ${Math.round(salary)}/month`
-  };
-};
-
-// Terminal Benefits Calculator (Severance + Accrued Leave + Notice Pay)
-export const calculateTerminalBenefits = (employeeData) => {
-  const {
-    yearsOfService,
-    monthlyBasicSalary,
-    accruedLeaveDays = 0,
-    noticePeriodDays = 0,
-    reasonForTermination = 'resignation' // resignation, dismissal, redundancy, retirement
-  } = employeeData;
-  
-  const salary = safeNum(monthlyBasicSalary);
-  const dailyRate = salary / 22; // 22 working days per month
-  
-  // Calculate severance (only for redundancy/retrenchment, not resignation or dismissal)
-  const severance = ['redundancy', 'retrenchment'].includes(reasonForTermination) 
-    ? calculateSeverancePay(yearsOfService, salary)
-    : { amount: 0, explanation: 'Severance not applicable for ' + reasonForTermination };
-  
-  // Calculate accrued leave pay (always applicable)
-  const accruedLeavePay = Math.round(safeNum(accruedLeaveDays) * dailyRate);
-  
-  // Calculate notice pay (if not served or paid in lieu)
-  const noticePay = Math.round(safeNum(noticePeriodDays) * dailyRate);
-  
-  // Gratuity (if company policy includes it)
-  const gratuity = calculateGratuity(yearsOfService, salary);
-  
-  const totalBenefits = severance.amount + accruedLeavePay + noticePay + gratuity.amount;
-  
-  return {
-    severance,
-    accruedLeavePay: {
-      amount: accruedLeavePay,
-      days: accruedLeaveDays,
-      dailyRate: Math.round(dailyRate)
-    },
-    noticePay: {
-      amount: noticePay,
-      days: noticePeriodDays,
-      dailyRate: Math.round(dailyRate)
-    },
-    gratuity,
-    totalBenefits,
-    breakdown: `Severance: Le ${severance.amount.toLocaleString()} + Leave: Le ${accruedLeavePay.toLocaleString()} + Notice: Le ${noticePay.toLocaleString()} + Gratuity: Le ${gratuity.amount.toLocaleString()}`
-  };
-};
 
 // Sierra Leone Minimum Wage (as of 2024) - in NLE (New Leone)
 // Per Minimum Wage Act and subsequent amendments
@@ -293,43 +187,36 @@ export const ROLE_BONUS_CONFIG = {
 // Common allowances - Per Employment Act 2023 Section 5
 // Workers entitled to: rent, transport, medical, relocation, risk allowances
 export const COMMON_ALLOWANCES = [
-  { name: "Transport Allowance", description: "Monthly transport to work (per Employment Act 2023 Sec 5)" },
-  { name: "Housing/Rent Allowance", description: "Accommodation support (per Employment Act 2023 Sec 5)" },
-  { name: "Medical Allowance", description: "Health care support (per Employment Act 2023 Sec 5)" },
-  { name: "Risk Allowance", description: "Hazardous work conditions (per Employment Act 2023 Sec 5)" },
-  { name: "Relocation Allowance", description: "For transferred employees (per Employment Act 2023 Sec 5)" },
-  { name: "Meal/Lunch Allowance", description: "Daily meal/subsistence (Freetown: Le 15-30/day typical)" },
-  { name: "Communication Allowance", description: "Phone/internet for work (SL Telecom costs)" },
-  { name: "Leave Allowance", description: "Annual leave travel/bonus payment" },
-  { name: "Fuel/Petrol Allowance", description: "Vehicle fuel support (SL fuel prices)" },
+  { name: "Transport Allowance", description: "Monthly transport to work (per Employment Act 2023)" },
+  { name: "Housing/Rent Allowance", description: "Accommodation support (per Employment Act 2023)" },
+  { name: "Medical Allowance", description: "Health care support (per Employment Act 2023)" },
+  { name: "Risk Allowance", description: "For hazardous work conditions (per Employment Act 2023)" },
+  { name: "Relocation Allowance", description: "For transferred employees (per Employment Act 2023)" },
+  { name: "Meal Allowance", description: "Daily meal/subsistence subsidy" },
+  { name: "Communication Allowance", description: "Phone/internet allowance" },
+  { name: "Leave Allowance", description: "Annual leave bonus" },
+  { name: "Fuel Allowance", description: "Vehicle fuel support" },
   { name: "Responsibility Allowance", description: "Management/supervisory responsibility" },
-  { name: "Professional Allowance", description: "Professional certification (ICSL, SLIIT, etc.)" },
-  { name: "Hardship Allowance", description: "Provincial/difficult location posting (upcountry)" },
-  { name: "Acting Allowance", description: "Performing higher duties (per Employment Act 2023 Sec 5)" },
-  { name: "Uniform Allowance", description: "Work uniform provision/maintenance" },
-  { name: "Entertainment Allowance", description: "Client entertainment (management level)" },
-  { name: "Night Shift Allowance", description: "Night work 8pm-6am (per Employment Act 2023 Sec 42)" },
-  { name: "Education Allowance", description: "Children's education support" },
-  { name: "Generator Allowance", description: "Power supply compensation (due to EDSA outages)" },
-  { name: "Security Allowance", description: "High-risk area posting or security duties" },
-  { name: "Tool Allowance", description: "Personal tools/equipment for skilled workers" }
+  { name: "Professional Allowance", description: "Professional certification/qualification" },
+  { name: "Hardship Allowance", description: "Remote/difficult location posting" },
+  { name: "Acting Allowance", description: "Temporarily performing higher duties (per Employment Act 2023)" },
+  { name: "Uniform Allowance", description: "Work uniform maintenance" },
+  { name: "Entertainment Allowance", description: "Client entertainment (management)" },
+  { name: "Night Shift Allowance", description: "Night work differential (8pm-6am per Employment Act 2023)" }
 ];
 
-// Common deduction types - Sierra Leone specific
+// Common deduction types
 export const COMMON_DEDUCTIONS = [
   { name: "NASSIT Employee (5%)", type: "statutory", description: "National Social Security contribution" },
-  { name: "PAYE Tax", type: "statutory", description: "Pay As You Earn income tax (NRA)" },
+  { name: "PAYE Tax", type: "statutory", description: "Pay As You Earn income tax" },
   { name: "Loan Repayment", type: "loan", description: "Staff loan repayment" },
   { name: "Salary Advance", type: "advance", description: "Advance salary deduction" },
   { name: "Equipment Damage", type: "other", description: "Damage to company property" },
-  { name: "Unauthorized Absence", type: "other", description: "Unpaid leave deduction (per Employment Act)" },
-  { name: "Union Dues", type: "voluntary", description: "Trade union membership (e.g. SLCTU)" },
-  { name: "Cooperative Savings", type: "voluntary", description: "Staff cooperative/credit union contribution" },
-  { name: "Health Insurance", type: "voluntary", description: "Private health coverage premium" },
-  { name: "Pension Top-up", type: "voluntary", description: "Additional voluntary pension contribution" },
-  { name: "SACCO Contribution", type: "voluntary", description: "Savings and Credit Cooperative contribution" },
-  { name: "Court Order Deduction", type: "statutory", description: "Court-ordered garnishment" },
-  { name: "Company Housing", type: "other", description: "Company-provided accommodation deduction" }
+  { name: "Unauthorized Absence", type: "other", description: "Unpaid leave deduction" },
+  { name: "Union Dues", type: "voluntary", description: "Trade union membership" },
+  { name: "Cooperative Savings", type: "voluntary", description: "Staff cooperative contribution" },
+  { name: "Health Insurance", type: "voluntary", description: "Optional health coverage" },
+  { name: "Pension Top-up", type: "voluntary", description: "Additional pension contribution" }
 ];
 
 // Sierra Leone Leave Entitlements - Per Employment Act 2023
@@ -865,3 +752,242 @@ export function formatSLE(amount) {
 
 // Alias for new naming
 export const formatNLE = formatSLE;
+
+// ============================================
+// SIERRA LEONE SPECIFIC CALCULATIONS
+// ============================================
+
+// 13th Month Salary Calculator (Common in Sierra Leone)
+// Typically paid in December or at end of year
+export const calculate13thMonth = (monthlyBasicSalary, monthsWorked = 12) => {
+  const salary = safeNum(monthlyBasicSalary);
+  const months = Math.min(safeNum(monthsWorked), 12);
+  
+  // Prorated 13th month based on months worked
+  const thirteenthMonth = Math.round((salary / 12) * months);
+  
+  return {
+    amount: thirteenthMonth,
+    monthsWorked: months,
+    fullAmount: salary,
+    prorated: months < 12,
+    explanation: months < 12 
+      ? `Prorated: (Le ${Math.round(salary)} / 12) × ${months} months = Le ${thirteenthMonth.toLocaleString()}`
+      : `Full 13th month: Le ${salary.toLocaleString()}`
+  };
+};
+
+// Leave Accrual Calculator - Per Employment Act 2023
+export const calculateLeaveAccrual = (monthsWorked, leavePolicy = 21) => {
+  const months = safeNum(monthsWorked);
+  const annualDays = safeNum(leavePolicy, 21); // Default 21 days per Employment Act
+  
+  // Employees accrue leave monthly after probation (6 months)
+  if (months < 6) {
+    return {
+      accruedDays: 0,
+      monthlyAccrual: 0,
+      explanation: "Leave accrues after probation period (6 months)"
+    };
+  }
+  
+  const monthlyAccrual = annualDays / 12;
+  const accruedDays = Math.round(monthlyAccrual * months * 10) / 10; // Round to 1 decimal
+  
+  return {
+    accruedDays,
+    monthlyAccrual: Math.round(monthlyAccrual * 10) / 10,
+    annualEntitlement: annualDays,
+    explanation: `${monthlyAccrual.toFixed(1)} days/month × ${months} months = ${accruedDays} days`
+  };
+};
+
+// Transport Allowance Calculator (Sierra Leone Standard)
+// Based on distance and transport costs in Freetown/provinces
+export const calculateTransportAllowance = (location = 'freetown', distance = 'medium') => {
+  const rates = {
+    freetown: {
+      near: 100,    // Within 5km - Le 100/day
+      medium: 150,  // 5-15km - Le 150/day
+      far: 250      // 15km+ - Le 250/day
+    },
+    provincial: {
+      near: 75,
+      medium: 125,
+      far: 200
+    }
+  };
+  
+  const locationRates = rates[location] || rates.freetown;
+  const dailyRate = locationRates[distance] || locationRates.medium;
+  const monthlyAllowance = dailyRate * 22; // 22 working days
+  
+  return {
+    daily: dailyRate,
+    monthly: monthlyAllowance,
+    location,
+    distance,
+    explanation: `Le ${dailyRate}/day × 22 days = Le ${monthlyAllowance.toLocaleString()}/month`
+  };
+};
+
+// Meal Allowance Calculator (Sierra Leone Standard)
+export const calculateMealAllowance = (shiftsPerMonth = 22, ratePerMeal = 25) => {
+  const shifts = safeNum(shiftsPerMonth, 22);
+  const rate = safeNum(ratePerMeal, 25);
+  const monthlyAllowance = Math.round(shifts * rate);
+  
+  return {
+    perMeal: rate,
+    shiftsPerMonth: shifts,
+    monthly: monthlyAllowance,
+    explanation: `Le ${rate}/meal × ${shifts} shifts = Le ${monthlyAllowance.toLocaleString()}/month`
+  };
+};
+
+// Cost of Living Adjustment (COLA) - Sierra Leone Inflation Adjustment
+// Based on Sierra Leone Consumer Price Index
+export const calculateCOLA = (baseSalary, inflationRate = 0.10) => {
+  const salary = safeNum(baseSalary);
+  const rate = safeNum(inflationRate, 0.10);
+  const colaAmount = Math.round(salary * rate);
+  
+  return {
+    amount: colaAmount,
+    percentage: rate * 100,
+    adjustedSalary: salary + colaAmount,
+    explanation: `Le ${salary.toLocaleString()} × ${(rate * 100).toFixed(1)}% = Le ${colaAmount.toLocaleString()}`
+  };
+};
+
+// Minimum Wage Compliance Check
+export const checkMinimumWageCompliance = (salary, salaryType = 'monthly') => {
+  const amount = safeNum(salary);
+  let minimumRequired, isCompliant, shortfall;
+  
+  switch (salaryType) {
+    case 'hourly':
+      minimumRequired = SL_MINIMUM_WAGE.hourly;
+      isCompliant = amount >= minimumRequired;
+      shortfall = isCompliant ? 0 : minimumRequired - amount;
+      break;
+    case 'daily':
+      minimumRequired = SL_MINIMUM_WAGE.daily;
+      isCompliant = amount >= minimumRequired;
+      shortfall = isCompliant ? 0 : minimumRequired - amount;
+      break;
+    case 'monthly':
+    default:
+      minimumRequired = SL_MINIMUM_WAGE.monthly;
+      isCompliant = amount >= minimumRequired;
+      shortfall = isCompliant ? 0 : minimumRequired - amount;
+      break;
+  }
+  
+  return {
+    isCompliant,
+    salary: amount,
+    minimumRequired,
+    shortfall: Math.round(shortfall),
+    salaryType,
+    warning: !isCompliant ? `Salary is below Sierra Leone minimum wage of Le ${minimumRequired.toLocaleString()}` : null
+  };
+};
+
+// NASSIT Contribution Compliance Check
+export const checkNASSITCompliance = (grossPay, nassitPaid) => {
+  const gross = safeNum(grossPay);
+  const paid = safeNum(nassitPaid);
+  const requiredEmployee = Math.round(gross * NASSIT_EMPLOYEE_RATE);
+  const requiredEmployer = Math.round(gross * NASSIT_EMPLOYER_RATE);
+  
+  const isCompliant = paid >= requiredEmployee;
+  
+  return {
+    isCompliant,
+    paid,
+    requiredEmployee,
+    requiredEmployer,
+    requiredTotal: requiredEmployee + requiredEmployer,
+    shortfall: isCompliant ? 0 : requiredEmployee - paid,
+    warning: !isCompliant ? `NASSIT contribution is below required 5% (Le ${requiredEmployee.toLocaleString()})` : null
+  };
+};
+
+// Working Hours Compliance Check - Per Employment Act 2023
+// Maximum 8 hours/day, 40 hours/week
+export const checkWorkingHoursCompliance = (hoursWorked, days = 5) => {
+  const hours = safeNum(hoursWorked);
+  const workDays = safeNum(days, 5);
+  
+  const maxDailyHours = 8;
+  const maxWeeklyHours = 40;
+  const avgHoursPerDay = workDays > 0 ? hours / workDays : 0;
+  
+  const exceedsDailyLimit = avgHoursPerDay > maxDailyHours;
+  const exceedsWeeklyLimit = hours > maxWeeklyHours;
+  
+  return {
+    isCompliant: !exceedsDailyLimit && !exceedsWeeklyLimit,
+    hoursWorked: hours,
+    avgHoursPerDay: Math.round(avgHoursPerDay * 10) / 10,
+    maxDailyHours,
+    maxWeeklyHours,
+    exceedsDailyLimit,
+    exceedsWeeklyLimit,
+    overtimeHours: exceedsWeeklyLimit ? hours - maxWeeklyHours : 0,
+    warning: exceedsWeeklyLimit ? `Working hours exceed 40 hours/week limit (Employment Act 2023)` : null
+  };
+};
+
+// Annual Leave Entitlement Check - Per Employment Act 2023
+export const checkLeaveEntitlement = (yearsOfService) => {
+  const years = safeNum(yearsOfService);
+  
+  // Per Employment Act 2023: 21 days after 1 year of service
+  if (years < 1) {
+    return {
+      entitled: false,
+      days: 0,
+      explanation: "Annual leave entitlement starts after 1 year of continuous service"
+    };
+  }
+  
+  const annualDays = SL_LEAVE_ENTITLEMENTS.annual.days;
+  
+  return {
+    entitled: true,
+    days: annualDays,
+    years,
+    explanation: `Entitled to ${annualDays} working days per year (Employment Act 2023 Section 48)`
+  };
+};
+
+// Payroll Summary Report Generator
+export const generatePayrollSummary = (payrollRecords) => {
+  if (!Array.isArray(payrollRecords) || payrollRecords.length === 0) {
+    return {
+      totalEmployees: 0,
+      totalGrossPay: 0,
+      totalNetPay: 0,
+      totalNASSITEmployee: 0,
+      totalNASSITEmployer: 0,
+      totalPAYE: 0,
+      totalDeductions: 0,
+      totalEmployerCost: 0
+    };
+  }
+  
+  return {
+    totalEmployees: payrollRecords.length,
+    totalGrossPay: Math.round(payrollRecords.reduce((sum, p) => sum + safeNum(p.gross_pay), 0)),
+    totalNetPay: Math.round(payrollRecords.reduce((sum, p) => sum + safeNum(p.net_pay), 0)),
+    totalNASSITEmployee: Math.round(payrollRecords.reduce((sum, p) => sum + safeNum(p.nassit_employee), 0)),
+    totalNASSITEmployer: Math.round(payrollRecords.reduce((sum, p) => sum + safeNum(p.nassit_employer), 0)),
+    totalPAYE: Math.round(payrollRecords.reduce((sum, p) => sum + safeNum(p.paye_tax), 0)),
+    totalDeductions: Math.round(payrollRecords.reduce((sum, p) => sum + safeNum(p.total_deductions), 0)),
+    totalEmployerCost: Math.round(payrollRecords.reduce((sum, p) => sum + safeNum(p.employer_cost), 0)),
+    avgGrossPay: Math.round(payrollRecords.reduce((sum, p) => sum + safeNum(p.gross_pay), 0) / payrollRecords.length),
+    avgNetPay: Math.round(payrollRecords.reduce((sum, p) => sum + safeNum(p.net_pay), 0) / payrollRecords.length)
+  };
+};
