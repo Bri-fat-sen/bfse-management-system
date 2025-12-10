@@ -363,6 +363,10 @@ Deno.serve(async (req) => {
           email: supplier.email,
           name: supplier.name
         }],
+        reply_to: {
+          email: org?.email || 'noreply@brifatsensystems.com',
+          name: org?.name || 'Purchase Order System'
+        },
         subject: `Purchase Order #${po.po_number} from ${org?.name || 'Your Company'}`,
         html: htmlContent,
         attachments: [{
