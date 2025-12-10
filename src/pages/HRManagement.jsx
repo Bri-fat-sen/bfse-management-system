@@ -252,82 +252,82 @@ export default function HRManagement() {
       </PageHeader>
 
       {/* Quick Stats */}
-      <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-2 sm:gap-4">
         <Card className="border-l-4 border-l-[#1EB053]">
-          <CardContent className="p-4">
+          <CardContent className="p-3 sm:p-4">
             <div className="flex items-center justify-between mb-2">
-              <Users className="w-8 h-8 text-[#1EB053]" />
-              <Badge className="bg-[#1EB053]/10 text-[#1EB053]">Active</Badge>
+              <Users className="w-6 h-6 sm:w-8 sm:h-8 text-[#1EB053]" />
+              <Badge className="bg-[#1EB053]/10 text-[#1EB053] text-[10px] sm:text-xs">Active</Badge>
             </div>
-            <p className="text-2xl font-bold">{hrMetrics.activeEmployees}</p>
-            <p className="text-xs text-gray-500">Active Employees</p>
+            <p className="text-xl sm:text-2xl font-bold">{hrMetrics.activeEmployees}</p>
+            <p className="text-[10px] sm:text-xs text-gray-500">Active Employees</p>
           </CardContent>
         </Card>
 
         <Card className="border-l-4 border-l-[#0072C6]">
-          <CardContent className="p-4">
+          <CardContent className="p-3 sm:p-4">
             <div className="flex items-center justify-between mb-2">
-              <Clock className="w-8 h-8 text-[#0072C6]" />
-              <Badge className="bg-[#0072C6]/10 text-[#0072C6]">{hrMetrics.attendanceRate}%</Badge>
+              <Clock className="w-6 h-6 sm:w-8 sm:h-8 text-[#0072C6]" />
+              <Badge className="bg-[#0072C6]/10 text-[#0072C6] text-[10px] sm:text-xs">{hrMetrics.attendanceRate}%</Badge>
             </div>
-            <p className="text-2xl font-bold">{hrMetrics.todayAttendance}</p>
-            <p className="text-xs text-gray-500">Present Today</p>
+            <p className="text-xl sm:text-2xl font-bold">{hrMetrics.todayAttendance}</p>
+            <p className="text-[10px] sm:text-xs text-gray-500">Present Today</p>
           </CardContent>
         </Card>
 
         <Card className="border-l-4 border-l-amber-500">
-          <CardContent className="p-4">
+          <CardContent className="p-3 sm:p-4">
             <div className="flex items-center justify-between mb-2">
-              <Calendar className="w-8 h-8 text-amber-500" />
-              <Badge className="bg-amber-100 text-amber-700">{hrMetrics.pendingLeaves}</Badge>
+              <Calendar className="w-6 h-6 sm:w-8 sm:h-8 text-amber-500" />
+              <Badge className="bg-amber-100 text-amber-700 text-[10px] sm:text-xs">{hrMetrics.pendingLeaves}</Badge>
             </div>
-            <p className="text-2xl font-bold">{leaveRequests.length}</p>
-            <p className="text-xs text-gray-500">Leave Requests</p>
+            <p className="text-xl sm:text-2xl font-bold">{leaveRequests.length}</p>
+            <p className="text-[10px] sm:text-xs text-gray-500">Leave Requests</p>
           </CardContent>
         </Card>
 
         <Card className="border-l-4 border-l-purple-500">
-          <CardContent className="p-4">
+          <CardContent className="p-3 sm:p-4">
             <div className="flex items-center justify-between mb-2">
-              <DollarSign className="w-8 h-8 text-purple-500" />
-              <Badge className="bg-purple-100 text-purple-700">{hrMetrics.pendingPayrolls}</Badge>
+              <DollarSign className="w-6 h-6 sm:w-8 sm:h-8 text-purple-500" />
+              <Badge className="bg-purple-100 text-purple-700 text-[10px] sm:text-xs">{hrMetrics.pendingPayrolls}</Badge>
             </div>
-            <p className="text-2xl font-bold">{payrolls.length}</p>
-            <p className="text-xs text-gray-500">Payroll Records</p>
+            <p className="text-xl sm:text-2xl font-bold">{payrolls.length}</p>
+            <p className="text-[10px] sm:text-xs text-gray-500">Payroll Records</p>
           </CardContent>
         </Card>
 
         <Card className="border-l-4 border-l-green-500">
-          <CardContent className="p-4">
+          <CardContent className="p-3 sm:p-4">
             <div className="flex items-center justify-between mb-2">
-              <TrendingUp className="w-8 h-8 text-green-500" />
-              <Badge className="bg-green-100 text-green-700">Avg</Badge>
+              <TrendingUp className="w-6 h-6 sm:w-8 sm:h-8 text-green-500" />
+              <Badge className="bg-green-100 text-green-700 text-[10px] sm:text-xs">Avg</Badge>
             </div>
-            <p className="text-2xl font-bold">Le {(hrMetrics.avgSalary / 1000).toFixed(0)}k</p>
-            <p className="text-xs text-gray-500">Average Salary</p>
+            <p className="text-xl sm:text-2xl font-bold">Le {(hrMetrics.avgSalary / 1000).toFixed(0)}k</p>
+            <p className="text-[10px] sm:text-xs text-gray-500">Average Salary</p>
           </CardContent>
         </Card>
 
         <Card className="border-l-4 border-l-pink-500">
-          <CardContent className="p-4">
+          <CardContent className="p-3 sm:p-4">
             <div className="flex items-center justify-between mb-2">
-              <Award className="w-8 h-8 text-pink-500" />
-              <Badge className="bg-pink-100 text-pink-700">{hrMetrics.pendingReviews}</Badge>
+              <Award className="w-6 h-6 sm:w-8 sm:h-8 text-pink-500" />
+              <Badge className="bg-pink-100 text-pink-700 text-[10px] sm:text-xs">{hrMetrics.pendingReviews}</Badge>
             </div>
-            <p className="text-2xl font-bold">{performanceReviews.length}</p>
-            <p className="text-xs text-gray-500">Reviews</p>
+            <p className="text-xl sm:text-2xl font-bold">{performanceReviews.length}</p>
+            <p className="text-[10px] sm:text-xs text-gray-500">Reviews</p>
           </CardContent>
         </Card>
       </div>
 
       {/* Main Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="grid w-full grid-cols-2 md:grid-cols-5">
-          <TabsTrigger value="overview">Overview</TabsTrigger>
-          <TabsTrigger value="employees">Employees</TabsTrigger>
-          <TabsTrigger value="payroll">Payroll</TabsTrigger>
-          <TabsTrigger value="leaves">Leaves</TabsTrigger>
-          <TabsTrigger value="performance">Performance</TabsTrigger>
+        <TabsList className="grid w-full grid-cols-3 sm:grid-cols-5 h-auto gap-1">
+          <TabsTrigger value="overview" className="text-xs sm:text-sm">Overview</TabsTrigger>
+          <TabsTrigger value="employees" className="text-xs sm:text-sm">Employees</TabsTrigger>
+          <TabsTrigger value="payroll" className="text-xs sm:text-sm">Payroll</TabsTrigger>
+          <TabsTrigger value="leaves" className="text-xs sm:text-sm">Leaves</TabsTrigger>
+          <TabsTrigger value="performance" className="text-xs sm:text-sm">Performance</TabsTrigger>
         </TabsList>
 
         {/* Overview Tab */}
@@ -465,17 +465,18 @@ export default function HRManagement() {
         <TabsContent value="employees" className="space-y-4">
           {/* Filters */}
           <Card>
-            <CardContent className="p-4">
+            <CardContent className="p-3 sm:p-4">
               {selectedEmployeeIds.length > 0 && (
-                <div className="mb-4 flex items-center justify-between p-3 bg-blue-50 border border-blue-200 rounded-lg">
-                  <span className="text-sm font-medium text-blue-900">
+                <div className="mb-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                  <span className="text-xs sm:text-sm font-medium text-blue-900">
                     {selectedEmployeeIds.length} employee(s) selected
                   </span>
-                  <div className="flex gap-2">
+                  <div className="flex gap-2 w-full sm:w-auto">
                     <Button
                       variant="outline"
                       size="sm"
                       onClick={() => setSelectedEmployeeIds([])}
+                      className="flex-1 sm:flex-none"
                     >
                       Clear
                     </Button>
@@ -483,14 +484,15 @@ export default function HRManagement() {
                       variant="destructive"
                       size="sm"
                       onClick={() => setShowBulkDeleteDialog(true)}
+                      className="flex-1 sm:flex-none"
                     >
                       <Trash2 className="w-4 h-4 mr-2" />
-                      Delete Selected
+                      Delete
                     </Button>
                   </div>
                 </div>
               )}
-              <div className="flex flex-col md:flex-row gap-4">
+              <div className="flex flex-col gap-3">
                 <div className="relative flex-1">
                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
                   <Input
@@ -500,41 +502,43 @@ export default function HRManagement() {
                     className="pl-10"
                   />
                 </div>
-                <Select value={roleFilter} onValueChange={setRoleFilter}>
-                  <SelectTrigger className="w-48">
-                    <SelectValue placeholder="Filter by role" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All Roles</SelectItem>
-                    <SelectItem value="super_admin">Super Admin</SelectItem>
-                    <SelectItem value="org_admin">Org Admin</SelectItem>
-                    <SelectItem value="warehouse_manager">Warehouse Manager</SelectItem>
-                    <SelectItem value="driver">Driver</SelectItem>
-                    <SelectItem value="accountant">Accountant</SelectItem>
-                  </SelectContent>
-                </Select>
-                <Select value={statusFilter} onValueChange={setStatusFilter}>
-                  <SelectTrigger className="w-48">
-                    <SelectValue placeholder="Filter by status" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All Status</SelectItem>
-                    <SelectItem value="active">Active</SelectItem>
-                    <SelectItem value="inactive">Inactive</SelectItem>
-                    <SelectItem value="suspended">Suspended</SelectItem>
-                  </SelectContent>
-                </Select>
+                <div className="grid grid-cols-2 gap-3">
+                  <Select value={roleFilter} onValueChange={setRoleFilter}>
+                    <SelectTrigger className="w-full">
+                      <SelectValue placeholder="Filter by role" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All Roles</SelectItem>
+                      <SelectItem value="super_admin">Super Admin</SelectItem>
+                      <SelectItem value="org_admin">Org Admin</SelectItem>
+                      <SelectItem value="warehouse_manager">Warehouse Manager</SelectItem>
+                      <SelectItem value="driver">Driver</SelectItem>
+                      <SelectItem value="accountant">Accountant</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <Select value={statusFilter} onValueChange={setStatusFilter}>
+                    <SelectTrigger className="w-full">
+                      <SelectValue placeholder="Filter by status" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All Status</SelectItem>
+                      <SelectItem value="active">Active</SelectItem>
+                      <SelectItem value="inactive">Inactive</SelectItem>
+                      <SelectItem value="suspended">Suspended</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
             </CardContent>
           </Card>
 
           {/* Employee Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
             {filteredEmployees.map(emp => (
               <Card key={emp.id} className={`hover:shadow-lg transition-shadow ${selectedEmployeeIds.includes(emp.id) ? 'ring-2 ring-blue-500' : ''}`}>
-                <CardContent className="p-4">
-                  <div className="flex items-start justify-between mb-4">
-                    <div className="flex items-center gap-3">
+                <CardContent className="p-3 sm:p-4">
+                  <div className="flex items-start justify-between mb-3 sm:mb-4">
+                    <div className="flex items-center gap-2 sm:gap-3 flex-1 min-w-0">
                       <input
                         type="checkbox"
                         checked={selectedEmployeeIds.includes(emp.id)}
@@ -544,18 +548,18 @@ export default function HRManagement() {
                             prev.includes(emp.id) ? prev.filter(id => id !== emp.id) : [...prev, emp.id]
                           );
                         }}
-                        className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                        className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500 flex-shrink-0"
                         disabled={emp.id === currentEmployee?.id}
                       />
-                      <Avatar className="w-12 h-12">
+                      <Avatar className="w-10 h-10 sm:w-12 sm:h-12 flex-shrink-0">
                         <AvatarImage src={emp.profile_photo} />
-                        <AvatarFallback className="bg-gradient-to-br from-[#1EB053] to-[#0072C6] text-white">
+                        <AvatarFallback className="bg-gradient-to-br from-[#1EB053] to-[#0072C6] text-white text-sm">
                           {emp.full_name?.charAt(0)}
                         </AvatarFallback>
                       </Avatar>
-                      <div>
-                        <h3 className="font-semibold">{emp.full_name}</h3>
-                        <p className="text-xs text-gray-500">{emp.employee_code}</p>
+                      <div className="min-w-0 flex-1">
+                        <h3 className="font-semibold text-sm sm:text-base truncate">{emp.full_name}</h3>
+                        <p className="text-[10px] sm:text-xs text-gray-500 truncate">{emp.employee_code}</p>
                       </div>
                     </div>
                     <DropdownMenu>
@@ -603,29 +607,29 @@ export default function HRManagement() {
                     </DropdownMenu>
                   </div>
 
-                  <div className="space-y-2 text-sm">
+                  <div className="space-y-2 text-xs sm:text-sm">
                     <div className="flex items-center gap-2 text-gray-600">
-                      <Building2 className="w-4 h-4" />
+                      <Building2 className="w-3 h-3 sm:w-4 sm:h-4 flex-shrink-0" />
                       <span className="truncate">{emp.department || 'No department'}</span>
                     </div>
                     <div className="flex items-center gap-2 text-gray-600">
-                      <Briefcase className="w-4 h-4" />
+                      <Briefcase className="w-3 h-3 sm:w-4 sm:h-4 flex-shrink-0" />
                       <span className="truncate">{emp.position || 'No position'}</span>
                     </div>
                     <div className="flex items-center gap-2 text-gray-600">
-                      <Mail className="w-4 h-4" />
-                      <span className="truncate">{emp.email || 'No email'}</span>
+                      <Mail className="w-3 h-3 sm:w-4 sm:h-4 flex-shrink-0" />
+                      <span className="truncate text-[10px] sm:text-xs">{emp.email || 'No email'}</span>
                     </div>
                   </div>
 
-                  <div className="mt-4 pt-4 border-t flex items-center justify-between">
+                  <div className="mt-3 sm:mt-4 pt-3 sm:pt-4 border-t flex items-center justify-between gap-2">
                     <Badge variant={
                       emp.status === 'active' ? 'default' :
                       emp.status === 'inactive' ? 'secondary' : 'destructive'
-                    }>
+                    } className="text-[10px] sm:text-xs">
                       {emp.status}
                     </Badge>
-                    <Badge variant="outline" className="text-xs">
+                    <Badge variant="outline" className="text-[10px] sm:text-xs truncate max-w-[120px]">
                       {emp.role?.replace(/_/g, ' ')}
                     </Badge>
                   </div>
@@ -647,52 +651,52 @@ export default function HRManagement() {
             </CardHeader>
             <CardContent>
               {payrolls.length === 0 ? (
-                <div className="text-center py-12">
-                  <DollarSign className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-                  <p className="text-gray-500">No payroll records yet</p>
-                  <Button 
-                    onClick={() => setShowBulkPayrollDialog(true)}
-                    className="mt-4 bg-[#1EB053]"
-                  >
-                    Process Payroll
-                  </Button>
-                </div>
+              <div className="text-center py-8 sm:py-12">
+                <DollarSign className="w-12 h-12 sm:w-16 sm:h-16 text-gray-300 mx-auto mb-4" />
+                <p className="text-sm sm:text-base text-gray-500">No payroll records yet</p>
+                <Button 
+                  onClick={() => setShowBulkPayrollDialog(true)}
+                  className="mt-4 bg-[#1EB053] w-full sm:w-auto"
+                >
+                  Process Payroll
+                </Button>
+              </div>
               ) : (
-                <div className="space-y-3">
-                  {payrolls.slice(0, 20).map(payroll => (
-                    <div key={payroll.id} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
-                      <div className="flex items-center gap-4">
-                        <Avatar className="w-12 h-12">
-                          <AvatarFallback className="bg-gradient-to-br from-[#1EB053] to-[#0072C6] text-white">
-                            {payroll.employee_name?.charAt(0)}
-                          </AvatarFallback>
-                        </Avatar>
-                        <div>
-                          <p className="font-medium">{payroll.employee_name}</p>
-                          <p className="text-sm text-gray-500">
-                            {format(new Date(payroll.period_start), 'MMM d')} - {format(new Date(payroll.period_end), 'MMM d, yyyy')}
-                          </p>
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-6">
-                        <div className="text-right">
-                          <p className="text-sm text-gray-500">Gross</p>
-                          <p className="font-medium">Le {payroll.gross_pay?.toLocaleString()}</p>
-                        </div>
-                        <div className="text-right">
-                          <p className="text-sm text-gray-500">Net Pay</p>
-                          <p className="font-bold text-[#1EB053]">Le {payroll.net_pay?.toLocaleString()}</p>
-                        </div>
-                        <Badge variant={
-                          payroll.status === 'paid' ? 'default' :
-                          payroll.status === 'approved' ? 'secondary' : 'outline'
-                        }>
-                          {payroll.status?.replace('_', ' ')}
-                        </Badge>
+              <div className="space-y-3">
+                {payrolls.slice(0, 20).map(payroll => (
+                  <div key={payroll.id} className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 p-3 sm:p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
+                    <div className="flex items-center gap-3 sm:gap-4 w-full sm:w-auto">
+                      <Avatar className="w-10 h-10 sm:w-12 sm:h-12 flex-shrink-0">
+                        <AvatarFallback className="bg-gradient-to-br from-[#1EB053] to-[#0072C6] text-white text-sm">
+                          {payroll.employee_name?.charAt(0)}
+                        </AvatarFallback>
+                      </Avatar>
+                      <div className="min-w-0 flex-1">
+                        <p className="font-medium text-sm sm:text-base truncate">{payroll.employee_name}</p>
+                        <p className="text-xs sm:text-sm text-gray-500">
+                          {format(new Date(payroll.period_start), 'MMM d')} - {format(new Date(payroll.period_end), 'MMM d, yyyy')}
+                        </p>
                       </div>
                     </div>
-                  ))}
-                </div>
+                    <div className="flex items-center gap-3 sm:gap-6 w-full sm:w-auto justify-between sm:justify-end">
+                      <div className="text-left sm:text-right">
+                        <p className="text-xs text-gray-500">Gross</p>
+                        <p className="font-medium text-sm">Le {payroll.gross_pay?.toLocaleString()}</p>
+                      </div>
+                      <div className="text-left sm:text-right">
+                        <p className="text-xs text-gray-500">Net Pay</p>
+                        <p className="font-bold text-sm sm:text-base text-[#1EB053]">Le {payroll.net_pay?.toLocaleString()}</p>
+                      </div>
+                      <Badge variant={
+                        payroll.status === 'paid' ? 'default' :
+                        payroll.status === 'approved' ? 'secondary' : 'outline'
+                      } className="text-[10px] sm:text-xs">
+                        {payroll.status?.replace('_', ' ')}
+                      </Badge>
+                    </div>
+                  </div>
+                ))}
+              </div>
               )}
             </CardContent>
           </Card>
