@@ -1,4 +1,5 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.4';
+import { jsPDF } from 'npm:jspdf@2.5.1';
 
 Deno.serve(async (req) => {
     try {
@@ -148,7 +149,13 @@ Deno.serve(async (req) => {
                     name: organisation?.name || 'Sales Receipt'
                 },
                 subject: `Your Receipt from ${organisation?.name || 'BRI-FAT-SEN ENTERPRISE'} - #${sale.sale_number || sale.id}`,
-                html: emailBody
+                html: emailBody,
+                attachments: [{
+                    content: pdfBase64,
+                    filename: `Receipt-${sale.sale_number || sale.id}.pdf`,
+                    type: 'application/pdf',
+                    disposition: 'attachment'
+                }]
             })
         });
 
