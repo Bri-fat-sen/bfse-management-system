@@ -16,9 +16,6 @@ import Analytics from './pages/Analytics';
 import Locations from './pages/Locations';
 import CRM from './pages/CRM';
 import WorkSchedules from './pages/WorkSchedules';
-import Landing from './pages/Landing';
-import Privacy from './pages/Privacy';
-import Terms from './pages/Terms';
 import StockAudit from './pages/StockAudit';
 import ResetData from './pages/ResetData';
 import EmployeeSelfService from './pages/EmployeeSelfService';
@@ -33,7 +30,6 @@ import ConstructionExpense from './pages/ConstructionExpense';
 import ExpenseManagement from './pages/ExpenseManagement';
 import UploadedDocuments from './pages/UploadedDocuments';
 import HRManagement from './pages/HRManagement';
-import Welcome from './pages/Welcome';
 import __Layout from './Layout.jsx';
 
 
@@ -56,9 +52,6 @@ export const PAGES = {
     "Locations": Locations,
     "CRM": CRM,
     "WorkSchedules": WorkSchedules,
-    "Landing": Landing,
-    "Privacy": Privacy,
-    "Terms": Terms,
     "StockAudit": StockAudit,
     "ResetData": ResetData,
     "EmployeeSelfService": EmployeeSelfService,
@@ -73,7 +66,6 @@ export const PAGES = {
     "ExpenseManagement": ExpenseManagement,
     "UploadedDocuments": UploadedDocuments,
     "HRManagement": HRManagement,
-    "Welcome": Welcome,
 }
 
 export const pagesConfig = {
