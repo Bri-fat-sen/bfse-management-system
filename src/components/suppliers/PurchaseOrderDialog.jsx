@@ -19,7 +19,7 @@ import {
 import { useToast } from "@/components/ui/Toast";
 import { 
   Plus, Trash2, Package, Calculator, X, Check, Loader2,
-  Building2, Calendar, Warehouse, CreditCard, Truck, FileText
+  Building2, Calendar, Warehouse, CreditCard, Truck, FileText, Repeat, Shield
 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { format, addDays } from "date-fns";
@@ -43,9 +43,23 @@ export default function PurchaseOrderDialog({
   const [taxAmount, setTaxAmount] = useState(purchaseOrder?.tax_amount || 0);
   const [paymentMethod, setPaymentMethod] = useState(purchaseOrder?.payment_method || "bank_transfer");
   const [showSummary, setShowSummary] = useState(false);
+  const [isRecurring, setIsRecurring] = useState(purchaseOrder?.is_recurring || false);
+  const [recurrenceData, setRecurrenceData] = useState(purchaseOrder?.recurrence || {
+    frequency: 'monthly',
+    next_order_date: '',
+    end_date: '',
+    auto_approve: false,
+    quantity_adjustment: { enabled: false, adjustment_percentage: 0 }
+  });
 
   const primaryColor = organisation?.primary_color || '#1EB053';
   const secondaryColor = organisation?.secondary_color || '#0072C6';
+
+  const { data: approvalRules = [] } = useQuery({
+    queryKey: ['approvalRules', orgId],
+    queryFn: () => base44.entities.ApprovalWorkflowRule.filter({ organisation_id: orgId, is_active: true }, '-priority'),
+    enabled: !!orgId,
+  });
 
   const { data: supplierProducts = [] } = useQuery({
     queryKey: ['supplierProducts', selectedSupplier],
@@ -78,6 +92,30 @@ export default function PurchaseOrderDialog({
       setPaymentMethod("cash");
     }
   }, [supplier]);
+
+  const determineApprovalWorkflow = (totalAmount) => {
+    const matchingRule = approvalRules.find(rule => {
+      if (rule.trigger_type === 'value_based' && rule.conditions) {
+        const min = rule.conditions.min_amount || 0;
+        const max = rule.conditions.max_amount || Infinity;
+        return totalAmount >= min && totalAmount <= max;
+      }
+      return false;
+    });
+
+    if (matchingRule) {
+      return {
+        required_approvers: matchingRule.approval_levels.map(level => ({
+          level: level.level,
+          role: level.required_role,
+          status: 'pending'
+        })),
+        current_level: 1,
+        workflow_type: 'value_based'
+      };
+    }
+    return null;
+  };
 
   const createMutation = useMutation({
     mutationFn: (data) => base44.entities.PurchaseOrder.create(data),
@@ -152,6 +190,9 @@ export default function PurchaseOrderDialog({
     
     const poNumber = purchaseOrder?.po_number || `PO-${format(new Date(), 'yyyyMMdd')}-${Math.floor(1000 + Math.random() * 9000)}`;
     
+    const approvalWorkflow = determineApprovalWorkflow(total);
+    const initialStatus = approvalWorkflow ? 'pending_approval' : 'draft';
+    
     const data = {
       organisation_id: orgId,
       po_number: poNumber,
@@ -161,17 +202,24 @@ export default function PurchaseOrderDialog({
       warehouse_name: warehouse?.name || 'Main',
       order_date: formData.get('order_date'),
       expected_delivery_date: formData.get('expected_delivery_date'),
-      items: items.filter(item => item.is_inventory_item ? item.product_id : item.product_name),
+      items: items.filter(item => item.is_inventory_item ? item.product_id : item.product_name).map(item => ({
+        ...item,
+        delivery_history: []
+      })),
       subtotal: subtotal,
       tax_amount: parseFloat(taxAmount) || 0,
       shipping_cost: parseFloat(shippingCost) || 0,
       total_amount: total,
-      status: purchaseOrder?.status || 'draft',
+      status: purchaseOrder?.status || initialStatus,
       payment_status: purchaseOrder?.payment_status || 'unpaid',
       payment_method: paymentMethod,
       created_by: currentEmployee?.id,
       created_by_name: currentEmployee?.full_name,
       notes: formData.get('notes'),
+      approval_workflow: approvalWorkflow,
+      is_recurring: isRecurring,
+      recurrence: isRecurring ? recurrenceData : null,
+      discrepancies: []
     };
 
     if (purchaseOrder) {
@@ -389,6 +437,44 @@ export default function PurchaseOrderDialog({
                   </SelectContent>
                 </Select>
               </div>
+            </div>
+
+            <div className="p-3 bg-purple-50 rounded-lg border border-purple-200">
+              <div className="flex items-center justify-between mb-2">
+                <div className="flex items-center gap-2">
+                  <Repeat className="w-4 h-4 text-purple-600" />
+                  <Label className="text-sm font-medium">Recurring Order</Label>
+                </div>
+                <input type="checkbox" checked={isRecurring} onChange={(e) => setIsRecurring(e.target.checked)} className="rounded" />
+              </div>
+              {isRecurring && (
+                <div className="space-y-2 mt-2">
+                  <div className="grid grid-cols-2 gap-2">
+                    <div>
+                      <Label className="text-xs">Frequency</Label>
+                      <Select value={recurrenceData.frequency} onValueChange={(val) => setRecurrenceData({...recurrenceData, frequency: val})}>
+                        <SelectTrigger className="mt-1 text-xs h-8">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="weekly">Weekly</SelectItem>
+                          <SelectItem value="bi_weekly">Bi-Weekly</SelectItem>
+                          <SelectItem value="monthly">Monthly</SelectItem>
+                          <SelectItem value="quarterly">Quarterly</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div>
+                      <Label className="text-xs">End Date</Label>
+                      <Input type="date" value={recurrenceData.end_date} onChange={(e) => setRecurrenceData({...recurrenceData, end_date: e.target.value})} className="mt-1 text-xs h-8" />
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2 text-xs">
+                    <input type="checkbox" checked={recurrenceData.auto_approve} onChange={(e) => setRecurrenceData({...recurrenceData, auto_approve: e.target.checked})} />
+                    <span>Auto-approve recurring orders</span>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
 
