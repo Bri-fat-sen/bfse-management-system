@@ -61,6 +61,7 @@ const generateFormHTML = (formType, org) => {
   const orgName = org?.name || 'Organisation Name';
   const orgPhone = org?.phone || '';
   const orgEmail = org?.email || '';
+  const formName = FORM_TEMPLATES.find(f => f.id === formType)?.name || 'Form';
   
   // Use the unified PDF styles
   const unifiedStyles = getUnifiedPDFStyles(org, 'report');
@@ -70,49 +71,91 @@ const generateFormHTML = (formType, org) => {
       ${unifiedStyles}
       
       @page {
-        margin: 0.5in 0.5in;
+        margin: 0.75in 0.5in;
         size: A4;
-        @top-left {
+      }
+      
+      @media print {
+        @page {
+          margin-top: 0.75in;
+          margin-bottom: 0.75in;
+        }
+        
+        body::before {
           content: '';
+          position: fixed;
+          top: 0.25in;
+          left: 0;
+          right: 0;
+          height: 6px;
           background: linear-gradient(to right, #1EB053 33.33%, #FFFFFF 33.33%, #FFFFFF 66.66%, #0072C6 66.66%);
-          height: 8px;
-          width: 100%;
+          z-index: 9999;
         }
-        @top-center {
-          content: '${FORM_TEMPLATES.find(f => f.id === formType)?.name || 'Form'}';
-          font-family: -apple-system, system-ui, sans-serif;
-          font-size: 10px;
-          color: #0F1F3C;
-          font-weight: 600;
-          padding-top: 12px;
-        }
-        @top-right {
-          content: '${orgName}';
-          font-family: -apple-system, system-ui, sans-serif;
-          font-size: 10px;
-          color: #64748b;
-          padding-top: 12px;
-        }
-        @bottom-left {
-          content: 'Page ' counter(page) ' of ' counter(pages);
-          font-family: -apple-system, system-ui, sans-serif;
-          font-size: 10px;
-          color: #64748b;
-          padding-bottom: 12px;
-        }
-        @bottom-center {
-          content: 'Printed: ${today}';
-          font-family: -apple-system, system-ui, sans-serif;
-          font-size: 10px;
-          color: #64748b;
-          padding-bottom: 12px;
-        }
-        @bottom-right {
+        
+        body::after {
           content: '';
+          position: fixed;
+          bottom: 0.25in;
+          left: 0;
+          right: 0;
+          height: 6px;
           background: linear-gradient(to right, #1EB053 33.33%, #FFFFFF 33.33%, #FFFFFF 66.66%, #0072C6 66.66%);
-          height: 8px;
-          width: 100%;
+          z-index: 9999;
         }
+        
+        .print-header {
+          display: block !important;
+          position: fixed;
+          top: 0.35in;
+          left: 0.5in;
+          right: 0.5in;
+          padding: 12px 0;
+          border-bottom: 1px solid #e5e7eb;
+        }
+        
+        .print-footer {
+          display: block !important;
+          position: fixed;
+          bottom: 0.35in;
+          left: 0.5in;
+          right: 0.5in;
+          padding: 12px 0;
+          border-top: 1px solid #e5e7eb;
+        }
+      }
+      
+      .print-header {
+        display: none;
+      }
+      
+      .print-footer {
+        display: none;
+      }
+      
+      .print-header-content {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        font-size: 10px;
+      }
+      
+      .print-header-title {
+        font-weight: 700;
+        color: #0F1F3C;
+        font-size: 11px;
+      }
+      
+      .print-header-org {
+        color: #64748b;
+        font-weight: 500;
+      }
+      
+      .print-footer-content {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        font-size: 10px;
+        color: #64748b;
       }
       
       .instructions {
@@ -1239,13 +1282,36 @@ const generateFormHTML = (formType, org) => {
     <!DOCTYPE html>
     <html>
     <head>
-      <title>${FORM_TEMPLATES.find(f => f.id === formType)?.name || 'Form'}</title>
+      <title>${formName}</title>
       ${commonStyles}
     </head>
     <body>
+      <div class="print-header">
+        <div class="print-header-content">
+          <span class="print-header-title">${formName}</span>
+          <span class="print-header-org">${orgName}</span>
+        </div>
+      </div>
+      
+      <div class="print-footer">
+        <div class="print-footer-content">
+          <span>Page <span class="page-number"></span></span>
+          <span>Printed: ${today}</span>
+        </div>
+      </div>
+      
       <div class="document">
         ${forms[formType] || ''}
       </div>
+      
+      <script>
+        window.onload = function() {
+          const pageNumbers = document.querySelectorAll('.page-number');
+          pageNumbers.forEach(el => {
+            el.textContent = '1';
+          });
+        };
+      </script>
     </body>
     </html>
   `;
