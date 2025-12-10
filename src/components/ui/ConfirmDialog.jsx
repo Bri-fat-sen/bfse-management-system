@@ -119,9 +119,9 @@ export default function ConfirmDialog({
         </div>
 
         {/* Sierra Leone Flag Stripe - Bottom */}
-        <div className="h-1.5 flex">
+        <div className="h-2 flex">
           <div className="flex-1 bg-[#1EB053]" />
-          <div className="flex-1 bg-white border-y border-gray-100" />
+          <div className="flex-1 bg-white" />
           <div className="flex-1 bg-[#0072C6]" />
         </div>
       </AlertDialogContent>
