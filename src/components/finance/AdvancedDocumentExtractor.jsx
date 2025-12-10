@@ -12,16 +12,16 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import {
   Upload, Loader2, FileUp, CheckCircle, Sparkles, AlertCircle, X, RefreshCw,
-  FileText, Table as TableIcon, ChevronRight, Trash2, Eye, AlertTriangle
+  FileText, Table as TableIcon, ChevronRight, Trash2, Eye, AlertTriangle, Cloud
 } from "lucide-react";
 import { useToast } from "@/components/ui/Toast";
+import GoogleDrivePicker from "./GoogleDrivePicker";
 
 const RECORD_TYPES = [
   { value: "expense", label: "Expenses", icon: "💰", color: "red" },
   { value: "revenue", label: "Revenue/Sales", icon: "📈", color: "green" },
   { value: "production", label: "Production Batches", icon: "🏭", color: "blue" },
   { value: "inventory", label: "Stock/Inventory", icon: "📦", color: "purple" },
-  { value: "stock_receipt", label: "Stock Receipt/Delivery", icon: "📦", color: "teal" },
   { value: "payroll", label: "Payroll Items", icon: "👥", color: "amber" },
 ];
 
@@ -77,20 +77,38 @@ export default function AdvancedDocumentExtractor({
   const [fileQueue, setFileQueue] = useState([]);
   const [processingIndex, setProcessingIndex] = useState(null);
   const [batchResults, setBatchResults] = useState([]);
+  const [showGoogleDrivePicker, setShowGoogleDrivePicker] = useState(false);
 
   const analyzeDocument = async (file_url) => {
     try {
       console.log("Starting document analysis...");
       
       const analysisResult = await base44.integrations.Core.InvokeLLM({
-        prompt: `Analyze this business document comprehensively.
+        prompt: `Analyze this business document comprehensively and determine its type.
 
 **Document Analysis:**
-1. Type Detection: Identify if invoice, receipt, expense report, sales report, inventory list, payroll sheet, etc.
-2. Record Type: Determine if this should be: expense, revenue, production, inventory, or payroll
+1. Type Detection: Identify the document type
+   - Expense/Invoice: Bills, invoices, receipts for purchases
+   - Revenue/Sales: Sales receipts, income records
+   - Production Batch: Production logs, manufacturing records, batch reports (often has batch numbers, production dates, quantities produced)
+   - Inventory/Stock Receipt: Stock delivery notes, goods received notes, inventory lists (often has product names, SKUs, quantities received)
+   - Payroll: Salary sheets, payroll records
+
+2. Record Type Classification: Based on the content, classify as one of:
+   - "expense" - for bills, invoices, expense reports
+   - "revenue" - for sales receipts, income records  
+   - "production" - for production batches, manufacturing logs (look for: batch numbers, production dates, quantities produced, raw materials)
+   - "inventory" or "stock_receipt" - for stock deliveries, goods received notes (look for: product lists, quantities received, delivery dates, suppliers)
+   - "payroll" - for salary sheets
+
 3. Structure: List ALL column headers found, count approximate rows, detect tables
 4. Metadata: Extract date, document number, issuer/vendor name, total amount, currency
 5. Quality: Rate readability (1-10), note any OCR challenges
+
+**Detection Hints:**
+- Production documents often contain: "batch", "produced", "manufacturing date", "raw materials", "output"
+- Stock receipt documents often contain: "received", "delivered", "goods", "delivery note", "GRN", "PO"
+- Expense documents often contain: "invoice", "bill", "payment", "expense"
 
 Be thorough and accurate.`,
         file_urls: [file_url],
@@ -100,7 +118,7 @@ Be thorough and accurate.`,
             document_type: { type: "string" },
             record_type: { 
               type: "string", 
-              enum: ["expense", "revenue", "production", "inventory", "payroll"],
+              enum: ["expense", "revenue", "production", "inventory", "stock_receipt", "payroll"],
             },
             confidence: { type: "number" },
             table_structure: {
@@ -250,6 +268,161 @@ Be thorough and accurate.`,
       await processFile(files[0]);
     } else {
       await startBatchProcessing(files);
+    }
+  };
+
+  const handleGoogleDriveFileSelected = async ({ file_url, fileName, mimeType }) => {
+    if (currencyMode === null) {
+      setPendingFile({ file_url, fileName, mimeType, isGoogleDrive: true });
+      setShowCurrencyDialog(true);
+      return;
+    }
+
+    await processGoogleDriveFile(file_url, fileName, mimeType);
+  };
+
+  const processGoogleDriveFile = async (file_url, fileName, mimeType) => {
+    setUploadLoading(true);
+    setShowCurrencyDialog(false);
+    setFileName(fileName);
+    setFileType(mimeType);
+    
+    try {
+      setFileUrl(file_url);
+      setUploadStage("analyzing");
+
+      toast.info("Analyzing document...", "AI is reading the document structure");
+      const analysis = await analyzeDocument(file_url);
+      
+      if (!analysis) {
+        throw new Error("No analysis result returned");
+      }
+      
+      setDocumentAnalysis(analysis);
+      setDetectedType(type === "auto" ? analysis.record_type : type);
+      setExtractedColumns(analysis.table_structure?.column_headers || []);
+      setDocumentMetadata(analysis.metadata);
+      setConfidenceScore(analysis.confidence || 0);
+
+      toast.info("Extracting data...", "Reading all rows from the document");
+      const rawExtraction = await extractDocumentData(file_url, analysis);
+
+      if (!rawExtraction?.rows) {
+        throw new Error("No rows returned from extraction");
+      }
+
+      const conversionFactor = currencyMode === 'sll' ? 1000 : 1;
+      const newCategories = new Set();
+
+      const fuzzyMatchCategory = (extractedCat) => {
+        const normalized = (extractedCat || '').toLowerCase().trim().replace(/\s+/g, '_');
+        const directMatch = dynamicCategories.find(cat => cat.value === normalized);
+        if (directMatch) return normalized;
+        const fuzzyMatch = dynamicCategories.find(cat => {
+          const catWords = cat.value.split('_');
+          const normWords = normalized.split('_');
+          return catWords.some(cw => normWords.includes(cw)) || 
+                 normWords.some(nw => catWords.includes(nw)) ||
+                 normalized.includes(cat.value) ||
+                 cat.value.includes(normalized);
+        });
+        if (fuzzyMatch) return fuzzyMatch.value;
+        return normalized || 'other';
+      };
+
+      const mappedData = (rawExtraction.rows || []).map((row, idx) => {
+        const estQty = parseFloat(row.estimated_quantity || row.quantity || 0);
+        const estUnitPrice = parseFloat(row.estimated_unit_price || row.unit_price || 0) / conversionFactor;
+        const estAmount = parseFloat(row.estimated_amount || 0) / conversionFactor || (estQty * estUnitPrice);
+
+        const actQty = parseFloat(row.actual_quantity || row.quantity || 0);
+        const actUnitPrice = parseFloat(row.actual_unit_price || row.unit_price || 0) / conversionFactor;
+        const actAmount = parseFloat(row.actual_amount || row.amount || 0) / conversionFactor || (actQty * actUnitPrice);
+
+        const finalAmount = actAmount > 0 ? actAmount : estAmount > 0 ? estAmount : parseFloat(row.amount || 0) / conversionFactor;
+
+        const matchedCategory = fuzzyMatchCategory(row.category);
+        const categoryExists = dynamicCategories.some(cat => cat.value === matchedCategory);
+
+        if (!categoryExists && matchedCategory !== 'other') {
+          newCategories.add(matchedCategory);
+        }
+
+        const hasDescription = row.description && row.description.length > 3;
+        const hasValidAmount = finalAmount > 0;
+        const hasDate = !!row.date;
+        const hasCategory = !!row.category;
+        const hasQuantityDetails = (row.quantity || row.actual_quantity || row.estimated_quantity) && 
+                                  (row.unit_price || row.actual_unit_price || row.estimated_unit_price);
+
+        let confidence = row.confidence || 50;
+        if (!row.confidence) {
+          confidence = 
+            (hasDescription ? 30 : 0) +
+            (hasValidAmount ? 30 : 0) +
+            (hasDate ? 15 : 0) +
+            (hasCategory ? 15 : 0) +
+            (hasQuantityDetails ? 10 : 0);
+        }
+
+        return {
+          id: `row-${idx}`,
+          selected: confidence >= 50,
+          row_number: idx + 1,
+          description: row.description || row.notes || '',
+          quantity: actQty || estQty || 0,
+          unit: row.unit || '',
+          unit_price: actUnitPrice || estUnitPrice || 0,
+          estimated_quantity: estQty,
+          estimated_unit_price: estUnitPrice,
+          estimated_amount: estAmount,
+          actual_quantity: actQty,
+          actual_unit_price: actUnitPrice,
+          amount: finalAmount,
+          category: matchedCategory,
+          date: row.date || analysis.metadata?.date || format(new Date(), 'yyyy-MM-dd'),
+          vendor: row.vendor || analysis.metadata?.issuer_name || '',
+          confidence: Math.round(confidence),
+          raw_data: row
+        };
+      }).filter(item => item.description && item.amount > 0);
+
+      if (newCategories.size > 0) {
+        const newCategoryOptions = Array.from(newCategories).map(cat => ({
+          value: cat,
+          label: cat.split('_').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ')
+        }));
+        setDynamicCategories(prev => [...prev, ...newCategoryOptions]);
+      }
+
+      if (mappedData.length === 0) {
+        toast.warning("No data found", "The document appears empty or unreadable. Try a clearer image.");
+        setUploadStage("upload");
+        return;
+      }
+
+      setExtractedData(mappedData);
+      setValidationResults({
+        accuracy_score: analysis.quality_assessment?.readability_score * 10 || 90,
+        completeness_score: 95,
+        issues_found: 0,
+        auto_corrections: 0
+      });
+      setUploadStage("editing");
+      
+      toast.success(
+        "Extraction complete", 
+        `${mappedData.length} rows extracted from Google Drive and ready for review`
+      );
+
+    } catch (error) {
+      console.error("Processing error:", error);
+      toast.error("Processing failed", error.message || "Failed to process document from Google Drive.");
+      setUploadStage("upload");
+      setFileUrl(null);
+      setExtractedData([]);
+    } finally {
+      setUploadLoading(false);
     }
   };
 
@@ -698,39 +871,6 @@ Be thorough and accurate.`,
             const result = await base44.entities.Revenue.create(revenueData);
             console.log(`✓ Success ${i + 1}:`, result);
             created++;
-          } else if (recordType === "production") {
-            const productionData = {
-              organisation_id: orgId,
-              batch_number: `BATCH-${Date.now()}-${i}`,
-              product_name: item.description || item.vendor || 'Unnamed Product',
-              production_date: item.date || format(new Date(), 'yyyy-MM-dd'),
-              quantity_produced: parseFloat(item.quantity) || parseFloat(item.amount) || 0,
-              status: 'completed',
-              notes: item.notes || 'Imported via AI extraction'
-            };
-            
-            console.log(`Creating production batch ${i + 1}:`, productionData);
-            const result = await base44.entities.ProductionBatch.create(productionData);
-            console.log(`✓ Success ${i + 1}:`, result);
-            created++;
-          } else if (recordType === "inventory" || recordType === "stock_receipt") {
-            // For inventory uploads - create products if they don't exist
-            const productData = {
-              organisation_id: orgId,
-              name: item.description || item.vendor || 'New Product',
-              sku: item.vendor || `SKU-${Date.now()}-${i}`,
-              category: item.category || 'other',
-              unit_price: parseFloat(item.unit_price || item.amount) || 0,
-              cost_price: parseFloat(item.unit_price || item.amount) || 0,
-              stock_quantity: parseFloat(item.quantity) || 0,
-              unit: item.unit || 'piece',
-              is_active: true
-            };
-            
-            console.log(`Creating product ${i + 1}:`, productData);
-            const result = await base44.entities.Product.create(productData);
-            console.log(`✓ Success ${i + 1}:`, result);
-            created++;
           }
         } catch (itemError) {
           console.error(`✗ FAILED ${i + 1}:`, itemError);
@@ -871,41 +1011,63 @@ Be thorough and accurate.`,
             
             {uploadStage === "upload" && (
               <div className="space-y-4">
-                <div className="border-2 border-dashed border-gray-300 rounded-xl p-12 text-center hover:border-[#0072C6] transition-colors">
-                  <input
-                    type="file"
-                    accept=".pdf,.csv,.png,.jpg,.jpeg,.doc,.docx"
-                    onChange={handleFileUpload}
-                    multiple
-                    className="hidden"
-                    id="advanced-doc-upload"
-                    disabled={uploadLoading}
-                  />
-                  <label htmlFor="advanced-doc-upload" className="cursor-pointer">
-                    <div className="flex flex-col items-center gap-4">
-                      <div className="w-20 h-20 rounded-full bg-gradient-to-br from-[#1EB053]/20 to-[#0072C6]/20 flex items-center justify-center">
-                        <Upload className="w-10 h-10 text-[#0072C6]" />
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {/* Local Upload */}
+                  <div className="border-2 border-dashed border-gray-300 rounded-xl p-8 text-center hover:border-[#0072C6] transition-colors">
+                    <input
+                      type="file"
+                      accept=".pdf,.csv,.png,.jpg,.jpeg,.doc,.docx"
+                      onChange={handleFileUpload}
+                      multiple
+                      className="hidden"
+                      id="advanced-doc-upload"
+                      disabled={uploadLoading}
+                    />
+                    <label htmlFor="advanced-doc-upload" className="cursor-pointer">
+                      <div className="flex flex-col items-center gap-3">
+                        <div className="w-16 h-16 rounded-full bg-gradient-to-br from-[#1EB053]/20 to-[#0072C6]/20 flex items-center justify-center">
+                          <Upload className="w-8 h-8 text-[#0072C6]" />
+                        </div>
+                        <div>
+                          <p className="text-base font-semibold text-gray-700 mb-1">
+                            Upload from Computer
+                          </p>
+                          <p className="text-xs text-gray-500">
+                            PDF, CSV, PNG, JPG
+                          </p>
+                          <p className="text-xs text-[#0072C6] mt-2 font-medium">
+                            ✨ Multiple files supported
+                          </p>
+                        </div>
                       </div>
-                      <div>
-                        <p className="text-lg font-semibold text-gray-700 mb-1">
-                          Upload Documents (Single or Multiple)
-                        </p>
-                        <p className="text-sm text-gray-500">
-                          AI will analyze structure, extract data, validate accuracy
-                        </p>
-                        <p className="text-xs text-[#0072C6] mt-2 font-medium">
-                          ✨ Select multiple files for batch processing
-                        </p>
+                    </label>
+                  </div>
+
+                  {/* Google Drive Upload */}
+                  <div className="border-2 border-dashed border-blue-300 rounded-xl p-8 text-center hover:border-blue-500 transition-colors bg-blue-50/30">
+                    <button
+                      onClick={() => setShowGoogleDrivePicker(true)}
+                      disabled={uploadLoading}
+                      className="w-full cursor-pointer disabled:opacity-50"
+                    >
+                      <div className="flex flex-col items-center gap-3">
+                        <div className="w-16 h-16 rounded-full bg-blue-100 flex items-center justify-center">
+                          <Cloud className="w-8 h-8 text-blue-600" />
+                        </div>
+                        <div>
+                          <p className="text-base font-semibold text-gray-700 mb-1">
+                            Import from Google Drive
+                          </p>
+                          <p className="text-xs text-gray-500">
+                            Select files from your Drive
+                          </p>
+                          <p className="text-xs text-blue-600 mt-2 font-medium">
+                            🔗 Direct integration
+                          </p>
+                        </div>
                       </div>
-                      <div className="flex gap-2 flex-wrap justify-center">
-                        {RECORD_TYPES.map(rt => (
-                          <Badge key={rt.value} variant="outline" className="text-xs">
-                            {rt.icon} {rt.label}
-                          </Badge>
-                        ))}
-                      </div>
-                    </div>
-                  </label>
+                    </button>
+                  </div>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
@@ -1558,6 +1720,8 @@ Be thorough and accurate.`,
                   setCurrencyMode('sle');
                   if (Array.isArray(pendingFile)) {
                     startBatchProcessing(pendingFile);
+                  } else if (pendingFile?.isGoogleDrive) {
+                    processGoogleDriveFile(pendingFile.file_url, pendingFile.fileName, pendingFile.mimeType);
                   } else if (pendingFile) {
                     processFile(pendingFile);
                   }
@@ -1584,6 +1748,8 @@ Be thorough and accurate.`,
                   setCurrencyMode('sll');
                   if (Array.isArray(pendingFile)) {
                     startBatchProcessing(pendingFile);
+                  } else if (pendingFile?.isGoogleDrive) {
+                    processGoogleDriveFile(pendingFile.file_url, pendingFile.fileName, pendingFile.mimeType);
                   } else if (pendingFile) {
                     processFile(pendingFile);
                   }
@@ -1605,6 +1771,12 @@ Be thorough and accurate.`,
           </div>
         </DialogContent>
       </Dialog>
+
+      <GoogleDrivePicker
+        open={showGoogleDrivePicker}
+        onOpenChange={setShowGoogleDrivePicker}
+        onFileSelected={handleGoogleDriveFileSelected}
+      />
     </>
   );
 }
