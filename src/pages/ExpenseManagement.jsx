@@ -43,6 +43,7 @@ import {
 } from "lucide-react";
 import { useToast } from "@/components/ui/Toast";
 import LoadingSpinner from "@/components/ui/LoadingSpinner";
+import { createNotification, notifyAdmins } from "@/components/notifications/notificationHelper";
 import PageHeader from "@/components/ui/PageHeader";
 import EmptyState from "@/components/ui/EmptyState";
 import AIFormAssistant from "@/components/ai/AIFormAssistant";
@@ -223,7 +224,6 @@ export default function ExpenseManagement() {
   const [bulkDeleteLoading, setBulkDeleteLoading] = useState(false);
   const [showExpenseDialog, setShowExpenseDialog] = useState(false);
   const [showAICategorizerDialog, setShowAICategorizerDialog] = useState(false);
-  const [approvalExpense, setApprovalExpense] = useState(null);
 
   const { data: user } = useQuery({
     queryKey: ['currentUser'],
@@ -241,6 +241,13 @@ export default function ExpenseManagement() {
   const currentEmployee = employee?.[0];
   const orgId = currentEmployee?.organisation_id;
   const isAdmin = ['super_admin', 'org_admin'].includes(currentEmployee?.role);
+
+  const { data: employees = [] } = useQuery({
+    queryKey: ['employees', orgId],
+    queryFn: () => base44.entities.Employee.filter({ organisation_id: orgId }),
+    enabled: !!orgId,
+    staleTime: 5 * 60 * 1000,
+  });
 
   const { data: organisation } = useQuery({
     queryKey: ['organisation', orgId],
@@ -308,11 +315,35 @@ export default function ExpenseManagement() {
   // Mutations
   const updateExpenseMutation = useMutation({
     mutationFn: ({ id, data }) => base44.entities.Expense.update(id, data),
-    onSuccess: () => {
+    onSuccess: async (result, { id, data }) => {
       queryClient.invalidateQueries({ queryKey: ['allExpenses', orgId] });
       queryClient.invalidateQueries({ queryKey: ['expenses', orgId] });
       queryClient.invalidateQueries({ queryKey: ['constructionExpenses', orgId] });
       toast.success("Expense updated");
+      
+      // Notify on approval/rejection
+      const originalExpense = expenses.find(e => e.id === id);
+      if (data.status === 'approved' && originalExpense?.recorded_by) {
+        await createNotification({
+          orgId,
+          recipientId: originalExpense.recorded_by,
+          recipientEmail: null,
+          type: 'approval',
+          title: 'Expense Approved',
+          message: `Your expense "${result.description || 'Expense'}" for Le ${result.amount?.toLocaleString()} has been approved`,
+          priority: 'normal'
+        }).catch(err => console.log('Approval notification failed:', err));
+      } else if (data.status === 'rejected' && originalExpense?.recorded_by) {
+        await createNotification({
+          orgId,
+          recipientId: originalExpense.recorded_by,
+          recipientEmail: null,
+          type: 'alert',
+          title: 'Expense Rejected',
+          message: `Your expense "${result.description || 'Expense'}" for Le ${result.amount?.toLocaleString()} was rejected`,
+          priority: 'high'
+        }).catch(err => console.log('Rejection notification failed:', err));
+      }
     },
     onError: (error) => {
       toast.error("Failed to update expense", error.message);
@@ -342,26 +373,23 @@ export default function ExpenseManagement() {
   };
 
   const createExpenseMutation = useMutation({
-    mutationFn: async (data) => {
-      const expense = await base44.entities.Expense.create(data);
-      
-      // Notify approvers if expense is pending
-      if (data.status === 'pending') {
-        try {
-          await base44.functions.invoke('notifyExpenseApprovers', { expense_id: expense.id });
-        } catch (notifyError) {
-          console.error('Failed to notify approvers:', notifyError);
-        }
-      }
-      
-      return expense;
-    },
-    onSuccess: () => {
+    mutationFn: (data) => base44.entities.Expense.create(data),
+    onSuccess: async (result) => {
       queryClient.invalidateQueries({ queryKey: ['allExpenses', orgId] });
       queryClient.invalidateQueries({ queryKey: ['expenses', orgId] });
       setShowExpenseDialog(false);
       setEditingExpense(null);
-      toast.success("Expense recorded", "Expense has been added and approvers notified");
+      toast.success("Expense recorded", "Expense has been added");
+      
+      // Notify admins about new expense
+      await notifyAdmins({
+        orgId,
+        employees,
+        type: 'approval',
+        title: 'New Expense Submission',
+        message: `${currentEmployee?.full_name} submitted an expense: ${result.description} - Le ${result.amount?.toLocaleString()}`,
+        priority: 'normal'
+      }).catch(err => console.log('Expense submission notification failed:', err));
     },
     onError: (error) => {
       toast.error("Failed to record expense", error.message);
@@ -684,11 +712,18 @@ export default function ExpenseManagement() {
                                 <Button
                                   variant="ghost"
                                   size="icon"
-                                  className="h-8 w-8 text-[#1EB053] hover:bg-green-50"
-                                  onClick={() => setApprovalExpense(expense)}
-                                  title="Review and Approve/Reject"
+                                  className="h-8 w-8 text-green-600 hover:bg-green-50"
+                                  onClick={() => handleApprove(expense)}
                                 >
                                   <CheckCircle className="w-4 h-4" />
+                                </Button>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="h-8 w-8 text-red-600 hover:bg-red-50"
+                                  onClick={() => handleReject(expense)}
+                                >
+                                  <XCircle className="w-4 h-4" />
                                 </Button>
                               </>
                             )}
@@ -775,11 +810,19 @@ export default function ExpenseManagement() {
                             <>
                               <Button
                                 size="sm"
-                                className="flex-1 bg-[#1EB053] hover:bg-[#178f43] text-white"
-                                onClick={() => setApprovalExpense(expense)}
+                                className="flex-1 bg-green-600 hover:bg-green-700 text-white"
+                                onClick={() => handleApprove(expense)}
                               >
                                 <CheckCircle className="w-4 h-4 mr-1" />
-                                Review
+                                Approve
+                              </Button>
+                              <Button
+                                size="sm"
+                                className="flex-1 bg-red-600 hover:bg-red-700 text-white"
+                                onClick={() => handleReject(expense)}
+                              >
+                                <XCircle className="w-4 h-4 mr-1" />
+                                Reject
                               </Button>
                             </>
                           )}
@@ -862,19 +905,29 @@ export default function ExpenseManagement() {
                   <p className="text-sm bg-gray-50 p-3 rounded-lg">{selectedExpense.notes}</p>
                 </div>
               )}
-              {selectedExpense.status === 'pending' && isAdmin && (
-               <div className="pt-4">
-                 <Button
-                   className="w-full bg-[#1EB053] hover:bg-[#178f43]"
-                   onClick={() => {
-                     setApprovalExpense(selectedExpense);
-                     setShowDetailDialog(false);
-                   }}
-                 >
-                   <CheckCircle className="w-4 h-4 mr-2" />
-                   Review & Approve/Reject
-                 </Button>
-               </div>
+              {selectedExpense.status === 'pending' && (
+                <div className="flex gap-2 pt-4">
+                  <Button
+                    className="flex-1 bg-green-600 hover:bg-green-700"
+                    onClick={() => {
+                      handleApprove(selectedExpense);
+                      setShowDetailDialog(false);
+                    }}
+                  >
+                    <CheckCircle className="w-4 h-4 mr-2" />
+                    Approve
+                  </Button>
+                  <Button
+                    className="flex-1 bg-red-600 hover:bg-red-700"
+                    onClick={() => {
+                      handleReject(selectedExpense);
+                      setShowDetailDialog(false);
+                    }}
+                  >
+                    <XCircle className="w-4 h-4 mr-2" />
+                    Reject
+                  </Button>
+                </div>
               )}
             </div>
           )}
@@ -952,13 +1005,6 @@ export default function ExpenseManagement() {
         categories={EXPENSE_CATEGORIES}
         orgId={orgId}
         currentEmployee={currentEmployee}
-      />
-
-      {/* Quick Expense Approval */}
-      <QuickExpenseApproval
-        expense={approvalExpense}
-        open={!!approvalExpense}
-        onOpenChange={(open) => !open && setApprovalExpense(null)}
       />
 
       {/* Bulk Delete Confirmation Dialog */}
