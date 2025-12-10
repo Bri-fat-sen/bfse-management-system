@@ -84,6 +84,8 @@ export default function Sales() {
   const [autoSetupDone, setAutoSetupDone] = useState(false);
   const [showUploadDialog, setShowUploadDialog] = useState(false);
   const [showFormsDialog, setShowFormsDialog] = useState(false);
+  const [selectedSaleIds, setSelectedSaleIds] = useState([]);
+  const [showBulkDeleteDialog, setShowBulkDeleteDialog] = useState(false);
 
   const { data: user } = useQuery({
     queryKey: ['currentUser'],
@@ -483,6 +485,21 @@ export default function Sales() {
     onError: (error) => {
       console.error('Delete sale error:', error);
       toast.error("Failed to delete sale", error.message);
+    }
+  });
+
+  const bulkDeleteSalesMutation = useMutation({
+    mutationFn: async (saleIds) => {
+      await Promise.all(saleIds.map(id => base44.entities.Sale.delete(id)));
+    },
+    onSuccess: (_, saleIds) => {
+      queryClient.invalidateQueries({ queryKey: ['sales', orgId] });
+      toast.success("Sales deleted", `${saleIds.length} sales removed successfully`);
+      setSelectedSaleIds([]);
+      setShowBulkDeleteDialog(false);
+    },
+    onError: (error) => {
+      toast.error("Failed to delete sales", error.message);
     }
   });
 
@@ -1029,7 +1046,19 @@ export default function Sales() {
         <TabsContent value="history">
           <Card>
             <CardHeader>
-              <CardTitle>Recent Sales</CardTitle>
+              <div className="flex items-center justify-between">
+                <CardTitle>Recent Sales</CardTitle>
+                {selectedSaleIds.length > 0 && (
+                  <Button
+                    variant="destructive"
+                    size="sm"
+                    onClick={() => setShowBulkDeleteDialog(true)}
+                  >
+                    <Trash2 className="w-4 h-4 mr-2" />
+                    Delete {selectedSaleIds.length} Selected
+                  </Button>
+                )}
+              </div>
             </CardHeader>
             <CardContent>
               {loadingSales ? (
@@ -1047,8 +1076,19 @@ export default function Sales() {
               ) : (
                 <div className="space-y-3">
                   {sales.map((sale) => (
-                    <div key={sale.id} className="flex flex-col sm:flex-row sm:items-center justify-between p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors gap-3">
+                    <div key={sale.id} className={`flex flex-col sm:flex-row sm:items-center justify-between p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors gap-3 ${selectedSaleIds.includes(sale.id) ? 'ring-2 ring-blue-500' : ''}`}>
                       <div className="flex items-center gap-3 sm:gap-4">
+                        <input
+                          type="checkbox"
+                          checked={selectedSaleIds.includes(sale.id)}
+                          onChange={(e) => {
+                            e.stopPropagation();
+                            setSelectedSaleIds(prev =>
+                              prev.includes(sale.id) ? prev.filter(id => id !== sale.id) : [...prev, sale.id]
+                            );
+                          }}
+                          className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                        />
                         <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[#1EB053] to-[#1D5FC3] flex items-center justify-center">
                           <Receipt className="w-5 h-5 text-white" />
                         </div>
@@ -1283,6 +1323,17 @@ export default function Sales() {
           }
         }}
         isLoading={deleteSaleMutation.isPending}
+      />
+
+      <ConfirmDialog
+        open={showBulkDeleteDialog}
+        onOpenChange={setShowBulkDeleteDialog}
+        title="Delete Multiple Sales"
+        description={`Are you sure you want to delete ${selectedSaleIds.length} sale(s)? This action cannot be undone.`}
+        confirmLabel="Delete All"
+        variant="danger"
+        onConfirm={() => bulkDeleteSalesMutation.mutate(selectedSaleIds)}
+        isLoading={bulkDeleteSalesMutation.isPending}
       />
 
       {/* Document Upload Dialog */}

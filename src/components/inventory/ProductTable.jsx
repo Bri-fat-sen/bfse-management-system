@@ -21,7 +21,9 @@ export default function ProductTable({ products, locations, onEdit, onDelete, on
   };
 
   const handleBulkDelete = () => {
-    if (confirm(`Delete ${selectedIds.length} selected product(s)?`)) {
+    const selectedProducts = products.filter(p => selectedIds.includes(p.id));
+    const productNames = selectedProducts.map(p => p.name).join(', ');
+    if (confirm(`Delete ${selectedIds.length} selected product(s)?\n\n${productNames.substring(0, 200)}${productNames.length > 200 ? '...' : ''}`)) {
       onBulkDelete(selectedIds);
       setSelectedIds([]);
     }

@@ -88,6 +88,8 @@ export default function HRManagement() {
   const [selectedEmployeeForReview, setSelectedEmployeeForReview] = useState(null);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [employeeToDelete, setEmployeeToDelete] = useState(null);
+  const [selectedEmployeeIds, setSelectedEmployeeIds] = useState([]);
+  const [showBulkDeleteDialog, setShowBulkDeleteDialog] = useState(false);
 
   const { data: user } = useQuery({
     queryKey: ['currentUser'],
@@ -155,6 +157,21 @@ export default function HRManagement() {
     },
     onError: (error) => {
       toast.error("Failed to delete employee", error.message);
+    }
+  });
+
+  const bulkDeleteEmployeesMutation = useMutation({
+    mutationFn: async (ids) => {
+      await Promise.all(ids.map(id => base44.entities.Employee.delete(id)));
+    },
+    onSuccess: (_, ids) => {
+      queryClient.invalidateQueries({ queryKey: ['employees'] });
+      toast.success("Employees deleted", `${ids.length} employees removed successfully`);
+      setSelectedEmployeeIds([]);
+      setShowBulkDeleteDialog(false);
+    },
+    onError: (error) => {
+      toast.error("Failed to delete employees", error.message);
     }
   });
 
@@ -449,6 +466,30 @@ export default function HRManagement() {
           {/* Filters */}
           <Card>
             <CardContent className="p-4">
+              {selectedEmployeeIds.length > 0 && (
+                <div className="mb-4 flex items-center justify-between p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                  <span className="text-sm font-medium text-blue-900">
+                    {selectedEmployeeIds.length} employee(s) selected
+                  </span>
+                  <div className="flex gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setSelectedEmployeeIds([])}
+                    >
+                      Clear
+                    </Button>
+                    <Button
+                      variant="destructive"
+                      size="sm"
+                      onClick={() => setShowBulkDeleteDialog(true)}
+                    >
+                      <Trash2 className="w-4 h-4 mr-2" />
+                      Delete Selected
+                    </Button>
+                  </div>
+                </div>
+              )}
               <div className="flex flex-col md:flex-row gap-4">
                 <div className="relative flex-1">
                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
@@ -490,10 +531,22 @@ export default function HRManagement() {
           {/* Employee Grid */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {filteredEmployees.map(emp => (
-              <Card key={emp.id} className="hover:shadow-lg transition-shadow">
+              <Card key={emp.id} className={`hover:shadow-lg transition-shadow ${selectedEmployeeIds.includes(emp.id) ? 'ring-2 ring-blue-500' : ''}`}>
                 <CardContent className="p-4">
                   <div className="flex items-start justify-between mb-4">
                     <div className="flex items-center gap-3">
+                      <input
+                        type="checkbox"
+                        checked={selectedEmployeeIds.includes(emp.id)}
+                        onChange={(e) => {
+                          e.stopPropagation();
+                          setSelectedEmployeeIds(prev =>
+                            prev.includes(emp.id) ? prev.filter(id => id !== emp.id) : [...prev, emp.id]
+                          );
+                        }}
+                        className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                        disabled={emp.id === currentEmployee?.id}
+                      />
                       <Avatar className="w-12 h-12">
                         <AvatarImage src={emp.profile_photo} />
                         <AvatarFallback className="bg-gradient-to-br from-[#1EB053] to-[#0072C6] text-white">
@@ -734,6 +787,17 @@ export default function HRManagement() {
         variant="danger"
         onConfirm={() => deleteEmployeeMutation.mutate(employeeToDelete.id)}
         isLoading={deleteEmployeeMutation.isPending}
+      />
+
+      <ConfirmDialog
+        open={showBulkDeleteDialog}
+        onOpenChange={setShowBulkDeleteDialog}
+        title="Delete Multiple Employees"
+        description={`Are you sure you want to delete ${selectedEmployeeIds.length} employee(s)? This action cannot be undone.`}
+        confirmLabel="Delete All"
+        variant="danger"
+        onConfirm={() => bulkDeleteEmployeesMutation.mutate(selectedEmployeeIds)}
+        isLoading={bulkDeleteEmployeesMutation.isPending}
       />
     </div>
   );
