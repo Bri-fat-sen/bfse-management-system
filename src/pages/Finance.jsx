@@ -747,6 +747,10 @@ export default function Finance() {
               <FileText className="w-4 h-4 mr-1" />
               Reports & Analysis
             </TabsTrigger>
+            <TabsTrigger value="upload" className="text-xs sm:text-sm rounded-lg data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#1EB053] data-[state=active]:to-[#0072C6] data-[state=active]:text-white data-[state=active]:shadow-lg transition-all font-medium">
+              <Upload className="w-4 h-4 mr-1" />
+              Upload Documents
+            </TabsTrigger>
           </TabsList>
           </div>
 
@@ -759,7 +763,7 @@ export default function Finance() {
                   <CardDescription>Manage your financial records</CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                     <Button onClick={() => setShowExpenseDialog(true)} variant="outline" className="h-20 flex-col gap-2">
                       <Receipt className="w-6 h-6 text-red-500" />
                       <span className="text-sm">Add Expense</span>
@@ -772,24 +776,11 @@ export default function Finance() {
                       <Landmark className="w-6 h-6 text-[#0072C6]" />
                       <span className="text-sm">Record Deposit</span>
                     </Button>
+                    <Button onClick={() => setActiveTab('upload')} variant="outline" className="h-20 flex-col gap-2 border-purple-200 hover:bg-purple-50">
+                      <Upload className="w-6 h-6 text-purple-600" />
+                      <span className="text-sm">Upload Docs</span>
+                    </Button>
                   </div>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardHeader>
-                  <CardTitle>Upload Documents</CardTitle>
-                  <CardDescription>Extract data from financial documents</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <DocumentUploadExtractor
-                    orgId={orgId}
-                    currentEmployee={currentEmployee}
-                    onDataExtracted={() => {
-                      queryClient.invalidateQueries({ queryKey: ['expenses', orgId] });
-                      queryClient.invalidateQueries({ queryKey: ['revenues', orgId] });
-                    }}
-                  />
                 </CardContent>
               </Card>
             </div>
@@ -1481,6 +1472,30 @@ export default function Finance() {
               organisation={organisation?.[0]}
               payrolls={payrolls}
             />
+          </TabsContent>
+
+          {/* Upload Documents Tab */}
+          <TabsContent value="upload" className="mt-6">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Upload className="w-5 h-5 text-purple-600" />
+                  Upload Financial Documents
+                </CardTitle>
+                <CardDescription>Upload receipts, invoices, or spreadsheets to extract financial data automatically</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <DocumentUploadExtractor
+                  orgId={orgId}
+                  currentEmployee={currentEmployee}
+                  onDataExtracted={() => {
+                    queryClient.invalidateQueries({ queryKey: ['expenses', orgId] });
+                    queryClient.invalidateQueries({ queryKey: ['revenues', orgId] });
+                    toast.success("Data extracted successfully");
+                  }}
+                />
+              </CardContent>
+            </Card>
           </TabsContent>
 
           {/* Cash Flow Tab */}
