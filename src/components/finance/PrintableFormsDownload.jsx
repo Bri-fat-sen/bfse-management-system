@@ -71,58 +71,33 @@ const generateFormHTML = (formType, org) => {
       ${unifiedStyles}
       
       @media print {
+        @page {
+          margin: 1.2in 0.5in 1in 0.5in;
+        }
+        
         .print-header {
           display: block !important;
-          position: running(header);
+          position: fixed;
+          top: 0;
+          left: 0;
+          right: 0;
+          z-index: 9999;
+          background: white;
         }
         
         .print-footer {
           display: block !important;
-          position: running(footer);
+          position: fixed;
+          bottom: 0;
+          left: 0;
+          right: 0;
+          z-index: 9999;
+          background: white;
         }
         
-        @page {
-          margin: 1in 0.5in;
-          
-          @top-left-corner {
-            content: '';
-          }
-          
-          @top-left {
-            content: element(header);
-            vertical-align: top;
-            padding-top: 0.15in;
-          }
-          
-          @top-center {
-            content: element(header);
-            vertical-align: top;
-            padding-top: 0.15in;
-          }
-          
-          @top-right {
-            content: element(header);
-            vertical-align: top;
-            padding-top: 0.15in;
-          }
-          
-          @bottom-left {
-            content: element(footer);
-            vertical-align: bottom;
-            padding-bottom: 0.15in;
-          }
-          
-          @bottom-center {
-            content: element(footer);
-            vertical-align: bottom;
-            padding-bottom: 0.15in;
-          }
-          
-          @bottom-right {
-            content: element(footer);
-            vertical-align: bottom;
-            padding-bottom: 0.15in;
-          }
+        .document {
+          margin-top: 0;
+          margin-bottom: 0;
         }
       }
       
@@ -137,7 +112,6 @@ const generateFormHTML = (formType, org) => {
       .print-header-stripe {
         height: 6px;
         display: flex;
-        margin-bottom: 10px;
       }
       
       .print-header-stripe > div:nth-child(1) {
@@ -162,7 +136,7 @@ const generateFormHTML = (formType, org) => {
         justify-content: space-between;
         align-items: center;
         font-size: 10px;
-        padding: 0 0.5in;
+        padding: 8px 0.5in;
       }
       
       .print-header-title {
@@ -182,8 +156,7 @@ const generateFormHTML = (formType, org) => {
         align-items: center;
         font-size: 10px;
         color: #64748b;
-        padding: 0 0.5in;
-        margin-bottom: 10px;
+        padding: 8px 0.5in;
       }
       
       .print-footer-stripe {
