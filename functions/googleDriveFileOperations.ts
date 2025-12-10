@@ -10,7 +10,7 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { action, fileId, fileName, mimeType, fileData } = await req.json();
+    const { action, fileId, fileName, mimeType, fileData, folderId } = await req.json();
     
     // Get Google Drive access token
     const accessToken = await base44.asServiceRole.connectors.getAccessToken('googledrive');
@@ -23,8 +23,6 @@ Deno.serve(async (req) => {
 
     if (action === 'list') {
       // List files and folders in a specific folder (or root if no folderId)
-      const { folderId } = await req.json();
-      
       let query = folderId 
         ? `'${folderId}' in parents and trashed = false`
         : `'root' in parents and trashed = false`;
