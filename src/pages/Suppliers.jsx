@@ -844,6 +844,24 @@ export default function Suppliers() {
           isLoading={deleteMutation.isPending}
         />
 
+        {/* Delete Purchase Order Confirmation */}
+        <ConfirmDialog
+          open={showDeletePOConfirm}
+          onOpenChange={setShowDeletePOConfirm}
+          title="Delete Purchase Order"
+          description={`Delete purchase order ${poToDelete?.po_number}?`}
+          confirmLabel="Delete"
+          cancelLabel="Cancel"
+          variant="danger"
+          onConfirm={() => {
+            if (poToDelete) {
+              deletePOMutation.mutate(poToDelete.id);
+              setPOToDelete(null);
+            }
+          }}
+          isLoading={deletePOMutation.isPending}
+        />
+
         {/* Dialogs */}
         <SupplierDialog
           open={showSupplierDialog}
