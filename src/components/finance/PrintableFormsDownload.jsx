@@ -191,6 +191,10 @@ const generateFormHTML = (formType, org) => {
         background: #0072C6;
       }
       
+      body {
+        counter-reset: page;
+      }
+
       @page {
         counter-increment: page;
       }
