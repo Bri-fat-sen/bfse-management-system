@@ -356,7 +356,7 @@ Deno.serve(async (req) => {
       },
       body: JSON.stringify({
         from: {
-          email: 'noreply@trial-jpzkmgq6pqr4059v.mlsender.net',
+          email: 'noreply@brifatsenenterprise.com',
           name: org?.name || 'Purchase Order System'
         },
         to: [{
