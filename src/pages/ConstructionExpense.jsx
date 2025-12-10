@@ -60,6 +60,7 @@ import {
 } from "lucide-react";
 import { useToast } from "@/components/ui/Toast";
 import LoadingSpinner from "@/components/ui/LoadingSpinner";
+import { notifyAdmins } from "@/components/notifications/notificationHelper";
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
   PieChart, Pie, Cell, Legend, LineChart, Line
@@ -234,12 +235,22 @@ export default function ConstructionExpense() {
   // Mutations
   const createExpenseMutation = useMutation({
     mutationFn: (data) => base44.entities.Expense.create(data),
-    onSuccess: () => {
+    onSuccess: async (result) => {
       queryClient.invalidateQueries({ queryKey: ['constructionExpenses', orgId] });
       queryClient.invalidateQueries({ queryKey: ['expenses', orgId] });
       setShowExpenseDialog(false);
       setEditingExpense(null);
       toast.success("Expense recorded", "Construction expense has been added");
+      
+      // Notify admins about new construction expense
+      await notifyAdmins({
+        orgId,
+        employees,
+        type: 'approval',
+        title: 'New Construction Expense',
+        message: `${currentEmployee?.full_name} recorded a construction expense: ${result.description} - Le ${result.amount?.toLocaleString()}`,
+        priority: 'normal'
+      });
     },
     onError: (error) => {
       toast.error("Failed to record expense", error.message);
@@ -248,12 +259,41 @@ export default function ConstructionExpense() {
 
   const updateExpenseMutation = useMutation({
     mutationFn: ({ id, data }) => base44.entities.Expense.update(id, data),
-    onSuccess: () => {
+    onSuccess: async (result, { id, data }) => {
       queryClient.invalidateQueries({ queryKey: ['constructionExpenses', orgId] });
       queryClient.invalidateQueries({ queryKey: ['expenses', orgId] });
       setShowExpenseDialog(false);
       setEditingExpense(null);
       toast.success("Expense updated");
+      
+      // Notify on status change
+      if (data.status === 'approved') {
+        const originalExpense = expenses.find(e => e.id === id);
+        if (originalExpense?.recorded_by) {
+          await createNotification({
+            orgId,
+            recipientId: originalExpense.recorded_by,
+            recipientEmail: null,
+            type: 'approval',
+            title: 'Construction Expense Approved',
+            message: `Your construction expense "${result.description || 'Expense'}" for Le ${result.amount?.toLocaleString()} has been approved`,
+            priority: 'normal'
+          });
+        }
+      } else if (data.status === 'rejected') {
+        const originalExpense = expenses.find(e => e.id === id);
+        if (originalExpense?.recorded_by) {
+          await createNotification({
+            orgId,
+            recipientId: originalExpense.recorded_by,
+            recipientEmail: null,
+            type: 'alert',
+            title: 'Construction Expense Rejected',
+            message: `Your construction expense "${result.description || 'Expense'}" for Le ${result.amount?.toLocaleString()} was rejected`,
+            priority: 'high'
+          });
+        }
+      }
     },
     onError: (error) => {
       toast.error("Failed to update expense", error.message);

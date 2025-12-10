@@ -53,6 +53,7 @@ import {
 } from "@/components/ui/select";
 import { useToast } from "@/components/ui/Toast";
 import ConfirmDialog from "@/components/ui/ConfirmDialog";
+import { notifyAdmins } from "@/components/notifications/notificationHelper";
 import PageHeader from "@/components/ui/PageHeader";
 import EmptyState from "@/components/ui/EmptyState";
 import LoadingSpinner from "@/components/ui/LoadingSpinner";
@@ -148,6 +149,13 @@ export default function Sales() {
     enabled: !!orgId,
     staleTime: 0,
     refetchOnWindowFocus: true,
+  });
+
+  const { data: employees = [] } = useQuery({
+    queryKey: ['employees', orgId],
+    queryFn: () => base44.entities.Employee.filter({ organisation_id: orgId }),
+    enabled: !!orgId,
+    staleTime: 5 * 60 * 1000,
   });
 
   // Fetch stock levels for the selected location
@@ -282,6 +290,18 @@ export default function Sales() {
     mutationFn: async (saleData) => {
       // Create the sale first
       const sale = await base44.entities.Sale.create(saleData);
+      
+      // Notify admins about the sale
+      if (employees.length > 0) {
+        await notifyAdmins({
+          orgId,
+          employees,
+          type: 'system',
+          title: 'New Sale Completed',
+          message: `${currentEmployee?.full_name} completed a ${saleData.sale_type} sale for Le ${saleData.total_amount?.toLocaleString()}`,
+          priority: 'normal'
+        }).catch(err => console.log('Notification failed:', err));
+      }
       
       // Update stock quantities for each item
       for (const item of saleData.items) {

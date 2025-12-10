@@ -1,9 +1,10 @@
-import { useState } from "react";
+import React, { useState } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { format, startOfMonth, endOfMonth, subMonths, addMonths } from "date-fns";
 import { toast } from "sonner";
 import ProtectedPage from "@/components/permissions/ProtectedPage";
+import { notifyAdmins, createNotification } from "@/components/notifications/notificationHelper";
 import CalendarView from "@/components/calendar/CalendarView";
 import TaskDialog from "@/components/calendar/TaskDialog";
 import EventDetailSheet from "@/components/calendar/EventDetailSheet";
@@ -83,9 +84,22 @@ export default function CalendarPage() {
   // Update task mutation (for drag and drop)
   const updateTaskMutation = useMutation({
     mutationFn: ({ id, data }) => base44.entities.Task.update(id, data),
-    onSuccess: () => {
+    onSuccess: async (result, { data }) => {
       queryClient.invalidateQueries({ queryKey: ['tasks'] });
       toast.success("Task rescheduled");
+      
+      // Notify assignee if task was rescheduled
+      if (data.due_date && result.assigned_to_id && result.assigned_to_email) {
+        await createNotification({
+          orgId,
+          recipientId: result.assigned_to_id,
+          recipientEmail: result.assigned_to_email,
+          type: 'hr',
+          title: 'Task Rescheduled',
+          message: `"${result.title}" has been rescheduled to ${format(new Date(data.due_date), 'MMM d, yyyy')}`,
+          priority: 'normal'
+        });
+      }
     },
     onError: () => {
       toast.error("Failed to reschedule task");
@@ -94,10 +108,27 @@ export default function CalendarPage() {
 
   // Delete task mutation
   const deleteTaskMutation = useMutation({
-    mutationFn: (taskId) => base44.entities.Task.delete(taskId),
-    onSuccess: () => {
+    mutationFn: async (taskId) => {
+      const task = tasks.find(t => t.id === taskId);
+      await base44.entities.Task.delete(taskId);
+      return task;
+    },
+    onSuccess: async (deletedTask) => {
       queryClient.invalidateQueries({ queryKey: ['tasks'] });
       toast.success("Task deleted");
+      
+      // Notify assignee if task was assigned
+      if (deletedTask?.assigned_to_id && deletedTask?.assigned_to_email) {
+        await createNotification({
+          orgId,
+          recipientId: deletedTask.assigned_to_id,
+          recipientEmail: deletedTask.assigned_to_email,
+          type: 'hr',
+          title: 'Task Deleted',
+          message: `The task "${deletedTask.title}" has been deleted`,
+          priority: 'normal'
+        });
+      }
     },
     onError: () => {
       toast.error("Failed to delete task");
