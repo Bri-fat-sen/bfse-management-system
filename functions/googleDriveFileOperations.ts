@@ -25,10 +25,10 @@ Deno.serve(async (req) => {
       // List files and folders in a specific folder (or root if no folderId)
       let query = folderId 
         ? `'${folderId}' in parents and trashed = false`
-        : `'root' in parents and trashed = false`;
+        : `trashed = false`;
       
       const listResponse = await fetch(
-        `https://www.googleapis.com/drive/v3/files?q=${encodeURIComponent(query)}&pageSize=50&orderBy=folder,modifiedTime desc&fields=files(id,name,mimeType,modifiedTime,size,thumbnailLink,parents)`,
+        `https://www.googleapis.com/drive/v3/files?q=${encodeURIComponent(query)}&pageSize=100&orderBy=folder,modifiedTime desc&fields=files(id,name,mimeType,modifiedTime,size,thumbnailLink,parents)`,
         {
           headers: {
             'Authorization': `Bearer ${accessToken}`,
@@ -38,7 +38,12 @@ Deno.serve(async (req) => {
       );
       
       if (!listResponse.ok) {
-        throw new Error(`Failed to list files: ${await listResponse.text()}`);
+        const errorText = await listResponse.text();
+        return Response.json({ 
+          error: `Drive access limited: With current permissions, you can only see files created by this app. To browse all your Drive files, you need broader Drive permissions.`,
+          folders: [],
+          files: []
+        });
       }
       
       const data = await listResponse.json();
@@ -47,7 +52,13 @@ Deno.serve(async (req) => {
       const folders = data.files?.filter(f => f.mimeType === 'application/vnd.google-apps.folder') || [];
       const files = data.files?.filter(f => f.mimeType !== 'application/vnd.google-apps.folder') || [];
       
-      return Response.json({ folders, files });
+      return Response.json({ 
+        folders, 
+        files,
+        message: folders.length === 0 && files.length === 0 ? 
+          'No files found. With drive.file scope, you can only see files created by this app or files you explicitly select.' : 
+          null
+      });
     }
 
     if (action === 'download') {
