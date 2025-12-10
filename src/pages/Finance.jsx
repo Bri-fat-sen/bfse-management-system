@@ -68,17 +68,13 @@ import { useToast } from "@/components/ui/Toast";
 import StatCard from "@/components/ui/StatCard";
 import LoadingSpinner from "@/components/ui/LoadingSpinner";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart as RePieChart, Pie, Cell, LineChart, Line, Area, AreaChart, Legend } from 'recharts';
-import AIInsightsPanel from "@/components/ai/AIInsightsPanel";
-import AIReportSummary from "@/components/ai/AIReportSummary";
 import AIFormAssistant, { QuickSuggestionChips } from "@/components/ai/AIFormAssistant";
 import BankAccountsSummary from "@/components/finance/BankAccountsSummary";
-import BankAccountsReport from "@/components/finance/BankAccountsReport";
 import BudgetingModule from "@/components/finance/BudgetingModule";
-import AIFinancialAnalysis from "@/components/finance/AIFinancialAnalysis";
 import DocumentUploadExtractor from "@/components/finance/DocumentUploadExtractor";
 import CategoryBreakdownChart from "@/components/finance/CategoryBreakdownChart";
-import AutomatedFinancialReports from "@/components/finance/AutomatedFinancialReports";
 import AIExpenseCategorizer from "@/components/finance/AIExpenseCategorizer";
+import UnifiedFinancialReports from "@/components/finance/UnifiedFinancialReports";
 
 const expenseCategories = [
   "fuel", "maintenance", "utilities", "supplies", "rent", 
@@ -767,13 +763,9 @@ export default function Finance() {
             <TabsTrigger value="budgeting" className="text-xs sm:text-sm rounded-lg data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#1EB053] data-[state=active]:to-[#0072C6] data-[state=active]:text-white data-[state=active]:shadow-lg transition-all font-medium">
               Budgeting
             </TabsTrigger>
-            <TabsTrigger value="ai-analysis" className="text-xs sm:text-sm rounded-lg data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#1EB053] data-[state=active]:to-[#0072C6] data-[state=active]:text-white data-[state=active]:shadow-lg transition-all font-medium">
-              <Sparkles className="w-4 h-4 mr-1" />
-              AI Analysis
-            </TabsTrigger>
-            <TabsTrigger value="automated-reports" className="text-xs sm:text-sm rounded-lg data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#1EB053] data-[state=active]:to-[#0072C6] data-[state=active]:text-white data-[state=active]:shadow-lg transition-all font-medium">
+            <TabsTrigger value="reports" className="text-xs sm:text-sm rounded-lg data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#1EB053] data-[state=active]:to-[#0072C6] data-[state=active]:text-white data-[state=active]:shadow-lg transition-all font-medium">
               <FileText className="w-4 h-4 mr-1" />
-              Auto Reports
+              Reports & Analysis
             </TabsTrigger>
           </TabsList>
           </div>
@@ -781,32 +773,6 @@ export default function Finance() {
           {/* Dashboard Tab */}
           <TabsContent value="dashboard" className="mt-6">
             <div className="space-y-6">
-              {/* AI Insights */}
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                <AIInsightsPanel 
-                  data={filteredExpenses.slice(0, 30)}
-                  type="expenses"
-                  title="AI Expense Insights"
-                  orgId={orgId}
-                />
-                <AIReportSummary
-                  reportData={{
-                    revenue: financials.totalRevenue,
-                    expenses: financials.totalExpenses,
-                    profit: financials.netProfit,
-                    margin: financials.profitMargin,
-                    period: dateRange,
-                    breakdown: {
-                      sales_revenue: financials.salesRevenue,
-                      transport_revenue: financials.transportRevenue,
-                      contract_revenue: financials.contractRevenue
-                    }
-                  }}
-                  reportType="financial"
-                  title="AI P&L Summary"
-                />
-              </div>
-            </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">
               {/* Revenue & Expenses Trend */}
@@ -1689,25 +1655,14 @@ export default function Finance() {
             </Card>
           </TabsContent>
 
-          {/* Budgeting & Forecasting Tab */}
+          {/* Budgeting Tab */}
           <TabsContent value="budgeting" className="mt-6">
             <BudgetingModule orgId={orgId} expenses={expenses} sales={sales} currentEmployee={currentEmployee} />
           </TabsContent>
 
-          {/* AI Analysis Tab */}
-          <TabsContent value="ai-analysis" className="mt-6">
-            <AIFinancialAnalysis 
-              orgId={orgId} 
-              expenses={expenses} 
-              sales={sales}
-              trips={trips}
-              organisation={organisation?.[0]}
-            />
-          </TabsContent>
-
-          {/* Automated Reports Tab */}
-          <TabsContent value="automated-reports" className="mt-6">
-            <AutomatedFinancialReports
+          {/* Unified Reports Tab */}
+          <TabsContent value="reports" className="mt-6">
+            <UnifiedFinancialReports
               orgId={orgId}
               sales={sales}
               expenses={expenses}
@@ -1715,9 +1670,8 @@ export default function Finance() {
               revenues={revenues}
               truckContracts={truckContracts}
               maintenanceRecords={maintenanceRecords}
+              bankDeposits={bankDeposits}
               organisation={organisation?.[0]}
-              assets={assets}
-              liabilities={liabilities}
               payrolls={payrolls}
             />
           </TabsContent>
