@@ -21,8 +21,12 @@ export default function LoadingSpinner({
             className="absolute inset-8 rounded-full border-[10px] border-transparent border-t-[#0072C6] animate-spin" 
             style={{ animationDuration: '2s' }}
           ></div>
-          <div className="absolute inset-0 flex items-center justify-center">
-            <div className="text-5xl">🇸🇱</div>
+          <div className="absolute inset-0 flex items-center justify-center p-8">
+            <img 
+              src="https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/69250a5e2096205358a5c476/e3d7b69e5_file_00000000014871faa409619479a5f0ef.png" 
+              alt="BRI-FAT-SEN" 
+              className="w-full h-full object-contain"
+            />
           </div>
         </div>
         
