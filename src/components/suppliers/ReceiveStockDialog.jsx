@@ -30,6 +30,7 @@ export default function ReceiveStockDialog({
   const queryClient = useQueryClient();
   const [receivedItems, setReceivedItems] = useState([]);
   const [notes, setNotes] = useState("");
+  const [discrepancies, setDiscrepancies] = useState([]);
 
   useEffect(() => {
     if (purchaseOrder?.items) {
@@ -40,8 +41,33 @@ export default function ReceiveStockDialog({
     }
   }, [purchaseOrder]);
 
+  const checkDiscrepancies = () => {
+    const foundDiscrepancies = [];
+    receivedItems.forEach(item => {
+      const expected = item.quantity_ordered - (item.quantity_received || 0);
+      if (item.receiving_quantity !== expected) {
+        const variance = item.receiving_quantity - expected;
+        foundDiscrepancies.push({
+          item_id: item.product_id || item.product_name,
+          product_name: item.product_name,
+          type: variance > 0 ? 'quantity_mismatch' : 'missing_item',
+          expected_quantity: expected,
+          received_quantity: item.receiving_quantity,
+          variance: variance,
+          description: `Expected ${expected}, received ${item.receiving_quantity}`,
+          resolution_status: 'pending',
+          reported_by: currentEmployee?.id,
+          reported_date: new Date().toISOString()
+        });
+      }
+    });
+    setDiscrepancies(foundDiscrepancies);
+    return foundDiscrepancies;
+  };
+
   const receiveMutation = useMutation({
     mutationFn: async () => {
+      const currentDiscrepancies = checkDiscrepancies();
       const updates = [];
       
       for (const item of receivedItems) {
@@ -152,12 +178,21 @@ export default function ReceiveStockDialog({
         }
       }
 
-      // Update PO with received quantities
+      // Update PO with received quantities and delivery history
       const updatedItems = purchaseOrder.items.map(item => {
         const received = receivedItems.find(r => r.product_id === item.product_id);
+        const deliveryRecord = {
+          delivery_date: new Date().toISOString(),
+          quantity_delivered: received?.receiving_quantity || 0,
+          quantity_accepted: received?.receiving_quantity || 0,
+          quantity_rejected: 0,
+          received_by: currentEmployee?.id,
+          received_by_name: currentEmployee?.full_name,
+        };
         return {
           ...item,
-          quantity_received: (item.quantity_received || 0) + (received?.receiving_quantity || 0)
+          quantity_received: (item.quantity_received || 0) + (received?.receiving_quantity || 0),
+          delivery_history: [...(item.delivery_history || []), deliveryRecord]
         };
       });
 
@@ -168,7 +203,8 @@ export default function ReceiveStockDialog({
         items: updatedItems,
         actual_delivery_date: format(new Date(), 'yyyy-MM-dd'),
         status: allReceived ? 'received' : someReceived ? 'partial' : purchaseOrder.status,
-        notes: notes ? `${purchaseOrder.notes || ''}\n${format(new Date(), 'yyyy-MM-dd')}: ${notes}`.trim() : purchaseOrder.notes
+        notes: notes ? `${purchaseOrder.notes || ''}\n${format(new Date(), 'yyyy-MM-dd')}: ${notes}`.trim() : purchaseOrder.notes,
+        discrepancies: [...(purchaseOrder.discrepancies || []), ...currentDiscrepancies]
       });
 
       // Update supplier stats
@@ -315,6 +351,38 @@ export default function ReceiveStockDialog({
             <div className="flex items-center gap-2 p-3 bg-amber-50 text-amber-700 rounded-lg">
               <AlertTriangle className="w-5 h-5" />
               <span className="text-sm">Enter quantities to receive</span>
+            </div>
+          )}
+
+          {receivedItems.some(item => item.receiving_quantity !== (item.quantity_ordered - (item.quantity_received || 0))) && (
+            <div className="p-3 bg-orange-50 border border-orange-200 rounded-lg">
+              <div className="flex items-start gap-2">
+                <AlertTriangle className="w-5 h-5 text-orange-600 flex-shrink-0 mt-0.5" />
+                <div className="flex-1">
+                  <p className="text-sm font-medium text-orange-900">Discrepancy Detected</p>
+                  <p className="text-xs text-orange-700 mt-1">
+                    Received quantities differ from expected. This will be flagged for review.
+                  </p>
+                  <Button 
+                    type="button" 
+                    variant="outline" 
+                    size="sm" 
+                    onClick={checkDiscrepancies}
+                    className="mt-2 text-xs h-7"
+                  >
+                    Preview Discrepancies
+                  </Button>
+                </div>
+              </div>
+              {discrepancies.length > 0 && (
+                <div className="mt-2 pt-2 border-t border-orange-200 space-y-1">
+                  {discrepancies.map((disc, idx) => (
+                    <div key={idx} className="text-xs text-orange-800">
+                      <span className="font-medium">{disc.product_name}:</span> {disc.description}
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           )}
         </div>

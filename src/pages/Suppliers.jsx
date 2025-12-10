@@ -55,18 +55,20 @@ import SupplierProductsDialog from "@/components/suppliers/SupplierProductsDialo
 import PurchaseOrderDialog from "@/components/suppliers/PurchaseOrderDialog";
 import ReceiveStockDialog from "@/components/suppliers/ReceiveStockDialog";
 import PriceHistoryDialog from "@/components/suppliers/PriceHistoryDialog";
+import ApprovalWorkflowManager from "@/components/suppliers/ApprovalWorkflowManager";
 import { PermissionGate } from "@/components/permissions/PermissionGate";
 import { format } from "date-fns";
 import PrintableFormsDownload from "@/components/finance/PrintableFormsDownload";
 
 const STATUS_CONFIG = {
   draft: { label: 'Draft', color: 'bg-gray-100 text-gray-700', icon: FileText },
-  pending: { label: 'Pending', color: 'bg-yellow-100 text-yellow-700', icon: Clock },
+  pending_approval: { label: 'Pending Approval', color: 'bg-yellow-100 text-yellow-700', icon: Clock },
   approved: { label: 'Approved', color: 'bg-blue-100 text-blue-700', icon: CheckCircle },
   ordered: { label: 'Ordered', color: 'bg-purple-100 text-purple-700', icon: ShoppingCart },
   partial: { label: 'Partial', color: 'bg-orange-100 text-orange-700', icon: AlertCircle },
   received: { label: 'Received', color: 'bg-green-100 text-green-700', icon: CheckCircle },
   cancelled: { label: 'Cancelled', color: 'bg-red-100 text-red-700', icon: Ban },
+  rejected: { label: 'Rejected', color: 'bg-red-100 text-red-700', icon: Ban },
 };
 
 export default function Suppliers() {
@@ -88,6 +90,7 @@ export default function Suppliers() {
   const [showPriceHistory, setShowPriceHistory] = useState(false);
   const [priceHistorySupplier, setPriceHistorySupplier] = useState(null);
   const [showFormsDialog, setShowFormsDialog] = useState(false);
+  const [showWorkflowManager, setShowWorkflowManager] = useState(false);
 
   const { data: user } = useQuery({
     queryKey: ['currentUser'],
@@ -284,6 +287,13 @@ export default function Suppliers() {
               <span className="hidden sm:inline">Price History</span>
               <span className="sm:hidden">Prices</span>
             </Button>
+            <PermissionGate module="settings" action="edit" fallback={null}>
+              <Button variant="outline" size="sm" className="text-xs sm:text-sm" onClick={() => setShowWorkflowManager(true)}>
+                <Shield className="w-4 h-4 sm:mr-2" />
+                <span className="hidden sm:inline">Approval Rules</span>
+                <span className="sm:hidden">Rules</span>
+              </Button>
+            </PermissionGate>
           </div>
         </PageHeader>
 
@@ -375,10 +385,11 @@ export default function Suppliers() {
                 ) : (
                   <>
                     <SelectItem value="draft">Draft</SelectItem>
-                    <SelectItem value="pending">Pending</SelectItem>
+                    <SelectItem value="pending_approval">Pending Approval</SelectItem>
                     <SelectItem value="ordered">Ordered</SelectItem>
                     <SelectItem value="partial">Partial</SelectItem>
                     <SelectItem value="received">Received</SelectItem>
+                    <SelectItem value="cancelled">Cancelled</SelectItem>
                   </>
                 )}
               </SelectContent>
@@ -859,6 +870,13 @@ export default function Suppliers() {
           onOpenChange={setShowFormsDialog}
           organisation={organisation?.[0]}
           filterForms={['expense_supplies', 'expense_general']}
+        />
+
+        {/* Approval Workflow Manager */}
+        <ApprovalWorkflowManager
+          open={showWorkflowManager}
+          onOpenChange={setShowWorkflowManager}
+          orgId={orgId}
         />
       </div>
     </PermissionGate>
