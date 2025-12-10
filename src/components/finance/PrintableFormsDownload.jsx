@@ -159,6 +159,14 @@ const generateFormHTML = (formType, org) => {
         padding: 8px 0.5in;
       }
       
+      .print-footer-content .page-number::before {
+        content: counter(page);
+      }
+      
+      .print-footer-content .total-pages::before {
+        content: counter(pages);
+      }
+      
       .print-footer-stripe {
         height: 6px;
         display: flex;
@@ -1323,7 +1331,7 @@ const generateFormHTML = (formType, org) => {
       
       <div class="print-footer">
         <div class="print-footer-content">
-          <span>Page 1</span>
+          <span>Page <span class="page-number"></span> of <span class="total-pages"></span></span>
           <span>Printed: ${today}</span>
         </div>
         <div class="print-footer-stripe">
