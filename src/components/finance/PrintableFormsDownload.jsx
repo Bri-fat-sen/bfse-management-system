@@ -100,11 +100,7 @@ const generateFormHTML = (formType, org) => {
           margin-bottom: 50px;
         }
         
-        body {
-          counter-reset: page 0;
-        }
-        
-        .page-number::before {
+        .page-number {
           content: counter(page);
         }
       }
@@ -191,6 +187,10 @@ const generateFormHTML = (formType, org) => {
       .print-footer-stripe > div:nth-child(3) {
         flex: 1;
         background: #0072C6;
+      }
+      
+      .page-counter::before {
+        content: "Page " counter(page);
       }
       
       .instructions {
@@ -1335,7 +1335,7 @@ const generateFormHTML = (formType, org) => {
       
       <div class="print-footer">
         <div class="print-footer-content">
-          <span>Page <span class="page-number"></span></span>
+          <span class="page-counter"></span>
           <span>Printed: ${today}</span>
         </div>
         <div class="print-footer-stripe">
@@ -1344,20 +1344,6 @@ const generateFormHTML = (formType, org) => {
           <div></div>
         </div>
       </div>
-      
-      <script>
-        let currentPage = 1;
-        window.addEventListener('beforeprint', () => {
-          currentPage = 1;
-          document.querySelectorAll('.page-number').forEach(el => {
-            el.textContent = currentPage;
-            currentPage++;
-          });
-        });
-        window.addEventListener('afterprint', () => {
-          currentPage = 1;
-        });
-      </script>
       
       <div class="document">
         ${forms[formType] || ''}
