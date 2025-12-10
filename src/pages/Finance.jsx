@@ -773,8 +773,7 @@ export default function Finance() {
           {/* Dashboard Tab */}
           <TabsContent value="dashboard" className="mt-6">
             <div className="space-y-6">
-
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               {/* Revenue & Expenses Trend */}
               <Card className="overflow-hidden relative border-0 shadow-xl">
                 {/* Sierra Leone Pattern Background */}
@@ -985,6 +984,7 @@ export default function Finance() {
                 icon={Receipt}
                 iconColor="text-red-500"
               />
+              </div>
             </div>
           </TabsContent>
 
