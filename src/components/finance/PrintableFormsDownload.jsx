@@ -162,15 +162,11 @@ const generateFormHTML = (formType, org) => {
       
       .print-footer-content {
         display: flex;
-        justify-content: space-between;
+        justify-content: center;
         align-items: center;
         font-size: 10px;
         color: #64748b;
         padding: 8px 0.5in;
-      }
-
-      .page-counter::before {
-        content: "Page " counter(page) " of ${totalPages}";
       }
       
       .print-footer-stripe {
@@ -1349,7 +1345,6 @@ const generateFormHTML = (formType, org) => {
       
       <div class="print-footer">
         <div class="print-footer-content">
-          <span class="page-counter"></span>
           <span>Printed: ${today}</span>
         </div>
         <div class="print-footer-stripe">
