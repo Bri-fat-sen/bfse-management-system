@@ -179,8 +179,17 @@ export default function BatchManagement({ products = [], warehouses = [], vehicl
         await Promise.all(batchMovements.map(sm => base44.entities.StockMovement.delete(sm.id)));
       }
       
-      // Product stock_quantity is automatically correct from location-based StockLevel records
-      // No need to manually adjust product stock when batch is deleted
+      // Recalculate product stock from remaining location totals
+      if (batch?.product_id) {
+        const allProductStockLevels = await base44.entities.StockLevel.filter({
+          organisation_id: orgId,
+          product_id: batch.product_id
+        });
+        const totalProductStock = allProductStockLevels.reduce((sum, sl) => sum + (sl.quantity || 0), 0);
+        await base44.entities.Product.update(batch.product_id, {
+          stock_quantity: totalProductStock
+        });
+      }
       
       // Log audit before deletion
       await logInventoryAudit({

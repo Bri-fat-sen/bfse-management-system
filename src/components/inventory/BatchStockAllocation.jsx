@@ -179,9 +179,17 @@ export default function BatchStockAllocation({
         }
       }
 
-      // Don't update product stock - it was already updated when batches were created
-      // FIFO allocation just distributes existing stock to locations
       const totalAllocatedNow = fifoQuantity - remainingToAllocate;
+
+      // Recalculate product stock from all location totals
+      const allProductStockLevels = await base44.entities.StockLevel.filter({
+        organisation_id: orgId,
+        product_id: product.id
+      });
+      const totalProductStock = allProductStockLevels.reduce((sum, sl) => sum + (sl.quantity || 0), 0);
+      await base44.entities.Product.update(product.id, {
+        stock_quantity: totalProductStock
+      });
 
       await logInventoryAudit({
         orgId,
@@ -266,8 +274,15 @@ export default function BatchStockAllocation({
         });
       }
 
-      // Don't update product stock - it was already updated when batch was created
-      // Stock allocation just distributes existing stock to different locations
+      // Recalculate product stock from all location totals
+      const allProductStockLevels = await base44.entities.StockLevel.filter({
+        organisation_id: orgId,
+        product_id: batch.product_id
+      });
+      const totalProductStock = allProductStockLevels.reduce((sum, sl) => sum + (sl.quantity || 0), 0);
+      await base44.entities.Product.update(batch.product_id, {
+        stock_quantity: totalProductStock
+      });
 
       const newAllocatedQty = (batch.allocated_quantity || 0) + totalAllocated;
       await base44.entities.InventoryBatch.update(batch.id, {
@@ -382,6 +397,16 @@ export default function BatchStockAllocation({
       await base44.entities.InventoryBatch.update(batch.id, {
         allocated_quantity: newAllocatedQty,
         status: newAllocatedQty === 0 ? 'active' : batch.status
+      });
+
+      // Recalculate product stock from all location totals
+      const allProductStockLevels = await base44.entities.StockLevel.filter({
+        organisation_id: orgId,
+        product_id: batch.product_id
+      });
+      const totalProductStock = allProductStockLevels.reduce((sum, sl) => sum + (sl.quantity || 0), 0);
+      await base44.entities.Product.update(batch.product_id, {
+        stock_quantity: totalProductStock
       });
 
       await logInventoryAudit({
