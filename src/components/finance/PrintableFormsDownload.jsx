@@ -79,7 +79,7 @@ const generateFormHTML = (formType, org) => {
         }
         
         @page :first {
-          counter-reset: pageNumber 1;
+          counter-reset: pageNumber 0;
         }
         
         .print-header-first-page {
