@@ -879,6 +879,28 @@ export function calculateFullPayroll({
 }
 
 /**
+ * Check if salary meets minimum wage requirements
+ */
+export function checkMinimumWageCompliance(monthlySalary, salaryType = "monthly", sector = null) {
+  const salary = safeNum(monthlySalary);
+  const minWage = sector && SL_MINIMUM_WAGE.sectors[sector] 
+    ? SL_MINIMUM_WAGE.sectors[sector] 
+    : SL_MINIMUM_WAGE.monthly;
+  
+  const rates = calculateRates(salary, salaryType);
+  const isCompliant = rates.monthlyRate >= minWage;
+  
+  return {
+    isCompliant,
+    monthlySalary: rates.monthlyRate,
+    minimumWage: minWage,
+    difference: rates.monthlyRate - minWage,
+    sector: sector || 'general',
+    warning: !isCompliant ? `Salary below minimum wage of Le ${minWage.toLocaleString()}` : null
+  };
+}
+
+/**
  * Format currency for display - Le (New Leone)
  */
 export function formatSLE(amount) {
