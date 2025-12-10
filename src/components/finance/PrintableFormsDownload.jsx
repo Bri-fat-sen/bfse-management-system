@@ -192,15 +192,11 @@ const generateFormHTML = (formType, org) => {
       }
       
       body {
-        counter-reset: page;
+        counter-reset: pageNum 0;
       }
 
-      @page {
-        counter-increment: page;
-      }
-
-      .page-counter::after {
-        content: counter(page);
+      .print-footer {
+        counter-increment: pageNum;
       }
       
       .total-pages::before {
@@ -1349,9 +1345,14 @@ const generateFormHTML = (formType, org) => {
       
       <div class="print-footer">
         <div class="print-footer-content">
-          <span>Page <span class="page-counter"></span> of ${totalPages}</span>
+          <span class="page-counter"></span>
           <span>Printed: ${today}</span>
         </div>
+        <style>
+          .page-counter::before {
+            content: "Page " counter(pageNum) " of ${totalPages}";
+          }
+        </style>
         <div class="print-footer-stripe">
           <div></div>
           <div></div>
@@ -1399,19 +1400,35 @@ export default function PrintableFormsDownload({ open, onOpenChange, organisatio
       
       iframe.onload = () => {
         setTimeout(() => {
-          // Add print event listeners to update page numbers
           const iframeWindow = iframe.contentWindow;
-          let currentPage = 1;
+          const iframeDoc = iframeWindow.document;
 
-          iframeWindow.addEventListener('beforeprint', () => {
-            const footer = iframeWindow.document.querySelector('.print-footer-content');
-            if (footer) {
-              const pageCounter = footer.querySelector('.page-counter');
-              if (pageCounter) {
-                pageCounter.textContent = `Page ${currentPage}`;
-              }
+          // Calculate actual number of pages based on content height
+          const contentHeight = iframeDoc.body.scrollHeight;
+          const pageHeight = 11 * 96; // Letter size in pixels (11 inches * 96 DPI)
+          const calculatedPages = Math.ceil(contentHeight / pageHeight);
+          const actualPages = Math.max(calculatedPages, ${totalPages});
+
+          // Create page counters for each page
+          const content = iframeDoc.querySelector('.document');
+          if (content) {
+            // Split content into pages and add page numbers
+            for (let i = 1; i <= actualPages; i++) {
+              const pageBreak = iframeDoc.createElement('div');
+              pageBreak.className = 'page-number-marker';
+              pageBreak.setAttribute('data-page', i);
+              pageBreak.style.pageBreakAfter = i < actualPages ? 'always' : 'auto';
+              pageBreak.style.visibility = 'hidden';
+              pageBreak.style.height = '0';
+              content.appendChild(pageBreak);
             }
-          });
+
+            // Update footer with calculated pages
+            const pageCountSpan = iframeDoc.querySelector('.page-counter');
+            if (pageCountSpan) {
+              pageCountSpan.setAttribute('data-total-pages', actualPages);
+            }
+          }
 
           iframeWindow.focus();
           iframeWindow.print();
