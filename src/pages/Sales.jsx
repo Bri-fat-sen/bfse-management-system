@@ -1,7 +1,6 @@
-import { useState, useEffect, useMemo } from "react";
+import React, { useState } from "react";
 import { base44 } from "@/api/base44Client";
 import { safeNumber, safeInt, formatNumber, calculateLineTotal, calculateSaleTotals } from "@/components/utils/calculations";
-import { cn } from "@/lib/utils";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { format } from "date-fns";
 import {
@@ -169,7 +168,7 @@ export default function Sales() {
   ).slice(0, 5);
 
   // Create a map of product stock at selected location
-  const locationStockMap = useMemo(() => {
+  const locationStockMap = React.useMemo(() => {
     const map = {};
     stockLevels.forEach(sl => {
       // Use quantity if available_quantity is 0 or undefined
@@ -188,17 +187,13 @@ export default function Sales() {
         const warehouseLocations = warehouses.filter(w => 
           !w.allowed_sale_types || w.allowed_sale_types.length === 0 || w.allowed_sale_types.includes('warehouse')
         );
-        return warehouseLocations.length > 0 
-          ? warehouseLocations.map(w => ({ id: w.id, name: w.name, type: 'warehouse' }))
-          : [{ id: 'default_warehouse', name: 'Main Warehouse', type: 'warehouse' }];
+        return warehouseLocations.map(w => ({ id: w.id, name: w.name, type: 'warehouse' }));
       case 'retail':
       default:
         const retailLocations = warehouses.filter(w => 
           !w.allowed_sale_types || w.allowed_sale_types.length === 0 || w.allowed_sale_types.includes('retail')
         );
-        return retailLocations.length > 0 
-          ? retailLocations.map(w => ({ id: w.id, name: w.name, type: 'store' }))
-          : [{ id: 'main_store', name: 'Main Store', type: 'store' }];
+        return retailLocations.map(w => ({ id: w.id, name: w.name, type: 'store' }));
     }
   };
 
@@ -206,7 +201,7 @@ export default function Sales() {
   const selectedLocationData = locationOptions.find(l => l.id === selectedLocation);
 
   // Auto-setup sale type and location based on employee role and assigned location
-  useEffect(() => {
+  React.useEffect(() => {
     if (autoSetupDone || !currentEmployee) return;
     
     const role = currentEmployee.role;
@@ -243,7 +238,7 @@ export default function Sales() {
   }, [currentEmployee, autoSetupDone]);
 
   // Auto-select location if only one option available (after initial setup)
-  useEffect(() => {
+  React.useEffect(() => {
     if (!autoSetupDone || !saleType) return;
     
     const options = getLocationOptions();
@@ -254,7 +249,7 @@ export default function Sales() {
   }, [locationOptions, selectedLocation, autoSetupDone, saleType]);
 
   // Reset location and cart when sale type changes (but not on initial setup)
-  useEffect(() => {
+  React.useEffect(() => {
     if (!autoSetupDone || !saleType) return;
     
     const options = getLocationOptions();
@@ -277,7 +272,7 @@ export default function Sales() {
   }, [saleType, warehouses.length, vehicles.length]);
 
   // Clear cart when location changes (stock is location-specific)
-  useEffect(() => {
+  React.useEffect(() => {
     if (cart.length > 0) {
       setCart([]);
     }
@@ -456,29 +451,18 @@ export default function Sales() {
   };
 
   // Filter products and add location-specific stock
-  const filteredProducts = useMemo(() => {
+  const filteredProducts = React.useMemo(() => {
     return (products || [])
       .filter(p => p && (
         p.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
         p.sku?.toLowerCase().includes(searchTerm.toLowerCase())
       ))
       .map(p => {
-        // For default locations (main_store, default_warehouse), use product stock directly
-        const isDefaultLocation = !selectedLocation || selectedLocation.startsWith('main_') || selectedLocation.startsWith('default_');
-        
         // Check if we have a specific stock level for this product at this location
         const locationStock = locationStockMap[p.id];
         
-        // Use location stock if available and not a default location, otherwise fall back to product stock
-        let stockValue;
-        if (isDefaultLocation) {
-          stockValue = p.stock_quantity ?? 0;
-        } else if (locationStock !== undefined && locationStock > 0) {
-          stockValue = locationStock;
-        } else {
-          // If no stock level record but product has stock, use product stock
-          stockValue = p.stock_quantity ?? 0;
-        }
+        // Use location stock if available, otherwise fall back to product stock
+        const stockValue = locationStock !== undefined ? locationStock : (p.stock_quantity ?? 0);
         
         return {
           ...p,
@@ -488,8 +472,7 @@ export default function Sales() {
   }, [products, searchTerm, selectedLocation, locationStockMap]);
 
   const addToCart = (product) => {
-    // For default locations, always allow (no strict location requirement)
-    if (!selectedLocation && locationOptions.length > 1) {
+    if (!selectedLocation) {
       toast.error("Select Location", `Please select a ${saleType === 'vehicle' ? 'vehicle' : saleType === 'warehouse' ? 'warehouse' : 'store'} first.`);
       return;
     }
