@@ -46,6 +46,11 @@ export default function ReceiveStockDialog({
       
       for (const item of receivedItems) {
         if (item.receiving_quantity > 0) {
+          // Skip inventory updates for non-inventory items
+          if (!item.is_inventory_item) {
+            continue;
+          }
+          
           const product = products.find(p => p.id === item.product_id);
           if (product) {
             const previousStock = product.stock_quantity || 0;
@@ -231,20 +236,25 @@ export default function ReceiveStockDialog({
           </div>
 
           <div className="space-y-3">
-            {receivedItems.map((item) => {
+            {receivedItems.map((item, index) => {
               const remaining = item.quantity_ordered - (item.quantity_received || 0);
               const isComplete = remaining === 0;
+              const isNonInventory = !item.is_inventory_item;
               
               return (
-                <Card key={item.product_id} className={isComplete ? 'opacity-50' : ''}>
+                <Card key={index} className={`${isComplete ? 'opacity-50' : ''} ${isNonInventory ? 'border-purple-200 bg-purple-50/30' : ''}`}>
                   <CardContent className="p-4">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-[#1EB053]/20 to-[#0072C6]/20 flex items-center justify-center">
-                          <Package className="w-5 h-5 text-[#0072C6]" />
+                        <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${isNonInventory ? 'bg-purple-100' : 'bg-gradient-to-br from-[#1EB053]/20 to-[#0072C6]/20'}`}>
+                          <Package className={`w-5 h-5 ${isNonInventory ? 'text-purple-600' : 'text-[#0072C6]'}`} />
                         </div>
                         <div>
-                          <p className="font-medium">{item.product_name}</p>
+                          <div className="flex items-center gap-2">
+                            <p className="font-medium">{item.product_name}</p>
+                            {isNonInventory && <Badge className="text-xs bg-purple-100 text-purple-700">Non-Inventory</Badge>}
+                          </div>
+                          {item.description && <p className="text-xs text-gray-500 mt-0.5">{item.description}</p>}
                           <div className="flex items-center gap-2 text-sm text-gray-500">
                             <span>Ordered: {item.quantity_ordered}</span>
                             <span>•</span>
@@ -268,7 +278,15 @@ export default function ReceiveStockDialog({
                             min="0"
                             max={remaining}
                             value={item.receiving_quantity}
-                            onChange={(e) => updateReceivingQty(item.product_id, parseInt(e.target.value) || 0)}
+                            onChange={(e) => {
+                              const newItems = [...receivedItems];
+                              const qty = parseInt(e.target.value) || 0;
+                              newItems[index] = { 
+                                ...newItems[index], 
+                                receiving_quantity: Math.max(0, Math.min(qty, remaining))
+                              };
+                              setReceivedItems(newItems);
+                            }}
                             disabled={isComplete}
                             className="mt-1"
                           />
