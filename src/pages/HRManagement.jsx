@@ -106,6 +106,7 @@ export default function HRManagement() {
 
   const currentEmployee = employeeData?.[0];
   const orgId = currentEmployee?.organisation_id;
+  const isAdmin = ['super_admin', 'org_admin', 'hr_admin', 'payroll_admin'].includes(currentEmployee?.role) || user?.role === 'admin';
 
   const { data: organisation } = useQuery({
     queryKey: ['organisation', orgId],
