@@ -75,7 +75,33 @@ const generateFormHTML = (formType, org) => {
           margin: 1.2in 0.5in 1in 0.5in;
         }
         
+        @page :first {
+          margin-top: 1.2in;
+        }
+        
+        body {
+          counter-reset: page;
+        }
+        
         .print-header {
+          display: block !important;
+          position: fixed;
+          top: 0;
+          left: 0;
+          right: 0;
+          z-index: 9999;
+          background: white;
+        }
+        
+        .document {
+          page-break-after: always;
+        }
+        
+        .document::before {
+          counter-increment: page;
+        }
+        
+        .print-header-first-page {
           display: block !important;
           position: fixed;
           top: 0;
@@ -95,13 +121,16 @@ const generateFormHTML = (formType, org) => {
           background: white;
         }
         
-        .document {
-          margin-top: 0;
-          margin-bottom: 0;
+        .page-number::after {
+          content: counter(page);
         }
       }
       
       .print-header {
+        display: none;
+      }
+      
+      .print-header-first-page {
         display: none;
       }
       
@@ -1309,7 +1338,7 @@ const generateFormHTML = (formType, org) => {
       ${commonStyles}
     </head>
     <body>
-      <div class="print-header">
+      <div class="print-header-first-page">
         <div class="print-header-stripe">
           <div></div>
           <div></div>
@@ -1323,7 +1352,7 @@ const generateFormHTML = (formType, org) => {
       
       <div class="print-footer">
         <div class="print-footer-content">
-          <span>Page 1</span>
+          <span>Page <span class="page-number"></span></span>
           <span>Printed: ${today}</span>
         </div>
         <div class="print-footer-stripe">
