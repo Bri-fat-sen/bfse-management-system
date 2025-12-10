@@ -1,4 +1,4 @@
-import { } from "react";
+import React from "react";
 
 export default function LoadingSpinner({ 
   message = "Loading...", 
@@ -52,65 +52,87 @@ export default function LoadingSpinner({
 
 // Welcome/Initial loading screen with logo
 export function WelcomeLoader({ orgName, orgLogo }) {
+  const [fadeStage, setFadeStage] = React.useState(0);
+  
+  React.useEffect(() => {
+    const timer1 = setTimeout(() => setFadeStage(1), 100);
+    const timer2 = setTimeout(() => setFadeStage(2), 800);
+    return () => {
+      clearTimeout(timer1);
+      clearTimeout(timer2);
+    };
+  }, []);
+
   return (
-    <div className="fixed inset-0 bg-white flex flex-col items-center justify-center z-50">
-      {/* Background subtle pattern */}
-      <div className="absolute inset-0 opacity-[0.02]">
-        <div className="absolute inset-0" style={{
-          backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%231EB053' fill-opacity='1'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`
-        }}></div>
+    <div className="fixed inset-0 bg-gradient-to-br from-[#0F1F3C] via-[#1a3a5e] to-[#0F1F3C] flex flex-col items-center justify-center z-50 overflow-hidden">
+      {/* Animated background particles */}
+      <div className="absolute inset-0 opacity-20">
+        <div className="absolute top-1/4 left-1/4 w-2 h-2 bg-[#1EB053] rounded-full animate-pulse" style={{ animationDuration: '2s' }}></div>
+        <div className="absolute top-1/3 right-1/4 w-3 h-3 bg-[#0072C6] rounded-full animate-pulse" style={{ animationDuration: '3s', animationDelay: '0.5s' }}></div>
+        <div className="absolute bottom-1/3 left-1/3 w-2 h-2 bg-white rounded-full animate-pulse" style={{ animationDuration: '2.5s', animationDelay: '1s' }}></div>
+        <div className="absolute bottom-1/4 right-1/3 w-2 h-2 bg-[#1EB053] rounded-full animate-pulse" style={{ animationDuration: '3.5s' }}></div>
       </div>
 
       <div className="relative z-10 flex flex-col items-center">
-        {/* Logo or Flag */}
-        {orgLogo ? (
-          <div className="w-32 h-32 bg-white rounded-3xl shadow-2xl flex items-center justify-center mb-10 p-4 border border-gray-100">
-            <img src={orgLogo} alt={orgName} className="max-w-full max-h-full object-contain" />
-          </div>
-        ) : (
-          <div className="w-32 h-24 rounded-2xl overflow-hidden shadow-2xl mb-10 border-4 border-gray-100">
-            <div className="h-1/3 bg-[#1EB053]"></div>
-            <div className="h-1/3 bg-white border-y-2 border-gray-200"></div>
-            <div className="h-1/3 bg-[#0072C6]"></div>
-          </div>
-        )}
-
-        {/* Organization Name */}
-        {orgName && (
-          <h1 className="text-3xl md:text-4xl font-bold bg-gradient-to-r from-[#1EB053] via-[#0072C6] to-[#1EB053] bg-clip-text text-transparent mb-3 text-center px-4">
-            {orgName}
-          </h1>
-        )}
-        <p className="text-gray-500 text-base mb-16">Business Management System</p>
-
-        {/* Large Animated Loading Spinner */}
-        <div className="relative mb-12">
-          <div className="w-32 h-32 relative">
-            <div className="absolute inset-0 rounded-full border-8 border-gray-100"></div>
-            <div className="absolute inset-0 rounded-full border-8 border-transparent border-t-[#1EB053] animate-spin"></div>
-            <div 
-              className="absolute inset-3 rounded-full border-8 border-transparent border-t-white animate-spin" 
-              style={{ animationDuration: '1.5s', animationDirection: 'reverse' }}
-            ></div>
-            <div 
-              className="absolute inset-6 rounded-full border-8 border-transparent border-t-[#0072C6] animate-spin" 
-              style={{ animationDuration: '2s' }}
-            ></div>
-            <div className="absolute inset-0 flex items-center justify-center">
-              <div className="text-4xl">🇸🇱</div>
-            </div>
-          </div>
-          
-          {/* Flag colors stripe */}
-          <div className="flex h-2 w-32 rounded-full overflow-hidden mt-6 mx-auto shadow-md">
-            <div className="flex-1 bg-[#1EB053]"></div>
-            <div className="flex-1 bg-white border-y-2 border-gray-200"></div>
-            <div className="flex-1 bg-[#0072C6]"></div>
-          </div>
+        {/* Cinematic Logo Animation */}
+        <div 
+          className="transition-all duration-1000 ease-out"
+          style={{
+            opacity: fadeStage >= 1 ? 1 : 0,
+            transform: fadeStage >= 1 ? 'scale(1) translateY(0)' : 'scale(0.8) translateY(20px)'
+          }}
+        >
+          <img 
+            src="https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/69250a5e2096205358a5c476/564ad3427_file_00000000014871faa409619479a5f0ef.png" 
+            alt="BRI-FAT-SEN Enterprise"
+            className="w-[90vw] max-w-2xl h-auto object-contain drop-shadow-2xl"
+          />
         </div>
 
-        <p className="text-gray-700 font-semibold text-lg">Welcome</p>
-        <p className="text-gray-400 text-sm mt-2">Preparing your dashboard...</p>
+        {/* Loading Animation */}
+        <div 
+          className="mt-12 transition-all duration-700 delay-500"
+          style={{
+            opacity: fadeStage >= 2 ? 1 : 0,
+            transform: fadeStage >= 2 ? 'translateY(0)' : 'translateY(10px)'
+          }}
+        >
+          {/* Spinner */}
+          <div className="relative mb-8">
+            <div className="w-20 h-20 relative mx-auto">
+              <div className="absolute inset-0 rounded-full border-4 border-white/10"></div>
+              <div className="absolute inset-0 rounded-full border-4 border-transparent border-t-[#1EB053] animate-spin"></div>
+              <div 
+                className="absolute inset-2 rounded-full border-4 border-transparent border-t-white animate-spin" 
+                style={{ animationDuration: '1.5s', animationDirection: 'reverse' }}
+              ></div>
+              <div 
+                className="absolute inset-4 rounded-full border-4 border-transparent border-t-[#0072C6] animate-spin" 
+                style={{ animationDuration: '2s' }}
+              ></div>
+            </div>
+          </div>
+
+          {/* Flag Stripe */}
+          <div className="flex h-1.5 w-32 rounded-full overflow-hidden mx-auto shadow-lg">
+            <div className="flex-1 bg-[#1EB053] animate-pulse"></div>
+            <div className="flex-1 bg-white animate-pulse" style={{ animationDelay: '0.2s' }}></div>
+            <div className="flex-1 bg-[#0072C6] animate-pulse" style={{ animationDelay: '0.4s' }}></div>
+          </div>
+
+          {/* Loading Text */}
+          <div className="text-center mt-8">
+            <p className="text-white font-semibold text-lg animate-pulse">Initializing System...</p>
+            <p className="text-white/60 text-sm mt-2">Please wait</p>
+          </div>
+        </div>
+      </div>
+
+      {/* Sierra Leone flag corner accent */}
+      <div className="absolute top-0 right-0 w-32 h-32 opacity-10">
+        <div className="w-full h-1/3 bg-[#1EB053]"></div>
+        <div className="w-full h-1/3 bg-white"></div>
+        <div className="w-full h-1/3 bg-[#0072C6]"></div>
       </div>
     </div>
   );
