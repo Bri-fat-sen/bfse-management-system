@@ -2,14 +2,31 @@ import { Download, Upload, ArrowLeftRight, Package, Trash2 } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import { formatDistanceToNow } from "date-fns";
 import { base44 } from "@/api/base44Client";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/components/ui/Toast";
+import { useState } from "react";
+import ConfirmDialog from "@/components/ui/ConfirmDialog";
 
 export default function StockMovementsList({ movements, products, locations }) {
   const toast = useToast();
   const queryClient = useQueryClient();
+  const [selectedIds, setSelectedIds] = useState([]);
+  const [showBulkDeleteConfirm, setShowBulkDeleteConfirm] = useState(false);
+
+  const toggleSelection = (id) => {
+    setSelectedIds(prev => 
+      prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]
+    );
+  };
+
+  const toggleSelectAll = () => {
+    setSelectedIds(prev => 
+      prev.length === movements.length ? [] : movements.map(m => m.id)
+    );
+  };
 
   const deleteMovementMutation = useMutation({
     mutationFn: (id) => base44.entities.StockMovement.delete(id),
@@ -19,6 +36,21 @@ export default function StockMovementsList({ movements, products, locations }) {
     },
     onError: (error) => {
       toast.error("Delete failed", error.message);
+    }
+  });
+
+  const bulkDeleteMutation = useMutation({
+    mutationFn: async (ids) => {
+      await Promise.all(ids.map(id => base44.entities.StockMovement.delete(id)));
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['stockMovements'] });
+      toast.success("Movements deleted", `${selectedIds.length} movements removed successfully`);
+      setSelectedIds([]);
+      setShowBulkDeleteConfirm(false);
+    },
+    onError: (error) => {
+      toast.error("Bulk delete failed", error.message);
     }
   });
   if (movements.length === 0) {
@@ -54,16 +86,43 @@ export default function StockMovementsList({ movements, products, locations }) {
   return (
     <Card className="border-t-4 border-t-[#1EB053]">
       <CardHeader>
-        <CardTitle>Stock Movements</CardTitle>
+        <div className="flex items-center justify-between">
+          <CardTitle>Stock Movements</CardTitle>
+          {selectedIds.length > 0 && (
+            <Button
+              variant="destructive"
+              size="sm"
+              onClick={() => setShowBulkDeleteConfirm(true)}
+            >
+              <Trash2 className="w-4 h-4 mr-2" />
+              Delete {selectedIds.length} Selected
+            </Button>
+          )}
+        </div>
       </CardHeader>
       <CardContent>
         <div className="space-y-3">
+          {movements.length > 1 && (
+            <div className="flex items-center gap-2 pb-2 border-b">
+              <Checkbox
+                checked={selectedIds.length === movements.length}
+                onCheckedChange={toggleSelectAll}
+              />
+              <span className="text-sm text-gray-600">
+                {selectedIds.length === movements.length ? 'Deselect All' : 'Select All'}
+              </span>
+            </div>
+          )}
           {movements.map((movement) => {
             const Icon = getIcon(movement.movement_type);
             const colorClass = getColor(movement.movement_type);
             
             return (
-              <div key={movement.id} className="flex items-center gap-4 p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
+              <div key={movement.id} className="flex items-center gap-3 p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
+                <Checkbox
+                  checked={selectedIds.includes(movement.id)}
+                  onCheckedChange={() => toggleSelection(movement.id)}
+                />
                 <div className={`w-12 h-12 rounded-xl ${colorClass} flex items-center justify-center flex-shrink-0`}>
                   <Icon className="w-6 h-6" />
                 </div>
@@ -101,6 +160,17 @@ export default function StockMovementsList({ movements, products, locations }) {
           })}
         </div>
       </CardContent>
+
+      <ConfirmDialog
+        open={showBulkDeleteConfirm}
+        onOpenChange={setShowBulkDeleteConfirm}
+        title="Delete Stock Movements"
+        description={`Are you sure you want to delete ${selectedIds.length} stock movement${selectedIds.length > 1 ? 's' : ''}? This action cannot be undone.`}
+        confirmLabel="Delete"
+        variant="danger"
+        onConfirm={() => bulkDeleteMutation.mutate(selectedIds)}
+        isLoading={bulkDeleteMutation.isPending}
+      />
     </Card>
   );
 }
