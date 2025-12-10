@@ -134,24 +134,20 @@ const generateFormHTML = (formType, org) => {
       
       .print-header-content {
         display: flex;
-        justify-content: center;
+        justify-content: space-between;
         align-items: center;
         font-size: 10px;
-        position: relative;
       }
       
       .print-header-title {
         font-weight: 700;
         color: #0F1F3C;
         font-size: 11px;
-        text-align: center;
       }
       
       .print-header-org {
         color: #64748b;
         font-weight: 500;
-        position: absolute;
-        right: 0;
       }
       
       .print-footer-content {
