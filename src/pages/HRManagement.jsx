@@ -90,6 +90,8 @@ export default function HRManagement() {
   const [employeeToDelete, setEmployeeToDelete] = useState(null);
   const [selectedEmployeeIds, setSelectedEmployeeIds] = useState([]);
   const [showBulkDeleteDialog, setShowBulkDeleteDialog] = useState(false);
+  const [showDeletePayrollDialog, setShowDeletePayrollDialog] = useState(false);
+  const [payrollToDelete, setPayrollToDelete] = useState(null);
 
   const { data: user } = useQuery({
     queryKey: ['currentUser'],
@@ -172,6 +174,19 @@ export default function HRManagement() {
     },
     onError: (error) => {
       toast.error("Failed to delete employees", error.message);
+    }
+  });
+
+  const deletePayrollMutation = useMutation({
+    mutationFn: (id) => base44.entities.Payroll.delete(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['payrolls'] });
+      toast.success("Payroll deleted successfully");
+      setShowDeletePayrollDialog(false);
+      setPayrollToDelete(null);
+    },
+    onError: (error) => {
+      toast.error("Failed to delete payroll", error.message);
     }
   });
 
@@ -347,28 +362,48 @@ export default function HRManagement() {
                 ) : (
                   <div className="space-y-3">
                     {payrolls.slice(0, 5).map(payroll => (
-                      <div key={payroll.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                        <div className="flex items-center gap-3">
-                          <Avatar className="w-10 h-10">
+                      <div key={payroll.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors group">
+                        <div className="flex items-center gap-3 flex-1 min-w-0">
+                          <Avatar className="w-10 h-10 flex-shrink-0">
                             <AvatarFallback className="bg-gradient-to-br from-[#1EB053] to-[#0072C6] text-white">
                               {payroll.employee_name?.charAt(0)}
                             </AvatarFallback>
                           </Avatar>
-                          <div>
-                            <p className="font-medium text-sm">{payroll.employee_name}</p>
+                          <div className="min-w-0 flex-1">
+                            <p className="font-medium text-sm truncate">{payroll.employee_name}</p>
                             <p className="text-xs text-gray-500">
                               {format(new Date(payroll.period_start), 'MMM yyyy')}
                             </p>
                           </div>
                         </div>
-                        <div className="text-right">
-                          <p className="font-bold text-[#1EB053]">Le {payroll.net_pay?.toLocaleString()}</p>
-                          <Badge variant={
-                            payroll.status === 'paid' ? 'default' :
-                            payroll.status === 'approved' ? 'secondary' : 'outline'
-                          } className="text-xs">
-                            {payroll.status?.replace('_', ' ')}
-                          </Badge>
+                        <div className="flex items-center gap-2">
+                          <div className="text-right">
+                            <p className="font-bold text-[#1EB053] text-sm">Le {payroll.net_pay?.toLocaleString()}</p>
+                            <Badge variant={
+                              payroll.status === 'paid' ? 'default' :
+                              payroll.status === 'approved' ? 'secondary' : 'outline'
+                            } className="text-[10px]">
+                              {payroll.status?.replace('_', ' ')}
+                            </Badge>
+                          </div>
+                          {isAdmin && (
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                <Button variant="ghost" size="icon" className="h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity">
+                                  <MoreVertical className="w-4 h-4" />
+                                </Button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent align="end">
+                                <DropdownMenuItem onClick={() => {
+                                  setPayrollToDelete(payroll);
+                                  setShowDeletePayrollDialog(true);
+                                }} className="text-red-600">
+                                  <Trash2 className="w-4 h-4 mr-2" />
+                                  Delete
+                                </DropdownMenuItem>
+                              </DropdownMenuContent>
+                            </DropdownMenu>
+                          )}
                         </div>
                       </div>
                     ))}
@@ -664,8 +699,8 @@ export default function HRManagement() {
               ) : (
               <div className="space-y-3">
                 {payrolls.slice(0, 20).map(payroll => (
-                  <div key={payroll.id} className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 p-3 sm:p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
-                    <div className="flex items-center gap-3 sm:gap-4 w-full sm:w-auto">
+                  <div key={payroll.id} className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 p-3 sm:p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors group">
+                    <div className="flex items-center gap-3 sm:gap-4 w-full sm:w-auto flex-1 min-w-0">
                       <Avatar className="w-10 h-10 sm:w-12 sm:h-12 flex-shrink-0">
                         <AvatarFallback className="bg-gradient-to-br from-[#1EB053] to-[#0072C6] text-white text-sm">
                           {payroll.employee_name?.charAt(0)}
@@ -678,7 +713,7 @@ export default function HRManagement() {
                         </p>
                       </div>
                     </div>
-                    <div className="flex items-center gap-3 sm:gap-6 w-full sm:w-auto justify-between sm:justify-end">
+                    <div className="flex items-center gap-2 sm:gap-6 w-full sm:w-auto justify-between sm:justify-end">
                       <div className="text-left sm:text-right">
                         <p className="text-xs text-gray-500">Gross</p>
                         <p className="font-medium text-sm">Le {payroll.gross_pay?.toLocaleString()}</p>
@@ -693,6 +728,24 @@ export default function HRManagement() {
                       } className="text-[10px] sm:text-xs">
                         {payroll.status?.replace('_', ' ')}
                       </Badge>
+                      {isAdmin && (
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" size="icon" className="h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity">
+                              <MoreVertical className="w-4 h-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuItem onClick={() => {
+                              setPayrollToDelete(payroll);
+                              setShowDeletePayrollDialog(true);
+                            }} className="text-red-600">
+                              <Trash2 className="w-4 h-4 mr-2" />
+                              Delete
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      )}
                     </div>
                   </div>
                 ))}
@@ -802,6 +855,17 @@ export default function HRManagement() {
         variant="danger"
         onConfirm={() => bulkDeleteEmployeesMutation.mutate(selectedEmployeeIds)}
         isLoading={bulkDeleteEmployeesMutation.isPending}
+      />
+
+      <ConfirmDialog
+        open={showDeletePayrollDialog}
+        onOpenChange={setShowDeletePayrollDialog}
+        title="Delete Payroll Record"
+        description={`Are you sure you want to delete the payroll for ${payrollToDelete?.employee_name} (${payrollToDelete?.period_start ? format(new Date(payrollToDelete.period_start), 'MMM yyyy') : ''})? This action cannot be undone.`}
+        confirmLabel="Delete"
+        variant="danger"
+        onConfirm={() => deletePayrollMutation.mutate(payrollToDelete.id)}
+        isLoading={deletePayrollMutation.isPending}
       />
     </div>
   );
