@@ -683,22 +683,16 @@ export default function Suppliers() {
                                           </DropdownMenuItem>
                                         )}
                                         {po.status === 'cancelled' && (
-                                          <DropdownMenuItem 
-                                            className="text-red-600"
-                                            onClick={() => {
-                                              if (confirm(`Delete purchase order ${po.po_number}?`)) {
-                                                base44.entities.PurchaseOrder.delete(po.id).then(() => {
-                                                  queryClient.invalidateQueries({ queryKey: ['purchaseOrders', orgId] });
-                                                  toast.success("Purchase order deleted");
-                                                }).catch((error) => {
-                                                  toast.error("Failed to delete", error.message);
-                                                });
-                                              }
-                                            }}
-                                          >
-                                            <Trash2 className="w-4 h-4 mr-2" />
-                                            Delete
-                                          </DropdownMenuItem>
+                                         <DropdownMenuItem 
+                                           className="text-red-600"
+                                           onClick={() => {
+                                             setPOToDelete(po);
+                                             setShowDeletePOConfirm(true);
+                                           }}
+                                         >
+                                           <Trash2 className="w-4 h-4 mr-2" />
+                                           Delete
+                                         </DropdownMenuItem>
                                         )}
                                       </DropdownMenuContent>
                                     </DropdownMenu>
