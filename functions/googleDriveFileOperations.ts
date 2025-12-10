@@ -10,7 +10,7 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { action, fileId, fileName, mimeType, fileData, folderId } = await req.json();
+    const { action, fileId, fileName, mimeType, fileData, folderId, folderName } = await req.json();
     
     // Get Google Drive access token
     const accessToken = await base44.asServiceRole.connectors.getAccessToken('googledrive');
@@ -19,6 +19,97 @@ Deno.serve(async (req) => {
       return Response.json({ 
         error: 'Google Drive not connected. Please authorize Google Drive access first.' 
       }, { status: 401 });
+    }
+
+    if (action === 'createFolder') {
+      // Create a folder in Google Drive
+      const metadata = {
+        name: folderName || 'Business Management Uploads',
+        mimeType: 'application/vnd.google-apps.folder'
+      };
+      
+      const createResponse = await fetch(
+        'https://www.googleapis.com/drive/v3/files',
+        {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${accessToken}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(metadata)
+        }
+      );
+      
+      if (!createResponse.ok) {
+        throw new Error(`Failed to create folder: ${await createResponse.text()}`);
+      }
+      
+      const folder = await createResponse.json();
+      
+      return Response.json({ 
+        folderId: folder.id,
+        folderName: folder.name,
+        webViewLink: `https://drive.google.com/drive/folders/${folder.id}`
+      });
+    }
+
+    if (action === 'findOrCreateFolder') {
+      // Search for existing folder first
+      const searchQuery = `name='${folderName || 'Business Management Uploads'}' and mimeType='application/vnd.google-apps.folder' and trashed=false`;
+      
+      const searchResponse = await fetch(
+        `https://www.googleapis.com/drive/v3/files?q=${encodeURIComponent(searchQuery)}&fields=files(id,name,webViewLink)`,
+        {
+          headers: {
+            'Authorization': `Bearer ${accessToken}`,
+            'Content-Type': 'application/json'
+          }
+        }
+      );
+      
+      if (searchResponse.ok) {
+        const searchData = await searchResponse.json();
+        if (searchData.files && searchData.files.length > 0) {
+          const existingFolder = searchData.files[0];
+          return Response.json({
+            folderId: existingFolder.id,
+            folderName: existingFolder.name,
+            webViewLink: `https://drive.google.com/drive/folders/${existingFolder.id}`,
+            existed: true
+          });
+        }
+      }
+      
+      // If not found, create it
+      const metadata = {
+        name: folderName || 'Business Management Uploads',
+        mimeType: 'application/vnd.google-apps.folder'
+      };
+      
+      const createResponse = await fetch(
+        'https://www.googleapis.com/drive/v3/files',
+        {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${accessToken}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(metadata)
+        }
+      );
+      
+      if (!createResponse.ok) {
+        throw new Error(`Failed to create folder: ${await createResponse.text()}`);
+      }
+      
+      const folder = await createResponse.json();
+      
+      return Response.json({ 
+        folderId: folder.id,
+        folderName: folder.name,
+        webViewLink: `https://drive.google.com/drive/folders/${folder.id}`,
+        existed: false
+      });
     }
 
     if (action === 'list') {
