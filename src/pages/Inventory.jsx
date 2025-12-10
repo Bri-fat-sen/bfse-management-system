@@ -474,6 +474,7 @@ export default function Inventory() {
             products={products}
             warehouses={warehouses}
             vehicles={vehicles}
+            orgId={orgId}
           />
         </TabsContent>
 
