@@ -70,14 +70,21 @@ const generateFormHTML = (formType, org) => {
     <style>
       ${unifiedStyles}
       
+      body {
+        counter-reset: page;
+      }
+      
       @media print {
         @page {
           margin: 1.2in 0.5in 1in 0.5in;
-          counter-increment: page;
         }
         
         @page :first {
           margin-top: 1.2in;
+        }
+        
+        body {
+          counter-reset: page 1;
         }
         
         .print-header-first-page {
@@ -86,19 +93,20 @@ const generateFormHTML = (formType, org) => {
         
         .print-footer {
           display: block !important;
-          position: fixed;
-          bottom: 0;
-          left: 0;
-          right: 0;
-          z-index: 9999;
-          background: white;
+          position: running(footer);
+        }
+        
+        @page {
+          @bottom-center {
+            content: element(footer);
+          }
         }
         
         .document {
           margin-top: 0;
         }
         
-        .page-number::after {
+        .page-number::before {
           content: counter(page);
         }
       }
@@ -1329,7 +1337,7 @@ const generateFormHTML = (formType, org) => {
       
       <div class="print-footer">
         <div class="print-footer-content">
-          <span>Page <span class="page-number"></span></span>
+          <span>Page <span class="page-number"></span> of <span class="total-pages"></span></span>
           <span>Printed: ${today}</span>
         </div>
         <div class="print-footer-stripe">
@@ -1338,6 +1346,15 @@ const generateFormHTML = (formType, org) => {
           <div></div>
         </div>
       </div>
+      
+      <script>
+        window.addEventListener('beforeprint', () => {
+          const totalPages = Math.ceil(document.body.scrollHeight / window.innerHeight);
+          document.querySelectorAll('.total-pages').forEach(el => {
+            el.textContent = totalPages;
+          });
+        });
+      </script>
       
       <div class="document">
         ${forms[formType] || ''}
