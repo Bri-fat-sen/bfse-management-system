@@ -105,19 +105,29 @@ export default function PurchaseOrderDialog({
     }
   });
 
-  const addItem = () => {
-    setItems([...items, { product_id: "", product_name: "", quantity_ordered: 1, quantity_received: 0, unit_cost: 0, total: 0 }]);
+  const addItem = (isInventory = true) => {
+    setItems([...items, { 
+      product_id: "", 
+      product_name: "", 
+      is_inventory_item: isInventory,
+      description: "",
+      quantity_ordered: 1, 
+      quantity_received: 0, 
+      unit_cost: 0, 
+      total: 0 
+    }]);
   };
 
   const updateItem = (index, field, value) => {
     const newItems = [...items];
     newItems[index][field] = value;
     
-    if (field === 'product_id') {
+    if (field === 'product_id' && value) {
       const product = products.find(p => p.id === value);
       const supplierProduct = supplierProducts.find(sp => sp.product_id === value);
       newItems[index].product_name = product?.name || "";
       newItems[index].unit_cost = supplierProduct?.unit_cost || product?.cost_price || 0;
+      newItems[index].is_inventory_item = true;
     }
     
     if (field === 'quantity_ordered' || field === 'unit_cost') {
@@ -150,7 +160,7 @@ export default function PurchaseOrderDialog({
       warehouse_name: warehouse?.name || 'Main',
       order_date: formData.get('order_date'),
       expected_delivery_date: formData.get('expected_delivery_date'),
-      items: items.filter(item => item.product_id),
+      items: items.filter(item => item.is_inventory_item ? item.product_id : item.product_name),
       subtotal: subtotal,
       tax_amount: parseFloat(taxAmount) || 0,
       shipping_cost: parseFloat(shippingCost) || 0,
@@ -232,9 +242,14 @@ export default function PurchaseOrderDialog({
             <div>
               <div className="flex items-center justify-between mb-2">
                 <Label className="font-medium">Order Items *</Label>
-                <Button type="button" onClick={addItem} size="sm" variant="outline">
-                  <Plus className="w-4 h-4 mr-1" />Add
-                </Button>
+                <div className="flex gap-2">
+                  <Button type="button" onClick={() => addItem(true)} size="sm" variant="outline" className="text-xs">
+                    <Plus className="w-4 h-4 mr-1" />Inventory
+                  </Button>
+                  <Button type="button" onClick={() => addItem(false)} size="sm" variant="outline" className="text-xs text-purple-600 border-purple-300 hover:bg-purple-50">
+                    <Plus className="w-4 h-4 mr-1" />Other
+                  </Button>
+                </div>
               </div>
               {items.length === 0 ? (
                 <div className="text-center py-8 bg-gray-50 rounded-lg border-2 border-dashed border-gray-200">
@@ -244,21 +259,33 @@ export default function PurchaseOrderDialog({
               ) : (
                 <div className="space-y-2">
                   {items.map((item, index) => (
-                    <div key={index} className="p-3 bg-gray-50 rounded-lg border">
+                    <div key={index} className={`p-3 rounded-lg border ${item.is_inventory_item ? 'bg-gray-50' : 'bg-purple-50 border-purple-200'}`}>
                       <div className="grid grid-cols-12 gap-2 items-end">
-                        <div className="col-span-6">
-                          <Label className="text-xs">Product</Label>
-                          <Select value={item.product_id} onValueChange={(val) => updateItem(index, 'product_id', val)}>
-                            <SelectTrigger className="mt-1 bg-white text-xs h-9">
-                              <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent>
-                              {products.map(p => (
-                                <SelectItem key={p.id} value={p.id} className="text-xs">{p.name}</SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                        </div>
+                        {item.is_inventory_item ? (
+                          <div className="col-span-6">
+                            <Label className="text-xs">Product</Label>
+                            <Select value={item.product_id} onValueChange={(val) => updateItem(index, 'product_id', val)}>
+                              <SelectTrigger className="mt-1 bg-white text-xs h-9">
+                                <SelectValue placeholder="Select product" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {products.map(p => (
+                                  <SelectItem key={p.id} value={p.id} className="text-xs">{p.name}</SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          </div>
+                        ) : (
+                          <div className="col-span-6">
+                            <Label className="text-xs text-purple-700">Item Name</Label>
+                            <Input 
+                              placeholder="e.g. Office supplies, Service" 
+                              value={item.product_name} 
+                              onChange={(e) => updateItem(index, 'product_name', e.target.value)} 
+                              className="mt-1 bg-white text-xs h-9 border-purple-200" 
+                            />
+                          </div>
+                        )}
                         <div className="col-span-2">
                           <Label className="text-xs">Qty</Label>
                           <Input type="number" min="1" value={item.quantity_ordered} onChange={(e) => updateItem(index, 'quantity_ordered', parseInt(e.target.value) || 0)} className="mt-1 bg-white text-xs h-9" />
@@ -273,6 +300,16 @@ export default function PurchaseOrderDialog({
                           </Button>
                         </div>
                       </div>
+                      {!item.is_inventory_item && (
+                        <div className="mt-2">
+                          <Input 
+                            placeholder="Description (optional)" 
+                            value={item.description || ""} 
+                            onChange={(e) => updateItem(index, 'description', e.target.value)} 
+                            className="text-xs h-8 bg-white border-purple-200" 
+                          />
+                        </div>
+                      )}
                     </div>
                   ))}
                 </div>
