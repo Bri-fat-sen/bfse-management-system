@@ -380,7 +380,7 @@ export default function Layout({ children, currentPageName }) {
                 <img 
                   src={currentOrg.logo_url} 
                   alt={currentOrg.name} 
-                  className="w-10 h-10 object-contain flex-shrink-0"
+                  className="max-h-10 max-w-[120px] object-contain flex-shrink-0"
                 />
               )}
               <p className="font-bold text-base text-white leading-tight line-clamp-2 min-w-0">{currentOrg?.name || 'Loading...'}</p>
@@ -390,7 +390,7 @@ export default function Layout({ children, currentPageName }) {
               <img 
                 src={currentOrg.logo_url} 
                 alt={currentOrg.name} 
-                className="w-10 h-10 object-contain mx-auto"
+                className="max-h-10 max-w-[60px] object-contain mx-auto"
               />
             ) : (
               <p className="font-bold text-xs text-white text-center">{currentOrg?.name?.charAt(0) || '?'}</p>
