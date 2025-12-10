@@ -75,22 +75,23 @@ const generateFormHTML = (formType, org) => {
       @media print {
         @page :first {
           counter-reset: pageNumber 1;
+          margin-top: 1.2in;
         }
-        
+
         @page {
           margin: 0.5in;
         }
-        
+
         .print-header-first-page {
           display: block !important;
-          position: fixed;
+          position: absolute;
           top: 0;
           left: 0;
           right: 0;
           background: white;
           z-index: 9999;
         }
-        
+
         .print-footer {
           display: block !important;
           position: fixed;
@@ -100,9 +101,8 @@ const generateFormHTML = (formType, org) => {
           background: white;
           z-index: 9999;
         }
-        
+
         .document {
-          margin-top: 60px;
           margin-bottom: 50px;
         }
       }
