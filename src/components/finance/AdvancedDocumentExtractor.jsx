@@ -1130,32 +1130,24 @@ Be thorough and accurate.`,
                     </label>
                   </div>
 
-                  <button
-                    onClick={() => loadDriveFiles()}
-                    disabled={uploadLoading || driveLoading}
-                    className="border-2 border-dashed border-gray-300 rounded-xl p-8 text-center hover:border-[#0072C6] transition-colors disabled:opacity-50"
-                  >
+                  <div className="border-2 border-dashed border-gray-200 rounded-xl p-8 text-center bg-gray-50 opacity-60">
                     <div className="flex flex-col items-center gap-3">
-                      <div className="w-16 h-16 rounded-full bg-gradient-to-br from-blue-100 to-blue-200 flex items-center justify-center">
-                        {driveLoading ? (
-                          <Loader2 className="w-8 h-8 text-blue-600 animate-spin" />
-                        ) : (
-                          <Cloud className="w-8 h-8 text-blue-600" />
-                        )}
+                      <div className="w-16 h-16 rounded-full bg-gray-200 flex items-center justify-center">
+                        <Cloud className="w-8 h-8 text-gray-400" />
                       </div>
                       <div>
-                        <p className="text-base font-semibold text-gray-700 mb-1">
-                          Import from Google Drive
+                        <p className="text-base font-semibold text-gray-500 mb-1">
+                          Google Drive (Unavailable)
                         </p>
-                        <p className="text-xs text-gray-500">
-                          Select files from your Drive
+                        <p className="text-xs text-gray-400">
+                          Requires app verification by Google
                         </p>
-                        <p className="text-xs text-blue-600 mt-1 font-medium">
-                          ☁️ Cloud storage integration
+                        <p className="text-xs text-gray-500 mt-1">
+                          Use local upload instead
                         </p>
                       </div>
                     </div>
-                  </button>
+                  </div>
                 </div>
 
                 <div className="text-center">
