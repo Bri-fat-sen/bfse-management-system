@@ -1,4 +1,5 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.4';
+import { jsPDF } from 'npm:jspdf@2.5.1';
 
 Deno.serve(async (req) => {
   try {
@@ -27,6 +28,199 @@ Deno.serve(async (req) => {
 
     const orgs = await base44.asServiceRole.entities.Organisation.filter({ id: po.organisation_id });
     const org = orgs[0];
+
+    // Generate PDF
+    const doc = new jsPDF();
+    const pageWidth = doc.internal.pageSize.getWidth();
+    let yPos = 15;
+
+    // Sierra Leone flag stripe at top
+    doc.setFillColor(30, 176, 83); // Green
+    doc.rect(0, 0, pageWidth / 3, 8, 'F');
+    doc.setFillColor(255, 255, 255); // White
+    doc.rect(pageWidth / 3, 0, pageWidth / 3, 8, 'F');
+    doc.setFillColor(0, 114, 198); // Blue
+    doc.rect((pageWidth / 3) * 2, 0, pageWidth / 3, 8, 'F');
+
+    yPos = 20;
+
+    // Header with gradient effect
+    doc.setFillColor(30, 176, 83);
+    doc.rect(0, yPos, pageWidth, 40, 'F');
+    
+    doc.setTextColor(255, 255, 255);
+    doc.setFontSize(24);
+    doc.setFont(undefined, 'bold');
+    doc.text('PURCHASE ORDER', pageWidth / 2, yPos + 15, { align: 'center' });
+    doc.setFontSize(16);
+    doc.text(`#${po.po_number}`, pageWidth / 2, yPos + 28, { align: 'center' });
+
+    yPos = 70;
+
+    // Company Info Box
+    doc.setDrawColor(30, 176, 83);
+    doc.setLineWidth(0.5);
+    doc.setFillColor(248, 250, 252);
+    doc.roundedRect(15, yPos, 85, 35, 3, 3, 'FD');
+    
+    doc.setTextColor(15, 31, 60);
+    doc.setFontSize(10);
+    doc.setFont(undefined, 'bold');
+    doc.text('FROM:', 20, yPos + 8);
+    doc.setFont(undefined, 'normal');
+    doc.setFontSize(9);
+    doc.text(org?.name || 'N/A', 20, yPos + 14);
+    if (org?.address) doc.text(org.address, 20, yPos + 20, { maxWidth: 75 });
+    if (org?.phone) doc.text(`Tel: ${org.phone}`, 20, yPos + 26);
+    if (org?.email) doc.text(`Email: ${org.email}`, 20, yPos + 32);
+
+    // Supplier Info Box
+    doc.setDrawColor(0, 114, 198);
+    doc.setFillColor(248, 250, 252);
+    doc.roundedRect(110, yPos, 85, 35, 3, 3, 'FD');
+    
+    doc.setTextColor(15, 31, 60);
+    doc.setFontSize(10);
+    doc.setFont(undefined, 'bold');
+    doc.text('TO:', 115, yPos + 8);
+    doc.setFont(undefined, 'normal');
+    doc.setFontSize(9);
+    doc.text(supplier.name, 115, yPos + 14);
+    if (supplier.contact_person) doc.text(supplier.contact_person, 115, yPos + 20);
+    if (supplier.phone) doc.text(`Tel: ${supplier.phone}`, 115, yPos + 26);
+    if (supplier.email) doc.text(`Email: ${supplier.email}`, 115, yPos + 32);
+
+    yPos = 115;
+
+    // Order Details
+    doc.setFillColor(243, 244, 246);
+    doc.rect(15, yPos, pageWidth - 30, 20, 'F');
+    doc.setDrawColor(229, 231, 235);
+    doc.rect(15, yPos, pageWidth - 30, 20);
+
+    doc.setTextColor(107, 114, 128);
+    doc.setFontSize(8);
+    doc.text('ORDER DATE:', 20, yPos + 7);
+    doc.text('EXPECTED DELIVERY:', 75, yPos + 7);
+    doc.text('DELIVERY TO:', 140, yPos + 7);
+
+    doc.setTextColor(15, 31, 60);
+    doc.setFont(undefined, 'bold');
+    doc.setFontSize(9);
+    doc.text(po.order_date || 'N/A', 20, yPos + 14);
+    doc.text(po.expected_delivery_date || 'TBD', 75, yPos + 14);
+    doc.text(po.warehouse_name || 'N/A', 140, yPos + 14);
+
+    yPos = 145;
+
+    // Items Table Header
+    doc.setFillColor(30, 176, 83);
+    doc.rect(15, yPos, pageWidth - 30, 10, 'F');
+    
+    doc.setTextColor(255, 255, 255);
+    doc.setFontSize(9);
+    doc.setFont(undefined, 'bold');
+    doc.text('ITEM', 20, yPos + 7);
+    doc.text('QTY', 110, yPos + 7);
+    doc.text('UNIT COST', 135, yPos + 7);
+    doc.text('TOTAL', 170, yPos + 7, { align: 'right' });
+
+    yPos += 10;
+
+    // Items
+    doc.setFont(undefined, 'normal');
+    doc.setTextColor(31, 41, 55);
+    doc.setFontSize(8);
+
+    po.items.forEach((item, idx) => {
+      if (yPos > 250) {
+        doc.addPage();
+        yPos = 20;
+      }
+
+      const bgColor = idx % 2 === 0 ? [255, 255, 255] : [249, 250, 251];
+      doc.setFillColor(...bgColor);
+      doc.rect(15, yPos, pageWidth - 30, 12, 'F');
+      doc.setDrawColor(229, 231, 235);
+      doc.line(15, yPos + 12, pageWidth - 15, yPos + 12);
+
+      doc.text(item.product_name, 20, yPos + 8, { maxWidth: 85 });
+      doc.text(`${item.quantity_ordered} ${item.unit || 'pcs'}`, 110, yPos + 8);
+      doc.text(`Le ${item.unit_cost?.toLocaleString() || 0}`, 135, yPos + 8);
+      doc.setFont(undefined, 'bold');
+      doc.text(`Le ${item.total?.toLocaleString() || 0}`, 195, yPos + 8, { align: 'right' });
+      doc.setFont(undefined, 'normal');
+
+      yPos += 12;
+    });
+
+    yPos += 5;
+
+    // Totals Section
+    doc.setDrawColor(30, 176, 83);
+    doc.setLineWidth(2);
+    doc.line(125, yPos, pageWidth - 15, yPos);
+    yPos += 8;
+
+    doc.setFontSize(9);
+    doc.setTextColor(107, 114, 128);
+    doc.text('Subtotal:', 130, yPos);
+    doc.setTextColor(15, 31, 60);
+    doc.text(`Le ${po.subtotal?.toLocaleString() || 0}`, 195, yPos, { align: 'right' });
+    yPos += 7;
+
+    if (po.shipping_cost > 0) {
+      doc.setTextColor(107, 114, 128);
+      doc.text('Shipping:', 130, yPos);
+      doc.setTextColor(15, 31, 60);
+      doc.text(`Le ${po.shipping_cost?.toLocaleString()}`, 195, yPos, { align: 'right' });
+      yPos += 7;
+    }
+
+    if (po.tax_amount > 0) {
+      doc.setTextColor(107, 114, 128);
+      doc.text('Tax:', 130, yPos);
+      doc.setTextColor(15, 31, 60);
+      doc.text(`Le ${po.tax_amount?.toLocaleString()}`, 195, yPos, { align: 'right' });
+      yPos += 7;
+    }
+
+    doc.setDrawColor(30, 176, 83);
+    doc.setLineWidth(1);
+    doc.line(125, yPos, pageWidth - 15, yPos);
+    yPos += 8;
+
+    doc.setFontSize(11);
+    doc.setFont(undefined, 'bold');
+    doc.setTextColor(30, 176, 83);
+    doc.text('TOTAL AMOUNT:', 130, yPos);
+    doc.setFontSize(13);
+    doc.text(`Le ${po.total_amount?.toLocaleString() || 0}`, 195, yPos, { align: 'right' });
+
+    // Notes
+    if (po.notes) {
+      yPos += 15;
+      doc.setFillColor(254, 243, 199);
+      doc.setDrawColor(245, 158, 11);
+      doc.roundedRect(15, yPos, pageWidth - 30, 20, 2, 2, 'FD');
+      doc.setFontSize(8);
+      doc.setFont(undefined, 'bold');
+      doc.setTextColor(146, 64, 14);
+      doc.text('NOTES:', 20, yPos + 6);
+      doc.setFont(undefined, 'normal');
+      doc.text(po.notes, 20, yPos + 12, { maxWidth: pageWidth - 40 });
+    }
+
+    // Footer stripe
+    const footerY = doc.internal.pageSize.getHeight() - 8;
+    doc.setFillColor(30, 176, 83);
+    doc.rect(0, footerY, pageWidth / 3, 8, 'F');
+    doc.setFillColor(255, 255, 255);
+    doc.rect(pageWidth / 3, footerY, pageWidth / 3, 8, 'F');
+    doc.setFillColor(0, 114, 198);
+    doc.rect((pageWidth / 3) * 2, footerY, pageWidth / 3, 8, 'F');
+
+    const pdfBase64 = doc.output('datauristring').split(',')[1];
 
     const itemsHtml = po.items.map(item => `
       <tr>
@@ -170,7 +364,13 @@ Deno.serve(async (req) => {
           name: supplier.name
         }],
         subject: `Purchase Order #${po.po_number} from ${org?.name || 'Your Company'}`,
-        html: htmlContent
+        html: htmlContent,
+        attachments: [{
+          content: pdfBase64,
+          filename: `PO-${po.po_number}.pdf`,
+          type: 'application/pdf',
+          disposition: 'attachment'
+        }]
       })
     });
 
