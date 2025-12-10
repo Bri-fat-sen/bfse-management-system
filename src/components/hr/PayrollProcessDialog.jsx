@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { base44 } from "@/api/base44Client";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { format, startOfMonth, endOfMonth, subMonths, differenceInDays } from "date-fns";
@@ -213,23 +213,25 @@ export default function PayrollProcessDialog({
     mutationFn: async (data) => {
       const payroll = await base44.entities.Payroll.create(data);
       
-      // Create audit log
-      await base44.entities.PayrollAudit.create({
-        organisation_id: orgId,
-        payroll_id: payroll.id,
-        employee_id: data.employee_id,
-        employee_name: data.employee_name,
-        action: 'created',
-        changed_by_id: currentEmployee?.id,
-        changed_by_name: currentEmployee?.full_name,
-        new_values: {
-          gross_pay: data.gross_pay,
-          net_pay: data.net_pay,
-          total_deductions: data.total_deductions,
-          period: `${data.period_start} to ${data.period_end}`
-        },
-        reason: 'Individual payroll processing'
-      });
+      // Create audit log only if we have currentEmployee
+      if (currentEmployee?.id) {
+        await base44.entities.PayrollAudit.create({
+          organisation_id: orgId,
+          payroll_id: payroll.id,
+          employee_id: data.employee_id,
+          employee_name: data.employee_name,
+          action: 'created',
+          changed_by_id: currentEmployee.id,
+          changed_by_name: currentEmployee.full_name,
+          new_values: {
+            gross_pay: data.gross_pay,
+            net_pay: data.net_pay,
+            total_deductions: data.total_deductions,
+            period: `${data.period_start} to ${data.period_end}`
+          },
+          reason: 'Individual payroll processing'
+        });
+      }
       
       return payroll;
     },
