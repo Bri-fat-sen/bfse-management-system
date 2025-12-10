@@ -1078,26 +1078,26 @@ IMPORTANT FOR BATCH ENTRY FORMS:
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-5xl max-h-[95vh] overflow-hidden p-0 w-[98vw] [&>button]:hidden">
+      <DialogContent className="max-w-5xl max-h-[95vh] overflow-hidden p-0 w-[95vw] sm:w-[98vw] [&>button]:hidden">
         <div className="h-2 flex">
           <div className="flex-1 bg-[#1EB053]" />
           <div className="flex-1 bg-white" />
           <div className="flex-1 bg-[#0072C6]" />
         </div>
 
-        <div className="px-6 py-4 bg-gradient-to-r from-[#1EB053] to-[#0072C6] text-white">
-          <div className="flex items-center gap-3">
-            <div className="w-12 h-12 rounded-xl bg-white/20 flex items-center justify-center">
-              <FileUp className="w-6 h-6 text-white" />
+        <div className="px-3 sm:px-6 py-3 sm:py-4 bg-gradient-to-r from-[#1EB053] to-[#0072C6] text-white">
+          <div className="flex items-center gap-2 sm:gap-3">
+            <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-white/20 flex items-center justify-center flex-shrink-0">
+              <FileUp className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
             </div>
-            <div className="flex-1">
-              <h2 className="text-xl font-bold">Import {isProduction ? 'Production Batches' : isRevenue ? 'Revenue/Sales' : 'Expenses'} from Document</h2>
-              <p className="text-white/80 text-sm">Upload PDF, CSV, or images to extract {isProduction ? 'production batch' : isRevenue ? 'revenue' : 'expense'} data</p>
+            <div className="flex-1 min-w-0">
+              <h2 className="text-base sm:text-xl font-bold truncate">Import {isProduction ? 'Production Batches' : isRevenue ? 'Revenue/Sales' : 'Expenses'} from Document</h2>
+              <p className="text-white/80 text-xs sm:text-sm truncate">Upload PDF, CSV, or images to extract {isProduction ? 'production batch' : isRevenue ? 'revenue' : 'expense'} data</p>
             </div>
           </div>
         </div>
 
-        <div className="p-6 space-y-4 overflow-y-auto max-h-[calc(95vh-140px)]">
+        <div className="p-3 sm:p-6 space-y-4 overflow-y-auto max-h-[calc(95vh-140px)]">
           {/* Location & Sale Type Selection for Revenue/Sales */}
           {(detectedType === 'revenue' || isRevenue) && (
             <div className="p-4 bg-blue-50 rounded-xl border border-blue-200">
@@ -1275,8 +1275,8 @@ IMPORTANT FOR BATCH ENTRY FORMS:
                 </div>
               )}
 
-              <div className="h-[calc(95vh-380px)] min-h-[300px] border rounded-lg overflow-x-auto overflow-y-auto">
-                <Table className={isProduction ? "min-w-[1200px]" : isRevenue ? "min-w-[900px]" : "min-w-[1600px]"}>
+              <div className="h-[calc(95vh-380px)] min-h-[300px] border rounded-lg overflow-x-auto overflow-y-auto -mx-3 sm:mx-0">
+                <Table className={isProduction ? "min-w-[800px] sm:min-w-[1200px]" : isRevenue ? "min-w-[600px] sm:min-w-[900px]" : "min-w-[1000px] sm:min-w-[1600px]"}>
                     <TableHeader>
                       <TableRow className="bg-gray-50">
                         <TableHead className="w-10">
@@ -1608,26 +1608,26 @@ IMPORTANT FOR BATCH ENTRY FORMS:
                     </Table>
                     </div>
 
-              <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 p-3 sm:p-4 bg-gray-50 rounded-lg">
                 <div>
-                  <p className="font-medium">
+                  <p className="font-medium text-sm sm:text-base">
                     {extractedData.filter(e => e.selected).length} item(s) selected
                   </p>
-                  <p className="text-sm text-gray-500">
+                  <p className="text-xs sm:text-sm text-gray-500">
                     Total: Le {extractedData.filter(e => e.selected).reduce((sum, e) => sum + (e.amount || 0), 0).toLocaleString()}
                   </p>
                 </div>
                 <Button
                   onClick={handleCreateRecords}
                   disabled={uploadLoading || extractedData.filter(e => e.selected).length === 0}
-                  className="bg-gradient-to-r from-[#1EB053] to-[#0072C6]"
+                  className="bg-gradient-to-r from-[#1EB053] to-[#0072C6] w-full sm:w-auto"
                 >
                   {uploadLoading ? (
                     <Loader2 className="w-4 h-4 mr-2 animate-spin" />
                   ) : (
                     <CheckCircle className="w-4 h-4 mr-2" />
                   )}
-                  Create {extractedData.filter(e => e.selected).length} {RECORD_TYPES.find(r => r.value === detectedType)?.label || 'Record'}(s)
+                  <span className="text-sm">Create {extractedData.filter(e => e.selected).length} {RECORD_TYPES.find(r => r.value === detectedType)?.label || 'Record'}(s)</span>
                 </Button>
               </div>
             </div>
