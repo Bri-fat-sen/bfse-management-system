@@ -35,25 +35,25 @@ import { getUnifiedPDFStyles, getUnifiedHeader, getUnifiedFooter } from "@/compo
 
 const FORM_TEMPLATES = [
   // EXPENSE FORMS
-  { id: 'expense_fuel', name: 'Fuel Expense Form', description: 'Track vehicle fuel purchases', icon: Fuel, color: 'bg-orange-100 text-orange-600', category: 'expense' },
-  { id: 'expense_maintenance', name: 'Maintenance Expense Form', description: 'Vehicle or equipment repairs', icon: Wrench, color: 'bg-yellow-100 text-yellow-600', category: 'expense' },
-  { id: 'expense_utilities', name: 'Utilities Expense Form', description: 'Electricity, water, internet bills', icon: Zap, color: 'bg-sky-100 text-sky-600', category: 'expense' },
-  { id: 'expense_supplies', name: 'Supplies Expense Form', description: 'Office and operational supplies', icon: Package, color: 'bg-blue-100 text-blue-600', category: 'expense' },
-  { id: 'expense_rent', name: 'Rent Expense Form', description: 'Office, warehouse, parking rent', icon: Home, color: 'bg-purple-100 text-purple-600', category: 'expense' },
-  { id: 'expense_salaries', name: 'Salary/Wages Form', description: 'Employee payment records', icon: Users, color: 'bg-indigo-100 text-indigo-600', category: 'expense' },
-  { id: 'expense_transport', name: 'Transport Expense Form', description: 'Travel and transport costs', icon: Bus, color: 'bg-teal-100 text-teal-600', category: 'expense' },
-  { id: 'expense_marketing', name: 'Marketing Expense Form', description: 'Advertising and promotions', icon: Megaphone, color: 'bg-pink-100 text-pink-600', category: 'expense' },
-  { id: 'expense_insurance', name: 'Insurance Expense Form', description: 'Vehicle and business insurance', icon: Shield, color: 'bg-emerald-100 text-emerald-600', category: 'expense' },
-  { id: 'expense_petty_cash', name: 'Petty Cash Form', description: 'Small daily expenses', icon: Coins, color: 'bg-amber-100 text-amber-600', category: 'expense' },
-  { id: 'expense_truck_contract', name: 'Truck Contract Expense Form', description: 'Fuel, tolls, loading, accommodation', icon: Truck, color: 'bg-slate-100 text-slate-600', category: 'expense' },
-  { id: 'expense_general', name: 'General Expense Form', description: 'Other miscellaneous expenses', icon: Receipt, color: 'bg-gray-100 text-gray-600', category: 'expense' },
+  { id: 'expense_fuel', name: 'Fuel Expense Form', description: 'Track vehicle fuel purchases', icon: Fuel, color: 'bg-orange-100 text-orange-600', category: 'expense', pages: 1 },
+  { id: 'expense_maintenance', name: 'Maintenance Expense Form', description: 'Vehicle or equipment repairs', icon: Wrench, color: 'bg-yellow-100 text-yellow-600', category: 'expense', pages: 2 },
+  { id: 'expense_utilities', name: 'Utilities Expense Form', description: 'Electricity, water, internet bills', icon: Zap, color: 'bg-sky-100 text-sky-600', category: 'expense', pages: 1 },
+  { id: 'expense_supplies', name: 'Supplies Expense Form', description: 'Office and operational supplies', icon: Package, color: 'bg-blue-100 text-blue-600', category: 'expense', pages: 2 },
+  { id: 'expense_rent', name: 'Rent Expense Form', description: 'Office, warehouse, parking rent', icon: Home, color: 'bg-purple-100 text-purple-600', category: 'expense', pages: 1 },
+  { id: 'expense_salaries', name: 'Salary/Wages Form', description: 'Employee payment records', icon: Users, color: 'bg-indigo-100 text-indigo-600', category: 'expense', pages: 2 },
+  { id: 'expense_transport', name: 'Transport Expense Form', description: 'Travel and transport costs', icon: Bus, color: 'bg-teal-100 text-teal-600', category: 'expense', pages: 2 },
+  { id: 'expense_marketing', name: 'Marketing Expense Form', description: 'Advertising and promotions', icon: Megaphone, color: 'bg-pink-100 text-pink-600', category: 'expense', pages: 1 },
+  { id: 'expense_insurance', name: 'Insurance Expense Form', description: 'Vehicle and business insurance', icon: Shield, color: 'bg-emerald-100 text-emerald-600', category: 'expense', pages: 1 },
+  { id: 'expense_petty_cash', name: 'Petty Cash Form', description: 'Small daily expenses', icon: Coins, color: 'bg-amber-100 text-amber-600', category: 'expense', pages: 2 },
+  { id: 'expense_truck_contract', name: 'Truck Contract Expense Form', description: 'Fuel, tolls, loading, accommodation', icon: Truck, color: 'bg-slate-100 text-slate-600', category: 'expense', pages: 1 },
+  { id: 'expense_general', name: 'General Expense Form', description: 'Other miscellaneous expenses', icon: Receipt, color: 'bg-gray-100 text-gray-600', category: 'expense', pages: 2 },
   // REVENUE FORMS
-  { id: 'revenue_retail_sales', name: 'Retail Sales Form', description: 'Direct customer sales', icon: ShoppingCart, color: 'bg-green-100 text-green-600', category: 'revenue' },
-  { id: 'revenue_warehouse_sales', name: 'Warehouse/Wholesale Sales Form', description: 'Bulk and wholesale sales', icon: Package, color: 'bg-lime-100 text-lime-600', category: 'revenue' },
-  { id: 'revenue_vehicle_sales', name: 'Vehicle Sales Form', description: 'Mobile vehicle sales', icon: Truck, color: 'bg-cyan-100 text-cyan-600', category: 'revenue' },
-  { id: 'revenue_trip', name: 'Trip Revenue Form', description: 'Passenger trips and ticket sales', icon: MapPin, color: 'bg-violet-100 text-violet-600', category: 'revenue' },
-  { id: 'revenue_truck_contract', name: 'Truck Contract Revenue Form', description: 'Cargo hauling contracts', icon: FileCheck, color: 'bg-teal-100 text-teal-600', category: 'revenue' },
-  { id: 'revenue_other', name: 'Other Income Form', description: 'Miscellaneous revenue sources', icon: DollarSign, color: 'bg-emerald-100 text-emerald-600', category: 'revenue' }
+  { id: 'revenue_retail_sales', name: 'Retail Sales Form', description: 'Direct customer sales', icon: ShoppingCart, color: 'bg-green-100 text-green-600', category: 'revenue', pages: 2 },
+  { id: 'revenue_warehouse_sales', name: 'Warehouse/Wholesale Sales Form', description: 'Bulk and wholesale sales', icon: Package, color: 'bg-lime-100 text-lime-600', category: 'revenue', pages: 2 },
+  { id: 'revenue_vehicle_sales', name: 'Vehicle Sales Form', description: 'Mobile vehicle sales', icon: Truck, color: 'bg-cyan-100 text-cyan-600', category: 'revenue', pages: 2 },
+  { id: 'revenue_trip', name: 'Trip Revenue Form', description: 'Passenger trips and ticket sales', icon: MapPin, color: 'bg-violet-100 text-violet-600', category: 'revenue', pages: 1 },
+  { id: 'revenue_truck_contract', name: 'Truck Contract Revenue Form', description: 'Cargo hauling contracts', icon: FileCheck, color: 'bg-teal-100 text-teal-600', category: 'revenue', pages: 1 },
+  { id: 'revenue_other', name: 'Other Income Form', description: 'Miscellaneous revenue sources', icon: DollarSign, color: 'bg-emerald-100 text-emerald-600', category: 'revenue', pages: 1 }
 ];
 
 const generateFormHTML = (formType, org) => {
@@ -61,7 +61,9 @@ const generateFormHTML = (formType, org) => {
   const orgName = org?.name || 'Organisation Name';
   const orgPhone = org?.phone || '';
   const orgEmail = org?.email || '';
-  const formName = FORM_TEMPLATES.find(f => f.id === formType)?.name || 'Form';
+  const formTemplate = FORM_TEMPLATES.find(f => f.id === formType);
+  const formName = formTemplate?.name || 'Form';
+  const totalPages = formTemplate?.pages || 1;
   
   // Use the unified PDF styles
   const unifiedStyles = getUnifiedPDFStyles(org, 'report');
@@ -1340,7 +1342,7 @@ const generateFormHTML = (formType, org) => {
       
       <div class="print-footer">
         <div class="print-footer-content">
-          <span><span class="page-counter"></span><span class="total-pages" data-total=""></span></span>
+          <span><span class="page-counter"></span><span class="total-pages" data-total="${totalPages}"></span></span>
           <span>Printed: ${today}</span>
         </div>
         <div class="print-footer-stripe">
@@ -1349,21 +1351,6 @@ const generateFormHTML = (formType, org) => {
           <div></div>
         </div>
       </div>
-      
-      <script>
-        function calculatePages() {
-          const pageHeight = 11 * 96 - (0.5 * 96 * 2); // Letter size minus margins (in pixels at 96 DPI)
-          const contentHeight = document.querySelector('.document').scrollHeight;
-          return Math.ceil(contentHeight / pageHeight);
-        }
-        
-        window.addEventListener('beforeprint', () => {
-          const totalPages = calculatePages();
-          document.querySelectorAll('.total-pages').forEach(el => {
-            el.setAttribute('data-total', totalPages);
-          });
-        });
-      </script>
       
       <div class="document">
         ${forms[formType] || ''}
