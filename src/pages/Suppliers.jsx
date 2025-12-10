@@ -193,7 +193,9 @@ export default function Suppliers() {
       toast.success("Email sent", response.data.message);
     },
     onError: (error) => {
-      toast.error("Failed to send email", error.response?.data?.error || error.message);
+      console.error('Send email error:', error);
+      const errorMsg = error.response?.data?.details || error.response?.data?.error || error.message;
+      toast.error("Failed to send email", errorMsg);
     }
   });
 
