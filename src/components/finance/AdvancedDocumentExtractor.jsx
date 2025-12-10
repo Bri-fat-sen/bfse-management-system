@@ -1097,7 +1097,7 @@ Be thorough and accurate.`,
                   </div>
 
                   <button
-                    onClick={loadDriveFiles}
+                    onClick={() => loadDriveFiles()}
                     disabled={uploadLoading || driveLoading}
                     className="border-2 border-dashed border-gray-300 rounded-xl p-8 text-center hover:border-[#0072C6] transition-colors disabled:opacity-50"
                   >
