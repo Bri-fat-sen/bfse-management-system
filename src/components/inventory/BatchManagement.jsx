@@ -63,6 +63,13 @@ export default function BatchManagement({ products = [], warehouses = [], vehicl
   const [allocatingBatch, setAllocatingBatch] = useState(null);
   const [showUploadDialog, setShowUploadDialog] = useState(false);
   const [showUploadForm, setShowUploadForm] = useState(false);
+  const [useEmployeeProducer, setUseEmployeeProducer] = useState(true);
+
+  const { data: employees = [] } = useQuery({
+    queryKey: ['employees', orgId],
+    queryFn: () => base44.entities.Employee.filter({ organisation_id: orgId, status: 'active' }),
+    enabled: !!orgId,
+  });
 
   const { data: batches = [], isLoading } = useQuery({
     queryKey: ['inventoryBatches', orgId],
@@ -271,6 +278,17 @@ export default function BatchManagement({ products = [], warehouses = [], vehicl
       if (durationHours < 0) durationHours += 24; // Handle overnight production
     }
 
+    // Handle producer/supervisor
+    let producerId = '';
+    let producerName = '';
+    if (useEmployeeProducer) {
+      producerId = formData.get('supervisor_id') || '';
+      const employee = employees.find(e => e.id === producerId);
+      producerName = employee?.full_name || '';
+    } else {
+      producerName = formData.get('supervisor_name') || '';
+    }
+
     const data = {
       organisation_id: orgId,
       product_id: formData.get('product_id'),
@@ -291,6 +309,8 @@ export default function BatchManagement({ products = [], warehouses = [], vehicl
       quality_status: formData.get('quality_status') || 'pending',
       wastage_quantity: parseInt(formData.get('wastage_quantity')) || 0,
       wastage_cost: parseFloat(formData.get('wastage_cost')) || 0,
+      supervisor_id: producerId,
+      supervisor_name: producerName,
       notes: formData.get('notes'),
       };
 
@@ -455,7 +475,14 @@ export default function BatchManagement({ products = [], warehouses = [], vehicl
                               </div>
                             </div>
                           </td>
-                          <td className="p-4 text-gray-600">{batch.warehouse_name || 'Main'}</td>
+                          <td className="p-4">
+                            <div>
+                              <p className="text-gray-600">{batch.warehouse_name || 'Main'}</p>
+                              {batch.supervisor_name && (
+                                <p className="text-xs text-gray-500">By: {batch.supervisor_name}</p>
+                              )}
+                            </div>
+                          </td>
                           <td className="p-4 text-right">
                             <div>
                               <span className="font-medium">{batch.quantity}</span>
@@ -639,6 +666,50 @@ export default function BatchManagement({ products = [], warehouses = [], vehicl
                     ))}
                   </SelectContent>
                 </Select>
+              </div>
+              <div className="col-span-2">
+                <Label>Produced By</Label>
+                <div className="flex gap-2 mt-1">
+                  <Button
+                    type="button"
+                    variant={useEmployeeProducer ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => setUseEmployeeProducer(true)}
+                    className="flex-1"
+                  >
+                    Select Employee
+                  </Button>
+                  <Button
+                    type="button"
+                    variant={!useEmployeeProducer ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => setUseEmployeeProducer(false)}
+                    className="flex-1"
+                  >
+                    Enter Name
+                  </Button>
+                </div>
+                {useEmployeeProducer ? (
+                  <Select name="supervisor_id" defaultValue={editingBatch?.supervisor_id}>
+                    <SelectTrigger className="mt-2">
+                      <SelectValue placeholder="Select employee..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {employees.map(emp => (
+                        <SelectItem key={emp.id} value={emp.id}>
+                          {emp.full_name} {emp.employee_code ? `(${emp.employee_code})` : ''}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                ) : (
+                  <Input
+                    name="supervisor_name"
+                    defaultValue={editingBatch?.supervisor_name}
+                    placeholder="Enter producer name..."
+                    className="mt-2"
+                  />
+                )}
               </div>
               <div>
                 <Label>Cost Price (Le)</Label>
