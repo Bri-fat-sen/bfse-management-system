@@ -1056,7 +1056,10 @@ export default function Finance() {
                 </div>
               </CardHeader>
               <CardContent>
-                <ScrollArea className="h-[400px]">
+                <div className="mb-3 text-sm text-gray-500">
+                  Showing {categoryFilteredExpenses.length} expense record(s)
+                </div>
+                <ScrollArea className="h-[600px]">
                   <div className="space-y-3">
                     {categoryFilteredExpenses.length === 0 ? (
                       <div className="text-center py-12 text-gray-500">
