@@ -8,7 +8,8 @@ import {
   X,
   Clock,
   AlertCircle,
-  Filter
+  Filter,
+  Plus
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -29,8 +30,9 @@ import {
 } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import { useToast } from "@/components/ui/use-toast";
+import { useToast } from "@/components/ui/Toast";
 import EmptyState from "@/components/ui/EmptyState";
+import LeaveRequestForm from "@/components/employee/LeaveRequestForm";
 
 const STATUS_COLORS = {
   pending: "bg-amber-100 text-amber-700",
@@ -50,12 +52,13 @@ const LEAVE_TYPE_LABELS = {
 };
 
 export default function LeaveManagement({ orgId, currentEmployee }) {
-  const { toast } = useToast();
+  const toast = useToast();
   const queryClient = useQueryClient();
   const [statusFilter, setStatusFilter] = useState("all");
   const [showRejectDialog, setShowRejectDialog] = useState(false);
   const [selectedRequest, setSelectedRequest] = useState(null);
   const [rejectionReason, setRejectionReason] = useState("");
+  const [showRequestForm, setShowRequestForm] = useState(false);
 
   const canApprove = ['super_admin', 'org_admin', 'hr_admin'].includes(currentEmployee?.role);
 
@@ -65,15 +68,78 @@ export default function LeaveManagement({ orgId, currentEmployee }) {
     enabled: !!orgId,
   });
 
+  const { data: employees = [] } = useQuery({
+    queryKey: ['employees', orgId],
+    queryFn: () => base44.entities.Employee.filter({ organisation_id: orgId }),
+    enabled: !!orgId,
+  });
+
   const updateMutation = useMutation({
-    mutationFn: ({ id, data }) => base44.entities.LeaveRequest.update(id, data),
+    mutationFn: async ({ id, data, employee }) => {
+      await base44.entities.LeaveRequest.update(id, data);
+      
+      // If approved, deduct from employee leave balance and send notifications
+      if (data.status === 'approved' && employee) {
+        const leaveType = employee.leave_type;
+        const daysRequested = employee.days_requested;
+        const currentEmployee = employees.find(e => e.id === employee.employee_id);
+        
+        if (currentEmployee) {
+          const balances = currentEmployee.leave_balances || {
+            annual_days: 21,
+            sick_days: 10,
+            maternity_days: 90,
+            paternity_days: 5
+          };
+
+          const balanceKey = `${leaveType}_days`;
+          if (balances[balanceKey] !== undefined) {
+            balances[balanceKey] = Math.max(0, (balances[balanceKey] || 0) - daysRequested);
+            
+            await base44.entities.Employee.update(currentEmployee.id, {
+              leave_balances: balances
+            });
+          }
+        }
+
+        // Notify employee of approval
+        await base44.entities.Notification.create({
+          organisation_id: orgId,
+          recipient_id: employee.employee_id,
+          recipient_email: currentEmployee?.email || currentEmployee?.user_email,
+          type: 'hr',
+          title: 'Leave Request Approved',
+          message: `Your ${employee.leave_type} leave request for ${employee.days_requested} days has been approved.`,
+          priority: 'normal'
+        });
+      }
+
+      // If rejected, notify employee
+      if (data.status === 'rejected' && employee) {
+        const currentEmployee = employees.find(e => e.id === employee.employee_id);
+        await base44.entities.Notification.create({
+          organisation_id: orgId,
+          recipient_id: employee.employee_id,
+          recipient_email: currentEmployee?.email || currentEmployee?.user_email,
+          type: 'hr',
+          title: 'Leave Request Rejected',
+          message: `Your ${employee.leave_type} leave request has been rejected. Reason: ${data.rejection_reason || 'Not specified'}`,
+          priority: 'high'
+        });
+      }
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['leaveRequests'] });
+      queryClient.invalidateQueries({ queryKey: ['employees'] });
+      queryClient.invalidateQueries({ queryKey: ['notifications'] });
       toast({ title: "Leave request updated" });
     },
   });
 
-  const handleApprove = (request) => {
+  const handleApprove = async (request) => {
+    // Notify manager/HR before approval
+    const hrAdmins = employees.filter(e => ['super_admin', 'org_admin', 'hr_admin'].includes(e.role));
+    
     updateMutation.mutate({
       id: request.id,
       data: {
@@ -81,7 +147,8 @@ export default function LeaveManagement({ orgId, currentEmployee }) {
         approved_by: currentEmployee.id,
         approved_by_name: currentEmployee.full_name || `${currentEmployee.first_name} ${currentEmployee.last_name}`,
         approval_date: format(new Date(), 'yyyy-MM-dd')
-      }
+      },
+      employee: request
     });
   };
 
@@ -97,7 +164,8 @@ export default function LeaveManagement({ orgId, currentEmployee }) {
         approved_by: currentEmployee.id,
         approved_by_name: currentEmployee.full_name || `${currentEmployee.first_name} ${currentEmployee.last_name}`,
         rejection_reason: rejectionReason
-      }
+      },
+      employee: selectedRequest
     });
     setShowRejectDialog(false);
     setSelectedRequest(null);
@@ -111,6 +179,7 @@ export default function LeaveManagement({ orgId, currentEmployee }) {
   const pendingCount = leaveRequests.filter(r => r.status === 'pending').length;
 
   return (
+    <>
     <Card>
       <CardHeader className="flex flex-row items-center justify-between">
         <CardTitle className="flex items-center gap-2">
@@ -120,18 +189,24 @@ export default function LeaveManagement({ orgId, currentEmployee }) {
             <Badge className="bg-amber-500">{pendingCount} pending</Badge>
           )}
         </CardTitle>
-        <Select value={statusFilter} onValueChange={setStatusFilter}>
-          <SelectTrigger className="w-36">
-            <Filter className="w-4 h-4 mr-2" />
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All Status</SelectItem>
-            <SelectItem value="pending">Pending</SelectItem>
-            <SelectItem value="approved">Approved</SelectItem>
-            <SelectItem value="rejected">Rejected</SelectItem>
-          </SelectContent>
-        </Select>
+        <div className="flex gap-2">
+          <Button size="sm" onClick={() => setShowRequestForm(true)} className="bg-[#1EB053]">
+            <Plus className="w-4 h-4 mr-1" />
+            New Request
+          </Button>
+          <Select value={statusFilter} onValueChange={setStatusFilter}>
+            <SelectTrigger className="w-36">
+              <Filter className="w-4 h-4 mr-2" />
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Status</SelectItem>
+              <SelectItem value="pending">Pending</SelectItem>
+              <SelectItem value="approved">Approved</SelectItem>
+              <SelectItem value="rejected">Rejected</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
       </CardHeader>
       <CardContent>
         {isLoading ? (
@@ -246,5 +321,13 @@ export default function LeaveManagement({ orgId, currentEmployee }) {
         </DialogContent>
       </Dialog>
     </Card>
+
+    <LeaveRequestForm
+      open={showRequestForm}
+      onOpenChange={setShowRequestForm}
+      employee={currentEmployee}
+      orgId={orgId}
+    />
+    </>
   );
 }
