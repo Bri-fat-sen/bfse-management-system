@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Star } from "lucide-react";
@@ -61,8 +61,8 @@ export default function PerformanceReviewDialog({
   const toast = useToast();
   const queryClient = useQueryClient();
   
-  const [reviewPeriod, setReviewPeriod] = useState(editingReview?.review_period || "");
-  const [ratings, setRatings] = useState(editingReview?.ratings || {
+  const [reviewPeriod, setReviewPeriod] = useState("");
+  const [ratings, setRatings] = useState({
     productivity: 3,
     quality: 3,
     attendance: 3,
@@ -70,9 +70,41 @@ export default function PerformanceReviewDialog({
     communication: 3,
     initiative: 3
   });
-  const [strengths, setStrengths] = useState(editingReview?.strengths || "");
-  const [improvements, setImprovements] = useState(editingReview?.areas_for_improvement || "");
-  const [goals, setGoals] = useState(editingReview?.goals || "");
+  const [strengths, setStrengths] = useState("");
+  const [improvements, setImprovements] = useState("");
+  const [goals, setGoals] = useState("");
+
+  useEffect(() => {
+    if (open) {
+      if (editingReview) {
+        setReviewPeriod(editingReview.review_period || "");
+        setRatings(editingReview.ratings || {
+          productivity: 3,
+          quality: 3,
+          attendance: 3,
+          teamwork: 3,
+          communication: 3,
+          initiative: 3
+        });
+        setStrengths(editingReview.strengths || "");
+        setImprovements(editingReview.areas_for_improvement || "");
+        setGoals(editingReview.goals || "");
+      } else {
+        setReviewPeriod("");
+        setRatings({
+          productivity: 3,
+          quality: 3,
+          attendance: 3,
+          teamwork: 3,
+          communication: 3,
+          initiative: 3
+        });
+        setStrengths("");
+        setImprovements("");
+        setGoals("");
+      }
+    }
+  }, [open, editingReview]);
 
   const overallRating = Object.values(ratings).reduce((a, b) => a + b, 0) / Object.values(ratings).length;
 

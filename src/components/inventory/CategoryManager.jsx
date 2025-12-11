@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import {
@@ -50,6 +50,19 @@ export default function CategoryManager({
     parent_category_id: "",
     color: "#1EB053"
   });
+
+  useEffect(() => {
+    if (open) {
+      setShowForm(false);
+      setEditingCategory(null);
+      setFormData({
+        name: "",
+        description: "",
+        parent_category_id: "",
+        color: "#1EB053"
+      });
+    }
+  }, [open]);
 
   const createMutation = useMutation({
     mutationFn: (data) => base44.entities.ProductCategory.create(data),
