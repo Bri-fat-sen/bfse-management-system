@@ -65,6 +65,9 @@ export default function BatchManagement({ products = [], warehouses = [], vehicl
   const [showUploadForm, setShowUploadForm] = useState(false);
   const [useEmployeeProducer, setUseEmployeeProducer] = useState(true);
   const [selectedBatchIds, setSelectedBatchIds] = useState([]);
+  const [showBulkAllocationDialog, setShowBulkAllocationDialog] = useState(false);
+  const [bulkAllocationLocation, setBulkAllocationLocation] = useState('');
+  const [bulkAllocationAction, setBulkAllocationAction] = useState('allocate'); // 'allocate' or 'reverse'
 
   const { data: employees = [] } = useQuery({
     queryKey: ['employees', orgId],
@@ -141,20 +144,156 @@ export default function BatchManagement({ products = [], warehouses = [], vehicl
   });
 
   const bulkAllocateMutation = useMutation({
-    mutationFn: async (batchIds) => {
-      const batchesToAllocate = batches.filter(b => batchIds.includes(b.id));
-      for (const batch of batchesToAllocate) {
-        await base44.entities.InventoryBatch.update(batch.id, {
-          allocated_quantity: batch.quantity
-        });
+    mutationFn: async ({ batchIds, locationId, action }) => {
+      const batchesToProcess = batches.filter(b => batchIds.includes(b.id));
+      const targetLocation = [...warehouses, ...vehicles].find(l => l.id === locationId);
+      
+      if (!targetLocation) throw new Error("Invalid location selected");
+      
+      if (action === 'allocate') {
+        // Allocate all selected batches to the chosen location
+        for (const batch of batchesToProcess) {
+          const availableQty = batch.quantity - (batch.allocated_quantity || 0);
+          if (availableQty <= 0) continue;
+          
+          const existingStock = stockLevels.find(
+            sl => sl.product_id === batch.product_id && sl.warehouse_id === locationId
+          );
+
+          if (existingStock) {
+            const newQty = (existingStock.quantity || 0) + availableQty;
+            await base44.entities.StockLevel.update(existingStock.id, {
+              quantity: newQty,
+              available_quantity: newQty
+            });
+          } else {
+            await base44.entities.StockLevel.create({
+              organisation_id: orgId,
+              product_id: batch.product_id,
+              product_name: batch.product_name,
+              warehouse_id: locationId,
+              warehouse_name: targetLocation.name || targetLocation.registration_number,
+              location_type: targetLocation.registration_number ? 'vehicle' : 'warehouse',
+              quantity: availableQty,
+              available_quantity: availableQty,
+              reorder_level: 10
+            });
+          }
+
+          await base44.entities.StockMovement.create({
+            organisation_id: orgId,
+            product_id: batch.product_id,
+            product_name: batch.product_name,
+            warehouse_id: locationId,
+            warehouse_name: targetLocation.name || targetLocation.registration_number,
+            movement_type: 'in',
+            quantity: availableQty,
+            previous_stock: existingStock?.quantity || 0,
+            new_stock: (existingStock?.quantity || 0) + availableQty,
+            reference_type: 'batch_allocation',
+            reference_id: batch.id,
+            batch_number: batch.batch_number,
+            notes: `Bulk allocation from batch ${batch.batch_number}`,
+            recorded_by: currentEmployee?.id,
+            recorded_by_name: currentEmployee?.full_name
+          });
+
+          await base44.entities.InventoryBatch.update(batch.id, {
+            allocated_quantity: batch.quantity,
+            status: 'depleted'
+          });
+          
+          // Update product total stock
+          const product = products.find(p => p.id === batch.product_id);
+          if (product) {
+            await base44.entities.Product.update(batch.product_id, {
+              stock_quantity: (product.stock_quantity || 0) + availableQty
+            });
+          }
+        }
+      } else if (action === 'reverse') {
+        // Reverse all allocations for selected batches
+        for (const batch of batchesToProcess) {
+          // Find all stock movements for this batch
+          const batchMovements = await base44.entities.StockMovement.filter({
+            organisation_id: orgId,
+            batch_number: batch.batch_number,
+            reference_type: 'batch_allocation'
+          });
+
+          // Reverse each allocation
+          for (const movement of batchMovements) {
+            const stockLevel = stockLevels.find(
+              sl => sl.product_id === batch.product_id && sl.warehouse_id === movement.warehouse_id
+            );
+
+            if (stockLevel) {
+              const newQty = Math.max(0, (stockLevel.quantity || 0) - movement.quantity);
+              if (newQty === 0) {
+                await base44.entities.StockLevel.delete(stockLevel.id);
+              } else {
+                await base44.entities.StockLevel.update(stockLevel.id, {
+                  quantity: newQty,
+                  available_quantity: newQty
+                });
+              }
+            }
+
+            // Create reverse movement record
+            await base44.entities.StockMovement.create({
+              organisation_id: orgId,
+              product_id: batch.product_id,
+              product_name: batch.product_name,
+              warehouse_id: movement.warehouse_id,
+              warehouse_name: movement.warehouse_name,
+              movement_type: 'out',
+              quantity: movement.quantity,
+              previous_stock: stockLevel?.quantity || 0,
+              new_stock: Math.max(0, (stockLevel?.quantity || 0) - movement.quantity),
+              reference_type: 'batch_deallocation',
+              reference_id: batch.id,
+              batch_number: batch.batch_number,
+              notes: `Bulk reverse: reversed allocation from batch ${batch.batch_number}`,
+              recorded_by: currentEmployee?.id,
+              recorded_by_name: currentEmployee?.full_name
+            });
+          }
+
+          // Reset batch allocation
+          await base44.entities.InventoryBatch.update(batch.id, {
+            allocated_quantity: 0,
+            status: 'active'
+          });
+          
+          // Update product total stock
+          const allProductStockLevels = await base44.entities.StockLevel.filter({
+            organisation_id: orgId,
+            product_id: batch.product_id
+          });
+          const totalProductStock = allProductStockLevels.reduce((sum, sl) => sum + (sl.quantity || 0), 0);
+          await base44.entities.Product.update(batch.product_id, {
+            stock_quantity: totalProductStock
+          });
+        }
       }
     },
-    onSuccess: () => {
+    onSuccess: (_, { action, batchIds }) => {
       queryClient.invalidateQueries({ queryKey: ['inventoryBatches'] });
-      toast.success("All selected batches fully allocated");
+      queryClient.invalidateQueries({ queryKey: ['stockLevels'] });
+      queryClient.invalidateQueries({ queryKey: ['stockMovements'] });
+      queryClient.invalidateQueries({ queryKey: ['products'] });
+      
+      if (action === 'allocate') {
+        toast.success(`All ${batchIds.length} batches allocated successfully`);
+      } else {
+        toast.success(`All ${batchIds.length} batch allocations reversed`);
+      }
+      
       setSelectedBatchIds([]);
+      setShowBulkAllocationDialog(false);
+      setBulkAllocationLocation('');
     },
-    onError: () => toast.error("Failed to allocate batches")
+    onError: (error) => toast.error("Bulk action failed: " + error.message)
   });
 
   const deleteMutation = useMutation({
@@ -388,8 +527,7 @@ export default function BatchManagement({ products = [], warehouses = [], vehicl
             </Button>
             {selectedBatchIds.length > 0 && (
               <Button 
-                onClick={() => bulkAllocateMutation.mutate(selectedBatchIds)}
-                disabled={bulkAllocateMutation.isPending}
+                onClick={() => setShowBulkAllocationDialog(true)}
                 className="bg-green-600 hover:bg-green-700"
               >
                 <CheckCircle className="w-4 h-4 mr-2" />
@@ -654,6 +792,139 @@ export default function BatchManagement({ products = [], warehouses = [], vehicl
           setShowUploadForm(false);
         }}
       />
+
+      {/* Bulk Allocation Dialog */}
+      <Dialog open={showBulkAllocationDialog} onOpenChange={setShowBulkAllocationDialog}>
+        <DialogContent className="max-w-md w-[95vw] sm:w-full">
+          <DialogHeader>
+            <DialogTitle>Bulk Batch Operations</DialogTitle>
+          </DialogHeader>
+          
+          <div className="space-y-4">
+            <div className="p-3 bg-blue-50 rounded-lg border border-blue-200">
+              <p className="text-sm text-blue-800">
+                <strong>{selectedBatchIds.length}</strong> batch(es) selected
+              </p>
+            </div>
+
+            <div>
+              <Label className="mb-2 block">Select Action</Label>
+              <div className="grid grid-cols-2 gap-2">
+                <Button
+                  type="button"
+                  variant={bulkAllocationAction === 'allocate' ? 'default' : 'outline'}
+                  onClick={() => setBulkAllocationAction('allocate')}
+                  className="h-auto py-3"
+                >
+                  <div className="flex flex-col items-center gap-1">
+                    <MapPin className="w-5 h-5" />
+                    <span className="text-xs">Allocate to Location</span>
+                  </div>
+                </Button>
+                <Button
+                  type="button"
+                  variant={bulkAllocationAction === 'reverse' ? 'default' : 'outline'}
+                  onClick={() => setBulkAllocationAction('reverse')}
+                  className="h-auto py-3"
+                >
+                  <div className="flex flex-col items-center gap-1">
+                    <XCircle className="w-5 h-5" />
+                    <span className="text-xs">Reverse All</span>
+                  </div>
+                </Button>
+              </div>
+            </div>
+
+            {bulkAllocationAction === 'allocate' && (
+              <div>
+                <Label className="mb-2 block">Select Location</Label>
+                <Select value={bulkAllocationLocation} onValueChange={setBulkAllocationLocation}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Choose warehouse or vehicle..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <div className="px-2 py-1.5 text-xs font-semibold text-gray-500 uppercase">Warehouses</div>
+                    {warehouses.map(w => (
+                      <SelectItem key={w.id} value={w.id}>
+                        🏭 {w.name}
+                      </SelectItem>
+                    ))}
+                    {vehicles.length > 0 && (
+                      <>
+                        <div className="px-2 py-1.5 text-xs font-semibold text-gray-500 uppercase mt-2">Vehicles</div>
+                        {vehicles.map(v => (
+                          <SelectItem key={v.id} value={v.id}>
+                            🚚 {v.registration_number}
+                          </SelectItem>
+                        ))}
+                      </>
+                    )}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+
+            {bulkAllocationAction === 'reverse' && (
+              <div className="bg-orange-50 border border-orange-200 rounded-lg p-3">
+                <div className="flex items-start gap-2">
+                  <AlertTriangle className="w-4 h-4 text-orange-600 mt-0.5" />
+                  <p className="text-sm text-orange-800">
+                    This will reverse all allocations for the selected batches, returning stock from all locations back to the batch pool.
+                  </p>
+                </div>
+              </div>
+            )}
+          </div>
+
+          <DialogFooter className="flex-col sm:flex-row gap-2">
+            <Button 
+              type="button" 
+              variant="outline" 
+              onClick={() => {
+                setShowBulkAllocationDialog(false);
+                setBulkAllocationLocation('');
+              }}
+              className="w-full sm:w-auto"
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={() => {
+                if (bulkAllocationAction === 'allocate' && !bulkAllocationLocation) {
+                  toast.error("Please select a location");
+                  return;
+                }
+                bulkAllocateMutation.mutate({
+                  batchIds: selectedBatchIds,
+                  locationId: bulkAllocationLocation,
+                  action: bulkAllocationAction
+                });
+              }}
+              disabled={bulkAllocateMutation.isPending || (bulkAllocationAction === 'allocate' && !bulkAllocationLocation)}
+              className={bulkAllocationAction === 'allocate' 
+                ? "bg-green-600 hover:bg-green-700 w-full sm:w-auto" 
+                : "bg-orange-600 hover:bg-orange-700 w-full sm:w-auto"}
+            >
+              {bulkAllocateMutation.isPending ? (
+                <>
+                  <Clock className="w-4 h-4 mr-2 animate-spin" />
+                  Processing...
+                </>
+              ) : bulkAllocationAction === 'allocate' ? (
+                <>
+                  <MapPin className="w-4 h-4 mr-2" />
+                  Allocate {selectedBatchIds.length}
+                </>
+              ) : (
+                <>
+                  <XCircle className="w-4 h-4 mr-2" />
+                  Reverse {selectedBatchIds.length}
+                </>
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* Add/Edit Dialog */}
       <Dialog open={showBatchDialog} onOpenChange={setShowBatchDialog}>
