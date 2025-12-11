@@ -404,9 +404,13 @@ export default function Inventory() {
                   <Button
                     variant="ghost"
                     size="sm"
-                    onClick={() => {
-                      queryClient.invalidateQueries({ queryKey: ['products'] });
-                      queryClient.invalidateQueries({ queryKey: ['stockLevels'] });
+                    onClick={async () => {
+                      toast.info("Refreshing inventory...");
+                      await queryClient.invalidateQueries({ queryKey: ['products'] });
+                      await queryClient.invalidateQueries({ queryKey: ['stockLevels'] });
+                      await queryClient.invalidateQueries({ queryKey: ['stockMovements'] });
+                      await queryClient.invalidateQueries({ queryKey: ['inventoryBatches'] });
+                      toast.success("Inventory refreshed");
                     }}
                     className="h-7"
                   >
