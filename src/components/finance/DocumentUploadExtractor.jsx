@@ -499,8 +499,6 @@ Be specific about WHY you chose that record type.`,
                 notes: { type: "string", description: "Any notes or remarks from 'Notes/Comments' field" },
                 wastage_quantity: { type: "number", description: "Wastage/damaged quantity from 'Wastage' field" },
                 wastage_cost: { type: "number", description: "Cost of wastage from 'Wastage Cost' field" },
-                supervisor_name: { type: "string", description: "Name of person who produced/supervised from 'Supervisor' or 'Produced By' field" },
-                produced_by: { type: "string", description: "Alternative field for producer name" },
                 // Payroll / Employee specific
                 employee_name: { type: "string", description: "Employee name or full name from form" },
                 employee_code: { type: "string", description: "Employee ID/code from form" },
@@ -525,8 +523,10 @@ Be specific about WHY you chose that record type.`,
                 stock_out: { type: "number", description: "Quantity issued/removed from 'Stock OUT' column" },
                 movement_reason: { type: "string", description: "Reason for stock movement from Notes/Reason column" },
                 // Production batch specific
-                rolls: { type: "number", description: "Number of rolls" },
-                weight_kg: { type: "number", description: "Weight in kilograms (kg)" }
+                rolls: { type: "number", description: "Number of rolls from 'Rolls' field" },
+                weight_kg: { type: "number", description: "Weight in kilograms (kg) from 'Weight' field" },
+                supervisor_name: { type: "string", description: "Name of person who produced/supervised the batch from 'Supervisor' or 'Produced By' field" },
+                produced_by: { type: "string", description: "Alternative producer name field" }
               }
             }
           }
@@ -572,8 +572,20 @@ Focus: ${typeSpecificPrompt}
 IMPORTANT FOR BATCH ENTRY FORMS:
 - Look for individual form fields like "Batch Number:", "Product Name:", "Quantity Produced:", etc.
 - Extract the handwritten or typed values next to each field label
+- Look for "Supervisor:" or "Produced By:" field and extract the name
 - For Stock Allocation table, extract all rows with Location Name, Quantity, Notes
 - Manufacturing Date and Expiry Date should be in YYYY-MM-DD format
+- Start Time and End Time should be in HH:MM format
+
+IMPORTANT: This is a FORM, not a table. Extract the form fields:
+- Product Name, SKU, Batch Number
+- Manufacturing Date, Start Time, End Time, Expiry Date
+- Quantity Produced, Rolls, Weight (kg)
+- Wastage Quantity, Wastage Cost
+- Warehouse/Location, Quality Status (Pending/Passed/Failed)
+- Supervisor/Produced By name
+- Any notes or comments
+- Then extract Stock Allocation table rows if present
 
 1. Find the document date (format as YYYY-MM-DD)
 2. For forms: extract field values. For tables: list ALL column headers
@@ -730,13 +742,7 @@ IMPORTANT FOR BATCH ENTRY FORMS:
             wastage_cost: (parseFloat(item.wastage_cost) || 0) / conversionFactor,
             manufacturing_date: item.manufacturing_date || '',
             start_time: item.start_time || '',
-            end_time: item.end_time || '',
-            quality_status: item.quality_status || 'pending',
-            supervisor_name: item.supervisor_name || item.produced_by || '',
-            supervisor_id: employees.find(emp => 
-              emp.full_name?.toLowerCase() === (item.supervisor_name || item.produced_by || '')?.toLowerCase() ||
-              emp.employee_code === (item.supervisor_name || item.produced_by)
-            )?.id || ''
+            end_time: item.end_time || ''
             };
         });
 
@@ -1044,13 +1050,8 @@ IMPORTANT FOR BATCH ENTRY FORMS:
             duration_hours: durationHours,
             expiry_date: item.expiry_date || '',
             cost_price: item.unit_price || item.actual_unit_cost || 0,
-            status: 'active',
-            quality_status: item.quality_status || 'pending',
-            wastage_quantity: wastageQty,
-            wastage_cost: wastageCost,
-            supervisor_id: item.supervisor_id || '',
-            supervisor_name: item.supervisor_name || '',
-            notes: item.notes || `Imported from document. ${item.description || ''}${durationHours > 0 ? ` | Duration: ${durationHours.toFixed(1)}h` : ''}`
+            status: item.quality_status || 'active',
+            notes: item.notes || `Imported from document. ${item.description || ''}${wastageQty > 0 ? ` | Wastage: ${wastageQty}` : ''}${durationHours > 0 ? ` | Duration: ${durationHours.toFixed(1)}h` : ''}`
           });
           batchCount++;
 
