@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
 import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
 import {
@@ -61,6 +61,12 @@ export default function ExpenseDialog({ open, onOpenChange, orgId, currentEmploy
     receipt_url: '',
     notes: '',
   });
+
+  useEffect(() => {
+    if (open) {
+      resetForm();
+    }
+  }, [open]);
 
   // Fetch past expenses for AI suggestions
   const { data: pastExpenses = [] } = useQuery({

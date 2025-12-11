@@ -44,10 +44,10 @@ export default function SendEmailDialog({
   organisation,
   prefilledRecipient = null
 }) {
-  const [recipients, setRecipients] = useState(prefilledRecipient ? [prefilledRecipient] : []);
+  const [recipients, setRecipients] = useState([]);
   const [newRecipient, setNewRecipient] = useState("");
-  const [subject, setSubject] = useState(defaultSubject);
-  const [message, setMessage] = useState(defaultContent);
+  const [subject, setSubject] = useState("");
+  const [message, setMessage] = useState("");
   const [isSending, setIsSending] = useState(false);
   const [showQuickContacts, setShowQuickContacts] = useState(false);
 
@@ -133,10 +133,6 @@ export default function SendEmailDialog({
           description: `Sent to ${recipients.length} recipient(s)`
         });
         onOpenChange(false);
-        // Reset form
-        setRecipients([]);
-        setSubject("");
-        setMessage("");
       } else {
         throw new Error(response.data?.error || 'Failed to send email');
       }
@@ -150,14 +146,13 @@ export default function SendEmailDialog({
     }
   };
 
-  // Reset form when dialog opens with new defaults
   React.useEffect(() => {
     if (open) {
-      setSubject(defaultSubject);
-      setMessage(defaultContent);
-      if (prefilledRecipient) {
-        setRecipients([prefilledRecipient]);
-      }
+      setSubject(defaultSubject || "");
+      setMessage(defaultContent || "");
+      setRecipients(prefilledRecipient ? [prefilledRecipient] : []);
+      setNewRecipient("");
+      setShowQuickContacts(false);
     }
   }, [open, defaultSubject, defaultContent, prefilledRecipient]);
 
