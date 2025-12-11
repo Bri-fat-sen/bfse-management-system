@@ -1064,7 +1064,7 @@ export default function Finance() {
                         <p>No expenses found</p>
                       </div>
                     ) : (
-                      categoryFilteredExpenses.slice(0, 50).map((expense) => (
+                      categoryFilteredExpenses.map((expense) => (
                         <div key={expense.id} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
                           <div className="flex items-center gap-4">
                             <input
