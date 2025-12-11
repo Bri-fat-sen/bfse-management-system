@@ -490,7 +490,8 @@ Be specific about WHY you chose that record type.`,
                 product_name: { type: "string", description: "Product name if this is production data, or from 'Product Name' field" },
                 batch_number: { type: "string", description: "Batch number from 'Batch Number' field or lot number if shown" },
                 manufacturing_date: { type: "string", description: "Manufacturing/Production Date in YYYY-MM-DD format from 'Manufacturing Date' or 'Production Date' field" },
-                production_time: { type: "string", description: "Production time in HH:MM format from 'Production Time' or 'Time' field" },
+                start_time: { type: "string", description: "Production start time in HH:MM format from 'Start Time' field" },
+                end_time: { type: "string", description: "Production end time in HH:MM format from 'End Time' or 'Completion Time' field" },
                 expiry_date: { type: "string", description: "Expiry date in YYYY-MM-DD format from 'Expiry Date' field" },
                 warehouse: { type: "string", description: "Warehouse name from 'Warehouse' field" },
                 quality_status: { type: "string", description: "Quality status from 'Quality Status' field (pending/passed/failed)" },
@@ -725,7 +726,8 @@ IMPORTANT FOR BATCH ENTRY FORMS:
             wastage_quantity: parseFloat(item.wastage_quantity) || 0,
             wastage_cost: (parseFloat(item.wastage_cost) || 0) / conversionFactor,
             manufacturing_date: item.manufacturing_date || '',
-            production_time: item.production_time || ''
+            start_time: item.start_time || '',
+            end_time: item.end_time || ''
             };
         });
 
@@ -997,6 +999,17 @@ IMPORTANT FOR BATCH ENTRY FORMS:
           const wastageCost = item.wastage_cost || 0;
           const finalQty = totalProduced - wastageQty;
           
+          // Calculate duration hours if start and end times provided
+          let durationHours = 0;
+          if (item.start_time && item.end_time) {
+            const [startHour, startMin] = item.start_time.split(':').map(Number);
+            const [endHour, endMin] = item.end_time.split(':').map(Number);
+            const startMinutes = startHour * 60 + startMin;
+            const endMinutes = endHour * 60 + endMin;
+            durationHours = (endMinutes - startMinutes) / 60;
+            if (durationHours < 0) durationHours += 24; // Handle overnight production
+          }
+          
           // Create InventoryBatch (used by BatchManagement)
           await base44.entities.InventoryBatch.create({
             organisation_id: orgId,
@@ -1009,11 +1022,13 @@ IMPORTANT FOR BATCH ENTRY FORMS:
             rolls: item.rolls || 0,
             weight_kg: item.weight_kg || 0,
             manufacturing_date: item.manufacturing_date || item.date || format(new Date(), 'yyyy-MM-dd'),
-            production_time: item.production_time || '',
+            start_time: item.start_time || '',
+            end_time: item.end_time || '',
+            duration_hours: durationHours,
             expiry_date: item.expiry_date || '',
             cost_price: item.unit_price || item.actual_unit_cost || 0,
             status: item.quality_status || 'active',
-            notes: item.notes || `Imported from document. ${item.description || ''}${wastageQty > 0 ? ` | Wastage: ${wastageQty}` : ''}`
+            notes: item.notes || `Imported from document. ${item.description || ''}${wastageQty > 0 ? ` | Wastage: ${wastageQty}` : ''}${durationHours > 0 ? ` | Duration: ${durationHours.toFixed(1)}h` : ''}`
           });
           batchCount++;
 
