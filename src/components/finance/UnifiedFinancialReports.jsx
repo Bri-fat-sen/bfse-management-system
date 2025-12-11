@@ -141,12 +141,36 @@ export default function UnifiedFinancialReports({
     const totalBankDeposits = periodDeposits.filter(d => d.status === 'confirmed').reduce((sum, d) => sum + (d.amount || 0), 0);
     const cashOnHand = totalRevenue - totalBankDeposits;
 
-    // Expense breakdown
+    // Expense breakdown - All categories from all streams
     const expensesByCategory = {};
     periodExpenses.forEach(e => {
       const cat = e.category || 'other';
       expensesByCategory[cat] = (expensesByCategory[cat] || 0) + (e.amount || 0);
     });
+    // Add fuel costs as a category
+    if (fuelCosts > 0) {
+      expensesByCategory['fuel'] = (expensesByCategory['fuel'] || 0) + fuelCosts;
+    }
+    // Add trip other costs as transport category
+    if (tripOtherCosts > 0) {
+      expensesByCategory['transport'] = (expensesByCategory['transport'] || 0) + tripOtherCosts;
+    }
+    // Add contract expenses as contracts category
+    if (contractExpenses > 0) {
+      expensesByCategory['contracts'] = (expensesByCategory['contracts'] || 0) + contractExpenses;
+    }
+    // Add maintenance as maintenance category
+    if (maintenanceCosts > 0) {
+      expensesByCategory['maintenance'] = (expensesByCategory['maintenance'] || 0) + maintenanceCosts;
+    }
+
+    // Revenue breakdown - All sources
+    const revenueBySource = {
+      'sales': salesRevenue,
+      'transport': transportRevenue,
+      'contracts': contractRevenue,
+      'owner_ceo': ownerContributions
+    };
 
     return {
       revenue: { salesRevenue, transportRevenue, contractRevenue, ownerContributions, totalRevenue },
@@ -154,6 +178,7 @@ export default function UnifiedFinancialReports({
       netProfit,
       profitMargin,
       expensesByCategory,
+      revenueBySource,
       banking: { totalBankDeposits, cashOnHand }
     };
   }, [periodData]);
@@ -548,23 +573,20 @@ Provide executive summary, key insights, anomalies, recommendations, cash flow a
               <CardDescription>{dateRange.label}</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              {/* Revenue */}
+              {/* Revenue - All Sources */}
               <div>
                 <div className="flex items-center justify-between py-2 border-b-2 border-green-200 bg-green-50 px-3 rounded-t-lg">
                   <span className="font-bold text-green-800">REVENUE</span>
                 </div>
                 <div className="space-y-2 mt-2">
-                  {[
-                    { label: 'Sales Revenue', amount: financials.revenue.salesRevenue },
-                    { label: 'Transport Revenue', amount: financials.revenue.transportRevenue },
-                    { label: 'Contract Revenue', amount: financials.revenue.contractRevenue },
-                    { label: 'Owner/CEO Contributions', amount: financials.revenue.ownerContributions }
-                  ].map((item, idx) => (
-                    <div key={idx} className={`flex justify-between px-3 py-2 ${idx % 2 === 1 ? 'bg-gray-50' : ''}`}>
-                      <span className="text-gray-600">{item.label}</span>
-                      <span className="font-medium">Le {item.amount.toLocaleString()}</span>
-                    </div>
-                  ))}
+                  {Object.entries(financials.revenueBySource || {})
+                    .filter(([_, amount]) => amount > 0)
+                    .map(([source, amount], idx) => (
+                      <div key={idx} className={`flex justify-between px-3 py-2 ${idx % 2 === 1 ? 'bg-gray-50' : ''}`}>
+                        <span className="text-gray-600">{source.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}</span>
+                        <span className="font-medium">Le {amount.toLocaleString()}</span>
+                      </div>
+                    ))}
                   <div className="flex justify-between px-3 py-3 bg-green-100 rounded-lg font-bold text-green-800">
                     <span>Total Revenue</span>
                     <span>Le {financials.revenue.totalRevenue.toLocaleString()}</span>
@@ -572,24 +594,21 @@ Provide executive summary, key insights, anomalies, recommendations, cash flow a
                 </div>
               </div>
 
-              {/* Expenses */}
+              {/* Expenses - All Categories from All Streams */}
               <div>
                 <div className="flex items-center justify-between py-2 border-b-2 border-red-200 bg-red-50 px-3 rounded-t-lg">
                   <span className="font-bold text-red-800">EXPENSES</span>
                 </div>
                 <div className="space-y-2 mt-2">
-                  {[
-                    { label: 'Recorded Expenses', amount: financials.expenses.recordedExpenses },
-                    { label: 'Fuel Costs', amount: financials.expenses.fuelCosts },
-                    { label: 'Trip Expenses', amount: financials.expenses.tripOtherCosts },
-                    { label: 'Contract Expenses', amount: financials.expenses.contractExpenses },
-                    { label: 'Maintenance', amount: financials.expenses.maintenanceCosts }
-                  ].map((item, idx) => (
-                    <div key={idx} className={`flex justify-between px-3 py-2 ${idx % 2 === 1 ? 'bg-gray-50' : ''}`}>
-                      <span className="text-gray-600">{item.label}</span>
-                      <span className="font-medium">Le {item.amount.toLocaleString()}</span>
-                    </div>
-                  ))}
+                  {Object.entries(financials.expensesByCategory || {})
+                    .filter(([_, amount]) => amount > 0)
+                    .sort((a, b) => b[1] - a[1])
+                    .map(([category, amount], idx) => (
+                      <div key={idx} className={`flex justify-between px-3 py-2 ${idx % 2 === 1 ? 'bg-gray-50' : ''}`}>
+                        <span className="text-gray-600">{category.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}</span>
+                        <span className="font-medium">Le {amount.toLocaleString()}</span>
+                      </div>
+                    ))}
                   <div className="flex justify-between px-3 py-3 bg-red-100 rounded-lg font-bold text-red-800">
                     <span>Total Expenses</span>
                     <span>Le {financials.expenses.totalExpenses.toLocaleString()}</span>
