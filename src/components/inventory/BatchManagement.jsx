@@ -302,6 +302,18 @@ export default function BatchManagement({ products = [], warehouses = [], vehicl
       const batchesToDelete = batches.filter(b => batchIds.includes(b.id));
       
       for (const batch of batchesToDelete) {
+        // Find and delete wastage expense records for this batch
+        const wastageExpenses = await base44.entities.Expense.filter({
+          organisation_id: orgId,
+          category: 'production_wastage'
+        });
+        const batchWastageExpenses = wastageExpenses.filter(e => 
+          e.description?.includes(batch.batch_number)
+        );
+        if (batchWastageExpenses.length > 0) {
+          await Promise.all(batchWastageExpenses.map(e => base44.entities.Expense.delete(e.id)));
+        }
+
         const batchMovements = await base44.entities.StockMovement.filter({ 
           organisation_id: orgId, 
           batch_number: batch.batch_number 
