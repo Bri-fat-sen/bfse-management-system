@@ -270,10 +270,9 @@ export default function ConstructionExpense() {
       if (data.status === 'approved') {
         const originalExpense = expenses.find(e => e.id === id);
         if (originalExpense?.recorded_by) {
-          await createNotification({
-            orgId,
-            recipientId: originalExpense.recorded_by,
-            recipientEmail: null,
+          await base44.entities.Notification.create({
+            organisation_id: orgId,
+            recipient_id: originalExpense.recorded_by,
             type: 'approval',
             title: 'Construction Expense Approved',
             message: `Your construction expense "${result.description || 'Expense'}" for Le ${result.amount?.toLocaleString()} has been approved`,
@@ -283,10 +282,9 @@ export default function ConstructionExpense() {
       } else if (data.status === 'rejected') {
         const originalExpense = expenses.find(e => e.id === id);
         if (originalExpense?.recorded_by) {
-          await createNotification({
-            orgId,
-            recipientId: originalExpense.recorded_by,
-            recipientEmail: null,
+          await base44.entities.Notification.create({
+            organisation_id: orgId,
+            recipient_id: originalExpense.recorded_by,
             type: 'alert',
             title: 'Construction Expense Rejected',
             message: `Your construction expense "${result.description || 'Expense'}" for Le ${result.amount?.toLocaleString()} was rejected`,
