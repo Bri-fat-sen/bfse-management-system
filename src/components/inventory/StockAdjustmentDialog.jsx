@@ -170,9 +170,16 @@ export default function StockAdjustmentDialog({
     }
   });
 
+  useEffect(() => {
+    if (open) {
+      resetForm();
+    }
+  }, [open]);
+
   const resetForm = () => {
     setSelectedProduct("");
     setQuantity("");
+    setAdjustmentType("in");
     setErrors({});
   };
 

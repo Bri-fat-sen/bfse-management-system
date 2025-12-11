@@ -153,12 +153,12 @@ export default function PayrollProcessDialog({
       .reduce((sum, s) => sum + (s.total_amount || 0), 0);
   }, [salesRecords, periodStart, periodEnd, salesAmount]);
 
-  // Auto-set overtime from attendance
+  // Auto-set overtime from attendance - run only once when employee changes
   useEffect(() => {
-    if (attendanceData.overtimeHours > 0 && overtimeHours === 0) {
+    if (selectedEmployeeId && attendanceData.overtimeHours > 0 && overtimeHours === 0) {
       setOvertimeHours(attendanceData.overtimeHours);
     }
-  }, [attendanceData.overtimeHours]);
+  }, [selectedEmployeeId, attendanceData.overtimeHours]);
 
   // Get applicable templates for selected employee
   const applicableTemplates = useMemo(() => {
@@ -265,6 +265,14 @@ export default function PayrollProcessDialog({
     }
   });
 
+  useEffect(() => {
+    if (open) {
+      const lastMonth = subMonths(new Date(), 1);
+      setPeriodStart(format(startOfMonth(lastMonth), 'yyyy-MM-dd'));
+      setPeriodEnd(format(endOfMonth(lastMonth), 'yyyy-MM-dd'));
+    }
+  }, [open]);
+
   const resetForm = () => {
     setSelectedEmployeeId("");
     setCustomAllowances([]);
@@ -275,6 +283,7 @@ export default function PayrollProcessDialog({
     setHolidayHours(0);
     setSalesAmount(0);
     setPayrollFrequency("monthly");
+    setShowAdvanced(false);
   };
 
   const handleSubmit = (e) => {
