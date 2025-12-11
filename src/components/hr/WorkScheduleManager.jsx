@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { format } from "date-fns";
@@ -125,6 +125,45 @@ export default function WorkScheduleManager({ orgId, employees }) {
       resetForm();
     },
   });
+
+  useEffect(() => {
+    if (dialogOpen && !editingSchedule) {
+      setFormData({
+        schedule_type: "fixed",
+        work_days: [1, 2, 3, 4, 5],
+        start_time: "08:00",
+        end_time: "17:00",
+        break_duration_mins: 60,
+        expected_hours_per_day: 8,
+        expected_hours_per_week: 40,
+        overtime_threshold_daily: 8,
+        overtime_threshold_weekly: 40,
+        effective_from: format(new Date(), 'yyyy-MM-dd'),
+        is_active: true,
+        notes: ""
+      });
+    }
+  }, [dialogOpen, editingSchedule]);
+
+  useEffect(() => {
+    if (bulkDialogOpen) {
+      setSelectedEmployees([]);
+      setFormData({
+        schedule_type: "fixed",
+        work_days: [1, 2, 3, 4, 5],
+        start_time: "08:00",
+        end_time: "17:00",
+        break_duration_mins: 60,
+        expected_hours_per_day: 8,
+        expected_hours_per_week: 40,
+        overtime_threshold_daily: 8,
+        overtime_threshold_weekly: 40,
+        effective_from: format(new Date(), 'yyyy-MM-dd'),
+        is_active: true,
+        notes: ""
+      });
+    }
+  }, [bulkDialogOpen]);
 
   const resetForm = () => {
     setDialogOpen(false);

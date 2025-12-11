@@ -231,6 +231,14 @@ export default function BulkDocumentDialog({
     setSending(false);
   };
 
+  useEffect(() => {
+    if (open) {
+      setStep(1);
+    } else {
+      resetForm();
+    }
+  }, [open]);
+
   const resetForm = () => {
     setStep(1);
     setDocumentType("");
@@ -239,6 +247,7 @@ export default function BulkDocumentDialog({
     setEmployeeSearch("");
     setDepartmentFilter("all");
     setRoleFilter("all");
+    setSending(false);
   };
 
   return (

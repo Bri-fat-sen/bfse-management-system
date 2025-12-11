@@ -1,4 +1,4 @@
-import { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import {
@@ -34,6 +34,14 @@ export default function NewGroupDialog({
   const [groupName, setGroupName] = useState("");
   const [selectedMembers, setSelectedMembers] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
+
+  useEffect(() => {
+    if (open) {
+      setGroupName("");
+      setSelectedMembers([]);
+      setSearchTerm("");
+    }
+  }, [open]);
 
   const createGroupMutation = useMutation({
     mutationFn: (data) => base44.entities.ChatRoom.create(data),
@@ -77,6 +85,7 @@ export default function NewGroupDialog({
       type: 'group',
       participants: allParticipants,
       participant_names: participantNames,
+      admins: [currentEmployee?.id],
       created_by: currentEmployee?.id,
       created_by_name: currentEmployee?.full_name,
       is_active: true,

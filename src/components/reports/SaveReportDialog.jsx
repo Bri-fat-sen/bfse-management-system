@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Save, FileText } from "lucide-react";
@@ -39,6 +39,13 @@ export default function SaveReportDialog({
   const [selectedType, setSelectedType] = useState(reportType);
   const [isFavorite, setIsFavorite] = useState(false);
   const [isShared, setIsShared] = useState(false);
+
+  useEffect(() => {
+    if (open) {
+      resetForm();
+      setSelectedType(reportType);
+    }
+  }, [open, reportType]);
 
   const saveReportMutation = useMutation({
     mutationFn: (reportData) => base44.entities.SavedReport.create(reportData),
