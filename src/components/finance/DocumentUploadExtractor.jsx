@@ -469,7 +469,7 @@ Be specific about WHY you chose that record type.`,
           },
           rows: {
             type: "array",
-            description: "Extract every single row from the table - do not skip any",
+            description: "Extract every single row from the table - do not skip any. IMPORTANT: Each row has its own date values, extract them individually for each row.",
             items: {
               type: "object",
               properties: {
@@ -490,10 +490,10 @@ Be specific about WHY you chose that record type.`,
                 sku: { type: "string", description: "Product SKU or product code if shown" },
                 product_name: { type: "string", description: "Product name if this is production data, or from 'Product Name' field" },
                 batch_number: { type: "string", description: "Batch number from 'Batch Number' field or lot number if shown" },
-                manufacturing_date: { type: "string", description: "Manufacturing/Production Date in YYYY-MM-DD format from 'Manufacturing Date' or 'Production Date' field" },
-                start_time: { type: "string", description: "Production start time in HH:MM format from 'Start Time' field" },
-                end_time: { type: "string", description: "Production end time in HH:MM format from 'End Time' or 'Completion Time' field" },
-                expiry_date: { type: "string", description: "Expiry date in YYYY-MM-DD format from 'Expiry Date' field" },
+                manufacturing_date: { type: "string", description: "CRITICAL: Manufacturing/Production Date in YYYY-MM-DD format - extract THIS ROW's specific date, NOT the document date" },
+                start_time: { type: "string", description: "Production start time in HH:MM format from THIS ROW's 'Start Time' field" },
+                end_time: { type: "string", description: "Production end time in HH:MM format from THIS ROW's 'End Time' or 'Completion Time' field" },
+                expiry_date: { type: "string", description: "CRITICAL: Expiry date in YYYY-MM-DD format - extract THIS ROW's specific expiry date, NOT the document date" },
                 warehouse: { type: "string", description: "Warehouse name from 'Warehouse' field" },
                 quality_status: { type: "string", description: "Quality status from 'Quality Status' field (pending/passed/failed)" },
                 notes: { type: "string", description: "Any notes or remarks from 'Notes/Comments' field" },
@@ -655,6 +655,9 @@ IMPORTANT: This is a FORM, not a table. Extract the form fields:
         const mappedData = items.map((item, idx) => {
         const matchedProduct = matchProductBySku(item.sku, item.product_name || item.details);
         const matchedCustomer = matchCustomer(item.customer);
+        
+        // Use row-specific date if available, otherwise fall back to document date
+        const itemDate = item.manufacturing_date || item.date || extractedDocDate;
 
         // Currency conversion logic
         const rawEstAmount = parseFloat(item.est_total) || parseFloat(item.estimated_amount) || 0;
@@ -708,13 +711,14 @@ IMPORTANT: This is a FORM, not a table. Extract the form fields:
           extra_columns: {},
           category: category,
           document_type: docType,
-          date: extractedDocDate,
+          date: itemDate,
           status: 'pending',
           sku: item.sku || matchedProduct?.sku || '',
           product_id: matchedProduct?.id || '',
           product_name: item.product_name || matchedProduct?.name || '',
           needs_product_selection: !matchedProduct && (item.product_name || item.details),
             batch_number: item.batch_number || '',
+            manufacturing_date: item.manufacturing_date || itemDate,
             expiry_date: item.expiry_date || '',
             is_production: !!(item.sku || item.batch_number || matchedProduct),
             // Payroll fields
