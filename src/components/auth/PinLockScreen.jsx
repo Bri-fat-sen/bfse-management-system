@@ -52,36 +52,18 @@ export default function PinLockScreen({
     setError("");
   };
 
-  // Keyboard support
-  React.useEffect(() => {
-    const handleKeyDown = (e) => {
-      if (success || attempts >= maxAttempts) return;
-
-      // Handle number keys (0-9)
-      if (e.key >= '0' && e.key <= '9') {
-        e.preventDefault();
-        handleDigit(e.key);
-      }
-      // Handle backspace/delete
-      else if (e.key === 'Backspace' || e.key === 'Delete') {
-        e.preventDefault();
-        handleDelete();
-      }
-      // Handle Enter to verify (if 4 digits entered)
-      else if (e.key === 'Enter' && pinRef.current.length === 4) {
-        e.preventDefault();
-        verifyPin(pinRef.current);
-      }
-    };
-
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [success, attempts]);
-
   const digits = [1, 2, 3, 4, 5, 6, 7, 8, 9, null, 0, 'delete'];
+  const inputRef = useRef(null);
+
+  // Auto-focus invisible input for keyboard capture
+  React.useEffect(() => {
+    if (inputRef.current && !success && attempts < maxAttempts) {
+      inputRef.current.focus();
+    }
+  }, [success, attempts, pin]);
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center overflow-hidden bg-white">
+    <div className="fixed inset-0 z-[100] flex items-center justify-center overflow-hidden bg-white" onClick={() => inputRef.current?.focus()}>
       {/* Subtle background pattern */}
       <div className="absolute inset-0">
         <div className="absolute inset-0 opacity-[0.02]" style={{
@@ -137,6 +119,34 @@ export default function PinLockScreen({
             </div>
           </div>
         </div>
+
+        {/* Hidden input for keyboard capture */}
+        <input
+          ref={inputRef}
+          type="text"
+          inputMode="numeric"
+          pattern="[0-9]*"
+          autoComplete="off"
+          className="sr-only"
+          style={{ position: 'absolute', opacity: 0, pointerEvents: 'none' }}
+          value={pin}
+          onChange={(e) => {
+            const value = e.target.value.replace(/\D/g, '').slice(0, 4);
+            pinRef.current = value;
+            setPin(value);
+            setError("");
+            if (value.length === 4) {
+              verifyPin(value);
+            }
+          }}
+          onKeyDown={(e) => {
+            if (e.key === 'Backspace' && pin.length > 0) {
+              e.preventDefault();
+              handleDelete();
+            }
+          }}
+          disabled={success || attempts >= maxAttempts}
+        />
 
         {/* PIN input display */}
         <div className="flex justify-center gap-4 mb-6">
