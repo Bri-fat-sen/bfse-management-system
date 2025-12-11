@@ -302,12 +302,7 @@ export default function Finance() {
   const bulkApproveRevenuesMutation = useMutation({
     mutationFn: async (revenueIds) => {
       for (const id of revenueIds) {
-        await base44.entities.Revenue.update(id, { 
-          status: 'approved',
-          approved_by: currentEmployee?.id,
-          approved_by_name: currentEmployee?.full_name,
-          approval_date: new Date().toISOString()
-        });
+        await base44.entities.Revenue.update(id, { status: 'approved' });
       }
     },
     onSuccess: () => {
@@ -1021,11 +1016,7 @@ export default function Finance() {
                       className="bg-green-600 hover:bg-green-700"
                       size="sm"
                     >
-                      {bulkApproveExpensesMutation.isPending ? (
-                        <Clock className="w-4 h-4 mr-2 animate-spin" />
-                      ) : (
-                        <CheckCircle className="w-4 h-4 mr-2" />
-                      )}
+                      <CheckCircle className="w-4 h-4 mr-2" />
                       Approve {selectedExpenseIds.length}
                     </Button>
                   )}
@@ -1086,7 +1077,7 @@ export default function Finance() {
                                   setSelectedExpenseIds(selectedExpenseIds.filter(id => id !== expense.id));
                                 }
                               }}
-                              className="w-4 h-4"
+                              className="w-4 h-4 flex-shrink-0"
                             />
                             <div className="w-10 h-10 rounded-full bg-red-100 flex items-center justify-center">
                               <ArrowDownRight className="w-5 h-5 text-red-600" />
@@ -1214,11 +1205,7 @@ export default function Finance() {
                       className="bg-green-600 hover:bg-green-700"
                       size="sm"
                     >
-                      {bulkApproveRevenuesMutation.isPending ? (
-                        <Clock className="w-4 h-4 mr-2 animate-spin" />
-                      ) : (
-                        <CheckCircle className="w-4 h-4 mr-2" />
-                      )}
+                      <CheckCircle className="w-4 h-4 mr-2" />
                       Approve {selectedRevenueIds.length}
                     </Button>
                   )}
