@@ -1,4 +1,4 @@
-import { useState } from "react";
+import React, { useState } from "react";
 import { base44 } from "@/api/base44Client";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { format } from "date-fns";
@@ -42,6 +42,16 @@ export default function MeetingDialog({
   const [isRecurring, setIsRecurring] = useState(false);
   const [recurrence, setRecurrence] = useState({ frequency: 'weekly', days: [], endType: 'never' });
   const [reminders, setReminders] = useState(['15']);
+
+  useEffect(() => {
+    if (open && !selectedAttendees.length) {
+      setSelectedAttendees([]);
+      setMeetingType("in_person");
+      setIsRecurring(false);
+      setRecurrence({ frequency: 'weekly', days: [], endType: 'never' });
+      setReminders(['15']);
+    }
+  }, [open]);
 
   const createMeetingMutation = useMutation({
     mutationFn: (data) => base44.entities.Meeting.create(data),
