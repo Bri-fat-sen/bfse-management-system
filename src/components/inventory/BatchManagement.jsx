@@ -68,6 +68,7 @@ export default function BatchManagement({ products = [], warehouses = [], vehicl
   const [showBulkAllocationDialog, setShowBulkAllocationDialog] = useState(false);
   const [bulkAllocationLocation, setBulkAllocationLocation] = useState('');
   const [bulkAllocationAction, setBulkAllocationAction] = useState('allocate'); // 'allocate' or 'reverse'
+  const [showBulkDeleteDialog, setShowBulkDeleteDialog] = useState(false);
 
   const { data: employees = [] } = useQuery({
     queryKey: ['employees', orgId],
@@ -294,6 +295,79 @@ export default function BatchManagement({ products = [], warehouses = [], vehicl
       setBulkAllocationLocation('');
     },
     onError: (error) => toast.error("Bulk action failed: " + error.message)
+  });
+
+  const bulkDeleteMutation = useMutation({
+    mutationFn: async (batchIds) => {
+      const batchesToDelete = batches.filter(b => batchIds.includes(b.id));
+      
+      for (const batch of batchesToDelete) {
+        const batchMovements = await base44.entities.StockMovement.filter({ 
+          organisation_id: orgId, 
+          batch_number: batch.batch_number 
+        });
+        
+        const locationStockUpdates = new Map();
+        for (const movement of batchMovements) {
+          if (movement.movement_type === 'in' && movement.reference_type === 'batch_allocation') {
+            const key = `${movement.product_id}_${movement.warehouse_id}`;
+            locationStockUpdates.set(key, {
+              product_id: movement.product_id,
+              warehouse_id: movement.warehouse_id,
+              quantity: (locationStockUpdates.get(key)?.quantity || 0) + movement.quantity
+            });
+          }
+        }
+        
+        for (const [_, update] of locationStockUpdates) {
+          const locationStocks = await base44.entities.StockLevel.filter({
+            organisation_id: orgId,
+            product_id: update.product_id,
+            warehouse_id: update.warehouse_id
+          });
+          
+          const stockLevel = locationStocks[0];
+          if (stockLevel) {
+            const newQty = Math.max(0, (stockLevel.quantity || 0) - update.quantity);
+            if (newQty === 0) {
+              await base44.entities.StockLevel.delete(stockLevel.id);
+            } else {
+              await base44.entities.StockLevel.update(stockLevel.id, {
+                quantity: newQty,
+                available_quantity: newQty
+              });
+            }
+          }
+        }
+        
+        if (batchMovements.length > 0) {
+          await Promise.all(batchMovements.map(sm => base44.entities.StockMovement.delete(sm.id)));
+        }
+        
+        if (batch.product_id) {
+          const allProductStockLevels = await base44.entities.StockLevel.filter({
+            organisation_id: orgId,
+            product_id: batch.product_id
+          });
+          const totalProductStock = allProductStockLevels.reduce((sum, sl) => sum + (sl.quantity || 0), 0);
+          await base44.entities.Product.update(batch.product_id, {
+            stock_quantity: totalProductStock
+          });
+        }
+        
+        await base44.entities.InventoryBatch.delete(batch.id);
+      }
+    },
+    onSuccess: (_, batchIds) => {
+      queryClient.invalidateQueries({ queryKey: ['inventoryBatches'] });
+      queryClient.invalidateQueries({ queryKey: ['stockLevels'] });
+      queryClient.invalidateQueries({ queryKey: ['stockMovements'] });
+      queryClient.invalidateQueries({ queryKey: ['products'] });
+      toast.success(`Deleted ${batchIds.length} batch(es) successfully`);
+      setSelectedBatchIds([]);
+      setShowBulkDeleteDialog(false);
+    },
+    onError: (error) => toast.error("Bulk delete failed: " + error.message)
   });
 
   const deleteMutation = useMutation({
@@ -526,13 +600,23 @@ export default function BatchManagement({ products = [], warehouses = [], vehicl
               Upload Form
             </Button>
             {selectedBatchIds.length > 0 && (
-              <Button 
-                onClick={() => setShowBulkAllocationDialog(true)}
-                className="bg-green-600 hover:bg-green-700"
-              >
-                <CheckCircle className="w-4 h-4 mr-2" />
-                Allocate {selectedBatchIds.length}
-              </Button>
+              <>
+                <Button 
+                  onClick={() => setShowBulkAllocationDialog(true)}
+                  className="bg-green-600 hover:bg-green-700"
+                >
+                  <CheckCircle className="w-4 h-4 mr-2" />
+                  Allocate {selectedBatchIds.length}
+                </Button>
+                <Button 
+                  variant="outline"
+                  onClick={() => setShowBulkDeleteDialog(true)}
+                  className="border-red-500 text-red-600 hover:bg-red-50"
+                >
+                  <Trash2 className="w-4 h-4 mr-2" />
+                  Delete {selectedBatchIds.length}
+                </Button>
+              </>
             )}
             <Button onClick={() => { setEditingBatch(null); setShowBatchDialog(true); }} className="bg-[#1EB053]">
               <Plus className="w-4 h-4 mr-2" />
