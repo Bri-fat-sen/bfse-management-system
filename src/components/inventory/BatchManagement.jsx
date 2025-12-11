@@ -258,6 +258,19 @@ export default function BatchManagement({ products = [], warehouses = [], vehicl
     const product = products.find(p => p.id === formData.get('product_id'));
     const warehouse = warehouses.find(w => w.id === formData.get('warehouse_id'));
 
+    // Calculate duration hours if start and end times are provided
+    const startTime = formData.get('start_time');
+    const endTime = formData.get('end_time');
+    let durationHours = 0;
+    if (startTime && endTime) {
+      const [startHour, startMin] = startTime.split(':').map(Number);
+      const [endHour, endMin] = endTime.split(':').map(Number);
+      const startMinutes = startHour * 60 + startMin;
+      const endMinutes = endHour * 60 + endMin;
+      durationHours = (endMinutes - startMinutes) / 60;
+      if (durationHours < 0) durationHours += 24; // Handle overnight production
+    }
+
     const data = {
       organisation_id: orgId,
       product_id: formData.get('product_id'),
@@ -269,9 +282,15 @@ export default function BatchManagement({ products = [], warehouses = [], vehicl
       rolls: parseInt(formData.get('rolls')) || 0,
       weight_kg: parseFloat(formData.get('weight_kg')) || 0,
       manufacturing_date: formData.get('manufacturing_date'),
+      start_time: startTime || '',
+      end_time: endTime || '',
+      duration_hours: durationHours,
       expiry_date: formData.get('expiry_date'),
       cost_price: parseFloat(formData.get('cost_price')) || 0,
       status: formData.get('status') || 'active',
+      quality_status: formData.get('quality_status') || 'pending',
+      wastage_quantity: parseInt(formData.get('wastage_quantity')) || 0,
+      wastage_cost: parseFloat(formData.get('wastage_cost')) || 0,
       notes: formData.get('notes'),
       };
 
@@ -597,6 +616,14 @@ export default function BatchManagement({ products = [], warehouses = [], vehicl
                 <Input name="manufacturing_date" type="date" defaultValue={editingBatch?.manufacturing_date} className="mt-1" />
               </div>
               <div>
+                <Label>Start Time</Label>
+                <Input name="start_time" type="time" defaultValue={editingBatch?.start_time} className="mt-1" />
+              </div>
+              <div>
+                <Label>End Time</Label>
+                <Input name="end_time" type="time" defaultValue={editingBatch?.end_time} className="mt-1" />
+              </div>
+              <div>
                 <Label>Expiry Date</Label>
                 <Input name="expiry_date" type="date" defaultValue={editingBatch?.expiry_date} className="mt-1" />
               </div>
@@ -631,6 +658,31 @@ export default function BatchManagement({ products = [], warehouses = [], vehicl
                   </SelectContent>
                 </Select>
               </div>
+              <div>
+                <Label>Quality Status</Label>
+                <Select name="quality_status" defaultValue={editingBatch?.quality_status || "pending"}>
+                  <SelectTrigger className="mt-1">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="pending">Pending</SelectItem>
+                    <SelectItem value="passed">Passed</SelectItem>
+                    <SelectItem value="failed">Failed</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label>Wastage Quantity</Label>
+                <Input name="wastage_quantity" type="number" defaultValue={editingBatch?.wastage_quantity || 0} className="mt-1" />
+              </div>
+              <div>
+                <Label>Wastage Cost (Le)</Label>
+                <Input name="wastage_cost" type="number" step="0.01" defaultValue={editingBatch?.wastage_cost || 0} className="mt-1" />
+              </div>
+            </div>
+            <div>
+              <Label>Notes</Label>
+              <Input name="notes" defaultValue={editingBatch?.notes} className="mt-1" placeholder="Additional notes..." />
             </div>
             <DialogFooter className="flex-col sm:flex-row gap-2">
               <Button type="button" variant="outline" onClick={() => setShowBatchDialog(false)} className="w-full sm:w-auto" disabled={createMutation.isPending || updateMutation.isPending}>Cancel</Button>
