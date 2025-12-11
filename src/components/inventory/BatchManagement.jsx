@@ -544,6 +544,8 @@ export default function BatchManagement({ products = [], warehouses = [], vehicl
         description="Upload your filled batch entry form. The system will automatically extract batch information."
         orgId={orgId}
         currentEmployee={currentEmployee}
+        products={products}
+        warehouses={warehouses}
         onSuccess={() => {
           queryClient.invalidateQueries({ queryKey: ['inventoryBatches'] });
           queryClient.invalidateQueries({ queryKey: ['products'] });
