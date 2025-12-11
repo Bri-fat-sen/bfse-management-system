@@ -67,6 +67,7 @@ import EmployeeDocuments from "@/components/hr/EmployeeDocuments";
 import PerformanceReviewDialog from "@/components/hr/PerformanceReviewDialog";
 import ConfirmDialog from "@/components/ui/ConfirmDialog";
 import RemunerationPackageManager from "@/components/hr/RemunerationPackageManager";
+import PayCycleManager from "@/components/hr/PayCycleManager";
 import { format } from "date-fns";
 
 export default function HRManagement() {
@@ -339,10 +340,11 @@ export default function HRManagement() {
 
       {/* Main Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="grid w-full grid-cols-3 sm:grid-cols-6 h-auto gap-1">
+        <TabsList className="grid w-full grid-cols-3 sm:grid-cols-7 h-auto gap-1">
           <TabsTrigger value="overview" className="text-xs sm:text-sm">Overview</TabsTrigger>
           <TabsTrigger value="employees" className="text-xs sm:text-sm">Employees</TabsTrigger>
           <TabsTrigger value="packages" className="text-xs sm:text-sm">Packages</TabsTrigger>
+          <TabsTrigger value="paycycles" className="text-xs sm:text-sm">Pay Cycles</TabsTrigger>
           <TabsTrigger value="payroll" className="text-xs sm:text-sm">Payroll</TabsTrigger>
           <TabsTrigger value="leaves" className="text-xs sm:text-sm">Leaves</TabsTrigger>
           <TabsTrigger value="performance" className="text-xs sm:text-sm">Performance</TabsTrigger>
@@ -502,6 +504,11 @@ export default function HRManagement() {
         {/* Packages Tab */}
         <TabsContent value="packages" className="space-y-4">
           <RemunerationPackageManager orgId={orgId} />
+        </TabsContent>
+
+        {/* Pay Cycles Tab */}
+        <TabsContent value="paycycles" className="space-y-4">
+          <PayCycleManager orgId={orgId} employees={employees} currentEmployee={currentEmployee} />
         </TabsContent>
 
         {/* Employees Tab */}
