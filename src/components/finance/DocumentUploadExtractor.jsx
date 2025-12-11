@@ -1168,11 +1168,15 @@ IMPORTANT FOR BATCH ENTRY FORMS:
                     <SelectValue placeholder="Select production location..." />
                   </SelectTrigger>
                   <SelectContent>
-                    {warehouses.filter(w => w.is_active !== false).map(w => (
-                      <SelectItem key={w.id} value={w.id}>
-                        🏭 {w.name}
-                      </SelectItem>
-                    ))}
+                    {warehouses?.length > 0 ? (
+                      warehouses.filter(w => w.is_active !== false).map(w => (
+                        <SelectItem key={w.id} value={w.id}>
+                          🏭 {w.name}
+                        </SelectItem>
+                      ))
+                    ) : (
+                      <SelectItem value="no-warehouses" disabled>No warehouses available</SelectItem>
+                    )}
                   </SelectContent>
                 </Select>
                 {!productionLocation && (
