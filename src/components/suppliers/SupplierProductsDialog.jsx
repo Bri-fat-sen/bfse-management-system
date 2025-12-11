@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
 import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
 import { cn } from "@/lib/utils";
@@ -34,6 +34,13 @@ export default function SupplierProductsDialog({
   const queryClient = useQueryClient();
   const [showAddForm, setShowAddForm] = useState(false);
   const [editingProduct, setEditingProduct] = useState(null);
+
+  useEffect(() => {
+    if (open) {
+      setShowAddForm(false);
+      setEditingProduct(null);
+    }
+  }, [open]);
 
   const { data: supplierProducts = [] } = useQuery({
     queryKey: ['supplierProducts', supplier?.id],

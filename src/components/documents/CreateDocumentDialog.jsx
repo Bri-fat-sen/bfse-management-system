@@ -244,6 +244,15 @@ export default function CreateDocumentDialog({
     }
   });
 
+  useEffect(() => {
+    if (open) {
+      setStep(1);
+      setEmployeeSearch("");
+    } else {
+      resetForm();
+    }
+  }, [open]);
+
   const resetForm = () => {
     setStep(1);
     setDocumentType("");
@@ -253,6 +262,7 @@ export default function CreateDocumentDialog({
     setCustomContent("");
     setCustomTitle("");
     setPreviewContent("");
+    setEmployeeSearch("");
   };
 
   const handleSelectAll = () => {

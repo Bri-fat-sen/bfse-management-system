@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { format, addDays } from "date-fns";
 import { base44 } from "@/api/base44Client";
 import {
@@ -44,19 +44,36 @@ export default function InvoiceDialog({
   onInvoiceCreated
 }) {
   const [invoiceData, setInvoiceData] = useState({
-    customer_name: customer?.name || '',
-    customer_email: customer?.email || '',
-    customer_phone: customer?.phone || '',
-    customer_address: customer?.address || '',
-    company_name: customer?.company_name || '',
-    tax_id: customer?.tax_id || '',
-    payment_terms: '30', // days
+    customer_name: '',
+    customer_email: '',
+    customer_phone: '',
+    customer_address: '',
+    company_name: '',
+    tax_id: '',
+    payment_terms: '30',
     notes: '',
     include_tax: false,
     tax_rate: 15
   });
   const [isSending, setIsSending] = useState(false);
   const [isCreating, setIsCreating] = useState(false);
+
+  useEffect(() => {
+    if (open) {
+      setInvoiceData({
+        customer_name: customer?.name || '',
+        customer_email: customer?.email || '',
+        customer_phone: customer?.phone || '',
+        customer_address: customer?.address || '',
+        company_name: customer?.company_name || '',
+        tax_id: customer?.tax_id || '',
+        payment_terms: '30',
+        notes: '',
+        include_tax: false,
+        tax_rate: 15
+      });
+    }
+  }, [open, customer]);
 
   const taxAmount = invoiceData.include_tax ? (cartTotal * invoiceData.tax_rate / 100) : 0;
   const totalWithTax = cartTotal + taxAmount;

@@ -70,6 +70,18 @@ export default function BulkPayrollDialog({
   const [usePackageAllowances, setUsePackageAllowances] = useState(true);
   const [includeAttendanceData, setIncludeAttendanceData] = useState(true);
 
+  useEffect(() => {
+    if (open) {
+      const lastMonth = subMonths(new Date(), 1);
+      setPeriodStart(format(startOfMonth(lastMonth), 'yyyy-MM-dd'));
+      setPeriodEnd(format(endOfMonth(lastMonth), 'yyyy-MM-dd'));
+      setSelectedEmployees([]);
+      setShowResults(false);
+      setResults([]);
+      setProgress(0);
+    }
+  }, [open]);
+
   // Fetch benefit/deduction templates
   const { data: templates = [] } = useQuery({
     queryKey: ['benefitDeductionTemplates', orgId],
