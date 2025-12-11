@@ -109,6 +109,8 @@ export default function Finance() {
   const [showBulkDeleteRevenues, setShowBulkDeleteRevenues] = useState(false);
   const [bulkDeleteLoading, setBulkDeleteLoading] = useState(false);
   const [showAICategorizerDialog, setShowAICategorizerDialog] = useState(false);
+  const [selectedExpenseIds, setSelectedExpenseIds] = useState([]);
+  const [selectedRevenueIds, setSelectedRevenueIds] = useState([]);
 
   const { data: user } = useQuery({
     queryKey: ['currentUser'],
@@ -276,6 +278,39 @@ export default function Finance() {
     onError: (error) => {
       toast.error("Failed to delete revenue");
     }
+  });
+
+  const bulkApproveExpensesMutation = useMutation({
+    mutationFn: async (expenseIds) => {
+      for (const id of expenseIds) {
+        await base44.entities.Expense.update(id, { 
+          status: 'approved',
+          approved_by: currentEmployee?.id,
+          approved_by_name: currentEmployee?.full_name,
+          approval_date: new Date().toISOString()
+        });
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['expenses', orgId] });
+      toast.success("All selected expenses approved");
+      setSelectedExpenseIds([]);
+    },
+    onError: () => toast.error("Failed to approve expenses")
+  });
+
+  const bulkApproveRevenuesMutation = useMutation({
+    mutationFn: async (revenueIds) => {
+      for (const id of revenueIds) {
+        await base44.entities.Revenue.update(id, { status: 'approved' });
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['revenues', orgId] });
+      toast.success("All selected revenue approved");
+      setSelectedRevenueIds([]);
+    },
+    onError: () => toast.error("Failed to approve revenue")
   });
 
   const createBankDepositMutation = useMutation({
@@ -974,6 +1009,17 @@ export default function Finance() {
               <CardHeader className="flex flex-row items-center justify-between flex-wrap gap-2">
                 <CardTitle>Expense Records</CardTitle>
                 <div className="flex items-center gap-2 flex-wrap">
+                  {selectedExpenseIds.length > 0 && (
+                    <Button 
+                      onClick={() => bulkApproveExpensesMutation.mutate(selectedExpenseIds)}
+                      disabled={bulkApproveExpensesMutation.isPending}
+                      className="bg-green-600 hover:bg-green-700"
+                      size="sm"
+                    >
+                      <CheckCircle className="w-4 h-4 mr-2" />
+                      Approve {selectedExpenseIds.length}
+                    </Button>
+                  )}
                   <Button
                     variant="outline"
                     onClick={() => setShowAICategorizerDialog(true)}
@@ -1021,6 +1067,18 @@ export default function Finance() {
                       categoryFilteredExpenses.slice(0, 50).map((expense) => (
                         <div key={expense.id} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
                           <div className="flex items-center gap-4">
+                            <input
+                              type="checkbox"
+                              checked={selectedExpenseIds.includes(expense.id)}
+                              onChange={(e) => {
+                                if (e.target.checked) {
+                                  setSelectedExpenseIds([...selectedExpenseIds, expense.id]);
+                                } else {
+                                  setSelectedExpenseIds(selectedExpenseIds.filter(id => id !== expense.id));
+                                }
+                              }}
+                              className="w-4 h-4 flex-shrink-0"
+                            />
                             <div className="w-10 h-10 rounded-full bg-red-100 flex items-center justify-center">
                               <ArrowDownRight className="w-5 h-5 text-red-600" />
                             </div>
@@ -1140,6 +1198,17 @@ export default function Finance() {
                   Revenue from Owners & CEO
                 </CardTitle>
                 <div className="flex gap-2 flex-wrap">
+                  {selectedRevenueIds.length > 0 && (
+                    <Button 
+                      onClick={() => bulkApproveRevenuesMutation.mutate(selectedRevenueIds)}
+                      disabled={bulkApproveRevenuesMutation.isPending}
+                      className="bg-green-600 hover:bg-green-700"
+                      size="sm"
+                    >
+                      <CheckCircle className="w-4 h-4 mr-2" />
+                      Approve {selectedRevenueIds.length}
+                    </Button>
+                  )}
                   {filteredRevenues.length > 0 && isAdmin && (
                     <Button 
                       variant="outline"
@@ -1175,6 +1244,18 @@ export default function Finance() {
                       revenues.map((revenue) => (
                         <div key={revenue.id} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
                           <div className="flex items-center gap-4 flex-1 min-w-0">
+                            <input
+                              type="checkbox"
+                              checked={selectedRevenueIds.includes(revenue.id)}
+                              onChange={(e) => {
+                                if (e.target.checked) {
+                                  setSelectedRevenueIds([...selectedRevenueIds, revenue.id]);
+                                } else {
+                                  setSelectedRevenueIds(selectedRevenueIds.filter(id => id !== revenue.id));
+                                }
+                              }}
+                              className="w-4 h-4 flex-shrink-0"
+                            />
                             <div className="w-10 h-10 rounded-full bg-green-100 flex items-center justify-center flex-shrink-0">
                               <ArrowUpRight className="w-5 h-5 text-green-600" />
                             </div>

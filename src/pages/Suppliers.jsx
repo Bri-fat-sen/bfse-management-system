@@ -94,6 +94,7 @@ export default function Suppliers() {
   const [priceHistorySupplier, setPriceHistorySupplier] = useState(null);
   const [showFormsDialog, setShowFormsDialog] = useState(false);
   const [showWorkflowManager, setShowWorkflowManager] = useState(false);
+  const [selectedPOIds, setSelectedPOIds] = useState([]);
 
   const { data: user } = useQuery({
     queryKey: ['currentUser'],
@@ -201,6 +202,25 @@ export default function Suppliers() {
       console.error('Update PO error:', error);
       toast.error("Failed to update purchase order");
     }
+  });
+
+  const bulkApprovePOMutation = useMutation({
+    mutationFn: async (poIds) => {
+      for (const id of poIds) {
+        await base44.entities.PurchaseOrder.update(id, { 
+          status: 'approved',
+          approved_by: currentEmployee?.id,
+          approved_by_name: currentEmployee?.full_name,
+          approval_date: new Date().toISOString()
+        });
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['purchaseOrders', orgId] });
+      toast.success("All selected POs approved");
+      setSelectedPOIds([]);
+    },
+    onError: () => toast.error("Failed to approve POs")
   });
 
   const sendEmailMutation = useMutation({
@@ -567,6 +587,19 @@ export default function Suppliers() {
 
           {/* Purchase Orders Tab */}
           <TabsContent value="orders">
+            {selectedPOIds.length > 0 && (
+              <div className="mb-4 flex justify-end">
+                <Button 
+                  onClick={() => bulkApprovePOMutation.mutate(selectedPOIds)}
+                  disabled={bulkApprovePOMutation.isPending}
+                  className="bg-green-600 hover:bg-green-700"
+                  size="sm"
+                >
+                  <CheckCircle className="w-4 h-4 mr-2" />
+                  Approve {selectedPOIds.length} PO{selectedPOIds.length > 1 ? 's' : ''}
+                </Button>
+              </div>
+            )}
             {loadingPOs ? (
               <div className="space-y-3">
                 {[...Array(5)].map((_, i) => (
@@ -598,6 +631,20 @@ export default function Suppliers() {
                     <table className="w-full">
                       <thead className="bg-gray-50 border-b">
                         <tr>
+                          <th className="p-4 w-12">
+                            <input
+                              type="checkbox"
+                              checked={selectedPOIds.length === filteredPOs.length && filteredPOs.length > 0}
+                              onChange={(e) => {
+                                if (e.target.checked) {
+                                  setSelectedPOIds(filteredPOs.map(po => po.id));
+                                } else {
+                                  setSelectedPOIds([]);
+                                }
+                              }}
+                              className="w-4 h-4"
+                            />
+                          </th>
                           <th className="text-left p-4 font-medium">PO Number</th>
                           <th className="text-left p-4 font-medium">Supplier</th>
                           <th className="text-left p-4 font-medium">Order Date</th>
@@ -613,6 +660,20 @@ export default function Suppliers() {
                           const StatusIcon = statusConfig.icon;
                           return (
                             <tr key={po.id} className="border-b hover:bg-gray-50">
+                              <td className="p-4">
+                                <input
+                                  type="checkbox"
+                                  checked={selectedPOIds.includes(po.id)}
+                                  onChange={(e) => {
+                                    if (e.target.checked) {
+                                      setSelectedPOIds([...selectedPOIds, po.id]);
+                                    } else {
+                                      setSelectedPOIds(selectedPOIds.filter(id => id !== po.id));
+                                    }
+                                  }}
+                                  className="w-4 h-4"
+                                />
+                              </td>
                               <td className="p-4">
                                 <span className="font-medium">{po.po_number}</span>
                                 <p className="text-xs text-gray-500">{po.items?.length || 0} items</p>

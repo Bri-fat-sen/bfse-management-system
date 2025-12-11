@@ -64,6 +64,7 @@ export default function BatchManagement({ products = [], warehouses = [], vehicl
   const [showUploadDialog, setShowUploadDialog] = useState(false);
   const [showUploadForm, setShowUploadForm] = useState(false);
   const [useEmployeeProducer, setUseEmployeeProducer] = useState(true);
+  const [selectedBatchIds, setSelectedBatchIds] = useState([]);
 
   const { data: employees = [] } = useQuery({
     queryKey: ['employees', orgId],
@@ -137,6 +138,23 @@ export default function BatchManagement({ products = [], warehouses = [], vehicl
       console.error('Update batch error:', error);
       toast.error("Failed to update batch", error.message);
     }
+  });
+
+  const bulkAllocateMutation = useMutation({
+    mutationFn: async (batchIds) => {
+      const batchesToAllocate = batches.filter(b => batchIds.includes(b.id));
+      for (const batch of batchesToAllocate) {
+        await base44.entities.InventoryBatch.update(batch.id, {
+          allocated_quantity: batch.quantity
+        });
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['inventoryBatches'] });
+      toast.success("All selected batches fully allocated");
+      setSelectedBatchIds([]);
+    },
+    onError: () => toast.error("Failed to allocate batches")
   });
 
   const deleteMutation = useMutation({
@@ -368,6 +386,16 @@ export default function BatchManagement({ products = [], warehouses = [], vehicl
               <Upload className="w-4 h-4 mr-2" />
               Upload Form
             </Button>
+            {selectedBatchIds.length > 0 && (
+              <Button 
+                onClick={() => bulkAllocateMutation.mutate(selectedBatchIds)}
+                disabled={bulkAllocateMutation.isPending}
+                className="bg-green-600 hover:bg-green-700"
+              >
+                <CheckCircle className="w-4 h-4 mr-2" />
+                Allocate {selectedBatchIds.length}
+              </Button>
+            )}
             <Button onClick={() => { setEditingBatch(null); setShowBatchDialog(true); }} className="bg-[#1EB053]">
               <Plus className="w-4 h-4 mr-2" />
               Add Batch
@@ -450,6 +478,20 @@ export default function BatchManagement({ products = [], warehouses = [], vehicl
                 <table className="w-full">
                   <thead className="bg-gray-50 border-b">
                     <tr>
+                      <th className="p-4 w-12">
+                        <input
+                          type="checkbox"
+                          checked={selectedBatchIds.length === filteredBatches.length && filteredBatches.length > 0}
+                          onChange={(e) => {
+                            if (e.target.checked) {
+                              setSelectedBatchIds(filteredBatches.map(b => b.id));
+                            } else {
+                              setSelectedBatchIds([]);
+                            }
+                          }}
+                          className="w-4 h-4"
+                        />
+                      </th>
                       <th className="text-left p-4 font-medium">Batch / Product</th>
                       <th className="text-left p-4 font-medium">Warehouse</th>
                       <th className="text-right p-4 font-medium">Quantity</th>
@@ -464,6 +506,20 @@ export default function BatchManagement({ products = [], warehouses = [], vehicl
                       const expiryStatus = getExpiryStatus(batch.expiry_date);
                       return (
                         <tr key={batch.id} className="border-b hover:bg-gray-50">
+                          <td className="p-4">
+                            <input
+                              type="checkbox"
+                              checked={selectedBatchIds.includes(batch.id)}
+                              onChange={(e) => {
+                                if (e.target.checked) {
+                                  setSelectedBatchIds([...selectedBatchIds, batch.id]);
+                                } else {
+                                  setSelectedBatchIds(selectedBatchIds.filter(id => id !== batch.id));
+                                }
+                              }}
+                              className="w-4 h-4"
+                            />
+                          </td>
                           <td className="p-4">
                             <div className="flex items-center gap-3">
                               <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-[#1EB053]/20 to-[#0072C6]/20 flex items-center justify-center">
