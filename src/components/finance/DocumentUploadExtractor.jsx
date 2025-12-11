@@ -490,6 +490,7 @@ Be specific about WHY you chose that record type.`,
                 product_name: { type: "string", description: "Product name if this is production data, or from 'Product Name' field" },
                 batch_number: { type: "string", description: "Batch number from 'Batch Number' field or lot number if shown" },
                 manufacturing_date: { type: "string", description: "Manufacturing/Production Date in YYYY-MM-DD format from 'Manufacturing Date' or 'Production Date' field" },
+                production_time: { type: "string", description: "Production time in HH:MM format from 'Production Time' or 'Time' field" },
                 expiry_date: { type: "string", description: "Expiry date in YYYY-MM-DD format from 'Expiry Date' field" },
                 warehouse: { type: "string", description: "Warehouse name from 'Warehouse' field" },
                 quality_status: { type: "string", description: "Quality status from 'Quality Status' field (pending/passed/failed)" },
@@ -722,7 +723,9 @@ IMPORTANT FOR BATCH ENTRY FORMS:
             rolls: parseFloat(item.rolls) || 0,
             weight_kg: parseFloat(item.weight_kg) || 0,
             wastage_quantity: parseFloat(item.wastage_quantity) || 0,
-            wastage_cost: (parseFloat(item.wastage_cost) || 0) / conversionFactor
+            wastage_cost: (parseFloat(item.wastage_cost) || 0) / conversionFactor,
+            manufacturing_date: item.manufacturing_date || '',
+            production_time: item.production_time || ''
             };
         });
 
@@ -1006,6 +1009,7 @@ IMPORTANT FOR BATCH ENTRY FORMS:
             rolls: item.rolls || 0,
             weight_kg: item.weight_kg || 0,
             manufacturing_date: item.manufacturing_date || item.date || format(new Date(), 'yyyy-MM-dd'),
+            production_time: item.production_time || '',
             expiry_date: item.expiry_date || '',
             cost_price: item.unit_price || item.actual_unit_cost || 0,
             status: item.quality_status || 'active',
