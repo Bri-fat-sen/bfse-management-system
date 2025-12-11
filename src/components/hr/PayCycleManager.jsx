@@ -571,7 +571,11 @@ export default function PayCycleManager({ orgId, employees = [], currentEmployee
                       className={`flex items-center gap-2 p-2 rounded cursor-pointer hover:bg-gray-50 ${formData.employee_ids.includes(emp.id) ? 'bg-[#1EB053]/10' : ''}`}
                       onClick={() => toggleEmployee(emp.id)}
                     >
-                      <Checkbox checked={formData.employee_ids.includes(emp.id)} />
+                      <Checkbox 
+                        checked={formData.employee_ids.includes(emp.id)} 
+                        onCheckedChange={() => toggleEmployee(emp.id)}
+                        onClick={(e) => e.stopPropagation()}
+                      />
                       <div className="flex-1">
                         <p className="text-sm font-medium">{emp.full_name}</p>
                         <p className="text-xs text-gray-500">{emp.role?.replace('_', ' ')} • {emp.department}</p>
