@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import { format, startOfMonth, endOfMonth, subMonths, parseISO, isWithinInterval } from "date-fns";
 import {
   FileText,
@@ -59,6 +59,10 @@ export default function ReportGenerator({ sales = [], expenses = [], employees =
   const [employeeFilter, setEmployeeFilter] = useState("all");
   const [isGenerating, setIsGenerating] = useState(false);
   const [showReport, setShowReport] = useState(false);
+
+  useEffect(() => {
+    setShowReport(false);
+  }, [reportType, dateFrom, dateTo, category, employeeFilter]);
 
   // Filter data based on date range
   const filterByDate = (items, dateField = 'created_date') => {
@@ -185,6 +189,10 @@ export default function ReportGenerator({ sales = [], expenses = [], employees =
   }, [showReport, reportType, dateFrom, dateTo, category, employeeFilter, sales, expenses, payrolls, trips]);
 
   const generateReport = () => {
+    if (!dateFrom || !dateTo) {
+      toast({ title: "Please select date range", variant: "destructive" });
+      return;
+    }
     setIsGenerating(true);
     setTimeout(() => {
       setShowReport(true);
@@ -207,64 +215,34 @@ export default function ReportGenerator({ sales = [], expenses = [], employees =
   const handleExportPDF = () => {
     if (!reportData) return;
     
+    // Convert summary to cards format
     const summaryCards = reportData.summary.map(item => ({
       label: item.label,
-      value: item.value.toString().replace('SLE', 'Le'),
+      value: item.value,
       highlight: item.highlight === 'green' ? 'green' : item.highlight === 'red' ? 'red' : undefined
     }));
 
+    // Build sections
     const sections = [];
     
+    // Add category breakdown if exists
     if (reportData.categoryBreakdown && Object.keys(reportData.categoryBreakdown).length > 0) {
       sections.push({
-        title: 'Category Breakdown',
+        title: 'By Category',
         icon: '📊',
         breakdown: reportData.categoryBreakdown
       });
     }
     
+    // Add data table
     sections.push({
-      title: 'Transaction Details',
+      title: 'Details',
       icon: '📋',
       table: {
         columns: reportData.columns,
-        rows: reportData.rows.map(row => row.map(cell => 
-          typeof cell === 'string' ? cell.replace('SLE', 'Le') : cell
-        ))
+        rows: reportData.rows
       }
     });
-
-    if (reportType === 'profit_loss') {
-      const totalRev = reportData.rows.filter(r => r[1] === 'Income').reduce((s, r) => {
-        const amt = r[2].replace(/[^\d.-]/g, '');
-        return s + parseFloat(amt || 0);
-      }, 0);
-      const totalExp = reportData.rows.filter(r => r[1] === 'Expense').reduce((s, r) => {
-        const amt = r[2].replace(/[^\d.-]/g, '');
-        return s + parseFloat(amt || 0);
-      }, 0);
-      const netProfit = totalRev - totalExp;
-
-      sections.push({
-        title: '',
-        content: `
-          <div class="totals-box">
-            <div class="totals-row">
-              <span>Total Revenue</span>
-              <span>Le ${totalRev.toLocaleString()}</span>
-            </div>
-            <div class="totals-row">
-              <span>Total Expenses</span>
-              <span>Le ${totalExp.toLocaleString()}</span>
-            </div>
-            <div class="totals-row grand">
-              <span>Net Profit/Loss</span>
-              <span>${netProfit >= 0 ? '+' : ''}Le ${netProfit.toLocaleString()}</span>
-            </div>
-          </div>
-        `
-      });
-    }
 
     const html = generateUnifiedPDF({
       documentType: 'report',
@@ -276,7 +254,7 @@ export default function ReportGenerator({ sales = [], expenses = [], employees =
     });
     
     printUnifiedPDF(html, `${reportType}_report_${format(new Date(), 'yyyy-MM-dd')}.pdf`);
-    toast({ title: "Report downloaded" });
+    toast({ title: "Report printed" });
   };
 
   return (

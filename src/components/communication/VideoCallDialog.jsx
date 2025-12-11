@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import {
   Dialog,
   DialogContent,
@@ -45,19 +45,37 @@ export default function VideoCallDialog({
   onAccept,
   onReject
 }) {
-  const [callStatus, setCallStatus] = useState(isIncoming ? "incoming" : "calling");
+  const [callStatus, setCallStatus] = useState("calling");
   const [isMuted, setIsMuted] = useState(false);
-  const [isVideoOff, setIsVideoOff] = useState(callType === "audio");
+  const [isVideoOff, setIsVideoOff] = useState(false);
   const [isScreenSharing, setIsScreenSharing] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [callDuration, setCallDuration] = useState(0);
   const [remoteUsers, setRemoteUsers] = useState([]);
-  const [viewMode, setViewMode] = useState("grid"); // "grid" or "speaker"
+  const [viewMode, setViewMode] = useState("grid");
   const [activeSpeaker, setActiveSpeaker] = useState(null);
   const [networkQuality, setNetworkQuality] = useState({ uplink: 0, downlink: 0 });
   const [callStats, setCallStats] = useState({ latency: 0, packetLoss: 0, bitrate: 0 });
   const [showQualityReport, setShowQualityReport] = useState(false);
   const [qualityLogs, setQualityLogs] = useState([]);
+
+  useEffect(() => {
+    if (open) {
+      setCallStatus(isIncoming ? "incoming" : "calling");
+      setIsMuted(false);
+      setIsVideoOff(callType === "audio");
+      setIsScreenSharing(false);
+      setIsFullscreen(false);
+      setCallDuration(0);
+      setRemoteUsers([]);
+      setViewMode("grid");
+      setActiveSpeaker(null);
+      setNetworkQuality({ uplink: 0, downlink: 0 });
+      setCallStats({ latency: 0, packetLoss: 0, bitrate: 0 });
+      setShowQualityReport(false);
+      setQualityLogs([]);
+    }
+  }, [open, isIncoming, callType]);
   const statsIntervalRef = useRef(null);
   
   const localVideoRef = useRef(null);
@@ -536,10 +554,7 @@ export default function VideoCallDialog({
                     <Tooltip>
                       <TooltipTrigger asChild>
                         <div className={`flex items-center gap-1.5 px-2 py-1 rounded-full bg-black/40 ${getQualityLevel(networkQuality.downlink).color}`}>
-                          {(() => {
-                            const QualityIcon = getQualityLevel(networkQuality.downlink).icon;
-                            return <QualityIcon className="w-4 h-4" />;
-                          })()}
+                          {React.createElement(getQualityLevel(networkQuality.downlink).icon, { className: "w-4 h-4" })}
                           <span className="text-xs font-medium">{getQualityLevel(networkQuality.downlink).label}</span>
                         </div>
                       </TooltipTrigger>

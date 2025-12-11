@@ -63,7 +63,7 @@ export default function SaveReportDialog({
   const resetForm = () => {
     setName('');
     setDescription('');
-    setSelectedType('custom');
+    setSelectedType(reportType);
     setIsFavorite(false);
     setIsShared(false);
   };

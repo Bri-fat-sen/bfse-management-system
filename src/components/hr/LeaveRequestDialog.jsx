@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { differenceInDays } from "date-fns";
@@ -43,12 +43,27 @@ export default function LeaveRequestDialog({
   const toast = useToast();
   const queryClient = useQueryClient();
   const [activeSection, setActiveSection] = useState('type');
-  const [leaveType, setLeaveType] = useState(editingRequest?.leave_type || "annual");
-  const [startDate, setStartDate] = useState(editingRequest?.start_date ? new Date(editingRequest.start_date) : null);
-  const [endDate, setEndDate] = useState(editingRequest?.end_date ? new Date(editingRequest.end_date) : null);
-  const [reason, setReason] = useState(editingRequest?.reason || "");
+  const [leaveType, setLeaveType] = useState("annual");
+  const [startDate, setStartDate] = useState(null);
+  const [endDate, setEndDate] = useState(null);
+  const [reason, setReason] = useState("");
   const [uploading, setUploading] = useState(false);
-  const [attachmentUrl, setAttachmentUrl] = useState(editingRequest?.attachment_url || "");
+  const [attachmentUrl, setAttachmentUrl] = useState("");
+
+  useEffect(() => {
+    if (open) {
+      if (editingRequest) {
+        setLeaveType(editingRequest.leave_type || "annual");
+        setStartDate(editingRequest.start_date ? new Date(editingRequest.start_date) : null);
+        setEndDate(editingRequest.end_date ? new Date(editingRequest.end_date) : null);
+        setReason(editingRequest.reason || "");
+        setAttachmentUrl(editingRequest.attachment_url || "");
+      } else {
+        resetForm();
+      }
+      setActiveSection('type');
+    }
+  }, [open, editingRequest]);
 
   const primaryColor = organisation?.primary_color || '#1EB053';
   const secondaryColor = organisation?.secondary_color || '#0072C6';
@@ -84,19 +99,6 @@ export default function LeaveRequestDialog({
       toast.error("Failed to update leave request", error.message);
     }
   });
-
-  useEffect(() => {
-    if (open && editingRequest) {
-      setLeaveType(editingRequest.leave_type || "annual");
-      setStartDate(editingRequest.start_date ? new Date(editingRequest.start_date) : null);
-      setEndDate(editingRequest.end_date ? new Date(editingRequest.end_date) : null);
-      setReason(editingRequest.reason || "");
-      setAttachmentUrl(editingRequest.attachment_url || "");
-      setActiveSection('type');
-    } else if (open && !editingRequest) {
-      resetForm();
-    }
-  }, [editingRequest, open]);
 
   const resetForm = () => {
     setLeaveType("annual");
