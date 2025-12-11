@@ -66,8 +66,7 @@ import SendInviteEmailDialog from "@/components/email/SendInviteEmailDialog";
 import EmployeeDocuments from "@/components/hr/EmployeeDocuments";
 import PerformanceReviewDialog from "@/components/hr/PerformanceReviewDialog";
 import ConfirmDialog from "@/components/ui/ConfirmDialog";
-import PayslipGenerator from "@/components/hr/PayslipGenerator";
-import EmailPayslipDialog from "@/components/hr/EmailPayslipDialog";
+import RemunerationPackageManager from "@/components/hr/RemunerationPackageManager";
 import { format } from "date-fns";
 
 export default function HRManagement() {
@@ -94,8 +93,6 @@ export default function HRManagement() {
   const [showBulkDeleteDialog, setShowBulkDeleteDialog] = useState(false);
   const [showDeletePayrollDialog, setShowDeletePayrollDialog] = useState(false);
   const [payrollToDelete, setPayrollToDelete] = useState(null);
-  const [showEmailPayslipDialog, setShowEmailPayslipDialog] = useState(false);
-  const [payrollForEmail, setPayrollForEmail] = useState(null);
 
   const { data: user } = useQuery({
     queryKey: ['currentUser'],
@@ -342,9 +339,10 @@ export default function HRManagement() {
 
       {/* Main Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="grid w-full grid-cols-3 sm:grid-cols-5 h-auto gap-1">
+        <TabsList className="grid w-full grid-cols-3 sm:grid-cols-6 h-auto gap-1">
           <TabsTrigger value="overview" className="text-xs sm:text-sm">Overview</TabsTrigger>
           <TabsTrigger value="employees" className="text-xs sm:text-sm">Employees</TabsTrigger>
+          <TabsTrigger value="packages" className="text-xs sm:text-sm">Packages</TabsTrigger>
           <TabsTrigger value="payroll" className="text-xs sm:text-sm">Payroll</TabsTrigger>
           <TabsTrigger value="leaves" className="text-xs sm:text-sm">Leaves</TabsTrigger>
           <TabsTrigger value="performance" className="text-xs sm:text-sm">Performance</TabsTrigger>
@@ -391,11 +389,6 @@ export default function HRManagement() {
                               {payroll.status?.replace('_', ' ')}
                             </Badge>
                           </div>
-                          <PayslipGenerator
-                            payroll={payroll}
-                            employee={employees.find(e => e.id === payroll.employee_id)}
-                            organisation={organisation}
-                          />
                           {isAdmin && (
                             <DropdownMenu>
                               <DropdownMenuTrigger asChild>
@@ -404,16 +397,6 @@ export default function HRManagement() {
                                 </Button>
                               </DropdownMenuTrigger>
                               <DropdownMenuContent align="end">
-                                <DropdownMenuItem onClick={() => {
-                                  const emp = employees.find(e => e.id === payroll.employee_id);
-                                  if (emp) {
-                                    setPayrollForEmail({ payroll, employee: emp });
-                                    setShowEmailPayslipDialog(true);
-                                  }
-                                }}>
-                                  <Send className="w-4 h-4 mr-2" />
-                                  Email Payslip
-                                </DropdownMenuItem>
                                 <DropdownMenuItem onClick={() => {
                                   setPayrollToDelete(payroll);
                                   setShowDeletePayrollDialog(true);
@@ -514,6 +497,11 @@ export default function HRManagement() {
               </div>
             </CardContent>
           </Card>
+        </TabsContent>
+
+        {/* Packages Tab */}
+        <TabsContent value="packages" className="space-y-4">
+          <RemunerationPackageManager orgId={orgId} />
         </TabsContent>
 
         {/* Employees Tab */}
@@ -748,11 +736,6 @@ export default function HRManagement() {
                       } className="text-[10px] sm:text-xs">
                         {payroll.status?.replace('_', ' ')}
                       </Badge>
-                      <PayslipGenerator
-                        payroll={payroll}
-                        employee={employees.find(e => e.id === payroll.employee_id)}
-                        organisation={organisation}
-                      />
                       {isAdmin && (
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
@@ -761,16 +744,6 @@ export default function HRManagement() {
                             </Button>
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end">
-                            <DropdownMenuItem onClick={() => {
-                              const emp = employees.find(e => e.id === payroll.employee_id);
-                              if (emp) {
-                                setPayrollForEmail({ payroll, employee: emp });
-                                setShowEmailPayslipDialog(true);
-                              }
-                            }}>
-                              <Send className="w-4 h-4 mr-2" />
-                              Email Payslip
-                            </DropdownMenuItem>
                             <DropdownMenuItem onClick={() => {
                               setPayrollToDelete(payroll);
                               setShowDeletePayrollDialog(true);
@@ -902,19 +875,6 @@ export default function HRManagement() {
         onConfirm={() => deletePayrollMutation.mutate(payrollToDelete.id)}
         isLoading={deletePayrollMutation.isPending}
       />
-
-      {payrollForEmail && (
-        <EmailPayslipDialog
-          open={showEmailPayslipDialog}
-          onOpenChange={(open) => {
-            setShowEmailPayslipDialog(open);
-            if (!open) setPayrollForEmail(null);
-          }}
-          payroll={payrollForEmail.payroll}
-          employee={payrollForEmail.employee}
-          organisation={organisation}
-        />
-      )}
     </div>
   );
 }
