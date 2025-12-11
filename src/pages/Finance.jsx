@@ -130,7 +130,7 @@ export default function Finance() {
 
   const { data: expenses = [], isLoading: loadingExpenses } = useQuery({
     queryKey: ['expenses', orgId],
-    queryFn: () => base44.entities.Expense.filter({ organisation_id: orgId }, '-date', 1000),
+    queryFn: () => base44.entities.Expense.filter({ organisation_id: orgId }, '-date', 10000),
     enabled: !!orgId,
     staleTime: 0,
     refetchOnWindowFocus: true,
