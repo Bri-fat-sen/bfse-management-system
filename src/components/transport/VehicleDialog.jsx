@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import {
@@ -60,25 +60,27 @@ export default function VehicleDialog({ open, onOpenChange, orgId, drivers = [],
   });
 
   useEffect(() => {
-    if (editingVehicle) {
-      setFormData({
-        registration_number: editingVehicle.registration_number || '',
-        vehicle_type: editingVehicle.vehicle_type || 'bus',
-        brand: editingVehicle.brand || '',
-        model: editingVehicle.model || '',
-        year: editingVehicle.year || new Date().getFullYear(),
-        capacity: editingVehicle.capacity || '',
-        fuel_type: editingVehicle.fuel_type || 'diesel',
-        current_mileage: editingVehicle.current_mileage || 0,
-        assigned_driver_id: editingVehicle.assigned_driver_id || '',
-        insurance_expiry: editingVehicle.insurance_expiry || '',
-        last_service_date: editingVehicle.last_service_date || '',
-        notes: editingVehicle.notes || '',
-      });
-      setShowAdvanced(true);
-    } else {
-      resetForm();
-      setShowAdvanced(false);
+    if (open) {
+      if (editingVehicle) {
+        setFormData({
+          registration_number: editingVehicle.registration_number || '',
+          vehicle_type: editingVehicle.vehicle_type || 'bus',
+          brand: editingVehicle.brand || '',
+          model: editingVehicle.model || '',
+          year: editingVehicle.year || new Date().getFullYear(),
+          capacity: editingVehicle.capacity || '',
+          fuel_type: editingVehicle.fuel_type || 'diesel',
+          current_mileage: editingVehicle.current_mileage || 0,
+          assigned_driver_id: editingVehicle.assigned_driver_id || '',
+          insurance_expiry: editingVehicle.insurance_expiry || '',
+          last_service_date: editingVehicle.last_service_date || '',
+          notes: editingVehicle.notes || '',
+        });
+        setShowAdvanced(true);
+      } else {
+        resetForm();
+        setShowAdvanced(false);
+      }
     }
   }, [editingVehicle, open]);
 
