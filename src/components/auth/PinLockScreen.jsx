@@ -127,8 +127,8 @@ export default function PinLockScreen({
           inputMode="numeric"
           pattern="[0-9]*"
           autoComplete="off"
-          className="sr-only"
-          style={{ position: 'absolute', opacity: 0, pointerEvents: 'none' }}
+          className="absolute opacity-0 pointer-events-none"
+          style={{ position: 'absolute', left: '-9999px' }}
           value={pin}
           onChange={(e) => {
             const value = e.target.value.replace(/\D/g, '').slice(0, 4);
