@@ -1175,6 +1175,66 @@ export default function BatchManagement({ products = [], warehouses = [], vehicl
           </form>
         </DialogContent>
       </Dialog>
+
+      {/* Bulk Delete Confirmation Dialog */}
+      <Dialog open={showBulkDeleteDialog} onOpenChange={setShowBulkDeleteDialog}>
+        <DialogContent className="max-w-md w-[95vw] sm:w-full">
+          <div className="h-1 flex">
+            <div className="flex-1 bg-[#1EB053]" />
+            <div className="flex-1 bg-white" />
+            <div className="flex-1 bg-[#0072C6]" />
+          </div>
+          <div className="p-6">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-12 h-12 rounded-full bg-red-100 flex items-center justify-center">
+                <AlertTriangle className="w-6 h-6 text-red-600" />
+              </div>
+              <h3 className="text-lg font-bold text-red-600">Confirm Bulk Delete</h3>
+            </div>
+            <div className="space-y-4">
+              <p className="text-gray-700">
+                Delete <strong>{selectedBatchIds.length}</strong> selected batch(es)?
+              </p>
+              <div className="bg-red-50 border border-red-200 rounded-lg p-3">
+                <p className="text-sm text-red-700 font-medium">⚠️ This action cannot be undone!</p>
+                <p className="text-xs text-red-600 mt-1">All stock allocations and movements for these batches will be removed.</p>
+              </div>
+              <div className="flex gap-2 pt-2">
+                <Button
+                  variant="outline"
+                  className="flex-1"
+                  onClick={() => setShowBulkDeleteDialog(false)}
+                  disabled={bulkDeleteMutation.isPending}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  className="flex-1 bg-red-600 hover:bg-red-700"
+                  onClick={() => bulkDeleteMutation.mutate(selectedBatchIds)}
+                  disabled={bulkDeleteMutation.isPending}
+                >
+                  {bulkDeleteMutation.isPending ? (
+                    <>
+                      <Clock className="w-4 h-4 mr-2 animate-spin" />
+                      Deleting...
+                    </>
+                  ) : (
+                    <>
+                      <Trash2 className="w-4 h-4 mr-2" />
+                      Delete All
+                    </>
+                  )}
+                </Button>
+              </div>
+            </div>
+          </div>
+          <div className="h-1 flex">
+            <div className="flex-1 bg-[#1EB053]" />
+            <div className="flex-1 bg-white" />
+            <div className="flex-1 bg-[#0072C6]" />
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
