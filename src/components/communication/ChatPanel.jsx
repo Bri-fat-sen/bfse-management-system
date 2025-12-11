@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
@@ -110,21 +110,31 @@ export default function ChatPanel({ isOpen, onClose, orgId, currentEmployee }) {
 
   // Auto-scroll to bottom on new messages
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages]);
+    if (messages.length > lastMessageCount) {
+      messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    }
+    setLastMessageCount(messages.length);
+  }, [messages.length]);
 
-  // Mark messages as read
+  // Mark messages as read - debounced to prevent infinite loops
   useEffect(() => {
-    if (selectedRoom && messages.length > 0 && currentEmployee) {
-      const unreadMessages = messages.filter(
-        m => m.sender_id !== currentEmployee.id && !m.read_by?.includes(currentEmployee.id)
-      );
+    if (!selectedRoom || !messages.length || !currentEmployee) return;
+    
+    const unreadMessages = messages.filter(
+      m => m.sender_id !== currentEmployee.id && !m.read_by?.includes(currentEmployee.id)
+    );
+    
+    if (unreadMessages.length === 0) return;
+    
+    const timer = setTimeout(() => {
       unreadMessages.forEach(msg => {
         const newReadBy = [...(msg.read_by || []), currentEmployee.id];
-        base44.entities.ChatMessage.update(msg.id, { read_by: newReadBy, is_read: true });
+        base44.entities.ChatMessage.update(msg.id, { read_by: newReadBy, is_read: true }).catch(() => {});
       });
-    }
-  }, [messages, selectedRoom, currentEmployee]);
+    }, 500);
+    
+    return () => clearTimeout(timer);
+  }, [messages.length, selectedRoom?.id, currentEmployee?.id]);
 
   const sendMessageMutation = useMutation({
     mutationFn: (data) => base44.entities.ChatMessage.create(data),

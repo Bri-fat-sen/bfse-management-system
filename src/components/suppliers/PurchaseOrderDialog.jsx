@@ -71,19 +71,37 @@ export default function PurchaseOrderDialog({
   const isCashOnly = supplier?.cash_only || false;
 
   useEffect(() => {
-    if (purchaseOrder) {
-      setSelectedSupplier(purchaseOrder.supplier_id);
-      setItems(purchaseOrder.items || []);
-      setShippingCost(purchaseOrder.shipping_cost || 0);
-      setTaxAmount(purchaseOrder.tax_amount || 0);
-      setPaymentMethod(purchaseOrder.payment_method || "bank_transfer");
-    } else {
-      setSelectedSupplier("");
-      setItems([]);
-      setShippingCost(0);
-      setTaxAmount(0);
-      setPaymentMethod("bank_transfer");
-      setShowSummary(false);
+    if (open) {
+      if (purchaseOrder) {
+        setSelectedSupplier(purchaseOrder.supplier_id);
+        setItems(purchaseOrder.items || []);
+        setShippingCost(purchaseOrder.shipping_cost || 0);
+        setTaxAmount(purchaseOrder.tax_amount || 0);
+        setPaymentMethod(purchaseOrder.payment_method || "bank_transfer");
+        setIsRecurring(purchaseOrder.is_recurring || false);
+        setRecurrenceData(purchaseOrder.recurrence || {
+          frequency: 'monthly',
+          next_order_date: '',
+          end_date: '',
+          auto_approve: false,
+          quantity_adjustment: { enabled: false, adjustment_percentage: 0 }
+        });
+      } else {
+        setSelectedSupplier("");
+        setItems([]);
+        setShippingCost(0);
+        setTaxAmount(0);
+        setPaymentMethod("bank_transfer");
+        setShowSummary(false);
+        setIsRecurring(false);
+        setRecurrenceData({
+          frequency: 'monthly',
+          next_order_date: '',
+          end_date: '',
+          auto_approve: false,
+          quantity_adjustment: { enabled: false, adjustment_percentage: 0 }
+        });
+      }
     }
   }, [purchaseOrder, open]);
 

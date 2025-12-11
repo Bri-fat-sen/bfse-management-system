@@ -33,13 +33,15 @@ export default function ReceiveStockDialog({
   const [discrepancies, setDiscrepancies] = useState([]);
 
   useEffect(() => {
-    if (purchaseOrder?.items) {
+    if (purchaseOrder?.items && open) {
       setReceivedItems(purchaseOrder.items.map(item => ({
         ...item,
         receiving_quantity: item.quantity_ordered - (item.quantity_received || 0)
       })));
+      setNotes("");
+      setDiscrepancies([]);
     }
-  }, [purchaseOrder]);
+  }, [purchaseOrder, open]);
 
   const checkDiscrepancies = () => {
     const foundDiscrepancies = [];
