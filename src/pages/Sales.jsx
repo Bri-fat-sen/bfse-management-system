@@ -283,11 +283,13 @@ export default function Sales() {
   }, [saleType, warehouses.length, vehicles.length]);
 
   // Clear cart when location changes (stock is location-specific)
+  const prevLocationRef = React.useRef(selectedLocation);
   React.useEffect(() => {
-    if (cart.length > 0) {
+    if (prevLocationRef.current && prevLocationRef.current !== selectedLocation && cart.length > 0) {
       setCart([]);
     }
-  }, [selectedLocation]);
+    prevLocationRef.current = selectedLocation;
+  }, [selectedLocation, cart.length]);
 
   const createSaleMutation = useMutation({
     mutationFn: async (saleData) => {
