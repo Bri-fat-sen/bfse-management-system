@@ -499,6 +499,8 @@ Be specific about WHY you chose that record type.`,
                 notes: { type: "string", description: "Any notes or remarks from 'Notes/Comments' field" },
                 wastage_quantity: { type: "number", description: "Wastage/damaged quantity from 'Wastage' field" },
                 wastage_cost: { type: "number", description: "Cost of wastage from 'Wastage Cost' field" },
+                supervisor_name: { type: "string", description: "Name of person who produced/supervised from 'Supervisor' or 'Produced By' field" },
+                produced_by: { type: "string", description: "Alternative field for producer name" },
                 // Payroll / Employee specific
                 employee_name: { type: "string", description: "Employee name or full name from form" },
                 employee_code: { type: "string", description: "Employee ID/code from form" },
@@ -728,7 +730,13 @@ IMPORTANT FOR BATCH ENTRY FORMS:
             wastage_cost: (parseFloat(item.wastage_cost) || 0) / conversionFactor,
             manufacturing_date: item.manufacturing_date || '',
             start_time: item.start_time || '',
-            end_time: item.end_time || ''
+            end_time: item.end_time || '',
+            quality_status: item.quality_status || 'pending',
+            supervisor_name: item.supervisor_name || item.produced_by || '',
+            supervisor_id: employees.find(emp => 
+              emp.full_name?.toLowerCase() === (item.supervisor_name || item.produced_by || '')?.toLowerCase() ||
+              emp.employee_code === (item.supervisor_name || item.produced_by)
+            )?.id || ''
             };
         });
 
@@ -1036,8 +1044,13 @@ IMPORTANT FOR BATCH ENTRY FORMS:
             duration_hours: durationHours,
             expiry_date: item.expiry_date || '',
             cost_price: item.unit_price || item.actual_unit_cost || 0,
-            status: item.quality_status || 'active',
-            notes: item.notes || `Imported from document. ${item.description || ''}${wastageQty > 0 ? ` | Wastage: ${wastageQty}` : ''}${durationHours > 0 ? ` | Duration: ${durationHours.toFixed(1)}h` : ''}`
+            status: 'active',
+            quality_status: item.quality_status || 'pending',
+            wastage_quantity: wastageQty,
+            wastage_cost: wastageCost,
+            supervisor_id: item.supervisor_id || '',
+            supervisor_name: item.supervisor_name || '',
+            notes: item.notes || `Imported from document. ${item.description || ''}${durationHours > 0 ? ` | Duration: ${durationHours.toFixed(1)}h` : ''}`
           });
           batchCount++;
 
