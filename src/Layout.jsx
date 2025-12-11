@@ -207,8 +207,16 @@ export default function Layout({ children, currentPageName }) {
     enabled: !!currentEmployee?.id,
   });
 
-  const actualRole = currentEmployee?.role || (user?.role === 'admin' ? 'super_admin' : 'read_only');
-  const userRole = (actualRole === 'super_admin' && previewRole) ? previewRole : actualRole;
+  const actualRole = useMemo(() => 
+    currentEmployee?.role || (user?.role === 'admin' ? 'super_admin' : 'read_only'),
+    [currentEmployee?.role, user?.role]
+  );
+  
+  const userRole = useMemo(() => 
+    (actualRole === 'super_admin' && previewRole) ? previewRole : actualRole,
+    [actualRole, previewRole]
+  );
+  
   const orgId = currentEmployee?.organisation_id;
 
   const { data: organisations } = useQuery({
