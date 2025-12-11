@@ -101,6 +101,7 @@ export default function DocumentUploadExtractor({
   const [documentSummary, setDocumentSummary] = useState(null);
   const [uploadLocation, setUploadLocation] = useState(selectedLocation || '');
   const [uploadSaleType, setUploadSaleType] = useState(selectedSaleType || 'retail');
+  const [productionLocation, setProductionLocation] = useState('');
   const [currencyMode, setCurrencyMode] = useState(null); // null = not set, 'sle', 'sll'
   const [showCurrencyDialog, setShowCurrencyDialog] = useState(false);
   const [pendingFile, setPendingFile] = useState(null);
@@ -768,9 +769,17 @@ IMPORTANT FOR BATCH ENTRY FORMS:
         toast.error("Missing Products", "Please select products for all items or deselect them");
         return;
       }
-      
+
       if (!uploadLocation) {
         toast.error("Missing Location", "Please select a location for all sales items");
+        return;
+      }
+    }
+
+    // Validate production-specific data
+    if (detectedType === 'production') {
+      if (!productionLocation) {
+        toast.error("Missing Location", "Please select a production location");
         return;
       }
     }
@@ -974,24 +983,24 @@ IMPORTANT FOR BATCH ENTRY FORMS:
           inventoryCount++;
         } else if (isProduction) {
           const batchNum = item.batch_number || `BATCH-${format(new Date(), 'yyyyMMdd')}-${String(batchCount + 1).padStart(3, '0')}`;
-          
-          // Find warehouse by name if not already matched
-          let warehouseId = item.warehouse_id;
-          let warehouseName = item.warehouse_name || item.warehouse;
-          if (!warehouseId && warehouseName) {
+
+          // Use selected production location or find warehouse by name
+          let warehouseId = productionLocation || item.warehouse_id;
+          let warehouseName = '';
+
+          if (warehouseId) {
+            const selectedWarehouse = warehouses.find(w => w.id === warehouseId);
+            warehouseName = selectedWarehouse?.name || '';
+          } else if (item.warehouse_name || item.warehouse) {
+            const warehouseNameFromDoc = item.warehouse_name || item.warehouse;
             const matchedWarehouse = warehouses.find(w => 
-              w.name?.toLowerCase().includes(warehouseName.toLowerCase()) ||
-              warehouseName.toLowerCase().includes(w.name?.toLowerCase())
+              w.name?.toLowerCase().includes(warehouseNameFromDoc.toLowerCase()) ||
+              warehouseNameFromDoc.toLowerCase().includes(w.name?.toLowerCase())
             );
             if (matchedWarehouse) {
               warehouseId = matchedWarehouse.id;
               warehouseName = matchedWarehouse.name;
             }
-          }
-          // Use first warehouse as default if none matched
-          if (!warehouseId && warehouses.length > 0) {
-            warehouseId = warehouses[0].id;
-            warehouseName = warehouses[0].name;
           }
           
           const totalProduced = item.quantity || item.actual_qty || 0;
@@ -1143,6 +1152,36 @@ IMPORTANT FOR BATCH ENTRY FORMS:
         </div>
 
         <div className="p-3 sm:p-6 space-y-4 overflow-y-auto max-h-[calc(95vh-140px)]">
+          {/* Production Location Selection */}
+          {(detectedType === 'production' || isProduction) && (
+            <div className="p-4 bg-green-50 rounded-xl border border-green-200">
+              <h3 className="font-semibold text-green-900 mb-3 flex items-center gap-2">
+                <MapPin className="w-5 h-5" />
+                Production Location
+              </h3>
+              <div>
+                <label className="text-xs font-medium text-green-800 uppercase mb-1 block">
+                  Select Warehouse/Location
+                </label>
+                <Select value={productionLocation} onValueChange={setProductionLocation}>
+                  <SelectTrigger className={!productionLocation ? "border-amber-400 bg-amber-50" : "bg-white"}>
+                    <SelectValue placeholder="Select production location..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {warehouses.filter(w => w.is_active !== false).map(w => (
+                      <SelectItem key={w.id} value={w.id}>
+                        🏭 {w.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                {!productionLocation && (
+                  <p className="text-xs text-amber-700 mt-1">⚠️ Location required for production batch</p>
+                )}
+              </div>
+            </div>
+          )}
+
           {/* Location & Sale Type Selection for Revenue/Sales */}
           {(detectedType === 'revenue' || isRevenue) && (
             <div className="p-4 bg-blue-50 rounded-xl border border-blue-200">
