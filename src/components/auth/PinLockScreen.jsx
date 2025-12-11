@@ -1,4 +1,4 @@
-import { useState, useCallback, useRef } from "react";
+import React, { useState, useCallback, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Delete, CheckCircle, XCircle, LogOut } from "lucide-react";
 
@@ -51,6 +51,32 @@ export default function PinLockScreen({
     setPin(pinRef.current);
     setError("");
   };
+
+  // Keyboard support
+  React.useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (success || attempts >= maxAttempts) return;
+
+      // Handle number keys (0-9)
+      if (e.key >= '0' && e.key <= '9') {
+        e.preventDefault();
+        handleDigit(e.key);
+      }
+      // Handle backspace/delete
+      else if (e.key === 'Backspace' || e.key === 'Delete') {
+        e.preventDefault();
+        handleDelete();
+      }
+      // Handle Enter to verify (if 4 digits entered)
+      else if (e.key === 'Enter' && pinRef.current.length === 4) {
+        e.preventDefault();
+        verifyPin(pinRef.current);
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [success, attempts]);
 
   const digits = [1, 2, 3, 4, 5, 6, 7, 8, 9, null, 0, 'delete'];
 
