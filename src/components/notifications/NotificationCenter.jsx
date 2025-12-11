@@ -228,65 +228,94 @@ export default function NotificationCenter({ orgId, currentEmployee }) {
                 const style = getNotificationStyle(notification.type);
                 const IconComponent = style.icon;
                 
+                const handleNotificationClick = () => {
+                  if (!notification.is_read) {
+                    markAsReadMutation.mutate(notification.id);
+                  }
+                  if (notification.link) {
+                    setOpen(false);
+                  }
+                };
+
                 return (
                   <div 
                     key={notification.id}
-                    className={`p-4 hover:bg-gray-50 transition-colors ${!notification.is_read ? 'bg-blue-50/50' : ''}`}
+                    className={`p-4 transition-colors ${!notification.is_read ? 'bg-blue-50/50' : ''} ${notification.link ? 'cursor-pointer hover:bg-gray-100' : 'hover:bg-gray-50'}`}
+                    onClick={() => notification.link && handleNotificationClick()}
                   >
-                    <div className="flex gap-3">
-                      <div className={`w-10 h-10 rounded-full ${style.bg} flex items-center justify-center flex-shrink-0`}>
-                        <IconComponent className={`w-5 h-5 ${style.color}`} />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-start justify-between gap-2">
-                          <div>
-                            <p className={`font-medium text-sm ${!notification.is_read ? 'text-gray-900' : 'text-gray-700'}`}>
-                              {notification.title}
-                            </p>
-                            <p className="text-sm text-gray-500 mt-0.5">{notification.message}</p>
-                          </div>
-                          {!notification.is_read && (
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="h-6 w-6 flex-shrink-0 text-blue-500 hover:text-blue-700"
-                              onClick={() => markAsReadMutation.mutate(notification.id)}
-                              title="Mark as read"
-                            >
-                              <Check className="w-3 h-3" />
-                            </Button>
-                          )}
+                    {notification.link ? (
+                      <Link to={notification.link} className="flex gap-3" onClick={handleNotificationClick}>
+                        <div className={`w-10 h-10 rounded-full ${style.bg} flex items-center justify-center flex-shrink-0`}>
+                          <IconComponent className={`w-5 h-5 ${style.color}`} />
                         </div>
-                        <div className="flex items-center justify-between mt-2">
-                          <div className="flex items-center gap-2">
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-start justify-between gap-2">
+                            <div>
+                              <p className={`font-medium text-sm ${!notification.is_read ? 'text-gray-900' : 'text-gray-700'}`}>
+                                {notification.title}
+                              </p>
+                              <p className="text-sm text-gray-500 mt-0.5">{notification.message}</p>
+                            </div>
+                            <ChevronRight className="w-4 h-4 text-[#0072C6] flex-shrink-0" />
+                          </div>
+                          <div className="flex items-center gap-2 mt-2">
                             <span className={`w-2 h-2 rounded-full ${getPriorityColor(notification.priority)}`} />
                             <span className="text-xs text-gray-400">
                               {formatDistanceToNow(new Date(notification.created_date), { addSuffix: true })}
                             </span>
-                            {notification.link && (
-                              <Link 
-                                to={notification.link}
-                                className="text-xs text-[#0072C6] hover:underline flex items-center gap-1"
-                                onClick={() => {
+                          </div>
+                        </div>
+                      </Link>
+                    ) : (
+                      <div className="flex gap-3">
+                        <div className={`w-10 h-10 rounded-full ${style.bg} flex items-center justify-center flex-shrink-0`}>
+                          <IconComponent className={`w-5 h-5 ${style.color}`} />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-start justify-between gap-2">
+                            <div>
+                              <p className={`font-medium text-sm ${!notification.is_read ? 'text-gray-900' : 'text-gray-700'}`}>
+                                {notification.title}
+                              </p>
+                              <p className="text-sm text-gray-500 mt-0.5">{notification.message}</p>
+                            </div>
+                            {!notification.is_read && (
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-6 w-6 flex-shrink-0 text-blue-500 hover:text-blue-700"
+                                onClick={(e) => {
+                                  e.stopPropagation();
                                   markAsReadMutation.mutate(notification.id);
-                                  setOpen(false);
                                 }}
+                                title="Mark as read"
                               >
-                                View <ChevronRight className="w-3 h-3" />
-                              </Link>
+                                <Check className="w-3 h-3" />
+                              </Button>
                             )}
                           </div>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-6 w-6 text-gray-400 hover:text-red-500"
-                            onClick={() => deleteNotificationMutation.mutate(notification.id)}
-                          >
-                            <Trash2 className="w-3 h-3" />
-                          </Button>
+                          <div className="flex items-center justify-between mt-2">
+                            <div className="flex items-center gap-2">
+                              <span className={`w-2 h-2 rounded-full ${getPriorityColor(notification.priority)}`} />
+                              <span className="text-xs text-gray-400">
+                                {formatDistanceToNow(new Date(notification.created_date), { addSuffix: true })}
+                              </span>
+                            </div>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-6 w-6 text-gray-400 hover:text-red-500"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                deleteNotificationMutation.mutate(notification.id);
+                              }}
+                            >
+                              <Trash2 className="w-3 h-3" />
+                            </Button>
+                          </div>
                         </div>
                       </div>
-                    </div>
+                    )}
                   </div>
                 );
               })}
