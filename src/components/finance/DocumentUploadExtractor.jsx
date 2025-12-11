@@ -47,6 +47,7 @@ const DEFAULT_EXPENSE_CATEGORIES = [
   { value: "marketing", label: "Marketing" },
   { value: "insurance", label: "Insurance" },
   { value: "petty_cash", label: "Petty Cash" },
+  { value: "production_wastage", label: "Production Wastage" },
   { value: "other", label: "Other" }
 ];
 
@@ -493,6 +494,8 @@ Be specific about WHY you chose that record type.`,
                 warehouse: { type: "string", description: "Warehouse name from 'Warehouse' field" },
                 quality_status: { type: "string", description: "Quality status from 'Quality Status' field (pending/passed/failed)" },
                 notes: { type: "string", description: "Any notes or remarks from 'Notes/Comments' field" },
+                wastage_quantity: { type: "number", description: "Wastage/damaged quantity from 'Wastage' field" },
+                wastage_cost: { type: "number", description: "Cost of wastage from 'Wastage Cost' field" },
                 // Payroll / Employee specific
                 employee_name: { type: "string", description: "Employee name or full name from form" },
                 employee_code: { type: "string", description: "Employee ID/code from form" },
@@ -717,7 +720,9 @@ IMPORTANT FOR BATCH ENTRY FORMS:
             stock_out: parseFloat(item.stock_out) || 0,
             // Production batch specific
             rolls: parseFloat(item.rolls) || 0,
-            weight_kg: parseFloat(item.weight_kg) || 0
+            weight_kg: parseFloat(item.weight_kg) || 0,
+            wastage_quantity: parseFloat(item.wastage_quantity) || 0,
+            wastage_cost: (parseFloat(item.wastage_cost) || 0) / conversionFactor
             };
         });
 
@@ -984,6 +989,11 @@ IMPORTANT FOR BATCH ENTRY FORMS:
             warehouseName = warehouses[0].name;
           }
           
+          const totalProduced = item.quantity || item.actual_qty || 0;
+          const wastageQty = item.wastage_quantity || 0;
+          const wastageCost = item.wastage_cost || 0;
+          const finalQty = totalProduced - wastageQty;
+          
           // Create InventoryBatch (used by BatchManagement)
           await base44.entities.InventoryBatch.create({
             organisation_id: orgId,
@@ -992,16 +1002,32 @@ IMPORTANT FOR BATCH ENTRY FORMS:
             product_name: item.product_name || item.description || 'Unknown Product',
             warehouse_id: warehouseId || '',
             warehouse_name: warehouseName || '',
-            quantity: item.quantity || item.actual_qty || 0,
+            quantity: finalQty,
             rolls: item.rolls || 0,
             weight_kg: item.weight_kg || 0,
             manufacturing_date: item.manufacturing_date || item.date || format(new Date(), 'yyyy-MM-dd'),
             expiry_date: item.expiry_date || '',
             cost_price: item.unit_price || item.actual_unit_cost || 0,
             status: item.quality_status || 'active',
-            notes: item.notes || `Imported from document. ${item.description || ''}`
+            notes: item.notes || `Imported from document. ${item.description || ''}${wastageQty > 0 ? ` | Wastage: ${wastageQty}` : ''}`
           });
           batchCount++;
+
+          // Create expense record for wastage if wastage exists
+          if (wastageQty > 0 || wastageCost > 0) {
+            await base44.entities.Expense.create({
+              organisation_id: orgId,
+              category: 'production_wastage',
+              description: `Production Wastage - Batch ${batchNum} - ${item.product_name || item.description || 'Unknown Product'}`,
+              amount: wastageCost || 0,
+              date: item.manufacturing_date || item.date || format(new Date(), 'yyyy-MM-dd'),
+              recorded_by: currentEmployee?.id,
+              recorded_by_name: currentEmployee?.full_name,
+              status: 'approved',
+              notes: `Wastage Qty: ${wastageQty} | Total Produced: ${totalProduced} | Final Qty: ${finalQty}`
+            });
+            expenseCount++;
+          }
         } else if (isRevenue) {
           await base44.entities.Revenue.create({
             organisation_id: orgId,
@@ -1292,6 +1318,8 @@ IMPORTANT FOR BATCH ENTRY FORMS:
                         {isProduction && <TableHead className="text-xs">PRODUCT</TableHead>}
                         {isProduction && <TableHead className="text-xs">BATCH #</TableHead>}
                         <TableHead className="text-xs">{isProduction ? 'DESCRIPTION' : isRevenue ? 'DESCRIPTION' : 'DETAILS'}</TableHead>
+                        {isProduction && <TableHead className="text-xs bg-amber-50">Wastage Qty</TableHead>}
+                        {isProduction && <TableHead className="text-xs bg-amber-50">Wastage Cost</TableHead>}
                         {isRevenue && (
                           <>
                             <TableHead className="text-xs">CUSTOMER</TableHead>
@@ -1395,6 +1423,28 @@ IMPORTANT FOR BATCH ENTRY FORMS:
                               className="h-7 text-xs min-w-[150px]"
                             />
                             </TableCell>
+                          {isProduction && (
+                            <>
+                              <TableCell className="bg-amber-50/50">
+                                <Input
+                                  type="number"
+                                  value={item.wastage_quantity || ''}
+                                  onChange={(e) => updateItem(item.id, 'wastage_quantity', parseFloat(e.target.value) || 0)}
+                                  className="h-7 text-xs w-20 text-center"
+                                  placeholder="0"
+                                />
+                              </TableCell>
+                              <TableCell className="bg-amber-50/50">
+                                <Input
+                                  type="number"
+                                  value={item.wastage_cost || ''}
+                                  onChange={(e) => updateItem(item.id, 'wastage_cost', parseFloat(e.target.value) || 0)}
+                                  className="h-7 text-xs w-24 text-right"
+                                  placeholder="0"
+                                />
+                              </TableCell>
+                            </>
+                          )}
                             {isRevenue && (
                             <>
                               <TableCell>
