@@ -204,7 +204,18 @@ export default function Suppliers() {
     }
   });
 
-  const bulkApprovePOMutation = useMutation({
+  const sendEmailMutation = useMutation({
+    mutationFn: (purchaseOrderId) => base44.functions.invoke('sendPurchaseOrder', { purchaseOrderId }),
+    onSuccess: (response) => {
+      toast.success("Purchase order sent to supplier successfully");
+    },
+    onError: (error) => {
+      console.error('Send email error:', error);
+      toast.error("Failed to send email to supplier");
+    }
+  });
+
+  const bulkApprovePOsMutation = useMutation({
     mutationFn: async (poIds) => {
       for (const id of poIds) {
         await base44.entities.PurchaseOrder.update(id, { 
@@ -221,17 +232,6 @@ export default function Suppliers() {
       setSelectedPOIds([]);
     },
     onError: () => toast.error("Failed to approve POs")
-  });
-
-  const sendEmailMutation = useMutation({
-    mutationFn: (purchaseOrderId) => base44.functions.invoke('sendPurchaseOrder', { purchaseOrderId }),
-    onSuccess: (response) => {
-      toast.success("Purchase order sent to supplier successfully");
-    },
-    onError: (error) => {
-      console.error('Send email error:', error);
-      toast.error("Failed to send email to supplier");
-    }
   });
 
   // Stats
@@ -587,19 +587,6 @@ export default function Suppliers() {
 
           {/* Purchase Orders Tab */}
           <TabsContent value="orders">
-            {selectedPOIds.length > 0 && (
-              <div className="mb-4 flex justify-end">
-                <Button 
-                  onClick={() => bulkApprovePOMutation.mutate(selectedPOIds)}
-                  disabled={bulkApprovePOMutation.isPending}
-                  className="bg-green-600 hover:bg-green-700"
-                  size="sm"
-                >
-                  <CheckCircle className="w-4 h-4 mr-2" />
-                  Approve {selectedPOIds.length} PO{selectedPOIds.length > 1 ? 's' : ''}
-                </Button>
-              </div>
-            )}
             {loadingPOs ? (
               <div className="space-y-3">
                 {[...Array(5)].map((_, i) => (
@@ -624,6 +611,32 @@ export default function Suppliers() {
               </PermissionGate>
             ) : (
               <>
+              {/* Bulk Actions */}
+              {selectedPOIds.length > 0 && (
+                <div className="flex items-center gap-2 mb-4">
+                  <Button 
+                    onClick={() => bulkApprovePOsMutation.mutate(selectedPOIds)}
+                    disabled={bulkApprovePOsMutation.isPending}
+                    className="bg-green-600 hover:bg-green-700"
+                    size="sm"
+                  >
+                    {bulkApprovePOsMutation.isPending ? (
+                      <Clock className="w-4 h-4 mr-2 animate-spin" />
+                    ) : (
+                      <CheckCircle className="w-4 h-4 mr-2" />
+                    )}
+                    Approve {selectedPOIds.length} PO(s)
+                  </Button>
+                  <Button 
+                    variant="outline"
+                    onClick={() => setSelectedPOIds([])}
+                    size="sm"
+                  >
+                    Clear Selection
+                  </Button>
+                </div>
+              )}
+              
               {/* Desktop Table View */}
               <Card className="hidden md:block">
                 <CardContent className="p-0">
@@ -631,7 +644,7 @@ export default function Suppliers() {
                     <table className="w-full">
                       <thead className="bg-gray-50 border-b">
                         <tr>
-                          <th className="p-4 w-12">
+                          <th className="w-12 p-4">
                             <input
                               type="checkbox"
                               checked={selectedPOIds.length === filteredPOs.length && filteredPOs.length > 0}

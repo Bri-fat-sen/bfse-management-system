@@ -151,7 +151,7 @@ export default function BatchManagement({ products = [], warehouses = [], vehicl
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['inventoryBatches'] });
-      toast.success("All selected batches fully allocated");
+      toast.success("All selected batches allocated");
       setSelectedBatchIds([]);
     },
     onError: () => toast.error("Failed to allocate batches")
@@ -392,7 +392,11 @@ export default function BatchManagement({ products = [], warehouses = [], vehicl
                 disabled={bulkAllocateMutation.isPending}
                 className="bg-green-600 hover:bg-green-700"
               >
-                <CheckCircle className="w-4 h-4 mr-2" />
+                {bulkAllocateMutation.isPending ? (
+                  <Clock className="w-4 h-4 mr-2 animate-spin" />
+                ) : (
+                  <MapPin className="w-4 h-4 mr-2" />
+                )}
                 Allocate {selectedBatchIds.length}
               </Button>
             )}
@@ -478,7 +482,7 @@ export default function BatchManagement({ products = [], warehouses = [], vehicl
                 <table className="w-full">
                   <thead className="bg-gray-50 border-b">
                     <tr>
-                      <th className="p-4 w-12">
+                      <th className="w-12 p-4">
                         <input
                           type="checkbox"
                           checked={selectedBatchIds.length === filteredBatches.length && filteredBatches.length > 0}
