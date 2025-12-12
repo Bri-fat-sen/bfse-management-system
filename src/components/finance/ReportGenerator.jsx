@@ -260,27 +260,15 @@ export default function ReportGenerator({ sales = [], expenses = [], employees =
     
     // Save to Drive automatically
     try {
-      const { base44 } = await import("@/api/base44Client");
-      
-      // Convert HTML to base64 (simplified - the backend will handle this)
-      const blob = await new Promise((resolve) => {
-        const iframe = document.createElement('iframe');
-        iframe.style.display = 'none';
-        document.body.appendChild(iframe);
-        iframe.contentDocument.write(html);
-        iframe.contentDocument.close();
-        
-        setTimeout(() => {
-          const pdfData = btoa(html);
-          document.body.removeChild(iframe);
-          resolve(`data:text/html;base64,${pdfData}`);
-        }, 100);
-      });
-      
       const driveResult = await base44.functions.invoke('saveToDrive', {
-        fileData: blob,
-        fileName: fileName,
-        mimeType: 'application/pdf'
+        reportData: {
+          title: reportData.title,
+          period: `${format(parseISO(dateFrom), 'MMM d, yyyy')} - ${format(parseISO(dateTo), 'MMM d, yyyy')}`,
+          summary: reportData.summary,
+          columns: reportData.columns,
+          rows: reportData.rows
+        },
+        fileName: fileName
       });
       
       if (driveResult.data.success) {
