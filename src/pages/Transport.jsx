@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { format } from "date-fns";
@@ -19,7 +19,8 @@ import {
   Package,
   Wrench,
   AlertTriangle,
-  Printer
+  Printer,
+  Cloud
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -55,6 +56,7 @@ import { MaintenanceCard, UpcomingMaintenanceCard, MaintenanceStats } from "@/co
 import { isPast, differenceInDays } from "date-fns";
 import AIRouteOptimizer from "@/components/ai/AIRouteOptimizer";
 import PrintableFormsDownload from "@/components/finance/PrintableFormsDownload";
+import ExportToGoogleDrive from "@/components/exports/ExportToGoogleDrive";
 
 export default function Transport() {
   const toast = useToast();
@@ -69,6 +71,8 @@ export default function Transport() {
   const [editingMaintenance, setEditingMaintenance] = useState(null);
   const [selectedVehicleForMaintenance, setSelectedVehicleForMaintenance] = useState(null);
   const [showFormsDialog, setShowFormsDialog] = useState(false);
+  const [showDriveExport, setShowDriveExport] = useState(false);
+  const [exportData, setExportData] = useState([]);
 
   const { data: user } = useQuery({
     queryKey: ['currentUser'],
@@ -322,6 +326,17 @@ export default function Transport() {
           >
             <Printer className="w-4 h-4" />
             <span className="hidden sm:inline">Forms</span>
+          </Button>
+          <Button
+            onClick={() => {
+              setExportData(activeTab === 'trips' ? trips : activeTab === 'contracts' ? truckContracts : activeTab === 'maintenance' ? maintenanceRecords : vehicles);
+              setShowDriveExport(true);
+            }}
+            variant="outline"
+            className="gap-2 border-blue-500 text-blue-700 hover:bg-blue-50"
+          >
+            <Cloud className="w-4 h-4" />
+            <span className="hidden sm:inline">Export</span>
           </Button>
           <Button
             onClick={() => setShowTripDialog(true)}
@@ -841,7 +856,6 @@ export default function Transport() {
         currentEmployee={currentEmployee}
         orgId={orgId}
         preselectedVehicleId={selectedVehicleForMaintenance}
-        organisation={organisation?.[0]}
       />
 
       {/* Truck Contract Dialog */}
@@ -939,7 +953,6 @@ export default function Transport() {
         open={showRouteDialog}
         onOpenChange={setShowRouteDialog}
         orgId={orgId}
-        organisation={organisation?.[0]}
       />
 
       {/* Printable Forms Dialog */}
@@ -948,6 +961,16 @@ export default function Transport() {
         onOpenChange={setShowFormsDialog}
         organisation={organisation?.[0]}
         filterForms={['revenue_trip', 'revenue_truck_contract', 'expense_fuel', 'expense_maintenance', 'expense_truck_contract', 'expense_transport']}
+      />
+
+      {/* Export to Drive */}
+      <ExportToGoogleDrive
+        open={showDriveExport}
+        onOpenChange={setShowDriveExport}
+        data={exportData}
+        fileName={`transport_${activeTab}_${format(new Date(), 'yyyy-MM-dd')}`}
+        dataType={activeTab}
+        orgId={orgId}
       />
 
       {/* Vehicle Dialog */}

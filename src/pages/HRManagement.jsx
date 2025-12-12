@@ -31,7 +31,8 @@ import {
   Star,
   Lock,
   FolderOpen,
-  UserPlus
+  UserPlus,
+  Cloud
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -68,6 +69,7 @@ import PerformanceReviewDialog from "@/components/hr/PerformanceReviewDialog";
 import ConfirmDialog from "@/components/ui/ConfirmDialog";
 import RemunerationPackageManager from "@/components/hr/RemunerationPackageManager";
 import PayCycleManager from "@/components/hr/PayCycleManager";
+import ExportToGoogleDrive from "@/components/exports/ExportToGoogleDrive";
 import { format } from "date-fns";
 
 export default function HRManagement() {
@@ -94,6 +96,8 @@ export default function HRManagement() {
   const [showBulkDeleteDialog, setShowBulkDeleteDialog] = useState(false);
   const [showDeletePayrollDialog, setShowDeletePayrollDialog] = useState(false);
   const [payrollToDelete, setPayrollToDelete] = useState(null);
+  const [showDriveExport, setShowDriveExport] = useState(false);
+  const [exportData, setExportData] = useState([]);
 
   const { data: user } = useQuery({
     queryKey: ['currentUser'],
@@ -251,6 +255,17 @@ export default function HRManagement() {
         actionLabel="Add Employee"
         actionIcon={UserPlus}
       >
+        <Button
+          variant="outline"
+          onClick={() => {
+            setExportData(employees);
+            setShowDriveExport(true);
+          }}
+          className="border-blue-500 text-blue-700 hover:bg-blue-50"
+        >
+          <Cloud className="w-4 h-4 mr-2" />
+          <span className="hidden sm:inline">Export</span>
+        </Button>
         <Button
           variant="outline"
           onClick={() => setShowInviteDialog(true)}
@@ -881,6 +896,15 @@ export default function HRManagement() {
         variant="danger"
         onConfirm={() => deletePayrollMutation.mutate(payrollToDelete.id)}
         isLoading={deletePayrollMutation.isPending}
+      />
+
+      <ExportToGoogleDrive
+        open={showDriveExport}
+        onOpenChange={setShowDriveExport}
+        data={exportData}
+        fileName={`hr_employees_${format(new Date(), 'yyyy-MM-dd')}`}
+        dataType="employees"
+        orgId={orgId}
       />
     </div>
   );
