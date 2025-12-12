@@ -30,7 +30,31 @@ Deno.serve(async (req) => {
       }
     }
 
-    // Create employee record (User account will be auto-created on first login via Google SSO)
+    // Check if User account exists, create if not
+    let userRecord = null;
+    try {
+      const allUsers = await base44.asServiceRole.entities.User.list();
+      userRecord = allUsers.find(u => u.email === email);
+      
+      if (!userRecord) {
+        // Create Base44 User account so they can access the app
+        userRecord = await base44.asServiceRole.entities.User.create({
+          email,
+          full_name,
+          role: 'user' // Base44 platform role
+        });
+        console.log('Created User account:', email);
+      } else {
+        console.log('User account already exists:', email);
+      }
+    } catch (error) {
+      console.error('User account check/creation error:', error);
+      return Response.json({ 
+        error: 'Failed to create user access: ' + error.message 
+      }, { status: 500 });
+    }
+
+    // Create employee record
     let employee = null;
     if (organisation_id) {
       const existingEmployees = await base44.entities.Employee.filter({ organisation_id });
