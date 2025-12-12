@@ -195,7 +195,7 @@ export default function Layout({ children, currentPageName }) {
     };
     
     autoLinkEmployee();
-  }, [user?.email]);
+  }, [user?.email, employee, refetchEmployee]);
 
   const currentEmployee = employee?.[0];
 
