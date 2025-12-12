@@ -87,8 +87,8 @@ Deno.serve(async (req) => {
         }, { status: 500 });
       }
 
-      accessToken = tokenData.access_token;
-    }
+    accessToken = tokenData.access_token;
+    console.log('Using service account authentication');
 
     const headers = {
       'Authorization': `Bearer ${accessToken}`,
