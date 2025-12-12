@@ -36,6 +36,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { useToast } from "@/components/ui/use-toast";
+import { base44 } from "@/api/base44Client";
 import { exportToCSV } from "@/components/exports/SierraLeoneExportStyles";
 import { generateUnifiedPDF, printUnifiedPDF } from "@/components/exports/UnifiedPDFStyles";
 
@@ -212,8 +213,10 @@ export default function ReportGenerator({ sales = [], expenses = [], employees =
     toast({ title: "CSV exported successfully" });
   };
 
-  const handleExportPDF = () => {
+  const handleExportPDF = async () => {
     if (!reportData) return;
+    
+    setIsGenerating(true);
     
     // Convert summary to cards format
     const summaryCards = reportData.summary.map(item => ({
@@ -253,8 +256,46 @@ export default function ReportGenerator({ sales = [], expenses = [], employees =
       sections: sections
     });
     
-    printUnifiedPDF(html, `${reportType}_report_${format(new Date(), 'yyyy-MM-dd')}.pdf`);
-    toast({ title: "Report printed" });
+    const fileName = `${reportType}_report_${format(new Date(), 'yyyy-MM-dd')}.pdf`;
+    
+    // Save to Drive automatically
+    try {
+      const { base44 } = await import("@/api/base44Client");
+      
+      // Convert HTML to base64 (simplified - the backend will handle this)
+      const blob = await new Promise((resolve) => {
+        const iframe = document.createElement('iframe');
+        iframe.style.display = 'none';
+        document.body.appendChild(iframe);
+        iframe.contentDocument.write(html);
+        iframe.contentDocument.close();
+        
+        setTimeout(() => {
+          const pdfData = btoa(html);
+          document.body.removeChild(iframe);
+          resolve(`data:text/html;base64,${pdfData}`);
+        }, 100);
+      });
+      
+      const driveResult = await base44.functions.invoke('saveToDrive', {
+        fileData: blob,
+        fileName: fileName,
+        mimeType: 'application/pdf'
+      });
+      
+      if (driveResult.data.success) {
+        toast({ 
+          title: "Report saved to Google Drive",
+          description: fileName 
+        });
+      }
+    } catch (error) {
+      console.log('Drive save skipped:', error.message);
+    }
+    
+    printUnifiedPDF(html, fileName);
+    setIsGenerating(false);
+    toast({ title: "Report downloaded" });
   };
 
   return (
