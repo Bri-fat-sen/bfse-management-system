@@ -218,6 +218,92 @@ Deno.serve(async (req) => {
         });
       }
 
+      case 'createFolder': {
+        if (!fileName) {
+          return Response.json({ error: 'Folder name required' }, { status: 400 });
+        }
+
+        const metadata = {
+          name: fileName,
+          mimeType: 'application/vnd.google-apps.folder',
+          parents: folderId ? [folderId] : undefined
+        };
+
+        const createResponse = await fetch(
+          'https://www.googleapis.com/drive/v3/files',
+          {
+            method: 'POST',
+            headers,
+            body: JSON.stringify(metadata)
+          }
+        );
+
+        if (!createResponse.ok) {
+          const errorText = await createResponse.text();
+          return Response.json({ error: 'Failed to create folder', details: errorText }, { status: 500 });
+        }
+
+        const result = await createResponse.json();
+        return Response.json({
+          success: true,
+          folderId: result.id,
+          folderName: result.name
+        });
+      }
+
+      case 'moveFile': {
+        const { fileId, newParentId, removeParents } = await req.json();
+        
+        if (!fileId || !newParentId) {
+          return Response.json({ error: 'fileId and newParentId required' }, { status: 400 });
+        }
+
+        const params = new URLSearchParams({
+          addParents: newParentId,
+          removeParents: removeParents || '',
+          fields: 'id,name,parents'
+        });
+
+        const moveResponse = await fetch(
+          `https://www.googleapis.com/drive/v3/files/${fileId}?${params.toString()}`,
+          {
+            method: 'PATCH',
+            headers
+          }
+        );
+
+        if (!moveResponse.ok) {
+          const errorText = await moveResponse.text();
+          return Response.json({ error: 'Failed to move file', details: errorText }, { status: 500 });
+        }
+
+        const result = await moveResponse.json();
+        return Response.json({ success: true, file: result });
+      }
+
+      case 'deleteFile': {
+        const { fileId } = await req.json();
+        
+        if (!fileId) {
+          return Response.json({ error: 'fileId required' }, { status: 400 });
+        }
+
+        const deleteResponse = await fetch(
+          `https://www.googleapis.com/drive/v3/files/${fileId}`,
+          {
+            method: 'DELETE',
+            headers: { 'Authorization': `Bearer ${accessToken}` }
+          }
+        );
+
+        if (!deleteResponse.ok && deleteResponse.status !== 204) {
+          const errorText = await deleteResponse.text();
+          return Response.json({ error: 'Failed to delete file', details: errorText }, { status: 500 });
+        }
+
+        return Response.json({ success: true, message: 'File deleted' });
+      }
+
       default:
         return Response.json({ error: 'Invalid action' }, { status: 400 });
     }
