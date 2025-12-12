@@ -18,7 +18,7 @@ import {
 import { toast } from "sonner";
 import { 
   Loader2, User, Mail, Phone, Building2, Briefcase, Send, AlertCircle, 
-  Package, X, Check, DollarSign, Calendar, Shield
+  Package, X, Check, DollarSign, Calendar, Shield, MapPin
 } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -59,6 +59,7 @@ export default function AddEmployeeDialog({ open, onOpenChange, orgId, employeeC
     hire_date: new Date().toISOString().split('T')[0],
     remuneration_package_id: '',
     pay_cycle_id: '',
+    assigned_location_ids: [],
   });
   
   const [sendWelcomeEmail, setSendWelcomeEmail] = useState(true);
@@ -80,6 +81,7 @@ export default function AddEmployeeDialog({ open, onOpenChange, orgId, employeeC
         hire_date: new Date().toISOString().split('T')[0],
         remuneration_package_id: '',
         pay_cycle_id: '',
+        assigned_location_ids: [],
       });
       setShowAdvanced(false);
       setSendWelcomeEmail(true);
@@ -101,6 +103,23 @@ export default function AddEmployeeDialog({ open, onOpenChange, orgId, employeeC
     queryFn: () => base44.entities.PayCycle.filter({ organisation_id: orgId, is_active: true }),
     enabled: !!orgId,
   });
+
+  const { data: warehouses = [] } = useQuery({
+    queryKey: ['warehouses', orgId],
+    queryFn: () => base44.entities.Warehouse.filter({ organisation_id: orgId, is_active: true }),
+    enabled: !!orgId,
+  });
+
+  const { data: vehicles = [] } = useQuery({
+    queryKey: ['vehicles', orgId],
+    queryFn: () => base44.entities.Vehicle.filter({ organisation_id: orgId }),
+    enabled: !!orgId,
+  });
+
+  const allLocations = [
+    ...warehouses.map(w => ({ id: w.id, name: w.name, type: 'warehouse' })),
+    ...vehicles.map(v => ({ id: v.id, name: `${v.registration_number} - ${v.brand || ''} ${v.model || ''}`.trim(), type: 'vehicle' }))
+  ];
 
   const applicablePackages = packages.filter(pkg => 
     !pkg.applicable_roles?.length || pkg.applicable_roles.includes(formData.role)
@@ -153,6 +172,10 @@ export default function AddEmployeeDialog({ open, onOpenChange, orgId, employeeC
         remuneration_package_id: data.remuneration_package_id || null,
         remuneration_package_name: selectedPackage?.name || null,
         email: data.email || null,
+        assigned_location_ids: data.assigned_location_ids || [],
+        assigned_location_names: data.assigned_location_ids?.map(id => 
+          allLocations.find(loc => loc.id === id)?.name
+        ).filter(Boolean) || [],
       });
 
       // Add employee to pay cycle if selected
@@ -222,6 +245,7 @@ export default function AddEmployeeDialog({ open, onOpenChange, orgId, employeeC
         hire_date: new Date().toISOString().split('T')[0],
         remuneration_package_id: '',
         pay_cycle_id: '',
+        assigned_location_ids: [],
       });
       setSendWelcomeEmail(true);
     },
@@ -384,6 +408,44 @@ export default function AddEmployeeDialog({ open, onOpenChange, orgId, employeeC
                     </Select>
                   </div>
                 )}
+
+                <div>
+                  <Label className="text-sm flex items-center gap-2">
+                    <MapPin className="w-3.5 h-3.5" />
+                    Assigned Locations
+                  </Label>
+                  <div className="mt-2 space-y-2 max-h-48 overflow-y-auto border rounded-lg p-3">
+                    {allLocations.length === 0 ? (
+                      <p className="text-xs text-gray-500 text-center py-2">No locations available</p>
+                    ) : (
+                      allLocations.map(location => (
+                        <div key={location.id} className="flex items-center gap-2">
+                          <Checkbox
+                            id={`location-${location.id}`}
+                            checked={formData.assigned_location_ids.includes(location.id)}
+                            onCheckedChange={(checked) => {
+                              setFormData(prev => ({
+                                ...prev,
+                                assigned_location_ids: checked
+                                  ? [...prev.assigned_location_ids, location.id]
+                                  : prev.assigned_location_ids.filter(id => id !== location.id)
+                              }));
+                            }}
+                          />
+                          <label htmlFor={`location-${location.id}`} className="text-sm cursor-pointer flex-1">
+                            {location.name}
+                            <Badge variant="outline" className="ml-2 text-xs">{location.type}</Badge>
+                          </label>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                  {formData.assigned_location_ids.length > 0 && (
+                    <p className="text-xs text-green-600 mt-1.5">
+                      {formData.assigned_location_ids.length} location(s) selected
+                    </p>
+                  )}
+                </div>
 
                 <Alert className="border-amber-200 bg-amber-50">
                   <AlertCircle className="h-4 w-4 text-amber-600" />
