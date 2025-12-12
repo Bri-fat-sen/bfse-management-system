@@ -512,6 +512,12 @@ export default function ReportGenerator({ sales = [], expenses = [], employees =
           </CardContent>
         </Card>
       )}
+      
+      <DriveFolderPicker
+        open={showFolderPicker}
+        onOpenChange={setShowFolderPicker}
+        onSelect={setSelectedFolder}
+      />
     </div>
   );
 }
