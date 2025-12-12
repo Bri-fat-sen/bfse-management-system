@@ -187,7 +187,7 @@ export default function ReportGenerator({ sales = [], expenses = [], employees =
       default:
         return null;
     }
-  }, [showReport, reportType, dateFrom, dateTo, category, employeeFilter, sales, expenses, payrolls, trips]);
+  }, [showReport, reportType, dateFrom, dateTo, category, employeeFilter, sales, expenses, trips]);
 
   const generateReport = () => {
     if (!dateFrom || !dateTo) {
