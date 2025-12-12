@@ -12,6 +12,12 @@ Deno.serve(async (req) => {
 
     const { reportData, fileName } = await req.json();
 
+    if (!reportData || !fileName) {
+      return Response.json({ 
+        error: 'Missing required fields: reportData and fileName' 
+      }, { status: 400 });
+    }
+
     // Get Google Drive access token from connector
     const accessToken = await base44.asServiceRole.connectors.getAccessToken('googledrive');
 
