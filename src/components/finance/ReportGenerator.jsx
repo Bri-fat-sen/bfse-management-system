@@ -39,6 +39,7 @@ import { useToast } from "@/components/ui/use-toast";
 import { base44 } from "@/api/base44Client";
 import { exportToCSV } from "@/components/exports/SierraLeoneExportStyles";
 import { generateUnifiedPDF, printUnifiedPDF } from "@/components/exports/UnifiedPDFStyles";
+import DriveFolderPicker from "@/components/drive/DriveFolderPicker";
 
 const reportTypes = [
   { id: "sales", name: "Sales Report", icon: ShoppingCart, color: "green" },
@@ -60,6 +61,8 @@ export default function ReportGenerator({ sales = [], expenses = [], employees =
   const [employeeFilter, setEmployeeFilter] = useState("all");
   const [isGenerating, setIsGenerating] = useState(false);
   const [showReport, setShowReport] = useState(false);
+  const [showFolderPicker, setShowFolderPicker] = useState(false);
+  const [selectedFolder, setSelectedFolder] = useState(null);
 
   useEffect(() => {
     setShowReport(false);
@@ -262,28 +265,33 @@ export default function ReportGenerator({ sales = [], expenses = [], employees =
     setIsGenerating(false);
     toast({ title: "Report downloaded" });
     
-    // Save to Drive automatically in background
+    // Save to Drive automatically in background - completely async, don't await
     setTimeout(() => {
-      base44.functions.invoke('saveToDrive', {
-        reportData: {
-          title: reportData.title,
-          period: `${format(parseISO(dateFrom), 'MMM d, yyyy')} - ${format(parseISO(dateTo), 'MMM d, yyyy')}`,
-          summary: reportData.summary,
-          columns: reportData.columns,
-          rows: reportData.rows.slice(0, 100)
-        },
-        fileName: fileName,
-        folderType: 'Reports'
-      }).then(result => {
-        if (result?.data?.success) {
-          toast({ 
-            title: "✓ Saved to Google Drive",
-            description: `${fileName} in Reports folder`,
-            variant: "default"
-          });
-        }
-      }).catch(() => {});
-    }, 500);
+      try {
+        base44.functions.invoke('saveToDrive', {
+          reportData: {
+            title: reportData.title,
+            period: `${format(parseISO(dateFrom), 'MMM d, yyyy')} - ${format(parseISO(dateTo), 'MMM d, yyyy')}`,
+            summary: reportData.summary,
+            columns: reportData.columns,
+            rows: reportData.rows.slice(0, 100)
+          },
+          fileName: fileName
+        }).then(result => {
+          if (result?.data?.success) {
+            toast({ 
+              title: "✓ Saved to Google Drive",
+              description: fileName,
+              variant: "default"
+            });
+          }
+        }).catch(error => {
+          console.log('Drive save skipped or failed:', error.message);
+        });
+      } catch (e) {
+        console.log('Drive save error:', e.message);
+      }
+    }, 100);
   };
 
   return (
@@ -416,6 +424,14 @@ export default function ReportGenerator({ sales = [], expenses = [], employees =
                 <Button variant="outline" size="sm" onClick={handleExportPDF}>
                   <Download className="w-4 h-4 mr-2" />
                   Export PDF
+                </Button>
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={() => setShowFolderPicker(true)}
+                  className="text-[#1EB053] border-[#1EB053]"
+                >
+                  {selectedFolder ? `✓ ${selectedFolder.name}` : 'Save to Drive'}
                 </Button>
               </div>
             </div>
