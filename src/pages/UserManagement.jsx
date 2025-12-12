@@ -76,7 +76,6 @@ import SendInviteEmailDialog from "@/components/email/SendInviteEmailDialog";
 import EmployeeDocuments from "@/components/hr/EmployeeDocuments";
 import PerformanceReviewDialog from "@/components/hr/PerformanceReviewDialog";
 import ConfirmDialog from "@/components/ui/ConfirmDialog";
-import CreateUserAccountDialog from "@/components/user/CreateUserAccountDialog";
 
 const roles = [
   "super_admin", "org_admin", "hr_admin", "payroll_admin", "warehouse_manager",
@@ -108,7 +107,6 @@ export default function UserManagement() {
   const [selectedEmployeeForDocs, setSelectedEmployeeForDocs] = useState(null);
   const [showPerformanceDialog, setShowPerformanceDialog] = useState(false);
   const [selectedEmployeeForReview, setSelectedEmployeeForReview] = useState(null);
-  const [showCreateUserDialog, setShowCreateUserDialog] = useState(false);
 
   // Fetch current user and employee
   const { data: currentUser } = useQuery({
@@ -360,22 +358,12 @@ export default function UserManagement() {
         action={() => setShowAddEmployeeDialog(true)}
         actionLabel="Add Employee"
       >
-        {isPlatformAdmin && (
-          <Button
-            variant="outline"
-            onClick={() => setShowCreateUserDialog(true)}
-            className="border-[#1EB053]/30 hover:border-[#1EB053] hover:bg-[#1EB053]/10"
-          >
-            <UserPlus className="w-4 h-4 mr-2" />
-            <span className="hidden sm:inline">Create User</span>
-          </Button>
-        )}
         <Button
           variant="outline"
           onClick={() => setShowInviteDialog(true)}
           className="border-[#0072C6]/30 hover:border-[#0072C6] hover:bg-[#0072C6]/10"
         >
-          <Mail className="w-4 h-4 mr-2" />
+          <UserPlus className="w-4 h-4 mr-2" />
           <span className="hidden sm:inline">Send Invite</span>
         </Button>
       </PageHeader>
@@ -1222,12 +1210,6 @@ export default function UserManagement() {
           orgId={orgId}
         />
       )}
-
-      {/* Create User Account Dialog */}
-      <CreateUserAccountDialog
-        open={showCreateUserDialog}
-        onOpenChange={setShowCreateUserDialog}
-      />
     </div>
   );
 }
