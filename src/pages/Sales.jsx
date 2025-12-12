@@ -88,6 +88,19 @@ export default function Sales() {
   const [selectedSaleIds, setSelectedSaleIds] = useState([]);
   const [showBulkDeleteDialog, setShowBulkDeleteDialog] = useState(false);
 
+  React.useEffect(() => {
+    if (showCheckout) {
+      setCustomerSearch("");
+      setSelectedCustomer(null);
+    }
+  }, [showCheckout]);
+
+  React.useEffect(() => {
+    if (showInvoice) {
+      setCustomerSearch("");
+    }
+  }, [showInvoice]);
+
   const { data: user } = useQuery({
     queryKey: ['currentUser'],
     queryFn: () => base44.auth.me(),
