@@ -12,13 +12,14 @@ Deno.serve(async (req) => {
     const { action, folderId, fileName, fileContent, mimeType, query } = await req.json();
 
     // Use service account key only
-    const serviceAccountKey = Deno.env.get('GOOGLE_SERVICE_ACCOUNT_KEY');
-      
-      if (!serviceAccountKey) {
-        return Response.json({ 
-          error: 'Google Drive not connected. Please authorize Google Drive or set GOOGLE_SERVICE_ACCOUNT_KEY secret.' 
-        }, { status: 403 });
-      }
+
+    if (!serviceAccountKey) {
+      return Response.json({ 
+        error: 'GOOGLE_SERVICE_ACCOUNT_KEY not set. Please add your service account JSON key.' 
+      }, { status: 403 });
+    }
+
+    let accessToken;
 
       // Parse service account JSON
       const credentials = JSON.parse(serviceAccountKey);
