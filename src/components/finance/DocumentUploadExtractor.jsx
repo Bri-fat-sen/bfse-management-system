@@ -1,4 +1,3 @@
-
 import React, { useState, useMemo } from "react";
 import { base44 } from "@/api/base44Client";
 import { format } from "date-fns";
@@ -601,7 +600,63 @@ IMPORTANT: This is a FORM, not a table. Extract the form fields:
       setExtractedColumns(columnHeaders);
 
       if (items.length > 0) {
-        const categorizeItem = (description) => {
+        // AI-powered categorization
+        toast.info("AI Analysis", "Categorizing items intelligently...");
+        
+        let aiCategories = {};
+        try {
+          const categorizationResult = await base44.integrations.Core.InvokeLLM({
+            prompt: `Analyze these ${docType} items and assign the most appropriate category to each item based on its description.
+
+Document Type: ${docType}
+Available Categories: ${categories.map(c => `${c.value} (${c.label})`).join(', ')}
+
+Items to categorize:
+${items.map((item, idx) => `${idx + 1}. ${item.details || item.description || item.product_name || 'Unknown'}`).join('\n')}
+
+For each item, determine the best category that matches its purpose. Consider:
+- Expense items: fuel, maintenance, utilities, supplies, rent, salaries, transport, marketing, insurance, materials, labor, equipment, petty_cash, production_wastage, other
+- Revenue items: retail_sales, wholesale_sales, vehicle_sales, transport_revenue, contract_revenue, service_income, owner_contribution, ceo_contribution, investor_funding, loan, grant, dividend, other
+
+Return a category for each item number.`,
+            response_json_schema: {
+              type: "object",
+              properties: {
+                categories: {
+                  type: "array",
+                  items: {
+                    type: "object",
+                    properties: {
+                      item_number: { type: "number" },
+                      category: { type: "string" },
+                      confidence: { type: "string", enum: ["high", "medium", "low"] },
+                      reasoning: { type: "string" }
+                    }
+                  }
+                }
+              }
+            }
+          });
+          
+          // Map AI results to items
+          aiCategories = {};
+          categorizationResult.categories?.forEach(cat => {
+            aiCategories[cat.item_number - 1] = cat.category;
+          });
+          
+          toast.success("AI Categorization", `${Object.keys(aiCategories).length} items categorized`);
+        } catch (error) {
+          console.error("AI categorization failed, using fallback:", error);
+        }
+
+        // Fallback categorization function
+        const categorizeItem = (description, index) => {
+          // First try AI suggestion
+          if (aiCategories[index]) {
+            return aiCategories[index];
+          }
+          
+          // Fallback to keyword matching
           const desc = (description || '').toLowerCase();
           if (desc.includes('fuel') || desc.includes('diesel') || desc.includes('petrol')) return 'fuel';
           if (desc.includes('cement') || desc.includes('sand') || desc.includes('gravel') || desc.includes('block')) return 'materials';
@@ -677,7 +732,7 @@ IMPORTANT: This is a FORM, not a table. Extract the form fields:
         const actUnitCost = rawActUnitCost / conversionFactor;
 
         const description = item.details || item.description || '';
-        const category = categorizeItem(description);
+        const category = categorizeItem(description, idx);
 
         if (!existingCategoryValues.includes(category) && !newCategories.find(c => c.value === category)) {
           const label = category.split('_').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
