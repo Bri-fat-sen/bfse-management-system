@@ -233,6 +233,7 @@ export default function Sales() {
     
     const role = currentEmployee.role;
     const assignedLocationId = currentEmployee.assigned_location_id;
+    const assignedLocationIds = currentEmployee.assigned_location_ids;
     const assignedLocationType = currentEmployee.assigned_location_type;
     
     // Determine default sale type based on role
@@ -256,9 +257,11 @@ export default function Sales() {
     
     setSaleType(defaultSaleType);
     
-    // Set assigned location if available
+    // Set assigned location if available (single or first from multiple)
     if (assignedLocationId) {
       setSelectedLocation(assignedLocationId);
+    } else if (assignedLocationIds && assignedLocationIds.length > 0) {
+      setSelectedLocation(assignedLocationIds[0]);
     }
     
     setAutoSetupDone(true);
@@ -826,7 +829,7 @@ export default function Sales() {
   
   // Determine if user can change location
   const canChangeLocation = ['super_admin', 'org_admin', 'warehouse_manager'].includes(currentEmployee?.role) || 
-    !currentEmployee?.assigned_location_id;
+    (!currentEmployee?.assigned_location_id && (!currentEmployee?.assigned_location_ids || currentEmployee.assigned_location_ids.length === 0));
 
   if (!user) {
     return <LoadingSpinner message="Loading Sales..." subtitle="Setting up your point of sale" fullScreen={true} />;
