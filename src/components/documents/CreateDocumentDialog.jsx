@@ -245,11 +245,10 @@ export default function CreateDocumentDialog({
   });
 
   useEffect(() => {
-    if (open) {
-      setStep(1);
-      setEmployeeSearch("");
-    } else {
+    if (!open) {
       resetForm();
+    } else if (open) {
+      setStep(1);
     }
   }, [open]);
 
@@ -263,6 +262,7 @@ export default function CreateDocumentDialog({
     setCustomTitle("");
     setPreviewContent("");
     setEmployeeSearch("");
+    setSending(false);
   };
 
   const handleSelectAll = () => {

@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { format } from "date-fns";
@@ -44,7 +44,7 @@ export default function MeetingDialog({
   const [reminders, setReminders] = useState(['15']);
 
   useEffect(() => {
-    if (open && !selectedAttendees.length) {
+    if (open) {
       setSelectedAttendees([]);
       setMeetingType("in_person");
       setIsRecurring(false);
