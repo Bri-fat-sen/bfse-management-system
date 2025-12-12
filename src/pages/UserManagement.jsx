@@ -171,6 +171,13 @@ export default function UserManagement() {
     enabled: !!orgId,
   });
 
+  // Fetch all organisations (for platform admin)
+  const { data: allOrganisations = [] } = useQuery({
+    queryKey: ['allOrganisations'],
+    queryFn: () => base44.entities.Organisation.list(),
+    enabled: isPlatformAdmin,
+  });
+
   // Update employee mutation
   const updateEmployeeMutation = useMutation({
     mutationFn: ({ id, data }) => base44.entities.Employee.update(id, data),
@@ -362,6 +369,12 @@ export default function UserManagement() {
       assigned_location_ids: editingEmployee.assigned_location_ids || [],
       assigned_location_names: editingEmployee.assigned_location_names || [],
     };
+
+    // Include organisation_id change if platform admin changed it
+    if (isPlatformAdmin && editingEmployee.organisation_id !== editingEmployee._original_org_id) {
+      data.organisation_id = editingEmployee.organisation_id;
+    }
+
     updateEmployeeMutation.mutate({ id: editingEmployee.id, data });
   };
 
@@ -665,16 +678,16 @@ export default function UserManagement() {
                           <Star className="w-4 h-4" />
                         </Button>
                         <Button
-                          variant="ghost"
-                          size="sm"
-                          className="h-8"
-                          onClick={() => {
-                            setEditingEmployee(emp);
-                            setShowEmployeeDialog(true);
-                          }}
+                         variant="ghost"
+                         size="sm"
+                         className="h-8"
+                         onClick={() => {
+                           setEditingEmployee({...emp, _original_org_id: emp.organisation_id});
+                           setShowEmployeeDialog(true);
+                         }}
                         >
-                          <Edit className="w-4 h-4 sm:mr-1" />
-                          <span className="hidden sm:inline">Edit</span>
+                         <Edit className="w-4 h-4 sm:mr-1" />
+                         <span className="hidden sm:inline">Edit</span>
                         </Button>
                         {emp.id !== currentEmployee?.id && (
                           <Button
@@ -1062,6 +1075,35 @@ export default function UserManagement() {
                         ))}
                       </SelectContent>
                     </Select>
+                  )}
+                </div>
+              )}
+
+              {/* Organisation Selection - Platform Admin Only */}
+              {isPlatformAdmin && (
+                <div className="p-3 bg-purple-50 rounded-lg border border-purple-200">
+                  <Label className="text-xs text-purple-700 flex items-center gap-1 mb-2">
+                    <Building2 className="w-3 h-3" /> Organisation Assignment
+                  </Label>
+                  <Select 
+                    value={editingEmployee.organisation_id}
+                    onValueChange={(value) => setEditingEmployee({...editingEmployee, organisation_id: value})}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select organisation" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {allOrganisations.map(org => (
+                        <SelectItem key={org.id} value={org.id}>
+                          {org.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  {editingEmployee.organisation_id !== editingEmployee._original_org_id && (
+                    <p className="text-xs text-amber-600 mt-2">
+                      ⚠️ Organisation will be changed on save
+                    </p>
                   )}
                 </div>
               )}
