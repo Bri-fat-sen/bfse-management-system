@@ -39,7 +39,8 @@ Deno.serve(async (req) => {
       employee = await base44.asServiceRole.entities.Employee.create({
         organisation_id,
         employee_code: employeeCode,
-        email: email, // Auto-links to user_email on first login
+        email: email,
+        user_email: email, // Link to User account (auto-created on first Google SSO login)
         first_name: full_name.split(' ')[0] || '',
         last_name: full_name.split(' ').slice(1).join(' ') || '',
         full_name,
