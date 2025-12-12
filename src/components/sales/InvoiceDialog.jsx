@@ -59,19 +59,36 @@ export default function InvoiceDialog({
   const [isCreating, setIsCreating] = useState(false);
 
   useEffect(() => {
-    if (open) {
+    if (open && customer) {
       setInvoiceData({
-        customer_name: customer?.name || '',
-        customer_email: customer?.email || '',
-        customer_phone: customer?.phone || '',
-        customer_address: customer?.address || '',
-        company_name: customer?.company_name || '',
-        tax_id: customer?.tax_id || '',
+        customer_name: customer.name || '',
+        customer_email: customer.email || '',
+        customer_phone: customer.phone || '',
+        customer_address: customer.address || '',
+        company_name: customer.company_name || '',
+        tax_id: customer.tax_id || '',
         payment_terms: '30',
         notes: '',
         include_tax: false,
         tax_rate: 15
       });
+    } else if (open && !customer) {
+      setInvoiceData({
+        customer_name: '',
+        customer_email: '',
+        customer_phone: '',
+        customer_address: '',
+        company_name: '',
+        tax_id: '',
+        payment_terms: '30',
+        notes: '',
+        include_tax: false,
+        tax_rate: 15
+      });
+    }
+    if (open) {
+      setIsSending(false);
+      setIsCreating(false);
     }
   }, [open, customer]);
 
