@@ -239,7 +239,7 @@ export default function UserManagement() {
   // Unlink employee mutation
   const unlinkEmployeeMutation = useMutation({
     mutationFn: async (employeeId) => {
-      return base44.entities.Employee.update(employeeId, {
+      return base44.asServiceRole.entities.Employee.update(employeeId, {
         user_email: null,
       });
     },
