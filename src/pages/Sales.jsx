@@ -26,7 +26,8 @@ import {
   MoreVertical,
   FileText,
   Upload,
-  Printer
+  Printer,
+  Cloud
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -88,6 +89,7 @@ export default function Sales() {
   const [showFormsDialog, setShowFormsDialog] = useState(false);
   const [selectedSaleIds, setSelectedSaleIds] = useState([]);
   const [showBulkDeleteDialog, setShowBulkDeleteDialog] = useState(false);
+  const [showDriveExport, setShowDriveExport] = useState(false);
 
   React.useEffect(() => {
     if (showCheckout) {
@@ -1531,6 +1533,16 @@ export default function Sales() {
         onOpenChange={setShowFormsDialog}
         organisation={organisation?.[0]}
         filterForms={['revenue_retail_sales', 'revenue_warehouse_sales', 'revenue_vehicle_sales']}
+      />
+
+      {/* Export to Drive */}
+      <ExportToGoogleDrive
+        open={showDriveExport}
+        onOpenChange={setShowDriveExport}
+        data={sales}
+        fileName={`sales_export_${format(new Date(), 'yyyy-MM-dd')}`}
+        dataType="sales"
+        orgId={orgId}
       />
     </div>
   );
