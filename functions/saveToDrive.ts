@@ -18,12 +18,13 @@ Deno.serve(async (req) => {
       }, { status: 400 });
     }
 
-    // Get Google Drive access token from connector
-    const accessToken = await base44.asServiceRole.connectors.getAccessToken('googledrive');
+    // Get Google Drive access token from connector or use API key
+    let accessToken = await base44.asServiceRole.connectors.getAccessToken('googledrive');
+    const apiKey = Deno.env.get('GOOGLE_API_KEY');
 
-    if (!accessToken) {
+    if (!accessToken && !apiKey) {
       return Response.json({ 
-        error: 'Google Drive not connected. Please authorize Google Drive access.' 
+        error: 'Google Drive not connected. Please authorize Google Drive access or set GOOGLE_API_KEY.' 
       }, { status: 403 });
     }
 
