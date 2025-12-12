@@ -38,6 +38,7 @@ import { format } from "date-fns";
 import PageHeader from "@/components/ui/PageHeader";
 import LoadingSpinner from "@/components/ui/LoadingSpinner";
 import CreateDocumentDialog from "@/components/documents/CreateDocumentDialog";
+import ContractGenerator from "@/components/documents/ContractGenerator";
 import BulkDocumentDialog from "@/components/documents/BulkDocumentDialog";
 import DocumentVersionControl from "@/components/documents/DocumentVersionControl";
 import DocumentSignatureDialog from "@/components/documents/DocumentSignatureDialog";
@@ -64,6 +65,7 @@ export default function Documents() {
   const [statusFilter, setStatusFilter] = useState("all");
   const [typeFilter, setTypeFilter] = useState("all");
   const [showCreateDialog, setShowCreateDialog] = useState(false);
+  const [showContractGenerator, setShowContractGenerator] = useState(false);
   const [showBulkDialog, setShowBulkDialog] = useState(false);
   const [showVersionControl, setShowVersionControl] = useState(false);
   const [selectedDocument, setSelectedDocument] = useState(null);
