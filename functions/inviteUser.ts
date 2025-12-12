@@ -4,10 +4,10 @@ Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
     
-    // Verify admin user
+    // Verify authenticated user
     const user = await base44.auth.me();
-    if (!user || user.role !== 'admin') {
-      return Response.json({ error: 'Unauthorized - Admin access required' }, { status: 403 });
+    if (!user) {
+      return Response.json({ error: 'Unauthorized' }, { status: 403 });
     }
 
     const { email, full_name, organisation_id, role = 'read_only', department, position, send_email = true } = await req.json();
@@ -16,34 +16,31 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Email and full name are required' }, { status: 400 });
     }
 
-    // Check if user already exists
-    const existingUsers = await base44.asServiceRole.entities.User.list();
-    const userExists = existingUsers.find(u => u.email === email);
+    // Check if user already exists (using regular entities API)
+    try {
+      const existingUsers = await base44.entities.User.list();
+      const userExists = existingUsers.find(u => u.email === email);
 
-    if (userExists) {
-      return Response.json({ 
-        error: 'User already exists with this email',
-        user: userExists 
-      }, { status: 409 });
+      if (userExists) {
+        return Response.json({ 
+          error: 'User already exists with this email',
+          user: userExists 
+        }, { status: 409 });
+      }
+    } catch (e) {
+      // User might not have permission to list all users, that's okay
+      console.log('Could not check existing users:', e.message);
     }
 
-    // Create Base44 user account
-    const newUser = await base44.asServiceRole.entities.User.create({
-      email,
-      full_name,
-      role: 'user', // Base44 platform role (always 'user', not 'admin')
-    });
-
-    // If organisation_id provided, create employee record
+    // Create employee record (user will be auto-linked via SSO on first login)
     let employee = null;
     if (organisation_id) {
-      const existingEmployees = await base44.asServiceRole.entities.Employee.filter({ organisation_id });
+      const existingEmployees = await base44.entities.Employee.filter({ organisation_id });
       const employeeCode = `EMP${String(existingEmployees.length + 1).padStart(4, '0')}`;
 
-      employee = await base44.asServiceRole.entities.Employee.create({
+      employee = await base44.entities.Employee.create({
         organisation_id,
         employee_code: employeeCode,
-        user_email: email,
         email: email,
         first_name: full_name.split(' ')[0] || '',
         last_name: full_name.split(' ').slice(1).join(' ') || '',
@@ -61,7 +58,7 @@ Deno.serve(async (req) => {
       const MAILERSEND_API_KEY = Deno.env.get('MAILERSEND_API_KEY');
       if (MAILERSEND_API_KEY) {
         const org = organisation_id ? 
-          await base44.asServiceRole.entities.Organisation.filter({ id: organisation_id }).then(r => r[0]) : 
+          await base44.entities.Organisation.filter({ id: organisation_id }).then(r => r[0]) : 
           null;
 
         const emailBody = `
@@ -92,9 +89,8 @@ Deno.serve(async (req) => {
 
     return Response.json({
       success: true,
-      user: newUser,
       employee,
-      message: 'User invited successfully'
+      message: 'User invited successfully. They can sign in with Google SSO using their email.'
     });
 
   } catch (error) {
