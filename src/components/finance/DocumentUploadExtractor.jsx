@@ -121,20 +121,13 @@ export default function DocumentUploadExtractor({
 
   const setupAppFolder = async () => {
     try {
-      const { data } = await base44.functions.invoke('googleDriveFileOperations', {
-        action: 'findOrCreateFolder',
-        folderName: 'Business Management Uploads'
+      const { data } = await base44.functions.invoke('googleDriveManager', {
+        action: 'getRootFolder'
       });
       
-      if (data.folderId) {
-        setAppFolderId(data.folderId);
-        setAppFolderLink(data.webViewLink);
-        
-        if (!data.existed) {
-          toast.success("Folder Created", "Business Management Uploads folder created in your Drive");
-        }
-        
-        return data.folderId;
+      if (data?.success && data.folder) {
+        setAppFolderId(data.folder.id);
+        return data.folder.id;
       }
     } catch (error) {
       console.error("Failed to setup app folder:", error);
@@ -153,20 +146,22 @@ export default function DocumentUploadExtractor({
         }
       }
       
-      const payload = { 
-        action: 'list',
+      const { data } = await base44.functions.invoke('googleDriveManager', {
+        action: 'listFiles',
         folderId: folderId || appFolderId || null
-      };
-      
-      const { data } = await base44.functions.invoke('googleDriveFileOperations', payload);
+      });
       
       if (data.error) {
         toast.error("Drive Error", data.error);
         return;
       }
       
-      setDriveFolders(data.folders || []);
-      setDriveFiles(data.files || []);
+      const files = data.files || [];
+      const folders = files.filter(f => f.mimeType === 'application/vnd.google-apps.folder');
+      const documents = files.filter(f => f.mimeType !== 'application/vnd.google-apps.folder');
+      
+      setDriveFolders(folders);
+      setDriveFiles(documents);
       setCurrentFolderId(folderId);
       setShowDrivePicker(true);
     } catch (error) {
@@ -209,18 +204,26 @@ export default function DocumentUploadExtractor({
     try {
       toast.info("Downloading from Drive...", driveFile.name);
       
-      const { data } = await base44.functions.invoke('googleDriveFileOperations', {
-        action: 'download',
-        fileId: driveFile.id,
-        fileName: driveFile.name,
-        mimeType: driveFile.mimeType
+      const { data } = await base44.functions.invoke('googleDriveManager', {
+        action: 'downloadFile',
+        folderId: driveFile.id
       });
       
       if (data.error) {
         throw new Error(data.error);
       }
 
-      const file_url = data.file_url;
+      // Upload the downloaded content to our server
+      const binaryData = atob(data.content);
+      const bytes = new Uint8Array(binaryData.length);
+      for (let i = 0; i < binaryData.length; i++) {
+        bytes[i] = binaryData.charCodeAt(i);
+      }
+      const blob = new Blob([bytes], { type: data.mimeType });
+      const file = new File([blob], driveFile.name, { type: data.mimeType });
+      
+      const uploadResult = await base44.integrations.Core.UploadFile({ file });
+      const file_url = uploadResult.file_url;
 
       // Continue with normal document processing flow...
       await base44.entities.UploadedDocument.create({
