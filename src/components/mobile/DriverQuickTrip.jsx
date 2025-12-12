@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { format } from "date-fns";
@@ -22,6 +22,14 @@ export default function DriverQuickTrip({ currentEmployee, orgId, vehicles, rout
   const [selectedRoute, setSelectedRoute] = useState("");
   const [passengers, setPassengers] = useState(0);
   const [fuelCost, setFuelCost] = useState(0);
+
+  useEffect(() => {
+    // Find and auto-select this driver's assigned vehicle
+    const assignedVehicle = vehicles.find(v => v.assigned_driver_id === currentEmployee?.id);
+    if (assignedVehicle) {
+      setSelectedVehicle(assignedVehicle.id);
+    }
+  }, [vehicles, currentEmployee]);
 
   const selectedRouteData = routes.find(r => r.id === selectedRoute);
   const ticketPrice = selectedRouteData?.base_ticket_price || 0;

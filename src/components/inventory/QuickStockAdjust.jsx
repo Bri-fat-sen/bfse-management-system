@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
@@ -17,6 +17,12 @@ export default function QuickStockAdjust({ open, onOpenChange, products, warehou
   const [adjustType, setAdjustType] = useState("add");
   const [quantity, setQuantity] = useState("");
   const [notes, setNotes] = useState("");
+
+  useEffect(() => {
+    if (open) {
+      resetForm();
+    }
+  }, [open]);
 
   const adjustMutation = useMutation({
     mutationFn: async ({ productId, type, qty, notes }) => {

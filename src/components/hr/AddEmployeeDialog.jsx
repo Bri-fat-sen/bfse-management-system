@@ -64,6 +64,29 @@ export default function AddEmployeeDialog({ open, onOpenChange, orgId, employeeC
   const [sendWelcomeEmail, setSendWelcomeEmail] = useState(true);
   const [isSendingEmail, setIsSendingEmail] = useState(false);
 
+  useEffect(() => {
+    if (open) {
+      setFormData({
+        first_name: '',
+        last_name: '',
+        email: '',
+        phone: '',
+        department: '',
+        position: '',
+        role: 'support_staff',
+        salary_type: 'monthly',
+        base_salary: '',
+        hourly_rate: '',
+        hire_date: new Date().toISOString().split('T')[0],
+        remuneration_package_id: '',
+        pay_cycle_id: '',
+      });
+      setShowAdvanced(false);
+      setSendWelcomeEmail(true);
+      setIsSendingEmail(false);
+    }
+  }, [open]);
+
   const primaryColor = organisation?.primary_color || '#1EB053';
   const secondaryColor = organisation?.secondary_color || '#0072C6';
 
