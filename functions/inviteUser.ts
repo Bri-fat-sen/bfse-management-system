@@ -53,43 +53,61 @@ Deno.serve(async (req) => {
     }
 
     // Send welcome email
+    let emailSent = false;
     if (send_email) {
       const MAILERSEND_API_KEY = Deno.env.get('MAILERSEND_API_KEY');
       if (MAILERSEND_API_KEY) {
-        const org = organisation_id ? 
-          await base44.entities.Organisation.filter({ id: organisation_id }).then(r => r[0]) : 
-          null;
+        try {
+          const org = organisation_id ? 
+            await base44.asServiceRole.entities.Organisation.filter({ id: organisation_id }).then(r => r[0]) : 
+            null;
 
-        const emailBody = `
-          <h2>Welcome to ${org?.name || 'the platform'}!</h2>
-          <p>Hi ${full_name},</p>
-          <p>You've been invited to join ${org?.name || 'our platform'}. Your account has been created and you can now log in.</p>
-          <p><strong>Email:</strong> ${email}</p>
-          <p>To get started, please visit the login page and sign in with your Google account using the email above.</p>
-          <p>If you have any questions, please contact your administrator.</p>
-          <p>Best regards,<br>${org?.name || 'The Team'}</p>
-        `;
+          const emailBody = `
+            <h2>Welcome to ${org?.name || 'the platform'}!</h2>
+            <p>Hi ${full_name},</p>
+            <p>You've been invited to join ${org?.name || 'our platform'}. Your account has been created and you can now log in.</p>
+            <p><strong>Email:</strong> ${email}</p>
+            <p>To get started, please visit the login page and sign in with your Google account using the email above.</p>
+            <p>If you have any questions, please contact your administrator.</p>
+            <p>Best regards,<br>${org?.name || 'The Team'}</p>
+          `;
 
-        await fetch('https://api.mailersend.com/v1/email', {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${MAILERSEND_API_KEY}`,
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            from: { email: 'noreply@trial-0r83ql3jx1wg9yjw.mlsender.net', name: org?.name || 'Platform' },
-            to: [{ email }],
-            subject: `Welcome to ${org?.name || 'the platform'}!`,
-            html: emailBody,
-          }),
-        });
+          const emailResponse = await fetch('https://api.mailersend.com/v1/email', {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${MAILERSEND_API_KEY}`,
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              from: { email: 'noreply@trial-0r83ql3jx1wg9yjw.mlsender.net', name: org?.name || 'Platform' },
+              to: [{ email }],
+              subject: `Welcome to ${org?.name || 'the platform'}!`,
+              html: emailBody,
+            }),
+          });
+
+          if (emailResponse.ok) {
+            emailSent = true;
+            console.log('Welcome email sent to:', email);
+          } else {
+            const errorText = await emailResponse.text();
+            console.error('Email sending failed:', emailResponse.status, errorText);
+          }
+        } catch (emailError) {
+          console.error('Email sending error:', emailError);
+        }
+      } else {
+        console.warn('MAILERSEND_API_KEY not found');
       }
     }
 
     return Response.json({
       success: true,
       employee,
-      message: 'User invited successfully. They can sign in with Google SSO using their email.'
+      email_sent: emailSent,
+      message: emailSent 
+        ? 'User invited successfully. Welcome email sent.' 
+        : 'User invited successfully. They can sign in with Google SSO using their email.'
     });
 
   } catch (error) {
