@@ -107,6 +107,8 @@ export default function UserManagement() {
   const [selectedEmployeeForDocs, setSelectedEmployeeForDocs] = useState(null);
   const [showPerformanceDialog, setShowPerformanceDialog] = useState(false);
   const [selectedEmployeeForReview, setSelectedEmployeeForReview] = useState(null);
+  const [showConsolidateDialog, setShowConsolidateDialog] = useState(false);
+  const [isConsolidating, setIsConsolidating] = useState(false);
 
   // Fetch current user and employee
   const { data: currentUser } = useQuery({
@@ -135,6 +137,13 @@ export default function UserManagement() {
     queryKey: ['employees', orgId],
     queryFn: () => base44.entities.Employee.filter({ organisation_id: orgId }),
     enabled: !!orgId,
+  });
+
+  // Fetch ALL employees (for platform admin to see cross-org employees)
+  const { data: allEmployees = [] } = useQuery({
+    queryKey: ['allEmployees'],
+    queryFn: () => base44.entities.Employee.list(),
+    enabled: isPlatformAdmin,
   });
 
   // Fetch organization
@@ -305,6 +314,30 @@ export default function UserManagement() {
     }
   };
 
+  // Consolidate all employees to current org
+  const handleConsolidateToOrg = async () => {
+    if (!orgId) return;
+    setIsConsolidating(true);
+    try {
+      const employeesFromOtherOrgs = allEmployees.filter(emp => emp.organisation_id !== orgId);
+      
+      for (const emp of employeesFromOtherOrgs) {
+        await base44.asServiceRole.entities.Employee.update(emp.id, {
+          organisation_id: orgId
+        });
+      }
+      
+      queryClient.invalidateQueries({ queryKey: ['employees'] });
+      queryClient.invalidateQueries({ queryKey: ['allEmployees'] });
+      toast.success(`Consolidated ${employeesFromOtherOrgs.length} employees to ${organisation?.name}`);
+      setShowConsolidateDialog(false);
+    } catch (error) {
+      toast.error("Failed to consolidate: " + error.message);
+    } finally {
+      setIsConsolidating(false);
+    }
+  };
+
   const handleEmployeeSubmit = (e) => {
     e.preventDefault();
     const formData = new FormData(e.target);
@@ -366,6 +399,16 @@ export default function UserManagement() {
           <UserPlus className="w-4 h-4 mr-2" />
           <span className="hidden sm:inline">Send Invite</span>
         </Button>
+        {isPlatformAdmin && allEmployees.some(emp => emp.organisation_id !== orgId) && (
+          <Button
+            variant="outline"
+            onClick={() => setShowConsolidateDialog(true)}
+            className="border-amber-500/30 hover:border-amber-500 hover:bg-amber-50"
+          >
+            <Building2 className="w-4 h-4 mr-2" />
+            <span className="hidden sm:inline">Consolidate Users</span>
+          </Button>
+        )}
       </PageHeader>
 
       {/* Stats */}
@@ -1210,6 +1253,19 @@ export default function UserManagement() {
           orgId={orgId}
         />
       )}
+
+      {/* Consolidate Users Dialog */}
+      <ConfirmDialog
+        open={showConsolidateDialog}
+        onOpenChange={setShowConsolidateDialog}
+        title="Consolidate All Users"
+        description={`Move all employees from other organisations to ${organisation?.name}? This will update ${allEmployees.filter(emp => emp.organisation_id !== orgId).length} employee records.`}
+        confirmLabel="Consolidate"
+        cancelLabel="Cancel"
+        variant="warning"
+        onConfirm={handleConsolidateToOrg}
+        isLoading={isConsolidating}
+      />
     </div>
   );
 }
