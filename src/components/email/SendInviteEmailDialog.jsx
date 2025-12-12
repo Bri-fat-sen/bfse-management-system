@@ -99,7 +99,7 @@ export default function SendInviteEmailDialog({ open, onOpenChange, organisation
             Invite User to Platform
           </DialogTitle>
           <DialogDescription>
-            Create a new user account and send them a welcome email
+            Invite a new user - they'll sign in with Google and their account will be created automatically on first login
           </DialogDescription>
         </DialogHeader>
 
