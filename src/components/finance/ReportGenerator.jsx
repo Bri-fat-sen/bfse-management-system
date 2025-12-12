@@ -262,28 +262,33 @@ export default function ReportGenerator({ sales = [], expenses = [], employees =
     setIsGenerating(false);
     toast({ title: "Report downloaded" });
     
-    // Save to Drive automatically in background
-    base44.functions.invoke('saveToDrive', {
-      reportData: {
-        title: reportData.title,
-        period: `${format(parseISO(dateFrom), 'MMM d, yyyy')} - ${format(parseISO(dateTo), 'MMM d, yyyy')}`,
-        summary: reportData.summary,
-        columns: reportData.columns,
-        rows: reportData.rows.slice(0, 100) // Limit rows to prevent payload size issues
-      },
-      fileName: fileName
-    }).then(result => {
-      if (result?.data?.success) {
-        toast({ 
-          title: "✓ Saved to Google Drive",
-          description: fileName,
-          variant: "default"
+    // Save to Drive automatically in background - completely async, don't await
+    setTimeout(() => {
+      try {
+        base44.functions.invoke('saveToDrive', {
+          reportData: {
+            title: reportData.title,
+            period: `${format(parseISO(dateFrom), 'MMM d, yyyy')} - ${format(parseISO(dateTo), 'MMM d, yyyy')}`,
+            summary: reportData.summary,
+            columns: reportData.columns,
+            rows: reportData.rows.slice(0, 100)
+          },
+          fileName: fileName
+        }).then(result => {
+          if (result?.data?.success) {
+            toast({ 
+              title: "✓ Saved to Google Drive",
+              description: fileName,
+              variant: "default"
+            });
+          }
+        }).catch(error => {
+          console.log('Drive save skipped or failed:', error.message);
         });
+      } catch (e) {
+        console.log('Drive save error:', e.message);
       }
-    }).catch(error => {
-      console.error('Drive save error:', error.response?.data || error.message);
-      // Silent fail - don't show error to user since PDF already downloaded
-    });
+    }, 100);
   };
 
   return (
