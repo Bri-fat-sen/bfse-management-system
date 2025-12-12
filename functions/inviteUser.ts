@@ -52,52 +52,39 @@ Deno.serve(async (req) => {
       console.log('Created employee record:', employeeCode);
     }
 
-    // Send welcome email
+    // Send welcome email using Base44 integration
     let emailSent = false;
     if (send_email) {
-      const MAILERSEND_API_KEY = Deno.env.get('MAILERSEND_API_KEY');
-      if (MAILERSEND_API_KEY) {
-        try {
-          const org = organisation_id ? 
-            await base44.asServiceRole.entities.Organisation.filter({ id: organisation_id }).then(r => r[0]) : 
-            null;
+      try {
+        const org = organisation_id ? 
+          await base44.asServiceRole.entities.Organisation.filter({ id: organisation_id }).then(r => r[0]) : 
+          null;
 
-          const emailBody = `
-            <h2>Welcome to ${org?.name || 'the platform'}!</h2>
-            <p>Hi ${full_name},</p>
-            <p>You've been invited to join ${org?.name || 'our platform'}. Your account has been created and you can now log in.</p>
-            <p><strong>Email:</strong> ${email}</p>
-            <p>To get started, please visit the login page and sign in with your Google account using the email above.</p>
-            <p>If you have any questions, please contact your administrator.</p>
-            <p>Best regards,<br>${org?.name || 'The Team'}</p>
-          `;
+        const emailBody = `
+          <h2>Welcome to ${org?.name || 'the platform'}!</h2>
+          <p>Hi ${full_name},</p>
+          <p>You've been invited to join ${org?.name || 'our platform'}. Your account will be created when you first sign in.</p>
+          <p><strong>Your Email:</strong> ${email}</p>
+          <p><strong>Your Role:</strong> ${role}</p>
+          ${department ? `<p><strong>Department:</strong> ${department}</p>` : ''}
+          ${position ? `<p><strong>Position:</strong> ${position}</p>` : ''}
+          <p>To get started, please visit the login page and sign in with your Google account using the email address above.</p>
+          <p>If you have any questions, please contact your administrator.</p>
+          <p>Best regards,<br>${org?.name || 'The Team'}</p>
+        `;
 
-          const emailResponse = await fetch('https://api.mailersend.com/v1/email', {
-            method: 'POST',
-            headers: {
-              'Authorization': `Bearer ${MAILERSEND_API_KEY}`,
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-              from: { email: 'noreply@trial-0r83ql3jx1wg9yjw.mlsender.net', name: org?.name || 'Platform' },
-              to: [{ email }],
-              subject: `Welcome to ${org?.name || 'the platform'}!`,
-              html: emailBody,
-            }),
-          });
+        await base44.asServiceRole.integrations.Core.SendEmail({
+          from_name: org?.name || 'Platform',
+          to: email,
+          subject: `Welcome to ${org?.name || 'the platform'}!`,
+          body: emailBody,
+        });
 
-          if (emailResponse.ok) {
-            emailSent = true;
-            console.log('Welcome email sent to:', email);
-          } else {
-            const errorText = await emailResponse.text();
-            console.error('Email sending failed:', emailResponse.status, errorText);
-          }
-        } catch (emailError) {
-          console.error('Email sending error:', emailError);
-        }
-      } else {
-        console.warn('MAILERSEND_API_KEY not found');
+        emailSent = true;
+        console.log('Welcome email sent to:', email);
+      } catch (emailError) {
+        console.error('Email sending error:', emailError);
+        emailSent = false;
       }
     }
 
