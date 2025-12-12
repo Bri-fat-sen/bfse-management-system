@@ -124,17 +124,23 @@ Deno.serve(async (req) => {
       base64Pdf +
       closeDelim;
 
-    const uploadResponse = await fetch(
-      'https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart',
-      {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${accessToken}`,
-          'Content-Type': `multipart/related; boundary=${boundary}`
-        },
-        body: multipartRequestBody
-      }
-    );
+    const uploadUrl = accessToken 
+      ? 'https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart'
+      : `https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&key=${apiKey}`;
+    
+    const headers = {
+      'Content-Type': `multipart/related; boundary=${boundary}`
+    };
+    
+    if (accessToken) {
+      headers['Authorization'] = `Bearer ${accessToken}`;
+    }
+
+    const uploadResponse = await fetch(uploadUrl, {
+      method: 'POST',
+      headers,
+      body: multipartRequestBody
+    });
 
     if (!uploadResponse.ok) {
       const errorText = await uploadResponse.text();
