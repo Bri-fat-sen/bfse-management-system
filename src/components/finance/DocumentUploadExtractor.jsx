@@ -1,3 +1,4 @@
+
 import React, { useState, useMemo } from "react";
 import { base44 } from "@/api/base44Client";
 import { format } from "date-fns";
@@ -138,17 +139,10 @@ export default function DocumentUploadExtractor({
   const loadDriveFiles = async (folderId = null) => {
     setDriveLoading(true);
     try {
-      // First time opening, setup app folder
-      if (!appFolderId && !folderId) {
-        const setupFolderId = await setupAppFolder();
-        if (setupFolderId) {
-          folderId = setupFolderId;
-        }
-      }
-      
+      // Don't force app folder - let user browse their entire Drive
       const { data } = await base44.functions.invoke('googleDriveManager', {
         action: 'listFiles',
-        folderId: folderId || appFolderId || null
+        folderId: folderId || null
       });
       
       if (data.error) {
@@ -206,7 +200,7 @@ export default function DocumentUploadExtractor({
       
       const { data } = await base44.functions.invoke('googleDriveManager', {
         action: 'downloadFile',
-        folderId: driveFile.id
+        fileId: driveFile.id // Changed folderId to fileId as it's a file download
       });
       
       if (data.error) {
