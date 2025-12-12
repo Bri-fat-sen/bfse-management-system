@@ -322,17 +322,13 @@ export default function UserManagement() {
     if (!orgId) return;
     setIsConsolidating(true);
     try {
-      const employeesFromOtherOrgs = allEmployees.filter(emp => emp.organisation_id !== orgId);
-      
-      for (const emp of employeesFromOtherOrgs) {
-        await base44.asServiceRole.entities.Employee.update(emp.id, {
-          organisation_id: orgId
-        });
-      }
+      const response = await base44.functions.invoke('consolidateEmployees', {
+        target_organisation_id: orgId
+      });
       
       queryClient.invalidateQueries({ queryKey: ['employees'] });
       queryClient.invalidateQueries({ queryKey: ['allEmployees'] });
-      toast.success(`Consolidated ${employeesFromOtherOrgs.length} employees to ${organisation?.name}`);
+      toast.success(`Consolidated ${response.data.moved_count} employees to ${organisation?.name}`);
       setShowConsolidateDialog(false);
     } catch (error) {
       toast.error("Failed to consolidate: " + error.message);
