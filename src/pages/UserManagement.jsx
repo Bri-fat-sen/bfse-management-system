@@ -971,31 +971,43 @@ export default function UserManagement() {
                         type="button"
                         variant="ghost"
                         size="sm"
-                        onClick={() => {
+                        onClick={async () => {
                           if (confirm('Unlink this user from employee?')) {
-                            unlinkEmployeeMutation.mutate(editingEmployee.id);
-                            setShowEmployeeDialog(false);
+                            try {
+                              await unlinkEmployeeMutation.mutateAsync(editingEmployee.id);
+                              setShowEmployeeDialog(false);
+                              setEditingEmployee(null);
+                            } catch (error) {
+                              console.error('Unlink error:', error);
+                            }
                           }
                         }}
                         className="text-red-600 hover:text-red-700"
+                        disabled={unlinkEmployeeMutation.isPending}
                       >
                         <Unlink className="w-4 h-4 mr-1" />
-                        Unlink
+                        {unlinkEmployeeMutation.isPending ? 'Unlinking...' : 'Unlink'}
                       </Button>
                     </div>
                   ) : (
                     <Select 
                       value={editingEmployee.user_email || ""}
-                      onValueChange={(email) => {
+                      onValueChange={async (email) => {
                         if (email && confirm(`Link ${email} to this employee?`)) {
-                          linkEmployeeMutation.mutate({
-                            userId: null,
-                            employeeId: editingEmployee.id,
-                            userEmail: email
-                          });
-                          setShowEmployeeDialog(false);
+                          try {
+                            await linkEmployeeMutation.mutateAsync({
+                              userId: null,
+                              employeeId: editingEmployee.id,
+                              userEmail: email
+                            });
+                            setShowEmployeeDialog(false);
+                            setEditingEmployee(null);
+                          } catch (error) {
+                            console.error('Link error:', error);
+                          }
                         }
                       }}
+                      disabled={linkEmployeeMutation.isPending}
                     >
                       <SelectTrigger>
                         <SelectValue placeholder="Select user to link..." />
