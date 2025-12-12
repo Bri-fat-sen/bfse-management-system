@@ -13,8 +13,6 @@ import {
   Edit,
   Trash2,
   MoreVertical,
-  UserPlus,
-  UserMinus,
   Package,
   ShoppingCart
 } from "lucide-react";
@@ -69,9 +67,7 @@ export default function Locations() {
   const queryClient = useQueryClient();
   const [activeTab, setActiveTab] = useState("warehouses");
   const [showLocationDialog, setShowLocationDialog] = useState(false);
-  const [showAssignStaffDialog, setShowAssignStaffDialog] = useState(false);
   const [editingLocation, setEditingLocation] = useState(null);
-  const [selectedLocation, setSelectedLocation] = useState(null);
   const [locationToDelete, setLocationToDelete] = useState(null);
   const [locationType, setLocationType] = useState("warehouse");
   const [allowedSaleTypes, setAllowedSaleTypes] = useState([]);
@@ -126,9 +122,12 @@ export default function Locations() {
     enabled: !!orgId,
   });
 
-  // Get staff assigned to each location
+  // Get staff assigned to each location (including multiple assignments)
   const getLocationStaff = (locationId) => {
-    return employees.filter(emp => emp.assigned_location_id === locationId);
+    return employees.filter(emp => 
+      emp.assigned_location_id === locationId || 
+      emp.assigned_location_ids?.includes(locationId)
+    );
   };
 
   // Get stock count for location (warehouse stock only)
@@ -242,13 +241,7 @@ export default function Locations() {
     }
   });
 
-  const updateEmployeeMutation = useMutation({
-    mutationFn: ({ id, data }) => base44.entities.Employee.update(id, data),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['employees'] });
-      toast.success("Staff assignment updated successfully");
-    },
-  });
+
 
   const handleSaveLocation = (e) => {
     e.preventDefault();
@@ -307,61 +300,7 @@ export default function Locations() {
     setLocationToDelete(null);
   };
 
-  const handleAssignStaff = async (employeeId) => {
-    if (!selectedLocation) return;
-    
-    const employee = employees.find(e => e.id === employeeId);
-    const locationName = selectedLocation.name || selectedLocation.registration_number;
-    
-    await updateEmployeeMutation.mutateAsync({
-      id: employeeId,
-      data: {
-        assigned_location_id: selectedLocation.id,
-        assigned_location_name: locationName,
-        assigned_location_type: selectedLocation.type,
-      }
-    });
-    
-    // Notify the employee about assignment
-    if (employee?.user_email) {
-      await createNotification({
-        orgId,
-        recipientId: employee.id,
-        recipientEmail: employee.user_email,
-        type: 'hr',
-        title: 'New Location Assignment',
-        message: `You have been assigned to ${locationName}`,
-        priority: 'normal'
-      }).catch(err => console.log('Assignment notification failed:', err));
-    }
-  };
 
-  const handleUnassignStaff = async (employeeId) => {
-    const employee = employees.find(e => e.id === employeeId);
-    const previousLocation = employee?.assigned_location_name;
-    
-    await updateEmployeeMutation.mutateAsync({
-      id: employeeId,
-      data: {
-        assigned_location_id: null,
-        assigned_location_name: null,
-        assigned_location_type: null,
-      }
-    });
-    
-    // Notify the employee about unassignment
-    if (employee?.user_email && previousLocation) {
-      await createNotification({
-        orgId,
-        recipientId: employee.id,
-        recipientEmail: employee.user_email,
-        type: 'hr',
-        title: 'Location Assignment Removed',
-        message: `You have been unassigned from ${previousLocation}`,
-        priority: 'normal'
-      }).catch(err => console.log('Unassignment notification failed:', err));
-    }
-  };
 
   const openAddLocation = (type) => {
     setLocationType(type);
@@ -377,10 +316,7 @@ export default function Locations() {
     setShowLocationDialog(true);
   };
 
-  const openAssignStaff = (location, type) => {
-    setSelectedLocation({ ...location, type });
-    setShowAssignStaffDialog(true);
-  };
+
 
   if (!user) {
     return <LoadingSpinner message="Loading Locations..." subtitle="Fetching warehouses and vehicles" fullScreen={true} />;
@@ -480,10 +416,6 @@ export default function Locations() {
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
-                <DropdownMenuItem onClick={() => openAssignStaff(location, type)}>
-                  <Users className="w-4 h-4 mr-2" />
-                  Manage Staff
-                </DropdownMenuItem>
                 <DropdownMenuItem onClick={() => openEditLocation(location, type)}>
                   <Edit className="w-4 h-4 mr-2" />
                   Edit
@@ -925,88 +857,7 @@ export default function Locations() {
         </DialogContent>
       </Dialog>
 
-      {/* Assign Staff Dialog */}
-      <Dialog open={showAssignStaffDialog} onOpenChange={setShowAssignStaffDialog}>
-        <DialogContent className="max-w-lg">
-          <DialogHeader>
-            <DialogTitle>Manage Staff - {selectedLocation?.name || selectedLocation?.registration_number}</DialogTitle>
-            <DialogDescription>Assign or remove staff from this location</DialogDescription>
-          </DialogHeader>
-          
-          <div className="space-y-4">
-            <div>
-              <h4 className="font-medium mb-2">Assigned Staff</h4>
-              {selectedLocation && getLocationStaff(selectedLocation.id).length === 0 ? (
-                <p className="text-sm text-gray-500 py-4 text-center bg-gray-50 rounded-lg">No staff assigned</p>
-              ) : (
-                <div className="space-y-2 max-h-40 overflow-y-auto">
-                  {selectedLocation && getLocationStaff(selectedLocation.id).map((emp) => (
-                    <div key={emp.id} className="flex items-center justify-between p-2 bg-green-50 rounded-lg">
-                      <div className="flex items-center gap-2">
-                        <Avatar className="w-8 h-8">
-                          <AvatarImage src={emp.profile_photo} />
-                          <AvatarFallback className="bg-gradient-to-br from-[#1EB053] to-[#0072C6] text-white text-xs">
-                            {emp.first_name?.charAt(0)}
-                          </AvatarFallback>
-                        </Avatar>
-                        <div>
-                          <p className="font-medium text-sm">{emp.full_name}</p>
-                          <p className="text-xs text-gray-500">{emp.role?.replace(/_/g, ' ')}</p>
-                        </div>
-                      </div>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="text-red-600 hover:text-red-700 hover:bg-red-50"
-                        onClick={() => handleUnassignStaff(emp.id)}
-                      >
-                        <UserMinus className="w-4 h-4" />
-                      </Button>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
 
-            <div className="border-t pt-4">
-              <h4 className="font-medium mb-2">Available Staff</h4>
-              <div className="space-y-2 max-h-48 overflow-y-auto">
-                {employees
-                  .filter(emp => !emp.assigned_location_id || emp.assigned_location_id !== selectedLocation?.id)
-                  .map((emp) => (
-                    <div key={emp.id} className="flex items-center justify-between p-2 bg-gray-50 rounded-lg">
-                      <div className="flex items-center gap-2">
-                        <Avatar className="w-8 h-8">
-                          <AvatarImage src={emp.profile_photo} />
-                          <AvatarFallback className="bg-gray-300 text-gray-600 text-xs">
-                            {emp.first_name?.charAt(0)}
-                          </AvatarFallback>
-                        </Avatar>
-                        <div>
-                          <p className="font-medium text-sm">{emp.full_name}</p>
-                          <p className="text-xs text-gray-500">
-                            {emp.role?.replace(/_/g, ' ')}
-                            {emp.assigned_location_name && (
-                              <span className="ml-1 text-amber-600">• Currently at {emp.assigned_location_name}</span>
-                            )}
-                          </p>
-                        </div>
-                      </div>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="text-green-600 hover:text-green-700 hover:bg-green-50"
-                        onClick={() => handleAssignStaff(emp.id)}
-                      >
-                        <UserPlus className="w-4 h-4" />
-                      </Button>
-                    </div>
-                  ))}
-              </div>
-            </div>
-          </div>
-        </DialogContent>
-      </Dialog>
 
       {/* Delete Confirmation */}
       <ConfirmDialog
