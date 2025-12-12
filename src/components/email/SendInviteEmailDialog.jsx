@@ -62,7 +62,13 @@ export default function SendInviteEmailDialog({ open, onOpenChange, organisation
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['allUsers'] });
       queryClient.invalidateQueries({ queryKey: ['employees'] });
-      toast.success("User invited successfully", `${fullName} has been added to the platform`);
+      
+      if (data.email_sent) {
+        toast.success("User invited successfully", `${fullName} has been added and welcome email sent`);
+      } else {
+        toast.warning("User invited (email issue)", data.message || `${fullName} added but email wasn't sent. Please inform them manually.`);
+      }
+      
       setEmail("");
       setFullName("");
       setRole("read_only");
