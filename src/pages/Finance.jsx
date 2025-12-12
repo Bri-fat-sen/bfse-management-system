@@ -102,6 +102,8 @@ export default function Finance() {
   const [showRevenueDialog, setShowRevenueDialog] = useState(false);
   const [showBankDepositDialog, setShowBankDepositDialog] = useState(false);
   const [showDocumentExtractor, setShowDocumentExtractor] = useState(false);
+  const [showDriveExport, setShowDriveExport] = useState(false);
+  const [exportData, setExportData] = useState([]);
   const [editingRevenue, setEditingRevenue] = useState(null);
   const [editingExpense, setEditingExpense] = useState(null);
   const [categoryFilter, setCategoryFilter] = useState("all");

@@ -62,6 +62,7 @@ import LoadingSpinner from "@/components/ui/LoadingSpinner";
 import ReceiptDialog from "@/components/sales/ReceiptDialog";
 import InvoiceDialog from "@/components/sales/InvoiceDialog";
 import DocumentUploadExtractor from "@/components/finance/DocumentUploadExtractor";
+import ExportToGoogleDrive from "@/components/exports/ExportToGoogleDrive";
 import PrintableFormsDownload from "@/components/finance/PrintableFormsDownload";
 
 export default function Sales() {
