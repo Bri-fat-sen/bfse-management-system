@@ -282,6 +282,7 @@ export default function ReportGenerator({ sales = [], expenses = [], employees =
       }
     }).catch(error => {
       console.error('Drive save error:', error);
+      // Silent fail - don't show error to user since PDF already downloaded
     });
   };
 
