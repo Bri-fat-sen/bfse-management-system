@@ -75,6 +75,7 @@ import BudgetingModule from "@/components/finance/BudgetingModule";
 import DocumentUploadExtractor from "@/components/finance/DocumentUploadExtractor";
 import AIExpenseCategorizer from "@/components/finance/AIExpenseCategorizer";
 import UnifiedFinancialReports from "@/components/finance/UnifiedFinancialReports";
+import DriveDataExtractor from "@/components/drive/DriveDataExtractor";
 
 const expenseCategories = [
   "fuel", "maintenance", "utilities", "supplies", "rent", 
@@ -111,6 +112,7 @@ export default function Finance() {
   const [showAICategorizerDialog, setShowAICategorizerDialog] = useState(false);
   const [selectedExpenseIds, setSelectedExpenseIds] = useState([]);
   const [selectedRevenueIds, setSelectedRevenueIds] = useState([]);
+  const [showDriveExtractor, setShowDriveExtractor] = useState(false);
 
   const { data: user } = useQuery({
     queryKey: ['currentUser'],
@@ -1587,17 +1589,17 @@ export default function Finance() {
                   </div>
 
                   <Button
-                    onClick={() => setShowDocumentExtractor(true)}
+                    onClick={() => setShowDriveExtractor(true)}
                     variant="outline"
                     className="border-2 border-dashed border-gray-300 rounded-xl p-6 sm:p-8 text-center hover:border-purple-500 transition-colors h-auto w-full"
                   >
                     <div className="flex flex-col items-center gap-3">
-                      <div className="w-12 h-12 sm:w-16 sm:h-16 rounded-full bg-blue-100 flex items-center justify-center">
-                        <FileText className="w-6 h-6 sm:w-8 sm:h-8 text-blue-600" />
+                      <div className="w-12 h-12 sm:w-16 sm:h-16 rounded-full bg-purple-100 flex items-center justify-center">
+                        <Sparkles className="w-6 h-6 sm:w-8 sm:h-8 text-purple-600" />
                       </div>
                       <div>
-                        <p className="text-sm sm:text-base text-gray-700 font-medium">Upload & Extract Data</p>
-                        <p className="text-xs sm:text-sm text-gray-500 mt-1">Advanced extraction tools</p>
+                        <p className="text-sm sm:text-base text-gray-700 font-medium">AI Extract from Drive</p>
+                        <p className="text-xs sm:text-sm text-gray-500 mt-1">Automatic data extraction</p>
                       </div>
                     </div>
                   </Button>
@@ -1629,6 +1631,14 @@ export default function Finance() {
               queryClient.invalidateQueries({ queryKey: ['expenses', orgId] });
               queryClient.invalidateQueries({ queryKey: ['revenues', orgId] });
             }}
+          />
+
+          {/* AI Drive Data Extractor */}
+          <DriveDataExtractor
+            open={showDriveExtractor}
+            onOpenChange={setShowDriveExtractor}
+            orgId={orgId}
+            currentEmployee={currentEmployee}
           />
 
           {/* Cash Flow Tab */}
