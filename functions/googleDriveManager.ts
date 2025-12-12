@@ -118,23 +118,9 @@ Deno.serve(async (req) => {
         }
         
         console.log('Drive query:', q);
-        console.log('Using OAuth:', usingOAuth);
-        
-        // Build URL - only add shared drive params when using OAuth
-        const params = new URLSearchParams({
-          q: q,
-          fields: 'files(id,name,mimeType,modifiedTime,size,webViewLink,createdTime,owners,shared)',
-          orderBy: 'modifiedTime desc',
-          pageSize: '1000'
-        });
-        
-        if (usingOAuth) {
-          params.append('supportsAllDrives', 'true');
-          params.append('includeItemsFromAllDrives', 'true');
-        }
         
         const listResponse = await fetch(
-          `https://www.googleapis.com/drive/v3/files?${params.toString()}`,
+          `https://www.googleapis.com/drive/v3/files?q=${encodeURIComponent(q)}&fields=files(id,name,mimeType,modifiedTime,size,webViewLink,createdTime,owners,shared)&orderBy=modifiedTime desc&pageSize=1000`,
           { headers }
         );
         
