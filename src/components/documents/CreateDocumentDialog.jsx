@@ -260,26 +260,7 @@ export default function CreateDocumentDialog({
     }
   });
 
-  useEffect(() => {
-    if (!open) {
-      resetForm();
-    } else if (open) {
-      setStep(1);
-    }
-  }, [open]);
 
-  const resetForm = () => {
-    setStep(1);
-    setDocumentType("");
-    setSelectedEmployees([]);
-    setSelectAll(false);
-    setVariables({});
-    setCustomContent("");
-    setCustomTitle("");
-    setPreviewContent("");
-    setEmployeeSearch("");
-    setSending(false);
-  };
 
   const handleSelectAll = () => {
     if (selectAll) {
