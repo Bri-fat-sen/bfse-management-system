@@ -9,14 +9,84 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { action, folderId, fileName, fileContent, mimeType } = await req.json();
+    const { action, folderId, fileName, fileContent, mimeType, query } = await req.json();
 
-    const accessToken = await base44.asServiceRole.connectors.getAccessToken('googledrive');
-    if (!accessToken) {
+    // Get service account credentials
+    const serviceAccountKey = Deno.env.get('GOOGLE_SERVICE_ACCOUNT_KEY');
+    
+    if (!serviceAccountKey) {
       return Response.json({ 
-        error: 'Google Drive not connected' 
+        error: 'Google Drive service account not configured. Please set GOOGLE_SERVICE_ACCOUNT_KEY secret.' 
       }, { status: 403 });
     }
+
+    // Parse service account JSON
+    const credentials = JSON.parse(serviceAccountKey);
+
+    // Generate JWT for service account authentication
+    const header = { alg: 'RS256', typ: 'JWT' };
+    const now = Math.floor(Date.now() / 1000);
+    const payload = {
+      iss: credentials.client_email,
+      scope: 'https://www.googleapis.com/auth/drive',
+      aud: 'https://oauth2.googleapis.com/token',
+      exp: now + 3600,
+      iat: now
+    };
+
+    // Import crypto key
+    const privateKey = credentials.private_key;
+    const pemHeader = '-----BEGIN PRIVATE KEY-----';
+    const pemFooter = '-----END PRIVATE KEY-----';
+    const pemContents = privateKey.substring(
+      pemHeader.length,
+      privateKey.length - pemFooter.length
+    ).trim();
+    const binaryDer = Uint8Array.from(atob(pemContents), c => c.charCodeAt(0));
+
+    const cryptoKey = await crypto.subtle.importKey(
+      'pkcs8',
+      binaryDer,
+      { name: 'RSASSA-PKCS1-v1_5', hash: 'SHA-256' },
+      false,
+      ['sign']
+    );
+
+    // Create JWT
+    const encodedHeader = btoa(JSON.stringify(header)).replace(/=/g, '').replace(/\+/g, '-').replace(/\//g, '_');
+    const encodedPayload = btoa(JSON.stringify(payload)).replace(/=/g, '').replace(/\+/g, '-').replace(/\//g, '_');
+    const unsignedToken = `${encodedHeader}.${encodedPayload}`;
+
+    const signature = await crypto.subtle.sign(
+      'RSASSA-PKCS1-v1_5',
+      cryptoKey,
+      new TextEncoder().encode(unsignedToken)
+    );
+
+    const encodedSignature = btoa(String.fromCharCode(...new Uint8Array(signature)))
+      .replace(/=/g, '')
+      .replace(/\+/g, '-')
+      .replace(/\//g, '_');
+
+    const jwt = `${unsignedToken}.${encodedSignature}`;
+
+    // Exchange JWT for access token
+    const tokenResponse = await fetch('https://oauth2.googleapis.com/token', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: `grant_type=urn:ietf:params:oauth:grant-type:jwt-bearer&assertion=${jwt}`
+    });
+
+    const tokenData = await tokenResponse.json();
+    
+    if (!tokenData.access_token) {
+      return Response.json({ 
+        error: 'Failed to get access token',
+        details: tokenData.error_description || 'Invalid service account key'
+      }, { status: 500 });
+    }
+
+    const accessToken = tokenData.access_token;
 
     const headers = {
       'Authorization': `Bearer ${accessToken}`,
@@ -34,14 +104,24 @@ Deno.serve(async (req) => {
       }
 
       case 'listFiles': {
+        // List all files with optional folder filter
         const q = folderId 
           ? `'${folderId}' in parents and trashed=false`
-          : `trashed=false`;
+          : query || `trashed=false`;
         
         const listResponse = await fetch(
-          `https://www.googleapis.com/drive/v3/files?q=${encodeURIComponent(q)}&fields=files(id,name,mimeType,modifiedTime,size,webViewLink)&orderBy=modifiedTime desc&pageSize=100`,
+          `https://www.googleapis.com/drive/v3/files?q=${encodeURIComponent(q)}&fields=files(id,name,mimeType,modifiedTime,size,webViewLink,createdTime,owners)&orderBy=modifiedTime desc&pageSize=1000`,
           { headers }
         );
+        
+        if (!listResponse.ok) {
+          const errorText = await listResponse.text();
+          return Response.json({ 
+            error: 'Failed to list files',
+            details: errorText
+          }, { status: listResponse.status });
+        }
+        
         const data = await listResponse.json();
         
         const sorted = (data.files || []).sort((a, b) => {
@@ -123,65 +203,6 @@ Deno.serve(async (req) => {
           success: true,
           content: base64,
           mimeType: downloadResponse.headers.get('content-type')
-        });
-      }
-
-      case 'extractData': {
-        const { fileId, fileUrl, detectedType } = await req.json();
-        
-        const prompt = `Analyze this financial document and extract ALL structured data.
-
-Return a JSON object with this EXACT structure:
-{
-  "detected_type": "${detectedType || 'expense'}",
-  "records": [
-    {
-      "date": "YYYY-MM-DD",
-      "description": "string",
-      "amount": number,
-      "vendor": "string (if applicable)",
-      "category": "fuel/maintenance/utilities/supplies/rent/salaries/transport/marketing/insurance/other",
-      "invoice_number": "string (if found)",
-      "payment_method": "cash/card/bank_transfer/mobile_money",
-      "customer_name": "string (for revenue)",
-      "items": [{"product": "string", "quantity": number, "price": number}] (for sales)
-    }
-  ]
-}
-
-Extract EVERY transaction, line item, expense, or revenue entry found. For bank statements, extract each transaction. For invoices, extract all line items. Be thorough.`;
-
-        const llmResult = await base44.asServiceRole.integrations.Core.InvokeLLM({
-          prompt: prompt,
-          file_urls: fileUrl,
-          response_json_schema: {
-            type: "object",
-            properties: {
-              detected_type: { type: "string" },
-              records: {
-                type: "array",
-                items: {
-                  type: "object",
-                  properties: {
-                    date: { type: "string" },
-                    description: { type: "string" },
-                    amount: { type: "number" },
-                    vendor: { type: "string" },
-                    category: { type: "string" },
-                    invoice_number: { type: "string" },
-                    payment_method: { type: "string" },
-                    customer_name: { type: "string" },
-                    items: { type: "array" }
-                  }
-                }
-              }
-            }
-          }
-        });
-
-        return Response.json({
-          success: true,
-          extractedData: llmResult
         });
       }
 
