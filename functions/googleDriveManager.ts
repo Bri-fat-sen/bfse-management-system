@@ -9,13 +9,12 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { action, folderId, fileName, fileContent, fileType, mimeType, query } = await req.json();
+    const { action, folderId, fileName, fileContent, mimeType } = await req.json();
 
-    // Get Google Drive access token
     const accessToken = await base44.asServiceRole.connectors.getAccessToken('googledrive');
     if (!accessToken) {
       return Response.json({ 
-        error: 'Google Drive not connected. Please authorize Google Drive access.' 
+        error: 'Google Drive not connected' 
       }, { status: 403 });
     }
 
@@ -24,107 +23,41 @@ Deno.serve(async (req) => {
       'Content-Type': 'application/json'
     };
 
-    // Get employee info for folder naming
-    const employees = await base44.entities.Employee.filter({ user_email: user.email });
-    const employee = employees[0];
-    const orgId = employee?.organisation_id;
-    
-    const organisations = orgId ? await base44.entities.Organisation.filter({ id: orgId }) : [];
-    const orgName = organisations[0]?.name || 'Organisation';
-    const orgCode = organisations[0]?.code || '';
-
-    // Root app folder name
-    const appFolderName = `${orgName}${orgCode ? ' (' + orgCode + ')' : ''} - Business Suite`;
-
     switch (action) {
-      case 'setup': {
-        // Find or create root app folder
-        const searchResponse = await fetch(
-          `https://www.googleapis.com/drive/v3/files?q=name='${appFolderName}' and mimeType='application/vnd.google-apps.folder' and trashed=false`,
+      case 'getRootFolder': {
+        const rootResponse = await fetch(
+          `https://www.googleapis.com/drive/v3/files/root?fields=id,name`,
           { headers }
         );
-        const searchData = await searchResponse.json();
-        
-        let rootFolderId;
-        if (searchData.files && searchData.files.length > 0) {
-          rootFolderId = searchData.files[0].id;
-        } else {
-          // Create root folder
-          const createResponse = await fetch(
-            'https://www.googleapis.com/drive/v3/files',
-            {
-              method: 'POST',
-              headers,
-              body: JSON.stringify({
-                name: appFolderName,
-                mimeType: 'application/vnd.google-apps.folder'
-              })
-            }
-          );
-          const rootFolder = await createResponse.json();
-          rootFolderId = rootFolder.id;
-        }
-
-        // Create subfolders
-        const subfolders = [
-          'Reports',
-          'Payroll & Payslips',
-          'Financial Documents',
-          'Invoices & Receipts',
-          'HR Documents',
-          'Imported Documents',
-          'Expenses',
-          'Bank Statements'
-        ];
-
-        const folderIds = { root: rootFolderId };
-
-        for (const folderName of subfolders) {
-          const searchSub = await fetch(
-            `https://www.googleapis.com/drive/v3/files?q=name='${folderName}' and '${rootFolderId}' in parents and mimeType='application/vnd.google-apps.folder' and trashed=false`,
-            { headers }
-          );
-          const subData = await searchSub.json();
-          
-          if (subData.files && subData.files.length > 0) {
-            folderIds[folderName] = subData.files[0].id;
-          } else {
-            const createSub = await fetch(
-              'https://www.googleapis.com/drive/v3/files',
-              {
-                method: 'POST',
-                headers,
-                body: JSON.stringify({
-                  name: folderName,
-                  mimeType: 'application/vnd.google-apps.folder',
-                  parents: [rootFolderId]
-                })
-              }
-            );
-            const subFolder = await createSub.json();
-            folderIds[folderName] = subFolder.id;
-          }
-        }
-
-        return Response.json({ success: true, folders: folderIds, rootName: appFolderName });
+        const rootData = await rootResponse.json();
+        return Response.json({ success: true, folder: rootData });
       }
 
       case 'listFiles': {
         const q = folderId 
           ? `'${folderId}' in parents and trashed=false`
-          : query || 'trashed=false';
+          : `trashed=false`;
         
         const listResponse = await fetch(
-          `https://www.googleapis.com/drive/v3/files?q=${encodeURIComponent(q)}&fields=files(id,name,mimeType,modifiedTime,size,webViewLink,iconLink)&orderBy=modifiedTime desc&pageSize=50`,
+          `https://www.googleapis.com/drive/v3/files?q=${encodeURIComponent(q)}&fields=files(id,name,mimeType,modifiedTime,size,webViewLink)&orderBy=modifiedTime desc&pageSize=100`,
           { headers }
         );
         const data = await listResponse.json();
-        return Response.json({ success: true, files: data.files || [] });
+        
+        const sorted = (data.files || []).sort((a, b) => {
+          const aIsFolder = a.mimeType === 'application/vnd.google-apps.folder';
+          const bIsFolder = b.mimeType === 'application/vnd.google-apps.folder';
+          if (aIsFolder && !bIsFolder) return -1;
+          if (!aIsFolder && bIsFolder) return 1;
+          return 0;
+        });
+        
+        return Response.json({ success: true, files: sorted });
       }
 
       case 'uploadFile': {
         if (!folderId || !fileName || !fileContent) {
-          return Response.json({ error: 'Missing required fields' }, { status: 400 });
+          return Response.json({ error: 'Missing fields' }, { status: 400 });
         }
 
         const boundary = '-------314159265358979323846';
@@ -174,10 +107,6 @@ Deno.serve(async (req) => {
       }
 
       case 'downloadFile': {
-        if (!folderId) { // using folderId as fileId for download
-          return Response.json({ error: 'Missing fileId' }, { status: 400 });
-        }
-
         const downloadResponse = await fetch(
           `https://www.googleapis.com/drive/v3/files/${folderId}?alt=media`,
           { headers: { 'Authorization': `Bearer ${accessToken}` } }
@@ -197,28 +126,14 @@ Deno.serve(async (req) => {
         });
       }
 
-      case 'getFileMetadata': {
-        if (!folderId) {
-          return Response.json({ error: 'Missing fileId' }, { status: 400 });
-        }
-
-        const metaResponse = await fetch(
-          `https://www.googleapis.com/drive/v3/files/${folderId}?fields=id,name,mimeType,size,createdTime,modifiedTime,webViewLink`,
-          { headers }
-        );
-
-        const metadata = await metaResponse.json();
-        return Response.json({ success: true, metadata });
-      }
-
       default:
         return Response.json({ error: 'Invalid action' }, { status: 400 });
     }
 
   } catch (error) {
-    console.error('Google Drive Manager error:', error);
+    console.error('Drive error:', error);
     return Response.json({ 
-      error: 'Internal server error',
+      error: 'Internal error',
       details: error.message 
     }, { status: 500 });
   }

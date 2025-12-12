@@ -6,52 +6,42 @@ import {
   Folder, 
   FileText, 
   Download, 
-  Upload, 
   RefreshCw, 
   FolderOpen,
   Home,
   ArrowLeft,
   Loader2
 } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
-import { useToast } from "@/components/ui/use-toast";
 import { format } from "date-fns";
 
 export default function DriveFileBrowser({ 
   onFileSelect, 
-  allowUpload = false,
   title = "Google Drive Files"
 }) {
-  const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
   const [files, setFiles] = useState([]);
-  const [folders, setFolders] = useState(null);
   const [currentFolder, setCurrentFolder] = useState(null);
   const [folderPath, setFolderPath] = useState([]);
 
   useEffect(() => {
-    setupDrive();
+    initializeDrive();
   }, []);
 
-  const setupDrive = async () => {
+  const initializeDrive = async () => {
     setIsLoading(true);
     try {
-      const result = await base44.functions.invoke('googleDriveManager', {
-        action: 'setup'
+      const rootResult = await base44.functions.invoke('googleDriveManager', {
+        action: 'getRootFolder'
       });
       
-      if (result?.data?.success) {
-        setFolders(result.data.folders);
-        setCurrentFolder(result.data.folders.root);
-        setFolderPath([{ name: result.data.rootName, id: result.data.folders.root }]);
-        loadFiles(result.data.folders.root);
+      if (rootResult?.data?.success) {
+        const root = rootResult.data.folder;
+        setCurrentFolder(root.id);
+        setFolderPath([{ name: 'My Drive', id: root.id }]);
+        loadFiles(root.id);
       }
     } catch (error) {
-      toast({ 
-        title: "Failed to setup Drive", 
-        description: error.message,
-        variant: "destructive" 
-      });
+      console.error('Drive init error:', error);
     }
     setIsLoading(false);
   };
@@ -68,11 +58,7 @@ export default function DriveFileBrowser({
         setFiles(result.data.files || []);
       }
     } catch (error) {
-      toast({ 
-        title: "Failed to load files", 
-        description: error.message,
-        variant: "destructive" 
-      });
+      console.error('Load files error:', error);
     }
     setIsLoading(false);
   };
@@ -93,10 +79,10 @@ export default function DriveFileBrowser({
   };
 
   const navigateToRoot = () => {
-    if (!folders) return;
-    setCurrentFolder(folders.root);
-    setFolderPath([folderPath[0]]);
-    loadFiles(folders.root);
+    const root = folderPath[0];
+    setCurrentFolder(root.id);
+    setFolderPath([root]);
+    loadFiles(root.id);
   };
 
   const handleFileSelect = async (file) => {
@@ -107,41 +93,11 @@ export default function DriveFileBrowser({
     }
   };
 
-  const downloadFile = async (file) => {
-    try {
-      const result = await base44.functions.invoke('googleDriveManager', {
-        action: 'downloadFile',
-        folderId: file.id // reusing folderId param for fileId
-      });
-      
-      if (result?.data?.success) {
-        const link = document.createElement('a');
-        link.href = `data:${result.data.mimeType};base64,${result.data.content}`;
-        link.download = file.name;
-        link.click();
-        toast({ title: "File downloaded" });
-      }
-    } catch (error) {
-      toast({ 
-        title: "Download failed", 
-        description: error.message,
-        variant: "destructive" 
-      });
-    }
-  };
-
   const formatFileSize = (bytes) => {
     if (!bytes) return '-';
     const sizes = ['B', 'KB', 'MB', 'GB'];
     const i = Math.floor(Math.log(bytes) / Math.log(1024));
     return `${(bytes / Math.pow(1024, i)).toFixed(1)} ${sizes[i]}`;
-  };
-
-  const getFileIcon = (file) => {
-    if (file.mimeType === 'application/vnd.google-apps.folder') {
-      return <Folder className="w-8 h-8 text-[#0072C6]" />;
-    }
-    return <FileText className="w-8 h-8 text-gray-500" />;
   };
 
   return (
@@ -162,8 +118,7 @@ export default function DriveFileBrowser({
           </Button>
         </div>
         
-        {/* Breadcrumb */}
-        <div className="flex items-center gap-2 mt-2 text-sm text-gray-600">
+        <div className="flex items-center gap-2 mt-2 text-sm">
           <Button 
             variant="ghost" 
             size="sm" 
@@ -174,34 +129,18 @@ export default function DriveFileBrowser({
           </Button>
           {folderPath.length > 1 && (
             <>
-              <Button 
-                variant="ghost" 
-                size="sm" 
-                onClick={navigateBack}
-              >
+              <Button variant="ghost" size="sm" onClick={navigateBack}>
                 <ArrowLeft className="w-4 h-4" />
               </Button>
-              <span className="text-gray-400">/</span>
+              <span>/</span>
             </>
           )}
           {folderPath.map((folder, idx) => (
             <React.Fragment key={folder.id}>
-              <button
-                onClick={() => {
-                  if (idx < folderPath.length - 1) {
-                    const newPath = folderPath.slice(0, idx + 1);
-                    setFolderPath(newPath);
-                    setCurrentFolder(folder.id);
-                    loadFiles(folder.id);
-                  }
-                }}
-                className={`hover:text-[#1EB053] ${
-                  idx === folderPath.length - 1 ? 'font-semibold text-[#1EB053]' : ''
-                }`}
-              >
+              <span className={idx === folderPath.length - 1 ? 'font-semibold text-[#1EB053]' : ''}>
                 {folder.name}
-              </button>
-              {idx < folderPath.length - 1 && <span className="text-gray-400">/</span>}
+              </span>
+              {idx < folderPath.length - 1 && <span>/</span>}
             </React.Fragment>
           ))}
         </div>
@@ -209,50 +148,35 @@ export default function DriveFileBrowser({
       
       <CardContent>
         {isLoading ? (
-          <div className="flex items-center justify-center py-12">
+          <div className="flex justify-center py-12">
             <Loader2 className="w-8 h-8 animate-spin text-[#1EB053]" />
           </div>
         ) : files.length === 0 ? (
           <div className="text-center py-12 text-gray-500">
             <Folder className="w-12 h-12 mx-auto mb-3 text-gray-300" />
-            <p>No files in this folder</p>
+            <p>No files</p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 gap-2">
+          <div className="space-y-2">
             {files.map(file => (
               <div
                 key={file.id}
-                className="flex items-center justify-between p-3 border rounded-lg hover:bg-gray-50 cursor-pointer transition-colors"
+                className="flex items-center justify-between p-3 border rounded-lg hover:bg-gray-50 cursor-pointer"
                 onClick={() => handleFileSelect(file)}
               >
                 <div className="flex items-center gap-3 flex-1 min-w-0">
-                  {getFileIcon(file)}
+                  {file.mimeType === 'application/vnd.google-apps.folder' ? (
+                    <Folder className="w-6 h-6 text-[#0072C6]" />
+                  ) : (
+                    <FileText className="w-6 h-6 text-gray-500" />
+                  )}
                   <div className="flex-1 min-w-0">
                     <p className="font-medium text-sm truncate">{file.name}</p>
-                    <div className="flex items-center gap-2 text-xs text-gray-500">
-                      <span>{formatFileSize(file.size)}</span>
-                      {file.modifiedTime && (
-                        <>
-                          <span>•</span>
-                          <span>{format(new Date(file.modifiedTime), 'MMM d, yyyy')}</span>
-                        </>
-                      )}
-                    </div>
+                    <p className="text-xs text-gray-500">
+                      {formatFileSize(file.size)} • {file.modifiedTime && format(new Date(file.modifiedTime), 'MMM d, yyyy')}
+                    </p>
                   </div>
                 </div>
-                
-                {file.mimeType !== 'application/vnd.google-apps.folder' && (
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      downloadFile(file);
-                    }}
-                  >
-                    <Download className="w-4 h-4" />
-                  </Button>
-                )}
               </div>
             ))}
           </div>

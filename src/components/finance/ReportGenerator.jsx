@@ -429,9 +429,9 @@ export default function ReportGenerator({ sales = [], expenses = [], employees =
                   variant="outline" 
                   size="sm" 
                   onClick={() => setShowFolderPicker(true)}
-                  className="text-[#1EB053] border-[#1EB053]"
+                  className={selectedFolder ? "bg-green-50 text-[#1EB053] border-[#1EB053]" : ""}
                 >
-                  {selectedFolder ? `✓ ${selectedFolder.name}` : 'Save to Drive'}
+                  {selectedFolder ? `✓ ${selectedFolder.name}` : 'Pick Drive Folder'}
                 </Button>
               </div>
             </div>
