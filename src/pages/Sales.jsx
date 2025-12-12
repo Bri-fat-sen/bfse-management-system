@@ -205,21 +205,40 @@ export default function Sales() {
     return map;
   }, [stockLevels]);
 
-  // Get location options based on sale type, filtered by allowed_sale_types
+  // Get location options based on sale type, filtered by allowed_sale_types and user assignments
   const getLocationOptions = () => {
+    const isUnrestricted = ['super_admin', 'org_admin'].includes(currentEmployee?.role);
+    const assignedIds = currentEmployee?.assigned_location_ids || [];
+    const singleAssignedId = currentEmployee?.assigned_location_id;
+    
+    // Build location IDs filter
+    const allowedLocationIds = isUnrestricted 
+      ? null  // null means show all
+      : (assignedIds.length > 0 ? assignedIds : (singleAssignedId ? [singleAssignedId] : null));
+    
     switch (saleType) {
       case 'vehicle':
-        return vehicles.map(v => ({ id: v.id, name: `${v.registration_number} - ${v.brand || ''} ${v.model || ''}`.trim(), type: 'vehicle' }));
+        let vehicleList = vehicles;
+        if (allowedLocationIds) {
+          vehicleList = vehicles.filter(v => allowedLocationIds.includes(v.id));
+        }
+        return vehicleList.map(v => ({ id: v.id, name: `${v.registration_number} - ${v.brand || ''} ${v.model || ''}`.trim(), type: 'vehicle' }));
       case 'warehouse':
-        const warehouseLocations = warehouses.filter(w => 
+        let warehouseLocations = warehouses.filter(w => 
           !w.allowed_sale_types || w.allowed_sale_types.length === 0 || w.allowed_sale_types.includes('warehouse')
         );
+        if (allowedLocationIds) {
+          warehouseLocations = warehouseLocations.filter(w => allowedLocationIds.includes(w.id));
+        }
         return warehouseLocations.map(w => ({ id: w.id, name: w.name, type: 'warehouse' }));
       case 'retail':
       default:
-        const retailLocations = warehouses.filter(w => 
+        let retailLocations = warehouses.filter(w => 
           !w.allowed_sale_types || w.allowed_sale_types.length === 0 || w.allowed_sale_types.includes('retail')
         );
+        if (allowedLocationIds) {
+          retailLocations = retailLocations.filter(w => allowedLocationIds.includes(w.id));
+        }
         return retailLocations.map(w => ({ id: w.id, name: w.name, type: 'store' }));
     }
   };
@@ -827,9 +846,8 @@ export default function Sales() {
   const canChangeSaleType = ['super_admin', 'org_admin', 'warehouse_manager'].includes(currentEmployee?.role) || 
     !currentEmployee?.assigned_location_id;
   
-  // Determine if user can change location
-  const canChangeLocation = ['super_admin', 'org_admin', 'warehouse_manager'].includes(currentEmployee?.role) || 
-    (!currentEmployee?.assigned_location_id && (!currentEmployee?.assigned_location_ids || currentEmployee.assigned_location_ids.length === 0));
+  // Determine if user can change location (always allow selection among assigned locations)
+  const canChangeLocation = true; // Users can always select from their available locations
 
   if (!user) {
     return <LoadingSpinner message="Loading Sales..." subtitle="Setting up your point of sale" fullScreen={true} />;
