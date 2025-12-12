@@ -156,7 +156,11 @@ export default function Sales() {
 
   const { data: warehouses = [] } = useQuery({
     queryKey: ['warehouses', orgId],
-    queryFn: () => base44.entities.Warehouse.filter({ organisation_id: orgId, is_active: true }),
+    queryFn: async () => {
+      // Get all warehouses for the organisation
+      const allWarehouses = await base44.entities.Warehouse.filter({ organisation_id: orgId, is_active: true });
+      return allWarehouses || [];
+    },
     enabled: !!orgId,
     staleTime: 5 * 60 * 1000,
     refetchOnWindowFocus: false,
