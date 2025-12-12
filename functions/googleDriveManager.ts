@@ -134,7 +134,7 @@ Deno.serve(async (req) => {
         }
         
         const data = await listResponse.json();
-        console.log(`Found ${data.files?.length || 0} files (OAuth: ${usingOAuth})`);
+        console.log(`Found ${data.files?.length || 0} files with service account`);
         
         const sorted = (data.files || []).sort((a, b) => {
           const aIsFolder = a.mimeType === 'application/vnd.google-apps.folder';
