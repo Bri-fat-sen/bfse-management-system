@@ -259,6 +259,8 @@ export default function ReportGenerator({ sales = [], expenses = [], employees =
     const fileName = `${reportType}_report_${format(new Date(), 'yyyy-MM-dd')}.pdf`;
     
     printUnifiedPDF(html, fileName);
+    setIsGenerating(false);
+    toast({ title: "Report downloaded" });
     
     // Save to Drive automatically in background
     base44.functions.invoke('saveToDrive', {
@@ -271,18 +273,16 @@ export default function ReportGenerator({ sales = [], expenses = [], employees =
       },
       fileName: fileName
     }).then(result => {
-      if (result.data.success) {
+      if (result?.data?.success) {
         toast({ 
-          title: "Also saved to Google Drive",
-          description: fileName 
+          title: "✓ Saved to Google Drive",
+          description: fileName,
+          variant: "default"
         });
       }
     }).catch(error => {
-      console.log('Drive save skipped:', error.message);
+      console.error('Drive save error:', error);
     });
-    
-    setIsGenerating(false);
-    toast({ title: "Report downloaded" });
   };
 
   return (
