@@ -71,10 +71,17 @@ export default function CreateDocumentDialog({
   const [employeeSearch, setEmployeeSearch] = useState("");
 
   useEffect(() => {
-    if (!open) {
-      resetForm();
-    } else if (open) {
+    if (open) {
       setStep(1);
+      setDocumentType("");
+      setSelectedEmployees([]);
+      setSelectAll(false);
+      setVariables({});
+      setCustomContent("");
+      setCustomTitle("");
+      setPreviewContent("");
+      setEmployeeSearch("");
+      setSending(false);
     }
   }, [open]);
 
