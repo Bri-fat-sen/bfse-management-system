@@ -54,43 +54,79 @@ Deno.serve(async (req) => {
     }
 
     // Send welcome email
+    let emailSent = false;
+    let emailError = null;
+    
     if (send_email) {
       const MAILERSEND_API_KEY = Deno.env.get('MAILERSEND_API_KEY');
       if (MAILERSEND_API_KEY) {
-        const org = organisation_id ? 
-          await base44.entities.Organisation.filter({ id: organisation_id }).then(r => r[0]) : 
-          null;
+        try {
+          const org = organisation_id ? 
+            await base44.entities.Organisation.filter({ id: organisation_id }).then(r => r[0]) : 
+            null;
 
-        const emailBody = `
-          <h2>Welcome to ${org?.name || 'the platform'}!</h2>
-          <p>Hi ${full_name},</p>
-          <p>You've been invited to join ${org?.name || 'our platform'}. Your account has been created and you can now log in.</p>
-          <p><strong>Email:</strong> ${email}</p>
-          <p>To get started, please visit the login page and sign in with your Google account using the email above.</p>
-          <p>If you have any questions, please contact your administrator.</p>
-          <p>Best regards,<br>${org?.name || 'The Team'}</p>
-        `;
+          const emailBody = `
+            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+              <div style="text-align: center; margin-bottom: 20px;">
+                <div style="display: inline-flex; height: 4px; width: 100px;">
+                  <div style="flex: 1; background: #1EB053;"></div>
+                  <div style="flex: 1; background: white;"></div>
+                  <div style="flex: 1; background: #0072C6;"></div>
+                </div>
+              </div>
+              <h2 style="color: #1EB053;">Welcome to ${org?.name || 'the platform'}!</h2>
+              <p>Hi ${full_name},</p>
+              <p>You've been invited to join <strong>${org?.name || 'our platform'}</strong>. Your employee account has been created.</p>
+              <div style="background: #f5f5f5; padding: 15px; border-radius: 8px; margin: 20px 0;">
+                <p style="margin: 0;"><strong>Email:</strong> ${email}</p>
+                <p style="margin: 10px 0 0 0;"><strong>Role:</strong> ${role}</p>
+              </div>
+              <p>To get started, please visit the login page and sign in with your Google account using the email above.</p>
+              <p>If you have any questions, please contact your administrator.</p>
+              <p>Best regards,<br>${org?.name || 'The Team'}</p>
+            </div>
+          `;
 
-        await fetch('https://api.mailersend.com/v1/email', {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${MAILERSEND_API_KEY}`,
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            from: { email: 'noreply@trial-0r83ql3jx1wg9yjw.mlsender.net', name: org?.name || 'Platform' },
-            to: [{ email }],
-            subject: `Welcome to ${org?.name || 'the platform'}!`,
-            html: emailBody,
-          }),
-        });
+          const emailResponse = await fetch('https://api.mailersend.com/v1/email', {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${MAILERSEND_API_KEY}`,
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              from: { email: 'noreply@trial-0r83ql3jx1wg9yjw.mlsender.net', name: org?.name || 'Platform' },
+              to: [{ email, name: full_name }],
+              subject: `Welcome to ${org?.name || 'the platform'}!`,
+              html: emailBody,
+            }),
+          });
+
+          if (emailResponse.ok) {
+            emailSent = true;
+            console.log('Welcome email sent successfully to:', email);
+          } else {
+            const errorText = await emailResponse.text();
+            emailError = `MailerSend API error: ${emailResponse.status} - ${errorText}`;
+            console.error('Failed to send email:', emailError);
+          }
+        } catch (error) {
+          emailError = error.message;
+          console.error('Email sending error:', error);
+        }
+      } else {
+        emailError = 'MAILERSEND_API_KEY not configured';
+        console.warn('Cannot send email: MAILERSEND_API_KEY not set');
       }
     }
 
     return Response.json({
       success: true,
       employee,
-      message: 'User invited successfully. They can sign in with Google SSO using their email.'
+      email_sent: emailSent,
+      email_error: emailError,
+      message: emailSent 
+        ? 'User invited successfully and welcome email sent.'
+        : `User invited successfully. ${emailError ? `Email not sent: ${emailError}` : 'Email sending was skipped.'}`
     });
 
   } catch (error) {
