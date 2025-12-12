@@ -252,14 +252,24 @@ export default function Documents() {
           action={() => setShowCreateDialog(true)}
           actionLabel="Create Document"
         >
-          <Button 
-            onClick={() => setShowBulkDialog(true)}
-            variant="outline"
-            className="border-[#1EB053] text-[#1EB053] hover:bg-[#1EB053]/10"
-          >
-            <Users className="w-4 h-4 mr-2" />
-            Bulk Send
-          </Button>
+          <div className="flex gap-2">
+            <Button
+              variant="outline"
+              onClick={() => setShowContractGenerator(true)}
+              className="border-[#0072C6] text-[#0072C6] hover:bg-blue-50"
+            >
+              <FileText className="w-4 h-4 mr-2" />
+              Generate Contract
+            </Button>
+            <Button 
+              onClick={() => setShowBulkDialog(true)}
+              variant="outline"
+              className="border-[#1EB053] text-[#1EB053] hover:bg-[#1EB053]/10"
+            >
+              <Users className="w-4 h-4 mr-2" />
+              Bulk Send
+            </Button>
+          </div>
         </PageHeader>
       ) : (
         <PageHeader
@@ -774,6 +784,13 @@ export default function Documents() {
             organisation={organisation}
             currentEmployee={currentEmployee}
             orgId={orgId}
+          />
+          
+          <ContractGenerator
+            open={showContractGenerator}
+            onOpenChange={setShowContractGenerator}
+            orgId={orgId}
+            currentEmployee={currentEmployee}
           />
           
           <BulkDocumentDialog
