@@ -262,33 +262,28 @@ export default function ReportGenerator({ sales = [], expenses = [], employees =
     setIsGenerating(false);
     toast({ title: "Report downloaded" });
     
-    // Save to Drive automatically in background - completely async, don't await
+    // Save to Drive automatically in background
     setTimeout(() => {
-      try {
-        base44.functions.invoke('saveToDrive', {
-          reportData: {
-            title: reportData.title,
-            period: `${format(parseISO(dateFrom), 'MMM d, yyyy')} - ${format(parseISO(dateTo), 'MMM d, yyyy')}`,
-            summary: reportData.summary,
-            columns: reportData.columns,
-            rows: reportData.rows.slice(0, 100)
-          },
-          fileName: fileName
-        }).then(result => {
-          if (result?.data?.success) {
-            toast({ 
-              title: "✓ Saved to Google Drive",
-              description: fileName,
-              variant: "default"
-            });
-          }
-        }).catch(error => {
-          console.log('Drive save skipped or failed:', error.message);
-        });
-      } catch (e) {
-        console.log('Drive save error:', e.message);
-      }
-    }, 100);
+      base44.functions.invoke('saveToDrive', {
+        reportData: {
+          title: reportData.title,
+          period: `${format(parseISO(dateFrom), 'MMM d, yyyy')} - ${format(parseISO(dateTo), 'MMM d, yyyy')}`,
+          summary: reportData.summary,
+          columns: reportData.columns,
+          rows: reportData.rows.slice(0, 100)
+        },
+        fileName: fileName,
+        folderType: 'Reports'
+      }).then(result => {
+        if (result?.data?.success) {
+          toast({ 
+            title: "✓ Saved to Google Drive",
+            description: `${fileName} in Reports folder`,
+            variant: "default"
+          });
+        }
+      }).catch(() => {});
+    }, 500);
   };
 
   return (

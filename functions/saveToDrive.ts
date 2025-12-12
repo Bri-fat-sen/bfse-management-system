@@ -10,7 +10,7 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { reportData, fileName } = await req.json();
+    const { reportData, fileName, folderType } = await req.json();
 
     if (!reportData || !fileName) {
       return Response.json({ 
@@ -18,15 +18,25 @@ Deno.serve(async (req) => {
       }, { status: 400 });
     }
 
-    // Get Google Drive access token from connector or use API key
-    let accessToken = await base44.asServiceRole.connectors.getAccessToken('googledrive');
-    const apiKey = Deno.env.get('GOOGLE_API_KEY');
-
-    if (!accessToken && !apiKey) {
+    // Get Google Drive access token
+    const accessToken = await base44.asServiceRole.connectors.getAccessToken('googledrive');
+    if (!accessToken) {
       return Response.json({ 
-        error: 'Google Drive not connected. Please authorize Google Drive access or set GOOGLE_API_KEY.' 
+        error: 'Google Drive not connected. Please authorize Google Drive access.' 
       }, { status: 403 });
     }
+
+    // Setup folder structure first
+    const setupResult = await base44.functions.invoke('googleDriveManager', {
+      action: 'setup'
+    });
+
+    if (!setupResult?.data?.success) {
+      return Response.json({ error: 'Failed to setup Drive folders' }, { status: 500 });
+    }
+
+    const folders = setupResult.data.folders;
+    const targetFolderId = folders[folderType || 'Reports'] || folders.root;
 
     // Generate PDF from report data
     const doc = new jsPDF();
@@ -104,61 +114,20 @@ Deno.serve(async (req) => {
     const pdfBytes = doc.output('arraybuffer');
     const base64Pdf = btoa(String.fromCharCode(...new Uint8Array(pdfBytes)));
 
-    // Upload to Google Drive
-    const metadata = {
-      name: fileName,
+    // Upload to Drive using manager
+    const uploadResult = await base44.functions.invoke('googleDriveManager', {
+      action: 'uploadFile',
+      folderId: targetFolderId,
+      fileName: fileName,
+      fileContent: base64Pdf,
       mimeType: 'application/pdf'
-    };
-
-    const boundary = '-------314159265358979323846';
-    const delimiter = `\r\n--${boundary}\r\n`;
-    const closeDelim = `\r\n--${boundary}--`;
-
-    const multipartRequestBody = 
-      delimiter +
-      'Content-Type: application/json; charset=UTF-8\r\n\r\n' +
-      JSON.stringify(metadata) +
-      delimiter +
-      'Content-Type: application/pdf\r\n' +
-      'Content-Transfer-Encoding: base64\r\n\r\n' +
-      base64Pdf +
-      closeDelim;
-
-    const uploadUrl = accessToken 
-      ? 'https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart'
-      : `https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&key=${apiKey}`;
-    
-    const headers = {
-      'Content-Type': `multipart/related; boundary=${boundary}`
-    };
-    
-    if (accessToken) {
-      headers['Authorization'] = `Bearer ${accessToken}`;
-    }
-
-    const uploadResponse = await fetch(uploadUrl, {
-      method: 'POST',
-      headers,
-      body: multipartRequestBody
     });
 
-    if (!uploadResponse.ok) {
-      const errorText = await uploadResponse.text();
-      console.error('Drive upload error:', errorText);
-      return Response.json({ 
-        error: 'Failed to upload to Google Drive',
-        details: errorText 
-      }, { status: uploadResponse.status });
+    if (!uploadResult?.data?.success) {
+      return Response.json({ error: 'Upload failed' }, { status: 500 });
     }
 
-    const result = await uploadResponse.json();
-
-    return Response.json({
-      success: true,
-      fileId: result.id,
-      fileName: result.name,
-      webViewLink: `https://drive.google.com/file/d/${result.id}/view`
-    });
+    return Response.json(uploadResult.data);
 
   } catch (error) {
     console.error('Save to Drive error:', error);
