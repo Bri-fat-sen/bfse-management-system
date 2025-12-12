@@ -123,10 +123,12 @@ export default function HRManagement() {
     enabled: !!orgId,
   });
 
-  const { data: employees = [], isLoading } = useQuery({
+  const { data: employees = [], isLoading, error: employeesError } = useQuery({
     queryKey: ['employees', orgId],
     queryFn: () => base44.entities.Employee.filter({ organisation_id: orgId }),
     enabled: !!orgId,
+    staleTime: 2 * 60 * 1000,
+    refetchOnWindowFocus: false,
   });
 
   const { data: payrolls = [] } = useQuery({
@@ -206,7 +208,11 @@ export default function HRManagement() {
   });
 
   const filteredEmployees = useMemo(() => {
+    if (!Array.isArray(employees)) return [];
+    
     return employees.filter(emp => {
+      if (!emp) return false;
+      
       const matchesSearch = 
         emp.full_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
         emp.employee_code?.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -418,11 +424,11 @@ export default function HRManagement() {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                {payrolls.slice(0, 5).length === 0 ? (
+                {!Array.isArray(payrolls) || payrolls.length === 0 ? (
                   <p className="text-sm text-gray-500 text-center py-4">No payroll records yet</p>
                 ) : (
                   <div className="space-y-3">
-                    {payrolls.slice(0, 5).map(payroll => (
+                    {payrolls.slice(0, 5).map(payroll => payroll && (
                       <div key={payroll.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors group">
                         <div className="flex items-center gap-3 flex-1 min-w-0">
                           <Avatar className="w-10 h-10 flex-shrink-0">
@@ -482,11 +488,11 @@ export default function HRManagement() {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                {leaveRequests.filter(l => l.status === 'pending').length === 0 ? (
+                {!Array.isArray(leaveRequests) || leaveRequests.filter(l => l?.status === 'pending').length === 0 ? (
                   <p className="text-sm text-gray-500 text-center py-4">No pending requests</p>
                 ) : (
                   <div className="space-y-3">
-                    {leaveRequests.filter(l => l.status === 'pending').slice(0, 5).map(leave => (
+                    {leaveRequests.filter(l => l?.status === 'pending').slice(0, 5).map(leave => leave && (
                       <div key={leave.id} className="flex items-center justify-between p-3 bg-amber-50 rounded-lg border border-amber-200">
                         <div className="flex items-center gap-3">
                           <Avatar className="w-10 h-10">
@@ -756,7 +762,7 @@ export default function HRManagement() {
               </Button>
             </CardHeader>
             <CardContent>
-              {payrolls.length === 0 ? (
+              {!Array.isArray(payrolls) || payrolls.length === 0 ? (
               <div className="text-center py-8 sm:py-12">
                 <DollarSign className="w-12 h-12 sm:w-16 sm:h-16 text-gray-300 mx-auto mb-4" />
                 <p className="text-sm sm:text-base text-gray-500">No payroll records yet</p>
@@ -769,7 +775,7 @@ export default function HRManagement() {
               </div>
               ) : (
               <div className="space-y-3">
-                {payrolls.slice(0, 20).map(payroll => (
+                {payrolls.slice(0, 20).map(payroll => payroll && (
                   <div key={payroll.id} className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 p-3 sm:p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors group">
                     <div className="flex items-center gap-3 sm:gap-4 w-full sm:w-auto flex-1 min-w-0">
                       <Avatar className="w-10 h-10 sm:w-12 sm:h-12 flex-shrink-0">
