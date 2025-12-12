@@ -11,23 +11,8 @@ Deno.serve(async (req) => {
 
     const { action, folderId, fileName, fileContent, mimeType, query } = await req.json();
 
-    let accessToken;
-    let usingOAuth = false;
-
-    // Try OAuth connector first - this uses the user's own Google account
-    try {
-      accessToken = await base44.asServiceRole.connectors.getAccessToken('googledrive');
-      if (accessToken) {
-        usingOAuth = true;
-        console.log('Using user OAuth token - will see all user files');
-      }
-    } catch (e) {
-      console.log('OAuth connector not available, trying service account');
-    }
-
-    // Fallback to service account if OAuth not available
-    if (!accessToken) {
-      const serviceAccountKey = Deno.env.get('GOOGLE_SERVICE_ACCOUNT_KEY');
+    // Use service account key only
+    const serviceAccountKey = Deno.env.get('GOOGLE_SERVICE_ACCOUNT_KEY');
       
       if (!serviceAccountKey) {
         return Response.json({ 
