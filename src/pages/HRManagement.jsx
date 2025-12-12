@@ -131,8 +131,10 @@ export default function HRManagement() {
 
   const { data: payrolls = [] } = useQuery({
     queryKey: ['payrolls', orgId],
-    queryFn: () => base44.entities.Payroll.filter({ organisation_id: orgId }),
+    queryFn: () => base44.entities.Payroll.filter({ organisation_id: orgId }, '-created_date', 200),
     enabled: !!orgId,
+    staleTime: 2 * 60 * 1000,
+    refetchOnWindowFocus: false,
   });
 
   const { data: attendance = [] } = useQuery({
@@ -142,18 +144,24 @@ export default function HRManagement() {
       date: new Date().toISOString().split('T')[0]
     }),
     enabled: !!orgId,
+    staleTime: 2 * 60 * 1000,
+    refetchOnWindowFocus: false,
   });
 
   const { data: leaveRequests = [] } = useQuery({
     queryKey: ['leaveRequests', orgId],
     queryFn: () => base44.entities.LeaveRequest.filter({ organisation_id: orgId }),
     enabled: !!orgId,
+    staleTime: 2 * 60 * 1000,
+    refetchOnWindowFocus: false,
   });
 
   const { data: performanceReviews = [] } = useQuery({
     queryKey: ['performanceReviews', orgId],
     queryFn: () => base44.entities.PerformanceReview.filter({ organisation_id: orgId }),
     enabled: !!orgId,
+    staleTime: 2 * 60 * 1000,
+    refetchOnWindowFocus: false,
   });
 
   const deleteEmployeeMutation = useMutation({
@@ -211,16 +219,37 @@ export default function HRManagement() {
 
   // Calculate HR metrics
   const hrMetrics = useMemo(() => {
-    const activeEmployees = employees.filter(e => e.status === 'active').length;
-    const pendingLeaves = leaveRequests.filter(l => l.status === 'pending').length;
-    const todayAttendance = attendance.filter(a => a.status === 'present').length;
-    const pendingPayrolls = payrolls.filter(p => p.status === 'pending_approval').length;
-    const thisMonthPayroll = payrolls.filter(p => {
-      const payrollDate = new Date(p.period_start);
-      const now = new Date();
-      return payrollDate.getMonth() === now.getMonth() && payrollDate.getFullYear() === now.getFullYear();
+    if (!employees || !Array.isArray(employees)) {
+      return {
+        totalEmployees: 0,
+        activeEmployees: 0,
+        pendingLeaves: 0,
+        todayAttendance: 0,
+        attendanceRate: 0,
+        pendingPayrolls: 0,
+        totalPayrollThisMonth: 0,
+        avgSalary: 0,
+        pendingReviews: 0,
+      };
+    }
+
+    const activeEmployees = employees.filter(e => e?.status === 'active').length;
+    const pendingLeaves = (leaveRequests || []).filter(l => l?.status === 'pending').length;
+    const todayAttendance = (attendance || []).filter(a => a?.status === 'present').length;
+    const pendingPayrolls = (payrolls || []).filter(p => p?.status === 'pending_approval').length;
+    
+    const thisMonthPayroll = (payrolls || []).filter(p => {
+      if (!p?.period_start) return false;
+      try {
+        const payrollDate = new Date(p.period_start);
+        const now = new Date();
+        return payrollDate.getMonth() === now.getMonth() && payrollDate.getFullYear() === now.getFullYear();
+      } catch {
+        return false;
+      }
     });
-    const totalPayrollThisMonth = thisMonthPayroll.reduce((sum, p) => sum + (p.net_pay || 0), 0);
+    
+    const totalPayrollThisMonth = thisMonthPayroll.reduce((sum, p) => sum + (p?.net_pay || 0), 0);
 
     return {
       totalEmployees: employees.length,
@@ -230,8 +259,8 @@ export default function HRManagement() {
       attendanceRate: activeEmployees > 0 ? ((todayAttendance / activeEmployees) * 100).toFixed(1) : 0,
       pendingPayrolls,
       totalPayrollThisMonth,
-      avgSalary: employees.length > 0 ? employees.reduce((sum, e) => sum + (e.base_salary || 0), 0) / employees.length : 0,
-      pendingReviews: performanceReviews.filter(r => r.status === 'pending').length,
+      avgSalary: employees.length > 0 ? employees.reduce((sum, e) => sum + (e?.base_salary || 0), 0) / employees.length : 0,
+      pendingReviews: (performanceReviews || []).filter(r => r?.status === 'pending').length,
     };
   }, [employees, attendance, leaveRequests, payrolls, performanceReviews]);
 
