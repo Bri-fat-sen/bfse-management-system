@@ -120,21 +120,35 @@ Deno.serve(async (req) => {
       }
 
       case 'listFiles': {
-        // List all files with optional folder filter, including shared files
+        // List files - OAuth shows user's files, service account shows limited access
         let q;
         if (folderId) {
           q = `'${folderId}' in parents and trashed=false`;
         } else if (query) {
           q = query;
         } else {
-          // Show all files visible to service account (owned + shared)
+          // Root level query
           q = `trashed=false`;
         }
         
         console.log('Drive query:', q);
+        console.log('Using OAuth:', usingOAuth);
+        
+        // Build URL - only add shared drive params when using OAuth
+        const params = new URLSearchParams({
+          q: q,
+          fields: 'files(id,name,mimeType,modifiedTime,size,webViewLink,createdTime,owners,shared)',
+          orderBy: 'modifiedTime desc',
+          pageSize: '1000'
+        });
+        
+        if (usingOAuth) {
+          params.append('supportsAllDrives', 'true');
+          params.append('includeItemsFromAllDrives', 'true');
+        }
         
         const listResponse = await fetch(
-          `https://www.googleapis.com/drive/v3/files?q=${encodeURIComponent(q)}&fields=files(id,name,mimeType,modifiedTime,size,webViewLink,createdTime,owners,shared,permissions)&orderBy=modifiedTime desc&pageSize=1000&supportsAllDrives=true&includeItemsFromAllDrives=true`,
+          `https://www.googleapis.com/drive/v3/files?${params.toString()}`,
           { headers }
         );
         
@@ -148,7 +162,7 @@ Deno.serve(async (req) => {
         }
         
         const data = await listResponse.json();
-        console.log(`Found ${data.files?.length || 0} files`);
+        console.log(`Found ${data.files?.length || 0} files (OAuth: ${usingOAuth})`);
         
         const sorted = (data.files || []).sort((a, b) => {
           const aIsFolder = a.mimeType === 'application/vnd.google-apps.folder';
