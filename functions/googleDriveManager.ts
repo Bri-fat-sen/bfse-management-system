@@ -11,82 +11,93 @@ Deno.serve(async (req) => {
 
     const { action, folderId, fileName, fileContent, mimeType, query } = await req.json();
 
-    // Get service account credentials
-    const serviceAccountKey = Deno.env.get('GOOGLE_SERVICE_ACCOUNT_KEY');
-    
-    if (!serviceAccountKey) {
-      return Response.json({ 
-        error: 'Google Drive service account not configured. Please set GOOGLE_SERVICE_ACCOUNT_KEY secret.' 
-      }, { status: 403 });
+    let accessToken;
+
+    // Try OAuth connector first
+    try {
+      accessToken = await base44.asServiceRole.connectors.getAccessToken('googledrive');
+    } catch (e) {
+      console.log('OAuth connector not available, trying service account');
     }
 
-    // Parse service account JSON
-    const credentials = JSON.parse(serviceAccountKey);
+    // Fallback to service account if OAuth not available
+    if (!accessToken) {
+      const serviceAccountKey = Deno.env.get('GOOGLE_SERVICE_ACCOUNT_KEY');
+      
+      if (!serviceAccountKey) {
+        return Response.json({ 
+          error: 'Google Drive not connected. Please authorize Google Drive or set GOOGLE_SERVICE_ACCOUNT_KEY secret.' 
+        }, { status: 403 });
+      }
 
-    // Generate JWT for service account authentication
-    const header = { alg: 'RS256', typ: 'JWT' };
-    const now = Math.floor(Date.now() / 1000);
-    const payload = {
-      iss: credentials.client_email,
-      scope: 'https://www.googleapis.com/auth/drive',
-      aud: 'https://oauth2.googleapis.com/token',
-      exp: now + 3600,
-      iat: now
-    };
+      // Parse service account JSON
+      const credentials = JSON.parse(serviceAccountKey);
 
-    // Import crypto key
-    const privateKey = credentials.private_key;
-    const pemHeader = '-----BEGIN PRIVATE KEY-----';
-    const pemFooter = '-----END PRIVATE KEY-----';
-    const pemContents = privateKey.substring(
-      pemHeader.length,
-      privateKey.length - pemFooter.length
-    ).trim();
-    const binaryDer = Uint8Array.from(atob(pemContents), c => c.charCodeAt(0));
+      // Generate JWT for service account authentication
+      const header = { alg: 'RS256', typ: 'JWT' };
+      const now = Math.floor(Date.now() / 1000);
+      const payload = {
+        iss: credentials.client_email,
+        scope: 'https://www.googleapis.com/auth/drive',
+        aud: 'https://oauth2.googleapis.com/token',
+        exp: now + 3600,
+        iat: now
+      };
 
-    const cryptoKey = await crypto.subtle.importKey(
-      'pkcs8',
-      binaryDer,
-      { name: 'RSASSA-PKCS1-v1_5', hash: 'SHA-256' },
-      false,
-      ['sign']
-    );
+      // Import crypto key
+      const privateKey = credentials.private_key;
+      const pemHeader = '-----BEGIN PRIVATE KEY-----';
+      const pemFooter = '-----END PRIVATE KEY-----';
+      const pemContents = privateKey.substring(
+        pemHeader.length,
+        privateKey.length - pemFooter.length
+      ).trim();
+      const binaryDer = Uint8Array.from(atob(pemContents), c => c.charCodeAt(0));
 
-    // Create JWT
-    const encodedHeader = btoa(JSON.stringify(header)).replace(/=/g, '').replace(/\+/g, '-').replace(/\//g, '_');
-    const encodedPayload = btoa(JSON.stringify(payload)).replace(/=/g, '').replace(/\+/g, '-').replace(/\//g, '_');
-    const unsignedToken = `${encodedHeader}.${encodedPayload}`;
+      const cryptoKey = await crypto.subtle.importKey(
+        'pkcs8',
+        binaryDer,
+        { name: 'RSASSA-PKCS1-v1_5', hash: 'SHA-256' },
+        false,
+        ['sign']
+      );
 
-    const signature = await crypto.subtle.sign(
-      'RSASSA-PKCS1-v1_5',
-      cryptoKey,
-      new TextEncoder().encode(unsignedToken)
-    );
+      // Create JWT
+      const encodedHeader = btoa(JSON.stringify(header)).replace(/=/g, '').replace(/\+/g, '-').replace(/\//g, '_');
+      const encodedPayload = btoa(JSON.stringify(payload)).replace(/=/g, '').replace(/\+/g, '-').replace(/\//g, '_');
+      const unsignedToken = `${encodedHeader}.${encodedPayload}`;
 
-    const encodedSignature = btoa(String.fromCharCode(...new Uint8Array(signature)))
-      .replace(/=/g, '')
-      .replace(/\+/g, '-')
-      .replace(/\//g, '_');
+      const signature = await crypto.subtle.sign(
+        'RSASSA-PKCS1-v1_5',
+        cryptoKey,
+        new TextEncoder().encode(unsignedToken)
+      );
 
-    const jwt = `${unsignedToken}.${encodedSignature}`;
+      const encodedSignature = btoa(String.fromCharCode(...new Uint8Array(signature)))
+        .replace(/=/g, '')
+        .replace(/\+/g, '-')
+        .replace(/\//g, '_');
 
-    // Exchange JWT for access token
-    const tokenResponse = await fetch('https://oauth2.googleapis.com/token', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-      body: `grant_type=urn:ietf:params:oauth:grant-type:jwt-bearer&assertion=${jwt}`
-    });
+      const jwt = `${unsignedToken}.${encodedSignature}`;
 
-    const tokenData = await tokenResponse.json();
-    
-    if (!tokenData.access_token) {
-      return Response.json({ 
-        error: 'Failed to get access token',
-        details: tokenData.error_description || 'Invalid service account key'
-      }, { status: 500 });
+      // Exchange JWT for access token
+      const tokenResponse = await fetch('https://oauth2.googleapis.com/token', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: `grant_type=urn:ietf:params:oauth:grant-type:jwt-bearer&assertion=${jwt}`
+      });
+
+      const tokenData = await tokenResponse.json();
+      
+      if (!tokenData.access_token) {
+        return Response.json({ 
+          error: 'Failed to get access token',
+          details: tokenData.error_description || 'Invalid service account key'
+        }, { status: 500 });
+      }
+
+      accessToken = tokenData.access_token;
     }
-
-    const accessToken = tokenData.access_token;
 
     const headers = {
       'Authorization': `Bearer ${accessToken}`,
