@@ -126,6 +126,65 @@ Deno.serve(async (req) => {
         });
       }
 
+      case 'extractData': {
+        const { fileId, fileUrl, detectedType } = await req.json();
+        
+        const prompt = `Analyze this financial document and extract ALL structured data.
+
+Return a JSON object with this EXACT structure:
+{
+  "detected_type": "${detectedType || 'expense'}",
+  "records": [
+    {
+      "date": "YYYY-MM-DD",
+      "description": "string",
+      "amount": number,
+      "vendor": "string (if applicable)",
+      "category": "fuel/maintenance/utilities/supplies/rent/salaries/transport/marketing/insurance/other",
+      "invoice_number": "string (if found)",
+      "payment_method": "cash/card/bank_transfer/mobile_money",
+      "customer_name": "string (for revenue)",
+      "items": [{"product": "string", "quantity": number, "price": number}] (for sales)
+    }
+  ]
+}
+
+Extract EVERY transaction, line item, expense, or revenue entry found. For bank statements, extract each transaction. For invoices, extract all line items. Be thorough.`;
+
+        const llmResult = await base44.asServiceRole.integrations.Core.InvokeLLM({
+          prompt: prompt,
+          file_urls: fileUrl,
+          response_json_schema: {
+            type: "object",
+            properties: {
+              detected_type: { type: "string" },
+              records: {
+                type: "array",
+                items: {
+                  type: "object",
+                  properties: {
+                    date: { type: "string" },
+                    description: { type: "string" },
+                    amount: { type: "number" },
+                    vendor: { type: "string" },
+                    category: { type: "string" },
+                    invoice_number: { type: "string" },
+                    payment_method: { type: "string" },
+                    customer_name: { type: "string" },
+                    items: { type: "array" }
+                  }
+                }
+              }
+            }
+          }
+        });
+
+        return Response.json({
+          success: true,
+          extractedData: llmResult
+        });
+      }
+
       default:
         return Response.json({ error: 'Invalid action' }, { status: 400 });
     }
