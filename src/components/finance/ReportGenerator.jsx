@@ -269,7 +269,7 @@ export default function ReportGenerator({ sales = [], expenses = [], employees =
         period: `${format(parseISO(dateFrom), 'MMM d, yyyy')} - ${format(parseISO(dateTo), 'MMM d, yyyy')}`,
         summary: reportData.summary,
         columns: reportData.columns,
-        rows: reportData.rows
+        rows: reportData.rows.slice(0, 100) // Limit rows to prevent payload size issues
       },
       fileName: fileName
     }).then(result => {
@@ -281,7 +281,7 @@ export default function ReportGenerator({ sales = [], expenses = [], employees =
         });
       }
     }).catch(error => {
-      console.error('Drive save error:', error);
+      console.error('Drive save error:', error.response?.data || error.message);
       // Silent fail - don't show error to user since PDF already downloaded
     });
   };
