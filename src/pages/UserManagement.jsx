@@ -125,11 +125,14 @@ export default function UserManagement() {
   const currentEmployee = currentEmployeeData?.[0];
   const orgId = currentEmployee?.organisation_id;
 
+  const isPlatformAdmin = currentUser?.role === 'admin';
+  const isOrgAdmin = ['super_admin', 'org_admin', 'hr_admin'].includes(currentEmployee?.role);
+
   // Fetch all Base44 users (requires admin)
   const { data: users = [], isLoading: loadingUsers, refetch: refetchUsers } = useQuery({
     queryKey: ['allUsers'],
     queryFn: () => base44.entities.User.list(),
-    enabled: currentUser?.role === 'admin',
+    enabled: isPlatformAdmin,
   });
 
   // Fetch all employees in the organization
@@ -365,9 +368,6 @@ export default function UserManagement() {
     };
     updateEmployeeMutation.mutate({ id: editingEmployee.id, data });
   };
-
-  const isPlatformAdmin = currentUser?.role === 'admin';
-  const isOrgAdmin = ['super_admin', 'org_admin', 'hr_admin'].includes(currentEmployee?.role);
 
   if (!isPlatformAdmin && !isOrgAdmin) {
     return (
