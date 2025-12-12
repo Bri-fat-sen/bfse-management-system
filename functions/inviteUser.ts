@@ -16,36 +16,21 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Email and full name are required' }, { status: 400 });
     }
 
-    // Check if user already exists
-    let existingUser = null;
-    try {
-      const allUsers = await base44.asServiceRole.entities.User.list();
-      existingUser = allUsers.find(u => u.email === email);
-    } catch (e) {
-      console.log('Could not check existing users:', e.message);
-    }
-
-    // Create Base44 User account if doesn't exist
-    let newUser = existingUser;
-    if (!existingUser) {
-      try {
-        newUser = await base44.asServiceRole.entities.User.create({
-          email,
-          full_name,
-          role: 'user', // Base44 role, not organization role
-        });
-        console.log('Created new User account:', email);
-      } catch (error) {
-        console.error('Failed to create User account:', error);
+    // Check if employee already exists
+    if (organisation_id) {
+      const existing = await base44.entities.Employee.filter({ 
+        organisation_id, 
+        email 
+      });
+      
+      if (existing.length > 0) {
         return Response.json({ 
-          error: 'Failed to create user account: ' + error.message 
-        }, { status: 500 });
+          error: 'Employee already exists with this email in this organisation'
+        }, { status: 409 });
       }
-    } else {
-      console.log('User account already exists:', email);
     }
 
-    // Create employee record
+    // Create employee record (User account will be auto-created on first login via Google SSO)
     let employee = null;
     if (organisation_id) {
       const existingEmployees = await base44.entities.Employee.filter({ organisation_id });
@@ -54,8 +39,7 @@ Deno.serve(async (req) => {
       employee = await base44.entities.Employee.create({
         organisation_id,
         employee_code: employeeCode,
-        user_email: email,
-        email: email,
+        email: email, // Will be auto-linked to user_email when they first log in
         first_name: full_name.split(' ')[0] || '',
         last_name: full_name.split(' ').slice(1).join(' ') || '',
         full_name,
