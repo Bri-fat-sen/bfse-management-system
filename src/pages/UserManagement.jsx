@@ -214,7 +214,7 @@ export default function UserManagement() {
       toast.success("Employee record created and linked successfully");
     },
     onError: (error) => {
-      toast.error("Failed to create employee", { description: error.message });
+      toast.error("Failed to create employee", error.message);
     }
   });
 
@@ -232,7 +232,7 @@ export default function UserManagement() {
       toast.success("User linked to employee record");
     },
     onError: (error) => {
-      toast.error("Failed to link user", { description: error.message });
+      toast.error("Failed to link user", error.message);
     }
   });
 
@@ -248,7 +248,7 @@ export default function UserManagement() {
       toast.success("User unlinked from employee record");
     },
     onError: (error) => {
-      toast.error("Failed to unlink user", { description: error.message });
+      toast.error("Failed to unlink user", error.message);
     }
   });
 
