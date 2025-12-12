@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import { useState, Fragment } from "react";
 import { base44 } from "@/api/base44Client";
 import { format } from "date-fns";
 import { Button } from "@/components/ui/button";
@@ -1074,7 +1074,7 @@ Be thorough and accurate.`,
             {uploadStage !== "upload" && (
               <div className="mt-4 flex items-center gap-2">
                 {["analyzing", "editing"].map((stage, idx) => (
-                  <React.Fragment key={stage}>
+                  <Fragment key={stage}>
                     <div className={`flex items-center gap-2 ${
                       uploadStage === stage ? 'text-white' : 
                       ["analyzing", "editing"].indexOf(uploadStage) > idx ? 'text-white' : 'text-white/50'
@@ -1089,7 +1089,7 @@ Be thorough and accurate.`,
                       <span className="text-sm capitalize">{stage}</span>
                     </div>
                     {idx < 1 && <ChevronRight className="w-4 h-4 text-white/50" />}
-                  </React.Fragment>
+                  </Fragment>
                 ))}
               </div>
             )}
