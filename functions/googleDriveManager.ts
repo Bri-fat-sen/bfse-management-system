@@ -12,10 +12,15 @@ Deno.serve(async (req) => {
     const { action, folderId, fileName, fileContent, mimeType, query } = await req.json();
 
     let accessToken;
+    let usingOAuth = false;
 
-    // Try OAuth connector first
+    // Try OAuth connector first - this uses the user's own Google account
     try {
       accessToken = await base44.asServiceRole.connectors.getAccessToken('googledrive');
+      if (accessToken) {
+        usingOAuth = true;
+        console.log('Using user OAuth token - will see all user files');
+      }
     } catch (e) {
       console.log('OAuth connector not available, trying service account');
     }
@@ -115,25 +120,21 @@ Deno.serve(async (req) => {
       }
 
       case 'listFiles': {
-        // List files - when no folder specified, show root files accessible to service account
+        // List all files with optional folder filter, including shared files
         let q;
         if (folderId) {
-          // List files in specific folder
           q = `'${folderId}' in parents and trashed=false`;
         } else if (query) {
-          // Custom query
           q = query;
         } else {
-          // Root level: show files in "My Drive" root that are accessible
-          // This will show both owned files and files shared directly with the service account
-          q = `trashed=false and 'root' in parents`;
+          // Show all files visible to service account (owned + shared)
+          q = `trashed=false`;
         }
         
         console.log('Drive query:', q);
-        console.log('Folder ID:', folderId);
         
         const listResponse = await fetch(
-          `https://www.googleapis.com/drive/v3/files?q=${encodeURIComponent(q)}&fields=files(id,name,mimeType,modifiedTime,size,webViewLink,createdTime,owners,shared,permissions)&orderBy=modifiedTime desc&pageSize=1000&supportsAllDrives=true&includeItemsFromAllDrives=true&corpora=allDrives`,
+          `https://www.googleapis.com/drive/v3/files?q=${encodeURIComponent(q)}&fields=files(id,name,mimeType,modifiedTime,size,webViewLink,createdTime,owners,shared,permissions)&orderBy=modifiedTime desc&pageSize=1000&supportsAllDrives=true&includeItemsFromAllDrives=true`,
           { headers }
         );
         
@@ -147,11 +148,7 @@ Deno.serve(async (req) => {
         }
         
         const data = await listResponse.json();
-        console.log(`Found ${data.files?.length || 0} files/folders`);
-        
-        if (data.files && data.files.length > 0) {
-          console.log('Sample files:', data.files.slice(0, 3).map(f => ({ name: f.name, mimeType: f.mimeType, shared: f.shared })));
-        }
+        console.log(`Found ${data.files?.length || 0} files`);
         
         const sorted = (data.files || []).sort((a, b) => {
           const aIsFolder = a.mimeType === 'application/vnd.google-apps.folder';
