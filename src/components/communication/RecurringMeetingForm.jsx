@@ -1,4 +1,4 @@
-import { } from "react";
+import React from "react";
 import { Repeat, Calendar } from "lucide-react";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";

@@ -1,4 +1,4 @@
-import { } from "react";
+import React from "react";
 import { Bell, Plus, X } from "lucide-react";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";

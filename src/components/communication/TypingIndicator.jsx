@@ -1,4 +1,4 @@
-import { } from "react";
+import React from "react";
 
 export default function TypingIndicator({ names = [] }) {
   if (names.length === 0) return null;

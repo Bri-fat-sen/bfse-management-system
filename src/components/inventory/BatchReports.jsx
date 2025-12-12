@@ -120,8 +120,8 @@ export default function BatchReports({ batches = [], products = [], warehouses =
     const summaryCards = [
       { label: 'Total Batches', value: batches.length.toString() },
       { label: 'Total Quantity', value: batches.reduce((sum, b) => sum + (b.quantity || 0), 0).toLocaleString() },
-      { label: 'Total Value', value: `Le ${reportData.totalValue.toLocaleString()}` },
-      { label: 'Expired Value', value: `Le ${reportData.expiredValue.toLocaleString()}`, highlight: reportData.expiredValue > 0 ? 'red' : 'green' }
+      { label: 'Total Value', value: `SLE ${reportData.totalValue.toLocaleString()}` },
+      { label: 'Expired Value', value: `SLE ${reportData.expiredValue.toLocaleString()}`, highlight: reportData.expiredValue > 0 ? 'red' : 'green' }
     ];
 
     const columns = ['Batch #', 'Product', 'Warehouse', 'Qty', 'Mfg Date', 'Expiry Date', 'Value', 'Status'];
@@ -130,9 +130,9 @@ export default function BatchReports({ batches = [], products = [], warehouses =
       b.product_name,
       b.warehouse_name || 'Main',
       b.quantity,
-      b.manufacturing_date ? format(new Date(b.manufacturing_date), 'MMM d, yyyy') : '-',
-      b.expiry_date ? format(new Date(b.expiry_date), 'MMM d, yyyy') : '-',
-      `Le ${((b.quantity || 0) * (b.cost_price || 0)).toLocaleString()}`,
+      b.manufacturing_date ? format(new Date(b.manufacturing_date), 'dd MMM yyyy') : '-',
+      b.expiry_date ? format(new Date(b.expiry_date), 'dd MMM yyyy') : '-',
+      `SLE ${((b.quantity || 0) * (b.cost_price || 0)).toLocaleString()}`,
       b.status
     ]);
 
@@ -148,7 +148,7 @@ export default function BatchReports({ batches = [], products = [], warehouses =
       }]
     });
 
-    printUnifiedPDF(html, `batch-inventory-report-${format(new Date(), 'yyyy-MM-dd')}.pdf`);
+    printUnifiedPDF(html);
   };
 
   return (

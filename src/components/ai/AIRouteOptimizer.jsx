@@ -11,8 +11,7 @@ import {
   RefreshCw,
   MapPin,
   DollarSign,
-  Route,
-  AlertTriangle
+  Route
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 

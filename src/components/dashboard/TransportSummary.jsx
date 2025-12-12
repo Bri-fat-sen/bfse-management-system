@@ -1,4 +1,4 @@
-import { } from "react";
+import React from "react";
 import { format } from "date-fns";
 import { Truck, Route, Users, Fuel, TrendingUp } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -53,7 +53,7 @@ export default function TransportSummary({ trips = [], vehicles = [], routes = [
               <TrendingUp className="w-4 h-4 text-green-600" />
               <span className="text-xs text-green-600 uppercase">Revenue</span>
             </div>
-            <p className="text-2xl font-bold text-green-700">Le {todayRevenue.toLocaleString()}</p>
+            <p className="text-2xl font-bold text-green-700">SLE {todayRevenue.toLocaleString()}</p>
             <p className="text-xs text-green-600 mt-1">{todayPassengers} passengers</p>
           </div>
         </div>

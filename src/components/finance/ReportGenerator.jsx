@@ -40,7 +40,6 @@ import { base44 } from "@/api/base44Client";
 import { exportToCSV } from "@/components/exports/SierraLeoneExportStyles";
 import { generateUnifiedPDF, printUnifiedPDF } from "@/components/exports/UnifiedPDFStyles";
 import DriveFolderPicker from "@/components/drive/DriveFolderPicker";
-import DriveDataExtractor from "@/components/drive/DriveDataExtractor";
 
 const reportTypes = [
   { id: "sales", name: "Sales Report", icon: ShoppingCart, color: "green" },
@@ -53,7 +52,7 @@ const expenseCategories = [
   "salaries", "transport", "marketing", "insurance", "petty_cash", "other"
 ];
 
-export default function ReportGenerator({ sales = [], expenses = [], employees = [], trips = [], organisation, orgId, currentEmployee }) {
+export default function ReportGenerator({ sales = [], expenses = [], employees = [], trips = [], organisation }) {
   const { toast } = useToast();
   const [reportType, setReportType] = useState("sales");
   const [dateFrom, setDateFrom] = useState(format(startOfMonth(subMonths(new Date(), 1)), 'yyyy-MM-dd'));
@@ -64,7 +63,6 @@ export default function ReportGenerator({ sales = [], expenses = [], employees =
   const [showReport, setShowReport] = useState(false);
   const [showFolderPicker, setShowFolderPicker] = useState(false);
   const [selectedFolder, setSelectedFolder] = useState(null);
-  const [showExtractor, setShowExtractor] = useState(false);
 
   useEffect(() => {
     setShowReport(false);
@@ -298,21 +296,6 @@ export default function ReportGenerator({ sales = [], expenses = [], employees =
 
   return (
     <div className="space-y-6">
-      <Card className="border-l-4 border-l-[#1EB053]">
-        <CardContent className="p-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <h3 className="font-semibold text-lg">Import from Google Drive</h3>
-              <p className="text-sm text-gray-500">Extract financial data from Drive documents using AI</p>
-            </div>
-            <Button onClick={() => setShowExtractor(true)} variant="outline" className="text-[#1EB053] border-[#1EB053]">
-              <FileText className="w-4 h-4 mr-2" />
-              Extract Data
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
-
       {/* Report Type Selection */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         {reportTypes.map((type) => (
@@ -534,13 +517,6 @@ export default function ReportGenerator({ sales = [], expenses = [], employees =
         open={showFolderPicker}
         onOpenChange={setShowFolderPicker}
         onSelect={setSelectedFolder}
-      />
-      
-      <DriveDataExtractor
-        open={showExtractor}
-        onOpenChange={setShowExtractor}
-        orgId={orgId}
-        currentEmployee={currentEmployee}
       />
     </div>
   );

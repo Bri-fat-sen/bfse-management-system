@@ -41,10 +41,11 @@ export default function TripReportExport({ trips = [], routes = [], vehicles = [
     const summaryCards = [
       { label: 'Total Trips', value: trips.length.toString() },
       { label: 'Total Passengers', value: totalPassengers.toLocaleString() },
-      { label: 'Total Revenue', value: `Le ${totalRevenue.toLocaleString()}` },
-      { label: 'Net Revenue', value: `Le ${netRevenue.toLocaleString()}`, highlight: netRevenue >= 0 ? 'green' : 'red' }
+      { label: 'Total Revenue', value: `SLE ${totalRevenue.toLocaleString()}` },
+      { label: 'Net Revenue', value: `SLE ${netRevenue.toLocaleString()}`, highlight: netRevenue >= 0 ? 'green' : 'red' }
     ];
 
+    // Route breakdown
     const routeBreakdown = {};
     trips.forEach(t => {
       const route = t.route_name || 'Unknown Route';
@@ -62,42 +63,22 @@ export default function TripReportExport({ trips = [], routes = [], vehicles = [
         title: 'Trip Records',
         icon: '🚐',
         table: {
-          columns: ['Date', 'Route', 'Vehicle', 'Driver', 'Passengers', 'Revenue', 'Fuel', 'Net', 'Status'],
-          rows: trips.map(t => [
-            t.date ? format(new Date(t.date), 'MMM d, yyyy') : '-',
-            t.route_name || 'N/A',
-            t.vehicle_registration || 'N/A',
-            t.driver_name || 'N/A',
-            t.passengers_count || 0,
-            `Le ${(t.total_revenue || 0).toLocaleString()}`,
-            `Le ${(t.fuel_cost || 0).toLocaleString()}`,
-            `Le ${(t.net_revenue || 0).toLocaleString()}`,
-            t.status || 'completed'
-          ])
+          columns: ['Date', 'Route', 'Vehicle', 'Driver', 'Passengers', 'Revenue', 'Fuel', 'Net (SLE)', 'Status'],
+          rows: [
+            ...trips.map(t => [
+              t.date ? format(new Date(t.date), 'dd MMM yyyy') : '-',
+              t.route_name || 'N/A',
+              t.vehicle_registration || 'N/A',
+              t.driver_name || 'N/A',
+              t.passengers_count || 0,
+              `SLE ${(t.total_revenue || 0).toLocaleString()}`,
+              `SLE ${(t.fuel_cost || 0).toLocaleString()}`,
+              `SLE ${(t.net_revenue || 0).toLocaleString()}`,
+              t.status || 'completed'
+            ]),
+            ['GRAND TOTAL', '', '', '', totalPassengers, `SLE ${totalRevenue.toLocaleString()}`, `SLE ${totalFuelCost.toLocaleString()}`, `SLE ${netRevenue.toLocaleString()}`, '']
+          ]
         }
-      },
-      {
-        title: '',
-        content: `
-          <div class="totals-box">
-            <div class="totals-row">
-              <span>Total Passengers</span>
-              <span>${totalPassengers.toLocaleString()}</span>
-            </div>
-            <div class="totals-row">
-              <span>Total Revenue</span>
-              <span>Le ${totalRevenue.toLocaleString()}</span>
-            </div>
-            <div class="totals-row">
-              <span>Total Fuel Cost</span>
-              <span>Le ${totalFuelCost.toLocaleString()}</span>
-            </div>
-            <div class="totals-row grand">
-              <span>Net Revenue</span>
-              <span>Le ${netRevenue.toLocaleString()}</span>
-            </div>
-          </div>
-        `
       }
     ];
 
@@ -110,16 +91,35 @@ export default function TripReportExport({ trips = [], routes = [], vehicles = [
       sections
     });
 
-    printUnifiedPDF(html, `transport-trip-report-${format(new Date(), 'yyyy-MM-dd')}.pdf`);
+    printUnifiedPDF(html, 'trip-report.pdf');
   };
 
   const getPreviewHTML = () => {
     const summaryCards = [
       { label: 'Total Trips', value: trips.length.toString() },
       { label: 'Total Passengers', value: totalPassengers.toLocaleString() },
-      { label: 'Total Revenue', value: `Le ${totalRevenue.toLocaleString()}` },
-      { label: 'Net Revenue', value: `Le ${netRevenue.toLocaleString()}`, highlight: netRevenue >= 0 ? 'green' : 'red' }
+      { label: 'Total Revenue', value: `SLE ${totalRevenue.toLocaleString()}` },
+      { label: 'Net Revenue', value: `SLE ${netRevenue.toLocaleString()}`, highlight: netRevenue >= 0 ? 'green' : 'red' }
     ];
+
+    const sections = [{
+      title: 'Trip Records',
+      icon: '🚐',
+      table: {
+        columns: ['Date', 'Route', 'Vehicle', 'Driver', 'Passengers', 'Revenue', 'Fuel', 'Net', 'Status'],
+        rows: trips.slice(0, 20).map(t => [
+          t.date ? format(new Date(t.date), 'dd MMM yyyy') : '-',
+          t.route_name || 'N/A',
+          t.vehicle_registration || 'N/A',
+          t.driver_name || 'N/A',
+          t.passengers_count || 0,
+          `SLE ${(t.total_revenue || 0).toLocaleString()}`,
+          `SLE ${(t.fuel_cost || 0).toLocaleString()}`,
+          `SLE ${(t.net_revenue || 0).toLocaleString()}`,
+          t.status || 'completed'
+        ])
+      }
+    }];
 
     return generateUnifiedPDF({
       documentType: 'report',
@@ -127,24 +127,7 @@ export default function TripReportExport({ trips = [], routes = [], vehicles = [
       organisation,
       infoBar: [{ label: 'Generated', value: format(new Date(), 'MMMM d, yyyy') }],
       summaryCards,
-      sections: [{
-        title: 'Trip Records (Preview - First 20)',
-        icon: '🚐',
-        table: {
-          columns: ['Date', 'Route', 'Vehicle', 'Driver', 'Passengers', 'Revenue', 'Fuel', 'Net', 'Status'],
-          rows: trips.slice(0, 20).map(t => [
-            t.date ? format(new Date(t.date), 'MMM d, yyyy') : '-',
-            t.route_name || 'N/A',
-            t.vehicle_registration || 'N/A',
-            t.driver_name || 'N/A',
-            t.passengers_count || 0,
-            `Le ${(t.total_revenue || 0).toLocaleString()}`,
-            `Le ${(t.fuel_cost || 0).toLocaleString()}`,
-            `Le ${(t.net_revenue || 0).toLocaleString()}`,
-            t.status || 'completed'
-          ])
-        }
-      }]
+      sections
     });
   };
 
@@ -182,7 +165,7 @@ export default function TripReportExport({ trips = [], routes = [], vehicles = [
               </div>
               <div>
                 <h2 className="text-xl font-bold">Trip Report</h2>
-                <p className="text-white/80 text-sm">{trips.length} trips • Le {netRevenue.toLocaleString()} net</p>
+                <p className="text-white/80 text-sm">{trips.length} trips • SLE {netRevenue.toLocaleString()} net</p>
               </div>
             </div>
           </div>

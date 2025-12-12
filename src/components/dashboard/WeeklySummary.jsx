@@ -1,4 +1,4 @@
-import { } from "react";
+import React from "react";
 import { format, subDays, parseISO } from "date-fns";
 import { TrendingUp, TrendingDown, DollarSign, ShoppingCart, Users, Truck } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";

@@ -60,27 +60,25 @@ export default function VehicleDialog({ open, onOpenChange, orgId, drivers = [],
   });
 
   useEffect(() => {
-    if (open) {
-      if (editingVehicle) {
-        setFormData({
-          registration_number: editingVehicle.registration_number || '',
-          vehicle_type: editingVehicle.vehicle_type || 'bus',
-          brand: editingVehicle.brand || '',
-          model: editingVehicle.model || '',
-          year: editingVehicle.year || new Date().getFullYear(),
-          capacity: editingVehicle.capacity || '',
-          fuel_type: editingVehicle.fuel_type || 'diesel',
-          current_mileage: editingVehicle.current_mileage || 0,
-          assigned_driver_id: editingVehicle.assigned_driver_id || '',
-          insurance_expiry: editingVehicle.insurance_expiry || '',
-          last_service_date: editingVehicle.last_service_date || '',
-          notes: editingVehicle.notes || '',
-        });
-        setShowAdvanced(true);
-      } else {
-        resetForm();
-        setShowAdvanced(false);
-      }
+    if (editingVehicle) {
+      setFormData({
+        registration_number: editingVehicle.registration_number || '',
+        vehicle_type: editingVehicle.vehicle_type || 'bus',
+        brand: editingVehicle.brand || '',
+        model: editingVehicle.model || '',
+        year: editingVehicle.year || new Date().getFullYear(),
+        capacity: editingVehicle.capacity || '',
+        fuel_type: editingVehicle.fuel_type || 'diesel',
+        current_mileage: editingVehicle.current_mileage || 0,
+        assigned_driver_id: editingVehicle.assigned_driver_id || '',
+        insurance_expiry: editingVehicle.insurance_expiry || '',
+        last_service_date: editingVehicle.last_service_date || '',
+        notes: editingVehicle.notes || '',
+      });
+      setShowAdvanced(true);
+    } else {
+      resetForm();
+      setShowAdvanced(false);
     }
   }, [editingVehicle, open]);
 

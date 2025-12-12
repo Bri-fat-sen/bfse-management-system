@@ -61,6 +61,7 @@ export default function AttendanceReportExport({ attendance = [], employee, empl
 
     const sections = [];
     
+    // Department breakdown if multiple employees
     if (employees) {
       const deptBreakdown = {};
       attendance.forEach(a => {
@@ -90,7 +91,7 @@ export default function AttendanceReportExport({ attendance = [], employee, empl
             return [
               a.employee_name || 'Unknown',
               emp?.department || '-',
-              a.date ? format(new Date(a.date), 'MMM d, yyyy') : '-',
+              a.date ? format(new Date(a.date), 'dd MMM yyyy') : '-',
               a.clock_in_time || '-',
               a.clock_out_time || '-',
               a.clock_in_location?.substring(0, 20) || '-',
@@ -99,7 +100,7 @@ export default function AttendanceReportExport({ attendance = [], employee, empl
             ];
           }) :
           attendance.map(a => [
-            a.date ? format(new Date(a.date), 'MMM d, yyyy') : '-',
+            a.date ? format(new Date(a.date), 'dd MMM yyyy') : '-',
             a.date ? format(new Date(a.date), 'EEEE') : '-',
             a.clock_in_time || '-',
             a.clock_out_time || '-',
@@ -109,32 +110,7 @@ export default function AttendanceReportExport({ attendance = [], employee, empl
       }
     });
 
-    if (absentDays > 0) {
-      sections.push({
-        title: '',
-        content: `
-          <div class="totals-box">
-            <div class="totals-row">
-              <span>Days Present</span>
-              <span>${presentDays}</span>
-            </div>
-            <div class="totals-row">
-              <span>Days Late</span>
-              <span>${lateDays}</span>
-            </div>
-            <div class="totals-row">
-              <span>Days Absent</span>
-              <span>${absentDays}</span>
-            </div>
-            <div class="totals-row grand">
-              <span>Total Hours Worked</span>
-              <span>${totalHours.toFixed(1)} hrs</span>
-            </div>
-          </div>
-        `
-      });
-    }
-
+    // Add notes if there are issues
     let notes = null;
     if (lateDays > 0 || absentDays > 0) {
       notes = `${lateDays > 0 ? `${lateDays} late arrival(s) recorded. ` : ''}${absentDays > 0 ? `${absentDays} absence(s) recorded.` : ''}`;
@@ -158,13 +134,13 @@ export default function AttendanceReportExport({ attendance = [], employee, empl
       notes
     });
 
-    printUnifiedPDF(html, `attendance-report-${format(new Date(), 'yyyy-MM-dd')}.pdf`);
+    printUnifiedPDF(html, 'attendance-report.pdf');
   };
 
   const getPreviewHTML = () => {
     const reportTitle = employees ? 
-      'Staff Attendance Report (Preview)' : 
-      `Attendance Report - ${employee?.full_name || 'Employee'} (Preview)`;
+      'Staff Attendance Report' : 
+      `Attendance Report - ${employee?.full_name || 'Employee'}`;
 
     const dateRange = attendance.length > 0 
       ? `${format(new Date(attendance[attendance.length - 1]?.date || new Date()), 'MMM d')} - ${format(new Date(attendance[0]?.date || new Date()), 'MMM d, yyyy')}`
@@ -177,42 +153,44 @@ export default function AttendanceReportExport({ attendance = [], employee, empl
       { label: 'Total Hours', value: `${totalHours.toFixed(1)} hrs` }
     ];
 
+    const sections = [{
+      title: employees ? 'Staff Attendance Records' : 'My Attendance Records',
+      icon: '📅',
+      table: {
+        columns: employees ?
+          ['Employee', 'Department', 'Date', 'Clock In', 'Clock Out', 'Hours', 'Status'] :
+          ['Date', 'Day', 'Clock In', 'Clock Out', 'Hours', 'Status'],
+        rows: employees ?
+          attendance.slice(0, 20).map(a => {
+            const emp = employees.find(e => e.id === a.employee_id);
+            return [
+              a.employee_name || 'Unknown',
+              emp?.department || '-',
+              a.date ? format(new Date(a.date), 'dd MMM yyyy') : '-',
+              a.clock_in_time || '-',
+              a.clock_out_time || '-',
+              a.total_hours ? `${a.total_hours.toFixed(2)} hrs` : '-',
+              a.status
+            ];
+          }) :
+          attendance.slice(0, 20).map(a => [
+            a.date ? format(new Date(a.date), 'dd MMM yyyy') : '-',
+            a.date ? format(new Date(a.date), 'EEEE') : '-',
+            a.clock_in_time || '-',
+            a.clock_out_time || '-',
+            a.total_hours ? `${a.total_hours.toFixed(2)} hrs` : '-',
+            a.status
+          ])
+      }
+    }];
+
     return generateUnifiedPDF({
       documentType: 'report',
       title: reportTitle,
       organisation,
       infoBar: [{ label: 'Period', value: dateRange }],
       summaryCards,
-      sections: [{
-        title: 'Attendance Records (First 20)',
-        icon: '📅',
-        table: {
-          columns: employees ?
-            ['Employee', 'Department', 'Date', 'Clock In', 'Clock Out', 'Hours', 'Status'] :
-            ['Date', 'Day', 'Clock In', 'Clock Out', 'Hours', 'Status'],
-          rows: employees ?
-            attendance.slice(0, 20).map(a => {
-              const emp = employees.find(e => e.id === a.employee_id);
-              return [
-                a.employee_name || 'Unknown',
-                emp?.department || '-',
-                a.date ? format(new Date(a.date), 'MMM d, yyyy') : '-',
-                a.clock_in_time || '-',
-                a.clock_out_time || '-',
-                a.total_hours ? `${a.total_hours.toFixed(2)} hrs` : '-',
-                a.status
-              ];
-            }) :
-            attendance.slice(0, 20).map(a => [
-              a.date ? format(new Date(a.date), 'MMM d, yyyy') : '-',
-              a.date ? format(new Date(a.date), 'EEEE') : '-',
-              a.clock_in_time || '-',
-              a.clock_out_time || '-',
-              a.total_hours ? `${a.total_hours.toFixed(2)} hrs` : '-',
-              a.status
-            ])
-        }
-      }]
+      sections
     });
   };
 

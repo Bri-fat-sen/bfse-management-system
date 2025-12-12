@@ -38,30 +38,24 @@ Deno.serve(async (req) => {
       }
 
       case 'listFiles': {
+        // List files - OAuth shows user's files, service account shows limited access
         let q;
         if (folderId) {
           q = `'${folderId}' in parents and trashed=false`;
         } else if (query) {
           q = query;
         } else {
-          // Root - list all user's files
-          q = `'root' in parents and trashed=false`;
+          // Root level query
+          q = `trashed=false`;
         }
-
-        const params = new URLSearchParams({
-          q: q,
-          fields: 'files(id,name,mimeType,modifiedTime,size,webViewLink,createdTime,owners,shared)',
-          orderBy: 'modifiedTime desc',
-          pageSize: '1000',
-          supportsAllDrives: 'true',
-          includeItemsFromAllDrives: 'true'
-        });
-
+        
+        console.log('Drive query:', q);
+        
         const listResponse = await fetch(
-          `https://www.googleapis.com/drive/v3/files?${params.toString()}`,
+          `https://www.googleapis.com/drive/v3/files?q=${encodeURIComponent(q)}&fields=files(id,name,mimeType,modifiedTime,size,webViewLink,createdTime,owners,shared)&orderBy=modifiedTime desc&pageSize=1000`,
           { headers }
         );
-
+        
         if (!listResponse.ok) {
           const errorText = await listResponse.text();
           console.error('Drive list error:', errorText);
@@ -70,10 +64,10 @@ Deno.serve(async (req) => {
             details: errorText
           }, { status: listResponse.status });
         }
-
+        
         const data = await listResponse.json();
-        console.log(`Found ${data.files?.length || 0} files`);
-
+        console.log(`Found ${data.files?.length || 0} files with service account`);
+        
         const sorted = (data.files || []).sort((a, b) => {
           const aIsFolder = a.mimeType === 'application/vnd.google-apps.folder';
           const bIsFolder = b.mimeType === 'application/vnd.google-apps.folder';
@@ -81,7 +75,7 @@ Deno.serve(async (req) => {
           if (!aIsFolder && bIsFolder) return 1;
           return 0;
         });
-
+        
         return Response.json({ success: true, files: sorted });
       }
 

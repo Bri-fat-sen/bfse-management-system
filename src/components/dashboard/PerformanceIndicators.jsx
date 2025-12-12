@@ -1,4 +1,4 @@
-import { } from "react";
+import React from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { TrendingUp, Target, Zap, Award, ArrowUpRight, ArrowDownRight } from "lucide-react";
 import { Progress } from "@/components/ui/progress";

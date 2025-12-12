@@ -42,7 +42,7 @@ export default function SupplierDialog({
   const queryClient = useQueryClient();
   const [rating, setRating] = useState(supplier?.rating || 0);
   const [cashOnly, setCashOnly] = useState(supplier?.cash_only || false);
-  const [showAdvanced, setShowAdvanced] = useState(false);
+  const [activeSection, setActiveSection] = useState('basic');
 
   const primaryColor = organisation?.primary_color || '#1EB053';
   const secondaryColor = organisation?.secondary_color || '#0072C6';
@@ -50,7 +50,9 @@ export default function SupplierDialog({
   useEffect(() => {
     setRating(supplier?.rating || 0);
     setCashOnly(supplier?.cash_only || false);
-    setShowAdvanced(!!supplier);
+    if (open) {
+      setActiveSection('basic');
+    }
   }, [supplier, open]);
 
   const createMutation = useMutation({
@@ -111,94 +113,194 @@ export default function SupplierDialog({
     }
   };
 
+  const sections = [
+    { id: 'basic', label: 'Basic Info', icon: Building2 },
+    { id: 'contact', label: 'Contact', icon: Phone },
+    { id: 'business', label: 'Business', icon: CreditCard },
+  ];
+
   const isPending = createMutation.isPending || updateMutation.isPending;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-lg max-h-[90vh] overflow-hidden p-0 w-[95vw] sm:w-full [&>button]:hidden">
+      <DialogContent className="max-w-2xl max-h-[90vh] overflow-hidden p-0 w-[95vw] sm:w-full [&>button]:hidden">
+        {/* Sierra Leone Flag Header */}
         <div className="h-2 flex">
           <div className="flex-1" style={{ backgroundColor: primaryColor }} />
           <div className="flex-1 bg-white" />
           <div className="flex-1" style={{ backgroundColor: secondaryColor }} />
         </div>
 
-        <div className="px-6 py-4 text-white border-b border-white/20" style={{ background: `linear-gradient(135deg, ${primaryColor} 0%, ${secondaryColor} 100%)` }}>
+        {/* Header with gradient */}
+        <div 
+          className="px-6 py-4 text-white"
+          style={{ background: `linear-gradient(135deg, ${primaryColor} 0%, ${secondaryColor} 100%)` }}
+        >
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center">
-                <Truck className="w-5 h-5 text-white" />
+              <div className="w-12 h-12 rounded-xl bg-white/20 flex items-center justify-center">
+                <Truck className="w-6 h-6 text-white" />
               </div>
               <div>
-                <h2 className="text-lg font-bold">{supplier ? 'Edit Supplier' : 'Add Supplier'}</h2>
-                <p className="text-white/80 text-xs">Press Ctrl+Enter to save</p>
+                <h2 className="text-xl font-bold">
+                  {supplier ? 'Edit Supplier' : 'Add New Supplier'}
+                </h2>
+                <p className="text-white/80 text-sm">
+                  {supplier ? `Updating: ${supplier.name}` : 'Register a new supplier partner'}
+                </p>
               </div>
             </div>
-            <Button variant="ghost" size="icon" onClick={() => onOpenChange(false)} className="text-white hover:bg-white/20">
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => onOpenChange(false)}
+              className="text-white hover:bg-white/20"
+            >
               <X className="w-5 h-5" />
             </Button>
           </div>
+
+          {/* Section Tabs */}
+          <div className="flex gap-1 mt-4 overflow-x-auto pb-1">
+            {sections.map((section) => (
+              <button
+                key={section.id}
+                type="button"
+                onClick={() => setActiveSection(section.id)}
+                className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-all whitespace-nowrap ${
+                  activeSection === section.id
+                    ? 'bg-white text-gray-900'
+                    : 'bg-white/20 text-white hover:bg-white/30'
+                }`}
+              >
+                <section.icon className="w-4 h-4" />
+                {section.label}
+              </button>
+            ))}
+          </div>
         </div>
 
-        <form onSubmit={handleSubmit} className="overflow-y-auto max-h-[calc(90vh-180px)]">
-          <div className="p-6 space-y-4">
-            <div>
-              <Label className="font-medium">Supplier Name *</Label>
-              <Input name="name" defaultValue={supplier?.name} required autoFocus className="mt-1.5" />
-            </div>
+        {/* Form Content */}
+        <form onSubmit={handleSubmit} className="overflow-y-auto max-h-[calc(90vh-220px)]">
+          <div className="p-6 space-y-6">
+            
+            {/* Basic Info Section */}
+            {activeSection === 'basic' && (
+              <div className="space-y-4">
+                <div className="flex items-center gap-2 mb-4">
+                  <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ backgroundColor: `${primaryColor}20` }}>
+                    <Building2 className="w-4 h-4" style={{ color: primaryColor }} />
+                  </div>
+                  <h3 className="font-semibold text-gray-900">Supplier Information</h3>
+                </div>
 
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <Label className="text-sm">Contact Person</Label>
-                <Input name="contact_person" defaultValue={supplier?.contact_person} className="mt-1.5" />
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="sm:col-span-2">
+                    <Label className="text-gray-700 font-medium">Supplier Name *</Label>
+                    <Input name="name" defaultValue={supplier?.name} required className="mt-1.5 border-gray-200" />
+                  </div>
+                  <div>
+                    <Label className="text-gray-700 font-medium">Supplier Code</Label>
+                    <Input name="code" defaultValue={supplier?.code} className="mt-1.5 border-gray-200" placeholder="e.g., SUP-001" />
+                  </div>
+                  <div>
+                    <Label className="text-gray-700 font-medium">Status</Label>
+                    <Select name="status" defaultValue={supplier?.status || "active"}>
+                      <SelectTrigger className="mt-1.5 border-gray-200">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="active">Active</SelectItem>
+                        <SelectItem value="inactive">Inactive</SelectItem>
+                        <SelectItem value="blocked">Blocked</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  {/* Rating */}
+                  <div className="sm:col-span-2 p-4 bg-amber-50 rounded-xl border border-amber-200">
+                    <Label className="text-amber-700 font-medium mb-2 block">Supplier Rating</Label>
+                    <div className="flex gap-1">
+                      {[1, 2, 3, 4, 5].map((star) => (
+                        <button
+                          key={star}
+                          type="button"
+                          onClick={() => setRating(star)}
+                          className="p-1 hover:scale-110 transition-transform"
+                        >
+                          <Star
+                            className={`w-8 h-8 ${star <= rating ? 'fill-[#D4AF37] text-[#D4AF37]' : 'text-gray-300'}`}
+                          />
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                </div>
               </div>
-              <div>
-                <Label className="text-sm">Phone</Label>
-                <Input name="phone" defaultValue={supplier?.phone} className="mt-1.5" />
+            )}
+
+            {/* Contact Section */}
+            {activeSection === 'contact' && (
+              <div className="space-y-4">
+                <div className="flex items-center gap-2 mb-4">
+                  <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ backgroundColor: `${secondaryColor}20` }}>
+                    <Phone className="w-4 h-4" style={{ color: secondaryColor }} />
+                  </div>
+                  <h3 className="font-semibold text-gray-900">Contact Details</h3>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <Label className="text-gray-700 font-medium">Contact Person</Label>
+                    <Input name="contact_person" defaultValue={supplier?.contact_person} className="mt-1.5 border-gray-200" />
+                  </div>
+                  <div>
+                    <Label className="text-gray-700 font-medium flex items-center gap-2">
+                      <Mail className="w-3 h-3" /> Email
+                    </Label>
+                    <Input name="email" type="email" defaultValue={supplier?.email} className="mt-1.5 border-gray-200" />
+                  </div>
+                  <div>
+                    <Label className="text-gray-700 font-medium">Phone</Label>
+                    <Input name="phone" defaultValue={supplier?.phone} className="mt-1.5 border-gray-200" />
+                  </div>
+                  <div>
+                    <Label className="text-gray-700 font-medium">Alternate Phone</Label>
+                    <Input name="alternate_phone" defaultValue={supplier?.alternate_phone} className="mt-1.5 border-gray-200" />
+                  </div>
+                  <div className="sm:col-span-2">
+                    <Label className="text-gray-700 font-medium flex items-center gap-2">
+                      <MapPin className="w-3 h-3" /> Address
+                    </Label>
+                    <Input name="address" defaultValue={supplier?.address} className="mt-1.5 border-gray-200" />
+                  </div>
+                  <div>
+                    <Label className="text-gray-700 font-medium">City</Label>
+                    <Input name="city" defaultValue={supplier?.city} className="mt-1.5 border-gray-200" />
+                  </div>
+                  <div>
+                    <Label className="text-gray-700 font-medium">Country</Label>
+                    <Input name="country" defaultValue={supplier?.country || 'Sierra Leone'} className="mt-1.5 border-gray-200" />
+                  </div>
+                </div>
               </div>
-            </div>
+            )}
 
-            <div className="p-4 bg-amber-50 rounded-xl border border-amber-200">
-              <Label className="text-amber-700 font-medium mb-2 block">Rating</Label>
-              <div className="flex gap-1">
-                {[1, 2, 3, 4, 5].map((star) => (
-                  <button key={star} type="button" onClick={() => setRating(star)} className="p-1 hover:scale-110 transition-transform">
-                    <Star className={`w-7 h-7 ${star <= rating ? 'fill-[#D4AF37] text-[#D4AF37]' : 'text-gray-300'}`} />
-                  </button>
-                ))}
-              </div>
-            </div>
+            {/* Business Section */}
+            {activeSection === 'business' && (
+              <div className="space-y-4">
+                <div className="flex items-center gap-2 mb-4">
+                  <div className="w-8 h-8 rounded-lg bg-purple-100 flex items-center justify-center">
+                    <CreditCard className="w-4 h-4 text-purple-600" />
+                  </div>
+                  <h3 className="font-semibold text-gray-900">Business Details</h3>
+                </div>
 
-            <button type="button" onClick={() => setShowAdvanced(!showAdvanced)} className="w-full text-sm text-gray-600 hover:text-gray-900 text-left">
-              {showAdvanced ? '− Hide' : '+ Show'} More Details
-            </button>
-
-            {showAdvanced && (
-              <div className="space-y-3 pt-2 border-t">
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
-                    <Label className="text-sm">Email</Label>
-                    <Input name="email" type="email" defaultValue={supplier?.email} className="mt-1.5" />
-                  </div>
-                  <div>
-                    <Label className="text-sm">Alt. Phone</Label>
-                    <Input name="alternate_phone" defaultValue={supplier?.alternate_phone} className="mt-1.5" />
-                  </div>
-                  <div>
-                    <Label className="text-sm">City</Label>
-                    <Input name="city" defaultValue={supplier?.city} className="mt-1.5" />
-                  </div>
-                  <div>
-                    <Label className="text-sm">Code</Label>
-                    <Input name="code" defaultValue={supplier?.code} placeholder="SUP-001" className="mt-1.5" />
-                  </div>
-                  <div className="col-span-2">
-                    <Label className="text-sm">Address</Label>
-                    <Input name="address" defaultValue={supplier?.address} className="mt-1.5" />
-                  </div>
-                  <div>
-                    <Label className="text-sm">Payment Terms</Label>
+                    <Label className="text-gray-700 font-medium">Payment Terms</Label>
                     <Select name="payment_terms" defaultValue={supplier?.payment_terms || "net_30"}>
-                      <SelectTrigger className="mt-1.5">
+                      <SelectTrigger className="mt-1.5 border-gray-200">
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
@@ -209,47 +311,72 @@ export default function SupplierDialog({
                     </Select>
                   </div>
                   <div>
-                    <Label className="text-sm">Lead Time (Days)</Label>
-                    <Input name="default_lead_time_days" type="number" min="1" defaultValue={supplier?.default_lead_time_days || 7} className="mt-1.5" />
+                    <Label className="text-gray-700 font-medium flex items-center gap-2">
+                      <Clock className="w-3 h-3" /> Lead Time (Days)
+                    </Label>
+                    <Input name="default_lead_time_days" type="number" min="1" defaultValue={supplier?.default_lead_time_days || 7} className="mt-1.5 border-gray-200" />
                   </div>
-                  <div className="col-span-2">
-                    <label className="flex items-center gap-2 cursor-pointer p-2 rounded bg-orange-50 border border-orange-200">
-                      <Checkbox checked={cashOnly} onCheckedChange={setCashOnly} />
-                      <span className="text-sm text-orange-700">Cash Only Supplier</span>
+                  <div>
+                    <Label className="text-gray-700 font-medium">Tax ID / NRA Number</Label>
+                    <Input name="tax_id" defaultValue={supplier?.tax_id} className="mt-1.5 border-gray-200" />
+                  </div>
+                  <div className="flex items-center pt-6">
+                    <label className="flex items-center gap-3 cursor-pointer p-3 rounded-xl bg-orange-50 border border-orange-200 flex-1">
+                      <Checkbox 
+                        id="cash_only" 
+                        checked={cashOnly} 
+                        onCheckedChange={setCashOnly}
+                        className="data-[state=checked]:bg-orange-500 data-[state=checked]:border-orange-500"
+                      />
+                      <span className="text-sm font-medium text-orange-700">Cash Only Account</span>
                     </label>
                   </div>
                   <div>
-                    <Label className="text-sm">Bank</Label>
-                    <Input name="bank_name" defaultValue={supplier?.bank_name} className="mt-1.5" />
+                    <Label className="text-gray-700 font-medium">Bank Name</Label>
+                    <Input name="bank_name" defaultValue={supplier?.bank_name} className="mt-1.5 border-gray-200" />
                   </div>
                   <div>
-                    <Label className="text-sm">Account</Label>
-                    <Input name="bank_account" defaultValue={supplier?.bank_account} className="mt-1.5" />
+                    <Label className="text-gray-700 font-medium">Bank Account</Label>
+                    <Input name="bank_account" defaultValue={supplier?.bank_account} className="mt-1.5 border-gray-200" />
                   </div>
-                  <div className="col-span-2">
-                    <Label className="text-sm">Notes</Label>
-                    <Textarea name="notes" defaultValue={supplier?.notes} className="mt-1.5" rows={2} />
+                  <div className="sm:col-span-2">
+                    <Label className="text-gray-700 font-medium flex items-center gap-2">
+                      <FileText className="w-3 h-3" /> Notes
+                    </Label>
+                    <Textarea name="notes" defaultValue={supplier?.notes} className="mt-1.5 border-gray-200" rows={3} />
                   </div>
                 </div>
               </div>
             )}
-
-            <input type="hidden" name="country" defaultValue={supplier?.country || 'Sierra Leone'} />
-            <input type="hidden" name="tax_id" defaultValue={supplier?.tax_id} />
-            <input type="hidden" name="status" defaultValue={supplier?.status || 'active'} />
           </div>
 
-          <div className="sticky bottom-0 bg-white border-t p-4 flex gap-2">
-            <Button type="button" variant="outline" onClick={() => onOpenChange(false)} className="flex-1 sm:flex-none sm:w-24">
+          {/* Footer */}
+          <div className="sticky bottom-0 bg-white border-t p-4 flex flex-col sm:flex-row gap-3">
+            <Button 
+              type="button" 
+              variant="outline" 
+              onClick={() => onOpenChange(false)} 
+              className="w-full sm:w-auto"
+            >
               Cancel
             </Button>
-            <Button type="submit" disabled={isPending} className="flex-1 text-white" style={{ background: `linear-gradient(135deg, ${primaryColor} 0%, ${secondaryColor} 100%)` }}>
-              {isPending ? 'Saving...' : <><Check className="w-4 h-4 mr-2" />{supplier ? 'Update' : 'Add'}</>}
+            <Button 
+              type="submit" 
+              disabled={isPending}
+              className="w-full sm:flex-1 text-white"
+              style={{ background: `linear-gradient(135deg, ${primaryColor} 0%, ${secondaryColor} 100%)` }}
+            >
+              {isPending ? (
+                <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Processing...</>
+              ) : (
+                <><Check className="w-4 h-4 mr-2" />{supplier ? 'Update' : 'Create'} Supplier</>
+              )}
             </Button>
           </div>
         </form>
 
-        <div className="h-1.5 flex">
+        {/* Bottom flag stripe */}
+        <div className="h-1 flex">
           <div className="flex-1" style={{ backgroundColor: primaryColor }} />
           <div className="flex-1 bg-white" />
           <div className="flex-1" style={{ backgroundColor: secondaryColor }} />

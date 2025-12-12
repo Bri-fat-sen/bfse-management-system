@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, createContext, useContext } from "react";
+import React, { useEffect, useRef, useState, createContext, useContext } from "react";
 import { toast } from "sonner";
 import { MessageSquare, Volume2, VolumeX, Moon, Bell, BellOff } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";

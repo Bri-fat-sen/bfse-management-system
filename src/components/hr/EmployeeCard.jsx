@@ -1,4 +1,4 @@
-import { } from "react";
+import React from "react";
 import { Phone, Mail, MapPin, Calendar, Briefcase } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";

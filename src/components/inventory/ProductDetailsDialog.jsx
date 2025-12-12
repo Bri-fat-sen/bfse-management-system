@@ -47,12 +47,6 @@ export default function ProductDetailsDialog({
 }) {
   const [activeTab, setActiveTab] = useState("details");
 
-  useEffect(() => {
-    if (open) {
-      setActiveTab("details");
-    }
-  }, [open]);
-
   // Fetch stock movements for this specific product
   const { data: productMovements = [], isLoading: movementsLoading } = useQuery({
     queryKey: ['productStockMovements', product?.id],

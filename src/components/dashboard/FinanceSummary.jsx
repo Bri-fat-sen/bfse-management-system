@@ -1,4 +1,4 @@
-import { } from "react";
+import React from "react";
 import { format, startOfMonth, endOfMonth, isWithinInterval } from "date-fns";
 import { DollarSign, TrendingUp, TrendingDown, PieChart, ArrowUpRight, ArrowDownRight } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -87,18 +87,18 @@ export default function FinanceSummary({ sales = [], expenses = [], trips = [], 
           <div className="p-2 bg-green-50 rounded-lg text-center">
             <ArrowUpRight className="w-4 h-4 mx-auto text-green-600 mb-1" />
             <p className="text-xs text-green-600 uppercase">Revenue</p>
-            <p className="text-sm font-bold text-green-700">Le {(totalRevenue / 1000).toFixed(0)}K</p>
+            <p className="text-sm font-bold text-green-700">SLE {(totalRevenue / 1000).toFixed(0)}K</p>
           </div>
           <div className="p-2 bg-red-50 rounded-lg text-center">
             <ArrowDownRight className="w-4 h-4 mx-auto text-red-600 mb-1" />
             <p className="text-xs text-red-600 uppercase">Expenses</p>
-            <p className="text-sm font-bold text-red-700">Le {(totalExpenses / 1000).toFixed(0)}K</p>
+            <p className="text-sm font-bold text-red-700">SLE {(totalExpenses / 1000).toFixed(0)}K</p>
           </div>
           <div className={`p-2 rounded-lg text-center ${netProfit >= 0 ? 'bg-blue-50' : 'bg-amber-50'}`}>
             <PieChart className={`w-4 h-4 mx-auto mb-1 ${netProfit >= 0 ? 'text-blue-600' : 'text-amber-600'}`} />
             <p className={`text-xs uppercase ${netProfit >= 0 ? 'text-blue-600' : 'text-amber-600'}`}>Profit</p>
             <p className={`text-sm font-bold ${netProfit >= 0 ? 'text-blue-700' : 'text-amber-700'}`}>
-              Le {(netProfit / 1000).toFixed(0)}K
+              SLE {(netProfit / 1000).toFixed(0)}K
             </p>
           </div>
         </div>
@@ -130,7 +130,7 @@ export default function FinanceSummary({ sales = [], expenses = [], trips = [], 
                   <Badge className={`capitalize ${categoryColors[category] || categoryColors.other}`}>
                     {category.replace('_', ' ')}
                   </Badge>
-                  <span className="text-sm font-medium">Le {amount.toLocaleString()}</span>
+                  <span className="text-sm font-medium">SLE {amount.toLocaleString()}</span>
                 </div>
               ))}
             </div>
