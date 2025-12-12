@@ -12,6 +12,7 @@ import {
   Users, Plus, Search, Filter, Star, Phone, Mail,
   TrendingUp, ShoppingCart, DollarSign, UserCheck, BarChart3
 } from "lucide-react";
+import { cn } from "@/lib/utils";
 import PageHeader from "@/components/ui/PageHeader";
 import CustomerDialog from "@/components/crm/CustomerDialog";
 import CustomerDetail from "@/components/crm/CustomerDetail";
