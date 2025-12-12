@@ -125,7 +125,16 @@ export default function HRManagement() {
 
   const { data: employees = [], isLoading, error: employeesError } = useQuery({
     queryKey: ['employees', orgId],
-    queryFn: () => base44.entities.Employee.filter({ organisation_id: orgId }),
+    queryFn: async () => {
+      if (!orgId) return [];
+      try {
+        const data = await base44.entities.Employee.filter({ organisation_id: orgId });
+        return Array.isArray(data) ? data : [];
+      } catch (err) {
+        console.error('Error fetching employees:', err);
+        return [];
+      }
+    },
     enabled: !!orgId,
     staleTime: 2 * 60 * 1000,
     refetchOnWindowFocus: false,
@@ -133,7 +142,16 @@ export default function HRManagement() {
 
   const { data: payrolls = [] } = useQuery({
     queryKey: ['payrolls', orgId],
-    queryFn: () => base44.entities.Payroll.filter({ organisation_id: orgId }, '-created_date', 200),
+    queryFn: async () => {
+      if (!orgId) return [];
+      try {
+        const data = await base44.entities.Payroll.filter({ organisation_id: orgId }, '-created_date', 200);
+        return Array.isArray(data) ? data : [];
+      } catch (err) {
+        console.error('Error fetching payrolls:', err);
+        return [];
+      }
+    },
     enabled: !!orgId,
     staleTime: 2 * 60 * 1000,
     refetchOnWindowFocus: false,
