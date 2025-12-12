@@ -122,17 +122,20 @@ Deno.serve(async (req) => {
         } else if (query) {
           q = query;
         } else {
-          // Include both owned files and files shared with the service account
-          q = `trashed=false and (sharedWithMe=true or 'me' in owners)`;
+          // Show all files visible to service account (owned + shared)
+          q = `trashed=false`;
         }
         
+        console.log('Drive query:', q);
+        
         const listResponse = await fetch(
-          `https://www.googleapis.com/drive/v3/files?q=${encodeURIComponent(q)}&fields=files(id,name,mimeType,modifiedTime,size,webViewLink,createdTime,owners,shared)&orderBy=modifiedTime desc&pageSize=1000&supportsAllDrives=true&includeItemsFromAllDrives=true`,
+          `https://www.googleapis.com/drive/v3/files?q=${encodeURIComponent(q)}&fields=files(id,name,mimeType,modifiedTime,size,webViewLink,createdTime,owners,shared,permissions)&orderBy=modifiedTime desc&pageSize=1000&supportsAllDrives=true&includeItemsFromAllDrives=true`,
           { headers }
         );
         
         if (!listResponse.ok) {
           const errorText = await listResponse.text();
+          console.error('Drive list error:', errorText);
           return Response.json({ 
             error: 'Failed to list files',
             details: errorText
@@ -140,6 +143,7 @@ Deno.serve(async (req) => {
         }
         
         const data = await listResponse.json();
+        console.log(`Found ${data.files?.length || 0} files`);
         
         const sorted = (data.files || []).sort((a, b) => {
           const aIsFolder = a.mimeType === 'application/vnd.google-apps.folder';
