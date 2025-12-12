@@ -1,235 +1,274 @@
 import React, { useState } from "react";
 import { base44 } from "@/api/base44Client";
-import { useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Loader2, FileText, DollarSign, TrendingUp, TrendingDown, CheckCircle2, AlertCircle } from "lucide-react";
+import { 
+  FileText, 
+  Loader2, 
+  CheckCircle2,
+  XCircle,
+  Download,
+  Upload,
+  DollarSign,
+  Receipt,
+  FileSpreadsheet,
+  Sparkles
+} from "lucide-react";
 import { useToast } from "@/components/ui/Toast";
-import { format } from "date-fns";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import DriveFileBrowser from "./DriveFileBrowser";
 
-export default function DriveDataExtractor({ open, onOpenChange, orgId, currentEmployee }) {
-  const [step, setStep] = useState(1);
-  const [selectedFile, setSelectedFile] = useState(null);
-  const [isExtracting, setIsExtracting] = useState(false);
-  const [extractedData, setExtractedData] = useState(null);
-  const [recordType, setRecordType] = useState("expense");
-  const [isImporting, setIsImporting] = useState(false);
+export default function DriveDataExtractor({ 
+  open, 
+  onOpenChange,
+  orgId,
+  currentEmployee 
+}) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const [step, setStep] = useState('select'); // select, extracting, review, importing
+  const [selectedFile, setSelectedFile] = useState(null);
+  const [extractedData, setExtractedData] = useState(null);
+  const [documentType, setDocumentType] = useState(null);
 
-  const handleFileSelect = (file) => {
-    setSelectedFile(file);
-    setStep(2);
-  };
-
-  const handleExtract = async () => {
-    setIsExtracting(true);
-    try {
-      const result = await base44.functions.invoke('googleDriveManager', {
-        action: 'extractData',
-        fileId: selectedFile.id,
-        fileUrl: selectedFile.webViewLink,
-        detectedType: recordType
+  const extractMutation = useMutation({
+    mutationFn: async (file) => {
+      const result = await base44.functions.invoke('extractDriveDocument', {
+        fileId: file.id,
+        fileName: file.name
       });
-
-      if (result?.data?.success) {
-        setExtractedData(result.data.extractedData);
-        setStep(3);
-        toast.success("Data extracted successfully", `Found ${result.data.extractedData.records?.length || 0} records`);
-      } else {
-        toast.error("Extraction failed", "Unable to extract data from file");
-      }
-    } catch (error) {
-      console.error('Extract error:', error);
-      toast.error("Extraction error", error.message);
+      return result.data;
+    },
+    onSuccess: (data) => {
+      setExtractedData(data);
+      setDocumentType(data.documentType);
+      setStep('review');
+      toast.success('Data extracted successfully', `Found ${data.recordCount} records`);
+    },
+    onError: (error) => {
+      toast.error('Extraction failed', error.message);
+      setStep('select');
     }
-    setIsExtracting(false);
-  };
+  });
 
-  const handleImport = async () => {
-    setIsImporting(true);
-    let successCount = 0;
-    let errorCount = 0;
-
-    try {
-      for (const record of extractedData.records) {
-        try {
-          if (recordType === "expense") {
-            await base44.entities.Expense.create({
-              organisation_id: orgId,
-              category: record.category || "other",
-              description: record.description,
-              amount: record.amount,
-              date: record.date,
-              vendor: record.vendor,
-              payment_method: record.payment_method || "bank_transfer",
-              recorded_by: currentEmployee?.id,
-              recorded_by_name: currentEmployee?.full_name,
-              status: "approved"
-            });
-            successCount++;
-          } else if (recordType === "revenue" || recordType === "sale") {
-            await base44.entities.Sale.create({
-              organisation_id: orgId,
-              sale_type: "retail",
-              customer_name: record.customer_name || "Drive Import",
-              total_amount: record.amount,
-              payment_method: record.payment_method || "bank_transfer",
-              payment_status: "paid",
-              employee_id: currentEmployee?.id,
-              employee_name: currentEmployee?.full_name,
-              items: record.items || [{ product_name: record.description, quantity: 1, unit_price: record.amount, total: record.amount }]
-            });
-            successCount++;
-          }
-        } catch (err) {
-          console.error('Import record error:', err);
-          errorCount++;
-        }
+  const importMutation = useMutation({
+    mutationFn: async () => {
+      const records = extractedData.data.records || extractedData.data.transactions || [];
+      
+      if (documentType === 'expense') {
+        const expenses = records.map(r => ({
+          organisation_id: orgId,
+          date: r.date,
+          category: r.category,
+          description: r.description || r.notes || '',
+          vendor: r.vendor || '',
+          amount: r.amount,
+          payment_method: r.payment_method || 'cash',
+          recorded_by: currentEmployee?.id,
+          recorded_by_name: currentEmployee?.full_name,
+          status: 'pending',
+          notes: r.notes || ''
+        }));
+        await base44.entities.Expense.bulkCreate(expenses);
+        return { type: 'expense', count: expenses.length };
+      } 
+      else if (documentType === 'revenue' || documentType === 'invoice' || documentType === 'receipt') {
+        const sales = records.map(r => ({
+          organisation_id: orgId,
+          sale_type: 'retail',
+          customer_name: r.customer_name || 'Walk-in',
+          customer_phone: r.customer_phone || '',
+          employee_id: currentEmployee?.id,
+          employee_name: currentEmployee?.full_name,
+          items: r.items || [],
+          total_amount: r.amount || r.total || 0,
+          payment_method: r.payment_method || 'cash',
+          payment_status: 'paid',
+          notes: r.description || ''
+        }));
+        await base44.entities.Sale.bulkCreate(sales);
+        return { type: 'sale', count: sales.length };
       }
-
+      else if (documentType === 'bank_statement') {
+        const transactions = extractedData.data.transactions || [];
+        const expenses = transactions
+          .filter(t => t.debit > 0)
+          .map(t => ({
+            organisation_id: orgId,
+            date: t.date,
+            category: 'other',
+            description: t.description,
+            vendor: t.description,
+            amount: t.debit,
+            payment_method: 'bank_transfer',
+            recorded_by: currentEmployee?.id,
+            recorded_by_name: currentEmployee?.full_name,
+            status: 'approved',
+            notes: `Ref: ${t.reference || ''}`
+          }));
+        await base44.entities.Expense.bulkCreate(expenses);
+        return { type: 'bank_statement', count: expenses.length };
+      }
+    },
+    onSuccess: (result) => {
       queryClient.invalidateQueries(['expenses']);
       queryClient.invalidateQueries(['sales']);
-
-      if (successCount > 0) {
-        toast.success("Import complete", `${successCount} records imported${errorCount > 0 ? `, ${errorCount} failed` : ''}`);
-      }
-
-      onOpenChange(false);
-      resetState();
-    } catch (error) {
-      toast.error("Import failed", error.message);
+      toast.success('Import complete', `Imported ${result.count} ${result.type} records`);
+      handleClose();
+    },
+    onError: (error) => {
+      toast.error('Import failed', error.message);
     }
-    setIsImporting(false);
+  });
+
+  const handleFileSelect = (file) => {
+    if (file.mimeType === 'application/vnd.google-apps.folder') return;
+    setSelectedFile(file);
+    setStep('extracting');
+    extractMutation.mutate(file);
   };
 
-  const resetState = () => {
-    setStep(1);
+  const handleImport = () => {
+    setStep('importing');
+    importMutation.mutate();
+  };
+
+  const handleClose = () => {
+    setStep('select');
     setSelectedFile(null);
     setExtractedData(null);
-    setRecordType("expense");
+    setDocumentType(null);
+    onOpenChange(false);
+  };
+
+  const getDocTypeInfo = (type) => {
+    const types = {
+      expense: { icon: Receipt, color: 'text-red-500', bg: 'bg-red-50', label: 'Expense' },
+      revenue: { icon: DollarSign, color: 'text-green-500', bg: 'bg-green-50', label: 'Revenue' },
+      bank_statement: { icon: FileSpreadsheet, color: 'text-blue-500', bg: 'bg-blue-50', label: 'Bank Statement' },
+      invoice: { icon: FileText, color: 'text-purple-500', bg: 'bg-purple-50', label: 'Invoice' },
+      receipt: { icon: Receipt, color: 'text-amber-500', bg: 'bg-amber-50', label: 'Receipt' }
+    };
+    return types[type] || types.expense;
   };
 
   return (
-    <Dialog open={open} onOpenChange={(val) => { onOpenChange(val); if (!val) resetState(); }}>
-      <DialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto">
+    <Dialog open={open} onOpenChange={handleClose}>
+      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            <FileText className="w-5 h-5 text-[#1EB053]" />
-            Extract Data from Google Drive
+            <Sparkles className="w-5 h-5 text-[#1EB053]" />
+            AI Document Extraction
           </DialogTitle>
         </DialogHeader>
 
-        <div className="flex gap-2 mb-4">
-          {[1, 2, 3].map((s) => (
-            <div key={s} className={`flex-1 h-2 rounded-full ${step >= s ? 'bg-[#1EB053]' : 'bg-gray-200'}`} />
-          ))}
-        </div>
-
-        {step === 1 && (
-          <DriveFileBrowser onFileSelect={handleFileSelect} title="Select Document" />
+        {step === 'select' && (
+          <div className="space-y-4">
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+              <p className="text-sm text-blue-900">
+                <strong>Select a document</strong> from your Google Drive. AI will automatically extract financial data for import.
+              </p>
+            </div>
+            <DriveFileBrowser onFileSelect={handleFileSelect} title="Select Document" />
+          </div>
         )}
 
-        {step === 2 && selectedFile && (
+        {step === 'extracting' && (
+          <div className="flex flex-col items-center justify-center py-12">
+            <Loader2 className="w-16 h-16 text-[#1EB053] animate-spin mb-4" />
+            <p className="text-lg font-semibold">Extracting data with AI...</p>
+            <p className="text-sm text-gray-500 mt-2">{selectedFile?.name}</p>
+          </div>
+        )}
+
+        {step === 'review' && extractedData && (
           <div className="space-y-4">
-            <Card>
+            <Card className={getDocTypeInfo(documentType).bg}>
               <CardHeader>
-                <CardTitle className="text-base">Selected File</CardTitle>
+                <CardTitle className="flex items-center gap-2 text-lg">
+                  {React.createElement(getDocTypeInfo(documentType).icon, { 
+                    className: `w-5 h-5 ${getDocTypeInfo(documentType).color}` 
+                  })}
+                  {getDocTypeInfo(documentType).label} - {extractedData.recordCount} Records
+                </CardTitle>
+                <p className="text-sm text-gray-600">{extractedData.fileName}</p>
               </CardHeader>
-              <CardContent>
-                <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
-                  <FileText className="w-8 h-8 text-gray-400" />
-                  <div>
-                    <p className="font-medium">{selectedFile.name}</p>
-                    <p className="text-sm text-gray-500">
-                      {selectedFile.size ? `${(selectedFile.size / 1024).toFixed(1)} KB` : ''} • 
-                      {selectedFile.modifiedTime && format(new Date(selectedFile.modifiedTime), 'MMM d, yyyy')}
-                    </p>
+            </Card>
+
+            <div className="border rounded-lg p-4 max-h-96 overflow-y-auto">
+              {documentType === 'bank_statement' && extractedData.data.account_info && (
+                <div className="mb-4 p-3 bg-gray-50 rounded-lg">
+                  <p className="font-semibold mb-2">Account Information</p>
+                  <div className="grid grid-cols-2 gap-2 text-sm">
+                    <div><span className="text-gray-600">Account:</span> {extractedData.data.account_info.account_name}</div>
+                    <div><span className="text-gray-600">Number:</span> {extractedData.data.account_info.account_number}</div>
+                    <div><span className="text-gray-600">Opening:</span> SLE {extractedData.data.account_info.opening_balance?.toLocaleString()}</div>
+                    <div><span className="text-gray-600">Closing:</span> SLE {extractedData.data.account_info.closing_balance?.toLocaleString()}</div>
                   </div>
                 </div>
-              </CardContent>
-            </Card>
+              )}
 
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-base">Record Type</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <Select value={recordType} onValueChange={setRecordType}>
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="expense">
-                      <div className="flex items-center gap-2">
-                        <TrendingDown className="w-4 h-4 text-red-500" />
-                        Expense
+              <div className="space-y-2">
+                {(extractedData.data.records || extractedData.data.transactions || []).map((record, idx) => (
+                  <div key={idx} className="p-3 border rounded-lg hover:bg-gray-50">
+                    <div className="flex justify-between items-start">
+                      <div className="flex-1">
+                        <p className="font-medium text-sm">
+                          {record.description || record.vendor || record.customer_name || 'Transaction'}
+                        </p>
+                        <div className="flex flex-wrap gap-2 mt-1">
+                          <Badge variant="outline" className="text-xs">
+                            {record.date}
+                          </Badge>
+                          {record.category && (
+                            <Badge variant="secondary" className="text-xs">
+                              {record.category}
+                            </Badge>
+                          )}
+                          {record.payment_method && (
+                            <Badge variant="outline" className="text-xs">
+                              {record.payment_method}
+                            </Badge>
+                          )}
+                        </div>
                       </div>
-                    </SelectItem>
-                    <SelectItem value="revenue">
-                      <div className="flex items-center gap-2">
-                        <TrendingUp className="w-4 h-4 text-green-500" />
-                        Revenue / Sale
+                      <div className="text-right">
+                        <p className={`font-bold ${
+                          record.debit ? 'text-red-600' : record.credit ? 'text-green-600' : 'text-gray-900'
+                        }`}>
+                          {record.debit && `- SLE ${record.debit.toLocaleString()}`}
+                          {record.credit && `+ SLE ${record.credit.toLocaleString()}`}
+                          {record.amount && `SLE ${record.amount.toLocaleString()}`}
+                          {record.total && `SLE ${record.total.toLocaleString()}`}
+                        </p>
                       </div>
-                    </SelectItem>
-                  </SelectContent>
-                </Select>
-              </CardContent>
-            </Card>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
 
-            <div className="flex justify-end gap-2">
-              <Button variant="outline" onClick={() => setStep(1)}>Back</Button>
-              <Button onClick={handleExtract} disabled={isExtracting} className="bg-[#1EB053] hover:bg-[#178f43]">
-                {isExtracting ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Extracting...</> : <>Extract Data</>}
+            <div className="flex justify-end gap-3">
+              <Button variant="outline" onClick={handleClose}>
+                Cancel
+              </Button>
+              <Button 
+                onClick={handleImport}
+                className="bg-[#1EB053] hover:bg-[#178f43]"
+              >
+                <Upload className="w-4 h-4 mr-2" />
+                Import {extractedData.recordCount} Records
               </Button>
             </div>
           </div>
         )}
 
-        {step === 3 && extractedData && (
-          <div className="space-y-4">
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-base flex items-center justify-between">
-                  <span>Extracted Records</span>
-                  <Badge variant="secondary">{extractedData.records?.length || 0} records</Badge>
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="max-h-96 overflow-y-auto space-y-2">
-                  {extractedData.records?.map((record, idx) => (
-                    <div key={idx} className="p-3 border rounded-lg">
-                      <div className="flex items-start justify-between">
-                        <div className="flex-1">
-                          <p className="font-medium">{record.description}</p>
-                          <div className="flex flex-wrap gap-2 mt-2 text-sm text-gray-600">
-                            <span>{record.date}</span>
-                            {record.vendor && <span>• {record.vendor}</span>}
-                            {record.customer_name && <span>• {record.customer_name}</span>}
-                            {record.category && <Badge variant="outline" className="text-xs">{record.category}</Badge>}
-                            {record.invoice_number && <Badge variant="outline" className="text-xs">{record.invoice_number}</Badge>}
-                          </div>
-                        </div>
-                        <p className="font-bold text-lg ml-4">
-                          SLE {record.amount?.toLocaleString()}
-                        </p>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-
-            <div className="flex justify-end gap-2">
-              <Button variant="outline" onClick={() => setStep(2)}>Back</Button>
-              <Button onClick={handleImport} disabled={isImporting} className="bg-[#1EB053] hover:bg-[#178f43]">
-                {isImporting ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Importing...</> : <><CheckCircle2 className="w-4 h-4 mr-2" /> Import {extractedData.records?.length} Records</>}
-              </Button>
-            </div>
+        {step === 'importing' && (
+          <div className="flex flex-col items-center justify-center py-12">
+            <Loader2 className="w-16 h-16 text-[#1EB053] animate-spin mb-4" />
+            <p className="text-lg font-semibold">Importing records...</p>
           </div>
         )}
       </DialogContent>
