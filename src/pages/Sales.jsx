@@ -121,6 +121,12 @@ export default function Sales() {
 
   const currentEmployee = employee?.[0];
   const orgId = currentEmployee?.organisation_id;
+  
+  // Get all organisation IDs the user has access to
+  const allOrgIds = React.useMemo(() => {
+    if (!employee || employee.length === 0) return [];
+    return [...new Set(employee.map(e => e.organisation_id).filter(Boolean))];
+  }, [employee]);
 
   const { data: organisation } = useQuery({
     queryKey: ['organisation', orgId],
@@ -156,11 +162,7 @@ export default function Sales() {
 
   const { data: warehouses = [] } = useQuery({
     queryKey: ['warehouses', orgId],
-    queryFn: async () => {
-      // Get all warehouses for the organisation
-      const allWarehouses = await base44.entities.Warehouse.filter({ organisation_id: orgId, is_active: true });
-      return allWarehouses || [];
-    },
+    queryFn: () => base44.entities.Warehouse.filter({ organisation_id: orgId, is_active: true }),
     enabled: !!orgId,
     staleTime: 5 * 60 * 1000,
     refetchOnWindowFocus: false,
@@ -183,12 +185,18 @@ export default function Sales() {
 
   // Fetch stock levels for the selected location
   const { data: stockLevels = [] } = useQuery({
-    queryKey: ['stockLevels', orgId, selectedLocation],
-    queryFn: () => base44.entities.StockLevel.filter({ 
-      organisation_id: orgId, 
-      warehouse_id: selectedLocation 
-    }),
-    enabled: !!orgId && !!selectedLocation,
+    queryKey: ['stockLevels', allOrgIds, selectedLocation],
+    queryFn: async () => {
+      if (allOrgIds.length === 0 || !selectedLocation) return [];
+      const results = await Promise.all(
+        allOrgIds.map(id => base44.entities.StockLevel.filter({ 
+          organisation_id: id, 
+          warehouse_id: selectedLocation 
+        }))
+      );
+      return results.flat();
+    },
+    enabled: allOrgIds.length > 0 && !!selectedLocation,
     staleTime: 0,
     refetchOnWindowFocus: true,
   });
