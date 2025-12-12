@@ -68,6 +68,15 @@ export default function CreateDocumentDialog({
   const [customTitle, setCustomTitle] = useState("");
   const [previewContent, setPreviewContent] = useState("");
   const [sending, setSending] = useState(false);
+  const [employeeSearch, setEmployeeSearch] = useState("");
+
+  useEffect(() => {
+    if (!open) {
+      resetForm();
+    } else if (open) {
+      setStep(1);
+    }
+  }, [open]);
 
   // Fetch custom templates
   const { data: customTemplates = [] } = useQuery({
@@ -333,8 +342,6 @@ export default function CreateDocumentDialog({
     setSending(false);
   };
 
-  const [employeeSearch, setEmployeeSearch] = useState("");
-  
   const filteredActiveEmployees = activeEmployees.filter(emp => 
     emp.full_name?.toLowerCase().includes(employeeSearch.toLowerCase()) ||
     emp.position?.toLowerCase().includes(employeeSearch.toLowerCase()) ||
