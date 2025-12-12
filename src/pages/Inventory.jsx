@@ -3,6 +3,7 @@ import { base44 } from "@/api/base44Client";
 import { useToast } from "@/components/ui/Toast";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import ConfirmDialog from "@/components/ui/ConfirmDialog";
+import { format } from "date-fns";
 import {
   Package,
   Search,
@@ -18,7 +19,8 @@ import {
   Download,
   Upload,
   ArrowLeftRight,
-  Zap
+  Zap,
+  Cloud
 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -38,6 +40,7 @@ import StockMovementsList from "@/components/inventory/StockMovementsList";
 import InventoryInsights from "@/components/inventory/InventoryInsights";
 import BatchManagement from "@/components/inventory/BatchManagement";
 import LocationStockView from "@/components/inventory/LocationStockView";
+import ExportToGoogleDrive from "@/components/exports/ExportToGoogleDrive";
 
 export default function Inventory() {
   const toast = useToast();
@@ -59,6 +62,7 @@ export default function Inventory() {
   const [productToDelete, setProductToDelete] = useState(null);
   const [showBulkDeleteConfirm, setShowBulkDeleteConfirm] = useState(false);
   const [productsToDelete, setProductsToDelete] = useState([]);
+  const [showDriveExport, setShowDriveExport] = useState(false);
 
   // Fetch current user and employee
   const { data: user } = useQuery({
@@ -239,6 +243,14 @@ export default function Inventory() {
           <p className="text-sm text-gray-500 mt-1">Manage your products and stock levels</p>
         </div>
         <div className="flex items-center gap-2">
+          <Button
+            onClick={() => setShowDriveExport(true)}
+            variant="outline"
+            className="border-blue-500 text-blue-700 hover:bg-blue-50"
+          >
+            <Cloud className="w-4 h-4 mr-2" />
+            <span className="hidden sm:inline">Export to Drive</span>
+          </Button>
           <Button
             onClick={() => {
               setEditingProduct(null);
@@ -586,6 +598,15 @@ export default function Inventory() {
           setProductsToDelete([]);
         }}
         isLoading={deleteProductMutation.isPending}
+      />
+
+      <ExportToGoogleDrive
+        open={showDriveExport}
+        onOpenChange={setShowDriveExport}
+        data={products}
+        fileName={`inventory_export_${format(new Date(), 'yyyy-MM-dd')}`}
+        dataType="inventory"
+        orgId={orgId}
       />
     </div>
   );

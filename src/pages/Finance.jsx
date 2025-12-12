@@ -39,7 +39,8 @@ import {
   Edit2,
   Trash2,
   AlertTriangle,
-  Info
+  Info,
+  Cloud
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -76,6 +77,7 @@ import DocumentUploadExtractor from "@/components/finance/DocumentUploadExtracto
 import AIExpenseCategorizer from "@/components/finance/AIExpenseCategorizer";
 import UnifiedFinancialReports from "@/components/finance/UnifiedFinancialReports";
 import DriveDataExtractor from "@/components/drive/DriveDataExtractor";
+import ExportToGoogleDrive from "@/components/exports/ExportToGoogleDrive";
 
 const expenseCategories = [
   "fuel", "maintenance", "utilities", "supplies", "rent", 
@@ -1568,11 +1570,26 @@ export default function Finance() {
           <TabsContent value="upload" className="mt-6">
             <Card>
               <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Upload className="w-5 h-5 text-purple-600" />
-                  Upload Financial Documents
-                </CardTitle>
-                <CardDescription>Upload receipts, invoices, or spreadsheets to extract financial data automatically</CardDescription>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <CardTitle className="flex items-center gap-2">
+                      <Upload className="w-5 h-5 text-purple-600" />
+                      Upload Financial Documents
+                    </CardTitle>
+                    <CardDescription>Upload receipts, invoices, or spreadsheets to extract financial data automatically</CardDescription>
+                  </div>
+                  <Button
+                    onClick={() => {
+                      setExportData(activeTab === 'expenses' ? expenses : revenues);
+                      setShowDriveExport(true);
+                    }}
+                    variant="outline"
+                    className="border-blue-500 text-blue-700 hover:bg-blue-50"
+                  >
+                    <Cloud className="w-4 h-4 mr-2" />
+                    Export to Drive
+                  </Button>
+                </div>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -1641,6 +1658,16 @@ export default function Finance() {
             onOpenChange={setShowDriveExtractor}
             orgId={orgId}
             currentEmployee={currentEmployee}
+          />
+
+          {/* Export to Drive */}
+          <ExportToGoogleDrive
+            open={showDriveExport}
+            onOpenChange={setShowDriveExport}
+            data={exportData}
+            fileName={`finance_${activeTab}_${format(new Date(), 'yyyy-MM-dd')}`}
+            dataType={activeTab}
+            orgId={orgId}
           />
 
           {/* Cash Flow Tab */}
