@@ -1,4 +1,4 @@
-import React from "react";
+import { } from "react";
 import { format } from "date-fns";
 import { Truck, MapPin, Clock, Users, DollarSign, Fuel } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
@@ -73,16 +73,16 @@ export default function TripCard({ trip, onEdit, onUpdateStatus, compact = false
             <div className="grid grid-cols-3 gap-2 text-center">
               <div>
                 <p className="text-xs text-gray-500">Revenue</p>
-                <p className="font-semibold text-green-600">SLE {(trip.total_revenue || 0).toLocaleString()}</p>
+                <p className="font-semibold text-green-600">Le {(trip.total_revenue || 0).toLocaleString()}</p>
               </div>
               <div>
                 <p className="text-xs text-gray-500">Expenses</p>
-                <p className="font-semibold text-red-600">SLE {((trip.fuel_cost || 0) + (trip.other_expenses || 0)).toLocaleString()}</p>
+                <p className="font-semibold text-red-600">Le {((trip.fuel_cost || 0) + (trip.other_expenses || 0)).toLocaleString()}</p>
               </div>
               <div>
                 <p className="text-xs text-gray-500">Net</p>
                 <p className={`font-semibold ${netRevenue >= 0 ? 'text-blue-600' : 'text-amber-600'}`}>
-                  SLE {netRevenue.toLocaleString()}
+                  Le {netRevenue.toLocaleString()}
                 </p>
               </div>
             </div>

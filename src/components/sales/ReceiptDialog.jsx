@@ -1,4 +1,4 @@
-import React, { useRef, useState } from "react";
+import React, { useRef, useState, useEffect } from "react";
 import { format } from "date-fns";
 import { base44 } from "@/api/base44Client";
 import {
@@ -21,6 +21,15 @@ export default function ReceiptDialog({ open, onOpenChange, sale, organisation }
   const [showEmailInput, setShowEmailInput] = useState(false);
   const [sending, setSending] = useState(false);
   const [downloading, setDownloading] = useState(false);
+
+  useEffect(() => {
+    if (open) {
+      setEmailTo(sale?.customer_phone || "");
+      setShowEmailInput(false);
+      setSending(false);
+      setDownloading(false);
+    }
+  }, [open, sale]);
 
   const primaryColor = organisation?.primary_color || '#1EB053';
   const secondaryColor = organisation?.secondary_color || '#0072C6';

@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import { format, isToday, isYesterday } from "date-fns";
 import {
   Search,

@@ -45,36 +45,55 @@ export default function CustomerDialog({ open, onOpenChange, customer, orgId, em
   const secondaryColor = organisation?.secondary_color || '#0072C6';
 
   useEffect(() => {
-    if (customer) {
-      setFormData({
-        ...formData,
-        ...customer,
-        tags: customer.tags || []
-      });
-      setShowAdvanced(true);
-    } else {
-      setFormData({
-        name: "",
-        email: "",
-        phone: "",
-        secondary_phone: "",
-        customer_type: "individual",
-        segment: "new",
-        address: "",
-        city: "",
-        company_name: "",
-        tax_id: "",
-        tags: [],
-        credit_limit: 0,
-        preferred_payment_method: "cash",
-        notes: "",
-        status: "active",
-        source: "walk_in",
-        assigned_sales_rep_id: "",
-        assigned_sales_rep_name: "",
-        birthday: ""
-      });
-      setShowAdvanced(false);
+    if (open) {
+      if (customer) {
+        setFormData({
+          name: customer.name || "",
+          email: customer.email || "",
+          phone: customer.phone || "",
+          secondary_phone: customer.secondary_phone || "",
+          customer_type: customer.customer_type || "individual",
+          segment: customer.segment || "new",
+          address: customer.address || "",
+          city: customer.city || "",
+          company_name: customer.company_name || "",
+          tax_id: customer.tax_id || "",
+          tags: customer.tags || [],
+          credit_limit: customer.credit_limit || 0,
+          preferred_payment_method: customer.preferred_payment_method || "cash",
+          notes: customer.notes || "",
+          status: customer.status || "active",
+          source: customer.source || "walk_in",
+          assigned_sales_rep_id: customer.assigned_sales_rep_id || "",
+          assigned_sales_rep_name: customer.assigned_sales_rep_name || "",
+          birthday: customer.birthday || ""
+        });
+        setShowAdvanced(true);
+      } else {
+        setFormData({
+          name: "",
+          email: "",
+          phone: "",
+          secondary_phone: "",
+          customer_type: "individual",
+          segment: "new",
+          address: "",
+          city: "",
+          company_name: "",
+          tax_id: "",
+          tags: [],
+          credit_limit: 0,
+          preferred_payment_method: "cash",
+          notes: "",
+          status: "active",
+          source: "walk_in",
+          assigned_sales_rep_id: "",
+          assigned_sales_rep_name: "",
+          birthday: ""
+        });
+        setShowAdvanced(false);
+        setTagInput("");
+      }
     }
   }, [customer, open]);
 

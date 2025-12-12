@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { format } from "date-fns";
@@ -841,6 +841,7 @@ export default function Transport() {
         currentEmployee={currentEmployee}
         orgId={orgId}
         preselectedVehicleId={selectedVehicleForMaintenance}
+        organisation={organisation?.[0]}
       />
 
       {/* Truck Contract Dialog */}
@@ -938,6 +939,7 @@ export default function Transport() {
         open={showRouteDialog}
         onOpenChange={setShowRouteDialog}
         orgId={orgId}
+        organisation={organisation?.[0]}
       />
 
       {/* Printable Forms Dialog */}

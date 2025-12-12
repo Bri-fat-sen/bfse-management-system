@@ -1,4 +1,4 @@
-import React from "react";
+import { } from "react";
 import { Card } from "@/components/ui/card";
 import { TrendingUp, TrendingDown } from "lucide-react";
 

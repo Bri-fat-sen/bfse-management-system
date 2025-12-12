@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from "react";
+import { useState, useMemo } from "react";
 import { format, startOfMonth, endOfMonth, startOfWeek, endOfWeek, addDays, isSameMonth, isSameDay, addMonths, subMonths, parseISO, isWithinInterval } from "date-fns";
 import { ChevronLeft, ChevronRight, Plus, Calendar as CalendarIcon, Clock, Users, Briefcase, AlertCircle, CheckCircle2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -384,7 +384,7 @@ export default function CalendarView({
 
           {/* Week View */}
           {view === "week" && (
-            <div className="grid grid-cols-7 gap-3">
+            <div className="grid grid-cols-7 gap-1 sm:gap-3">
               {calendarDays.map((day) => {
                 const dayEvents = getEventsForDate(day);
                 const isToday = isSameDay(day, new Date());
@@ -398,7 +398,7 @@ export default function CalendarView({
                         {...provided.droppableProps}
                         onClick={() => dayEvents.length === 0 && onAddTask?.(dateStr)}
                         className={cn(
-                          "min-h-[500px] rounded-xl border-2 transition-all group cursor-pointer relative overflow-hidden",
+                          "min-h-[400px] sm:min-h-[500px] rounded-lg sm:rounded-xl border-2 transition-all group cursor-pointer relative overflow-hidden",
                           isToday && "border-[#1EB053] bg-gradient-to-br from-green-50 via-emerald-50 to-teal-50 shadow-xl ring-4 ring-[#1EB053]/20",
                           snapshot.isDraggingOver && "bg-gradient-to-br from-blue-50 to-cyan-50 border-blue-400 shadow-xl scale-[1.02]",
                           !isToday && "border-gray-200 bg-white hover:border-gray-300 hover:shadow-lg"
@@ -415,17 +415,17 @@ export default function CalendarView({
 
                         {/* Date header */}
                         <div className={cn(
-                          "p-4 border-b-2 border-dashed",
+                          "p-2 sm:p-4 border-b-2 border-dashed",
                           isToday ? "border-[#1EB053]/30" : "border-gray-200"
                         )}>
                           <div className={cn(
-                            "text-xs font-semibold uppercase tracking-wide mb-1",
+                            "text-[10px] sm:text-xs font-semibold uppercase tracking-wide mb-0.5 sm:mb-1",
                             isToday ? "text-[#1EB053]" : "text-gray-500"
                           )}>
                             {format(day, 'EEE')}
                           </div>
                           <div className={cn(
-                            "text-4xl font-bold",
+                            "text-2xl sm:text-4xl font-bold",
                             isToday && "bg-gradient-to-br from-[#1EB053] to-[#0072C6] bg-clip-text text-transparent",
                             !isToday && "text-gray-900"
                           )}>
@@ -439,7 +439,7 @@ export default function CalendarView({
                         </div>
                         
                         {/* Events list */}
-                        <div className="p-3 space-y-2 overflow-y-auto max-h-[400px]">
+                        <div className="p-1.5 sm:p-3 space-y-1 sm:space-y-2 overflow-y-auto max-h-[300px] sm:max-h-[400px]">
                           {dayEvents.map((event, eventIdx) => (
                             <Draggable
                               key={event.id}
@@ -457,7 +457,7 @@ export default function CalendarView({
                                     onEventClick?.(event);
                                   }}
                                   className={cn(
-                                    "p-3 rounded-xl cursor-pointer transition-all hover:shadow-lg border-l-4",
+                                    "p-2 sm:p-3 rounded-lg sm:rounded-xl cursor-pointer transition-all hover:shadow-lg border-l-4",
                                     eventColors[event.category || event.type]?.bg,
                                     eventColors[event.category || event.type]?.text,
                                     eventColors[event.category || event.type]?.border,
@@ -465,34 +465,34 @@ export default function CalendarView({
                                     event.status === 'completed' && "opacity-60"
                                   )}
                                 >
-                                  <div className="flex items-start justify-between gap-2 mb-1">
-                                    <div className="flex items-center gap-2 flex-1">
+                                  <div className="flex items-start justify-between gap-1 mb-0.5 sm:mb-1">
+                                    <div className="flex items-center gap-1 sm:gap-2 flex-1 min-w-0">
                                       {event.time && (
-                                        <Badge className="bg-white/50 text-xs px-2 py-0.5">
-                                          <Clock className="w-3 h-3 mr-1" />
-                                          {event.time}
+                                        <Badge className="bg-white/50 text-[10px] sm:text-xs px-1.5 sm:px-2 py-0.5">
+                                          <Clock className="w-2.5 h-2.5 sm:w-3 sm:h-3 sm:mr-1" />
+                                          <span className="hidden sm:inline">{event.time}</span>
                                         </Badge>
                                       )}
                                       {event.status === 'completed' && (
-                                        <CheckCircle2 className="w-4 h-4 text-green-600" />
+                                        <CheckCircle2 className="w-3 h-3 sm:w-4 sm:h-4 text-green-600" />
                                       )}
                                     </div>
                                     {event.priority && (
-                                      <Badge className={cn("text-[10px] px-1.5 py-0.5", priorityColors[event.priority])}>
-                                        {event.priority}
+                                      <Badge className={cn("text-[9px] sm:text-[10px] px-1 sm:px-1.5 py-0.5", priorityColors[event.priority])}>
+                                        {event.priority.charAt(0).toUpperCase()}
                                       </Badge>
                                     )}
                                   </div>
                                   <p className={cn(
-                                    "font-semibold text-sm mb-1",
+                                    "font-semibold text-xs sm:text-sm mb-0.5 sm:mb-1 line-clamp-2",
                                     event.status === 'completed' && "line-through"
                                   )}>
                                     {event.title}
                                   </p>
                                   {event.attendees?.length > 0 && (
-                                    <div className="flex items-center gap-1 text-xs opacity-75 mt-2">
-                                      <Users className="w-3 h-3" />
-                                      <span>{event.attendees.length} attendee{event.attendees.length !== 1 ? 's' : ''}</span>
+                                    <div className="flex items-center gap-1 text-[10px] sm:text-xs opacity-75 mt-1 sm:mt-2">
+                                      <Users className="w-2.5 h-2.5 sm:w-3 sm:h-3" />
+                                      <span className="truncate">{event.attendees.length}</span>
                                     </div>
                                   )}
                                 </div>

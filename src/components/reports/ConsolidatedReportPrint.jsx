@@ -83,9 +83,9 @@ function generateSalesSection({ sales, startDate, endDate }) {
 
   return {
     summaryCards: [
-      { label: 'Total Revenue', value: `SLE ${totalRevenue.toLocaleString()}`, highlight: 'green' },
+      { label: 'Total Revenue', value: `Le ${totalRevenue.toLocaleString()}`, highlight: 'green' },
       { label: 'Transactions', value: filteredSales.length.toString() },
-      { label: 'Avg. Transaction', value: `SLE ${filteredSales.length > 0 ? Math.round(totalRevenue / filteredSales.length).toLocaleString() : 0}` }
+      { label: 'Avg. Transaction', value: `Le ${filteredSales.length > 0 ? Math.round(totalRevenue / filteredSales.length).toLocaleString() : 0}` }
     ],
     sections: [
       {
@@ -103,7 +103,7 @@ function generateSalesSection({ sales, startDate, endDate }) {
             (s.sale_number || '-').substring(0, 15),
             (s.customer_name || 'Walk-in').substring(0, 25),
             (s.payment_method || 'cash').replace(/_/g, ' '),
-            `SLE ${(s.total_amount || 0).toLocaleString()}`
+            `Le ${(s.total_amount || 0).toLocaleString()}`
           ])
         }
       }
@@ -121,9 +121,9 @@ function generateRevenueSection({ sales, expenses, trips, startDate, endDate }) 
 
   return {
     summaryCards: [
-      { label: 'Total Revenue', value: `SLE ${totalRevenue.toLocaleString()}` },
-      { label: 'Sales Revenue', value: `SLE ${salesRevenue.toLocaleString()}` },
-      { label: 'Transport Revenue', value: `SLE ${transportRevenue.toLocaleString()}` }
+      { label: 'Total Revenue', value: `Le ${totalRevenue.toLocaleString()}` },
+      { label: 'Sales Revenue', value: `Le ${salesRevenue.toLocaleString()}` },
+      { label: 'Transport Revenue', value: `Le ${transportRevenue.toLocaleString()}` }
     ],
     sections: [
       {
@@ -148,7 +148,7 @@ function generateInventorySection({ products }) {
   return {
     summaryCards: [
       { label: 'Total Products', value: activeProducts.length.toString() },
-      { label: 'Stock Value', value: `SLE ${totalValue.toLocaleString()}` },
+      { label: 'Stock Value', value: `Le ${totalValue.toLocaleString()}` },
       { label: 'Low Stock', value: lowStock.length.toString(), highlight: lowStock.length > 0 ? 'red' : 'green' },
       { label: 'Out of Stock', value: outOfStock.length.toString(), highlight: outOfStock.length > 0 ? 'red' : 'green' }
     ],
@@ -176,8 +176,8 @@ function generateInventorySection({ products }) {
             p.name,
             p.category || 'Uncategorized',
             p.stock_quantity || 0,
-            `SLE ${(p.unit_price || 0).toLocaleString()}`,
-            `SLE ${((p.stock_quantity || 0) * (p.unit_price || 0)).toLocaleString()}`
+            `Le ${(p.unit_price || 0).toLocaleString()}`,
+            `Le ${((p.stock_quantity || 0) * (p.unit_price || 0)).toLocaleString()}`
           ])
         }
       }
@@ -198,10 +198,10 @@ function generatePayrollSection({ payrolls, startDate, endDate }) {
 
   return {
     summaryCards: [
-      { label: 'Total Gross', value: `SLE ${totalGross.toLocaleString()}` },
-      { label: 'Total Net', value: `SLE ${totalNet.toLocaleString()}` },
-      { label: 'NASSIT', value: `SLE ${totalNassit.toLocaleString()}` },
-      { label: 'PAYE Tax', value: `SLE ${totalPaye.toLocaleString()}`, highlight: 'red' }
+      { label: 'Total Gross', value: `Le ${totalGross.toLocaleString()}` },
+      { label: 'Total Net', value: `Le ${totalNet.toLocaleString()}` },
+      { label: 'NASSIT', value: `Le ${totalNassit.toLocaleString()}` },
+      { label: 'PAYE Tax', value: `Le ${totalPaye.toLocaleString()}`, highlight: 'red' }
     ],
     sections: [
       {
@@ -212,9 +212,9 @@ function generatePayrollSection({ payrolls, startDate, endDate }) {
           rows: filtered.slice(0, 25).map(p => [
             p.employee_name,
             p.employee_role || '-',
-            `SLE ${(p.gross_pay || 0).toLocaleString()}`,
-            `SLE ${(p.total_deductions || 0).toLocaleString()}`,
-            `SLE ${(p.net_pay || 0).toLocaleString()}`,
+            `Le ${(p.gross_pay || 0).toLocaleString()}`,
+            `Le ${(p.total_deductions || 0).toLocaleString()}`,
+            `Le ${(p.net_pay || 0).toLocaleString()}`,
             p.status
           ])
         }
@@ -237,8 +237,8 @@ function generateTransportSection({ trips, startDate, endDate }) {
     summaryCards: [
       { label: 'Total Trips', value: filtered.length.toString() },
       { label: 'Passengers', value: totalPassengers.toLocaleString() },
-      { label: 'Revenue', value: `SLE ${totalRevenue.toLocaleString()}` },
-      { label: 'Net Revenue', value: `SLE ${(totalRevenue - totalFuel).toLocaleString()}`, highlight: (totalRevenue - totalFuel) >= 0 ? 'green' : 'red' }
+      { label: 'Revenue', value: `Le ${totalRevenue.toLocaleString()}` },
+      { label: 'Net Revenue', value: `Le ${(totalRevenue - totalFuel).toLocaleString()}`, highlight: (totalRevenue - totalFuel) >= 0 ? 'green' : 'red' }
     ],
     sections: [
       {
@@ -252,9 +252,9 @@ function generateTransportSection({ trips, startDate, endDate }) {
             t.vehicle_registration || '-',
             t.driver_name || '-',
             t.passengers_count || 0,
-            `SLE ${(t.total_revenue || 0).toLocaleString()}`,
-            `SLE ${(t.fuel_cost || 0).toLocaleString()}`,
-            `SLE ${((t.total_revenue || 0) - (t.fuel_cost || 0)).toLocaleString()}`
+            `Le ${(t.total_revenue || 0).toLocaleString()}`,
+            `Le ${(t.fuel_cost || 0).toLocaleString()}`,
+            `Le ${((t.total_revenue || 0) - (t.fuel_cost || 0)).toLocaleString()}`
           ])
         }
       }
@@ -285,9 +285,9 @@ function generateExpenseSection({ expenses, startDate, endDate }) {
 
   return {
     summaryCards: [
-      { label: 'Total Expenses', value: `SLE ${totalExpenses.toLocaleString()}`, highlight: 'red' },
-      { label: 'Approved', value: `SLE ${approved.toLocaleString()}` },
-      { label: 'Pending', value: `SLE ${pending.toLocaleString()}`, highlight: 'gold' },
+      { label: 'Total Expenses', value: `Le ${totalExpenses.toLocaleString()}`, highlight: 'red' },
+      { label: 'Approved', value: `Le ${approved.toLocaleString()}` },
+      { label: 'Pending', value: `Le ${pending.toLocaleString()}`, highlight: 'gold' },
       { label: 'Transactions', value: filtered.length.toString() }
     ],
     sections: [
@@ -306,7 +306,7 @@ function generateExpenseSection({ expenses, startDate, endDate }) {
             (e.category || 'other').replace(/_/g, ' '),
             (e.description || '-').substring(0, 50) + ((e.description?.length || 0) > 50 ? '...' : ''),
             (e.vendor || '-').substring(0, 30),
-            `SLE ${(e.amount || 0).toLocaleString()}`
+            `Le ${(e.amount || 0).toLocaleString()}`
           ])
         }
       }
@@ -330,9 +330,9 @@ function generateProfitLossSection({ sales, expenses, trips, startDate, endDate 
 
   return {
     summaryCards: [
-      { label: 'Total Revenue', value: `SLE ${totalRevenue.toLocaleString()}` },
-      { label: 'Total Expenses', value: `SLE ${totalCosts.toLocaleString()}`, highlight: 'red' },
-      { label: 'Net Profit/Loss', value: `SLE ${netProfit.toLocaleString()}`, highlight: netProfit >= 0 ? 'green' : 'red' },
+      { label: 'Total Revenue', value: `Le ${totalRevenue.toLocaleString()}` },
+      { label: 'Total Expenses', value: `Le ${totalCosts.toLocaleString()}`, highlight: 'red' },
+      { label: 'Net Profit/Loss', value: `Le ${netProfit.toLocaleString()}`, highlight: netProfit >= 0 ? 'green' : 'red' },
       { label: 'Profit Margin', value: `${margin}%` }
     ],
     sections: [

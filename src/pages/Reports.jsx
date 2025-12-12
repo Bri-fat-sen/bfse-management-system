@@ -272,14 +272,14 @@ export default function Reports() {
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         <StatCard 
           label="Monthly Revenue" 
-          value={`SLE ${stats.revenue.toLocaleString()}`}
+          value={`Le ${stats.revenue.toLocaleString()}`}
           change={stats.revenueChange}
           icon={TrendingUp}
           color="green"
         />
         <StatCard 
           label="Net Profit" 
-          value={`SLE ${stats.netProfit.toLocaleString()}`}
+          value={`Le ${stats.netProfit.toLocaleString()}`}
           icon={DollarSign}
           color={stats.netProfit >= 0 ? "blue" : "red"}
         />
@@ -647,14 +647,14 @@ function generateQuickReportConfig(type, { sales, expenses, payrolls, trips, pro
       organisation,
       summaryCards: [
         { label: 'Total Sales', value: sales.filter(s => format(new Date(s.created_date), 'yyyy-MM-dd') === format(now, 'yyyy-MM-dd')).length, highlight: 'blue' },
-        { label: 'Revenue', value: `SLE ${sales.filter(s => format(new Date(s.created_date), 'yyyy-MM-dd') === format(now, 'yyyy-MM-dd')).reduce((sum, s) => sum + (s.total_amount || 0), 0).toLocaleString()}`, highlight: 'green' },
+        { label: 'Revenue', value: `Le ${sales.filter(s => format(new Date(s.created_date), 'yyyy-MM-dd') === format(now, 'yyyy-MM-dd')).reduce((sum, s) => sum + (s.total_amount || 0), 0).toLocaleString()}`, highlight: 'green' },
       ],
       sections: [{
         title: 'Sales Today',
         table: {
           columns: ['#', 'Customer', 'Items', 'Amount', 'Payment'],
           rows: sales.filter(s => format(new Date(s.created_date), 'yyyy-MM-dd') === format(now, 'yyyy-MM-dd')).slice(0, 20).map((s, i) => [
-            i + 1, s.customer_name || 'Walk-in', s.items?.length || 0, `SLE ${(s.total_amount || 0).toLocaleString()}`, s.payment_method
+            i + 1, s.customer_name || 'Walk-in', s.items?.length || 0, `Le ${(s.total_amount || 0).toLocaleString()}`, s.payment_method
           ])
         }
       }]
@@ -664,7 +664,7 @@ function generateQuickReportConfig(type, { sales, expenses, payrolls, trips, pro
       dateRange: format(now, 'MMMM yyyy'),
       organisation,
       summaryCards: [
-        { label: 'Total Revenue', value: `SLE ${sales.filter(s => new Date(s.created_date) >= monthStart).reduce((sum, s) => sum + (s.total_amount || 0), 0).toLocaleString()}`, highlight: 'green' },
+        { label: 'Total Revenue', value: `Le ${sales.filter(s => new Date(s.created_date) >= monthStart).reduce((sum, s) => sum + (s.total_amount || 0), 0).toLocaleString()}`, highlight: 'green' },
         { label: 'Sales Count', value: sales.filter(s => new Date(s.created_date) >= monthStart).length, highlight: 'blue' },
       ],
       sections: [{
@@ -673,7 +673,7 @@ function generateQuickReportConfig(type, { sales, expenses, payrolls, trips, pro
           columns: ['Payment Method', 'Count', 'Amount'],
           rows: ['cash', 'card', 'mobile_money', 'credit'].map(method => {
             const filtered = sales.filter(s => new Date(s.created_date) >= monthStart && s.payment_method === method);
-            return [method.replace('_', ' ').toUpperCase(), filtered.length, `SLE ${filtered.reduce((sum, s) => sum + (s.total_amount || 0), 0).toLocaleString()}`];
+            return [method.replace('_', ' ').toUpperCase(), filtered.length, `Le ${filtered.reduce((sum, s) => sum + (s.total_amount || 0), 0).toLocaleString()}`];
           })
         }
       }]
@@ -701,7 +701,7 @@ function generateQuickReportConfig(type, { sales, expenses, payrolls, trips, pro
       dateRange: format(now, 'MMMM yyyy'),
       organisation,
       summaryCards: [
-        { label: 'Total Payroll', value: `SLE ${payrolls.filter(p => new Date(p.period_end) >= monthStart).reduce((sum, p) => sum + (p.net_pay || 0), 0).toLocaleString()}`, highlight: 'green' },
+        { label: 'Total Payroll', value: `Le ${payrolls.filter(p => new Date(p.period_end) >= monthStart).reduce((sum, p) => sum + (p.net_pay || 0), 0).toLocaleString()}`, highlight: 'green' },
         { label: 'Employees Paid', value: payrolls.filter(p => new Date(p.period_end) >= monthStart && p.status === 'paid').length, highlight: 'blue' },
       ],
       sections: [{
@@ -709,7 +709,7 @@ function generateQuickReportConfig(type, { sales, expenses, payrolls, trips, pro
         table: {
           columns: ['Employee', 'Gross', 'Deductions', 'Net Pay', 'Status'],
           rows: payrolls.filter(p => new Date(p.period_end) >= monthStart).slice(0, 15).map(p => [
-            p.employee_name || '-', `SLE ${(p.gross_pay || 0).toLocaleString()}`, `SLE ${(p.total_deductions || 0).toLocaleString()}`, `SLE ${(p.net_pay || 0).toLocaleString()}`, p.status
+            p.employee_name || '-', `Le ${(p.gross_pay || 0).toLocaleString()}`, `Le ${(p.total_deductions || 0).toLocaleString()}`, `Le ${(p.net_pay || 0).toLocaleString()}`, p.status
           ])
         }
       }]
@@ -720,14 +720,14 @@ function generateQuickReportConfig(type, { sales, expenses, payrolls, trips, pro
       organisation,
       summaryCards: [
         { label: 'Total Trips', value: trips.filter(t => new Date(t.date) >= monthStart).length, highlight: 'blue' },
-        { label: 'Revenue', value: `SLE ${trips.filter(t => new Date(t.date) >= monthStart).reduce((sum, t) => sum + (t.total_revenue || 0), 0).toLocaleString()}`, highlight: 'green' },
+        { label: 'Revenue', value: `Le ${trips.filter(t => new Date(t.date) >= monthStart).reduce((sum, t) => sum + (t.total_revenue || 0), 0).toLocaleString()}`, highlight: 'green' },
       ],
       sections: [{
         title: 'Trip Details',
         table: {
           columns: ['Date', 'Driver', 'Route', 'Passengers', 'Revenue'],
           rows: trips.filter(t => new Date(t.date) >= monthStart).slice(0, 15).map(t => [
-            t.date, t.driver_name || '-', t.route_name || '-', t.passengers_count || 0, `SLE ${(t.total_revenue || 0).toLocaleString()}`
+            t.date, t.driver_name || '-', t.route_name || '-', t.passengers_count || 0, `Le ${(t.total_revenue || 0).toLocaleString()}`
           ])
         }
       }]
@@ -737,7 +737,7 @@ function generateQuickReportConfig(type, { sales, expenses, payrolls, trips, pro
       dateRange: format(now, 'MMMM yyyy'),
       organisation,
       summaryCards: [
-        { label: 'Total Expenses', value: `SLE ${expenses.filter(e => new Date(e.date || e.created_date) >= monthStart).reduce((sum, e) => sum + (e.amount || 0), 0).toLocaleString()}`, highlight: 'red' },
+        { label: 'Total Expenses', value: `Le ${expenses.filter(e => new Date(e.date || e.created_date) >= monthStart).reduce((sum, e) => sum + (e.amount || 0), 0).toLocaleString()}`, highlight: 'red' },
       ],
       sections: [{
         title: 'Expenses by Category',
@@ -745,7 +745,7 @@ function generateQuickReportConfig(type, { sales, expenses, payrolls, trips, pro
           columns: ['Category', 'Count', 'Amount'],
           rows: [...new Set(expenses.map(e => e.category))].map(cat => {
             const filtered = expenses.filter(e => new Date(e.date || e.created_date) >= monthStart && e.category === cat);
-            return [cat, filtered.length, `SLE ${filtered.reduce((sum, e) => sum + (e.amount || 0), 0).toLocaleString()}`];
+            return [cat, filtered.length, `Le ${filtered.reduce((sum, e) => sum + (e.amount || 0), 0).toLocaleString()}`];
           })
         }
       }]
@@ -758,9 +758,9 @@ function generateQuickReportConfig(type, { sales, expenses, payrolls, trips, pro
         const rev = sales.filter(s => new Date(s.created_date) >= monthStart).reduce((sum, s) => sum + (s.total_amount || 0), 0);
         const exp = expenses.filter(e => new Date(e.date || e.created_date) >= monthStart).reduce((sum, e) => sum + (e.amount || 0), 0);
         return [
-          { label: 'Revenue', value: `SLE ${rev.toLocaleString()}`, highlight: 'green' },
-          { label: 'Expenses', value: `SLE ${exp.toLocaleString()}`, highlight: 'red' },
-          { label: 'Net Profit', value: `SLE ${(rev - exp).toLocaleString()}`, highlight: rev - exp >= 0 ? 'green' : 'red' },
+          { label: 'Revenue', value: `Le ${rev.toLocaleString()}`, highlight: 'green' },
+          { label: 'Expenses', value: `Le ${exp.toLocaleString()}`, highlight: 'red' },
+          { label: 'Net Profit', value: `Le ${(rev - exp).toLocaleString()}`, highlight: rev - exp >= 0 ? 'green' : 'red' },
         ];
       })(),
       sections: []
