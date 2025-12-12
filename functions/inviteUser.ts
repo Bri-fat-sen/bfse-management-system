@@ -39,7 +39,8 @@ Deno.serve(async (req) => {
       employee = await base44.entities.Employee.create({
         organisation_id,
         employee_code: employeeCode,
-        email: email, // Will be auto-linked to user_email when they first log in
+        user_email: email, // Link to user account
+        email: email,
         first_name: full_name.split(' ')[0] || '',
         last_name: full_name.split(' ').slice(1).join(' ') || '',
         full_name,
