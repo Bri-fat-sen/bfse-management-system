@@ -115,13 +115,19 @@ Deno.serve(async (req) => {
       }
 
       case 'listFiles': {
-        // List all files with optional folder filter
-        const q = folderId 
-          ? `'${folderId}' in parents and trashed=false`
-          : query || `trashed=false`;
+        // List all files with optional folder filter, including shared files
+        let q;
+        if (folderId) {
+          q = `'${folderId}' in parents and trashed=false`;
+        } else if (query) {
+          q = query;
+        } else {
+          // Include both owned files and files shared with the service account
+          q = `trashed=false and (sharedWithMe=true or 'me' in owners)`;
+        }
         
         const listResponse = await fetch(
-          `https://www.googleapis.com/drive/v3/files?q=${encodeURIComponent(q)}&fields=files(id,name,mimeType,modifiedTime,size,webViewLink,createdTime,owners)&orderBy=modifiedTime desc&pageSize=1000`,
+          `https://www.googleapis.com/drive/v3/files?q=${encodeURIComponent(q)}&fields=files(id,name,mimeType,modifiedTime,size,webViewLink,createdTime,owners,shared)&orderBy=modifiedTime desc&pageSize=1000&supportsAllDrives=true&includeItemsFromAllDrives=true`,
           { headers }
         );
         
