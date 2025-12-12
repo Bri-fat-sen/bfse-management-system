@@ -177,14 +177,14 @@ export default function Layout({ children, currentPageName }) {
       if (!user?.email || employee?.length > 0) return;
       
       try {
-        const unlinkedEmployees = await base44.entities.Employee.filter({ 
-          email: user.email 
-        });
-        
-        const matchingEmployee = unlinkedEmployees.find(e => !e.user_email);
+        // Try to find employee by email field (not user_email)
+        const allEmployees = await base44.asServiceRole.entities.Employee.list();
+        const matchingEmployee = allEmployees.find(e => 
+          e.email === user.email && !e.user_email
+        );
         
         if (matchingEmployee) {
-          await base44.entities.Employee.update(matchingEmployee.id, {
+          await base44.asServiceRole.entities.Employee.update(matchingEmployee.id, {
             user_email: user.email
           });
           refetchEmployee();
