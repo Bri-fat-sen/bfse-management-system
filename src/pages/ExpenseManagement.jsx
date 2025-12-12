@@ -84,7 +84,7 @@ const EXPENSE_CATEGORIES = [
 ];
 
 function ExpenseFormFields({ editingExpense, categories, orgId }) {
-  const [formData, setFormData] = React.useState({
+  const [formData, setFormData] = useState({
     category: editingExpense?.category || 'other',
     description: editingExpense?.description || '',
     vendor: editingExpense?.vendor || '',
