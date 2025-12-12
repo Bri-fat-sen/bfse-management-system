@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import {
@@ -31,10 +31,19 @@ export default function DocumentSignatureDialog({
   onSigned
 }) {
   const queryClient = useQueryClient();
-  const [signatureName, setSignatureName] = useState(employee?.full_name || "");
+  const [signatureName, setSignatureName] = useState("");
   const [agreed, setAgreed] = useState(false);
   const [rejecting, setRejecting] = useState(false);
   const [rejectionReason, setRejectionReason] = useState("");
+
+  useEffect(() => {
+    if (open) {
+      setSignatureName(employee?.full_name || "");
+      setAgreed(false);
+      setRejecting(false);
+      setRejectionReason("");
+    }
+  }, [open, employee]);
 
   const signDocumentMutation = useMutation({
     mutationFn: async () => {
