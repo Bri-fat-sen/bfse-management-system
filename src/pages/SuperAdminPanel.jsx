@@ -38,18 +38,18 @@ export default function SuperAdminPanel() {
 
   const { data: organisations = [], isLoading } = useQuery({
     queryKey: ['allOrganisations'],
-    queryFn: () => base44.asServiceRole.entities.Organisation.list(),
+    queryFn: () => base44.entities.Organisation.list(),
     enabled: user?.role === 'admin',
   });
 
   const { data: employees = [] } = useQuery({
     queryKey: ['allEmployees'],
-    queryFn: () => base44.asServiceRole.entities.Employee.list(),
+    queryFn: () => base44.entities.Employee.list(),
     enabled: user?.role === 'admin',
   });
 
   const createOrgMutation = useMutation({
-    mutationFn: (data) => base44.asServiceRole.entities.Organisation.create(data),
+    mutationFn: (data) => base44.entities.Organisation.create(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['allOrganisations'] });
       toast.success("Organisation Created", "New organisation has been created successfully");
@@ -62,7 +62,7 @@ export default function SuperAdminPanel() {
   });
 
   const updateOrgMutation = useMutation({
-    mutationFn: ({ id, data }) => base44.asServiceRole.entities.Organisation.update(id, data),
+    mutationFn: ({ id, data }) => base44.entities.Organisation.update(id, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['allOrganisations'] });
       toast.success("Organisation Updated");
@@ -75,7 +75,7 @@ export default function SuperAdminPanel() {
   });
 
   const deleteOrgMutation = useMutation({
-    mutationFn: (id) => base44.asServiceRole.entities.Organisation.delete(id),
+    mutationFn: (id) => base44.entities.Organisation.delete(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['allOrganisations'] });
       toast.success("Organisation Deleted");
