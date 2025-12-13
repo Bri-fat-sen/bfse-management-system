@@ -21,7 +21,6 @@ export default function AddEmployeeDialog({ open, onOpenChange, employee, orgId 
     email: "",
     phone: "",
     employee_code: `EMP${Date.now().toString().slice(-6)}`,
-    role: "read_only",
     department: "",
     position: "",
     base_salary: 0,
@@ -193,24 +192,6 @@ export default function AddEmployeeDialog({ open, onOpenChange, employee, orgId 
                 />
               </div>
               <div>
-                <Label>Role *</Label>
-                <Select
-                  value={formData.role}
-                  onValueChange={(value) => setFormData({ ...formData, role: value })}
-                >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {roleOptions.map((opt) => (
-                      <SelectItem key={opt.value} value={opt.value}>
-                        {opt.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div>
                 <Label>Status</Label>
                 <Select
                   value={formData.status}
@@ -226,6 +207,17 @@ export default function AddEmployeeDialog({ open, onOpenChange, employee, orgId 
                   </SelectContent>
                 </Select>
               </div>
+              {employee && (
+                <div>
+                  <Label>Role (View Only)</Label>
+                  <Input
+                    value={employee.role?.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase()) || 'N/A'}
+                    disabled
+                    className="bg-gray-50"
+                  />
+                  <p className="text-xs text-gray-500 mt-1">Role can only be changed in User Management</p>
+                </div>
+              )}
             </div>
           </div>
 
@@ -291,37 +283,21 @@ export default function AddEmployeeDialog({ open, onOpenChange, employee, orgId 
             </div>
           </div>
 
-          {/* Location Assignment */}
-          {locations.length > 0 && (
+          {/* Location Assignment - View Only */}
+          {employee && employee.assigned_location_name && (
             <div className="space-y-4">
               <h3 className="font-semibold text-gray-900 flex items-center gap-2">
                 <MapPin className="w-4 h-4" />
                 Location Assignment
               </h3>
               <div>
-                <Label>Assigned Location</Label>
-                <Select
-                  value={formData.assigned_location_id}
-                  onValueChange={(value) => {
-                    const loc = locations.find(l => l.id === value);
-                    setFormData({
-                      ...formData,
-                      assigned_location_id: value,
-                      assigned_location_name: loc?.name,
-                    });
-                  }}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select location..." />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {locations.map((loc) => (
-                      <SelectItem key={loc.id} value={loc.id}>
-                        {loc.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <Label>Assigned Location (View Only)</Label>
+                <Input
+                  value={employee.assigned_location_name || 'Not assigned'}
+                  disabled
+                  className="bg-gray-50"
+                />
+                <p className="text-xs text-gray-500 mt-1">Location can only be changed in User Management</p>
               </div>
             </div>
           )}
