@@ -199,7 +199,8 @@ export default function Transport() {
     }
   });
 
-  const todayTrips = trips.filter(t => t.date === format(new Date(), 'yyyy-MM-dd'));
+  const today = format(new Date(), 'yyyy-MM-dd');
+  const todayTrips = trips.filter(t => t.date === today);
   const totalRevenue = todayTrips.reduce((sum, t) => sum + (t.total_revenue || 0), 0);
   const totalPassengers = todayTrips.reduce((sum, t) => sum + (t.passengers_count || 0), 0);
   const activeVehicles = vehicles.filter(v => v.status === 'active');
@@ -215,13 +216,24 @@ export default function Transport() {
     }, 0);
 
   // Upcoming and overdue maintenance
-  const upcomingMaintenance = maintenanceRecords.filter(m => 
-    m.next_due_date && !isPast(new Date(m.next_due_date)) && 
-    differenceInDays(new Date(m.next_due_date), new Date()) <= 30
-  );
-  const overdueMaintenance = maintenanceRecords.filter(m => 
-    m.next_due_date && isPast(new Date(m.next_due_date))
-  );
+  const upcomingMaintenance = maintenanceRecords.filter(m => {
+    if (!m.next_due_date) return false;
+    try {
+      const dueDate = new Date(m.next_due_date);
+      return !isNaN(dueDate.getTime()) && !isPast(dueDate) && differenceInDays(dueDate, new Date()) <= 30;
+    } catch {
+      return false;
+    }
+  });
+  const overdueMaintenance = maintenanceRecords.filter(m => {
+    if (!m.next_due_date) return false;
+    try {
+      const dueDate = new Date(m.next_due_date);
+      return !isNaN(dueDate.getTime()) && isPast(dueDate);
+    } catch {
+      return false;
+    }
+  });
 
   if (!user) {
     return <LoadingSpinner message="Loading Transport..." subtitle="Fetching vehicles and trips" fullScreen={true} />;
@@ -326,7 +338,7 @@ export default function Transport() {
             onClick={() => {
               const data = activeTab === 'trips' 
                 ? trips.map(t => ({
-                    Date: (t.date || t.created_date) ? format(new Date(t.date || t.created_date), 'yyyy-MM-dd') : 'N/A',
+                    Date: format(new Date(t.date || t.created_date), 'yyyy-MM-dd'),
                     Vehicle: t.vehicle_registration || 'N/A',
                     Driver: t.driver_name || 'N/A',
                     Route: t.route_name || 'N/A',
@@ -349,7 +361,7 @@ export default function Transport() {
                   }))
                 : activeTab === 'maintenance'
                 ? maintenanceRecords.map(m => ({
-                    Date: m.date_performed ? format(new Date(m.date_performed), 'yyyy-MM-dd') : 'N/A',
+                    Date: format(new Date(m.date_performed), 'yyyy-MM-dd'),
                     Vehicle: m.vehicle_registration || 'N/A',
                     'Maintenance Type': m.maintenance_type,
                     'Service Provider': m.service_provider || 'N/A',
@@ -598,7 +610,7 @@ export default function Transport() {
                                 Driver: {vehicle.assigned_driver_name}
                               </p>
                             )}
-                            {lastMaintenance && lastMaintenance.date_performed && (
+                            {lastMaintenance && (
                               <p className="text-sm text-gray-500">
                                 Last service: {format(new Date(lastMaintenance.date_performed), 'MMM d, yyyy')}
                               </p>
