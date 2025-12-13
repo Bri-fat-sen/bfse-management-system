@@ -240,24 +240,6 @@ export default function Layout({ children, currentPageName }) {
 
   const currentOrg = organisationData?.[0];
 
-  const handleLogout = () => {
-    setIsPinUnlocked(false);
-    sessionStorage.removeItem('pinUnlocked');
-    base44.auth.logout(createPageUrl('Landing'));
-  };
-
-  const handlePinUnlock = () => {
-    setIsPinUnlocked(true);
-    sessionStorage.setItem('pinUnlocked', 'true');
-  };
-
-  useEffect(() => {
-    const unlocked = sessionStorage.getItem('pinUnlocked');
-    if (unlocked === 'true') {
-      setIsPinUnlocked(true);
-    }
-  }, []);
-
   // If user has no organisation, show minimal layout for JoinOrganisation page
   if (!currentEmployee && currentPageName === 'JoinOrganisation') {
     return (
@@ -355,6 +337,24 @@ export default function Layout({ children, currentPageName }) {
     return DEFAULT_ROLE_PERMISSIONS[userRole] || DEFAULT_ROLE_PERMISSIONS.read_only;
   }, [userRole]);
 
+  const handleLogout = () => {
+    setIsPinUnlocked(false);
+    sessionStorage.removeItem('pinUnlocked');
+    base44.auth.logout(createPageUrl('Landing'));
+  };
+
+  const handlePinUnlock = () => {
+    setIsPinUnlocked(true);
+    sessionStorage.setItem('pinUnlocked', 'true');
+  };
+
+  useEffect(() => {
+    const unlocked = sessionStorage.getItem('pinUnlocked');
+    if (unlocked === 'true') {
+      setIsPinUnlocked(true);
+    }
+  }, []);
+
   const filteredMenuSections = useMemo(() => {
     const effectiveRole = (actualRole === 'super_admin' && previewRole) ? previewRole : userRole;
     const effectivePermissions = previewRole ? (DEFAULT_ROLE_PERMISSIONS[previewRole] || DEFAULT_ROLE_PERMISSIONS.read_only) : permissions;
@@ -376,6 +376,24 @@ export default function Layout({ children, currentPageName }) {
       })
     })).filter(section => section.items.length > 0);
   }, [userRole, permissions, previewRole, actualRole]);
+
+  const handleLogout = () => {
+    setIsPinUnlocked(false);
+    sessionStorage.removeItem('pinUnlocked');
+    base44.auth.logout(createPageUrl('Landing'));
+  };
+
+  const handlePinUnlock = () => {
+    setIsPinUnlocked(true);
+    sessionStorage.setItem('pinUnlocked', 'true');
+  };
+
+  useEffect(() => {
+    const unlocked = sessionStorage.getItem('pinUnlocked');
+    if (unlocked === 'true') {
+      setIsPinUnlocked(true);
+    }
+  }, []);
 
   const requiresPinAuth = currentEmployee?.pin_hash && !isPinUnlocked;
 
