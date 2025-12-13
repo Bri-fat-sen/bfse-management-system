@@ -1,7 +1,6 @@
 import React from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Users, CheckCircle, XCircle, Clock } from "lucide-react";
-import { format } from "date-fns";
+import { CheckCircle, XCircle, Clock } from "lucide-react";
 
 export default function AttendanceOverviewTab({ orgId, attendance, employees }) {
   const present = attendance.filter(a => a.status === 'present').length;
