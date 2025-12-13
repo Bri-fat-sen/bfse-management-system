@@ -15,7 +15,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useToast } from "@/components/ui/Toast";
 
 export default function AddEmployeeDialog({ open, onOpenChange, employee, orgId }) {
-  const [formData, setFormData] = useState(employee || {
+  const [formData, setFormData] = useState(employee ? { ...employee } : {
     first_name: "",
     last_name: "",
     email: "",
