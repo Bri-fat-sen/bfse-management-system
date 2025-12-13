@@ -318,6 +318,13 @@ export default function ProcessPayrollDialog({ open, onOpenChange, orgId, curren
   const totalGross = payrollPreview.reduce((sum, p) => sum + (p.gross_pay || 0), 0);
   const totalNet = payrollPreview.reduce((sum, p) => sum + (p.net_pay || 0), 0);
 
+  // Fetch packages for estimation
+  const { data: allPackages = [] } = useQuery({
+    queryKey: ['remunerationPackages', orgId],
+    queryFn: () => base44.entities.RemunerationPackage.filter({ organisation_id: orgId }),
+    enabled: !!orgId,
+  });
+
   // Calculate estimated statutory deductions for selected employees
   const estimatedStatutory = useMemo(() => {
     if (selectedEmployees.length === 0) return null;
@@ -326,6 +333,7 @@ export default function ProcessPayrollDialog({ open, onOpenChange, orgId, curren
     let totalNassitEmp = 0;
     let totalNassitEmpr = 0;
     let totalPaye = 0;
+    let totalGrossAccumulated = 0;
 
     selectedEmployees.forEach(empId => {
       const emp = activeEmployees.find(e => e.id === empId);
@@ -334,9 +342,18 @@ export default function ProcessPayrollDialog({ open, onOpenChange, orgId, curren
       const baseSalary = parseFloat(emp.base_salary) || parseFloat(emp.hourly_rate) || parseFloat(emp.daily_rate) || 0;
       totalBase += baseSalary;
 
-      const totalAllowances = allowances.reduce((sum, a) => sum + (parseFloat(a.amount) || 0), 0);
-      const totalBonuses = bonuses.reduce((sum, b) => sum + (parseFloat(b.amount) || 0), 0);
+      // Include package allowances/bonuses in estimate
+      const empPackage = allPackages.find(p => p.id === emp.remuneration_package_id);
+      const packageAllowances = empPackage?.allowances || [];
+      const packageBonuses = empPackage?.bonuses || [];
+      
+      const totalAllowances = allowances.reduce((sum, a) => sum + (parseFloat(a.amount) || 0), 0) +
+                              packageAllowances.reduce((sum, a) => sum + (parseFloat(a.amount) || 0), 0);
+      const totalBonuses = bonuses.reduce((sum, b) => sum + (parseFloat(b.amount) || 0), 0) +
+                           packageBonuses.reduce((sum, b) => sum + (parseFloat(b.amount) || 0), 0);
+      
       const grossBeforeTax = baseSalary + totalAllowances + totalBonuses;
+      totalGrossAccumulated += grossBeforeTax;
       
       const taxCalc = calculateSalaryBreakdown(grossBeforeTax, {}, {});
       totalNassitEmp += taxCalc.nassit.employee;
@@ -349,10 +366,10 @@ export default function ProcessPayrollDialog({ open, onOpenChange, orgId, curren
       totalNassitEmp,
       totalNassitEmpr,
       totalPaye,
-      totalGross: totalBase + allowances.reduce((sum, a) => sum + (a.amount || 0), 0) * selectedEmployees.length + bonuses.reduce((sum, b) => sum + (b.amount || 0), 0) * selectedEmployees.length,
+      totalGross: totalGrossAccumulated,
       employeeCount: selectedEmployees.length
     };
-  }, [selectedEmployees, activeEmployees, allowances, bonuses]);
+  }, [selectedEmployees, activeEmployees, allowances, bonuses, allPackages]);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
