@@ -77,7 +77,6 @@ import DocumentUploadExtractor from "@/components/finance/DocumentUploadExtracto
 import AIExpenseCategorizer from "@/components/finance/AIExpenseCategorizer";
 import UnifiedFinancialReports from "@/components/finance/UnifiedFinancialReports";
 import DriveDataExtractor from "@/components/drive/DriveDataExtractor";
-import ExportToGoogleDrive from "@/components/exports/ExportToGoogleDrive";
 import ModernExportDialog from "@/components/exports/ModernExportDialog";
 
 const expenseCategories = [
@@ -105,8 +104,6 @@ export default function Finance() {
   const [showRevenueDialog, setShowRevenueDialog] = useState(false);
   const [showBankDepositDialog, setShowBankDepositDialog] = useState(false);
   const [showDocumentExtractor, setShowDocumentExtractor] = useState(false);
-  const [showDriveExport, setShowDriveExport] = useState(false);
-  const [exportData, setExportData] = useState([]);
   const [editingRevenue, setEditingRevenue] = useState(null);
   const [editingExpense, setEditingExpense] = useState(null);
   const [categoryFilter, setCategoryFilter] = useState("all");
@@ -1601,25 +1598,12 @@ export default function Finance() {
           <TabsContent value="upload" className="mt-6">
             <Card>
               <CardHeader>
-                <div className="flex items-center justify-between">
-                  <div>
-                    <CardTitle className="flex items-center gap-2">
-                      <Upload className="w-5 h-5 text-purple-600" />
-                      Upload Financial Documents
-                    </CardTitle>
-                    <CardDescription>Upload receipts, invoices, or spreadsheets to extract financial data automatically</CardDescription>
-                  </div>
-                  <Button
-                    onClick={() => {
-                      setExportData(activeTab === 'expenses' ? expenses : revenues);
-                      setShowDriveExport(true);
-                    }}
-                    variant="outline"
-                    className="border-blue-500 text-blue-700 hover:bg-blue-50"
-                  >
-                    <Cloud className="w-4 h-4 mr-2" />
-                    Export to Drive
-                  </Button>
+                <div>
+                  <CardTitle className="flex items-center gap-2">
+                    <Upload className="w-5 h-5 text-purple-600" />
+                    Upload Financial Documents
+                  </CardTitle>
+                  <CardDescription>Upload receipts, invoices, or spreadsheets to extract financial data automatically</CardDescription>
                 </div>
               </CardHeader>
               <CardContent className="space-y-4">
@@ -1689,16 +1673,6 @@ export default function Finance() {
             onOpenChange={setShowDriveExtractor}
             orgId={orgId}
             currentEmployee={currentEmployee}
-          />
-
-          {/* Export to Drive */}
-          <ExportToGoogleDrive
-            open={showDriveExport}
-            onOpenChange={setShowDriveExport}
-            data={exportData}
-            fileName={`finance_${activeTab}_${format(new Date(), 'yyyy-MM-dd')}`}
-            dataType={activeTab}
-            orgId={orgId}
           />
 
           {/* Modern Export Dialog */}
