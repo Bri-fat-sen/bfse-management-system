@@ -70,6 +70,7 @@ import MobileDeliveryUpdate from "@/components/mobile/MobileDeliveryUpdate";
 import RolePreviewSwitcher, { RolePreviewBanner } from "@/components/admin/RolePreviewSwitcher";
 import OfflineSyncButton from "@/components/offline/OfflineSyncButton";
 import { ToastProvider } from "@/components/ui/Toast";
+import { useThemeCustomization } from "@/components/settings/useThemeCustomization";
 
 const menuSections = [
   {
@@ -175,6 +176,9 @@ export default function Layout({ children, currentPageName }) {
   const [isPinUnlocked, setIsPinUnlocked] = useState(false);
   const [showSetPinDialog, setShowSetPinDialog] = useState(false);
   const [previewRole, setPreviewRole] = useState(null);
+
+  // Apply theme customization
+  const userPreferences = useThemeCustomization(user?.email);
 
   const toggleSection = (title) => {
     setCollapsedSections(prev => ({ ...prev, [title]: !prev[title] }));
@@ -415,7 +419,7 @@ export default function Layout({ children, currentPageName }) {
   }
 
   return (
-    <div className={`min-h-screen ${darkMode ? 'dark bg-[#0F1F3C]' : 'bg-gray-50'}`} style={{ minHeight: '100dvh' }}>
+    <div className={`min-h-screen ${darkMode ? 'dark' : ''} bg-gray-50`} style={{ minHeight: '100dvh' }}>
       <style>{`
         @supports (height: 100dvh) {
           .min-h-screen { min-height: 100dvh; }
@@ -483,10 +487,12 @@ export default function Layout({ children, currentPageName }) {
       )}
 
       <aside className={`
-        fixed top-0 left-0 z-50 h-full bg-[#0F1F3C] text-white transition-all duration-300 flex flex-col
+        fixed top-0 left-0 z-50 h-full text-white transition-all duration-300 flex flex-col
         w-[85vw] max-w-64 lg:${sidebarOpen ? 'w-64' : 'w-20'}
         ${mobileMenuOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
-      `}>
+      `}
+      style={{ backgroundColor: 'var(--sl-navy)' }}
+      >
         <div className="flex-shrink-0">
           <div className="h-1.5 flex">
             <div className="flex-1 bg-[#1EB053]" />

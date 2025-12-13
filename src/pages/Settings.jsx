@@ -131,6 +131,11 @@ export default function Settings() {
 
   const handleSavePreferences = () => {
     updatePreferencesMutation.mutate(localPrefs);
+    // Trigger a refetch to apply changes immediately
+    setTimeout(() => {
+      queryClient.invalidateQueries({ queryKey: ['preferences'] });
+      window.location.reload(); // Reload to apply all changes
+    }, 500);
   };
 
   const handleResetToDefault = () => {
