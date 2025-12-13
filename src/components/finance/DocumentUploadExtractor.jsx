@@ -1419,7 +1419,7 @@ Provide:
                   )}
                 </div>
               </div>
-            </div>
+            </motion.div>
           )}
 
           {extractedData.length === 0 && (
@@ -1950,7 +1950,7 @@ Provide:
                     New Upload
                   </Button>
                 </div>
-              </div>
+              </motion.div>
 
               {extractedColumns.length > 0 && (
                 <motion.div
