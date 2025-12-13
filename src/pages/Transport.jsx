@@ -567,7 +567,15 @@ export default function Transport() {
                   {vehicles.map((vehicle) => {
                     const vehicleMaintenance = maintenanceRecords.filter(m => m.vehicle_id === vehicle.id);
                     const lastMaintenance = vehicleMaintenance[0];
-                    const vehicleOverdue = vehicleMaintenance.filter(m => m.next_due_date && isPast(new Date(m.next_due_date)));
+                    const vehicleOverdue = vehicleMaintenance.filter(m => {
+                      if (!m.next_due_date) return false;
+                      try {
+                        const dueDate = new Date(m.next_due_date);
+                        return !isNaN(dueDate.getTime()) && isPast(dueDate);
+                      } catch {
+                        return false;
+                      }
+                    });
                     const hasOverdue = vehicleOverdue.length > 0;
 
                     return (
