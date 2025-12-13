@@ -13,12 +13,13 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/components/ui/Toast";
 import LoadingSpinner from "@/components/ui/LoadingSpinner";
-import EmployeeManagementTab from "@/components/hr/EmployeeManagementTab.jsx";
-import PayrollProcessingTab from "@/components/hr/PayrollProcessingTab.jsx";
-import LeaveManagementTab from "@/components/hr/LeaveManagementTab.jsx";
-import AttendanceOverviewTab from "@/components/hr/AttendanceOverviewTab.jsx";
-import ReportsAnalyticsTab from "@/components/hr/ReportsAnalyticsTab.jsx";
-import SierraLeonePayrollSettings from "@/components/hr/SierraLeonePayrollSettings.jsx";
+import EmployeeManagementTab from "@/components/hr/EmployeeManagementTab";
+import PayrollProcessingTab from "@/components/hr/PayrollProcessingTab";
+import LeaveManagementTab from "@/components/hr/LeaveManagementTab";
+import AttendanceOverviewTab from "@/components/hr/AttendanceOverviewTab";
+import ReportsAnalyticsTab from "@/components/hr/ReportsAnalyticsTab";
+import SierraLeonePayrollSettings from "@/components/hr/SierraLeonePayrollSettings";
+import StatutoryReportsTab from "@/components/hr/StatutoryReportsTab";
 
 export default function HRManagement() {
   const [activeTab, setActiveTab] = useState("employees");
@@ -67,6 +68,14 @@ export default function HRManagement() {
     }),
     enabled: !!orgId,
   });
+
+  const { data: organisationData } = useQuery({
+    queryKey: ['organisation', orgId],
+    queryFn: () => base44.entities.Organisation.filter({ id: orgId }),
+    enabled: !!orgId,
+  });
+
+  const currentOrg = organisationData?.[0];
 
   if (!user || !currentEmployee) {
     return <LoadingSpinner message="Loading HR System..." />;
@@ -220,6 +229,10 @@ export default function HRManagement() {
                 <Clock className="w-4 h-4" />
                 Attendance
               </TabsTrigger>
+              <TabsTrigger value="statutory" className="gap-2">
+                <FileText className="w-4 h-4" />
+                NASSIT & PAYE
+              </TabsTrigger>
               <TabsTrigger value="reports" className="gap-2">
                 <TrendingUp className="w-4 h-4" />
                 Reports
@@ -262,6 +275,13 @@ export default function HRManagement() {
                 orgId={orgId}
                 attendance={attendance}
                 employees={employees}
+              />
+            </TabsContent>
+
+            <TabsContent value="statutory">
+              <StatutoryReportsTab 
+                orgId={orgId}
+                organisation={currentOrg}
               />
             </TabsContent>
 
