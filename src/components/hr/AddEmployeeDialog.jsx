@@ -183,6 +183,26 @@ export default function AddEmployeeDialog({ open, onOpenChange, employee, orgId 
               <Briefcase className="w-4 h-4" />
               Employment Details
             </h3>
+            <div className="col-span-2">
+              <Label>Employment Type *</Label>
+              <Select
+                value={formData.employment_type || 'salary'}
+                onValueChange={(value) => setFormData({ ...formData, employment_type: value })}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="salary">Salary (Fixed monthly pay)</SelectItem>
+                  <SelectItem value="wage">Wage (Hourly/daily based on hours worked)</SelectItem>
+                </SelectContent>
+              </Select>
+              <p className="text-xs text-gray-500 mt-1">
+                {formData.employment_type === 'wage' 
+                  ? 'Wage employees clock in/out and are paid based on approved hours worked'
+                  : 'Salary employees receive fixed monthly pay regardless of hours worked'}
+              </p>
+            </div>
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <Label>Employee Code *</Label>
@@ -269,15 +289,42 @@ export default function AddEmployeeDialog({ open, onOpenChange, employee, orgId 
                   </SelectContent>
                 </Select>
               </div>
-              <div>
-                <Label>Base Salary (Le)</Label>
-                <Input
-                  type="number"
-                  value={formData.base_salary}
-                  onChange={(e) => setFormData({ ...formData, base_salary: parseFloat(e.target.value) || 0 })}
-                  placeholder="0.00"
-                />
-              </div>
+              {formData.employment_type === 'salary' || !formData.employment_type ? (
+                <div>
+                  <Label>Base Salary (Le)</Label>
+                  <Input
+                    type="number"
+                    value={formData.base_salary}
+                    onChange={(e) => setFormData({ ...formData, base_salary: parseFloat(e.target.value) || 0 })}
+                    placeholder="0.00"
+                  />
+                </div>
+              ) : (
+                <>
+                  {formData.salary_type === 'hourly' && (
+                    <div>
+                      <Label>Hourly Rate (Le)</Label>
+                      <Input
+                        type="number"
+                        value={formData.hourly_rate}
+                        onChange={(e) => setFormData({ ...formData, hourly_rate: parseFloat(e.target.value) || 0 })}
+                        placeholder="0.00"
+                      />
+                    </div>
+                  )}
+                  {formData.salary_type === 'daily' && (
+                    <div>
+                      <Label>Daily Rate (Le)</Label>
+                      <Input
+                        type="number"
+                        value={formData.daily_rate}
+                        onChange={(e) => setFormData({ ...formData, daily_rate: parseFloat(e.target.value) || 0 })}
+                        placeholder="0.00"
+                      />
+                    </div>
+                  )}
+                </>
+              )}
               {remunerationPackages.length > 0 && (
                 <div className="col-span-2">
                   <Label>Remuneration Package (Optional)</Label>
