@@ -45,8 +45,7 @@ export default function PrintFormsButtons({ organisation }) {
   ];
 
   const generateFormData = (formType, category) => {
-    .instructions {
-      background: var(--gray-50);
+    const isExpense = category === 'expense';
       padding: 16px 20px;
       border-radius: 8px;
       margin-bottom: 24px;
