@@ -49,40 +49,18 @@ export default function PendingJoinRequests() {
 
   const { data: allRequests = [], isLoading } = useQuery({
     queryKey: ['joinRequests', orgId],
-    queryFn: async () => {
-      if (userRole === 'admin') {
-        return base44.asServiceRole.entities.OrganisationJoinRequest.list();
-      }
-      return base44.entities.OrganisationJoinRequest.filter({ organisation_id: orgId });
-    },
+    queryFn: () => base44.entities.OrganisationJoinRequest.filter({ organisation_id: orgId }),
     enabled: !!orgId && ['super_admin', 'org_admin', 'admin'].includes(userRole),
   });
 
   const approveMutation = useMutation({
     mutationFn: async ({ requestId, employeeData }) => {
-      // Create employee
-      const newEmployee = await base44.asServiceRole.entities.Employee.create(employeeData);
-      
-      // Update request
-      await base44.asServiceRole.entities.OrganisationJoinRequest.update(requestId, {
-        status: 'approved',
-        approved_by: currentEmployee?.id,
-        approved_by_name: currentEmployee?.full_name,
-        approval_date: new Date().toISOString(),
-        employee_id: newEmployee.id,
+      const response = await base44.functions.invoke('handleJoinRequest', {
+        action: 'approve',
+        requestId,
+        employeeData
       });
-
-      // Send notification
-      await base44.asServiceRole.entities.Notification.create({
-        organisation_id: employeeData.organisation_id,
-        recipient_email: employeeData.user_email,
-        type: 'system',
-        title: 'Join Request Approved',
-        message: `Your request to join ${reviewingRequest?.organisation_name} has been approved!`,
-        priority: 'high',
-      });
-
-      return newEmployee;
+      return response.data;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['joinRequests'] });
@@ -96,23 +74,12 @@ export default function PendingJoinRequests() {
 
   const rejectMutation = useMutation({
     mutationFn: async ({ requestId, reason }) => {
-      await base44.asServiceRole.entities.OrganisationJoinRequest.update(requestId, {
-        status: 'rejected',
-        approved_by: currentEmployee?.id,
-        approved_by_name: currentEmployee?.full_name,
-        approval_date: new Date().toISOString(),
-        rejection_reason: reason,
+      const response = await base44.functions.invoke('handleJoinRequest', {
+        action: 'reject',
+        requestId,
+        rejectionReason: reason
       });
-
-      // Send notification
-      await base44.asServiceRole.entities.Notification.create({
-        organisation_id: reviewingRequest.organisation_id,
-        recipient_email: reviewingRequest.user_email,
-        type: 'system',
-        title: 'Join Request Update',
-        message: `Your request to join ${reviewingRequest?.organisation_name} was not approved.`,
-        priority: 'normal',
-      });
+      return response.data;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['joinRequests'] });
