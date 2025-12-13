@@ -14,11 +14,13 @@ import ProcessPayrollDialog from "@/components/hr/ProcessPayrollDialogNew";
 import PayrollDetailDialog from "@/components/hr/PayrollDetailDialog";
 import { formatLeone } from "@/components/hr/sierraLeoneTaxCalculator";
 import ConfirmDialog from "@/components/ui/ConfirmDialog";
+import ModernExportDialog from "@/components/exports/ModernExportDialog";
 
 export default function PayrollProcessingTab({ orgId, employees, payrolls, currentEmployee }) {
   const [showProcessDialog, setShowProcessDialog] = useState(false);
   const [selectedPayroll, setSelectedPayroll] = useState(null);
   const [deletePayrollId, setDeletePayrollId] = useState(null);
+  const [exportDialogOpen, setExportDialogOpen] = useState(false);
   const queryClient = useQueryClient();
   const toast = useToast();
 
@@ -39,6 +41,14 @@ export default function PayrollProcessingTab({ orgId, employees, payrolls, curre
     queryFn: () => base44.entities.PayCycle.filter({ organisation_id: orgId, is_active: true }),
     enabled: !!orgId,
   });
+
+  const { data: organisation } = useQuery({
+    queryKey: ['organisation', orgId],
+    queryFn: () => base44.entities.Organisation.filter({ id: orgId }),
+    enabled: !!orgId,
+  });
+
+  const currentOrg = organisation?.[0];
 
   const sortedPayrolls = [...payrolls].sort((a, b) => {
     try {
@@ -158,7 +168,25 @@ export default function PayrollProcessingTab({ orgId, employees, payrolls, curre
           <Plus className="w-4 h-4 mr-2" />
           Process Payroll
         </Button>
-        <Button variant="outline">
+        <Button 
+          variant="outline"
+          onClick={() => {
+            const exportData = sortedPayrolls.map(p => ({
+              'Employee Name': p.employee_name,
+              'Employee Code': p.employee_code || 'N/A',
+              'Period': p.pay_period || 'N/A',
+              'Pay Date': p.pay_date ? format(new Date(p.pay_date), 'PP') : 'N/A',
+              'Gross Salary': formatLeone(p.gross_salary || 0),
+              'NASSIT Employee': formatLeone(p.nassit_employee || 0),
+              'NASSIT Employer': formatLeone(p.nassit_employer || 0),
+              'PAYE Tax': formatLeone(p.paye_tax || 0),
+              'Total Deductions': formatLeone(p.total_deductions || 0),
+              'Net Salary': formatLeone(p.net_salary || 0),
+              'Status': p.status || 'draft',
+            }));
+            setExportDialogOpen(true);
+          }}
+        >
           <Download className="w-4 h-4 mr-2" />
           Export Payroll
         </Button>
@@ -296,6 +324,27 @@ export default function PayrollProcessingTab({ orgId, employees, payrolls, curre
         description="Are you sure you want to delete this payroll record? This action cannot be undone."
         confirmText="Delete"
         variant="destructive"
+      />
+
+      {/* Export Dialog */}
+      <ModernExportDialog
+        open={exportDialogOpen}
+        onOpenChange={setExportDialogOpen}
+        data={sortedPayrolls.map(p => ({
+          'Employee Name': p.employee_name,
+          'Employee Code': p.employee_code || 'N/A',
+          'Period': p.pay_period || 'N/A',
+          'Pay Date': p.pay_date ? format(new Date(p.pay_date), 'PP') : 'N/A',
+          'Gross Salary': formatLeone(p.gross_salary || 0),
+          'NASSIT Employee': formatLeone(p.nassit_employee || 0),
+          'NASSIT Employer': formatLeone(p.nassit_employer || 0),
+          'PAYE Tax': formatLeone(p.paye_tax || 0),
+          'Total Deductions': formatLeone(p.total_deductions || 0),
+          'Net Salary': formatLeone(p.net_salary || 0),
+          'Status': p.status || 'draft',
+        }))}
+        reportTitle="Payroll Report"
+        orgData={currentOrg}
       />
     </div>
   );
