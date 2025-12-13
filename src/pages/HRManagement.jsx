@@ -13,6 +13,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/components/ui/Toast";
 import LoadingSpinner from "@/components/ui/LoadingSpinner";
+import ModernExportDialog from "@/components/exports/ModernExportDialog";
 import EmployeeManagementTab from "@/components/hr/EmployeeManagementTab";
 import PayrollProcessingTab from "@/components/hr/PayrollProcessingTab";
 import LeaveManagementTab from "@/components/hr/LeaveManagementTab";
@@ -24,6 +25,8 @@ import TaxFilingReports from "@/components/hr/TaxFilingReports";
 export default function HRManagement() {
   const [activeTab, setActiveTab] = useState("employees");
   const [searchTerm, setSearchTerm] = useState("");
+  const [exportDialogOpen, setExportDialogOpen] = useState(false);
+  const [exportData, setExportData] = useState({ data: [], title: "" });
   const queryClient = useQueryClient();
   const toast = useToast();
 
@@ -172,6 +175,30 @@ export default function HRManagement() {
               </div>
             </div>
             <div className="flex items-center gap-2">
+              <Button
+                onClick={() => {
+                  setExportData({
+                    data: employees.map(e => ({
+                      'Employee Code': e.employee_code,
+                      'Full Name': e.full_name,
+                      Role: e.role,
+                      Department: e.department || 'N/A',
+                      Position: e.position || 'N/A',
+                      'Employment Type': e.employment_type,
+                      'Base Salary': `Le ${e.base_salary?.toLocaleString() || 0}`,
+                      'Hire Date': e.hire_date || 'N/A',
+                      Status: e.status,
+                    })),
+                    title: 'HR Employee Report'
+                  });
+                  setExportDialogOpen(true);
+                }}
+                className="bg-gradient-to-r from-[#1EB053] to-[#0072C6] text-white"
+                size="sm"
+              >
+                <Download className="w-4 h-4 mr-2" />
+                Export
+              </Button>
               <Badge className="bg-[#1EB053] text-white">NASSIT Integrated</Badge>
               <Badge className="bg-[#0072C6] text-white">Tax Compliant</Badge>
             </div>
@@ -311,6 +338,14 @@ export default function HRManagement() {
         <div className="flex-1 bg-white" />
         <div className="flex-1 bg-[#0072C6]" />
       </div>
+
+      <ModernExportDialog
+        open={exportDialogOpen}
+        onOpenChange={setExportDialogOpen}
+        data={exportData.data}
+        reportTitle={exportData.title}
+        orgData={currentOrg}
+      />
     </div>
   );
 }
