@@ -286,10 +286,10 @@ export default function ProcessPayrollDialog({ open, onOpenChange, orgId, curren
       console.log('Total allowances calculated:', totalAllowances);
       console.log('===================');
       
-      const totalAllowances = combinedAllowances.reduce((sum, a) => sum + (parseFloat(a.amount) || 0), 0);
       const totalBonuses = combinedBonuses.reduce((sum, b) => sum + (parseFloat(b.amount) || 0), 0);
       
       const grossPay = baseSalary + totalAllowances + totalBonuses;
+      console.log('Gross pay calculation:', baseSalary, '+', totalAllowances, '+', totalBonuses, '=', grossPay);
       const taxCalc = calculateSalaryBreakdown(grossPay, {}, {});
       
       const customDeductions = combinedDeductions.reduce((sum, d) => sum + (parseFloat(d.amount) || 0), 0);
