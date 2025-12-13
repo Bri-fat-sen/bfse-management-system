@@ -232,9 +232,8 @@ export default function Dashboard() {
   }
 
   if (!currentEmployee) {
-    // Redirect to request organisation page
-    window.location.href = createPageUrl("RequestOrganisation");
-    return <LoadingSpinner message="Redirecting..." subtitle="Setting up your access" />;
+    window.location.href = createPageUrl('JoinOrganisation');
+    return null;
   }
 
   // Show role-specific dashboard
