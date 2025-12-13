@@ -22,6 +22,9 @@ import { createPageUrl } from "@/utils";
 import { motion } from "framer-motion";
 import ConsolidatedReports from "@/components/exports/ConsolidatedReports";
 import ModernExportDialog from "@/components/exports/ModernExportDialog";
+import UpcomingPayrollWidget from "@/components/dashboard/UpcomingPayrollWidget";
+import LowStockAlertWidget from "@/components/dashboard/LowStockAlertWidget";
+import MonthlyPerformanceWidget from "@/components/dashboard/MonthlyPerformanceWidget";
 
 const COLORS = ['#1EB053', '#0072C6', '#D4AF37', '#FF6B35', '#8B5CF6', '#EF4444', '#10B981'];
 
@@ -117,6 +120,12 @@ export default function ExecutiveDashboard() {
   const { data: stockMovements = [] } = useQuery({
     queryKey: ['stockMovements', orgId],
     queryFn: () => base44.entities.StockMovement.filter({ organisation_id: orgId }, '-created_date', 500),
+    enabled: !!orgId,
+  });
+
+  const { data: payCycles = [] } = useQuery({
+    queryKey: ['payCycles', orgId],
+    queryFn: () => base44.entities.PayCycle.filter({ organisation_id: orgId, is_active: true }),
     enabled: !!orgId,
   });
 
@@ -435,6 +444,13 @@ export default function ExecutiveDashboard() {
 
         {/* Overview Tab */}
         <TabsContent value="overview" className="space-y-6">
+          {/* New Widgets Row */}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <UpcomingPayrollWidget payCycles={payCycles} payrolls={payrolls} />
+            <LowStockAlertWidget products={products} />
+            <MonthlyPerformanceWidget metrics={metrics} dateRange={dateRange} />
+          </div>
+
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.2 }}>
               <Card className="border-0 shadow-xl bg-white">
