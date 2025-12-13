@@ -669,10 +669,9 @@ export function generateUnifiedPDF({
   showFooter = true
 }) {
   const styles = getUnifiedPDFStyles(organisation, documentType);
-  const generatedDate = new Date().toLocaleString('en-GB', { 
-    day: 'numeric', month: 'long', year: 'numeric', 
-    hour: '2-digit', minute: '2-digit' 
-  });
+  const generatedDate = new Date().toLocaleDateString('en-GB', { 
+    day: '2-digit', month: '2-digit', year: 'numeric'
+  }).replace(/\//g, '/');
   const finalDocNumber = docNumber || `${documentType.toUpperCase().slice(0,3)}-${Date.now().toString(36).toUpperCase()}`;
   const finalDocDate = docDate || generatedDate;
   const orgCode = organisation?.code || '';
