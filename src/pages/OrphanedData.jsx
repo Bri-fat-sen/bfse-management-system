@@ -203,6 +203,21 @@ export default function OrphanedData() {
     return allEmployeesRaw.filter(emp => !emp.organisation_id || !organisationIds.has(emp.organisation_id));
   }, [allEmployeesRaw, organisationIds]);
 
+  // Find organisations with no employees or data
+  const orphanedOrganisations = useMemo(() => {
+    return allOrganisations.filter(org => {
+      const hasEmployees = allEmployeesRaw.some(emp => emp.organisation_id === org.id);
+      const hasProducts = products.some(p => p.organisation_id === org.id);
+      const hasWarehouses = warehouses.some(w => w.organisation_id === org.id);
+      const hasVehicles = vehicles.some(v => v.organisation_id === org.id);
+      const hasSuppliers = suppliers.some(s => s.organisation_id === org.id);
+      const hasCustomers = customers.some(c => c.organisation_id === org.id);
+      const hasRoutes = routes.some(r => r.organisation_id === org.id);
+      
+      return !hasEmployees && !hasProducts && !hasWarehouses && !hasVehicles && !hasSuppliers && !hasCustomers && !hasRoutes;
+    });
+  }, [allOrganisations, allEmployeesRaw, products, warehouses, vehicles, suppliers, customers, routes]);
+
   // Fetch data for each entity type
   const entityQueries = ENTITY_CONFIG.map(config => {
     return useQuery({
@@ -437,6 +452,62 @@ export default function OrphanedData() {
           </Card>
         )}
 
+        {/* Orphaned Organisations Alert */}
+        {orphanedOrganisations.length > 0 && (
+          <Card className="bg-orange-50 border-orange-200">
+            <CardContent className="p-4">
+              <div className="flex items-start justify-between gap-4">
+                <div className="flex items-start gap-3">
+                  <AlertTriangle className="w-6 h-6 text-orange-600 flex-shrink-0 mt-0.5" />
+                  <div>
+                    <p className="font-semibold text-orange-800">Orphaned organisations</p>
+                    <p className="text-sm text-orange-700 mb-3">
+                      {orphanedOrganisations.length} organisation{orphanedOrganisations.length !== 1 ? 's' : ''} found with no employees or data
+                    </p>
+                    <div className="space-y-2">
+                      {orphanedOrganisations.map(org => (
+                        <div key={org.id} className="bg-white rounded-lg p-3 border border-orange-200">
+                          <div className="flex items-center justify-between">
+                            <div>
+                              <p className="font-medium text-gray-900">{org.name}</p>
+                              <p className="text-sm text-gray-600">Code: {org.code}</p>
+                              <p className="text-xs text-gray-500 mt-1">
+                                Created: {org.created_date?.split('T')[0] || 'Unknown'}
+                              </p>
+                              <p className="text-xs text-orange-600 mt-1">
+                                No employees, products, or other data linked to this organisation
+                              </p>
+                            </div>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="text-red-600 border-red-200 hover:bg-red-50"
+                              onClick={() => {
+                                const confirmDelete = window.confirm(`Delete organisation "${org.name}"? This action cannot be undone.`);
+                                if (confirmDelete) {
+                                  base44.entities.Organisation.delete(org.id).then(() => {
+                                    queryClient.invalidateQueries();
+                                    toast.success("Organisation deleted");
+                                  }).catch(err => {
+                                    toast.error("Delete failed", err.message);
+                                  });
+                                }
+                              }}
+                            >
+                              <Trash2 className="w-4 h-4 mr-1" />
+                              Delete
+                            </Button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
         {/* Summary Cards */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <Card className="border-l-4 border-l-amber-500">
@@ -444,7 +515,7 @@ export default function OrphanedData() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-xs text-gray-500 uppercase">Total Orphaned</p>
-                  <p className="text-3xl font-bold text-amber-600">{totalOrphaned + orphanedEmployees.length}</p>
+                  <p className="text-3xl font-bold text-amber-600">{totalOrphaned + orphanedEmployees.length + orphanedOrganisations.length}</p>
                 </div>
                 <AlertTriangle className="w-10 h-10 text-amber-500" />
               </div>
