@@ -73,7 +73,7 @@ import { ToastProvider } from "@/components/ui/Toast";
 
 const menuSections = [
   {
-    title: "Home",
+    title: "Dashboard",
     items: [
       { name: "Dashboard", icon: LayoutDashboard, page: "Dashboard", module: "dashboard" },
       { name: "My Portal", icon: User, page: "EmployeeSelfService", module: "dashboard" },
@@ -88,14 +88,15 @@ const menuSections = [
     ]
   },
   {
-    title: "Inventory & Supply",
+    title: "Inventory & Warehouse",
     items: [
       { name: "Stock Management", icon: Package, page: "Inventory", module: "inventory" },
       { name: "Supplier Relations", icon: Building2, page: "Suppliers", module: "suppliers" },
+      { name: "Stock Auditing", icon: BarChart3, page: "StockAudit", module: "inventory", adminOnly: true },
     ]
   },
   {
-    title: "Transport & Logistics",
+    title: "Transport & Fleet",
     items: [
       { name: "Fleet Operations", icon: Truck, page: "Transport", module: "transport" },
     ]
@@ -104,42 +105,51 @@ const menuSections = [
     title: "Human Resources",
     items: [
       { name: "HR & Payroll", icon: Users, page: "HRManagement", module: "hr" },
-      { name: "HR Documents", icon: FileText, page: "Documents", module: "hr" },
       { name: "Time & Attendance", icon: Clock, page: "Attendance", module: "attendance" },
-      { name: "Schedules", icon: Calendar, page: "WorkSchedules", module: "hr" },
+      { name: "Work Schedules", icon: Calendar, page: "WorkSchedules", module: "hr" },
     ]
   },
   {
-    title: "Finance & Reports",
+    title: "Documents & Records",
+    items: [
+      { name: "HR Documents", icon: FileText, page: "Documents", module: "hr" },
+      { name: "Document Archive", icon: Upload, page: "UploadedDocuments", module: "settings", adminOnly: true },
+    ]
+  },
+  {
+    title: "Finance & Accounting",
     items: [
       { name: "Financial Overview", icon: DollarSign, page: "Finance", module: "finance" },
+      { name: "Expense Control", icon: DollarSign, page: "ExpenseManagement", module: "finance", adminOnly: true },
+      { name: "Construction Projects", icon: Building2, page: "ConstructionExpense", module: "finance", adminOnly: true },
+    ]
+  },
+  {
+    title: "Reports & Analytics",
+    items: [
       { name: "Activity Logs", icon: Activity, page: "ActivityLog", module: "activity_log" },
     ]
   },
   {
-    title: "System & Settings",
+    title: "System Administration",
     items: [
       { name: "Settings", icon: Settings, page: "Settings", module: "settings" },
       { name: "Help & Support", icon: HelpCircle, page: "Support", module: "settings" },
-    ]
-  },
-  {
-    title: "Administration",
-    items: [
       { name: "Users & Access", icon: Shield, page: "UserManagement", module: "settings", adminOnly: true },
       { name: "Role Permissions", icon: Lock, page: "RolePermissions", module: "settings", adminOnly: true },
       { name: "Organisation Settings", icon: Building2, page: "OrganisationManage", module: "settings", adminOnly: true },
       { name: "Locations & Sites", icon: MapPin, page: "Locations", module: "settings", adminOnly: true },
-      { name: "Expense Control", icon: DollarSign, page: "ExpenseManagement", module: "finance", adminOnly: true },
-      { name: "Construction Projects", icon: Building2, page: "ConstructionExpense", module: "finance", adminOnly: true },
-      { name: "Stock Auditing", icon: Package, page: "StockAudit", module: "inventory", adminOnly: true },
-      { name: "Document Archive", icon: Upload, page: "UploadedDocuments", module: "settings", adminOnly: true },
-      { name: "Super Admin", icon: Shield, page: "SuperAdminPanel", module: "settings", adminOnly: true },
+    ]
+  },
+  {
+    title: "Super Admin Tools",
+    items: [
+      { name: "Super Admin Panel", icon: Shield, page: "SuperAdminPanel", module: "settings", adminOnly: true },
       { name: "Join Requests", icon: Users, page: "PendingJoinRequests", module: "settings", adminOnly: true },
       { name: "Data Cleanup", icon: AlertTriangle, page: "OrphanedData", module: "settings", adminOnly: true },
       { name: "System Reset", icon: AlertTriangle, page: "ResetData", module: "settings", adminOnly: true },
-      ]
-      }
+    ]
+  }
 ];
 
 export default function Layout({ children, currentPageName }) {
