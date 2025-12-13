@@ -20,7 +20,8 @@ import {
   Wrench,
   AlertTriangle,
   Printer,
-  Cloud
+  Cloud,
+  Download
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -57,6 +58,7 @@ import { isPast, differenceInDays } from "date-fns";
 import AIRouteOptimizer from "@/components/ai/AIRouteOptimizer";
 import PrintableFormsDownload from "@/components/finance/PrintableFormsDownload";
 import ExportToGoogleDrive from "@/components/exports/ExportToGoogleDrive";
+import ModernExportDialog from "@/components/exports/ModernExportDialog";
 
 export default function Transport() {
   const toast = useToast();
@@ -73,6 +75,8 @@ export default function Transport() {
   const [showFormsDialog, setShowFormsDialog] = useState(false);
   const [showDriveExport, setShowDriveExport] = useState(false);
   const [exportData, setExportData] = useState([]);
+  const [exportDialogOpen, setExportDialogOpen] = useState(false);
+  const [modernExportData, setModernExportData] = useState({ data: [], title: "" });
 
   const { data: user } = useQuery({
     queryKey: ['currentUser'],
@@ -329,13 +333,52 @@ export default function Transport() {
           </Button>
           <Button
             onClick={() => {
-              setExportData(activeTab === 'trips' ? trips : activeTab === 'contracts' ? truckContracts : activeTab === 'maintenance' ? maintenanceRecords : vehicles);
-              setShowDriveExport(true);
+              let data = [];
+              let title = "";
+              if (activeTab === 'trips') {
+                data = trips.map(t => ({
+                  Date: format(new Date(t.date), 'yyyy-MM-dd'),
+                  Vehicle: t.vehicle_registration || 'N/A',
+                  Driver: t.driver_name,
+                  Route: t.route_name || 'N/A',
+                  Passengers: t.passengers_count || 0,
+                  Revenue: `Le ${t.total_revenue || 0}`,
+                  'Fuel Cost': `Le ${t.fuel_cost || 0}`,
+                  'Net Revenue': `Le ${t.net_revenue || 0}`,
+                  Status: t.status,
+                }));
+                title = "Transport Trips Report";
+              } else if (activeTab === 'contracts') {
+                data = truckContracts.map(c => ({
+                  'Contract #': c.contract_number,
+                  Client: c.client_name,
+                  Vehicle: c.vehicle_registration || 'N/A',
+                  'Contract Amount': `Le ${c.contract_amount || 0}`,
+                  'Total Expenses': `Le ${c.total_expenses || 0}`,
+                  'Net Revenue': `Le ${c.net_revenue || 0}`,
+                  Status: c.status,
+                  'Payment Status': c.payment_status,
+                }));
+                title = "Truck Contracts Report";
+              } else if (activeTab === 'maintenance') {
+                data = maintenanceRecords.map(m => ({
+                  Date: format(new Date(m.date_performed), 'yyyy-MM-dd'),
+                  Vehicle: m.vehicle_registration,
+                  Type: m.maintenance_type,
+                  Description: m.description || 'N/A',
+                  Cost: `Le ${m.cost || 0}`,
+                  'Performed By': m.performed_by_name || 'N/A',
+                  'Next Due': m.next_due_date || 'N/A',
+                }));
+                title = "Vehicle Maintenance Report";
+              }
+              setModernExportData({ data, title });
+              setExportDialogOpen(true);
             }}
             variant="outline"
-            className="gap-2 border-blue-500 text-blue-700 hover:bg-blue-50"
+            className="gap-2 border-[#0072C6] text-[#0072C6] hover:bg-[#0072C6]/10"
           >
-            <Cloud className="w-4 h-4" />
+            <Download className="w-4 h-4" />
             <span className="hidden sm:inline">Export</span>
           </Button>
           <Button
@@ -971,6 +1014,15 @@ export default function Transport() {
         fileName={`transport_${activeTab}_${format(new Date(), 'yyyy-MM-dd')}`}
         dataType={activeTab}
         orgId={orgId}
+      />
+
+      {/* Modern Export Dialog */}
+      <ModernExportDialog
+        open={exportDialogOpen}
+        onOpenChange={setExportDialogOpen}
+        data={modernExportData.data}
+        reportTitle={modernExportData.title}
+        orgData={organisation?.[0]}
       />
 
       {/* Vehicle Dialog */}
