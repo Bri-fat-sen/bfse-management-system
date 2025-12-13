@@ -254,7 +254,15 @@ export default function DocumentUploadExtractor({
     ctx.drawImage(video, 0, 0);
     
     canvas.toBlob((blob) => {
-      const file = new File([blob], `photo-${Date.now()}.jpg`, { type: 'image/jpeg' });
+      const fileName = `photo-${Date.now()}.jpg`;
+      blob.name = fileName;
+      blob.lastModified = Date.now();
+      
+      const file = Object.assign(blob, {
+        name: fileName,
+        lastModified: Date.now()
+      });
+      
       stopCamera();
       handleMultipleFiles([file]);
     }, 'image/jpeg', 0.95);
