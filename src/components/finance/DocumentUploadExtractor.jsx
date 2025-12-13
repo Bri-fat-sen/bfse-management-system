@@ -254,14 +254,23 @@ export default function DocumentUploadExtractor({
     ctx.drawImage(video, 0, 0);
     
     canvas.toBlob((blob) => {
-      const fileName = `photo-${Date.now()}.jpg`;
-      blob.name = fileName;
-      blob.lastModified = Date.now();
+      if (!blob) {
+        toast.error("Capture failed", "Could not capture photo");
+        return;
+      }
       
-      const file = Object.assign(blob, {
-        name: fileName,
-        lastModified: Date.now()
-      });
+      const fileName = `photo-${Date.now()}.jpg`;
+      
+      // Create File object (fallback for browsers without File constructor)
+      let file;
+      try {
+        file = new window.File([blob], fileName, { type: 'image/jpeg' });
+      } catch (e) {
+        // Fallback: add File properties to Blob
+        file = blob;
+        file.name = fileName;
+        file.lastModified = Date.now();
+      }
       
       stopCamera();
       handleMultipleFiles([file]);
