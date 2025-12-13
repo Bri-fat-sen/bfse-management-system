@@ -31,7 +31,6 @@ import {
   CheckCircle,
   Hammer,
   MapPin,
-  Cloud,
   FileText
 } from "lucide-react";
 import { useToast } from "@/components/ui/Toast";
@@ -105,272 +104,115 @@ export default function DocumentUploadExtractor({
   const [currencyMode, setCurrencyMode] = useState(null); // null = not set, 'sle', 'sll'
   const [showCurrencyDialog, setShowCurrencyDialog] = useState(false);
   const [pendingFile, setPendingFile] = useState(null);
-  const [showDrivePicker, setShowDrivePicker] = useState(false);
-  const [driveFiles, setDriveFiles] = useState([]);
-  const [driveFolders, setDriveFolders] = useState([]);
-  const [driveLoading, setDriveLoading] = useState(false);
-  const [currentFolderId, setCurrentFolderId] = useState(null);
-  const [folderPath, setFolderPath] = useState([{ id: null, name: 'My Drive' }]);
-  const [appFolderId, setAppFolderId] = useState(null);
-  const [appFolderLink, setAppFolderLink] = useState(null);
+  const [dragActive, setDragActive] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
+  const [queuedFiles, setQueuedFiles] = useState([]);
 
   const baseCategories = type === "expense" ? DEFAULT_EXPENSE_CATEGORIES : DEFAULT_REVENUE_SOURCES;
   const categories = useMemo(() => {
     return [...(customCategories || baseCategories), ...dynamicCategories];
   }, [customCategories, baseCategories, dynamicCategories]);
 
-  const setupAppFolder = async () => {
-    try {
-      const { data } = await base44.functions.invoke('googleDriveManager', {
-        action: 'getRootFolder'
-      });
-      
-      if (data?.success && data.folder) {
-        setAppFolderId(data.folder.id);
-        return data.folder.id;
-      }
-    } catch (error) {
-      console.error("Failed to setup app folder:", error);
-      return null;
-    }
+  const handleDragEnter = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setDragActive(true);
   };
 
-  const loadDriveFiles = async (folderId = null) => {
-    setDriveLoading(true);
-    try {
-      // Don't force app folder - let user browse their entire Drive
-      const { data } = await base44.functions.invoke('googleDriveManager', {
-        action: 'listFiles',
-        folderId: folderId || null
-      });
-      
-      if (data.error) {
-        toast.error("Drive Error", data.error);
-        return;
-      }
-      
-      const files = data.files || [];
-      const folders = files.filter(f => f.mimeType === 'application/vnd.google-apps.folder');
-      const documents = files.filter(f => f.mimeType !== 'application/vnd.google-apps.folder');
-      
-      setDriveFolders(folders);
-      setDriveFiles(documents);
-      setCurrentFolderId(folderId);
-      setShowDrivePicker(true);
-    } catch (error) {
-      toast.error("Failed to load Drive files", error.message);
-    } finally {
-      setDriveLoading(false);
-    }
+  const handleDragLeave = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setDragActive(false);
   };
 
-  const navigateToFolder = (folder) => {
-    setFolderPath(prev => [...prev, { id: folder.id, name: folder.name }]);
-    loadDriveFiles(folder.id);
+  const handleDragOver = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
   };
 
-  const navigateBack = (index) => {
-    const newPath = folderPath.slice(0, index + 1);
-    setFolderPath(newPath);
-    loadDriveFiles(newPath[newPath.length - 1].id);
-  };
-
-  const handleDriveFileSelect = async (driveFile) => {
-    setShowDrivePicker(false);
+  const handleDrop = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setDragActive(false);
     
-    if (currencyMode === null) {
-      setPendingFile({ isDriveFile: true, driveFile });
-      setShowCurrencyDialog(true);
+    const files = Array.from(e.dataTransfer.files);
+    if (files.length > 0) {
+      handleMultipleFiles(files);
+    }
+  };
+
+  const handleMultipleFiles = (files) => {
+    const validFiles = files.filter(file => {
+      const ext = file.name.split('.').pop().toLowerCase();
+      return ['pdf', 'csv', 'png', 'jpg', 'jpeg', 'xlsx', 'xls'].includes(ext);
+    });
+
+    if (validFiles.length === 0) {
+      toast.error("Invalid files", "Please upload PDF, CSV, Excel, or image files");
       return;
     }
-    
-    await processDriveFile(driveFile);
-  };
 
-  const processDriveFile = async (driveFile) => {
-    setUploadLoading(true);
-    setExtractedData([]);
-    setExtractedColumns([]);
-    setDocumentSummary(null);
-    setDetectedType(type === "auto" ? null : type);
+    if (validFiles.length > 10) {
+      toast.warning("Too many files", "Processing first 10 files");
+      setQueuedFiles(validFiles.slice(0, 10));
+    } else {
+      setQueuedFiles(validFiles);
+    }
 
-    try {
-      toast.info("Downloading from Drive...", driveFile.name);
-      
-      const { data } = await base44.functions.invoke('googleDriveManager', {
-        action: 'downloadFile',
-        fileId: driveFile.id // Changed folderId to fileId as it's a file download
-      });
-      
-      if (data.error) {
-        throw new Error(data.error);
-      }
-
-      // Upload the downloaded content to our server
-      const binaryData = atob(data.content);
-      const bytes = new Uint8Array(binaryData.length);
-      for (let i = 0; i < binaryData.length; i++) {
-        bytes[i] = binaryData.charCodeAt(i);
-      }
-      const blob = new Blob([bytes], { type: data.mimeType });
-      const file = new File([blob], driveFile.name, { type: data.mimeType });
-      
-      const uploadResult = await base44.integrations.Core.UploadFile({ file });
-      const file_url = uploadResult.file_url;
-
-      // Continue with normal document processing flow...
-      await base44.entities.UploadedDocument.create({
-        organisation_id: orgId,
-        file_name: driveFile.name,
-        file_url: file_url,
-        file_type: driveFile.mimeType || driveFile.name.split('.').pop(),
-        file_size: driveFile.size || 0,
-        category: type === "auto" ? "other" : type === "revenue" ? "revenue" : "expense",
-        uploaded_by_id: currentEmployee?.id,
-        uploaded_by_name: currentEmployee?.full_name,
-        description: `Imported from Google Drive`
-      });
-
-      // Rest of the processing is the same as local file upload
-      // (copying the analysis and extraction logic from processFile)
-      const analysisResult = await base44.integrations.Core.InvokeLLM({
-        prompt: `Analyze this document and determine what type of business records should be created from it.
-
-Available record types:
-1. EXPENSE - Operating costs, purchases, bills, invoices for things bought, petty cash, maintenance costs
-   → Look for: "EXPENSE ENTRY FORM" in header/title
-2. REVENUE - Sales receipts, income records, contributions, funding received, customer payments
-   → Look for: "REVENUE ENTRY FORM" in header/title
-3. PRODUCTION - Manufacturing records, production batches, batch numbers, product runs with quantities
-   → Look for: "BATCH ENTRY FORM" or "PRODUCTION BATCH ENTRY FORM" in header/title
-   → Fields: Batch Number, Manufacturing Date, Expiry Date, Quantity Produced, Rolls, Weight (kg)
-4. INVENTORY - Stock receipts, goods received notes, inventory counts, stock adjustments
-   → Look for: "STOCK ADJUSTMENT FORM" or "INVENTORY" in header/title
-   → Fields: Stock In, Stock Out, Warehouse/Location
-5. PAYROLL - Salary sheets, payroll records, employee payments, bonus lists, deduction schedules
-   → Look for: "EMPLOYEE ENTRY FORM" or "EMPLOYEE ONBOARDING FORM" in header/title
-   → Fields: Employee Code, Position, Salary, Hire Date
-
-Analyze the document content, headers, columns, and data to determine the record type.`,
-        file_urls: [file_url],
-        response_json_schema: {
-          type: "object",
-          properties: {
-            detected_type: { 
-              type: "string", 
-              enum: ["expense", "revenue", "production", "inventory", "payroll"]
-            },
-            confidence: { type: "string", enum: ["high", "medium", "low"] },
-            summary: { type: "string" },
-            reasoning: { type: "string" },
-            key_columns: { type: "array", items: { type: "string" } },
-            document_date: { type: "string" },
-            total_rows_estimate: { type: "number" }
-          }
-        }
-      });
-
-      setDocumentSummary(analysisResult);
-      const docType = type === "auto" ? analysisResult.detected_type : type;
-      setDetectedType(docType);
-      
-      toast.info(
-        `${RECORD_TYPES.find(r => r.value === docType)?.icon || '📄'} ${RECORD_TYPES.find(r => r.value === docType)?.label || docType} detected`,
-        "From Google Drive"
-      );
-
-      // Continue with extraction...
-      const extractionSchema = {
-        type: "object",
-        properties: {
-          document_info: {
-            type: "object",
-            properties: {
-              date: { type: "string" },
-              title: { type: "string" },
-              type: { type: "string" },
-              reference: { type: "string" }
-            }
-          },
-          table_columns: { type: "array", items: { type: "string" } },
-          rows: { type: "array", items: { type: "object" } }
-        }
-      };
-
-      let result;
-      let items = [];
-      let extractedDocDate = analysisResult.document_date || format(new Date(), 'yyyy-MM-dd');
-      let columnHeaders = analysisResult.key_columns || [];
-
-      try {
-        const extractResult = await base44.integrations.Core.ExtractDataFromUploadedFile({
-          file_url: file_url,
-          json_schema: extractionSchema
-        });
-
-        if (extractResult.status === 'success' && extractResult.output) {
-          result = extractResult.output;
-          items = result.rows || [];
-          extractedDocDate = result.document_info?.date || extractedDocDate;
-          columnHeaders = result.table_columns || columnHeaders;
-        }
-      } catch {
-        // Fallback to LLM extraction if needed
-        result = { rows: [], document_info: {} };
-      }
-
-      setExtractedColumns(columnHeaders);
-
-      if (items.length > 0) {
-        const conversionFactor = currencyMode === 'sll' ? 1000 : 1;
-        
-        const mappedData = items.map((item, idx) => ({
-          id: `temp-${idx}`,
-          selected: true,
-          description: item.details || item.description || '',
-          amount: (parseFloat(item.amount) || 0) / conversionFactor,
-          date: extractedDocDate,
-          category: 'other',
-          vendor: item.vendor || ''
-        }));
-
-        setExtractedData(mappedData);
-        toast.success("Data extracted", `Found ${mappedData.length} items from Drive`);
-      } else {
-        toast.warning("No data found", "Could not find table data in the document");
-      }
-    } catch (error) {
-      console.error("Drive upload error:", error);
-      toast.error("Upload failed", error.message);
-    } finally {
-      setUploadLoading(false);
+    // Auto-process first file if currency already set
+    if (currencyMode && validFiles.length === 1) {
+      processFile(validFiles[0]);
+    } else if (currencyMode === null) {
+      setPendingFile(validFiles[0]);
+      setShowCurrencyDialog(true);
     }
   };
 
   const handleFileUpload = async (e) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
+    const files = Array.from(e.target.files || []);
+    if (files.length === 0) return;
 
-    // Ask user about currency before processing
-    if (currencyMode === null) {
-      setPendingFile(file);
-      setShowCurrencyDialog(true);
-      return;
+    handleMultipleFiles(files);
+  };
+
+  const validateFile = (file) => {
+    const maxSize = 10 * 1024 * 1024; // 10MB
+    const allowedTypes = ['application/pdf', 'text/csv', 'image/png', 'image/jpeg', 'image/jpg', 
+                          'application/vnd.ms-excel', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'];
+    
+    if (file.size > maxSize) {
+      toast.error("File too large", `${file.name} exceeds 10MB limit`);
+      return false;
     }
 
-    processFile(file);
+    const ext = file.name.split('.').pop().toLowerCase();
+    const validExt = ['pdf', 'csv', 'png', 'jpg', 'jpeg', 'xlsx', 'xls'].includes(ext);
+    
+    if (!validExt && !allowedTypes.includes(file.type)) {
+      toast.error("Invalid file type", `${file.name} is not a supported format`);
+      return false;
+    }
+
+    return true;
   };
 
   const processFile = async (file) => {
+    if (!validateFile(file)) return;
+
     setUploadLoading(true);
     setShowCurrencyDialog(false);
     setExtractedData([]);
     setExtractedColumns([]);
     setDocumentSummary(null);
     setDetectedType(type === "auto" ? null : type);
+    setUploadProgress(0);
 
     try {
+      toast.info("Uploading...", file.name);
+      setUploadProgress(30);
+      
       const { file_url } = await base44.integrations.Core.UploadFile({ file });
+      setUploadProgress(50);
 
       // Save uploaded document for record keeping
       await base44.entities.UploadedDocument.create({
@@ -385,6 +227,9 @@ Analyze the document content, headers, columns, and data to determine the record
         description: `Uploaded for data extraction`
       });
 
+      setUploadProgress(60);
+      toast.info("Analyzing document...", "AI is reading the content");
+      
       // First, analyze document to detect what type of records to create
       const analysisResult = await base44.integrations.Core.InvokeLLM({
         prompt: `Analyze this document and determine what type of business records should be created from it.
@@ -440,11 +285,14 @@ Be specific about WHY you chose that record type.`,
       const docType = type === "auto" ? analysisResult.detected_type : type;
       setDetectedType(docType);
       
+      setUploadProgress(75);
       toast.info(
         `${RECORD_TYPES.find(r => r.value === docType)?.icon || '📄'} ${RECORD_TYPES.find(r => r.value === docType)?.label || docType} detected`,
         analysisResult.summary
       );
 
+      toast.info("Extracting data...", "Reading table rows");
+      
       // Now extract the actual data based on detected type
       const extractionSchema = {
         type: "object",
@@ -813,6 +661,7 @@ Return a category for each item number.`,
 
         setExtractedData(validData);
         const colInfo = columnHeaders.length > 0 ? ` (${columnHeaders.length} columns)` : '';
+        setUploadProgress(100);
         toast.success("Data extracted", `Found ${validData.length} items${colInfo}`);
       } else {
         toast.warning("No data found", "Could not find table data in the document");
@@ -820,6 +669,7 @@ Return a category for each item number.`,
     } catch (error) {
       console.error("Upload error:", error);
       toast.error("Upload failed", error.message);
+      setUploadProgress(0);
     } finally {
       setUploadLoading(false);
     }
@@ -1311,52 +1161,90 @@ Return a category for each item number.`,
 
           {extractedData.length === 0 && (
             <div className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="border-2 border-dashed border-gray-300 rounded-xl p-6 text-center hover:border-[#0072C6] transition-colors">
-                  <input
-                    type="file"
-                    accept=".pdf,.csv,.png,.jpg,.jpeg"
-                    onChange={handleFileUpload}
-                    className="hidden"
-                    id="doc-upload-finance"
-                    disabled={uploadLoading}
-                  />
-                  <label htmlFor="doc-upload-finance" className="cursor-pointer">
-                    {uploadLoading ? (
-                      <div className="flex flex-col items-center gap-3">
-                        <Loader2 className="w-12 h-12 text-[#0072C6] animate-spin" />
-                        <p className="text-gray-600 text-sm">Processing...</p>
+              <div
+                onDragEnter={handleDragEnter}
+                onDragOver={handleDragOver}
+                onDragLeave={handleDragLeave}
+                onDrop={handleDrop}
+                className={`
+                  border-2 border-dashed rounded-xl p-8 text-center transition-all
+                  ${dragActive ? 'border-[#1EB053] bg-green-50 scale-105' : 'border-gray-300 hover:border-[#0072C6]'}
+                  ${uploadLoading ? 'opacity-50 pointer-events-none' : ''}
+                `}
+              >
+                <input
+                  type="file"
+                  accept=".pdf,.csv,.png,.jpg,.jpeg,.xlsx,.xls"
+                  onChange={handleFileUpload}
+                  multiple
+                  className="hidden"
+                  id="doc-upload-finance"
+                  disabled={uploadLoading}
+                />
+                <label htmlFor="doc-upload-finance" className="cursor-pointer">
+                  {uploadLoading ? (
+                    <div className="flex flex-col items-center gap-3">
+                      <Loader2 className="w-16 h-16 text-[#0072C6] animate-spin" />
+                      <p className="text-gray-600 font-medium">Processing document...</p>
+                      <div className="w-64 h-2 bg-gray-200 rounded-full overflow-hidden">
+                        <div 
+                          className="h-full bg-gradient-to-r from-[#1EB053] to-[#0072C6] transition-all duration-300"
+                          style={{ width: `${uploadProgress}%` }}
+                        />
                       </div>
-                    ) : (
-                      <div className="flex flex-col items-center gap-3">
-                        <div className="w-14 h-14 rounded-full bg-[#0072C6]/10 flex items-center justify-center">
-                          <Upload className="w-7 h-7 text-[#0072C6]" />
-                        </div>
-                        <p className="text-gray-700 font-medium">Upload from Computer</p>
-                        <p className="text-xs text-gray-500">PDF, CSV, or images</p>
-                      </div>
-                    )}
-                  </label>
-                </div>
-
-                <button
-                  onClick={() => loadDriveFiles()}
-                  disabled={uploadLoading || driveLoading}
-                  className="border-2 border-dashed border-gray-300 rounded-xl p-6 text-center hover:border-[#0072C6] transition-colors disabled:opacity-50"
-                >
-                  <div className="flex flex-col items-center gap-3">
-                    <div className="w-14 h-14 rounded-full bg-blue-100 flex items-center justify-center">
-                      {driveLoading ? (
-                        <Loader2 className="w-7 h-7 text-blue-600 animate-spin" />
-                      ) : (
-                        <Cloud className="w-7 h-7 text-blue-600" />
-                      )}
+                      <p className="text-xs text-gray-500">{uploadProgress}% complete</p>
                     </div>
-                    <p className="text-gray-700 font-medium">Import from Drive</p>
-                    <p className="text-xs text-gray-500">Select from Google Drive</p>
-                  </div>
-                </button>
+                  ) : (
+                    <div className="flex flex-col items-center gap-4">
+                      <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-[#1EB053] to-[#0072C6] flex items-center justify-center shadow-lg">
+                        <Upload className="w-10 h-10 text-white" />
+                      </div>
+                      <div>
+                        <p className="text-lg font-bold text-gray-900 mb-1">
+                          {dragActive ? 'Drop files here' : 'Upload Documents'}
+                        </p>
+                        <p className="text-sm text-gray-600">
+                          Drag & drop or click to browse
+                        </p>
+                        <p className="text-xs text-gray-500 mt-2">
+                          Supports: PDF, CSV, Excel, Images • Max 10 files • 10MB each
+                        </p>
+                      </div>
+                    </div>
+                  )}
+                </label>
               </div>
+
+              {queuedFiles.length > 0 && !uploadLoading && (
+                <div className="p-4 bg-blue-50 rounded-lg border border-blue-200">
+                  <h4 className="font-semibold text-blue-900 mb-2 flex items-center gap-2">
+                    <FileText className="w-4 h-4" />
+                    Queued Files ({queuedFiles.length})
+                  </h4>
+                  <div className="space-y-1">
+                    {queuedFiles.map((f, idx) => (
+                      <div key={idx} className="flex items-center justify-between text-sm p-2 bg-white rounded">
+                        <span className="text-gray-700 truncate flex-1">{f.name}</span>
+                        <span className="text-xs text-gray-500">{(f.size / 1024).toFixed(0)} KB</span>
+                      </div>
+                    ))}
+                  </div>
+                  <Button
+                    size="sm"
+                    className="w-full mt-3 bg-gradient-to-r from-[#1EB053] to-[#0072C6]"
+                    onClick={() => {
+                      if (currencyMode === null) {
+                        setPendingFile(queuedFiles[0]);
+                        setShowCurrencyDialog(true);
+                      } else {
+                        processFile(queuedFiles[0]);
+                      }
+                    }}
+                  >
+                    Process {queuedFiles.length} File{queuedFiles.length > 1 ? 's' : ''}
+                  </Button>
+                </div>
+              )}
               
               {/* Record type hints */}
               {!uploadLoading && (
@@ -1844,9 +1732,7 @@ Return a category for each item number.`,
                 className="w-full h-auto py-4 px-6 text-left hover:border-green-500 hover:bg-green-50"
                 onClick={() => {
                   setCurrencyMode('sle');
-                  if (pendingFile?.isDriveFile) {
-                    processDriveFile(pendingFile.driveFile);
-                  } else if (pendingFile) {
+                  if (pendingFile) {
                     processFile(pendingFile);
                   }
                 }}
@@ -1871,9 +1757,7 @@ Return a category for each item number.`,
                 className="w-full h-auto py-4 px-6 text-left hover:border-blue-500 hover:bg-blue-50"
                 onClick={() => {
                   setCurrencyMode('sll');
-                  if (pendingFile?.isDriveFile) {
-                    processDriveFile(pendingFile.driveFile);
-                  } else if (pendingFile) {
+                  if (pendingFile) {
                     processFile(pendingFile);
                   }
                 }}
@@ -1900,93 +1784,6 @@ Return a category for each item number.`,
                 setShowCurrencyDialog(false);
                 setPendingFile(null);
               }}
-            >
-              Cancel
-            </Button>
-          </div>
-        </DialogContent>
-      </Dialog>
-
-      {/* Google Drive File Picker */}
-      <Dialog open={showDrivePicker} onOpenChange={setShowDrivePicker}>
-        <DialogContent className="max-w-2xl max-h-[80vh] overflow-hidden">
-          <div className="space-y-4">
-            <div className="flex items-center gap-3 pb-3 border-b">
-              <Cloud className="w-6 h-6 text-blue-600" />
-              <div className="flex-1">
-                <h3 className="text-lg font-bold">Select from Google Drive</h3>
-                {appFolderLink && (
-                  <a
-                    href={appFolderLink}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-xs text-blue-600 hover:underline mt-1 inline-block"
-                  >
-                    📁 Open "Business Management Uploads" folder
-                  </a>
-                )}
-                <p className="text-xs text-gray-500 mt-1">
-                  Transfer your files to "Business Management Uploads" folder to access them here
-                </p>
-              </div>
-            </div>
-
-            <div className="overflow-y-auto max-h-[60vh] space-y-2">
-              {driveLoading ? (
-                <div className="text-center py-8">
-                  <Loader2 className="w-8 h-8 mx-auto mb-2 animate-spin text-blue-600" />
-                  <p className="text-sm text-gray-500">Loading...</p>
-                </div>
-              ) : (
-                <>
-                  {driveFolders.map(folder => (
-                    <button
-                      key={folder.id}
-                      onClick={() => navigateToFolder(folder)}
-                      className="w-full p-3 rounded-lg border hover:border-blue-500 hover:bg-blue-50 transition-colors text-left"
-                    >
-                      <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 text-yellow-500 flex-shrink-0">📁</div>
-                        <div className="flex-1 min-w-0">
-                          <p className="font-medium text-sm truncate">{folder.name}</p>
-                          <p className="text-xs text-gray-500">Folder</p>
-                        </div>
-                      </div>
-                    </button>
-                  ))}
-                  
-                  {driveFiles.length === 0 && driveFolders.length === 0 ? (
-                    <div className="text-center py-8 text-gray-500">
-                      <Cloud className="w-12 h-12 mx-auto mb-2 opacity-50" />
-                      <p>No files or folders found</p>
-                    </div>
-                  ) : (
-                    driveFiles.map(file => (
-                      <button
-                        key={file.id}
-                        onClick={() => handleDriveFileSelect(file)}
-                        className="w-full p-3 rounded-lg border hover:border-blue-500 hover:bg-blue-50 transition-colors text-left"
-                      >
-                        <div className="flex items-center gap-3">
-                          <FileText className="w-8 h-8 text-blue-600 flex-shrink-0" />
-                          <div className="flex-1 min-w-0">
-                            <p className="font-medium text-sm truncate">{file.name}</p>
-                            <p className="text-xs text-gray-500">
-                              {new Date(file.modifiedTime).toLocaleDateString()} • {file.size ? `${Math.round(file.size / 1024)} KB` : 'Unknown size'}
-                            </p>
-                          </div>
-                        </div>
-                      </button>
-                    ))
-                  )}
-                </>
-              )}
-            </div>
-
-            <Button
-              variant="outline"
-              className="w-full"
-              onClick={() => setShowDrivePicker(false)}
             >
               Cancel
             </Button>
