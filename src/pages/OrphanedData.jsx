@@ -485,7 +485,7 @@ export default function OrphanedData() {
                               onClick={() => {
                                 const confirmDelete = window.confirm(`Delete organisation "${org.name}"? This action cannot be undone.`);
                                 if (confirmDelete) {
-                                  base44.entities.Organisation.delete(org.id).then(() => {
+                                  base44.asServiceRole.entities.Organisation.delete(org.id).then(() => {
                                     queryClient.invalidateQueries();
                                     toast.success("Organisation deleted");
                                   }).catch(err => {
