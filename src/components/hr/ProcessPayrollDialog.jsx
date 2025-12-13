@@ -23,6 +23,8 @@ export default function ProcessPayrollDialog({ open, onOpenChange, orgId, employ
   const [payCycleId, setPayCycleId] = useState("");
   const [showPreview, setShowPreview] = useState(false);
   const [payrollPreview, setPayrollPreview] = useState([]);
+  const [allowances, setAllowances] = useState([]);
+  const [bonuses, setBonuses] = useState([]);
 
   const queryClient = useQueryClient();
   const toast = useToast();
@@ -51,6 +53,8 @@ export default function ProcessPayrollDialog({ open, onOpenChange, orgId, employ
     setSelectedEmployees([]);
     setShowPreview(false);
     setPayrollPreview([]);
+    setAllowances([]);
+    setBonuses([]);
   };
 
   const handleGeneratePreview = () => {
@@ -67,7 +71,11 @@ export default function ProcessPayrollDialog({ open, onOpenChange, orgId, employ
       const emp = activeEmployees.find(e => e.id === empId);
       if (!emp) return null;
 
-      const breakdown = calculateSalaryBreakdown(emp.base_salary || 0, {}, {});
+      const totalAllowances = allowances.reduce((sum, a) => sum + a.amount, 0);
+      const totalBonuses = bonuses.reduce((sum, b) => sum + b.amount, 0);
+      const adjustedSalary = emp.base_salary + totalAllowances + totalBonuses;
+      
+      const breakdown = calculateSalaryBreakdown(adjustedSalary, {}, {});
 
       return {
         organisation_id: orgId,
@@ -77,11 +85,12 @@ export default function ProcessPayrollDialog({ open, onOpenChange, orgId, employ
         period_start: periodStart,
         period_end: periodEnd,
         payment_date: payDate,
-        base_salary: breakdown.basicSalary,
-        allowances: [],
-        bonuses: [],
+        base_salary: emp.base_salary,
+        allowances: allowances,
+        bonuses: bonuses,
         deductions: [],
-        total_allowances: breakdown.totalAllowances,
+        total_allowances: totalAllowances,
+        total_bonuses: totalBonuses,
         gross_pay: breakdown.grossSalary,
         nassit_employee: breakdown.nassit.employee,
         nassit_employer: breakdown.nassit.employer,
@@ -160,6 +169,106 @@ export default function ProcessPayrollDialog({ open, onOpenChange, orgId, employ
                 </Select>
               </div>
             )}
+
+            {/* Allowances */}
+            <div className="p-4 border rounded-lg bg-green-50/50">
+              <div className="flex items-center justify-between mb-3">
+                <Label className="text-green-700">Allowances (Added to all employees)</Label>
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="outline"
+                  onClick={() => setAllowances([...allowances, { name: '', amount: 0 }])}
+                  className="h-7 text-xs border-green-600 text-green-600 hover:bg-green-50"
+                >
+                  + Add Allowance
+                </Button>
+              </div>
+              {allowances.map((allowance, idx) => (
+                <div key={idx} className="flex gap-2 mb-2">
+                  <Input
+                    placeholder="Name (e.g., Transport)"
+                    value={allowance.name}
+                    onChange={(e) => {
+                      const updated = [...allowances];
+                      updated[idx].name = e.target.value;
+                      setAllowances(updated);
+                    }}
+                    className="flex-1"
+                  />
+                  <Input
+                    type="number"
+                    placeholder="Amount"
+                    value={allowance.amount}
+                    onChange={(e) => {
+                      const updated = [...allowances];
+                      updated[idx].amount = parseFloat(e.target.value) || 0;
+                      setAllowances(updated);
+                    }}
+                    className="w-32"
+                  />
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="ghost"
+                    onClick={() => setAllowances(allowances.filter((_, i) => i !== idx))}
+                    className="text-red-600"
+                  >
+                    ✕
+                  </Button>
+                </div>
+              ))}
+            </div>
+
+            {/* Bonuses */}
+            <div className="p-4 border rounded-lg bg-blue-50/50">
+              <div className="flex items-center justify-between mb-3">
+                <Label className="text-blue-700">Bonuses (Added to all employees)</Label>
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="outline"
+                  onClick={() => setBonuses([...bonuses, { name: '', amount: 0, type: 'performance' }])}
+                  className="h-7 text-xs border-blue-600 text-blue-600 hover:bg-blue-50"
+                >
+                  + Add Bonus
+                </Button>
+              </div>
+              {bonuses.map((bonus, idx) => (
+                <div key={idx} className="flex gap-2 mb-2">
+                  <Input
+                    placeholder="Name (e.g., Performance)"
+                    value={bonus.name}
+                    onChange={(e) => {
+                      const updated = [...bonuses];
+                      updated[idx].name = e.target.value;
+                      setBonuses(updated);
+                    }}
+                    className="flex-1"
+                  />
+                  <Input
+                    type="number"
+                    placeholder="Amount"
+                    value={bonus.amount}
+                    onChange={(e) => {
+                      const updated = [...bonuses];
+                      updated[idx].amount = parseFloat(e.target.value) || 0;
+                      setBonuses(updated);
+                    }}
+                    className="w-32"
+                  />
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="ghost"
+                    onClick={() => setBonuses(bonuses.filter((_, i) => i !== idx))}
+                    className="text-red-600"
+                  >
+                    ✕
+                  </Button>
+                </div>
+              ))}
+            </div>
 
             {/* Employee Selection */}
             <div>
