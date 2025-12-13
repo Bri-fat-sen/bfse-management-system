@@ -1556,6 +1556,7 @@ Provide:
                     </Button>
                   </motion.div>
                 )}
+              </AnimatePresence>
               
               {/* Record type hints */}
               {!uploadLoading && (
