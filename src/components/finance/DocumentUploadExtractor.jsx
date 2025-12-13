@@ -2227,6 +2227,36 @@ Provide:
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Image Preview Dialog */}
+      <Dialog open={showPreview} onOpenChange={setShowPreview}>
+        <DialogContent className="max-w-4xl">
+          <div className="h-1 flex -mx-6 -mt-6">
+            <div className="flex-1 bg-[#1EB053]" />
+            <div className="flex-1 bg-white" />
+            <div className="flex-1 bg-[#0072C6]" />
+          </div>
+          <div className="space-y-4">
+            <h3 className="text-lg font-bold flex items-center gap-2">
+              <Eye className="w-5 h-5 text-[#0072C6]" />
+              Document Preview
+            </h3>
+            {previewFile && previewImages[previewFile.name] && (
+              <div className="bg-gray-100 rounded-xl p-4 max-h-[70vh] overflow-auto">
+                <img 
+                  src={previewImages[previewFile.name]} 
+                  alt={previewFile.name}
+                  className="w-full h-auto object-contain rounded-lg shadow-lg"
+                />
+              </div>
+            )}
+            <div className="p-3 bg-gray-50 rounded-lg">
+              <p className="font-medium text-gray-900">{previewFile?.name}</p>
+              <p className="text-xs text-gray-500">{previewFile?.size ? `${(previewFile.size / 1024).toFixed(0)} KB` : ''}</p>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </Dialog>
   );
 }
