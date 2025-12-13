@@ -33,9 +33,9 @@ import LoadingSpinner from "@/components/ui/LoadingSpinner";
 import PersonalInfoEditor from "@/components/employee/PersonalInfoEditor";
 import MyPayslips from "@/components/employee/MyPayslips";
 import TrainingHistory from "@/components/employee/TrainingHistory";
-import LeaveRequestForm from "@/components/employee/LeaveRequestForm";
 import PerformanceReviews from "@/components/employee/PerformanceReviews";
 import WageClockInOut from "@/components/hr/WageClockInOut";
+import MyLeaveRequests from "@/components/employee/MyLeaveRequests";
 
 export default function EmployeeSelfService() {
   const [activeTab, setActiveTab] = useState("overview");
@@ -779,7 +779,7 @@ export default function EmployeeSelfService() {
 
         {/* Leave Tab */}
         <TabsContent value="leave" className="mt-6">
-          <LeaveRequestForm 
+          <MyLeaveRequests 
             employee={currentEmployee}
             orgId={orgId}
           />

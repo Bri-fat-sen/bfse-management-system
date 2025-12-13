@@ -29,6 +29,7 @@ export default function PersonalInfoEditor({ employee, open, onOpenChange }) {
     if (employee) {
       setFormData({
         phone: employee.phone || "",
+        email: employee.email || "",
         address: employee.address || "",
         emergency_contact: employee.emergency_contact || "",
         emergency_phone: employee.emergency_phone || ""
