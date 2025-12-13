@@ -1,7 +1,7 @@
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import { base44 } from "@/api/base44Client";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { Calculator, Users, DollarSign, Calendar, CheckCircle } from "lucide-react";
+import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
+import { Calculator, Users, DollarSign, Calendar, CheckCircle, Clock, ArrowLeft } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -13,16 +13,19 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/components/ui/Toast";
 import { calculateSalaryBreakdown, formatLeone } from "@/components/hr/sierraLeoneTaxCalculator";
+import WageEmployeeTimesheetApproval from "./WageEmployeeTimesheetApproval";
 
-export default function ProcessPayrollDialog({ open, onOpenChange, orgId, employees, payCycles }) {
+export default function ProcessPayrollDialog({ open, onOpenChange, orgId, employees, payCycles, currentEmployee }) {
+  const [activeStep, setActiveStep] = useState("config"); // "config" | "timesheet" | "preview"
   const [selectedEmployees, setSelectedEmployees] = useState([]);
-  const [payPeriod, setPayPeriod] = useState(new Date().toISOString().slice(0, 7)); // YYYY-MM
+  const [employmentTypeFilter, setEmploymentTypeFilter] = useState("all");
+  const [payPeriod, setPayPeriod] = useState(new Date().toISOString().slice(0, 7));
   const [payDate, setPayDate] = useState(new Date().toISOString().split('T')[0]);
   const [payCycleId, setPayCycleId] = useState("");
   const [frequency, setFrequency] = useState("monthly");
-  const [showPreview, setShowPreview] = useState(false);
   const [payrollPreview, setPayrollPreview] = useState([]);
   const [allowances, setAllowances] = useState([]);
   const [bonuses, setBonuses] = useState([]);
@@ -33,13 +36,39 @@ export default function ProcessPayrollDialog({ open, onOpenChange, orgId, employ
   const toast = useToast();
 
   const activeEmployees = employees.filter(e => e.status === 'active');
+  
+  // Filter by employment type
+  const filteredEmployees = useMemo(() => {
+    if (employmentTypeFilter === "all") return activeEmployees;
+    if (employmentTypeFilter === "salary") return activeEmployees.filter(e => !e.employment_type || e.employment_type === 'salary');
+    return activeEmployees.filter(e => e.employment_type === 'wage');
+  }, [activeEmployees, employmentTypeFilter]);
+
+  const wageEmployees = activeEmployees.filter(e => e.employment_type === 'wage');
+  const salaryEmployees = activeEmployees.filter(e => !e.employment_type || e.employment_type === 'salary');
+
+  const [year, month] = payPeriod.split('-');
+  const periodStart = `${year}-${month}-01`;
+  const periodEnd = new Date(parseInt(year), parseInt(month), 0).toISOString().split('T')[0];
+
+  // Fetch attendance for wage employees
+  const { data: allAttendance = [] } = useQuery({
+    queryKey: ['attendanceForPayroll', orgId, periodStart, periodEnd],
+    queryFn: async () => {
+      const records = await base44.entities.Attendance.filter({ organisation_id: orgId });
+      return records.filter(a => {
+        const date = new Date(a.date);
+        return date >= new Date(periodStart) && date <= new Date(periodEnd);
+      });
+    },
+    enabled: !!orgId && activeStep === 'timesheet',
+  });
 
   const processMutation = useMutation({
     mutationFn: async (payrollRecords) => {
-      const created = await Promise.all(
+      return await Promise.all(
         payrollRecords.map(record => base44.entities.Payroll.create(record))
       );
-      return created;
     },
     onSuccess: () => {
       queryClient.invalidateQueries(['payrolls']);
@@ -54,12 +83,13 @@ export default function ProcessPayrollDialog({ open, onOpenChange, orgId, employ
 
   const resetForm = () => {
     setSelectedEmployees([]);
-    setShowPreview(false);
+    setActiveStep("config");
     setPayrollPreview([]);
     setAllowances([]);
     setBonuses([]);
     setDeductions([]);
     setManualAdjustments({});
+    setEmploymentTypeFilter("all");
   };
 
   const calculateFrequencyMultiplier = (freq) => {
@@ -71,30 +101,86 @@ export default function ProcessPayrollDialog({ open, onOpenChange, orgId, employ
     }
   };
 
-  const handleGeneratePreview = () => {
+  const handleGeneratePreview = async () => {
     if (selectedEmployees.length === 0) {
       toast.error("No Employees", "Please select at least one employee");
       return;
     }
 
-    const [year, month] = payPeriod.split('-');
-    const periodStart = `${year}-${month}-01`;
-    const periodEnd = new Date(parseInt(year), parseInt(month), 0).toISOString().split('T')[0];
+    // Check if any selected employees are wage employees
+    const hasWageEmployees = selectedEmployees.some(id => {
+      const emp = activeEmployees.find(e => e.id === id);
+      return emp?.employment_type === 'wage';
+    });
 
+    if (hasWageEmployees) {
+      setActiveStep("timesheet");
+      return;
+    }
+
+    // Generate preview for salary employees only
+    await generatePayrollPreview();
+    setActiveStep("preview");
+  };
+
+  const handleProceedFromTimesheet = async () => {
+    await generatePayrollPreview();
+    setActiveStep("preview");
+  };
+
+  const generatePayrollPreview = async () => {
     const frequencyMultiplier = calculateFrequencyMultiplier(frequency);
+    
+    // Fetch attendance for wage employees
+    const attendanceData = await base44.entities.Attendance.filter({ organisation_id: orgId });
+    const periodAttendance = attendanceData.filter(a => {
+      const date = new Date(a.date);
+      return date >= new Date(periodStart) && date <= new Date(periodEnd);
+    });
 
     const preview = selectedEmployees.map(empId => {
       const emp = activeEmployees.find(e => e.id === empId);
       if (!emp) return null;
 
       const adjustment = manualAdjustments[empId] || {};
-      
-      // Calculate prorated salary based on frequency
-      const proratedSalary = (emp.base_salary || 0) / frequencyMultiplier;
+      const isWageEmployee = emp.employment_type === 'wage';
+
+      let baseSalary = 0;
+      let proratedSalary = 0;
+      let hoursWorked = 0;
+
+      if (isWageEmployee) {
+        // Get approved hours for wage employee
+        const empAttendance = periodAttendance.filter(a => 
+          a.employee_id === empId && 
+          (a.timesheet_status === 'approved' || a.timesheet_status === 'overridden')
+        );
+        hoursWorked = empAttendance.reduce((sum, a) => sum + (a.approved_hours || a.total_hours || 0), 0);
+
+        if (emp.salary_type === 'hourly') {
+          baseSalary = (emp.hourly_rate || 0) * hoursWorked;
+        } else if (emp.salary_type === 'daily') {
+          const daysWorked = Math.floor(hoursWorked / 8);
+          baseSalary = (emp.daily_rate || 0) * daysWorked;
+        }
+        proratedSalary = baseSalary;
+      } else {
+        // Salary employee - fixed pay, unaffected by schedules
+        baseSalary = emp.base_salary || 0;
+        proratedSalary = baseSalary;
+
+        if (frequency === 'weekly') {
+          proratedSalary = baseSalary / 4.33;
+        } else if (frequency === 'bi_weekly') {
+          proratedSalary = baseSalary / 2.165;
+        }
+      }
       
       // Calculate overtime
       const overtimeHours = adjustment.overtimeHours || 0;
-      const hourlyRate = (emp.base_salary || 0) / 160; // ~160 working hours per month
+      const hourlyRate = isWageEmployee 
+        ? (emp.hourly_rate || (emp.daily_rate ? emp.daily_rate / 8 : 0))
+        : (emp.base_salary || 0) / 160;
       const overtimePay = overtimeHours * hourlyRate * 1.5;
       
       // Calculate weekend pay
@@ -127,14 +213,17 @@ export default function ProcessPayrollDialog({ open, onOpenChange, orgId, employ
         employee_code: emp.employee_code,
         employee_role: emp.role,
         employee_location: emp.assigned_location_name,
+        employment_type: emp.employment_type || 'salary',
         payroll_frequency: frequency,
         period_start: periodStart,
         period_end: periodEnd,
         payment_date: payDate,
-        base_salary: emp.base_salary,
+        base_salary: emp.base_salary || 0,
         prorated_salary: proratedSalary,
         salary_type: emp.salary_type || 'monthly',
-        hours_worked: adjustment.hoursWorked || 0,
+        hours_worked: hoursWorked,
+        hours_approved: isWageEmployee ? hoursWorked : 0,
+        timesheet_approved: isWageEmployee,
         days_worked: adjustment.daysWorked || 0,
         overtime_hours: overtimeHours,
         overtime_pay: overtimePay,
@@ -162,7 +251,7 @@ export default function ProcessPayrollDialog({ open, onOpenChange, orgId, employ
         status: 'draft',
         calculation_details: {
           hourly_rate: hourlyRate,
-          daily_rate: (emp.base_salary || 0) / 22,
+          daily_rate: emp.daily_rate || ((emp.base_salary || 0) / 22),
           tax_bracket: breakdown.paye.taxableIncome > 0 ? 'As per SL rates' : 'Tax Free',
           effective_tax_rate: breakdown.paye.effectiveRate,
           annual_gross_equivalent: breakdown.grossSalary * 12,
@@ -172,7 +261,6 @@ export default function ProcessPayrollDialog({ open, onOpenChange, orgId, employ
     }).filter(Boolean);
 
     setPayrollPreview(preview);
-    setShowPreview(true);
   };
 
   const handleProcessPayroll = () => {
@@ -199,7 +287,8 @@ export default function ProcessPayrollDialog({ open, onOpenChange, orgId, employ
           </DialogTitle>
         </DialogHeader>
 
-        {!showPreview ? (
+        {/* Configuration Step */}
+        {activeStep === "config" && (
           <div className="space-y-6">
             {/* Pay Period Selection */}
             <div className="grid grid-cols-3 gap-4">
@@ -442,18 +531,47 @@ export default function ProcessPayrollDialog({ open, onOpenChange, orgId, employ
 
             {/* Employee Selection */}
             <div>
-              <Label className="mb-3 block">Select Employees *</Label>
+              <div className="flex items-center justify-between mb-3">
+                <Label>Select Employees *</Label>
+                <div className="flex gap-2">
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant={employmentTypeFilter === "all" ? "default" : "outline"}
+                    onClick={() => setEmploymentTypeFilter("all")}
+                  >
+                    All ({activeEmployees.length})
+                  </Button>
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant={employmentTypeFilter === "salary" ? "default" : "outline"}
+                    onClick={() => setEmploymentTypeFilter("salary")}
+                  >
+                    Salary ({salaryEmployees.length})
+                  </Button>
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant={employmentTypeFilter === "wage" ? "default" : "outline"}
+                    onClick={() => setEmploymentTypeFilter("wage")}
+                  >
+                    Wage ({wageEmployees.length})
+                  </Button>
+                </div>
+              </div>
+
               <div className="space-y-2 max-h-96 overflow-y-auto border rounded-lg p-4">
                 <div className="flex items-center gap-2 pb-2 border-b">
                   <Checkbox
-                    checked={selectedEmployees.length === activeEmployees.length}
+                    checked={selectedEmployees.length === filteredEmployees.length && filteredEmployees.length > 0}
                     onCheckedChange={(checked) => {
-                      setSelectedEmployees(checked ? activeEmployees.map(e => e.id) : []);
+                      setSelectedEmployees(checked ? filteredEmployees.map(e => e.id) : []);
                     }}
                   />
-                  <span className="font-semibold text-sm">Select All ({activeEmployees.length})</span>
+                  <span className="font-semibold text-sm">Select All ({filteredEmployees.length})</span>
                 </div>
-                {activeEmployees.map((emp) => (
+                {filteredEmployees.map((emp) => (
                   <div key={emp.id} className="space-y-2 p-2 hover:bg-gray-50 rounded border-b">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2">
@@ -468,15 +586,35 @@ export default function ProcessPayrollDialog({ open, onOpenChange, orgId, employ
                           }}
                         />
                         <div>
-                          <p className="font-medium text-sm">{emp.full_name}</p>
+                          <div className="flex items-center gap-2">
+                            <p className="font-medium text-sm">{emp.full_name}</p>
+                            {emp.employment_type === 'wage' && (
+                              <Badge variant="outline" className="text-xs bg-blue-50 text-blue-700">Wage</Badge>
+                            )}
+                          </div>
                           <p className="text-xs text-gray-500">{emp.employee_code} • {emp.department}</p>
                         </div>
                       </div>
-                      <span className="text-sm font-semibold text-[#1EB053]">
-                        {formatLeone(emp.base_salary || 0)}
-                      </span>
+                      <div className="text-right">
+                        {emp.employment_type === 'wage' ? (
+                          <>
+                            <p className="font-semibold text-[#0072C6] text-sm">
+                              Le {emp.salary_type === 'hourly' ? (emp.hourly_rate || 0).toLocaleString() : (emp.daily_rate || 0).toLocaleString()}/
+                              {emp.salary_type === 'hourly' ? 'hr' : 'day'}
+                            </p>
+                            <p className="text-xs text-gray-500">Based on hours</p>
+                          </>
+                        ) : (
+                          <>
+                            <p className="font-semibold text-[#1EB053] text-sm">
+                              {formatLeone(emp.base_salary || 0)}
+                            </p>
+                            <p className="text-xs text-gray-500 capitalize">{emp.salary_type}</p>
+                          </>
+                        )}
+                      </div>
                     </div>
-                    {selectedEmployees.includes(emp.id) && (
+                    {selectedEmployees.includes(emp.id) && emp.employment_type !== 'wage' && (
                       <div className="ml-8 grid grid-cols-4 gap-2">
                         <Input
                           type="number"
@@ -534,11 +672,48 @@ export default function ProcessPayrollDialog({ open, onOpenChange, orgId, employ
                 className="bg-gradient-to-r from-[#1EB053] to-[#0072C6] text-white"
               >
                 <Calculator className="w-4 h-4 mr-2" />
-                Generate Preview
+                {selectedEmployees.some(id => activeEmployees.find(e => e.id === id)?.employment_type === 'wage')
+                  ? 'Review Timesheets'
+                  : 'Generate Preview'}
               </Button>
             </div>
           </div>
-        ) : (
+        )}
+
+        {/* Timesheet Approval Step */}
+        {activeStep === "timesheet" && (
+          <div className="space-y-6">
+            <div className="p-4 bg-amber-50 border border-amber-200 rounded-lg">
+              <p className="text-sm text-amber-800">
+                <strong>Wage Employee Timesheets:</strong> Review and approve/override hours worked before processing payroll.
+                Only approved hours will be paid.
+              </p>
+            </div>
+
+            <WageEmployeeTimesheetApproval
+              periodStart={periodStart}
+              periodEnd={periodEnd}
+              orgId={orgId}
+              currentEmployee={currentEmployee}
+            />
+
+            <div className="flex justify-between pt-6 border-t">
+              <Button variant="outline" onClick={() => setActiveStep("config")}>
+                <ArrowLeft className="w-4 h-4 mr-2" />
+                Back to Configuration
+              </Button>
+              <Button
+                onClick={handleProceedFromTimesheet}
+                className="bg-gradient-to-r from-[#1EB053] to-[#0072C6] text-white"
+              >
+                Continue to Preview
+              </Button>
+            </div>
+          </div>
+        )}
+
+        {/* Preview Step */}
+        {activeStep === "preview" && (
           <div className="space-y-6">
             {/* Summary Cards */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
@@ -566,7 +741,14 @@ export default function ProcessPayrollDialog({ open, onOpenChange, orgId, employ
                 <div key={idx} className="p-3 border rounded-lg bg-gray-50">
                   <div className="flex items-start justify-between">
                     <div className="flex-1">
-                      <p className="font-semibold text-sm">{record.employee_name}</p>
+                      <div className="flex items-center gap-2">
+                        <p className="font-semibold text-sm">{record.employee_name}</p>
+                        {record.employment_type === 'wage' && (
+                          <Badge variant="outline" className="text-xs bg-blue-50 text-blue-700">
+                            Wage • {record.hours_worked}h
+                          </Badge>
+                        )}
+                      </div>
                       <p className="text-xs text-gray-500">{record.employee_code}</p>
                     </div>
                     <div className="text-right">
@@ -597,7 +779,8 @@ export default function ProcessPayrollDialog({ open, onOpenChange, orgId, employ
             </div>
 
             <div className="flex justify-end gap-3 pt-4 border-t">
-              <Button variant="outline" onClick={() => setShowPreview(false)}>
+              <Button variant="outline" onClick={() => setActiveStep(wageEmployees.some(e => selectedEmployees.includes(e.id)) ? "timesheet" : "config")}>
+                <ArrowLeft className="w-4 h-4 mr-2" />
                 Back
               </Button>
               <Button

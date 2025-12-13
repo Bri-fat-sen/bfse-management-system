@@ -211,6 +211,7 @@ export default function PayrollProcessingTab({ orgId, employees, payrolls, curre
         orgId={orgId}
         employees={employees}
         payCycles={payCycles}
+        currentEmployee={currentEmployee}
       />
 
       {/* Payroll Detail Dialog */}
