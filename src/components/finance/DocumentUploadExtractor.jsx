@@ -1,4 +1,3 @@
-
 import React, { useState, useMemo, useRef } from "react";
 import { base44 } from "@/api/base44Client";
 import { format } from "date-fns";
@@ -1306,14 +1305,19 @@ Provide:
             <div className="flex-1 bg-[#0072C6]" />
           </div>
 
-        <div className="px-3 sm:px-6 py-3 sm:py-4 bg-gradient-to-r from-[#1EB053] to-[#0072C6] text-white">
-          <div className="flex items-center gap-2 sm:gap-3">
-            <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-white/20 flex items-center justify-center flex-shrink-0">
-              <FileUp className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
-            </div>
+        <div className="relative overflow-hidden px-3 sm:px-6 py-4 sm:py-6 bg-gradient-to-r from-[#1EB053] via-blue-500 to-[#0072C6]">
+          <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGRlZnM+PHBhdHRlcm4gaWQ9ImdyaWQiIHdpZHRoPSI0MCIgaGVpZ2h0PSI0MCIgcGF0dGVyblVuaXRzPSJ1c2VyU3BhY2VPblVzZSI+PHBhdGggZD0iTSAwIDEwIEwgNDAgMTAgTSAxMCAwIEwgMTAgNDAgTSAwIDIwIEwgNDAgMjAgTSAyMCAwIEwgMjAgNDAgTSAwIDMwIEwgNDAgMzAgTSAzMCAwIEwgMzAgNDAiIGZpbGw9Im5vbmUiIHN0cm9rZT0id2hpdGUiIHN0cm9rZS1vcGFjaXR5PSIwLjA1IiBzdHJva2Utd2lkdGg9IjEiLz48L3BhdHRlcm4+PC9kZWZzPjxyZWN0IHdpZHRoPSIxMDAlIiBoZWlnaHQ9IjEwMCUiIGZpbGw9InVybCgjZ3JpZCkiLz48L3N2Zz4=')] opacity-30"></div>
+          <div className="relative flex items-center gap-3 sm:gap-4">
+            <motion.div 
+              className="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-white/90 backdrop-blur-sm flex items-center justify-center flex-shrink-0 shadow-lg"
+              whileHover={{ scale: 1.05, rotate: 5 }}
+              transition={{ type: "spring", stiffness: 300 }}
+            >
+              <FileUp className="w-6 h-6 sm:w-7 sm:h-7 text-[#1EB053]" />
+            </motion.div>
             <div className="flex-1 min-w-0">
-              <h2 className="text-base sm:text-xl font-bold truncate">{title} from Document</h2> {/* Updated here */}
-              <p className="text-white/80 text-xs sm:text-sm truncate">Upload PDF, CSV, or images to extract {isProduction ? 'production batch' : isRevenue ? 'revenue' : 'expense'} data</p>
+              <h2 className="text-lg sm:text-2xl font-black text-white truncate drop-shadow-lg">{title} from Document</h2>
+              <p className="text-white/90 text-xs sm:text-sm truncate font-medium">✨ AI-powered extraction • Upload PDF, CSV, or images</p>
             </div>
           </div>
         </div>
@@ -1321,10 +1325,16 @@ Provide:
         <div className="p-3 sm:p-6 space-y-4 overflow-y-auto max-h-[calc(95vh-140px)]">
           {/* Production Location Selection */}
           {(detectedType === 'production' || isProduction) && (
-            <div className="p-4 bg-green-50 rounded-xl border border-green-200">
-              <h3 className="font-semibold text-green-900 mb-3 flex items-center gap-2">
-                <MapPin className="w-5 h-5" />
-                Production Location
+            <motion.div 
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="p-4 sm:p-5 bg-gradient-to-br from-green-50 to-emerald-50 rounded-2xl border-2 border-green-300 shadow-lg"
+            >
+              <h3 className="font-bold text-green-900 mb-3 flex items-center gap-2">
+                <div className="w-8 h-8 rounded-lg bg-green-500 flex items-center justify-center">
+                  <MapPin className="w-4 h-4 text-white" />
+                </div>
+                <span>Production Location</span>
               </h3>
               <div>
                 <label className="text-xs font-medium text-green-800 uppercase mb-1 block">
@@ -1355,10 +1365,16 @@ Provide:
 
           {/* Location & Sale Type Selection for Revenue/Sales */}
           {(detectedType === 'revenue' || isRevenue) && (
-            <div className="p-4 bg-blue-50 rounded-xl border border-blue-200">
-              <h3 className="font-semibold text-blue-900 mb-3 flex items-center gap-2">
-                <MapPin className="w-5 h-5" />
-                Sales Location & Type
+            <motion.div 
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="p-4 sm:p-5 bg-gradient-to-br from-blue-50 to-cyan-50 rounded-2xl border-2 border-blue-300 shadow-lg"
+            >
+              <h3 className="font-bold text-blue-900 mb-3 flex items-center gap-2">
+                <div className="w-8 h-8 rounded-lg bg-blue-500 flex items-center justify-center">
+                  <MapPin className="w-4 h-4 text-white" />
+                </div>
+                <span>Sales Location & Type</span>
               </h3>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
@@ -1421,17 +1437,25 @@ Provide:
                 </TabsList>
 
                 <TabsContent value="upload" className="space-y-4 mt-4">
-                  <div
+                  <motion.div
                     onDragEnter={handleDragEnter}
                     onDragOver={handleDragOver}
                     onDragLeave={handleDragLeave}
                     onDrop={handleDrop}
+                    whileHover={!uploadLoading ? { scale: 1.01 } : {}}
                     className={`
-                      relative border-2 border-dashed rounded-2xl p-10 text-center transition-all duration-300
-                      ${dragActive ? 'border-[#1EB053] bg-gradient-to-br from-green-50 to-blue-50 scale-[1.02] shadow-2xl' : 'border-gray-300 hover:border-[#0072C6] hover:shadow-lg'}
+                      relative border-3 border-dashed rounded-3xl p-8 sm:p-12 text-center transition-all duration-500 overflow-hidden
+                      ${dragActive ? 'border-[#1EB053] bg-gradient-to-br from-green-50 via-blue-50 to-purple-50 scale-[1.02] shadow-2xl' : 'border-gray-300 hover:border-[#0072C6] hover:shadow-xl bg-gradient-to-br from-gray-50 to-white'}
                       ${uploadLoading ? 'opacity-50 pointer-events-none' : ''}
                     `}
                   >
+                    {dragActive && (
+                      <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        className="absolute inset-0 bg-gradient-to-br from-[#1EB053]/10 to-[#0072C6]/10 pointer-events-none"
+                      />
+                    )}
                     <input
                       type="file"
                       accept=".pdf,.csv,.png,.jpg,.jpeg,.xlsx,.xls"
@@ -1472,63 +1496,87 @@ Provide:
                             </div>
                           </motion.div>
                         ) : (
-                          <motion.div
-                            key="upload"
-                            initial={{ opacity: 0, y: 10 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            exit={{ opacity: 0, y: -10 }}
-                            className="flex flex-col items-center gap-5"
-                          >
-                            <motion.div 
-                              className="w-24 h-24 rounded-3xl bg-gradient-to-br from-[#1EB053] via-blue-500 to-[#0072C6] flex items-center justify-center shadow-2xl"
-                              whileHover={{ scale: 1.1, rotate: 5 }}
-                              transition={{ type: "spring", stiffness: 300 }}
-                            >
-                              <Upload className="w-12 h-12 text-white" />
-                            </motion.div>
-                            <div>
-                              <p className="text-xl font-bold text-gray-900 mb-2">
-                                {dragActive ? '✨ Drop your files here!' : 'Upload Your Documents'}
-                              </p>
-                              <p className="text-sm text-gray-600 mb-1">
-                                Drag & drop files or click to browse
-                              </p>
-                              <div className="flex items-center justify-center gap-4 mt-4 text-xs text-gray-500">
-                                <span className="flex items-center gap-1">
-                                  <FileText className="w-3 h-3" /> PDF, CSV, Excel
-                                </span>
-                                <span className="flex items-center gap-1">
-                                  <ImageIcon className="w-3 h-3" /> JPG, PNG
-                                </span>
-                                <span className="flex items-center gap-1">
-                                  <Zap className="w-3 h-3" /> AI Powered
-                                </span>
-                              </div>
-                            </div>
-                          </motion.div>
+                        <motion.div
+                        key="upload"
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -10 }}
+                        className="flex flex-col items-center gap-6"
+                        >
+                        <motion.div 
+                        className="relative w-28 h-28 sm:w-32 sm:h-32 rounded-3xl bg-gradient-to-br from-[#1EB053] via-blue-500 to-[#0072C6] flex items-center justify-center shadow-2xl"
+                        whileHover={{ scale: 1.1, rotate: 5 }}
+                        transition={{ type: "spring", stiffness: 300 }}
+                        animate={{ 
+                        boxShadow: dragActive 
+                        ? "0 25px 50px -12px rgba(30, 176, 83, 0.5)" 
+                        : "0 20px 25px -5px rgba(0, 0, 0, 0.1)"
+                        }}
+                        >
+                        <Upload className="w-14 h-14 sm:w-16 sm:h-16 text-white" />
+                        <motion.div
+                        className="absolute -top-2 -right-2 w-10 h-10 rounded-full bg-amber-400 flex items-center justify-center shadow-lg"
+                        animate={{ rotate: 360 }}
+                        transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
+                        >
+                        <Sparkles className="w-5 h-5 text-white" />
+                        </motion.div>
+                        </motion.div>
+                        <div className="text-center">
+                        <motion.p 
+                        className="text-xl sm:text-2xl font-black text-gray-900 mb-2 bg-gradient-to-r from-[#1EB053] to-[#0072C6] bg-clip-text text-transparent"
+                        animate={{ scale: dragActive ? [1, 1.05, 1] : 1 }}
+                        transition={{ duration: 0.5, repeat: dragActive ? Infinity : 0 }}
+                        >
+                        {dragActive ? '✨ Drop your files here!' : 'Upload Documents'}
+                        </motion.p>
+                        <p className="text-sm sm:text-base text-gray-600 mb-1 font-medium">
+                        Drag & drop or click to browse
+                        </p>
+                        <div className="flex items-center justify-center gap-3 sm:gap-4 mt-4 text-xs text-gray-500">
+                        <motion.span whileHover={{ scale: 1.1 }} className="flex items-center gap-1 px-2 py-1 bg-white rounded-full shadow-sm">
+                        <FileText className="w-3 h-3 text-blue-600" /> <span className="font-medium">PDF, CSV</span>
+                        </motion.span>
+                        <motion.span whileHover={{ scale: 1.1 }} className="flex items-center gap-1 px-2 py-1 bg-white rounded-full shadow-sm">
+                        <ImageIcon className="w-3 h-3 text-purple-600" /> <span className="font-medium">Images</span>
+                        </motion.span>
+                        <motion.span whileHover={{ scale: 1.1 }} className="flex items-center gap-1 px-2 py-1 bg-gradient-to-r from-amber-100 to-yellow-100 rounded-full shadow-sm">
+                        <Zap className="w-3 h-3 text-amber-600" /> <span className="font-bold text-amber-700">AI Powered</span>
+                        </motion.span>
+                        </div>
+                        </div>
+                        </motion.div>
                         )}
                       </AnimatePresence>
                     </label>
-                  </div>
+                  </motion.div>
                 </TabsContent>
 
                 <TabsContent value="camera" className="mt-4">
                   {!showCamera ? (
-                    <div className="space-y-4">
-                      <div className="text-center p-10 border-2 border-dashed border-gray-300 rounded-2xl hover:border-[#0072C6] transition-colors">
-                        <div className="w-24 h-24 rounded-3xl bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center mx-auto mb-4 shadow-xl">
-                          <Camera className="w-12 h-12 text-white" />
-                        </div>
-                        <h3 className="text-xl font-bold text-gray-900 mb-2">Scan Documents with Camera</h3>
-                        <p className="text-sm text-gray-600 mb-4">
-                          Capture receipts, invoices, or forms instantly
+                    <motion.div 
+                      initial={{ opacity: 0, scale: 0.95 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      className="space-y-4"
+                    >
+                      <div className="text-center p-8 sm:p-12 border-3 border-dashed border-purple-300 rounded-3xl bg-gradient-to-br from-purple-50 via-pink-50 to-fuchsia-50 hover:border-purple-500 hover:shadow-2xl transition-all duration-300">
+                        <motion.div 
+                          className="w-24 h-24 sm:w-28 sm:h-28 rounded-3xl bg-gradient-to-br from-purple-500 via-pink-500 to-fuchsia-600 flex items-center justify-center mx-auto mb-5 shadow-2xl"
+                          whileHover={{ scale: 1.1, rotate: [0, -5, 5, 0] }}
+                          transition={{ type: "spring", stiffness: 300 }}
+                        >
+                          <Camera className="w-12 h-12 sm:w-14 sm:h-14 text-white" />
+                        </motion.div>
+                        <h3 className="text-xl sm:text-2xl font-black text-gray-900 mb-2">Scan with Camera 📸</h3>
+                        <p className="text-sm sm:text-base text-gray-600 mb-5 max-w-md mx-auto">
+                          Capture receipts, invoices, or forms instantly with your device camera
                         </p>
-                        <Button onClick={startCamera} className="bg-gradient-to-r from-purple-600 to-pink-600">
-                          <Camera className="w-4 h-4 mr-2" />
+                        <Button onClick={startCamera} className="bg-gradient-to-r from-purple-600 via-pink-600 to-fuchsia-600 hover:shadow-xl transition-shadow text-base px-6 py-6 rounded-xl font-bold">
+                          <Camera className="w-5 h-5 mr-2" />
                           Open Camera
                         </Button>
                       </div>
-                    </div>
+                    </motion.div>
                   ) : (
                     <div className="space-y-4">
                       <div className="relative rounded-xl overflow-hidden bg-black">
@@ -1710,14 +1758,32 @@ Provide:
               
               {/* Record type hints */}
               {!uploadLoading && (
-                <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
-                  {RECORD_TYPES.map(rt => (
-                    <div key={rt.value} className="p-2 bg-gray-50 rounded-lg text-center">
-                      <span className="text-xl">{rt.icon}</span>
-                      <p className="text-xs font-medium text-gray-700">{rt.label}</p>
-                    </div>
+                <motion.div 
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  className="grid grid-cols-2 sm:grid-cols-5 gap-2 sm:gap-3"
+                >
+                  {RECORD_TYPES.map((rt, idx) => (
+                    <motion.div
+                      key={rt.value}
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: idx * 0.05 }}
+                      whileHover={{ scale: 1.05, y: -2 }}
+                      className="p-3 sm:p-4 bg-white rounded-xl text-center border-2 border-gray-100 hover:border-gray-300 hover:shadow-lg transition-all cursor-default group"
+                    >
+                      <motion.span 
+                        className="text-2xl sm:text-3xl block mb-1"
+                        whileHover={{ scale: 1.2, rotate: [0, -10, 10, 0] }}
+                        transition={{ duration: 0.3 }}
+                      >
+                        {rt.icon}
+                      </motion.span>
+                      <p className="text-[10px] sm:text-xs font-bold text-gray-700 group-hover:text-gray-900">{rt.label}</p>
+                      <p className="text-[9px] sm:text-[10px] text-gray-500 mt-0.5 hidden sm:block">{rt.description}</p>
+                    </motion.div>
                   ))}
-                </div>
+                </motion.div>
               )}
             </div>
           )}
@@ -1729,33 +1795,40 @@ Provide:
                 <motion.div
                   initial={{ opacity: 0, y: -10 }}
                   animate={{ opacity: 1, y: 0 }}
-                  className="p-4 bg-gradient-to-r from-blue-50 to-purple-50 rounded-xl border-2 border-blue-200 shadow-lg"
+                  className="relative overflow-hidden p-5 sm:p-6 bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 rounded-2xl border-2 border-blue-300 shadow-xl"
                 >
-                  <div className="flex items-start gap-3">
-                    <motion.span 
-                      className="text-3xl"
-                      initial={{ scale: 0 }}
-                      animate={{ scale: 1 }}
-                      transition={{ type: "spring", stiffness: 200 }}
+                  <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-blue-400/10 to-purple-400/10 rounded-full blur-3xl"></div>
+                  <div className="relative flex items-start gap-3 sm:gap-4">
+                    <motion.div
+                      className="flex-shrink-0 w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-white shadow-lg flex items-center justify-center border-2 border-blue-200"
+                      initial={{ scale: 0, rotate: -180 }}
+                      animate={{ scale: 1, rotate: 0 }}
+                      transition={{ type: "spring", stiffness: 200, delay: 0.1 }}
+                      whileHover={{ scale: 1.1, rotate: 5 }}
                     >
-                      {RECORD_TYPES.find(r => r.value === detectedType)?.icon || '📄'}
-                    </motion.span>
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2 mb-2">
-                        <h4 className="font-bold text-gray-900 text-lg">
+                      <span className="text-3xl sm:text-4xl">
+                        {RECORD_TYPES.find(r => r.value === detectedType)?.icon || '📄'}
+                      </span>
+                    </motion.div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 mb-2 flex-wrap">
+                        <h4 className="font-black text-gray-900 text-base sm:text-xl">
                           {RECORD_TYPES.find(r => r.value === detectedType)?.label || detectedType}
                         </h4>
-                        <Badge className={
-                          documentSummary.confidence === 'high' ? 'bg-green-100 text-green-700 border-green-300' : 
-                          documentSummary.confidence === 'medium' ? 'bg-yellow-100 text-yellow-700 border-yellow-300' : 
-                          'bg-red-100 text-red-700 border-red-300'
-                        }>
+                        <Badge className={`
+                          ${documentSummary.confidence === 'high' ? 'bg-green-500 text-white border-green-600' : 
+                          documentSummary.confidence === 'medium' ? 'bg-yellow-500 text-white border-yellow-600' : 
+                          'bg-red-500 text-white border-red-600'} shadow-md font-bold
+                        `}>
                           <CheckCircle className="w-3 h-3 mr-1" />
                           {documentSummary.confidence} confidence
                         </Badge>
                       </div>
-                      <p className="text-sm text-gray-700 font-medium mb-1">{documentSummary.summary}</p>
-                      <p className="text-xs text-gray-600">💡 {documentSummary.reasoning}</p>
+                      <p className="text-sm sm:text-base text-gray-800 font-semibold mb-2 leading-relaxed">{documentSummary.summary}</p>
+                      <div className="flex items-start gap-2 p-3 bg-white/60 backdrop-blur-sm rounded-lg border border-blue-200">
+                        <Sparkles className="w-4 h-4 text-purple-600 flex-shrink-0 mt-0.5" />
+                        <p className="text-xs sm:text-sm text-gray-700 font-medium">{documentSummary.reasoning}</p>
+                      </div>
                     </div>
                   </div>
                 </motion.div>
@@ -1767,13 +1840,18 @@ Provide:
                   initial={{ opacity: 0, y: -10 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.2 }}
-                  className="p-4 bg-gradient-to-br from-purple-50 to-pink-50 rounded-xl border-2 border-purple-200 shadow-lg"
+                  className="relative overflow-hidden p-5 sm:p-6 bg-gradient-to-br from-purple-50 via-fuchsia-50 to-pink-50 rounded-2xl border-2 border-purple-300 shadow-xl"
                 >
-                  <div className="flex items-center gap-2 mb-3">
-                    <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center">
-                      <Sparkles className="w-4 h-4 text-white" />
-                    </div>
-                    <h4 className="font-bold text-purple-900">AI Financial Insights</h4>
+                  <div className="absolute top-0 left-0 w-40 h-40 bg-gradient-to-br from-purple-400/10 to-pink-400/10 rounded-full blur-3xl"></div>
+                  <div className="relative flex items-center gap-3 mb-4">
+                    <motion.div 
+                      className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-gradient-to-br from-purple-500 via-fuchsia-500 to-pink-500 flex items-center justify-center shadow-lg"
+                      animate={{ rotate: [0, 5, -5, 0] }}
+                      transition={{ duration: 2, repeat: Infinity }}
+                    >
+                      <Sparkles className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
+                    </motion.div>
+                    <h4 className="font-black text-purple-900 text-base sm:text-lg">AI Financial Insights</h4>
                   </div>
                   
                   {aiInsights.cost_breakdown && (
@@ -1818,17 +1896,25 @@ Provide:
                 </motion.div>
               )}
 
-              <div className="flex items-center justify-between flex-wrap gap-2 p-4 bg-gradient-to-r from-gray-50 to-gray-100 rounded-xl border">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#1EB053] to-[#0072C6] flex items-center justify-center shadow-lg">
-                    <span className="text-white font-bold text-lg">{extractedData.filter(e => e.selected).length}</span>
-                  </div>
+              <motion.div 
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="flex items-center justify-between flex-wrap gap-3 p-4 sm:p-5 bg-gradient-to-br from-white via-gray-50 to-blue-50 rounded-2xl border-2 border-gray-200 shadow-lg"
+              >
+                <div className="flex items-center gap-3 sm:gap-4">
+                  <motion.div 
+                    className="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-gradient-to-br from-[#1EB053] to-[#0072C6] flex items-center justify-center shadow-xl"
+                    whileHover={{ scale: 1.1, rotate: 360 }}
+                    transition={{ type: "spring", stiffness: 200 }}
+                  >
+                    <span className="text-white font-black text-lg sm:text-xl">{extractedData.filter(e => e.selected).length}</span>
+                  </motion.div>
                   <div>
-                    <p className="font-bold text-gray-900">
-                      {extractedData.filter(e => e.selected).length} item(s) ready
+                    <p className="font-black text-gray-900 text-base sm:text-lg">
+                      {extractedData.filter(e => e.selected).length} item{extractedData.filter(e => e.selected).length !== 1 ? 's' : ''} ready
                     </p>
-                    <p className="text-sm text-gray-600 font-mono">
-                      Total: Le {extractedData.filter(e => e.selected).reduce((sum, e) => sum + (e.amount || 0), 0).toLocaleString()}
+                    <p className="text-sm sm:text-base text-gray-700 font-mono font-bold">
+                      Total: <span className="text-[#1EB053]">Le {extractedData.filter(e => e.selected).reduce((sum, e) => sum + (e.amount || 0), 0).toLocaleString()}</span>
                     </p>
                   </div>
                 </div>
@@ -1870,12 +1956,16 @@ Provide:
                 <motion.div
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
-                  className="p-4 bg-gradient-to-r from-blue-50 to-cyan-50 rounded-xl border border-blue-200"
+                  className="p-4 sm:p-5 bg-gradient-to-br from-cyan-50 via-blue-50 to-indigo-50 rounded-2xl border-2 border-cyan-300 shadow-lg"
                 >
-                  <p className="text-sm text-blue-900 font-bold mb-2 flex items-center gap-2">
-                    <FileText className="w-4 h-4" />
-                    Detected Columns ({extractedColumns.length})
-                  </p>
+                  <div className="flex items-center gap-2 mb-3">
+                    <div className="w-8 h-8 rounded-lg bg-cyan-500 flex items-center justify-center shadow-md">
+                      <FileText className="w-4 h-4 text-white" />
+                    </div>
+                    <p className="text-sm sm:text-base text-cyan-900 font-black">
+                      Detected Columns ({extractedColumns.length})
+                    </p>
+                  </div>
                   <div className="flex flex-wrap gap-2">
                     {extractedColumns.map((col, idx) => (
                       <motion.div
@@ -1883,8 +1973,9 @@ Provide:
                         initial={{ opacity: 0, scale: 0.8 }}
                         animate={{ opacity: 1, scale: 1 }}
                         transition={{ delay: idx * 0.03 }}
+                        whileHover={{ scale: 1.05, y: -2 }}
                       >
-                        <Badge variant="outline" className="bg-white border-blue-300 text-blue-700 shadow-sm">
+                        <Badge className="bg-white border-2 border-cyan-400 text-cyan-800 shadow-md font-bold px-3 py-1">
                           {col}
                         </Badge>
                       </motion.div>
@@ -2253,42 +2344,51 @@ Provide:
               <motion.div
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="sticky bottom-0 bg-white border-t-2 border-gray-200 -mx-6 px-6 py-4 shadow-2xl"
+                className="sticky bottom-0 bg-gradient-to-r from-white via-blue-50 to-purple-50 border-t-4 border-[#1EB053] -mx-6 px-4 sm:px-6 py-4 sm:py-5 shadow-2xl backdrop-blur-sm"
               >
                 <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-                  <div className="flex items-center gap-4">
-                    <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-[#1EB053] to-[#0072C6] flex items-center justify-center shadow-lg">
-                      <span className="text-white font-bold text-lg">{extractedData.filter(e => e.selected).length}</span>
-                    </div>
+                  <div className="flex items-center gap-3 sm:gap-4">
+                    <motion.div 
+                      className="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-gradient-to-br from-[#1EB053] via-blue-500 to-[#0072C6] flex items-center justify-center shadow-2xl"
+                      whileHover={{ scale: 1.1 }}
+                      animate={{ 
+                        boxShadow: ["0 10px 30px rgba(30, 176, 83, 0.3)", "0 10px 40px rgba(0, 114, 198, 0.4)", "0 10px 30px rgba(30, 176, 83, 0.3)"]
+                      }}
+                      transition={{ duration: 3, repeat: Infinity }}
+                    >
+                      <span className="text-white font-black text-xl sm:text-2xl">{extractedData.filter(e => e.selected).length}</span>
+                    </motion.div>
                     <div>
-                      <p className="font-bold text-gray-900">
-                        {extractedData.filter(e => e.selected).length} item(s) ready
+                      <p className="font-black text-gray-900 text-base sm:text-xl">
+                        {extractedData.filter(e => e.selected).length} item{extractedData.filter(e => e.selected).length !== 1 ? 's' : ''} selected
                       </p>
-                      <p className="text-sm text-gray-600 font-mono">
-                        Total: Le {extractedData.filter(e => e.selected).reduce((sum, e) => sum + (e.amount || 0), 0).toLocaleString()}
+                      <p className="text-sm sm:text-lg text-gray-700 font-mono font-bold">
+                        <span className="text-[#1EB053]">Le {extractedData.filter(e => e.selected).reduce((sum, e) => sum + (e.amount || 0), 0).toLocaleString()}</span>
                       </p>
                     </div>
                   </div>
-                  <div className="flex gap-2 w-full sm:w-auto">
+                  <div className="flex gap-2 sm:gap-3 w-full sm:w-auto">
                     <Button
                       variant="outline"
                       onClick={() => setExtractedData(prev => prev.map(e => ({ ...e, selected: !e.selected })))}
-                      className="flex-1 sm:flex-none"
+                      className="flex-1 sm:flex-none border-2 hover:border-gray-400 hover:bg-gray-50 font-semibold"
                     >
                       Toggle All
                     </Button>
-                    <Button
-                      onClick={createRecords} // Updated here
-                      disabled={createLoading || extractedData.filter(e => e.selected).length === 0} // Updated here
-                      className="bg-gradient-to-r from-[#1EB053] to-[#0072C6] flex-1 sm:flex-none shadow-lg hover:shadow-xl transition-shadow"
-                    >
-                      {createLoading ? ( // Updated here
-                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                      ) : (
-                        <CheckCircle className="w-4 h-4 mr-2" />
-                      )}
-                      <span>Create Records</span>
-                    </Button>
+                    <motion.div className="flex-1 sm:flex-none" whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
+                      <Button
+                        onClick={createRecords}
+                        disabled={createLoading || extractedData.filter(e => e.selected).length === 0}
+                        className="w-full bg-gradient-to-r from-[#1EB053] via-blue-500 to-[#0072C6] shadow-xl hover:shadow-2xl transition-all font-bold text-base px-6 py-6 rounded-xl"
+                      >
+                        {createLoading ? (
+                          <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+                        ) : (
+                          <CheckCircle className="w-5 h-5 mr-2" />
+                        )}
+                        <span>{createLoading ? 'Creating...' : 'Create Records'}</span>
+                      </Button>
+                    </motion.div>
                   </div>
                 </div>
               </motion.div>
@@ -2306,73 +2406,97 @@ Provide:
 
       {/* Currency Selection Dialog */}
       <Dialog open={showCurrencyDialog} onOpenChange={setShowCurrencyDialog}>
-        <DialogContent className="max-w-md w-[95vw]">
-          <div className="space-y-4">
+        <DialogContent className="max-w-md w-[95vw] [&>button]:hidden">
+          <div className="h-1.5 flex -mx-6 -mt-6">
+            <div className="flex-1 bg-[#1EB053]" />
+            <div className="flex-1 bg-white" />
+            <div className="flex-1 bg-[#0072C6]" />
+          </div>
+          <div className="space-y-5 sm:space-y-6">
             <div className="text-center">
-              <div className="w-12 h-12 sm:w-16 sm:h-16 rounded-full bg-yellow-100 mx-auto mb-4 flex items-center justify-center">
-                <span className="text-2xl sm:text-3xl">💱</span>
-              </div>
-              <h3 className="text-lg sm:text-xl font-bold text-gray-900 mb-2">What Currency is in the Document?</h3>
-              <p className="text-xs sm:text-sm text-gray-600 px-2">
-                Sierra Leone redenominated in July 2022: 1,000 old Leones (SLL) = 1 new Leone (SLE)
+              <motion.div 
+                className="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl bg-gradient-to-br from-yellow-400 to-amber-500 mx-auto mb-4 flex items-center justify-center shadow-2xl"
+                initial={{ scale: 0, rotate: -180 }}
+                animate={{ scale: 1, rotate: 0 }}
+                transition={{ type: "spring", stiffness: 200 }}
+                whileHover={{ scale: 1.1, rotate: 5 }}
+              >
+                <span className="text-3xl sm:text-4xl">💱</span>
+              </motion.div>
+              <h3 className="text-xl sm:text-2xl font-black text-gray-900 mb-3">Currency Selection</h3>
+              <p className="text-xs sm:text-sm text-gray-600 px-2 font-medium leading-relaxed">
+                Sierra Leone redenominated in July 2022<br/>
+                <span className="text-amber-700 font-bold">1,000 old Leones (SLL) = 1 new Leone (SLE)</span>
               </p>
             </div>
 
-            <div className="space-y-3">
-              <Button
-                type="button"
-                variant="outline"
-                className="w-full h-auto py-3 sm:py-4 px-4 sm:px-6 text-left hover:border-green-500 hover:bg-green-50"
-                onClick={() => {
-                  setCurrencyMode('sle');
-                  if (pendingFile) {
-                    processFile(pendingFile);
-                  }
-                }}
-              >
-                <div className="flex items-start gap-2 sm:gap-3">
-                  <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg bg-green-100 flex items-center justify-center flex-shrink-0 mt-1">
-                    <span className="text-lg sm:text-xl">✓</span>
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="font-bold text-gray-900 mb-1 text-sm sm:text-base">New Leone (SLE)</div>
-                    <div className="text-xs sm:text-sm text-gray-600">
-                      Amounts like: <strong>75</strong>, <strong>1,500</strong>, <strong>25,000</strong>
+            <div className="space-y-3 sm:space-y-4">
+              <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="w-full h-auto py-4 sm:py-5 px-5 sm:px-6 text-left border-2 hover:border-green-500 hover:bg-gradient-to-br hover:from-green-50 hover:to-emerald-50 hover:shadow-xl transition-all duration-300 group"
+                  onClick={() => {
+                    setCurrencyMode('sle');
+                    if (pendingFile) {
+                      processFile(pendingFile);
+                    }
+                  }}
+                >
+                  <div className="flex items-start gap-3 sm:gap-4">
+                    <motion.div 
+                      className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-gradient-to-br from-green-400 to-emerald-500 flex items-center justify-center flex-shrink-0 shadow-lg group-hover:shadow-xl transition-shadow"
+                      whileHover={{ rotate: 360 }}
+                      transition={{ duration: 0.5 }}
+                    >
+                      <span className="text-xl sm:text-2xl">✓</span>
+                    </motion.div>
+                    <div className="flex-1 min-w-0">
+                      <div className="font-black text-gray-900 mb-1.5 text-base sm:text-lg">New Leone (SLE) ✨</div>
+                      <div className="text-xs sm:text-sm text-gray-700 font-semibold mb-1">
+                        Modern amounts: <span className="text-green-700 font-mono">75</span>, <span className="text-green-700 font-mono">1,500</span>, <span className="text-green-700 font-mono">25,000</span>
+                      </div>
+                      <div className="text-[10px] sm:text-xs text-green-700 font-bold mt-1 bg-green-100 inline-block px-2 py-0.5 rounded-full">✓ No conversion needed</div>
                     </div>
-                    <div className="text-[10px] sm:text-xs text-gray-500 mt-1">No conversion needed</div>
                   </div>
-                </div>
-              </Button>
+                </Button>
+              </motion.div>
 
-              <Button
-                type="button"
-                variant="outline"
-                className="w-full h-auto py-3 sm:py-4 px-4 sm:px-6 text-left hover:border-blue-500 hover:bg-blue-50"
-                onClick={() => {
-                  setCurrencyMode('sll');
-                  if (pendingFile) {
-                    processFile(pendingFile);
-                  }
-                }}
-              >
-                <div className="flex items-start gap-2 sm:gap-3">
-                  <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg bg-blue-100 flex items-center justify-center flex-shrink-0 mt-1">
-                    <span className="text-lg sm:text-xl">🔄</span>
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="font-bold text-gray-900 mb-1 text-sm sm:text-base">Old Leone (SLL)</div>
-                    <div className="text-xs sm:text-sm text-gray-600">
-                      Amounts like: <strong>75,000</strong>, <strong>1,500,000</strong>
+              <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="w-full h-auto py-4 sm:py-5 px-5 sm:px-6 text-left border-2 hover:border-blue-500 hover:bg-gradient-to-br hover:from-blue-50 hover:to-cyan-50 hover:shadow-xl transition-all duration-300 group"
+                  onClick={() => {
+                    setCurrencyMode('sll');
+                    if (pendingFile) {
+                      processFile(pendingFile);
+                    }
+                  }}
+                >
+                  <div className="flex items-start gap-3 sm:gap-4">
+                    <motion.div 
+                      className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-gradient-to-br from-blue-400 to-cyan-500 flex items-center justify-center flex-shrink-0 shadow-lg group-hover:shadow-xl transition-shadow"
+                      whileHover={{ rotate: -360 }}
+                      transition={{ duration: 0.5 }}
+                    >
+                      <span className="text-xl sm:text-2xl">🔄</span>
+                    </motion.div>
+                    <div className="flex-1 min-w-0">
+                      <div className="font-black text-gray-900 mb-1.5 text-base sm:text-lg">Old Leone (SLL) 🕐</div>
+                      <div className="text-xs sm:text-sm text-gray-700 font-semibold mb-1">
+                        Legacy amounts: <span className="text-blue-700 font-mono">75,000</span>, <span className="text-blue-700 font-mono">1,500,000</span>
+                      </div>
+                      <div className="text-[10px] sm:text-xs text-blue-700 font-bold mt-1 bg-blue-100 inline-block px-2 py-0.5 rounded-full">🔄 Auto-converts ÷ 1,000</div>
                     </div>
-                    <div className="text-[10px] sm:text-xs text-gray-500 mt-1">Will divide by 1,000 to convert</div>
                   </div>
-                </div>
-              </Button>
+                </Button>
+              </motion.div>
             </div>
 
             <Button
               variant="ghost"
-              className="w-full text-sm"
+              className="w-full text-sm mt-2 hover:bg-gray-100"
               onClick={() => {
                 setShowCurrencyDialog(false);
                 setPendingFile(null);
@@ -2381,69 +2505,96 @@ Provide:
               Cancel
             </Button>
           </div>
+          <div className="h-1.5 flex -mx-6 -mb-6">
+            <div className="flex-1 bg-[#1EB053]" />
+            <div className="flex-1 bg-white" />
+            <div className="flex-1 bg-[#0072C6]" />
+          </div>
         </DialogContent>
       </Dialog>
 
       {/* Enhanced Image Preview Dialog */}
       <Dialog open={showPreview} onOpenChange={setShowPreview}>
-        <DialogContent className="max-w-6xl max-h-[95vh] w-[95vw]">
-          <div className="h-1 flex -mx-3 sm:-mx-6 -mt-3 sm:-mt-6">
+        <DialogContent className="max-w-6xl max-h-[95vh] w-[95vw] p-0 overflow-hidden [&>button]:hidden">
+          <div className="h-2 flex">
             <div className="flex-1 bg-[#1EB053]" />
             <div className="flex-1 bg-white" />
             <div className="flex-1 bg-[#0072C6]" />
           </div>
-          <div className="space-y-3 sm:space-y-4">
-            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 sm:gap-0">
-              <h3 className="text-base sm:text-lg font-bold flex items-center gap-2">
-                <Eye className="w-4 h-4 sm:w-5 sm:h-5 text-[#0072C6]" />
-                <span className="text-sm sm:text-lg">Document Preview</span>
-              </h3>
-              <div className="flex gap-1 sm:gap-2 flex-wrap">
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={() => setPreviewRotation((previewRotation - 90) % 360)}
-                  className="text-xs sm:text-sm h-8 px-2 sm:px-3"
-                >
-                  <span className="hidden sm:inline">↶ Rotate</span>
-                  <span className="sm:hidden">↶</span>
-                </Button>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={() => setPreviewZoom(Math.max(0.5, previewZoom - 0.25))}
-                  disabled={previewZoom <= 0.5}
-                  className="text-xs sm:text-sm h-8 px-2 sm:px-3"
-                >
-                  <span className="hidden sm:inline">− Zoom Out</span>
-                  <span className="sm:hidden">−</span>
-                </Button>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={() => setPreviewZoom(Math.min(3, previewZoom + 0.25))}
-                  disabled={previewZoom >= 3}
-                  className="text-xs sm:text-sm h-8 px-2 sm:px-3"
-                >
-                  <span className="hidden sm:inline">+ Zoom In</span>
-                  <span className="sm:hidden">+</span>
-                </Button>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={() => { setPreviewZoom(1); setPreviewRotation(0); }}
-                  className="text-xs sm:text-sm h-8 px-2 sm:px-3"
-                >
-                  Reset
-                </Button>
+          <div className="p-4 sm:p-6 space-y-4 sm:space-y-5">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 to-purple-500 flex items-center justify-center shadow-lg">
+                  <Eye className="w-5 h-5 text-white" />
+                </div>
+                <h3 className="text-lg sm:text-xl font-black text-gray-900">Document Preview</h3>
+              </div>
+              <div className="flex gap-2 flex-wrap">
+                <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => setPreviewRotation((previewRotation - 90) % 360)}
+                    className="text-xs sm:text-sm h-9 px-3 sm:px-4 border-2 font-semibold"
+                  >
+                    <span className="hidden sm:inline">↶ Rotate</span>
+                    <span className="sm:hidden text-base">↶</span>
+                  </Button>
+                </motion.div>
+                <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => setPreviewZoom(Math.max(0.5, previewZoom - 0.25))}
+                    disabled={previewZoom <= 0.5}
+                    className="text-xs sm:text-sm h-9 px-3 sm:px-4 border-2 font-semibold"
+                  >
+                    <span className="hidden sm:inline">− Zoom Out</span>
+                    <span className="sm:hidden text-base">−</span>
+                  </Button>
+                </motion.div>
+                <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => setPreviewZoom(Math.min(3, previewZoom + 0.25))}
+                    disabled={previewZoom >= 3}
+                    className="text-xs sm:text-sm h-9 px-3 sm:px-4 border-2 font-semibold"
+                  >
+                    <span className="hidden sm:inline">+ Zoom In</span>
+                    <span className="sm:hidden text-base">+</span>
+                  </Button>
+                </motion.div>
+                <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+                  <Button
+                    size="sm"
+                    className="text-xs sm:text-sm h-9 px-3 sm:px-4 bg-gradient-to-r from-[#1EB053] to-[#0072C6] text-white font-bold shadow-lg"
+                    onClick={() => { setPreviewZoom(1); setPreviewRotation(0); }}
+                  >
+                    <RotateCw className="w-3 h-3 mr-1" />
+                    Reset
+                  </Button>
+                </motion.div>
+                <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => setShowPreview(false)}
+                    className="text-xs sm:text-sm h-9 px-3 sm:px-4 border-2 font-semibold"
+                  >
+                    <X className="w-3 h-3 mr-1" />
+                    Close
+                  </Button>
+                </motion.div>
               </div>
             </div>
             {previewFile && previewImages[previewFile.name] && (
-              <div className="bg-gray-900 rounded-xl p-2 sm:p-4 max-h-[55vh] sm:max-h-[65vh] overflow-auto flex items-center justify-center">
+              <div className="relative bg-gradient-to-br from-gray-900 to-gray-800 rounded-2xl p-3 sm:p-6 max-h-[55vh] sm:max-h-[65vh] overflow-auto flex items-center justify-center shadow-2xl border-2 border-gray-700">
+                <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAiIGhlaWdodD0iMjAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGRlZnM+PHBhdHRlcm4gaWQ9ImdyaWQiIHdpZHRoPSIyMCIgaGVpZ2h0PSIyMCIgcGF0dGVyblVuaXRzPSJ1c2VyU3BhY2VPblVzZSI+PHBhdGggZD0iTSAwIDEwIEwgMjAgMTAgTSAxMCAwIEwgMTAgMjAiIGZpbGw9Im5vbmUiIHN0cm9rZT0id2hpdGUiIHN0cm9rZS1vcGFjaXR5PSIwLjAzIiBzdHJva2Utd2lkdGg9IjEiLz48L3BhdHRlcm4+PC9kZWZzPjxyZWN0IHdpZHRoPSIxMDAlIiBoZWlnaHQ9IjEwMCUiIGZpbGw9InVybCgjZ3JpZCkiLz48L3N2Zz4=')] opacity-50"></div>
                 <motion.img 
                   src={previewImages[previewFile.name]} 
                   alt={previewFile.name}
-                  className="max-w-full h-auto object-contain rounded-lg shadow-2xl"
+                  className="relative max-w-full h-auto object-contain rounded-xl shadow-2xl"
                   style={{
                     transform: `scale(${previewZoom}) rotate(${previewRotation}deg)`,
                     transformOrigin: 'center center',
@@ -2454,21 +2605,28 @@ Provide:
                 />
               </div>
             )}
-            <div className="p-2 sm:p-3 bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg border border-blue-200">
-              <div className="flex items-center justify-between gap-2">
+            <motion.div 
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="p-3 sm:p-4 bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50 rounded-xl border-2 border-blue-300 shadow-lg"
+            >
+              <div className="flex items-center justify-between gap-3">
                 <div className="min-w-0 flex-1">
-                  <p className="font-medium text-gray-900 text-xs sm:text-sm truncate">{previewFile?.name}</p>
-                  <p className="text-[10px] sm:text-xs text-gray-500">
-                    {previewFile?.size ? `${(previewFile.size / 1024).toFixed(0)} KB • ` : ''}
-                    <span className="hidden sm:inline">Zoom: {(previewZoom * 100).toFixed(0)}% • Rotation: {previewRotation}°</span>
-                    <span className="sm:hidden">{(previewZoom * 100).toFixed(0)}% • {previewRotation}°</span>
-                  </p>
+                  <p className="font-bold text-gray-900 text-sm sm:text-base truncate">{previewFile?.name}</p>
+                  <div className="flex items-center gap-2 mt-1 flex-wrap">
+                    <Badge className="bg-blue-500 text-white text-[10px] sm:text-xs font-bold shadow-md">
+                      {previewFile?.size ? `${(previewFile.size / 1024).toFixed(0)} KB` : 'FILE'}
+                    </Badge>
+                    <Badge className="bg-purple-500 text-white text-[10px] sm:text-xs font-bold shadow-md">
+                      Zoom: {(previewZoom * 100).toFixed(0)}%
+                    </Badge>
+                    <Badge className="bg-pink-500 text-white text-[10px] sm:text-xs font-bold shadow-md">
+                      {previewRotation}°
+                    </Badge>
+                  </div>
                 </div>
-                <Badge className="bg-blue-100 text-blue-700 text-xs flex-shrink-0">
-                  {previewFile?.type?.split('/')[1]?.toUpperCase() || 'FILE'}
-                </Badge>
               </div>
-            </div>
+            </motion.div>
           </div>
         </DialogContent>
       </Dialog>
