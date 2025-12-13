@@ -222,13 +222,19 @@ export default function DocumentUploadExtractor({
       const stream = await navigator.mediaDevices.getUserMedia({ 
         video: { facingMode: 'environment', width: { ideal: 1920 }, height: { ideal: 1080 } } 
       });
-      setCameraStream(stream);
-      setShowCamera(true);
       
-      if (videoRef.current) {
-        videoRef.current.srcObject = stream;
-      }
+      setShowCamera(true);
+      setCameraStream(stream);
+      
+      // Wait for next render cycle to ensure video element exists
+      setTimeout(() => {
+        if (videoRef.current) {
+          videoRef.current.srcObject = stream;
+          videoRef.current.play().catch(e => console.error("Video play error:", e));
+        }
+      }, 100);
     } catch (error) {
+      console.error("Camera error:", error);
       toast.error("Camera Error", "Could not access camera. Please check permissions.");
     }
   };
