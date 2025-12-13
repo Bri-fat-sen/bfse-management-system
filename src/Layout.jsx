@@ -203,7 +203,13 @@ export default function Layout({ children, currentPageName }) {
   const currentEmployee = employee?.[0];
 
   // Redirect users without employee record to JoinOrganisation page
+  // But redirect non-authenticated users to Landing page first
   useEffect(() => {
+    if (!user && currentPageName !== 'Landing') {
+      window.location.href = createPageUrl('Landing');
+      return;
+    }
+    
     if (user && !loadingEmployee && !currentEmployee && currentPageName !== 'JoinOrganisation') {
       window.location.href = createPageUrl('JoinOrganisation');
     }
