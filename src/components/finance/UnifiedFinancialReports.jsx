@@ -47,6 +47,7 @@ import {
 } from "lucide-react";
 import { useToast } from "@/components/ui/Toast";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend, PieChart, Pie, Cell, AreaChart, Area, Line } from "recharts";
+import ModernExportDialog from "@/components/exports/ModernExportDialog";
 
 const COLORS = ['#1EB053', '#0072C6', '#D4AF37', '#0F1F3C', '#9333ea', '#f59e0b', '#ef4444', '#10b981'];
 
@@ -67,15 +68,8 @@ export default function UnifiedFinancialReports({
   const [generatingReport, setGeneratingReport] = useState(false);
   const [aiAnalysis, setAiAnalysis] = useState(null);
   const [activeTab, setActiveTab] = useState("pl");
-  const [showExportDialog, setShowExportDialog] = useState(false);
-  const [selectedReportType, setSelectedReportType] = useState("pl_statement");
-  const [exportFormat, setExportFormat] = useState("pdf");
-  const [exportOptions, setExportOptions] = useState({
-    includeLogo: true,
-    includeCharts: true,
-    includeAIAnalysis: true,
-    includeNotes: true,
-  });
+  const [exportDialogOpen, setExportDialogOpen] = useState(false);
+  const [currentExportData, setCurrentExportData] = useState({ data: [], title: "" });
 
   // Calculate date range
   const dateRange = useMemo(() => {
@@ -280,85 +274,36 @@ Provide executive summary, key insights, anomalies, recommendations, cash flow a
     }
   };
 
-  // Export handlers
-  const exportToCSV = (reportType) => {
-    let csvContent = "";
-    let filename = "";
-
-    if (reportType === "pl_statement") {
-      filename = `PL_Statement_${dateRange.label.replace(/\s/g, '_')}.csv`;
-      csvContent = `Profit & Loss Statement\nPeriod,${dateRange.label}\n\n`;
-      csvContent += "Category,Amount (Le)\n";
-      csvContent += `Sales Revenue,${financials.revenue.salesRevenue}\n`;
-      csvContent += `Transport Revenue,${financials.revenue.transportRevenue}\n`;
-      csvContent += `Total Revenue,${financials.revenue.totalRevenue}\n\n`;
-      csvContent += `Recorded Expenses,${financials.expenses.recordedExpenses}\n`;
-      csvContent += `Total Expenses,${financials.expenses.totalExpenses}\n\n`;
-      csvContent += `Net Profit,${financials.netProfit}\n`;
-      csvContent += `Profit Margin (%),${financials.profitMargin.toFixed(2)}\n`;
-    } else if (reportType === "cash_flow") {
-      filename = `Cash_Flow_${dateRange.label.replace(/\s/g, '_')}.csv`;
-      csvContent = `Cash Flow Statement\nPeriod,${dateRange.label}\n\n`;
-      csvContent += "Activity,Amount (Le)\n";
-      csvContent += `Operating Cash,${financials.revenue.totalRevenue - financials.expenses.totalExpenses}\n`;
-      csvContent += `Bank Deposits,${financials.banking.totalBankDeposits}\n`;
-      csvContent += `Cash On Hand,${financials.banking.cashOnHand}\n`;
-    }
-
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-    const link = document.createElement("a");
-    const url = URL.createObjectURL(blob);
-    link.href = url;
-    link.download = filename;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    URL.revokeObjectURL(url);
-    
-    toast.success("CSV exported", `Downloaded ${filename}`);
-  };
-
-  const exportToPDF = async (reportType) => {
-    try {
-      const response = await base44.functions.invoke('generateFinancialReportPDF', {
-        reportData: {
-          title: reportType === "pl_statement" ? "Profit & Loss Statement" : "Cash Flow Statement",
-          period: dateRange.label,
-          organisation,
-          revenue: financials.revenue,
-          expenses: financials.expenses,
-          netProfit: financials.netProfit,
-          profitMargin: financials.profitMargin
-        },
-        reportType,
-        exportOptions,
-        aiAnalysis: exportOptions.includeAIAnalysis ? aiAnalysis : null,
-        monthlyTrend: exportOptions.includeCharts ? monthlyTrend : null
-      });
-
-      const blob = new Blob([response.data], { type: 'application/pdf' });
-      const url = window.URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = `${reportType}_${dateRange.label.replace(/\s/g, '_')}.pdf`;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      window.URL.revokeObjectURL(url);
-
-      toast.success("PDF generated", "Report downloaded");
-    } catch (error) {
-      toast.error("PDF generation failed", error.message);
-    }
-  };
-
   const handleExport = () => {
-    if (exportFormat === "csv") {
-      exportToCSV(selectedReportType);
-    } else {
-      exportToPDF(selectedReportType);
-    }
-    setShowExportDialog(false);
+    const exportData = activeTab === "pl" 
+      ? [
+          { Category: 'Sales Revenue', Amount: `Le ${financials.revenue.salesRevenue.toLocaleString()}` },
+          { Category: 'Transport Revenue', Amount: `Le ${financials.revenue.transportRevenue.toLocaleString()}` },
+          { Category: 'Contract Revenue', Amount: `Le ${financials.revenue.contractRevenue.toLocaleString()}` },
+          { Category: 'Owner/CEO Contributions', Amount: `Le ${financials.revenue.ownerContributions.toLocaleString()}` },
+          { Category: 'Total Revenue', Amount: `Le ${financials.revenue.totalRevenue.toLocaleString()}` },
+          { Category: '', Amount: '' },
+          { Category: 'Recorded Expenses', Amount: `Le ${financials.expenses.recordedExpenses.toLocaleString()}` },
+          { Category: 'Fuel Costs', Amount: `Le ${financials.expenses.fuelCosts.toLocaleString()}` },
+          { Category: 'Maintenance', Amount: `Le ${financials.expenses.maintenanceCosts.toLocaleString()}` },
+          { Category: 'Total Expenses', Amount: `Le ${financials.expenses.totalExpenses.toLocaleString()}` },
+          { Category: '', Amount: '' },
+          { Category: 'Net Profit', Amount: `Le ${financials.netProfit.toLocaleString()}` },
+          { Category: 'Profit Margin', Amount: `${financials.profitMargin.toFixed(1)}%` },
+        ]
+      : [
+          { Category: 'Cash Inflow', Amount: `Le ${financials.revenue.totalRevenue.toLocaleString()}` },
+          { Category: 'Cash Outflow', Amount: `Le ${financials.expenses.totalExpenses.toLocaleString()}` },
+          { Category: 'Net Cash Flow', Amount: `Le ${financials.netProfit.toLocaleString()}` },
+          { Category: 'Total Bank Deposits', Amount: `Le ${financials.banking.totalBankDeposits.toLocaleString()}` },
+          { Category: 'Cash On Hand', Amount: `Le ${financials.banking.cashOnHand.toLocaleString()}` },
+        ];
+
+    setCurrentExportData({
+      data: exportData,
+      title: activeTab === "pl" ? "Profit & Loss Statement" : "Cash Flow Statement"
+    });
+    setExportDialogOpen(true);
   };
 
   return (
@@ -389,7 +334,7 @@ Provide executive summary, key insights, anomalies, recommendations, cash flow a
           </Select>
           <Button
             variant="outline"
-            onClick={() => setShowExportDialog(true)}
+            onClick={handleExport}
             className="border-[#0072C6] text-[#0072C6] hover:bg-[#0072C6]/10"
           >
             <Download className="w-4 h-4 mr-2" />
@@ -785,112 +730,14 @@ Provide executive summary, key insights, anomalies, recommendations, cash flow a
         </TabsContent>
       </Tabs>
 
-      {/* Export Dialog */}
-      <Dialog open={showExportDialog} onOpenChange={setShowExportDialog}>
-        <DialogContent className="max-w-lg w-[95vw] max-h-[85vh] overflow-y-auto [&>button]:hidden">
-          <div className="h-1.5 flex">
-            <div className="flex-1 bg-[#1EB053]" />
-            <div className="flex-1 bg-white" />
-            <div className="flex-1 bg-[#0072C6]" />
-          </div>
-          <DialogHeader>
-            <DialogTitle className="text-lg sm:text-xl flex items-center gap-2">
-              <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-[#1EB053] to-[#0072C6] flex items-center justify-center">
-                <Download className="w-5 h-5 text-white" />
-              </div>
-              Export Report
-            </DialogTitle>
-          </DialogHeader>
-
-          <div className="space-y-4 py-2">
-            {/* Report Type */}
-            <div>
-              <Label className="text-xs sm:text-sm font-semibold mb-2 block">Select Report</Label>
-              <div className="grid grid-cols-2 gap-2">
-                {[
-                  { value: "pl_statement", label: "P&L", icon: FileText },
-                  { value: "cash_flow", label: "Cash Flow", icon: Wallet }
-                ].map(report => (
-                  <button
-                    key={report.value}
-                    onClick={() => setSelectedReportType(report.value)}
-                    className={`p-3 rounded-lg border-2 transition-all ${
-                      selectedReportType === report.value
-                        ? 'border-[#1EB053] bg-green-50'
-                        : 'border-gray-200'
-                    }`}
-                  >
-                    <report.icon className={`w-6 h-6 mx-auto mb-1 ${selectedReportType === report.value ? 'text-[#1EB053]' : 'text-gray-400'}`} />
-                    <p className="font-semibold text-xs">{report.label}</p>
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {/* Format */}
-            <div>
-              <Label className="text-xs sm:text-sm font-semibold mb-2 block">Format</Label>
-              <div className="grid grid-cols-2 gap-2">
-                <button
-                  onClick={() => setExportFormat("pdf")}
-                  className={`p-3 rounded-lg border-2 transition-all ${
-                    exportFormat === "pdf" ? 'border-red-500 bg-red-50' : 'border-gray-200'
-                  }`}
-                >
-                  <FileBarChart className={`w-6 h-6 mx-auto mb-1 ${exportFormat === "pdf" ? 'text-red-600' : 'text-gray-400'}`} />
-                  <p className="font-semibold text-xs">PDF</p>
-                </button>
-                <button
-                  onClick={() => setExportFormat("csv")}
-                  className={`p-3 rounded-lg border-2 transition-all ${
-                    exportFormat === "csv" ? 'border-green-500 bg-green-50' : 'border-gray-200'
-                  }`}
-                >
-                  <FileSpreadsheet className={`w-6 h-6 mx-auto mb-1 ${exportFormat === "csv" ? 'text-green-600' : 'text-gray-400'}`} />
-                  <p className="font-semibold text-xs">CSV</p>
-                </button>
-              </div>
-            </div>
-
-            {/* PDF Options */}
-            {exportFormat === "pdf" && (
-              <div>
-                <Label className="text-xs sm:text-sm font-semibold mb-2 block">Options</Label>
-                <div className="space-y-2 p-3 bg-gray-50 rounded-lg border">
-                  {[
-                    { id: 'includeLogo', label: 'Logo & branding', key: 'includeLogo' },
-                    { id: 'includeCharts', label: 'Charts', key: 'includeCharts' },
-                    { id: 'includeAIAnalysis', label: 'AI insights', key: 'includeAIAnalysis', disabled: !aiAnalysis },
-                    { id: 'includeNotes', label: 'Notes', key: 'includeNotes' }
-                  ].map(option => (
-                    <div key={option.id} className="flex items-center gap-2">
-                      <Checkbox
-                        id={option.id}
-                        checked={exportOptions[option.key]}
-                        onCheckedChange={(checked) => setExportOptions(prev => ({ ...prev, [option.key]: checked }))}
-                        disabled={option.disabled}
-                      />
-                      <Label htmlFor={option.id} className="text-xs cursor-pointer">
-                        {option.label}
-                      </Label>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-          </div>
-
-          <DialogFooter className="flex-col gap-2">
-            <Button onClick={handleExport} className="bg-gradient-to-r from-[#1EB053] to-[#0072C6] w-full">
-              <Download className="w-4 h-4 mr-2" />
-              Export {exportFormat.toUpperCase()}
-            </Button>
-            <Button variant="outline" onClick={() => setShowExportDialog(false)} className="w-full">
-              Cancel
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      {/* Modern Export Dialog */}
+      <ModernExportDialog
+        open={exportDialogOpen}
+        onOpenChange={setExportDialogOpen}
+        data={currentExportData.data}
+        reportTitle={currentExportData.title}
+        orgData={organisation}
+      />
     </div>
   );
 }
