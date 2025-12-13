@@ -92,26 +92,34 @@ export default function ModernExportDialog({
 
     // Table data
     doc.setTextColor(0, 0, 0);
-    doc.setFontSize(9);
+    doc.setFontSize(8);
     let y = 55;
 
     if (data.length > 0) {
       const headers = Object.keys(data[0]);
-      const colWidth = 190 / headers.length;
-
+      const pageWidth = 190;
+      const startX = 10;
+      
+      // Calculate column widths based on content
+      const colWidths = headers.map(() => pageWidth / headers.length);
+      
       // Table headers
       doc.setFillColor(240, 240, 240);
-      doc.rect(10, y - 5, 190, 8, 'F');
+      doc.rect(startX, y - 5, pageWidth, 8, 'F');
       doc.setFont(undefined, 'bold');
+      
+      let xPos = startX + 2;
       headers.forEach((header, i) => {
-        doc.text(header.replace(/_/g, ' ').toUpperCase(), 12 + (i * colWidth), y);
+        const headerText = header.replace(/_/g, ' ').toUpperCase();
+        doc.text(headerText, xPos, y, { maxWidth: colWidths[i] - 4 });
+        xPos += colWidths[i];
       });
 
       // Table rows
       doc.setFont(undefined, 'normal');
-      y += 8;
+      y += 10;
       
-      data.slice(0, 30).forEach((row, rowIndex) => {
+      data.slice(0, 40).forEach((row, rowIndex) => {
         if (y > 270) {
           doc.addPage();
           
@@ -129,14 +137,18 @@ export default function ModernExportDialog({
         // Alternate row colors
         if (rowIndex % 2 === 0) {
           doc.setFillColor(249, 250, 251);
-          doc.rect(10, y - 4, 190, 7, 'F');
+          doc.rect(startX, y - 4, pageWidth, 8, 'F');
         }
         
+        xPos = startX + 2;
         headers.forEach((header, i) => {
-          const text = String(row[header] || '').substring(0, 30);
-          doc.text(text, 12 + (i * colWidth), y);
+          const cellText = String(row[header] || '');
+          // Truncate long text and wrap if needed
+          const truncated = cellText.length > 40 ? cellText.substring(0, 40) + '...' : cellText;
+          doc.text(truncated, xPos, y, { maxWidth: colWidths[i] - 4 });
+          xPos += colWidths[i];
         });
-        y += 7;
+        y += 8;
       });
     }
 
