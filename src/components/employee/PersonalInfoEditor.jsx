@@ -13,13 +13,14 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
-import { User, Phone, MapPin, UserCheck, Save, Loader2 } from "lucide-react";
+import { User, Phone, MapPin, UserCheck, Save, Loader2, Mail } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 export default function PersonalInfoEditor({ employee, open, onOpenChange }) {
   const queryClient = useQueryClient();
   const [formData, setFormData] = useState({
     phone: "",
+    email: "",
     address: "",
     emergency_contact: "",
     emergency_phone: ""
@@ -70,43 +71,72 @@ export default function PersonalInfoEditor({ employee, open, onOpenChange }) {
           </DialogTitle>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <Label className="flex items-center gap-2">
-              <Phone className="w-4 h-4 text-gray-500" />
-              Phone Number
-            </Label>
-            <Input
-              type="tel"
-              value={formData.phone}
-              onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-              placeholder="+232 XX XXX XXXX"
-              className="mt-1"
-            />
+        <form onSubmit={handleSubmit} className="space-y-5">
+          <div className="space-y-4">
+            <h3 className="font-semibold text-gray-900 flex items-center gap-2 text-sm">
+              <User className="w-4 h-4 text-[#1EB053]" />
+              Contact Information
+            </h3>
+            
+            <div>
+              <Label className="flex items-center gap-2 text-xs">
+                <div className="w-6 h-6 rounded bg-blue-100 flex items-center justify-center">
+                  <Mail className="w-3 h-3 text-blue-600" />
+                </div>
+                Email Address
+              </Label>
+              <Input
+                type="email"
+                value={formData.email}
+                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                placeholder="your.email@example.com"
+                className="mt-1"
+              />
+            </div>
+
+            <div>
+              <Label className="flex items-center gap-2 text-xs">
+                <div className="w-6 h-6 rounded bg-green-100 flex items-center justify-center">
+                  <Phone className="w-3 h-3 text-green-600" />
+                </div>
+                Phone Number
+              </Label>
+              <Input
+                type="tel"
+                value={formData.phone}
+                onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                placeholder="+232 XX XXX XXXX"
+                className="mt-1"
+              />
+            </div>
+
+            <div>
+              <Label className="flex items-center gap-2 text-xs">
+                <div className="w-6 h-6 rounded bg-red-100 flex items-center justify-center">
+                  <MapPin className="w-3 h-3 text-red-600" />
+                </div>
+                Address
+              </Label>
+              <Textarea
+                value={formData.address}
+                onChange={(e) => setFormData({ ...formData, address: e.target.value })}
+                placeholder="Enter your full address"
+                className="mt-1"
+                rows={3}
+              />
+            </div>
           </div>
 
-          <div>
-            <Label className="flex items-center gap-2">
-              <MapPin className="w-4 h-4 text-gray-500" />
-              Address
-            </Label>
-            <Textarea
-              value={formData.address}
-              onChange={(e) => setFormData({ ...formData, address: e.target.value })}
-              placeholder="Enter your full address"
-              className="mt-1"
-              rows={3}
-            />
-          </div>
+          <div className="h-px bg-gradient-to-r from-transparent via-gray-200 to-transparent" />
 
           <div className="p-4 bg-amber-50 rounded-lg border border-amber-200">
-            <h4 className="font-medium text-amber-800 flex items-center gap-2 mb-3">
+            <h4 className="font-semibold text-amber-800 flex items-center gap-2 mb-3 text-sm">
               <UserCheck className="w-4 h-4" />
               Emergency Contact
             </h4>
             <div className="space-y-3">
               <div>
-                <Label>Contact Name</Label>
+                <Label className="text-xs">Contact Name</Label>
                 <Input
                   value={formData.emergency_contact}
                   onChange={(e) => setFormData({ ...formData, emergency_contact: e.target.value })}
@@ -115,7 +145,7 @@ export default function PersonalInfoEditor({ employee, open, onOpenChange }) {
                 />
               </div>
               <div>
-                <Label>Contact Phone</Label>
+                <Label className="text-xs">Contact Phone</Label>
                 <Input
                   type="tel"
                   value={formData.emergency_phone}
@@ -127,10 +157,10 @@ export default function PersonalInfoEditor({ employee, open, onOpenChange }) {
             </div>
           </div>
 
-          <p className="text-xs text-gray-500 bg-blue-50 p-3 rounded-lg">
-            Note: Only personal contact information can be updated here. For changes to your name, 
-            email, department, role, or salary, please contact HR administration via the HR & Payroll page.
-          </p>
+          <div className="text-xs text-gray-500 bg-blue-50 p-3 rounded-lg border border-blue-100">
+            <p className="font-medium text-blue-700 mb-1">📝 Note:</p>
+            <p>Only personal contact information can be updated here. For changes to your name, department, role, or salary, please contact HR administration.</p>
+          </div>
 
           <DialogFooter>
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
