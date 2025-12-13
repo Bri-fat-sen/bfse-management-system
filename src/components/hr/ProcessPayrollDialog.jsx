@@ -59,6 +59,10 @@ export default function ProcessPayrollDialog({ open, onOpenChange, orgId, employ
       return;
     }
 
+    const [year, month] = payPeriod.split('-');
+    const periodStart = `${year}-${month}-01`;
+    const periodEnd = new Date(parseInt(year), parseInt(month), 0).toISOString().split('T')[0];
+
     const preview = selectedEmployees.map(empId => {
       const emp = activeEmployees.find(e => e.id === empId);
       if (!emp) return null;
@@ -70,18 +74,20 @@ export default function ProcessPayrollDialog({ open, onOpenChange, orgId, employ
         employee_id: emp.id,
         employee_name: emp.full_name,
         employee_code: emp.employee_code,
-        pay_period: payPeriod,
-        pay_date: payDate,
-        pay_cycle_id: payCycleId || null,
-        basic_salary: breakdown.basicSalary,
-        allowances: breakdown.totalAllowances,
-        gross_salary: breakdown.grossSalary,
+        period_start: periodStart,
+        period_end: periodEnd,
+        payment_date: payDate,
+        base_salary: breakdown.basicSalary,
+        allowances: [],
+        bonuses: [],
+        deductions: [],
+        total_allowances: breakdown.totalAllowances,
+        gross_pay: breakdown.grossSalary,
         nassit_employee: breakdown.nassit.employee,
         nassit_employer: breakdown.nassit.employer,
         paye_tax: breakdown.paye.tax,
-        other_deductions: breakdown.otherDeductions,
         total_deductions: breakdown.totalDeductions,
-        net_salary: breakdown.netSalary,
+        net_pay: breakdown.netSalary,
         employer_cost: breakdown.employerCost,
         status: 'draft',
       };
@@ -95,10 +101,10 @@ export default function ProcessPayrollDialog({ open, onOpenChange, orgId, employ
     processMutation.mutate(payrollPreview);
   };
 
-  const totalGross = payrollPreview.reduce((sum, p) => sum + p.gross_salary, 0);
-  const totalNet = payrollPreview.reduce((sum, p) => sum + p.net_salary, 0);
-  const totalNASSIT = payrollPreview.reduce((sum, p) => sum + p.nassit_employee + p.nassit_employer, 0);
-  const totalPAYE = payrollPreview.reduce((sum, p) => sum + p.paye_tax, 0);
+  const totalGross = payrollPreview.reduce((sum, p) => sum + (p.gross_pay || 0), 0);
+  const totalNet = payrollPreview.reduce((sum, p) => sum + (p.net_pay || 0), 0);
+  const totalNASSIT = payrollPreview.reduce((sum, p) => sum + (p.nassit_employee || 0) + (p.nassit_employer || 0), 0);
+  const totalPAYE = payrollPreview.reduce((sum, p) => sum + (p.paye_tax || 0), 0);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -239,14 +245,14 @@ export default function ProcessPayrollDialog({ open, onOpenChange, orgId, employ
                       <p className="text-xs text-gray-500">{record.employee_code}</p>
                     </div>
                     <div className="text-right">
-                      <p className="text-lg font-bold text-[#1EB053]">{formatLeone(record.net_salary)}</p>
+                      <p className="text-lg font-bold text-[#1EB053]">{formatLeone(record.net_pay)}</p>
                       <p className="text-xs text-gray-500">Net Pay</p>
                     </div>
                   </div>
                   <div className="grid grid-cols-4 gap-2 mt-2 pt-2 border-t text-xs">
                     <div>
                       <p className="text-gray-500">Gross</p>
-                      <p className="font-semibold">{formatLeone(record.gross_salary)}</p>
+                      <p className="font-semibold">{formatLeone(record.gross_pay)}</p>
                     </div>
                     <div>
                       <p className="text-gray-500">NASSIT</p>
