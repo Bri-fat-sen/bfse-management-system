@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { base44 } from "@/api/base44Client";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
 import { X, Download, Check, FileText, DollarSign, TrendingUp, Calendar, Trash2 } from "lucide-react";
 import {
   Dialog,
@@ -14,11 +14,27 @@ import { useToast } from "@/components/ui/Toast";
 import { format } from "date-fns";
 import { formatLeone } from "@/components/hr/sierraLeoneTaxCalculator";
 import ConfirmDialog from "@/components/ui/ConfirmDialog";
+import PayslipGenerator from "@/components/hr/PayslipGenerator";
 
 export default function PayrollDetailDialog({ open, onOpenChange, payroll, orgId }) {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const queryClient = useQueryClient();
   const toast = useToast();
+
+  const { data: employee } = useQuery({
+    queryKey: ['employee', payroll?.employee_id],
+    queryFn: () => base44.entities.Employee.filter({ id: payroll.employee_id }),
+    enabled: !!payroll?.employee_id && open,
+  });
+
+  const { data: organisation } = useQuery({
+    queryKey: ['organisation', orgId],
+    queryFn: () => base44.entities.Organisation.filter({ id: orgId }),
+    enabled: !!orgId && open,
+  });
+
+  const currentEmployee = employee?.[0];
+  const currentOrg = organisation?.[0];
 
   const updateStatusMutation = useMutation({
     mutationFn: (status) => base44.entities.Payroll.update(payroll.id, { status }),
@@ -162,11 +178,11 @@ export default function PayrollDetailDialog({ open, onOpenChange, payroll, orgId
           </div>
 
           {/* Actions */}
-          <div className="flex gap-3 pt-4 border-t">
+          <div className="flex gap-3 pt-4 border-t flex-wrap">
             {payroll.status === 'draft' && (
               <Button
                 onClick={() => updateStatusMutation.mutate('approved')}
-                className="flex-1 bg-gradient-to-r from-[#1EB053] to-[#0072C6] text-white"
+                className="flex-1 min-w-[140px] bg-gradient-to-r from-[#1EB053] to-[#0072C6] text-white"
               >
                 <Check className="w-4 h-4 mr-2" />
                 Approve
@@ -175,16 +191,19 @@ export default function PayrollDetailDialog({ open, onOpenChange, payroll, orgId
             {payroll.status === 'approved' && (
               <Button
                 onClick={() => updateStatusMutation.mutate('paid')}
-                className="flex-1 bg-green-600 hover:bg-green-700 text-white"
+                className="flex-1 min-w-[140px] bg-green-600 hover:bg-green-700 text-white"
               >
                 <Check className="w-4 h-4 mr-2" />
                 Mark as Paid
               </Button>
             )}
-            <Button variant="outline" className="flex-1">
-              <Download className="w-4 h-4 mr-2" />
-              Download Payslip
-            </Button>
+            {currentEmployee && currentOrg && (
+              <PayslipGenerator 
+                payroll={payroll} 
+                employee={currentEmployee} 
+                organisation={currentOrg} 
+              />
+            )}
             <Button 
               variant="outline" 
               onClick={() => setShowDeleteConfirm(true)}
