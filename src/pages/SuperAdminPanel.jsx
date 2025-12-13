@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Shield, Building2, Plus, Edit, Trash2, Users, CheckCircle, XCircle, AlertTriangle, Search, Lock } from "lucide-react";
+import { Shield, Building2, Plus, Edit, Trash2, Users, CheckCircle, XCircle, AlertTriangle, Search } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -11,14 +11,11 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useToast } from "@/components/ui/Toast";
 import LoadingSpinner from "@/components/ui/LoadingSpinner";
-import SSOSettingsDialog from "@/components/organisation/SSOSettingsDialog";
 
 export default function SuperAdminPanel() {
   const [showCreateDialog, setShowCreateDialog] = useState(false);
   const [editingOrg, setEditingOrg] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
-  const [showSSODialog, setShowSSODialog] = useState(false);
-  const [ssoOrg, setSsoOrg] = useState(null);
   const [formData, setFormData] = useState({
     name: "",
     code: "",
@@ -88,12 +85,6 @@ export default function SuperAdminPanel() {
       toast.error("Deletion Failed", error.message);
     },
   });
-
-  const handleSSOSave = async (ssoData) => {
-    await updateOrgMutation.mutateAsync({ id: ssoOrg.id, data: ssoData });
-    toast.success("SSO Settings Updated");
-    setShowSSODialog(false);
-  };
 
   if (user?.role !== 'admin') {
     return (
@@ -328,12 +319,6 @@ export default function SuperAdminPanel() {
                                 <StatusIcon className="w-3 h-3 mr-1" />
                                 {org.status}
                               </Badge>
-                              {org.sso_enabled && (
-                                <Badge className="bg-green-100 text-green-800">
-                                  <Lock className="w-3 h-3 mr-1" />
-                                  SSO
-                                </Badge>
-                              )}
                             </div>
                             <div className="flex items-center gap-4 mt-1 flex-wrap">
                               <p className="text-sm text-gray-600">
@@ -350,17 +335,6 @@ export default function SuperAdminPanel() {
                           </div>
                         </div>
                         <div className="flex items-center gap-2 flex-shrink-0">
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => {
-                              setSsoOrg(org);
-                              setShowSSODialog(true);
-                            }}
-                            title="Configure SSO"
-                          >
-                            <Lock className="w-4 h-4" />
-                          </Button>
                           <Button
                             variant="outline"
                             size="sm"
@@ -513,17 +487,17 @@ export default function SuperAdminPanel() {
             </div>
           </div>
         </DialogContent>
-      </Dialog>
+        </Dialog>
 
-      {/* SSO Settings Dialog */}
-      {ssoOrg && (
-        <SSOSettingsDialog
-          open={showSSODialog}
-          onOpenChange={setShowSSODialog}
-          organisation={ssoOrg}
-          onSave={handleSSOSave}
+        <SSOConfigDialog
+        open={showSSODialog}
+        onOpenChange={setShowSSODialog}
+        organisation={selectedOrgForSSO}
+        onSave={(org) => {
+          updateOrgMutation.mutate({ id: org.id, data: org });
+          setShowSSODialog(false);
+        }}
         />
-      )}
-    </div>
-  );
-}
+        </div>
+        );
+        }
