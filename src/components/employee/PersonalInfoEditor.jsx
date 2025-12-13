@@ -128,7 +128,7 @@ export default function PersonalInfoEditor({ employee, open, onOpenChange }) {
 
           <p className="text-xs text-gray-500 bg-blue-50 p-3 rounded-lg">
             Note: Only personal contact information can be updated here. For changes to your name, 
-            email, department, or role, please contact HR administration.
+            email, department, role, or salary, please contact HR administration via the HR & Payroll page.
           </p>
 
           <DialogFooter>

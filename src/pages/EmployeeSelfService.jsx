@@ -156,7 +156,7 @@ export default function EmployeeSelfService() {
                   className="bg-white text-[#1EB053] hover:bg-gray-100 shadow-lg"
                 >
                   <Edit className="w-4 h-4 mr-2" />
-                  Edit Profile
+                  Edit Contact Info
                 </Button>
               </div>
               
@@ -393,7 +393,7 @@ export default function EmployeeSelfService() {
                   onClick={() => setShowPersonalInfoEditor(true)}
                 >
                   <Edit className="w-4 h-4 mr-2" />
-                  Edit Personal Info
+                  Edit Contact Info
                 </Button>
               </CardContent>
             </Card>

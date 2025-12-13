@@ -92,10 +92,10 @@ export default function Profile() {
             <p className="text-sm text-gray-500 mt-1">View and manage your information</p>
           </div>
         </div>
-        <Link to={createPageUrl("Settings")}>
+        <Link to={createPageUrl("EmployeeSelfService")}>
           <Button variant="outline" className="border-gray-300 hover:border-[#0072C6] hover:bg-[#0072C6]/5">
-            <Edit className="w-4 h-4 mr-2" />
-            Edit Profile
+            <User className="w-4 h-4 mr-2" />
+            My Portal
           </Button>
         </Link>
       </div>
