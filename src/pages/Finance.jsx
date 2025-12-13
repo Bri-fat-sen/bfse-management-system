@@ -118,13 +118,13 @@ export default function Finance() {
   const [selectedRevenueIds, setSelectedRevenueIds] = useState([]);
   const [showDriveExtractor, setShowDriveExtractor] = useState(false);
 
-  const { data: user } = useQuery({
+  const { data: user, isLoading: loadingUser } = useQuery({
     queryKey: ['currentUser'],
     queryFn: () => base44.auth.me(),
     staleTime: 5 * 60 * 1000,
   });
 
-  const { data: employee } = useQuery({
+  const { data: employee, isLoading: loadingEmployee } = useQuery({
     queryKey: ['employee', user?.email],
     queryFn: () => base44.entities.Employee.filter({ user_email: user?.email }),
     enabled: !!user?.email,
@@ -618,6 +618,10 @@ export default function Finance() {
   };
 
   const isAdmin = ['super_admin', 'org_admin'].includes(currentEmployee?.role);
+
+  if (loadingUser || (user && loadingEmployee)) {
+    return <LoadingSpinner message="Loading Finance..." subtitle="Fetching financial data" fullScreen={true} />;
+  }
 
   if (!user) {
     return <LoadingSpinner message="Loading Finance..." subtitle="Fetching financial data" fullScreen={true} />;

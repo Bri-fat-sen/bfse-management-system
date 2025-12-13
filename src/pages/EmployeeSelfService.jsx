@@ -38,7 +38,7 @@ export default function EmployeeSelfService() {
   const [activeTab, setActiveTab] = useState("profile");
   const [showPersonalInfoEditor, setShowPersonalInfoEditor] = useState(false);
 
-  const { data: user } = useQuery({
+  const { data: user, isLoading: loadingUser } = useQuery({
     queryKey: ['currentUser'],
     queryFn: () => base44.auth.me(),
   });
@@ -78,7 +78,11 @@ export default function EmployeeSelfService() {
 
   const currentOrg = organisation?.[0];
 
-  if (loadingEmployee || !user) {
+  if (loadingUser || (user && loadingEmployee)) {
+    return <LoadingSpinner message="Loading My Portal..." subtitle="Fetching your information" />;
+  }
+
+  if (!user) {
     return <LoadingSpinner message="Loading My Portal..." subtitle="Fetching your information" />;
   }
 

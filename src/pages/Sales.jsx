@@ -104,14 +104,14 @@ export default function Sales() {
     }
   }, [showInvoice]);
 
-  const { data: user } = useQuery({
+  const { data: user, isLoading: loadingUser } = useQuery({
     queryKey: ['currentUser'],
     queryFn: () => base44.auth.me(),
     staleTime: 5 * 60 * 1000,
     refetchOnWindowFocus: false,
   });
 
-  const { data: employee } = useQuery({
+  const { data: employee, isLoading: loadingEmployee } = useQuery({
     queryKey: ['employee', user?.email],
     queryFn: () => base44.entities.Employee.filter({ user_email: user?.email }),
     enabled: !!user?.email,
@@ -848,6 +848,10 @@ export default function Sales() {
   
   // Determine if user can change location (always allow selection among assigned locations)
   const canChangeLocation = true; // Users can always select from their available locations
+
+  if (loadingUser || (user && loadingEmployee)) {
+    return <LoadingSpinner message="Loading Sales..." subtitle="Setting up your point of sale" fullScreen={true} />;
+  }
 
   if (!user) {
     return <LoadingSpinner message="Loading Sales..." subtitle="Setting up your point of sale" fullScreen={true} />;

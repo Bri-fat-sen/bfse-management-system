@@ -99,12 +99,12 @@ export default function HRManagement() {
   const [showDriveExport, setShowDriveExport] = useState(false);
   const [exportData, setExportData] = useState([]);
 
-  const { data: user } = useQuery({
+  const { data: user, isLoading: loadingUser } = useQuery({
     queryKey: ['currentUser'],
     queryFn: () => base44.auth.me(),
   });
 
-  const { data: employeeData } = useQuery({
+  const { data: employeeData, isLoading: loadingEmployee } = useQuery({
     queryKey: ['currentEmployee', user?.email],
     queryFn: () => base44.entities.Employee.filter({ user_email: user?.email }),
     enabled: !!user?.email,
@@ -288,7 +288,11 @@ export default function HRManagement() {
     };
   }, [employees, attendance, leaveRequests, payrolls, performanceReviews]);
 
-  if (isLoading || !user) {
+  if (loadingUser || (user && loadingEmployee) || isLoading) {
+    return <LoadingSpinner message="Loading HR data..." />;
+  }
+
+  if (!user) {
     return <LoadingSpinner message="Loading HR data..." />;
   }
 

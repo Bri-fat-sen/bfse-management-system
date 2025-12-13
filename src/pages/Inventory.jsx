@@ -65,13 +65,13 @@ export default function Inventory() {
   const [showDriveExport, setShowDriveExport] = useState(false);
 
   // Fetch current user and employee
-  const { data: user } = useQuery({
+  const { data: user, isLoading: loadingUser } = useQuery({
     queryKey: ['currentUser'],
     queryFn: () => base44.auth.me(),
     staleTime: 10 * 60 * 1000,
   });
 
-  const { data: employee } = useQuery({
+  const { data: employee, isLoading: loadingEmployee } = useQuery({
     queryKey: ['employee', user?.email],
     queryFn: () => base44.entities.Employee.filter({ user_email: user?.email }),
     enabled: !!user?.email,
@@ -218,6 +218,10 @@ export default function Inventory() {
       toast.success("Product deleted", "Product removed successfully");
     },
   });
+
+  if (loadingUser || (user && loadingEmployee)) {
+    return <LoadingSpinner message="Loading Inventory..." fullScreen />;
+  }
 
   if (!user || !currentEmployee || !orgId) {
     return <LoadingSpinner message="Loading Inventory..." fullScreen />;
