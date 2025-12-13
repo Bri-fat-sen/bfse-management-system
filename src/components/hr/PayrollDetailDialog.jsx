@@ -196,17 +196,17 @@ export default function PayrollDetailDialog({ open, onOpenChange, payroll, orgId
           </div>
         </div>
 
-        <ConfirmDialog
-          open={showDeleteConfirm}
-          onOpenChange={setShowDeleteConfirm}
-          onConfirm={() => deleteMutation.mutate()}
-          title="Delete Payroll?"
-          description="Are you sure you want to delete this payroll record? This action cannot be undone."
-          confirmText="Delete"
-          variant="destructive"
-        />
-        </div>
       </DialogContent>
+
+      <ConfirmDialog
+        open={showDeleteConfirm}
+        onOpenChange={setShowDeleteConfirm}
+        onConfirm={() => deleteMutation.mutate()}
+        title="Delete Payroll?"
+        description="Are you sure you want to delete this payroll record? This action cannot be undone."
+        confirmText="Delete"
+        variant="destructive"
+      />
     </Dialog>
   );
 }
