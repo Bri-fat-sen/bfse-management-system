@@ -240,6 +240,48 @@ export default function Layout({ children, currentPageName }) {
 
   const currentOrg = organisationData?.[0];
 
+  const { data: chatRooms = [] } = useQuery({
+    queryKey: ['chatRooms', orgId, currentEmployee?.id],
+    queryFn: () => base44.entities.ChatRoom.filter({ organisation_id: orgId }),
+    enabled: !!orgId && !!currentEmployee?.id,
+    staleTime: 30 * 1000,
+    refetchInterval: 30000,
+    refetchOnWindowFocus: false,
+  });
+
+  const unreadChatCount = useMemo(() => {
+    if (!currentEmployee?.id || !chatRooms.length) return 0;
+    return chatRooms
+      .filter(r => r.participants?.includes(currentEmployee.id))
+      .reduce((sum, r) => sum + (r.unread_count || 0), 0);
+  }, [chatRooms, currentEmployee?.id]);
+
+  const permissions = useMemo(() => {
+    return DEFAULT_ROLE_PERMISSIONS[userRole] || DEFAULT_ROLE_PERMISSIONS.read_only;
+  }, [userRole]);
+
+  const filteredMenuSections = useMemo(() => {
+    const effectiveRole = (actualRole === 'super_admin' && previewRole) ? previewRole : userRole;
+    const effectivePermissions = previewRole ? (DEFAULT_ROLE_PERMISSIONS[previewRole] || DEFAULT_ROLE_PERMISSIONS.read_only) : permissions;
+    
+    if (effectiveRole === 'super_admin' && !previewRole) {
+      return menuSections;
+    }
+    
+    return menuSections.map(section => ({
+      ...section,
+      items: section.items.filter(item => {
+        if (item.adminOnly && !['super_admin', 'org_admin'].includes(effectiveRole)) {
+          return false;
+        }
+        if (item.page === 'Reports' && !['super_admin', 'org_admin', 'accountant', 'hr_admin', 'warehouse_manager'].includes(effectiveRole)) {
+          return false;
+        }
+        return effectivePermissions[item.module]?.can_view ?? false;
+      })
+    })).filter(section => section.items.length > 0);
+  }, [userRole, permissions, previewRole, actualRole]);
+
   const handleLogout = () => {
     setIsPinUnlocked(false);
     sessionStorage.removeItem('pinUnlocked');
@@ -257,6 +299,8 @@ export default function Layout({ children, currentPageName }) {
       setIsPinUnlocked(true);
     }
   }, []);
+
+  const requiresPinAuth = currentEmployee?.pin_hash && !isPinUnlocked;
 
   // If user has no organisation, show minimal layout for JoinOrganisation page
   if (!currentEmployee && currentPageName === 'JoinOrganisation') {
@@ -334,50 +378,6 @@ export default function Layout({ children, currentPageName }) {
       </div>
     );
   }
-
-  const { data: chatRooms = [] } = useQuery({
-    queryKey: ['chatRooms', orgId, currentEmployee?.id],
-    queryFn: () => base44.entities.ChatRoom.filter({ organisation_id: orgId }),
-    enabled: !!orgId && !!currentEmployee?.id,
-    staleTime: 30 * 1000,
-    refetchInterval: 30000,
-    refetchOnWindowFocus: false,
-  });
-
-  const unreadChatCount = useMemo(() => {
-    if (!currentEmployee?.id || !chatRooms.length) return 0;
-    return chatRooms
-      .filter(r => r.participants?.includes(currentEmployee.id))
-      .reduce((sum, r) => sum + (r.unread_count || 0), 0);
-  }, [chatRooms, currentEmployee?.id]);
-
-  const permissions = useMemo(() => {
-    return DEFAULT_ROLE_PERMISSIONS[userRole] || DEFAULT_ROLE_PERMISSIONS.read_only;
-  }, [userRole]);
-
-  const filteredMenuSections = useMemo(() => {
-    const effectiveRole = (actualRole === 'super_admin' && previewRole) ? previewRole : userRole;
-    const effectivePermissions = previewRole ? (DEFAULT_ROLE_PERMISSIONS[previewRole] || DEFAULT_ROLE_PERMISSIONS.read_only) : permissions;
-    
-    if (effectiveRole === 'super_admin' && !previewRole) {
-      return menuSections;
-    }
-    
-    return menuSections.map(section => ({
-      ...section,
-      items: section.items.filter(item => {
-        if (item.adminOnly && !['super_admin', 'org_admin'].includes(effectiveRole)) {
-          return false;
-        }
-        if (item.page === 'Reports' && !['super_admin', 'org_admin', 'accountant', 'hr_admin', 'warehouse_manager'].includes(effectiveRole)) {
-          return false;
-        }
-        return effectivePermissions[item.module]?.can_view ?? false;
-      })
-    })).filter(section => section.items.length > 0);
-  }, [userRole, permissions, previewRole, actualRole]);
-
-  const requiresPinAuth = currentEmployee?.pin_hash && !isPinUnlocked;
 
   if (requiresPinAuth && user && currentEmployee) {
     return (
