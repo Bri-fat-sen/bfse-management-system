@@ -96,6 +96,22 @@ export default function JoinOrganisation() {
     { value: "payroll_admin", label: "Payroll Admin" },
   ];
 
+  const [useCode, setUseCode] = useState(false);
+  const [orgCode, setOrgCode] = useState("");
+  const [foundOrg, setFoundOrg] = useState(null);
+
+  const handleFindByCode = () => {
+    if (!orgCode.trim()) return;
+    const org = organisations.find(o => o.code?.toUpperCase() === orgCode.toUpperCase());
+    if (org) {
+      setFoundOrg(org);
+      setSelectedOrg(org);
+    } else {
+      toast.error("Not Found", "No organisation found with that code");
+      setFoundOrg(null);
+    }
+  };
+
   return (
     <div className="max-w-5xl mx-auto space-y-6">
       {/* Header */}
@@ -185,18 +201,63 @@ export default function JoinOrganisation() {
             </div>
           )}
 
+          {/* Join Method Selection */}
+          {!selectedOrg && (
+            <div className="flex items-center justify-center gap-4 mb-4">
+              <Button
+                variant={!useCode ? "default" : "outline"}
+                onClick={() => setUseCode(false)}
+                className={!useCode ? "bg-gradient-to-r from-[#1EB053] to-[#0072C6] text-white" : ""}
+              >
+                Browse All
+              </Button>
+              <Button
+                variant={useCode ? "default" : "outline"}
+                onClick={() => setUseCode(true)}
+                className={useCode ? "bg-gradient-to-r from-[#1EB053] to-[#0072C6] text-white" : ""}
+              >
+                Use Code
+              </Button>
+            </div>
+          )}
+
           {/* Organisation Selection */}
           {!selectedOrg ? (
             <div className="space-y-4">
-              <div>
-                <Label>Search Organisations</Label>
-                <Input
-                  placeholder="Search by name or code..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="mt-1"
-                />
-              </div>
+              {useCode ? (
+                <div className="space-y-4">
+                  <div className="bg-gradient-to-r from-[#1EB053]/10 to-[#0072C6]/10 rounded-lg p-6 text-center">
+                    <Building2 className="w-12 h-12 text-gray-400 mx-auto mb-3" />
+                    <h3 className="font-semibold text-gray-900 mb-2">Enter Organisation Code</h3>
+                    <p className="text-sm text-gray-600 mb-4">Ask your administrator for the organisation code</p>
+                    <div className="flex gap-2 max-w-md mx-auto">
+                      <Input
+                        value={orgCode}
+                        onChange={(e) => setOrgCode(e.target.value.toUpperCase())}
+                        placeholder="e.g. ABC123"
+                        className="font-mono text-center text-lg"
+                        onKeyDown={(e) => e.key === 'Enter' && handleFindByCode()}
+                      />
+                      <Button
+                        onClick={handleFindByCode}
+                        className="bg-gradient-to-r from-[#1EB053] to-[#0072C6] text-white"
+                      >
+                        Find
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <>
+                  <div>
+                    <Label>Search Organisations</Label>
+                    <Input
+                      placeholder="Search by name or code..."
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                      className="mt-1"
+                    />
+                  </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3 max-h-96 overflow-y-auto">
                 {loadingOrgs ? (
@@ -239,6 +300,8 @@ export default function JoinOrganisation() {
                   })
                 )}
               </div>
+                </>
+              )}
             </div>
           ) : (
             <div className="space-y-4">
