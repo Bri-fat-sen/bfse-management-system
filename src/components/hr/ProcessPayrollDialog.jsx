@@ -21,10 +21,13 @@ export default function ProcessPayrollDialog({ open, onOpenChange, orgId, employ
   const [payPeriod, setPayPeriod] = useState(new Date().toISOString().slice(0, 7)); // YYYY-MM
   const [payDate, setPayDate] = useState(new Date().toISOString().split('T')[0]);
   const [payCycleId, setPayCycleId] = useState("");
+  const [frequency, setFrequency] = useState("monthly");
   const [showPreview, setShowPreview] = useState(false);
   const [payrollPreview, setPayrollPreview] = useState([]);
   const [allowances, setAllowances] = useState([]);
   const [bonuses, setBonuses] = useState([]);
+  const [deductions, setDeductions] = useState([]);
+  const [manualAdjustments, setManualAdjustments] = useState({});
 
   const queryClient = useQueryClient();
   const toast = useToast();
@@ -55,6 +58,17 @@ export default function ProcessPayrollDialog({ open, onOpenChange, orgId, employ
     setPayrollPreview([]);
     setAllowances([]);
     setBonuses([]);
+    setDeductions([]);
+    setManualAdjustments({});
+  };
+
+  const calculateFrequencyMultiplier = (freq) => {
+    switch(freq) {
+      case 'weekly': return 52 / 12;
+      case 'bi_weekly': return 26 / 12;
+      case 'monthly': return 1;
+      default: return 1;
+    }
   };
 
   const handleGeneratePreview = () => {
@@ -67,38 +81,93 @@ export default function ProcessPayrollDialog({ open, onOpenChange, orgId, employ
     const periodStart = `${year}-${month}-01`;
     const periodEnd = new Date(parseInt(year), parseInt(month), 0).toISOString().split('T')[0];
 
+    const frequencyMultiplier = calculateFrequencyMultiplier(frequency);
+
     const preview = selectedEmployees.map(empId => {
       const emp = activeEmployees.find(e => e.id === empId);
       if (!emp) return null;
 
-      const totalAllowances = allowances.reduce((sum, a) => sum + a.amount, 0);
-      const totalBonuses = bonuses.reduce((sum, b) => sum + b.amount, 0);
-      const adjustedSalary = emp.base_salary + totalAllowances + totalBonuses;
+      const adjustment = manualAdjustments[empId] || {};
       
+      // Calculate prorated salary based on frequency
+      const proratedSalary = (emp.base_salary || 0) / frequencyMultiplier;
+      
+      // Calculate overtime
+      const overtimeHours = adjustment.overtimeHours || 0;
+      const hourlyRate = (emp.base_salary || 0) / 160; // ~160 working hours per month
+      const overtimePay = overtimeHours * hourlyRate * 1.5;
+      
+      // Calculate weekend pay
+      const weekendHours = adjustment.weekendHours || 0;
+      const weekendPay = weekendHours * hourlyRate * 2;
+      
+      // Calculate holiday pay
+      const holidayHours = adjustment.holidayHours || 0;
+      const holidayPay = holidayHours * hourlyRate * 2.5;
+      
+      // Sum allowances and bonuses
+      const totalAllowances = allowances.reduce((sum, a) => sum + (a.amount || 0), 0);
+      const totalBonuses = bonuses.reduce((sum, b) => sum + (b.amount || 0), 0);
+      
+      // Calculate adjusted salary
+      const adjustedSalary = proratedSalary + totalAllowances + totalBonuses + overtimePay + weekendPay + holidayPay;
+      
+      // Apply tax calculations
       const breakdown = calculateSalaryBreakdown(adjustedSalary, {}, {});
+      
+      // Add custom deductions
+      const customDeductions = deductions.reduce((sum, d) => sum + (d.amount || 0), 0);
+      const finalTotalDeductions = breakdown.totalDeductions + customDeductions;
+      const finalNetPay = breakdown.netSalary - customDeductions;
 
       return {
         organisation_id: orgId,
         employee_id: emp.id,
         employee_name: emp.full_name,
         employee_code: emp.employee_code,
+        employee_role: emp.role,
+        employee_location: emp.assigned_location_name,
+        payroll_frequency: frequency,
         period_start: periodStart,
         period_end: periodEnd,
         payment_date: payDate,
         base_salary: emp.base_salary,
+        prorated_salary: proratedSalary,
+        salary_type: emp.salary_type || 'monthly',
+        hours_worked: adjustment.hoursWorked || 0,
+        days_worked: adjustment.daysWorked || 0,
+        overtime_hours: overtimeHours,
+        overtime_pay: overtimePay,
+        overtime_rate_multiplier: 1.5,
+        weekend_hours: weekendHours,
+        weekend_pay: weekendPay,
+        holiday_hours: holidayHours,
+        holiday_pay: holidayPay,
         allowances: allowances,
         bonuses: bonuses,
-        deductions: [],
+        deductions: [...deductions, 
+          { name: 'NASSIT (5%)', amount: breakdown.nassit.employee, type: 'statutory' },
+          { name: 'PAYE Tax', amount: breakdown.paye.tax, type: 'statutory' }
+        ],
         total_allowances: totalAllowances,
         total_bonuses: totalBonuses,
         gross_pay: breakdown.grossSalary,
         nassit_employee: breakdown.nassit.employee,
         nassit_employer: breakdown.nassit.employer,
         paye_tax: breakdown.paye.tax,
-        total_deductions: breakdown.totalDeductions,
-        net_pay: breakdown.netSalary,
+        total_statutory_deductions: breakdown.nassit.employee + breakdown.paye.tax,
+        total_deductions: finalTotalDeductions,
+        net_pay: finalNetPay,
         employer_cost: breakdown.employerCost,
         status: 'draft',
+        calculation_details: {
+          hourly_rate: hourlyRate,
+          daily_rate: (emp.base_salary || 0) / 22,
+          tax_bracket: breakdown.paye.taxableIncome > 0 ? 'As per SL rates' : 'Tax Free',
+          effective_tax_rate: breakdown.paye.effectiveRate,
+          annual_gross_equivalent: breakdown.grossSalary * 12,
+          frequency_multiplier: frequencyMultiplier,
+        },
       };
     }).filter(Boolean);
 
@@ -133,7 +202,7 @@ export default function ProcessPayrollDialog({ open, onOpenChange, orgId, employ
         {!showPreview ? (
           <div className="space-y-6">
             {/* Pay Period Selection */}
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-3 gap-4">
               <div>
                 <Label>Pay Period (Month) *</Label>
                 <Input
@@ -149,6 +218,19 @@ export default function ProcessPayrollDialog({ open, onOpenChange, orgId, employ
                   value={payDate}
                   onChange={(e) => setPayDate(e.target.value)}
                 />
+              </div>
+              <div>
+                <Label>Payroll Frequency *</Label>
+                <Select value={frequency} onValueChange={setFrequency}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="weekly">Weekly</SelectItem>
+                    <SelectItem value="bi_weekly">Bi-Weekly (Every 2 weeks)</SelectItem>
+                    <SelectItem value="monthly">Monthly</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
             </div>
 
@@ -246,6 +328,26 @@ export default function ProcessPayrollDialog({ open, onOpenChange, orgId, employ
                     }}
                     className="flex-1"
                   />
+                  <Select
+                    value={bonus.type || 'performance'}
+                    onValueChange={(value) => {
+                      const updated = [...bonuses];
+                      updated[idx].type = value;
+                      setBonuses(updated);
+                    }}
+                  >
+                    <SelectTrigger className="w-32">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="performance">Performance</SelectItem>
+                      <SelectItem value="sales_commission">Commission</SelectItem>
+                      <SelectItem value="attendance">Attendance</SelectItem>
+                      <SelectItem value="role_based">Role Based</SelectItem>
+                      <SelectItem value="holiday">Holiday</SelectItem>
+                      <SelectItem value="other">Other</SelectItem>
+                    </SelectContent>
+                  </Select>
                   <Input
                     type="number"
                     placeholder="Amount"
@@ -270,6 +372,74 @@ export default function ProcessPayrollDialog({ open, onOpenChange, orgId, employ
               ))}
             </div>
 
+            {/* Deductions */}
+            <div className="p-4 border rounded-lg bg-red-50/50">
+              <div className="flex items-center justify-between mb-3">
+                <Label className="text-red-700">Deductions (Added to all employees)</Label>
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="outline"
+                  onClick={() => setDeductions([...deductions, { name: '', amount: 0, type: 'voluntary' }])}
+                  className="h-7 text-xs border-red-600 text-red-600 hover:bg-red-50"
+                >
+                  + Add Deduction
+                </Button>
+              </div>
+              {deductions.map((deduction, idx) => (
+                <div key={idx} className="flex gap-2 mb-2">
+                  <Input
+                    placeholder="Name (e.g., Loan Payment)"
+                    value={deduction.name}
+                    onChange={(e) => {
+                      const updated = [...deductions];
+                      updated[idx].name = e.target.value;
+                      setDeductions(updated);
+                    }}
+                    className="flex-1"
+                  />
+                  <Select
+                    value={deduction.type || 'voluntary'}
+                    onValueChange={(value) => {
+                      const updated = [...deductions];
+                      updated[idx].type = value;
+                      setDeductions(updated);
+                    }}
+                  >
+                    <SelectTrigger className="w-32">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="voluntary">Voluntary</SelectItem>
+                      <SelectItem value="loan">Loan</SelectItem>
+                      <SelectItem value="advance">Advance</SelectItem>
+                      <SelectItem value="other">Other</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <Input
+                    type="number"
+                    placeholder="Amount"
+                    value={deduction.amount}
+                    onChange={(e) => {
+                      const updated = [...deductions];
+                      updated[idx].amount = parseFloat(e.target.value) || 0;
+                      setDeductions(updated);
+                    }}
+                    className="w-32"
+                  />
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="ghost"
+                    onClick={() => setDeductions(deductions.filter((_, i) => i !== idx))}
+                    className="text-red-600"
+                  >
+                    ✕
+                  </Button>
+                </div>
+              ))}
+            </div>
+
             {/* Employee Selection */}
             <div>
               <Label className="mb-3 block">Select Employees *</Label>
@@ -284,26 +454,72 @@ export default function ProcessPayrollDialog({ open, onOpenChange, orgId, employ
                   <span className="font-semibold text-sm">Select All ({activeEmployees.length})</span>
                 </div>
                 {activeEmployees.map((emp) => (
-                  <div key={emp.id} className="flex items-center justify-between p-2 hover:bg-gray-50 rounded">
-                    <div className="flex items-center gap-2">
-                      <Checkbox
-                        checked={selectedEmployees.includes(emp.id)}
-                        onCheckedChange={(checked) => {
-                          setSelectedEmployees(
-                            checked
-                              ? [...selectedEmployees, emp.id]
-                              : selectedEmployees.filter(id => id !== emp.id)
-                          );
-                        }}
-                      />
-                      <div>
-                        <p className="font-medium text-sm">{emp.full_name}</p>
-                        <p className="text-xs text-gray-500">{emp.employee_code} • {emp.department}</p>
+                  <div key={emp.id} className="space-y-2 p-2 hover:bg-gray-50 rounded border-b">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <Checkbox
+                          checked={selectedEmployees.includes(emp.id)}
+                          onCheckedChange={(checked) => {
+                            setSelectedEmployees(
+                              checked
+                                ? [...selectedEmployees, emp.id]
+                                : selectedEmployees.filter(id => id !== emp.id)
+                            );
+                          }}
+                        />
+                        <div>
+                          <p className="font-medium text-sm">{emp.full_name}</p>
+                          <p className="text-xs text-gray-500">{emp.employee_code} • {emp.department}</p>
+                        </div>
                       </div>
+                      <span className="text-sm font-semibold text-[#1EB053]">
+                        {formatLeone(emp.base_salary || 0)}
+                      </span>
                     </div>
-                    <span className="text-sm font-semibold text-[#1EB053]">
-                      {formatLeone(emp.base_salary || 0)}
-                    </span>
+                    {selectedEmployees.includes(emp.id) && (
+                      <div className="ml-8 grid grid-cols-4 gap-2">
+                        <Input
+                          type="number"
+                          placeholder="Days"
+                          value={manualAdjustments[emp.id]?.daysWorked || ''}
+                          onChange={(e) => setManualAdjustments({
+                            ...manualAdjustments,
+                            [emp.id]: { ...manualAdjustments[emp.id], daysWorked: parseFloat(e.target.value) || 0 }
+                          })}
+                          className="h-8 text-xs"
+                        />
+                        <Input
+                          type="number"
+                          placeholder="OT Hours"
+                          value={manualAdjustments[emp.id]?.overtimeHours || ''}
+                          onChange={(e) => setManualAdjustments({
+                            ...manualAdjustments,
+                            [emp.id]: { ...manualAdjustments[emp.id], overtimeHours: parseFloat(e.target.value) || 0 }
+                          })}
+                          className="h-8 text-xs"
+                        />
+                        <Input
+                          type="number"
+                          placeholder="Weekend Hrs"
+                          value={manualAdjustments[emp.id]?.weekendHours || ''}
+                          onChange={(e) => setManualAdjustments({
+                            ...manualAdjustments,
+                            [emp.id]: { ...manualAdjustments[emp.id], weekendHours: parseFloat(e.target.value) || 0 }
+                          })}
+                          className="h-8 text-xs"
+                        />
+                        <Input
+                          type="number"
+                          placeholder="Holiday Hrs"
+                          value={manualAdjustments[emp.id]?.holidayHours || ''}
+                          onChange={(e) => setManualAdjustments({
+                            ...manualAdjustments,
+                            [emp.id]: { ...manualAdjustments[emp.id], holidayHours: parseFloat(e.target.value) || 0 }
+                          })}
+                          className="h-8 text-xs"
+                        />
+                      </div>
+                    )}
                   </div>
                 ))}
               </div>
