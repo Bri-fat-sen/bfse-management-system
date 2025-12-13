@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useRef } from "react";
+import React, { useState, useCallback, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Delete, CheckCircle, XCircle, LogOut } from "lucide-react";
 
@@ -56,7 +56,7 @@ export default function PinLockScreen({
   const inputRef = useRef(null);
 
   // Auto-focus invisible input for keyboard capture
-  React.useEffect(() => {
+  useEffect(() => {
     if (inputRef.current && !success && attempts < maxAttempts) {
       inputRef.current.focus();
     }
