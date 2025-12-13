@@ -20,11 +20,15 @@ import LoadingSpinner from "@/components/ui/LoadingSpinner";
 import { Link } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import { motion } from "framer-motion";
+import ConsolidatedReports from "@/components/exports/ConsolidatedReports";
+import ModernExportDialog from "@/components/exports/ModernExportDialog";
 
 const COLORS = ['#1EB053', '#0072C6', '#D4AF37', '#FF6B35', '#8B5CF6', '#EF4444', '#10B981'];
 
 export default function ExecutiveDashboard() {
   const [dateRange, setDateRange] = useState("this_month");
+  const [exportDialogOpen, setExportDialogOpen] = useState(false);
+  const [exportData, setExportData] = useState({ data: [], title: "" });
   const [selectedModule, setSelectedModule] = useState("all");
 
   const { data: user } = useQuery({
@@ -837,6 +841,11 @@ export default function ExecutiveDashboard() {
 
         {/* Reports Tab */}
         <TabsContent value="reports" className="space-y-6">
+          <ConsolidatedReports orgId={orgId} orgData={currentOrg} />
+        </TabsContent>
+
+        {/* Keep other tabs */}
+        <TabsContent value="old-reports-placeholder" className="space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {[
               { title: "Sales Report", module: "Sales", icon: ShoppingCart, gradient: "from-green-500 to-emerald-600" },
@@ -876,6 +885,14 @@ export default function ExecutiveDashboard() {
           </div>
         </TabsContent>
       </Tabs>
+
+      <ModernExportDialog
+        open={exportDialogOpen}
+        onOpenChange={setExportDialogOpen}
+        data={exportData.data}
+        reportTitle={exportData.title}
+        orgData={currentOrg}
+      />
     </div>
   );
 }
