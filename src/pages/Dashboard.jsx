@@ -231,14 +231,10 @@ export default function Dashboard() {
     return <LoadingSpinner message="Loading Dashboard..." subtitle="Preparing your overview" fullScreen={true} />;
   }
 
-  // If user is admin but has no employee record, show manager dashboard
-  if (!currentEmployee && user?.role === 'admin') {
-    return <ManagerDashboard currentEmployee={null} orgId={null} user={user} />;
-  }
-
+  // Users without employee record should go to JoinOrganisation page
+  // This check is already handled by layout, so don't redirect from Dashboard
   if (!currentEmployee) {
-    window.location.href = createPageUrl('JoinOrganisation');
-    return null;
+    return <LoadingSpinner message="Setting up..." subtitle="Please wait" fullScreen={true} />;
   }
 
   // Show role-specific dashboard
