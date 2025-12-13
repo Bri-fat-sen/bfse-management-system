@@ -100,11 +100,11 @@ export default function TaxFilingReports({ orgId, organisation }) {
       'Payment must be made by the 15th of the following month.',
       '',
       'Tax Brackets Applied (Sierra Leone):',
-      '• Le 0 - 600,000: 0% (Tax-free)',
-      '• Le 600,001 - 1,200,000: 15%',
-      '• Le 1,200,001 - 2,400,000: 20%',
-      '• Le 2,400,001 - 3,600,000: 25%',
-      '• Above Le 3,600,000: 30%',
+      '- Le 0 - 600,000: 0% (Tax-free)',
+      '- Le 600,001 - 1,200,000: 15%',
+      '- Le 1,200,001 - 2,400,000: 20%',
+      '- Le 2,400,001 - 3,600,000: 25%',
+      '- Above Le 3,600,000: 30%',
     ];
 
     const blob = new Blob([reportLines.join('\n')], { type: 'text/plain' });
