@@ -2294,11 +2294,11 @@ Provide:
         <DialogContent className="max-w-md w-[95vw]">
           <div className="space-y-4">
             <div className="text-center">
-              <div className="w-16 h-16 rounded-full bg-yellow-100 mx-auto mb-4 flex items-center justify-center">
-                <span className="text-3xl">💱</span>
+              <div className="w-12 h-12 sm:w-16 sm:h-16 rounded-full bg-yellow-100 mx-auto mb-4 flex items-center justify-center">
+                <span className="text-2xl sm:text-3xl">💱</span>
               </div>
-              <h3 className="text-xl font-bold text-gray-900 mb-2">What Currency is in the Document?</h3>
-              <p className="text-sm text-gray-600">
+              <h3 className="text-lg sm:text-xl font-bold text-gray-900 mb-2">What Currency is in the Document?</h3>
+              <p className="text-xs sm:text-sm text-gray-600 px-2">
                 Sierra Leone redenominated in July 2022: 1,000 old Leones (SLL) = 1 new Leone (SLE)
               </p>
             </div>
@@ -2307,7 +2307,7 @@ Provide:
               <Button
                 type="button"
                 variant="outline"
-                className="w-full h-auto py-4 px-6 text-left hover:border-green-500 hover:bg-green-50"
+                className="w-full h-auto py-3 sm:py-4 px-4 sm:px-6 text-left hover:border-green-500 hover:bg-green-50"
                 onClick={() => {
                   setCurrencyMode('sle');
                   if (pendingFile) {
@@ -2315,16 +2315,16 @@ Provide:
                   }
                 }}
               >
-                <div className="flex items-start gap-3">
-                  <div className="w-10 h-10 rounded-lg bg-green-100 flex items-center justify-center flex-shrink-0 mt-1">
-                    <span className="text-xl">✓</span>
+                <div className="flex items-start gap-2 sm:gap-3">
+                  <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg bg-green-100 flex items-center justify-center flex-shrink-0 mt-1">
+                    <span className="text-lg sm:text-xl">✓</span>
                   </div>
-                  <div className="flex-1">
-                    <div className="font-bold text-gray-900 mb-1">New Leone (SLE)</div>
-                    <div className="text-sm text-gray-600">
-                      Document shows amounts like: <strong>75</strong>, <strong>1,500</strong>, <strong>25,000</strong>
+                  <div className="flex-1 min-w-0">
+                    <div className="font-bold text-gray-900 mb-1 text-sm sm:text-base">New Leone (SLE)</div>
+                    <div className="text-xs sm:text-sm text-gray-600">
+                      Amounts like: <strong>75</strong>, <strong>1,500</strong>, <strong>25,000</strong>
                     </div>
-                    <div className="text-xs text-gray-500 mt-1">No conversion needed</div>
+                    <div className="text-[10px] sm:text-xs text-gray-500 mt-1">No conversion needed</div>
                   </div>
                 </div>
               </Button>
@@ -2332,7 +2332,7 @@ Provide:
               <Button
                 type="button"
                 variant="outline"
-                className="w-full h-auto py-4 px-6 text-left hover:border-blue-500 hover:bg-blue-50"
+                className="w-full h-auto py-3 sm:py-4 px-4 sm:px-6 text-left hover:border-blue-500 hover:bg-blue-50"
                 onClick={() => {
                   setCurrencyMode('sll');
                   if (pendingFile) {
@@ -2340,16 +2340,16 @@ Provide:
                   }
                 }}
               >
-                <div className="flex items-start gap-3">
-                  <div className="w-10 h-10 rounded-lg bg-blue-100 flex items-center justify-center flex-shrink-0 mt-1">
-                    <span className="text-xl">🔄</span>
+                <div className="flex items-start gap-2 sm:gap-3">
+                  <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg bg-blue-100 flex items-center justify-center flex-shrink-0 mt-1">
+                    <span className="text-lg sm:text-xl">🔄</span>
                   </div>
-                  <div className="flex-1">
-                    <div className="font-bold text-gray-900 mb-1">Old Leone (SLL)</div>
-                    <div className="text-sm text-gray-600">
-                      Document shows amounts like: <strong>75,000</strong>, <strong>1,500,000</strong>, <strong>25,000,000</strong>
+                  <div className="flex-1 min-w-0">
+                    <div className="font-bold text-gray-900 mb-1 text-sm sm:text-base">Old Leone (SLL)</div>
+                    <div className="text-xs sm:text-sm text-gray-600">
+                      Amounts like: <strong>75,000</strong>, <strong>1,500,000</strong>
                     </div>
-                    <div className="text-xs text-gray-500 mt-1">Will divide by 1,000 to convert</div>
+                    <div className="text-[10px] sm:text-xs text-gray-500 mt-1">Will divide by 1,000 to convert</div>
                   </div>
                 </div>
               </Button>
@@ -2357,7 +2357,7 @@ Provide:
 
             <Button
               variant="ghost"
-              className="w-full"
+              className="w-full text-sm"
               onClick={() => {
                 setShowCurrencyDialog(false);
                 setPendingFile(null);
@@ -2457,9 +2457,6 @@ Provide:
           </div>
         </DialogContent>
       </Dialog>
-
-      {/* Currency Selection Dialog */}
-      <Dialog open={showCurrencyDialog} onOpenChange={setShowCurrencyDialog}>
         <DialogContent className="max-w-md">
           <div className="space-y-4">
             <div className="text-center">
