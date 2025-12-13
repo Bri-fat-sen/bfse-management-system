@@ -358,8 +358,16 @@ export default function ProcessPayrollDialog({ open, onOpenChange, orgId, curren
       const packageAllowances = empPackage?.allowances || [];
       const packageBonuses = empPackage?.bonuses || [];
       
+      // Calculate package allowances (handle percentage type)
+      const calculatedPackageAllowances = packageAllowances.map(a => {
+        if (a.type === 'percentage') {
+          return (baseSalary * (parseFloat(a.amount) || 0)) / 100;
+        }
+        return parseFloat(a.amount) || 0;
+      });
+      
       const totalAllowances = allowances.reduce((sum, a) => sum + (parseFloat(a.amount) || 0), 0) +
-                              packageAllowances.reduce((sum, a) => sum + (parseFloat(a.amount) || 0), 0);
+                              calculatedPackageAllowances.reduce((sum, a) => sum + a, 0);
       const totalBonuses = bonuses.reduce((sum, b) => sum + (parseFloat(b.amount) || 0), 0) +
                            packageBonuses.reduce((sum, b) => sum + (parseFloat(b.amount) || 0), 0);
       
