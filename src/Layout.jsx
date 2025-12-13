@@ -74,6 +74,7 @@ import { ToastProvider } from "@/components/ui/Toast";
 const menuSections = [
   {
     title: "Dashboard",
+    color: "#1EB053",
     items: [
       { name: "Dashboard", icon: LayoutDashboard, page: "Dashboard", module: "dashboard" },
       { name: "My Portal", icon: User, page: "EmployeeSelfService", module: "dashboard" },
@@ -82,6 +83,7 @@ const menuSections = [
   },
   {
     title: "Sales & Customers",
+    color: "#0072C6",
     items: [
       { name: "Point of Sale", icon: ShoppingCart, page: "Sales", module: "sales" },
       { name: "Customer Management", icon: Users, page: "CRM", module: "sales" },
@@ -89,6 +91,7 @@ const menuSections = [
   },
   {
     title: "Inventory & Warehouse",
+    color: "#D4AF37",
     items: [
       { name: "Stock Management", icon: Package, page: "Inventory", module: "inventory" },
       { name: "Supplier Relations", icon: Building2, page: "Suppliers", module: "suppliers" },
@@ -97,12 +100,14 @@ const menuSections = [
   },
   {
     title: "Transport & Fleet",
+    color: "#FF6B35",
     items: [
       { name: "Fleet Operations", icon: Truck, page: "Transport", module: "transport" },
     ]
   },
   {
     title: "Human Resources",
+    color: "#8B5CF6",
     items: [
       { name: "HR & Payroll", icon: Users, page: "HRManagement", module: "hr" },
       { name: "Time & Attendance", icon: Clock, page: "Attendance", module: "attendance" },
@@ -111,6 +116,7 @@ const menuSections = [
   },
   {
     title: "Documents & Records",
+    color: "#10B981",
     items: [
       { name: "HR Documents", icon: FileText, page: "Documents", module: "hr" },
       { name: "Document Archive", icon: Upload, page: "UploadedDocuments", module: "settings", adminOnly: true },
@@ -118,6 +124,7 @@ const menuSections = [
   },
   {
     title: "Finance & Accounting",
+    color: "#EF4444",
     items: [
       { name: "Financial Overview", icon: DollarSign, page: "Finance", module: "finance" },
       { name: "Expense Control", icon: DollarSign, page: "ExpenseManagement", module: "finance", adminOnly: true },
@@ -126,12 +133,14 @@ const menuSections = [
   },
   {
     title: "Reports & Analytics",
+    color: "#F59E0B",
     items: [
       { name: "Activity Logs", icon: Activity, page: "ActivityLog", module: "activity_log" },
     ]
   },
   {
     title: "System Administration",
+    color: "#06B6D4",
     items: [
       { name: "Settings", icon: Settings, page: "Settings", module: "settings" },
       { name: "Help & Support", icon: HelpCircle, page: "Support", module: "settings" },
@@ -143,6 +152,7 @@ const menuSections = [
   },
   {
     title: "Super Admin Tools",
+    color: "#DC2626",
     items: [
       { name: "Super Admin Panel", icon: Shield, page: "SuperAdminPanel", module: "settings", adminOnly: true },
       { name: "Join Requests", icon: Users, page: "PendingJoinRequests", module: "settings", adminOnly: true },
@@ -537,7 +547,7 @@ export default function Layout({ children, currentPageName }) {
             </div>
 
             <nav className="flex-1 overflow-y-auto p-3 space-y-1">
-          {filteredMenuSections.map((section, sectionIndex) => (
+            {filteredMenuSections.map((section, sectionIndex) => (
             <div key={section.title}>
               {sectionIndex > 0 && sidebarOpen && (
                 <div className="h-0.5 flex mx-3 my-3">
@@ -549,7 +559,8 @@ export default function Layout({ children, currentPageName }) {
               {sidebarOpen ? (
                 <button
                   onClick={() => toggleSection(section.title)}
-                  className="w-full flex items-center justify-between px-3 mb-2 text-sm font-semibold uppercase tracking-wider text-gray-400 hover:text-white transition-colors"
+                  className="w-full flex items-center justify-between px-3 mb-2 text-sm font-semibold uppercase tracking-wider transition-colors"
+                  style={{ color: section.color }}
                 >
                   <span>{section.title}</span>
                   {collapsedSections[section.title] ? (
@@ -574,12 +585,15 @@ export default function Layout({ children, currentPageName }) {
                           ${isActive ? 'text-white' : 'text-gray-400 hover:text-white'}
                         `}
                       >
-                        <item.icon className={`w-5 h-5 flex-shrink-0 transition-colors ${isActive ? 'text-[#1EB053]' : 'group-hover:text-[#1EB053]'}`} />
+                        <item.icon 
+                          className={`w-5 h-5 flex-shrink-0 transition-colors`}
+                          style={{ color: isActive ? section.color : '' }}
+                        />
                         {sidebarOpen && (
                           <>
                             <span className="font-medium text-sm flex-1">{item.name}</span>
                             {item.badge && (
-                              <span className="px-2 py-0.5 text-[10px] font-bold bg-[#1EB053] text-white rounded-full">
+                              <span className="px-2 py-0.5 text-[10px] font-bold text-white rounded-full" style={{ backgroundColor: section.color }}>
                                 {item.badge}
                               </span>
                             )}
@@ -596,8 +610,8 @@ export default function Layout({ children, currentPageName }) {
                 </div>
               )}
             </div>
-          ))}
-        </nav>
+            ))}
+            </nav>
 
         <div className="flex-shrink-0">
           <div className="h-0.5 flex mx-4 mb-3">
