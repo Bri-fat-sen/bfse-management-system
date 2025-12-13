@@ -159,14 +159,14 @@ export default function Layout({ children, currentPageName }) {
     setCollapsedSections(prev => ({ ...prev, [title]: !prev[title] }));
   };
 
-  const { data: user } = useQuery({
+  const { data: user, isLoading: loadingUser } = useQuery({
     queryKey: ['currentUser'],
     queryFn: () => base44.auth.me(),
     staleTime: 10 * 60 * 1000,
     refetchOnWindowFocus: false,
   });
 
-  const { data: employee, refetch: refetchEmployee } = useQuery({
+  const { data: employee, isLoading: loadingEmployee, refetch: refetchEmployee } = useQuery({
     queryKey: ['currentEmployee', user?.email],
     queryFn: () => base44.entities.Employee.filter({ user_email: user?.email }),
     enabled: !!user?.email,
@@ -202,13 +202,11 @@ export default function Layout({ children, currentPageName }) {
   const currentEmployee = employee?.[0];
 
   // Redirect users without employee record to JoinOrganisation page
-  const needsOrganisation = user && !currentEmployee && currentPageName !== 'JoinOrganisation';
-  
   React.useEffect(() => {
-    if (needsOrganisation) {
+    if (user && !loadingEmployee && !currentEmployee && currentPageName !== 'JoinOrganisation') {
       window.location.href = createPageUrl('JoinOrganisation');
     }
-  }, [needsOrganisation]);
+  }, [user, loadingEmployee, currentEmployee, currentPageName]);
 
   const { data: notifications = [] } = useQuery({
     queryKey: ['notifications', currentEmployee?.id],
@@ -301,6 +299,11 @@ export default function Layout({ children, currentPageName }) {
   }, []);
 
   const requiresPinAuth = currentEmployee?.pin_hash && !isPinUnlocked;
+
+  // Show loading while fetching auth data
+  if (loadingUser || (user && loadingEmployee)) {
+    return <LoadingSpinner message="Loading..." subtitle="Please wait" fullScreen={true} />;
+  }
 
   // If user has no organisation, show minimal layout for JoinOrganisation page
   if (!currentEmployee && currentPageName === 'JoinOrganisation') {
