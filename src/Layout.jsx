@@ -230,6 +230,36 @@ export default function Layout({ children, currentPageName }) {
 
   const currentOrg = organisationData?.[0];
 
+  // Handle non-active organisation
+  if (currentOrg && currentOrg.status !== 'active' && currentPageName !== 'Settings' && currentPageName !== 'OrganisationManage') {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
+        <div className="max-w-md w-full">
+          <div className="h-1 flex rounded-full overflow-hidden mb-6">
+            <div className="flex-1 bg-[#1EB053]" />
+            <div className="flex-1 bg-white" />
+            <div className="flex-1 bg-[#0072C6]" />
+          </div>
+          <div className="bg-white rounded-xl shadow-lg p-6 text-center">
+            <div className="w-16 h-16 bg-amber-100 rounded-full flex items-center justify-center mx-auto mb-4">
+              <AlertTriangle className="w-8 h-8 text-amber-600" />
+            </div>
+            <h2 className="text-xl font-bold text-gray-900 mb-2">Organisation {currentOrg.status === 'suspended' ? 'Suspended' : 'Pending Activation'}</h2>
+            <p className="text-gray-600 mb-4">
+              {currentOrg.status === 'suspended' 
+                ? 'This organisation has been suspended. Please contact support.'
+                : 'This organisation is pending activation. Please wait for approval.'}
+            </p>
+            <Button onClick={handleLogout} variant="outline" className="w-full">
+              <LogOut className="w-4 h-4 mr-2" />
+              Log Out
+            </Button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   const { data: chatRooms = [] } = useQuery({
     queryKey: ['chatRooms', orgId, currentEmployee?.id],
     queryFn: () => base44.entities.ChatRoom.filter({ organisation_id: orgId }),
