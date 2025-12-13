@@ -29,7 +29,6 @@ import OrphanedData from './pages/OrphanedData';
 import ConstructionExpense from './pages/ConstructionExpense';
 import ExpenseManagement from './pages/ExpenseManagement';
 import UploadedDocuments from './pages/UploadedDocuments';
-import HRManagement from './pages/HRManagement';
 import JoinOrganisation from './pages/JoinOrganisation';
 import PendingJoinRequests from './pages/PendingJoinRequests';
 import SuperAdminPanel from './pages/SuperAdminPanel';
@@ -68,7 +67,6 @@ export const PAGES = {
     "ConstructionExpense": ConstructionExpense,
     "ExpenseManagement": ExpenseManagement,
     "UploadedDocuments": UploadedDocuments,
-    "HRManagement": HRManagement,
     "JoinOrganisation": JoinOrganisation,
     "PendingJoinRequests": PendingJoinRequests,
     "SuperAdminPanel": SuperAdminPanel,
