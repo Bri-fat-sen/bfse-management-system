@@ -1,9 +1,11 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useRef } from "react";
 import { base44 } from "@/api/base44Client";
 import { format } from "date-fns";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { motion, AnimatePresence } from "framer-motion";
 
 import {
   Dialog,
@@ -31,7 +33,18 @@ import {
   CheckCircle,
   Hammer,
   MapPin,
-  FileText
+  FileText,
+  Camera,
+  X,
+  AlertCircle,
+  Eye,
+  Trash2,
+  RotateCw,
+  Sparkles,
+  Zap,
+  TrendingUp,
+  Image as ImageIcon,
+  File
 } from "lucide-react";
 import { useToast } from "@/components/ui/Toast";
 
@@ -107,6 +120,15 @@ export default function DocumentUploadExtractor({
   const [dragActive, setDragActive] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [queuedFiles, setQueuedFiles] = useState([]);
+  const [previewImages, setPreviewImages] = useState({});
+  const [showCamera, setShowCamera] = useState(false);
+  const [cameraStream, setCameraStream] = useState(null);
+  const [processingStage, setProcessingStage] = useState('');
+  const [aiInsights, setAiInsights] = useState(null);
+  const [showPreview, setShowPreview] = useState(false);
+  const [previewFile, setPreviewFile] = useState(null);
+  const videoRef = useRef(null);
+  const canvasRef = useRef(null);
 
   const baseCategories = type === "expense" ? DEFAULT_EXPENSE_CATEGORIES : DEFAULT_REVENUE_SOURCES;
   const categories = useMemo(() => {
@@ -141,14 +163,10 @@ export default function DocumentUploadExtractor({
     }
   };
 
-  const handleMultipleFiles = (files) => {
-    const validFiles = files.filter(file => {
-      const ext = file.name.split('.').pop().toLowerCase();
-      return ['pdf', 'csv', 'png', 'jpg', 'jpeg', 'xlsx', 'xls'].includes(ext);
-    });
+  const handleMultipleFiles = async (files) => {
+    const validFiles = files.filter(validateFile);
 
     if (validFiles.length === 0) {
-      toast.error("Invalid files", "Please upload PDF, CSV, Excel, or image files");
       return;
     }
 
@@ -159,6 +177,15 @@ export default function DocumentUploadExtractor({
       setQueuedFiles(validFiles);
     }
 
+    // Generate previews for images
+    const previews = {};
+    for (const file of validFiles) {
+      if (file.type.startsWith('image/')) {
+        previews[file.name] = URL.createObjectURL(file);
+      }
+    }
+    setPreviewImages(previews);
+
     // Auto-process first file if currency already set
     if (currencyMode && validFiles.length === 1) {
       processFile(validFiles[0]);
@@ -166,6 +193,66 @@ export default function DocumentUploadExtractor({
       setPendingFile(validFiles[0]);
       setShowCurrencyDialog(true);
     }
+  };
+
+  const startCamera = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ 
+        video: { facingMode: 'environment', width: { ideal: 1920 }, height: { ideal: 1080 } } 
+      });
+      setCameraStream(stream);
+      setShowCamera(true);
+      
+      if (videoRef.current) {
+        videoRef.current.srcObject = stream;
+      }
+    } catch (error) {
+      toast.error("Camera Error", "Could not access camera. Please check permissions.");
+    }
+  };
+
+  const stopCamera = () => {
+    if (cameraStream) {
+      cameraStream.getTracks().forEach(track => track.stop());
+      setCameraStream(null);
+    }
+    setShowCamera(false);
+  };
+
+  const capturePhoto = () => {
+    if (!videoRef.current || !canvasRef.current) return;
+    
+    const canvas = canvasRef.current;
+    const video = videoRef.current;
+    
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+    
+    const ctx = canvas.getContext('2d');
+    ctx.drawImage(video, 0, 0);
+    
+    canvas.toBlob((blob) => {
+      const file = new File([blob], `photo-${Date.now()}.jpg`, { type: 'image/jpeg' });
+      stopCamera();
+      handleMultipleFiles([file]);
+    }, 'image/jpeg', 0.95);
+  };
+
+  const removeQueuedFile = (fileName) => {
+    setQueuedFiles(prev => prev.filter(f => f.name !== fileName));
+    if (previewImages[fileName]) {
+      URL.revokeObjectURL(previewImages[fileName]);
+      setPreviewImages(prev => {
+        const newPreviews = { ...prev };
+        delete newPreviews[fileName];
+        return newPreviews;
+      });
+    }
+  };
+
+  const previewDocument = (file) => {
+    setPreviewFile(file);
+    setShowPreview(true);
   };
 
   const handleFileUpload = async (e) => {
@@ -213,6 +300,7 @@ export default function DocumentUploadExtractor({
       
       const { file_url } = await base44.integrations.Core.UploadFile({ file });
       setUploadProgress(50);
+      setProcessingStage('Saving document...');
 
       // Save uploaded document for record keeping
       await base44.entities.UploadedDocument.create({
@@ -228,6 +316,7 @@ export default function DocumentUploadExtractor({
       });
 
       setUploadProgress(60);
+      setProcessingStage('AI analyzing document type...');
       toast.info("Analyzing document...", "AI is reading the content");
       
       // First, analyze document to detect what type of records to create
@@ -286,13 +375,12 @@ Be specific about WHY you chose that record type.`,
       setDetectedType(docType);
       
       setUploadProgress(75);
+      setProcessingStage('Extracting data rows...');
       toast.info(
         `${RECORD_TYPES.find(r => r.value === docType)?.icon || '📄'} ${RECORD_TYPES.find(r => r.value === docType)?.label || docType} detected`,
         analysisResult.summary
       );
 
-      toast.info("Extracting data...", "Reading table rows");
-      
       // Now extract the actual data based on detected type
       const extractionSchema = {
         type: "object",
@@ -448,10 +536,12 @@ IMPORTANT: This is a FORM, not a table. Extract the form fields:
       setExtractedColumns(columnHeaders);
 
       if (items.length > 0) {
-        // AI-powered categorization
+        setUploadProgress(85);
+        setProcessingStage('AI categorizing items...');
         toast.info("AI Analysis", "Categorizing items intelligently...");
         
         let aiCategories = {};
+        let insights = null;
         try {
           const categorizationResult = await base44.integrations.Core.InvokeLLM({
             prompt: `Analyze these ${docType} items and assign the most appropriate category to each item based on its description.
@@ -493,6 +583,54 @@ Return a category for each item number.`,
           });
           
           toast.success("AI Categorization", `${Object.keys(aiCategories).length} items categorized`);
+
+          // Generate financial insights
+          try {
+            const totalAmount = items.reduce((sum, item) => {
+              const amount = parseFloat(item.actual_total || item.amount || item.est_total || 0);
+              return sum + amount;
+            }, 0);
+
+            const insightsResult = await base44.integrations.Core.InvokeLLM({
+              prompt: `Analyze these ${docType} items and provide actionable business insights.
+
+Total ${docType === 'expense' ? 'Expenses' : 'Revenue'}: ${totalAmount} (in document currency)
+Number of items: ${items.length}
+
+Items:
+${items.slice(0, 20).map((item, idx) => 
+  `${idx + 1}. ${item.details || item.description || item.product_name || ''} - ${item.actual_total || item.amount || item.est_total || 0}`
+).join('\n')}
+
+Provide:
+1. Key observations about spending/revenue patterns
+2. Potential cost-saving opportunities (for expenses) or revenue optimization (for revenue)
+3. Any unusual or high-value items that need attention
+4. Recommendations for better financial management`,
+              response_json_schema: {
+                type: "object",
+                properties: {
+                  total_value: { type: "number" },
+                  key_observations: { type: "array", items: { type: "string" } },
+                  recommendations: { type: "array", items: { type: "string" } },
+                  high_value_items: { type: "array", items: { type: "string" } },
+                  cost_breakdown: { 
+                    type: "object",
+                    properties: {
+                      top_category: { type: "string" },
+                      top_category_amount: { type: "number" },
+                      top_category_percentage: { type: "number" }
+                    }
+                  }
+                }
+              }
+            });
+
+            insights = insightsResult;
+            setAiInsights(insights);
+          } catch (error) {
+            console.error("Insights generation failed:", error);
+          }
         } catch (error) {
           console.error("AI categorization failed, using fallback:", error);
         }
@@ -662,7 +800,15 @@ Return a category for each item number.`,
         setExtractedData(validData);
         const colInfo = columnHeaders.length > 0 ? ` (${columnHeaders.length} columns)` : '';
         setUploadProgress(100);
-        toast.success("Data extracted", `Found ${validData.length} items${colInfo}`);
+        setProcessingStage('Complete!');
+        
+        toast.success("Data extracted successfully!", `${validData.length} items ready to review${colInfo}`, {
+          duration: 3000,
+          icon: <Sparkles className="w-5 h-5" />
+        });
+        
+        // Clear queued files after successful processing
+        setQueuedFiles([]);
       } else {
         toast.warning("No data found", "Could not find table data in the document");
       }
@@ -670,6 +816,7 @@ Return a category for each item number.`,
       console.error("Upload error:", error);
       toast.error("Upload failed", error.message);
       setUploadProgress(0);
+      setProcessingStage('');
     } finally {
       setUploadLoading(false);
     }
@@ -1161,90 +1308,254 @@ Return a category for each item number.`,
 
           {extractedData.length === 0 && (
             <div className="space-y-4">
-              <div
-                onDragEnter={handleDragEnter}
-                onDragOver={handleDragOver}
-                onDragLeave={handleDragLeave}
-                onDrop={handleDrop}
-                className={`
-                  border-2 border-dashed rounded-xl p-8 text-center transition-all
-                  ${dragActive ? 'border-[#1EB053] bg-green-50 scale-105' : 'border-gray-300 hover:border-[#0072C6]'}
-                  ${uploadLoading ? 'opacity-50 pointer-events-none' : ''}
-                `}
-              >
-                <input
-                  type="file"
-                  accept=".pdf,.csv,.png,.jpg,.jpeg,.xlsx,.xls"
-                  onChange={handleFileUpload}
-                  multiple
-                  className="hidden"
-                  id="doc-upload-finance"
-                  disabled={uploadLoading}
-                />
-                <label htmlFor="doc-upload-finance" className="cursor-pointer">
-                  {uploadLoading ? (
-                    <div className="flex flex-col items-center gap-3">
-                      <Loader2 className="w-16 h-16 text-[#0072C6] animate-spin" />
-                      <p className="text-gray-600 font-medium">Processing document...</p>
-                      <div className="w-64 h-2 bg-gray-200 rounded-full overflow-hidden">
-                        <div 
-                          className="h-full bg-gradient-to-r from-[#1EB053] to-[#0072C6] transition-all duration-300"
-                          style={{ width: `${uploadProgress}%` }}
-                        />
+              <Tabs defaultValue="upload" className="w-full">
+                <TabsList className="grid w-full grid-cols-2">
+                  <TabsTrigger value="upload" className="gap-2">
+                    <FileUp className="w-4 h-4" />
+                    Upload File
+                  </TabsTrigger>
+                  <TabsTrigger value="camera" className="gap-2">
+                    <Camera className="w-4 h-4" />
+                    Scan with Camera
+                  </TabsTrigger>
+                </TabsList>
+
+                <TabsContent value="upload" className="space-y-4 mt-4">
+                  <div
+                    onDragEnter={handleDragEnter}
+                    onDragOver={handleDragOver}
+                    onDragLeave={handleDragLeave}
+                    onDrop={handleDrop}
+                    className={`
+                      relative border-2 border-dashed rounded-2xl p-10 text-center transition-all duration-300
+                      ${dragActive ? 'border-[#1EB053] bg-gradient-to-br from-green-50 to-blue-50 scale-[1.02] shadow-2xl' : 'border-gray-300 hover:border-[#0072C6] hover:shadow-lg'}
+                      ${uploadLoading ? 'opacity-50 pointer-events-none' : ''}
+                    `}
+                  >
+                    <input
+                      type="file"
+                      accept=".pdf,.csv,.png,.jpg,.jpeg,.xlsx,.xls"
+                      onChange={handleFileUpload}
+                      multiple
+                      className="hidden"
+                      id="doc-upload-finance"
+                      disabled={uploadLoading}
+                    />
+                    <label htmlFor="doc-upload-finance" className="cursor-pointer">
+                      <AnimatePresence mode="wait">
+                        {uploadLoading ? (
+                          <motion.div
+                            key="loading"
+                            initial={{ opacity: 0, scale: 0.9 }}
+                            animate={{ opacity: 1, scale: 1 }}
+                            exit={{ opacity: 0, scale: 0.9 }}
+                            className="flex flex-col items-center gap-4"
+                          >
+                            <div className="relative">
+                              <Loader2 className="w-20 h-20 text-[#0072C6] animate-spin" />
+                              <div className="absolute inset-0 flex items-center justify-center">
+                                <Sparkles className="w-8 h-8 text-[#1EB053] animate-pulse" />
+                              </div>
+                            </div>
+                            <div>
+                              <p className="text-gray-900 font-bold text-lg mb-2">Processing your document...</p>
+                              <p className="text-sm text-gray-600 mb-3">{processingStage}</p>
+                              <div className="w-80 h-3 bg-gray-200 rounded-full overflow-hidden shadow-inner">
+                                <motion.div 
+                                  className="h-full bg-gradient-to-r from-[#1EB053] via-blue-500 to-[#0072C6]"
+                                  initial={{ width: 0 }}
+                                  animate={{ width: `${uploadProgress}%` }}
+                                  transition={{ duration: 0.5, ease: "easeOut" }}
+                                />
+                              </div>
+                              <p className="text-xs text-gray-500 mt-2 font-mono">{uploadProgress}% • AI Powered</p>
+                            </div>
+                          </motion.div>
+                        ) : (
+                          <motion.div
+                            key="upload"
+                            initial={{ opacity: 0, y: 10 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            exit={{ opacity: 0, y: -10 }}
+                            className="flex flex-col items-center gap-5"
+                          >
+                            <motion.div 
+                              className="w-24 h-24 rounded-3xl bg-gradient-to-br from-[#1EB053] via-blue-500 to-[#0072C6] flex items-center justify-center shadow-2xl"
+                              whileHover={{ scale: 1.1, rotate: 5 }}
+                              transition={{ type: "spring", stiffness: 300 }}
+                            >
+                              <Upload className="w-12 h-12 text-white" />
+                            </motion.div>
+                            <div>
+                              <p className="text-xl font-bold text-gray-900 mb-2">
+                                {dragActive ? '✨ Drop your files here!' : 'Upload Your Documents'}
+                              </p>
+                              <p className="text-sm text-gray-600 mb-1">
+                                Drag & drop files or click to browse
+                              </p>
+                              <div className="flex items-center justify-center gap-4 mt-4 text-xs text-gray-500">
+                                <span className="flex items-center gap-1">
+                                  <FileText className="w-3 h-3" /> PDF, CSV, Excel
+                                </span>
+                                <span className="flex items-center gap-1">
+                                  <ImageIcon className="w-3 h-3" /> JPG, PNG
+                                </span>
+                                <span className="flex items-center gap-1">
+                                  <Zap className="w-3 h-3" /> AI Powered
+                                </span>
+                              </div>
+                            </div>
+                          </motion.div>
+                        )}
+                      </AnimatePresence>
+                    </label>
+                  </div>
+                </TabsContent>
+
+                <TabsContent value="camera" className="mt-4">
+                  {!showCamera ? (
+                    <div className="space-y-4">
+                      <div className="text-center p-10 border-2 border-dashed border-gray-300 rounded-2xl hover:border-[#0072C6] transition-colors">
+                        <div className="w-24 h-24 rounded-3xl bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center mx-auto mb-4 shadow-xl">
+                          <Camera className="w-12 h-12 text-white" />
+                        </div>
+                        <h3 className="text-xl font-bold text-gray-900 mb-2">Scan Documents with Camera</h3>
+                        <p className="text-sm text-gray-600 mb-4">
+                          Capture receipts, invoices, or forms instantly
+                        </p>
+                        <Button onClick={startCamera} className="bg-gradient-to-r from-purple-600 to-pink-600">
+                          <Camera className="w-4 h-4 mr-2" />
+                          Open Camera
+                        </Button>
                       </div>
-                      <p className="text-xs text-gray-500">{uploadProgress}% complete</p>
                     </div>
                   ) : (
-                    <div className="flex flex-col items-center gap-4">
-                      <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-[#1EB053] to-[#0072C6] flex items-center justify-center shadow-lg">
-                        <Upload className="w-10 h-10 text-white" />
+                    <div className="space-y-4">
+                      <div className="relative rounded-xl overflow-hidden bg-black">
+                        <video
+                          ref={videoRef}
+                          autoPlay
+                          playsInline
+                          className="w-full h-auto max-h-96 object-contain"
+                        />
+                        <div className="absolute inset-0 border-2 border-white/30 pointer-events-none">
+                          <div className="absolute top-4 left-4 right-4 h-1 bg-gradient-to-r from-[#1EB053] to-[#0072C6]" />
+                          <div className="absolute bottom-4 left-4 right-4 h-1 bg-gradient-to-r from-[#1EB053] to-[#0072C6]" />
+                        </div>
                       </div>
-                      <div>
-                        <p className="text-lg font-bold text-gray-900 mb-1">
-                          {dragActive ? 'Drop files here' : 'Upload Documents'}
-                        </p>
-                        <p className="text-sm text-gray-600">
-                          Drag & drop or click to browse
-                        </p>
-                        <p className="text-xs text-gray-500 mt-2">
-                          Supports: PDF, CSV, Excel, Images • Max 10 files • 10MB each
-                        </p>
+                      <canvas ref={canvasRef} className="hidden" />
+                      <div className="flex gap-3">
+                        <Button onClick={capturePhoto} className="flex-1 bg-gradient-to-r from-[#1EB053] to-[#0072C6]">
+                          <Camera className="w-4 h-4 mr-2" />
+                          Capture Photo
+                        </Button>
+                        <Button onClick={stopCamera} variant="outline">
+                          <X className="w-4 h-4 mr-2" />
+                          Cancel
+                        </Button>
                       </div>
                     </div>
                   )}
-                </label>
-              </div>
+                </TabsContent>
+              </Tabs>
 
-              {queuedFiles.length > 0 && !uploadLoading && (
-                <div className="p-4 bg-blue-50 rounded-lg border border-blue-200">
-                  <h4 className="font-semibold text-blue-900 mb-2 flex items-center gap-2">
-                    <FileText className="w-4 h-4" />
-                    Queued Files ({queuedFiles.length})
-                  </h4>
-                  <div className="space-y-1">
-                    {queuedFiles.map((f, idx) => (
-                      <div key={idx} className="flex items-center justify-between text-sm p-2 bg-white rounded">
-                        <span className="text-gray-700 truncate flex-1">{f.name}</span>
-                        <span className="text-xs text-gray-500">{(f.size / 1024).toFixed(0)} KB</span>
-                      </div>
-                    ))}
-                  </div>
-                  <Button
-                    size="sm"
-                    className="w-full mt-3 bg-gradient-to-r from-[#1EB053] to-[#0072C6]"
-                    onClick={() => {
-                      if (currencyMode === null) {
-                        setPendingFile(queuedFiles[0]);
-                        setShowCurrencyDialog(true);
-                      } else {
-                        processFile(queuedFiles[0]);
-                      }
-                    }}
+              <AnimatePresence>
+                {queuedFiles.length > 0 && !uploadLoading && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -20 }}
+                    className="p-4 bg-gradient-to-br from-blue-50 to-purple-50 rounded-xl border-2 border-blue-200 shadow-lg"
                   >
-                    Process {queuedFiles.length} File{queuedFiles.length > 1 ? 's' : ''}
-                  </Button>
-                </div>
-              )}
+                    <div className="flex items-center justify-between mb-3">
+                      <h4 className="font-bold text-blue-900 flex items-center gap-2">
+                        <FileText className="w-5 h-5" />
+                        Ready to Process ({queuedFiles.length} file{queuedFiles.length > 1 ? 's' : ''})
+                      </h4>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={() => {
+                          queuedFiles.forEach(f => {
+                            if (previewImages[f.name]) {
+                              URL.revokeObjectURL(previewImages[f.name]);
+                            }
+                          });
+                          setQueuedFiles([]);
+                          setPreviewImages({});
+                        }}
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </Button>
+                    </div>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mb-3">
+                      {queuedFiles.map((f, idx) => (
+                        <motion.div
+                          key={idx}
+                          initial={{ opacity: 0, scale: 0.9 }}
+                          animate={{ opacity: 1, scale: 1 }}
+                          transition={{ delay: idx * 0.05 }}
+                          className="relative group bg-white p-3 rounded-lg border hover:border-blue-400 hover:shadow-md transition-all"
+                        >
+                          <div className="flex items-start gap-3">
+                            {previewImages[f.name] ? (
+                              <img 
+                                src={previewImages[f.name]} 
+                                alt={f.name}
+                                className="w-12 h-12 object-cover rounded flex-shrink-0 cursor-pointer"
+                                onClick={() => previewDocument(f)}
+                              />
+                            ) : (
+                              <div className="w-12 h-12 bg-gray-100 rounded flex items-center justify-center flex-shrink-0">
+                                <File className="w-6 h-6 text-gray-400" />
+                              </div>
+                            )}
+                            <div className="flex-1 min-w-0">
+                              <p className="text-sm font-medium text-gray-900 truncate">{f.name}</p>
+                              <p className="text-xs text-gray-500">
+                                {(f.size / 1024).toFixed(0)} KB
+                              </p>
+                            </div>
+                            <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                              {previewImages[f.name] && (
+                                <Button
+                                  size="sm"
+                                  variant="ghost"
+                                  className="h-7 w-7 p-0"
+                                  onClick={() => previewDocument(f)}
+                                >
+                                  <Eye className="w-3 h-3" />
+                                </Button>
+                              )}
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                className="h-7 w-7 p-0 text-red-600"
+                                onClick={() => removeQueuedFile(f.name)}
+                              >
+                                <X className="w-3 h-3" />
+                              </Button>
+                            </div>
+                          </div>
+                        </motion.div>
+                      ))}
+                    </div>
+                    <Button
+                      className="w-full bg-gradient-to-r from-[#1EB053] to-[#0072C6] shadow-lg hover:shadow-xl transition-shadow"
+                      onClick={() => {
+                        if (currencyMode === null) {
+                          setPendingFile(queuedFiles[0]);
+                          setShowCurrencyDialog(true);
+                        } else {
+                          processFile(queuedFiles[0]);
+                        }
+                      }}
+                    >
+                      <Sparkles className="w-4 h-4 mr-2" />
+                      Process with AI
+                    </Button>
+                  </motion.div>
+                )}
               
               {/* Record type hints */}
               {!uploadLoading && (
@@ -1264,61 +1575,167 @@ Return a category for each item number.`,
             <div className="space-y-4">
               {/* Document Analysis Summary */}
               {documentSummary && (
-                <div className="p-4 bg-gradient-to-r from-blue-50 to-purple-50 rounded-xl border border-blue-100">
+                <motion.div
+                  initial={{ opacity: 0, y: -10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="p-4 bg-gradient-to-r from-blue-50 to-purple-50 rounded-xl border-2 border-blue-200 shadow-lg"
+                >
                   <div className="flex items-start gap-3">
-                    <span className="text-2xl">{RECORD_TYPES.find(r => r.value === detectedType)?.icon || '📄'}</span>
+                    <motion.span 
+                      className="text-3xl"
+                      initial={{ scale: 0 }}
+                      animate={{ scale: 1 }}
+                      transition={{ type: "spring", stiffness: 200 }}
+                    >
+                      {RECORD_TYPES.find(r => r.value === detectedType)?.icon || '📄'}
+                    </motion.span>
                     <div className="flex-1">
-                      <div className="flex items-center gap-2 mb-1">
-                        <h4 className="font-semibold text-gray-800">
+                      <div className="flex items-center gap-2 mb-2">
+                        <h4 className="font-bold text-gray-900 text-lg">
                           {RECORD_TYPES.find(r => r.value === detectedType)?.label || detectedType}
                         </h4>
-                        <Badge className={documentSummary.confidence === 'high' ? 'bg-green-100 text-green-700' : documentSummary.confidence === 'medium' ? 'bg-yellow-100 text-yellow-700' : 'bg-red-100 text-red-700'}>
+                        <Badge className={
+                          documentSummary.confidence === 'high' ? 'bg-green-100 text-green-700 border-green-300' : 
+                          documentSummary.confidence === 'medium' ? 'bg-yellow-100 text-yellow-700 border-yellow-300' : 
+                          'bg-red-100 text-red-700 border-red-300'
+                        }>
+                          <CheckCircle className="w-3 h-3 mr-1" />
                           {documentSummary.confidence} confidence
                         </Badge>
                       </div>
-                      <p className="text-sm text-gray-600">{documentSummary.summary}</p>
-                      <p className="text-xs text-gray-500 mt-1">Reason: {documentSummary.reasoning}</p>
+                      <p className="text-sm text-gray-700 font-medium mb-1">{documentSummary.summary}</p>
+                      <p className="text-xs text-gray-600">💡 {documentSummary.reasoning}</p>
                     </div>
                   </div>
-                </div>
+                </motion.div>
               )}
 
-              <div className="flex items-center justify-between flex-wrap gap-2">
+              {/* AI Insights Panel */}
+              {aiInsights && (
+                <motion.div
+                  initial={{ opacity: 0, y: -10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.2 }}
+                  className="p-4 bg-gradient-to-br from-purple-50 to-pink-50 rounded-xl border-2 border-purple-200 shadow-lg"
+                >
+                  <div className="flex items-center gap-2 mb-3">
+                    <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center">
+                      <Sparkles className="w-4 h-4 text-white" />
+                    </div>
+                    <h4 className="font-bold text-purple-900">AI Financial Insights</h4>
+                  </div>
+                  
+                  {aiInsights.cost_breakdown && (
+                    <div className="mb-3 p-3 bg-white rounded-lg">
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm text-gray-600">Top Category:</span>
+                        <div className="text-right">
+                          <p className="font-bold text-purple-700">{aiInsights.cost_breakdown.top_category}</p>
+                          <p className="text-xs text-gray-500">{aiInsights.cost_breakdown.top_category_percentage?.toFixed(0)}% of total</p>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {aiInsights.key_observations?.length > 0 && (
+                    <div className="mb-3">
+                      <p className="text-xs font-semibold text-purple-800 mb-2">Key Observations:</p>
+                      <ul className="space-y-1">
+                        {aiInsights.key_observations.slice(0, 3).map((obs, idx) => (
+                          <li key={idx} className="text-xs text-gray-700 flex items-start gap-2">
+                            <TrendingUp className="w-3 h-3 text-purple-600 mt-0.5 flex-shrink-0" />
+                            <span>{obs}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+
+                  {aiInsights.recommendations?.length > 0 && (
+                    <div>
+                      <p className="text-xs font-semibold text-purple-800 mb-2">Recommendations:</p>
+                      <ul className="space-y-1">
+                        {aiInsights.recommendations.slice(0, 2).map((rec, idx) => (
+                          <li key={idx} className="text-xs text-gray-700 flex items-start gap-2">
+                            <Zap className="w-3 h-3 text-amber-500 mt-0.5 flex-shrink-0" />
+                            <span>{rec}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                </motion.div>
+              )}
+
+              <div className="flex items-center justify-between flex-wrap gap-2 p-4 bg-gradient-to-r from-gray-50 to-gray-100 rounded-xl border">
                 <div className="flex items-center gap-3">
-                  <h3 className="font-semibold text-gray-700">Extracted Data ({extractedData.length})</h3>
+                  <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#1EB053] to-[#0072C6] flex items-center justify-center shadow-lg">
+                    <CheckCircle className="w-5 h-5 text-white" />
+                  </div>
+                  <div>
+                    <h3 className="font-bold text-gray-900">Extracted Data</h3>
+                    <p className="text-xs text-gray-600">{extractedData.length} items • {extractedData.filter(e => e.selected).length} selected</p>
+                  </div>
                 </div>
                 <div className="flex gap-2">
                   <Select value={detectedType} onValueChange={setDetectedType}>
-                    <SelectTrigger className="w-[200px] h-8 text-xs">
+                    <SelectTrigger className="w-[200px] h-9">
                       <SelectValue placeholder="Select record type" />
                     </SelectTrigger>
                     <SelectContent>
                       {RECORD_TYPES.map(rt => (
                         <SelectItem key={rt.value} value={rt.value}>
-                          {rt.icon} {rt.label}
+                          <span className="flex items-center gap-2">
+                            <span>{rt.icon}</span>
+                            <span>{rt.label}</span>
+                          </span>
                         </SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => { 
+                      setExtractedData([]); 
+                      setExtractedColumns([]); 
+                      setDocumentSummary(null);
+                      setAiInsights(null);
+                      setUploadProgress(0);
+                      setProcessingStage('');
+                    }}
+                  >
+                    <RotateCw className="w-4 h-4 mr-2" />
+                    New Upload
+                  </Button>
                 </div>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => { setExtractedData([]); setExtractedColumns([]); }}
-                >
-                  Clear & Upload New
-                </Button>
               </div>
 
               {extractedColumns.length > 0 && (
-                <div className="p-3 bg-blue-50 rounded-lg">
-                  <p className="text-xs text-blue-700 font-medium mb-1">Columns detected from document:</p>
-                  <div className="flex flex-wrap gap-1">
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  className="p-4 bg-gradient-to-r from-blue-50 to-cyan-50 rounded-xl border border-blue-200"
+                >
+                  <p className="text-sm text-blue-900 font-bold mb-2 flex items-center gap-2">
+                    <FileText className="w-4 h-4" />
+                    Detected Columns ({extractedColumns.length})
+                  </p>
+                  <div className="flex flex-wrap gap-2">
                     {extractedColumns.map((col, idx) => (
-                      <Badge key={idx} variant="outline" className="text-xs bg-white">{col}</Badge>
+                      <motion.div
+                        key={idx}
+                        initial={{ opacity: 0, scale: 0.8 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        transition={{ delay: idx * 0.03 }}
+                      >
+                        <Badge variant="outline" className="bg-white border-blue-300 text-blue-700 shadow-sm">
+                          {col}
+                        </Badge>
+                      </motion.div>
                     ))}
                   </div>
-                </div>
+                </motion.div>
               )}
 
               <div className="h-[calc(95vh-380px)] min-h-[300px] border rounded-lg overflow-x-auto overflow-y-auto -mx-3 sm:mx-0">
@@ -1678,28 +2095,48 @@ Return a category for each item number.`,
                     </Table>
                     </div>
 
-              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 p-3 sm:p-4 bg-gray-50 rounded-lg">
-                <div>
-                  <p className="font-medium text-sm sm:text-base">
-                    {extractedData.filter(e => e.selected).length} item(s) selected
-                  </p>
-                  <p className="text-xs sm:text-sm text-gray-500">
-                    Total: Le {extractedData.filter(e => e.selected).reduce((sum, e) => sum + (e.amount || 0), 0).toLocaleString()}
-                  </p>
+              <motion.div
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="sticky bottom-0 bg-white border-t-2 border-gray-200 -mx-6 px-6 py-4 shadow-2xl"
+              >
+                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                  <div className="flex items-center gap-4">
+                    <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-[#1EB053] to-[#0072C6] flex items-center justify-center shadow-lg">
+                      <span className="text-white font-bold text-lg">{extractedData.filter(e => e.selected).length}</span>
+                    </div>
+                    <div>
+                      <p className="font-bold text-gray-900">
+                        {extractedData.filter(e => e.selected).length} item(s) ready
+                      </p>
+                      <p className="text-sm text-gray-600 font-mono">
+                        Total: Le {extractedData.filter(e => e.selected).reduce((sum, e) => sum + (e.amount || 0), 0).toLocaleString()}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex gap-2 w-full sm:w-auto">
+                    <Button
+                      variant="outline"
+                      onClick={() => setExtractedData(prev => prev.map(e => ({ ...e, selected: !e.selected })))}
+                      className="flex-1 sm:flex-none"
+                    >
+                      Toggle All
+                    </Button>
+                    <Button
+                      onClick={handleCreateRecords}
+                      disabled={uploadLoading || extractedData.filter(e => e.selected).length === 0}
+                      className="bg-gradient-to-r from-[#1EB053] to-[#0072C6] flex-1 sm:flex-none shadow-lg hover:shadow-xl transition-shadow"
+                    >
+                      {uploadLoading ? (
+                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      ) : (
+                        <CheckCircle className="w-4 h-4 mr-2" />
+                      )}
+                      <span>Create Records</span>
+                    </Button>
+                  </div>
                 </div>
-                <Button
-                  onClick={handleCreateRecords}
-                  disabled={uploadLoading || extractedData.filter(e => e.selected).length === 0}
-                  className="bg-gradient-to-r from-[#1EB053] to-[#0072C6] w-full sm:w-auto"
-                >
-                  {uploadLoading ? (
-                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                  ) : (
-                    <CheckCircle className="w-4 h-4 mr-2" />
-                  )}
-                  <span className="text-sm">Create {extractedData.filter(e => e.selected).length} {RECORD_TYPES.find(r => r.value === detectedType)?.label || 'Record'}(s)</span>
-                </Button>
-              </div>
+              </motion.div>
             </div>
           )}
         </div>
