@@ -45,7 +45,7 @@ const STATUS_CONFIG = {
   }
 };
 
-export default function MyLeaveRequests({ employee, orgId }) {
+export default function MyLeaveRequests({ employee, orgId, onRequestLeave }) {
   const [showLeaveForm, setShowLeaveForm] = useState(false);
 
   const { data: leaveRequests = [] } = useQuery({
@@ -179,7 +179,7 @@ export default function MyLeaveRequests({ employee, orgId }) {
           <Button 
             size="sm" 
             className="bg-[#1EB053] hover:bg-[#178f43]"
-            onClick={() => setShowLeaveForm(true)}
+            onClick={() => onRequestLeave ? onRequestLeave() : setShowLeaveForm(true)}
           >
             <CalendarDays className="w-4 h-4 mr-2" />
             Request Leave
@@ -276,12 +276,14 @@ export default function MyLeaveRequests({ employee, orgId }) {
         </CardContent>
       </Card>
 
-      <LeaveRequestForm
-        open={showLeaveForm}
-        onOpenChange={setShowLeaveForm}
-        employee={employee}
-        orgId={orgId}
-      />
+      {!onRequestLeave && (
+        <LeaveRequestForm
+          open={showLeaveForm}
+          onOpenChange={setShowLeaveForm}
+          employee={employee}
+          orgId={orgId}
+        />
+      )}
     </div>
   );
 }
