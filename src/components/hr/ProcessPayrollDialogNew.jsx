@@ -19,6 +19,16 @@ import { useToast } from "@/components/ui/Toast";
 import { calculateSalaryBreakdown, formatLeone } from "@/components/hr/sierraLeoneTaxCalculator";
 import WageEmployeeTimesheetApproval from "./WageEmployeeTimesheetApproval";
 
+const LEAVE_TYPE_LABELS = {
+  annual: "Annual Leave",
+  sick: "Sick Leave",
+  maternity: "Maternity Leave",
+  paternity: "Paternity Leave",
+  unpaid: "Unpaid Leave",
+  compassionate: "Compassionate Leave",
+  study: "Study Leave"
+};
+
 export default function ProcessPayrollDialog({ open, onOpenChange, orgId, currentEmployee, employees, payCycles }) {
   const [activeStep, setActiveStep] = useState("config");
   const [selectedEmployees, setSelectedEmployees] = useState([]);
@@ -97,10 +107,19 @@ export default function ProcessPayrollDialog({ open, onOpenChange, orgId, curren
 
   const generatePayrollPreview = async () => {
     let allAttendance = [];
+    let allLeaveRequests = [];
+    
     if (wageEmployees.length > 0) {
       const fetchedAttendance = await base44.entities.Attendance.filter({ organisation_id: orgId });
       allAttendance = Array.isArray(fetchedAttendance) ? fetchedAttendance : [];
     }
+    
+    // Fetch approved leave requests for the period
+    const fetchedLeave = await base44.entities.LeaveRequest.filter({ 
+      organisation_id: orgId,
+      status: 'approved'
+    });
+    allLeaveRequests = Array.isArray(fetchedLeave) ? fetchedLeave : [];
 
     const preview = [];
 
@@ -109,6 +128,47 @@ export default function ProcessPayrollDialog({ open, onOpenChange, orgId, curren
       if (!emp) continue;
 
       const isWageEmployee = emp.employment_type === 'wage';
+
+      // Calculate leave days in this pay period
+      const empLeaveInPeriod = allLeaveRequests.filter(leave => {
+        if (leave.employee_id !== empId) return false;
+        const leaveStart = new Date(leave.start_date);
+        const leaveEnd = new Date(leave.end_date);
+        const periodStartDate = new Date(periodStart);
+        const periodEndDate = new Date(periodEnd);
+        
+        // Check if leave overlaps with pay period
+        return leaveStart <= periodEndDate && leaveEnd >= periodStartDate;
+      });
+      
+      const totalLeaveDays = empLeaveInPeriod.reduce((sum, leave) => {
+        // Calculate actual days in pay period
+        const leaveStart = new Date(leave.start_date);
+        const leaveEnd = new Date(leave.end_date);
+        const periodStartDate = new Date(periodStart);
+        const periodEndDate = new Date(periodEnd);
+        
+        const actualStart = leaveStart > periodStartDate ? leaveStart : periodStartDate;
+        const actualEnd = leaveEnd < periodEndDate ? leaveEnd : periodEndDate;
+        
+        const days = Math.floor((actualEnd - actualStart) / (1000 * 60 * 60 * 24)) + 1;
+        return sum + Math.max(0, days);
+      }, 0);
+      
+      const unpaidLeaveDays = empLeaveInPeriod
+        .filter(leave => leave.leave_type === 'unpaid')
+        .reduce((sum, leave) => {
+          const leaveStart = new Date(leave.start_date);
+          const leaveEnd = new Date(leave.end_date);
+          const periodStartDate = new Date(periodStart);
+          const periodEndDate = new Date(periodEnd);
+          
+          const actualStart = leaveStart > periodStartDate ? leaveStart : periodStartDate;
+          const actualEnd = leaveEnd < periodEndDate ? leaveEnd : periodEndDate;
+          
+          const days = Math.floor((actualEnd - actualStart) / (1000 * 60 * 60 * 24)) + 1;
+          return sum + Math.max(0, days);
+        }, 0);
 
       let baseSalary = 0;
       let approvedHours = 0;
@@ -131,7 +191,15 @@ export default function ProcessPayrollDialog({ open, onOpenChange, orgId, curren
           baseSalary = (emp.daily_rate || 0) * daysWorked;
         }
       } else {
+        // Salary employee - deduct unpaid leave
         baseSalary = emp.base_salary || 0;
+        
+        if (unpaidLeaveDays > 0) {
+          // Calculate daily rate (monthly salary / 30 days)
+          const dailyRate = baseSalary / 30;
+          const unpaidDeduction = dailyRate * unpaidLeaveDays;
+          baseSalary = Math.max(0, baseSalary - unpaidDeduction);
+        }
       }
 
       const totalAllowances = allowances.reduce((sum, a) => sum + (a.amount || 0), 0);
@@ -149,6 +217,7 @@ export default function ProcessPayrollDialog({ open, onOpenChange, orgId, curren
         employee_id: emp.id,
         employee_name: emp.full_name,
         employee_role: emp.role,
+        employee_location: emp.assigned_location_name,
         employment_type: emp.employment_type || 'salary',
         payroll_frequency: frequency,
         period_start: periodStart,
@@ -159,10 +228,17 @@ export default function ProcessPayrollDialog({ open, onOpenChange, orgId, curren
         hours_worked: isWageEmployee ? approvedHours : 0,
         hours_approved: isWageEmployee ? approvedHours : 0,
         timesheet_approved: isWageEmployee,
+        leave_days_taken: totalLeaveDays,
+        unpaid_leave_days: unpaidLeaveDays,
         allowances,
         bonuses,
         deductions: [
           ...deductions,
+          ...(unpaidLeaveDays > 0 ? [{ 
+            name: `Unpaid Leave (${unpaidLeaveDays} days)`, 
+            amount: (emp.base_salary / 30) * unpaidLeaveDays, 
+            type: 'leave' 
+          }] : []),
           { name: 'NASSIT (5%)', amount: taxCalc.nassit.employee, type: 'statutory' },
           { name: 'PAYE Tax', amount: taxCalc.paye.tax, type: 'statutory' }
         ],
@@ -181,7 +257,11 @@ export default function ProcessPayrollDialog({ open, onOpenChange, orgId, curren
           hourly_rate: emp.hourly_rate || 0,
           daily_rate: emp.daily_rate || 0,
           effective_tax_rate: taxCalc.paye.effectiveRate,
+          leave_days_in_period: totalLeaveDays,
+          unpaid_leave_days: unpaidLeaveDays
         },
+        notes: empLeaveInPeriod.length > 0 ? 
+          `Leave: ${empLeaveInPeriod.map(l => `${LEAVE_TYPE_LABELS[l.leave_type] || l.leave_type} (${l.days_requested}d)`).join(', ')}` : ''
       });
     }
 

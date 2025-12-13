@@ -75,17 +75,17 @@ export default function LeaveManagement({ orgId, currentEmployee }) {
   });
 
   const updateMutation = useMutation({
-    mutationFn: async ({ id, data, employee }) => {
+    mutationFn: async ({ id, data, leaveRequest }) => {
       await base44.entities.LeaveRequest.update(id, data);
       
       // If approved, deduct from employee leave balance and send notifications
-      if (data.status === 'approved' && employee) {
-        const leaveType = employee.leave_type;
-        const daysRequested = employee.days_requested;
-        const currentEmployee = employees.find(e => e.id === employee.employee_id);
+      if (data.status === 'approved' && leaveRequest) {
+        const leaveType = leaveRequest.leave_type;
+        const daysRequested = leaveRequest.days_requested;
+        const emp = employees.find(e => e.id === leaveRequest.employee_id);
         
-        if (currentEmployee) {
-          const balances = currentEmployee.leave_balances || {
+        if (emp) {
+          const balances = emp.leave_balances || {
             annual_days: 21,
             sick_days: 10,
             maternity_days: 90,
@@ -96,65 +96,67 @@ export default function LeaveManagement({ orgId, currentEmployee }) {
           if (balances[balanceKey] !== undefined) {
             balances[balanceKey] = Math.max(0, (balances[balanceKey] || 0) - daysRequested);
             
-            await base44.entities.Employee.update(currentEmployee.id, {
+            await base44.entities.Employee.update(emp.id, {
               leave_balances: balances
             });
           }
-        }
 
-        // Notify employee of approval
-        await base44.entities.Notification.create({
-          organisation_id: orgId,
-          recipient_id: employee.employee_id,
-          recipient_email: currentEmployee?.email || currentEmployee?.user_email,
-          type: 'hr',
-          title: 'Leave Request Approved',
-          message: `Your ${employee.leave_type} leave request for ${employee.days_requested} days has been approved.`,
-          priority: 'normal'
-        });
+          // Notify employee of approval
+          await base44.entities.Notification.create({
+            organisation_id: orgId,
+            recipient_id: leaveRequest.employee_id,
+            recipient_email: emp.email || emp.user_email,
+            type: 'hr',
+            title: 'Leave Request Approved',
+            message: `Your ${LEAVE_TYPE_LABELS[leaveType]} request for ${daysRequested} days (${format(new Date(leaveRequest.start_date), 'MMM d')} - ${format(new Date(leaveRequest.end_date), 'MMM d, yyyy')}) has been approved.`,
+            priority: 'normal'
+          });
+        }
       }
 
       // If rejected, notify employee
-      if (data.status === 'rejected' && employee) {
-        const currentEmployee = employees.find(e => e.id === employee.employee_id);
-        await base44.entities.Notification.create({
-          organisation_id: orgId,
-          recipient_id: employee.employee_id,
-          recipient_email: currentEmployee?.email || currentEmployee?.user_email,
-          type: 'hr',
-          title: 'Leave Request Rejected',
-          message: `Your ${employee.leave_type} leave request has been rejected. Reason: ${data.rejection_reason || 'Not specified'}`,
-          priority: 'high'
-        });
+      if (data.status === 'rejected' && leaveRequest) {
+        const emp = employees.find(e => e.id === leaveRequest.employee_id);
+        if (emp) {
+          await base44.entities.Notification.create({
+            organisation_id: orgId,
+            recipient_id: leaveRequest.employee_id,
+            recipient_email: emp.email || emp.user_email,
+            type: 'hr',
+            title: 'Leave Request Rejected',
+            message: `Your ${LEAVE_TYPE_LABELS[leaveRequest.leave_type]} request has been rejected. Reason: ${data.rejection_reason || 'Not specified'}`,
+            priority: 'high'
+          });
+        }
       }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['leaveRequests'] });
       queryClient.invalidateQueries({ queryKey: ['employees'] });
       queryClient.invalidateQueries({ queryKey: ['notifications'] });
-      toast({ title: "Leave request updated" });
+      toast.success("Leave request updated successfully");
     },
+    onError: (error) => {
+      toast.error("Failed to update", error.message);
+    }
   });
 
   const handleApprove = async (request) => {
-    // Notify manager/HR before approval
-    const hrAdmins = employees.filter(e => ['super_admin', 'org_admin', 'hr_admin'].includes(e.role));
-    
     updateMutation.mutate({
       id: request.id,
       data: {
         status: "approved",
         approved_by: currentEmployee.id,
-        approved_by_name: currentEmployee.full_name || `${currentEmployee.first_name} ${currentEmployee.last_name}`,
+        approved_by_name: currentEmployee.full_name,
         approval_date: format(new Date(), 'yyyy-MM-dd')
       },
-      employee: request
+      leaveRequest: request
     });
   };
 
   const handleReject = () => {
-    if (!rejectionReason) {
-      toast({ title: "Please provide a reason", variant: "destructive" });
+    if (!rejectionReason.trim()) {
+      toast.error("Please provide a reason for rejection");
       return;
     }
     updateMutation.mutate({
@@ -162,10 +164,10 @@ export default function LeaveManagement({ orgId, currentEmployee }) {
       data: {
         status: "rejected",
         approved_by: currentEmployee.id,
-        approved_by_name: currentEmployee.full_name || `${currentEmployee.first_name} ${currentEmployee.last_name}`,
+        approved_by_name: currentEmployee.full_name,
         rejection_reason: rejectionReason
       },
-      employee: selectedRequest
+      leaveRequest: selectedRequest
     });
     setShowRejectDialog(false);
     setSelectedRequest(null);
