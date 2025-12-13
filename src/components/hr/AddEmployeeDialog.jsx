@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
 import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
 import { X, Save, User, Mail, Phone, MapPin, Briefcase, DollarSign, Calendar } from "lucide-react";
@@ -15,12 +15,12 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useToast } from "@/components/ui/Toast";
 
 export default function AddEmployeeDialog({ open, onOpenChange, employee, orgId }) {
-  const [formData, setFormData] = useState(employee ? { ...employee } : {
+  const [formData, setFormData] = useState({
     first_name: "",
     last_name: "",
     email: "",
     phone: "",
-    employee_code: `EMP${Date.now().toString().slice(-6)}`,
+    employee_code: "",
     department: "",
     position: "",
     base_salary: 0,
@@ -28,6 +28,31 @@ export default function AddEmployeeDialog({ open, onOpenChange, employee, orgId 
     status: "active",
     hire_date: new Date().toISOString().split('T')[0],
   });
+
+  // Initialize form data when employee or dialog opens
+  useEffect(() => {
+    if (open) {
+      if (employee) {
+        // Editing existing employee - preserve all data including employee_code
+        setFormData({ ...employee });
+      } else {
+        // Adding new employee - generate new code
+        setFormData({
+          first_name: "",
+          last_name: "",
+          email: "",
+          phone: "",
+          employee_code: `EMP${Date.now().toString().slice(-6)}`,
+          department: "",
+          position: "",
+          base_salary: 0,
+          salary_type: "monthly",
+          status: "active",
+          hire_date: new Date().toISOString().split('T')[0],
+        });
+      }
+    }
+  }, [employee, open]);
 
   const queryClient = useQueryClient();
   const toast = useToast();
