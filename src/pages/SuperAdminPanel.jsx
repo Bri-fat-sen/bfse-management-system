@@ -66,6 +66,7 @@ export default function SuperAdminPanel() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['allOrganisations'] });
       toast.success("Organisation Updated");
+      setShowCreateDialog(false);
       setEditingOrg(null);
       resetForm();
     },
