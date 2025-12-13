@@ -45,6 +45,14 @@ export default function ExecutiveDashboard() {
   const currentEmployee = employee?.[0];
   const orgId = currentEmployee?.organisation_id;
 
+  const { data: organisationData } = useQuery({
+    queryKey: ['organisation', orgId],
+    queryFn: () => base44.entities.Organisation.filter({ id: orgId }),
+    enabled: !!orgId,
+  });
+
+  const currentOrg = organisationData?.[0];
+
   // Calculate date range
   const { startDate, endDate } = useMemo(() => {
     const now = new Date();
@@ -250,7 +258,35 @@ export default function ExecutiveDashboard() {
                   <SelectItem value="last_3_months">Last 3 Months</SelectItem>
                 </SelectContent>
               </Select>
-              <Button className="bg-white/10 hover:bg-white/20 text-white border-white/20 backdrop-blur-sm gap-2">
+              <Button 
+                onClick={() => {
+                  const dashboardData = [
+                    {
+                      Metric: 'Total Revenue',
+                      Value: `Le ${(metrics.totalSales + metrics.tripRevenue).toLocaleString()}`,
+                      Period: `${format(startDate, 'PP')} - ${format(endDate, 'PP')}`,
+                    },
+                    {
+                      Metric: 'Total Expenses',
+                      Value: `Le ${metrics.totalExpenses.toLocaleString()}`,
+                      Period: `${format(startDate, 'PP')} - ${format(endDate, 'PP')}`,
+                    },
+                    {
+                      Metric: 'Net Income',
+                      Value: `Le ${metrics.netIncome.toLocaleString()}`,
+                      Period: `${format(startDate, 'PP')} - ${format(endDate, 'PP')}`,
+                    },
+                    {
+                      Metric: 'Inventory Value',
+                      Value: `Le ${metrics.totalInventoryValue.toLocaleString()}`,
+                      Period: 'Current',
+                    },
+                  ];
+                  setExportData({ data: dashboardData, title: 'Executive Dashboard Summary' });
+                  setExportDialogOpen(true);
+                }}
+                className="bg-white/10 hover:bg-white/20 text-white border-white/20 backdrop-blur-sm gap-2"
+              >
                 <Download className="w-4 h-4" />
                 Export
               </Button>
