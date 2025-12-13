@@ -31,6 +31,7 @@ export default function TaxFilingReports({ orgId, organisation }) {
   const totalGrossPay = monthPayrolls.reduce((sum, p) => sum + (p.gross_pay || 0), 0);
 
   const generateNASSITReport = () => {
+    if (monthPayrolls.length === 0) return;
     const reportLines = [
       'NASSIT MONTHLY CONTRIBUTION REPORT',
       `Organisation: ${organisation?.name || 'N/A'}`,
@@ -70,6 +71,7 @@ export default function TaxFilingReports({ orgId, organisation }) {
   };
 
   const generatePAYEReport = () => {
+    if (monthPayrolls.length === 0) return;
     const reportLines = [
       'PAYE TAX DEDUCTION REPORT',
       `Organisation: ${organisation?.name || 'N/A'}`,

@@ -19,7 +19,7 @@ import LeaveManagementTab from "@/components/hr/LeaveManagementTab";
 import AttendanceOverviewTab from "@/components/hr/AttendanceOverviewTab";
 import ReportsAnalyticsTab from "@/components/hr/ReportsAnalyticsTab";
 import SierraLeonePayrollSettings from "@/components/hr/SierraLeonePayrollSettings";
-import StatutoryReportsTab from "@/components/hr/StatutoryReportsTab";
+import TaxFilingReports from "@/components/hr/TaxFilingReports";
 
 export default function HRManagement() {
   const [activeTab, setActiveTab] = useState("employees");
@@ -229,9 +229,9 @@ export default function HRManagement() {
                 <Clock className="w-4 h-4" />
                 Attendance
               </TabsTrigger>
-              <TabsTrigger value="statutory" className="gap-2">
+              <TabsTrigger value="tax-filing" className="gap-2">
                 <FileText className="w-4 h-4" />
-                NASSIT & PAYE
+                Tax Filing
               </TabsTrigger>
               <TabsTrigger value="reports" className="gap-2">
                 <TrendingUp className="w-4 h-4" />
@@ -278,8 +278,8 @@ export default function HRManagement() {
               />
             </TabsContent>
 
-            <TabsContent value="statutory">
-              <StatutoryReportsTab 
+            <TabsContent value="tax-filing">
+              <TaxFilingReports 
                 orgId={orgId}
                 organisation={currentOrg}
               />
