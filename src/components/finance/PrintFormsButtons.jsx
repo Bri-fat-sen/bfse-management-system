@@ -2,15 +2,15 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Printer, Receipt, DollarSign, Loader2, Fuel, Wrench, Building2, ShoppingCart, Users, Truck, Megaphone, FileText, Wallet, X, Package, Droplets, Bus, TrendingUp } from "lucide-react";
 import { useToast } from "@/components/ui/Toast";
-import { printUnifiedPDF, getUnifiedPDFStyles, getUnifiedHeader, getUnifiedFooter } from "@/components/exports/UnifiedPDFStyles";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import ModernExportDialog from "@/components/exports/ModernExportDialog";
 
 export default function PrintFormsButtons({ organisation }) {
   const toast = useToast();
-  const [printingExpense, setPrintingExpense] = useState(false);
-  const [printingRevenue, setPrintingRevenue] = useState(false);
   const [showExpenseDialog, setShowExpenseDialog] = useState(false);
   const [showRevenueDialog, setShowRevenueDialog] = useState(false);
+  const [exportDialogOpen, setExportDialogOpen] = useState(false);
+  const [currentExportData, setCurrentExportData] = useState({ data: [], title: "" });
 
   const expenseFormTypes = [
     { id: 'general', name: 'General Expense Form', icon: Receipt, color: 'red', description: 'Multi-item expense form' },
@@ -46,19 +46,8 @@ export default function PrintFormsButtons({ organisation }) {
     { id: 'other', name: 'Other Income', icon: FileText, color: 'slate', description: 'Miscellaneous revenue' },
   ];
 
-  const generateExpenseFormHTML = (formType) => {
-    const styles = getUnifiedPDFStyles(organisation, 'report');
-    const header = getUnifiedHeader(organisation, formType.name, 'EXPENSE-FORM', new Date().toLocaleDateString(), 'report');
-    const footer = getUnifiedFooter(organisation);
-    
-    return `
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Expense Entry Form - ${organisation?.name || 'Organisation'}</title>
-  <style>${styles}
+  const prepareExpenseFormData = (formType) => {
+    const data = [];
     .instructions {
       background: var(--gray-50);
       padding: 16px 20px;
@@ -838,21 +827,16 @@ export default function PrintFormsButtons({ organisation }) {
 
   const handlePrintForm = (formType, category) => {
     const isExpense = category === 'expense';
-    if (isExpense) {
-      setPrintingExpense(true);
-      setShowExpenseDialog(false);
-    } else {
-      setPrintingRevenue(true);
-      setShowRevenueDialog(false);
-    }
+    setShowExpenseDialog(false);
+    setShowRevenueDialog(false);
 
-    const html = isExpense ? generateExpenseFormHTML(formType) : generateRevenueFormHTML(formType);
+    const data = isExpense ? prepareExpenseFormData(formType) : prepareRevenueFormData(formType);
     
-    printUnifiedPDF(html, `${formType.name.replace(/\s+/g, '_')}_${new Date().toISOString().split('T')[0]}.pdf`);
-    
-    setPrintingExpense(false);
-    setPrintingRevenue(false);
-    toast.success("PDF Generated", `${formType.name} downloaded successfully`);
+    setCurrentExportData({
+      data,
+      title: formType.name
+    });
+    setExportDialogOpen(true);
   };
 
   return (
@@ -861,31 +845,30 @@ export default function PrintFormsButtons({ organisation }) {
         <Button
           variant="outline"
           onClick={() => setShowExpenseDialog(true)}
-          disabled={printingExpense}
           className="border-red-500 text-red-600 hover:bg-red-50"
         >
-          {printingExpense ? (
-            <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-          ) : (
-            <Receipt className="w-4 h-4 mr-2" />
-          )}
+          <Receipt className="w-4 h-4 mr-2" />
           Print Expense Form
         </Button>
         
         <Button
           variant="outline"
           onClick={() => setShowRevenueDialog(true)}
-          disabled={printingRevenue}
           className="border-[#1EB053] text-[#1EB053] hover:bg-[#1EB053]/10"
         >
-          {printingRevenue ? (
-            <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-          ) : (
-            <DollarSign className="w-4 h-4 mr-2" />
-          )}
+          <DollarSign className="w-4 h-4 mr-2" />
           Print Revenue Form
         </Button>
       </div>
+
+      {/* Modern Export Dialog */}
+      <ModernExportDialog
+        open={exportDialogOpen}
+        onOpenChange={setExportDialogOpen}
+        data={currentExportData.data}
+        reportTitle={currentExportData.title}
+        orgData={organisation}
+      />
 
       {/* Expense Forms Dialog */}
       <Dialog open={showExpenseDialog} onOpenChange={setShowExpenseDialog}>
