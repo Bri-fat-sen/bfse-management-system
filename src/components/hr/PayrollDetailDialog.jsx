@@ -56,12 +56,21 @@ export default function PayrollDetailDialog({ open, onOpenChange, payroll, orgId
           <div className="p-4 bg-gradient-to-r from-[#1EB053]/10 to-[#0072C6]/10 rounded-lg">
             <h3 className="font-semibold text-lg">{payroll.employee_name}</h3>
             <div className="flex items-center gap-4 mt-2 text-sm text-gray-600">
-              <span>{payroll.employee_code}</span>
-              <span>•</span>
-              <span className="flex items-center gap-1">
-                <Calendar className="w-3 h-3" />
-                {format(new Date(payroll.pay_date), 'MMMM d, yyyy')}
-              </span>
+              {payroll.employee_code && <span>{payroll.employee_code}</span>}
+              {payroll.employee_code && payroll.pay_date && <span>•</span>}
+              {payroll.pay_date && (() => {
+                try {
+                  const date = new Date(payroll.pay_date);
+                  return !isNaN(date.getTime()) && (
+                    <span className="flex items-center gap-1">
+                      <Calendar className="w-3 h-3" />
+                      {format(date, 'MMMM d, yyyy')}
+                    </span>
+                  );
+                } catch {
+                  return null;
+                }
+              })()}
             </div>
             <p className="text-sm text-gray-600 mt-1">{payroll.pay_period}</p>
           </div>
@@ -75,17 +84,17 @@ export default function PayrollDetailDialog({ open, onOpenChange, payroll, orgId
             <div className="space-y-2 text-sm">
               <div className="flex justify-between p-2 bg-gray-50 rounded">
                 <span>Basic Salary</span>
-                <span className="font-semibold">{formatLeone(payroll.basic_salary)}</span>
+                <span className="font-semibold">{formatLeone(payroll.basic_salary || 0)}</span>
               </div>
-              {payroll.allowances > 0 && (
+              {(payroll.allowances || 0) > 0 && (
                 <div className="flex justify-between p-2 bg-gray-50 rounded">
                   <span>Allowances</span>
-                  <span className="font-semibold">{formatLeone(payroll.allowances)}</span>
+                  <span className="font-semibold">{formatLeone(payroll.allowances || 0)}</span>
                 </div>
               )}
               <div className="flex justify-between p-2 bg-green-50 rounded font-semibold">
                 <span>Gross Salary</span>
-                <span className="text-green-700">{formatLeone(payroll.gross_salary)}</span>
+                <span className="text-green-700">{formatLeone(payroll.gross_salary || 0)}</span>
               </div>
             </div>
           </div>
@@ -99,25 +108,25 @@ export default function PayrollDetailDialog({ open, onOpenChange, payroll, orgId
             <div className="space-y-2 text-sm">
               <div className="flex justify-between p-2 bg-[#1EB053]/5 rounded">
                 <span>NASSIT Employee (5%)</span>
-                <span className="font-semibold">{formatLeone(payroll.nassit_employee)}</span>
+                <span className="font-semibold">{formatLeone(payroll.nassit_employee || 0)}</span>
               </div>
               <div className="flex justify-between p-2 bg-[#1EB053]/5 rounded">
                 <span>NASSIT Employer (10%)</span>
-                <span className="font-semibold">{formatLeone(payroll.nassit_employer)}</span>
+                <span className="font-semibold">{formatLeone(payroll.nassit_employer || 0)}</span>
               </div>
               <div className="flex justify-between p-2 bg-[#0072C6]/5 rounded">
                 <span>PAYE Tax</span>
-                <span className="font-semibold">{formatLeone(payroll.paye_tax)}</span>
+                <span className="font-semibold">{formatLeone(payroll.paye_tax || 0)}</span>
               </div>
-              {payroll.other_deductions > 0 && (
+              {(payroll.other_deductions || 0) > 0 && (
                 <div className="flex justify-between p-2 bg-gray-50 rounded">
                   <span>Other Deductions</span>
-                  <span className="font-semibold">{formatLeone(payroll.other_deductions)}</span>
+                  <span className="font-semibold">{formatLeone(payroll.other_deductions || 0)}</span>
                 </div>
               )}
               <div className="flex justify-between p-2 bg-red-50 rounded font-semibold">
                 <span>Total Deductions</span>
-                <span className="text-red-700">{formatLeone(payroll.total_deductions)}</span>
+                <span className="text-red-700">{formatLeone(payroll.total_deductions || 0)}</span>
               </div>
             </div>
           </div>
@@ -126,7 +135,7 @@ export default function PayrollDetailDialog({ open, onOpenChange, payroll, orgId
           <div className="p-4 bg-gradient-to-r from-[#1EB053] to-[#0072C6] rounded-lg text-white">
             <div className="flex justify-between items-center">
               <span className="text-lg font-semibold">Net Salary</span>
-              <span className="text-3xl font-bold">{formatLeone(payroll.net_salary)}</span>
+              <span className="text-3xl font-bold">{formatLeone(payroll.net_salary || 0)}</span>
             </div>
           </div>
 
@@ -134,7 +143,7 @@ export default function PayrollDetailDialog({ open, onOpenChange, payroll, orgId
           <div className="p-3 bg-amber-50 rounded-lg">
             <div className="flex justify-between items-center text-sm">
               <span className="text-gray-700">Total Employer Cost (incl. NASSIT)</span>
-              <span className="font-bold text-amber-700">{formatLeone(payroll.employer_cost)}</span>
+              <span className="font-bold text-amber-700">{formatLeone(payroll.employer_cost || 0)}</span>
             </div>
           </div>
 
