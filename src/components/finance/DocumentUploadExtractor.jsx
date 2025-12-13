@@ -1577,7 +1577,7 @@ Provide:
                         <Trash2 className="w-4 h-4" />
                       </Button>
                     </div>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mb-3">
+                    <div className="grid grid-cols-1 gap-2 mb-3">
                      {queuedFiles.map((f, idx) => {
                        const queueItem = processingQueue.find(q => q.file.name === f.name);
                        const status = queueItem?.status || 'queued';
@@ -1588,22 +1588,22 @@ Provide:
                            initial={{ opacity: 0, scale: 0.9 }}
                            animate={{ opacity: 1, scale: 1 }}
                            transition={{ delay: idx * 0.05 }}
-                           className="relative group bg-white p-3 rounded-lg border hover:border-blue-400 hover:shadow-md transition-all"
+                           className="relative group bg-white p-2 sm:p-3 rounded-lg border hover:border-blue-400 hover:shadow-md transition-all"
                          >
-                           <div className="flex items-start gap-3">
+                           <div className="flex items-start gap-2 sm:gap-3">
                              <div className="relative flex-shrink-0">
                                {previewImages[f.name] ? (
                                  <motion.img 
                                    src={previewImages[f.name]} 
                                    alt={f.name}
-                                   className="w-12 h-12 object-cover rounded cursor-pointer"
+                                   className="w-10 h-10 sm:w-12 sm:h-12 object-cover rounded cursor-pointer"
                                    onClick={() => previewDocument(f)}
                                    whileHover={{ scale: 1.1 }}
                                    whileTap={{ scale: 0.95 }}
                                  />
                                ) : (
-                                 <div className="w-12 h-12 bg-gray-100 rounded flex items-center justify-center">
-                                   <File className="w-6 h-6 text-gray-400" />
+                                 <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gray-100 rounded flex items-center justify-center">
+                                   <File className="w-5 h-5 sm:w-6 sm:h-6 text-gray-400" />
                                  </div>
                                )}
                                {status === 'processing' && (
@@ -1627,8 +1627,8 @@ Provide:
                                )}
                              </div>
                              <div className="flex-1 min-w-0">
-                               <p className="text-sm font-medium text-gray-900 truncate">{f.name}</p>
-                               <p className="text-xs text-gray-500">
+                               <p className="text-xs sm:text-sm font-medium text-gray-900 truncate">{f.name}</p>
+                               <p className="text-[10px] sm:text-xs text-gray-500">
                                  {(f.size / 1024).toFixed(0)} KB
                                </p>
                                {status === 'processing' && (
@@ -1644,15 +1644,15 @@ Provide:
                                  <Button
                                    size="sm"
                                    variant="ghost"
-                                   className="h-6 text-xs text-red-600 mt-1 p-0"
+                                   className="h-6 text-[10px] sm:text-xs text-red-600 mt-1 p-0"
                                    onClick={() => retryFailedUpload(f)}
                                  >
                                    <RotateCw className="w-3 h-3 mr-1" />
                                    Retry
                                  </Button>
                                )}
-                             </div>
-                             <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                               </div>
+                               <div className="flex gap-1 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
                                {previewImages[f.name] && status !== 'processing' && (
                                  <Button
                                    size="sm"
@@ -2367,53 +2367,60 @@ Provide:
 
       {/* Enhanced Image Preview Dialog */}
       <Dialog open={showPreview} onOpenChange={setShowPreview}>
-        <DialogContent className="max-w-6xl max-h-[95vh]">
-          <div className="h-1 flex -mx-6 -mt-6">
+        <DialogContent className="max-w-6xl max-h-[95vh] w-[95vw]">
+          <div className="h-1 flex -mx-3 sm:-mx-6 -mt-3 sm:-mt-6">
             <div className="flex-1 bg-[#1EB053]" />
             <div className="flex-1 bg-white" />
             <div className="flex-1 bg-[#0072C6]" />
           </div>
-          <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <h3 className="text-lg font-bold flex items-center gap-2">
-                <Eye className="w-5 h-5 text-[#0072C6]" />
-                Document Preview
+          <div className="space-y-3 sm:space-y-4">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 sm:gap-0">
+              <h3 className="text-base sm:text-lg font-bold flex items-center gap-2">
+                <Eye className="w-4 h-4 sm:w-5 sm:h-5 text-[#0072C6]" />
+                <span className="text-sm sm:text-lg">Document Preview</span>
               </h3>
-              <div className="flex gap-2">
+              <div className="flex gap-1 sm:gap-2 flex-wrap">
                 <Button
                   size="sm"
                   variant="outline"
                   onClick={() => setPreviewRotation((previewRotation - 90) % 360)}
+                  className="text-xs sm:text-sm h-8 px-2 sm:px-3"
                 >
-                  ↶ Rotate
+                  <span className="hidden sm:inline">↶ Rotate</span>
+                  <span className="sm:hidden">↶</span>
                 </Button>
                 <Button
                   size="sm"
                   variant="outline"
                   onClick={() => setPreviewZoom(Math.max(0.5, previewZoom - 0.25))}
                   disabled={previewZoom <= 0.5}
+                  className="text-xs sm:text-sm h-8 px-2 sm:px-3"
                 >
-                  − Zoom Out
+                  <span className="hidden sm:inline">− Zoom Out</span>
+                  <span className="sm:hidden">−</span>
                 </Button>
                 <Button
                   size="sm"
                   variant="outline"
                   onClick={() => setPreviewZoom(Math.min(3, previewZoom + 0.25))}
                   disabled={previewZoom >= 3}
+                  className="text-xs sm:text-sm h-8 px-2 sm:px-3"
                 >
-                  + Zoom In
+                  <span className="hidden sm:inline">+ Zoom In</span>
+                  <span className="sm:hidden">+</span>
                 </Button>
                 <Button
                   size="sm"
                   variant="outline"
                   onClick={() => { setPreviewZoom(1); setPreviewRotation(0); }}
+                  className="text-xs sm:text-sm h-8 px-2 sm:px-3"
                 >
                   Reset
                 </Button>
               </div>
             </div>
             {previewFile && previewImages[previewFile.name] && (
-              <div className="bg-gray-900 rounded-xl p-4 max-h-[65vh] overflow-auto flex items-center justify-center">
+              <div className="bg-gray-900 rounded-xl p-2 sm:p-4 max-h-[55vh] sm:max-h-[65vh] overflow-auto flex items-center justify-center">
                 <motion.img 
                   src={previewImages[previewFile.name]} 
                   alt={previewFile.name}
@@ -2428,16 +2435,17 @@ Provide:
                 />
               </div>
             )}
-            <div className="p-3 bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg border border-blue-200">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="font-medium text-gray-900">{previewFile?.name}</p>
-                  <p className="text-xs text-gray-500">
+            <div className="p-2 sm:p-3 bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg border border-blue-200">
+              <div className="flex items-center justify-between gap-2">
+                <div className="min-w-0 flex-1">
+                  <p className="font-medium text-gray-900 text-xs sm:text-sm truncate">{previewFile?.name}</p>
+                  <p className="text-[10px] sm:text-xs text-gray-500">
                     {previewFile?.size ? `${(previewFile.size / 1024).toFixed(0)} KB • ` : ''}
-                    Zoom: {(previewZoom * 100).toFixed(0)}% • Rotation: {previewRotation}°
+                    <span className="hidden sm:inline">Zoom: {(previewZoom * 100).toFixed(0)}% • Rotation: {previewRotation}°</span>
+                    <span className="sm:hidden">{(previewZoom * 100).toFixed(0)}% • {previewRotation}°</span>
                   </p>
                 </div>
-                <Badge className="bg-blue-100 text-blue-700">
+                <Badge className="bg-blue-100 text-blue-700 text-xs flex-shrink-0">
                   {previewFile?.type?.split('/')[1]?.toUpperCase() || 'FILE'}
                 </Badge>
               </div>
