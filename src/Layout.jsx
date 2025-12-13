@@ -240,6 +240,24 @@ export default function Layout({ children, currentPageName }) {
 
   const currentOrg = organisationData?.[0];
 
+  const handleLogout = () => {
+    setIsPinUnlocked(false);
+    sessionStorage.removeItem('pinUnlocked');
+    base44.auth.logout(createPageUrl('Landing'));
+  };
+
+  const handlePinUnlock = () => {
+    setIsPinUnlocked(true);
+    sessionStorage.setItem('pinUnlocked', 'true');
+  };
+
+  useEffect(() => {
+    const unlocked = sessionStorage.getItem('pinUnlocked');
+    if (unlocked === 'true') {
+      setIsPinUnlocked(true);
+    }
+  }, []);
+
   // If user has no organisation, show minimal layout for JoinOrganisation page
   if (!currentEmployee && currentPageName === 'JoinOrganisation') {
     return (
@@ -358,24 +376,6 @@ export default function Layout({ children, currentPageName }) {
       })
     })).filter(section => section.items.length > 0);
   }, [userRole, permissions, previewRole, actualRole]);
-
-  const handleLogout = () => {
-    setIsPinUnlocked(false);
-    sessionStorage.removeItem('pinUnlocked');
-    base44.auth.logout(createPageUrl('Landing'));
-  };
-
-  const handlePinUnlock = () => {
-    setIsPinUnlocked(true);
-    sessionStorage.setItem('pinUnlocked', 'true');
-  };
-
-  useEffect(() => {
-    const unlocked = sessionStorage.getItem('pinUnlocked');
-    if (unlocked === 'true') {
-      setIsPinUnlocked(true);
-    }
-  }, []);
 
   const requiresPinAuth = currentEmployee?.pin_hash && !isPinUnlocked;
 
