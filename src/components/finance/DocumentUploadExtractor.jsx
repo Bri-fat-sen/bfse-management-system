@@ -405,7 +405,7 @@ export default function DocumentUploadExtractor({
       setProcessingStage('Saving document...');
 
       // Save uploaded document for record keeping
-      await base44.entities.UploadedDocument.create({
+      const uploadedDoc = await base44.entities.UploadedDocument.create({
         organisation_id: orgId,
         file_name: file.name,
         file_url: file_url,
@@ -414,8 +414,15 @@ export default function DocumentUploadExtractor({
         category: type === "auto" ? "other" : type === "revenue" ? "revenue" : "expense",
         uploaded_by_id: currentEmployee?.id,
         uploaded_by_name: currentEmployee?.full_name,
-        description: `Uploaded for data extraction`
+        description: `Uploaded for data extraction`,
+        tags: [],
+        linked_records: [],
+        current_version: 1,
+        version_history: []
       });
+      
+      // Store document ID for linking records later
+      file.documentId = uploadedDoc.id;
 
       updateProgress(60);
       setProcessingStage('AI analyzing document type...');
@@ -1039,6 +1046,9 @@ Provide:
         });
       }
 
+      const linkedRecords = [];
+      const documentId = uploadedDocs[0]?.id;
+
       for (const item of selectedItems) {
         if ((isRevenue || detectedType === 'auto') && item.product_id && uploadLocation) {
           // Create sales record from revenue document
@@ -1046,7 +1056,7 @@ Provide:
 
           const locationInfo = [...warehouses, ...vehicles].find(l => l.id === uploadLocation);
 
-          await base44.entities.Sale.create({
+          const sale = await base44.entities.Sale.create({
             organisation_id: orgId,
             sale_number: saleNumber,
             sale_type: uploadSaleType,
@@ -1115,7 +1125,7 @@ Provide:
             `${item.first_name} ${item.last_name}` : 
             item.employee_name || item.first_name || '';
           
-          await base44.entities.Employee.create({
+          const newEmployee = await base44.entities.Employee.create({
             organisation_id: orgId,
             employee_code: item.employee_code || `EMP-${format(new Date(), 'yyyyMMdd')}-${Math.floor(1000 + Math.random() * 9000)}`,
             first_name: item.first_name || item.employee_name?.split(' ')[0] || '',
@@ -1131,12 +1141,21 @@ Provide:
             base_salary: item.base_salary || item.amount || 0,
             status: 'active',
             emergency_contact: item.emergency_contact || '',
-            emergency_phone: item.emergency_phone || ''
+            emergency_phone: item.emergency_phone || '',
+            source_document_id: documentId
           });
+          
+          linkedRecords.push({
+            entity_type: 'Employee',
+            entity_id: newEmployee.id,
+            entity_name: fullName,
+            created_date: new Date().toISOString()
+          });
+          
           employeeCount++;
         } else if (isPayroll && item.employee_id) {
           // Create payroll-related expense record
-          await base44.entities.Expense.create({
+          const payrollExpense = await base44.entities.Expense.create({
             organisation_id: orgId,
             category: 'salaries',
             description: `Payroll: ${item.employee_name} - ${item.description || 'Salary payment'}`,
@@ -1146,15 +1165,24 @@ Provide:
             recorded_by: currentEmployee?.id,
             recorded_by_name: currentEmployee?.full_name,
             status: 'pending',
-            notes: `Base: Le${(item.base_salary || 0).toLocaleString()}, Bonus: Le${(item.bonus || 0).toLocaleString()}, Deductions: Le${(item.deduction || 0).toLocaleString()}`
+            notes: `Base: Le${(item.base_salary || 0).toLocaleString()}, Bonus: Le${(item.bonus || 0).toLocaleString()}, Deductions: Le${(item.deduction || 0).toLocaleString()}`,
+            source_document_id: documentId
           });
+          
+          linkedRecords.push({
+            entity_type: 'Expense',
+            entity_id: payrollExpense.id,
+            entity_name: `Payroll: ${item.employee_name}`,
+            created_date: new Date().toISOString()
+          });
+          
           payrollCount++;
         } else if (isInventory && item.product_id) {
           // Create stock movement record
           const movementQty = item.stock_in || item.stock_out || item.quantity || 0;
           const movementType = item.stock_in > 0 ? 'in' : 'out';
           
-          await base44.entities.StockMovement.create({
+          const stockMovement = await base44.entities.StockMovement.create({
             organisation_id: orgId,
             product_id: item.product_id,
             product_name: item.product_name || item.description,
@@ -1165,8 +1193,17 @@ Provide:
             reference_type: 'manual',
             recorded_by: currentEmployee?.id,
             recorded_by_name: currentEmployee?.full_name,
-            notes: item.movement_reason || item.notes || `Imported from STOCK ADJUSTMENT FORM. ${item.description || ''}`
+            notes: item.movement_reason || item.notes || `Imported from STOCK ADJUSTMENT FORM. ${item.description || ''}`,
+            source_document_id: documentId
           });
+          
+          linkedRecords.push({
+            entity_type: 'StockMovement',
+            entity_id: stockMovement.id,
+            entity_name: `${movementType.toUpperCase()}: ${item.product_name}`,
+            created_date: new Date().toISOString()
+          });
+          
           inventoryCount++;
         } else if (isProduction) {
           const batchNum = item.batch_number || `BATCH-${format(new Date(), 'yyyyMMdd')}-${String(batchCount + 1).padStart(3, '0')}`;
@@ -1207,7 +1244,7 @@ Provide:
           }
           
           // Create InventoryBatch (used by BatchManagement)
-          await base44.entities.InventoryBatch.create({
+          const batch = await base44.entities.InventoryBatch.create({
             organisation_id: orgId,
             batch_number: batchNum,
             product_id: item.product_id || '',
@@ -1224,13 +1261,22 @@ Provide:
             expiry_date: item.expiry_date || '',
             cost_price: item.unit_price || item.actual_unit_cost || 0,
             status: item.quality_status || 'active',
-            notes: item.notes || `Imported from document. ${item.description || ''}${wastageQty > 0 ? ` | Wastage: ${wastageQty}` : ''}${durationHours > 0 ? ` | Duration: ${durationHours.toFixed(1)}h` : ''}`
+            notes: item.notes || `Imported from document. ${item.description || ''}${wastageQty > 0 ? ` | Wastage: ${wastageQty}` : ''}${durationHours > 0 ? ` | Duration: ${durationHours.toFixed(1)}h` : ''}`,
+            source_document_id: documentId
           });
+          
+          linkedRecords.push({
+            entity_type: 'InventoryBatch',
+            entity_id: batch.id,
+            entity_name: `Batch ${batchNum}`,
+            created_date: new Date().toISOString()
+          });
+          
           batchCount++;
 
           // Create expense record for wastage if wastage exists
           if (wastageQty > 0 || wastageCost > 0) {
-            await base44.entities.Expense.create({
+            const wastageExpense = await base44.entities.Expense.create({
               organisation_id: orgId,
               category: 'production_wastage',
               description: `Production Wastage - Batch ${batchNum} - ${item.product_name || item.description || 'Unknown Product'}`,
@@ -1239,12 +1285,21 @@ Provide:
               recorded_by: currentEmployee?.id,
               recorded_by_name: currentEmployee?.full_name,
               status: 'approved',
-              notes: `Wastage Qty: ${wastageQty} | Total Produced: ${totalProduced} | Final Qty: ${finalQty}`
+              notes: `Wastage Qty: ${wastageQty} | Total Produced: ${totalProduced} | Final Qty: ${finalQty}`,
+              source_document_id: documentId
             });
+            
+            linkedRecords.push({
+              entity_type: 'Expense',
+              entity_id: wastageExpense.id,
+              entity_name: `Wastage - Batch ${batchNum}`,
+              created_date: new Date().toISOString()
+            });
+            
             expenseCount++;
           }
         } else if (isRevenue) {
-          await base44.entities.Revenue.create({
+          const revenue = await base44.entities.Revenue.create({
             organisation_id: orgId,
             source: item.category,
             contributor_name: item.contributor_name || item.description,
@@ -1255,11 +1310,20 @@ Provide:
             recorded_by: currentEmployee?.id,
             recorded_by_name: currentEmployee?.full_name,
             status: 'pending',
-            notes: `Imported from document`
+            notes: `Imported from document`,
+            source_document_id: documentId
           });
+          
+          linkedRecords.push({
+            entity_type: 'Revenue',
+            entity_id: revenue.id,
+            entity_name: item.contributor_name || item.description,
+            created_date: new Date().toISOString()
+          });
+          
           revenueCount++;
         } else {
-          await base44.entities.Expense.create({
+          const expense = await base44.entities.Expense.create({
             organisation_id: orgId,
             category: item.category,
             description: item.description,
@@ -1272,10 +1336,31 @@ Provide:
             status: 'pending',
             notes: item.estimated_amount > 0 
               ? `Est: ${item.estimated_qty} x Le${item.estimated_unit_cost.toLocaleString()} = Le${item.estimated_amount.toLocaleString()}`
-              : 'Imported from document'
+              : 'Imported from document',
+            source_document_id: documentId
           });
+          
+          linkedRecords.push({
+            entity_type: 'Expense',
+            entity_id: expense.id,
+            entity_name: item.description,
+            created_date: new Date().toISOString()
+          });
+          
           expenseCount++;
         }
+      }
+
+      // Update document with linked records
+      if (documentId && linkedRecords.length > 0) {
+        await base44.entities.UploadedDocument.update(documentId, {
+          linked_records: linkedRecords,
+          tags: [
+            detectedType,
+            format(new Date(), 'MMM yyyy'),
+            `${linkedRecords.length} records`
+          ]
+        });
       }
 
       onOpenChange(false);
