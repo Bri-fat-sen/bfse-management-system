@@ -133,9 +133,12 @@ export default function DocumentUploadExtractor({
   const [processingQueue, setProcessingQueue] = useState([]);
   const [failedUploads, setFailedUploads] = useState([]);
   const [showSuccessAnimation, setShowSuccessAnimation] = useState(false);
-  const [activeTab, setActiveTab] = useState("upload"); // Added state
+  const [activeTab, setActiveTab] = useState("upload");
+  const [isProcessingBatch, setIsProcessingBatch] = useState(false);
+  const [batchProgress, setBatchProgress] = useState({ current: 0, total: 0 });
   const videoRef = useRef(null);
   const canvasRef = useRef(null);
+  const processingRef = useRef(false);
 
   const baseCategories = type === "expense" ? DEFAULT_EXPENSE_CATEGORIES : DEFAULT_REVENUE_SOURCES;
   const categories = useMemo(() => {
@@ -193,7 +196,7 @@ export default function DocumentUploadExtractor({
     const queue = validFiles.map((file, idx) => ({
       id: `file-${Date.now()}-${idx}`,
       file,
-      status: 'queued', // queued, processing, completed, failed
+      status: 'queued',
       progress: 0,
       error: null
     }));
@@ -208,12 +211,12 @@ export default function DocumentUploadExtractor({
     }
     setPreviewImages(previews);
 
-    // Auto-process first file if currency already set
-    if (currencyMode && validFiles.length === 1) {
-      processFile(validFiles[0]);
-    } else if (currencyMode === null) {
+    // Show currency dialog if needed, otherwise start batch processing
+    if (currencyMode === null) {
       setPendingFile(validFiles[0]);
       setShowCurrencyDialog(true);
+    } else if (validFiles.length === 1) {
+      processFile(validFiles[0]);
     }
   };
 
@@ -304,7 +307,61 @@ export default function DocumentUploadExtractor({
 
   const retryFailedUpload = async (file) => {
     setFailedUploads(prev => prev.filter(f => f.name !== file.name));
+    setProcessingQueue(prev => prev.map(item => 
+      item.file.name === file.name ? { ...item, status: 'queued', error: null, progress: 0 } : item
+    ));
     processFile(file);
+  };
+
+  const processBatch = async () => {
+    if (processingRef.current || queuedFiles.length === 0) return;
+    
+    processingRef.current = true;
+    setIsProcessingBatch(true);
+    setBatchProgress({ current: 0, total: queuedFiles.length });
+
+    const allExtractedData = [];
+    
+    for (let i = 0; i < queuedFiles.length; i++) {
+      const file = queuedFiles[i];
+      setBatchProgress({ current: i + 1, total: queuedFiles.length });
+      
+      try {
+        setProcessingQueue(prev => prev.map(item => 
+          item.file.name === file.name ? { ...item, status: 'processing', progress: 0 } : item
+        ));
+
+        const data = await processSingleFile(file, (progress) => {
+          setProcessingQueue(prev => prev.map(item => 
+            item.file.name === file.name ? { ...item, progress } : item
+          ));
+        });
+
+        if (data && data.length > 0) {
+          allExtractedData.push(...data);
+        }
+
+        setProcessingQueue(prev => prev.map(item => 
+          item.file.name === file.name ? { ...item, status: 'completed', progress: 100 } : item
+        ));
+        
+      } catch (error) {
+        console.error(`Failed to process ${file.name}:`, error);
+        setProcessingQueue(prev => prev.map(item => 
+          item.file.name === file.name ? { ...item, status: 'failed', error: error.message } : item
+        ));
+        setFailedUploads(prev => [...prev, { file, error: error.message }]);
+      }
+    }
+
+    if (allExtractedData.length > 0) {
+      setExtractedData(allExtractedData);
+      toast.success("Batch Complete!", `${allExtractedData.length} items extracted from ${queuedFiles.length} file(s)`);
+    }
+
+    setIsProcessingBatch(false);
+    processingRef.current = false;
+    setQueuedFiles([]);
   };
 
   const handleFileUpload = async (e) => {
@@ -335,23 +392,16 @@ export default function DocumentUploadExtractor({
     return true;
   };
 
-  const processFile = async (file) => {
-    if (!validateFile(file)) return;
-
-    setUploadLoading(true);
-    setShowCurrencyDialog(false);
-    setExtractedData([]);
-    setExtractedColumns([]);
-    setDocumentSummary(null);
-    setDetectedType(type === "auto" ? null : type);
-    setUploadProgress(0);
+  const processSingleFile = async (file, progressCallback) => {
+    const updateProgress = (progress) => {
+      setUploadProgress(progress);
+      if (progressCallback) progressCallback(progress);
+    };
 
     try {
-      toast.info("Uploading...", file.name);
-      setUploadProgress(30);
-      
+      updateProgress(30);
       const { file_url } = await base44.integrations.Core.UploadFile({ file });
-      setUploadProgress(50);
+      updateProgress(50);
       setProcessingStage('Saving document...');
 
       // Save uploaded document for record keeping
@@ -367,9 +417,8 @@ export default function DocumentUploadExtractor({
         description: `Uploaded for data extraction`
       });
 
-      setUploadProgress(60);
+      updateProgress(60);
       setProcessingStage('AI analyzing document type...');
-      toast.info("Analyzing document...", "AI is reading the content");
       
       // First, analyze document to detect what type of records to create
       const analysisResult = await base44.integrations.Core.InvokeLLM({
@@ -426,12 +475,8 @@ Be specific about WHY you chose that record type.`,
       const docType = type === "auto" ? analysisResult.detected_type : type;
       setDetectedType(docType);
       
-      setUploadProgress(75);
+      updateProgress(75);
       setProcessingStage('Extracting data rows...');
-      toast.info(
-        `${RECORD_TYPES.find(r => r.value === docType)?.icon || '📄'} ${RECORD_TYPES.find(r => r.value === docType)?.label || docType} detected`,
-        analysisResult.summary
-      );
 
       // Now extract the actual data based on detected type
       const extractionSchema = {
@@ -588,9 +633,8 @@ IMPORTANT: This is a FORM, not a table. Extract the form fields:
       setExtractedColumns(columnHeaders);
 
       if (items.length > 0) {
-        setUploadProgress(85);
+        updateProgress(85);
         setProcessingStage('AI categorizing items...');
-        toast.info("AI Analysis", "Categorizing items intelligently...");
         
         let aiCategories = {};
         let insights = null;
@@ -633,8 +677,6 @@ Return a category for each item number.`,
           categorizationResult.categories?.forEach(cat => {
             aiCategories[cat.item_number - 1] = cat.category;
           });
-          
-          toast.success("AI Categorization", `${Object.keys(aiCategories).length} items categorized`);
 
           // Generate financial insights
           try {
@@ -846,48 +888,53 @@ Provide:
 
         if (newCategories.length > 0) {
           setDynamicCategories(prev => [...prev, ...newCategories]);
-          toast.info("New categories detected", `${newCategories.map(c => c.label).join(', ')}`);
         }
 
-        setExtractedData(validData);
-        const colInfo = columnHeaders.length > 0 ? ` (${columnHeaders.length} columns)` : '';
-        setUploadProgress(100);
+        updateProgress(100);
         setProcessingStage('Complete!');
         
-        // Update processing queue
+        return validData;
+      } else {
+        throw new Error("No data found in document");
+      }
+    } catch (error) {
+      console.error("Processing error:", error);
+      throw error;
+    }
+  };
+
+  const processFile = async (file) => {
+    if (!validateFile(file)) return;
+
+    setUploadLoading(true);
+    setShowCurrencyDialog(false);
+    setExtractedData([]);
+    setExtractedColumns([]);
+    setDocumentSummary(null);
+    setDetectedType(type === "auto" ? null : type);
+    setUploadProgress(0);
+
+    try {
+      toast.info("Processing...", file.name);
+      const data = await processSingleFile(file, null);
+      
+      if (data && data.length > 0) {
+        setExtractedData(data);
         setProcessingQueue(prev => prev.map(item => 
           item.file.name === file.name ? { ...item, status: 'completed', progress: 100 } : item
         ));
-        
-        // Show success animation
         setShowSuccessAnimation(true);
         setTimeout(() => setShowSuccessAnimation(false), 2000);
-        
-        toast.success("Data extracted successfully!", `${validData.length} items ready to review${colInfo}`, {
-          duration: 3000,
-          icon: <Sparkles className="w-5 h-5" />
-        });
-        
-        // Clear queued files after successful processing
+        toast.success("Extraction Complete!", `${data.length} items ready to review`);
         setQueuedFiles([]);
-      } else {
-        toast.warning("No data found", "Could not find table data in the document");
       }
     } catch (error) {
       console.error("Upload error:", error);
-      toast.error("Upload failed", error.message, {
-        action: () => retryFailedUpload(file),
-        actionLabel: "Retry"
-      });
-      
-      // Track failed upload
+      toast.error("Processing failed", error.message);
       setFailedUploads(prev => [...prev, { file, error: error.message }]);
-      
-      // Update processing queue
       setProcessingQueue(prev => prev.map(item => 
         item.file.name === file.name ? { ...item, status: 'failed', error: error.message } : item
       ));
-      
       setUploadProgress(0);
       setProcessingStage('');
     } finally {
@@ -1664,117 +1711,152 @@ Provide:
                        const queueItem = processingQueue.find(q => q.file.name === f.name);
                        const status = queueItem?.status || 'queued';
 
-                       return (
-                         <motion.div
-                           key={idx}
-                           initial={{ opacity: 0, scale: 0.9 }}
-                           animate={{ opacity: 1, scale: 1 }}
-                           transition={{ delay: idx * 0.05 }}
-                           className="relative group bg-white p-2 sm:p-3 rounded-lg border hover:border-blue-400 hover:shadow-md transition-all"
-                         >
-                           <div className="flex items-start gap-2 sm:gap-3">
-                             <div className="relative flex-shrink-0">
-                               {previewImages[f.name] ? (
-                                 <motion.img 
-                                   src={previewImages[f.name]} 
-                                   alt={f.name}
-                                   className="w-10 h-10 sm:w-12 sm:h-12 object-cover rounded cursor-pointer"
-                                   onClick={() => previewDocument(f)}
-                                   whileHover={{ scale: 1.1 }}
-                                   whileTap={{ scale: 0.95 }}
-                                 />
-                               ) : (
-                                 <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gray-100 rounded flex items-center justify-center">
-                                   <File className="w-5 h-5 sm:w-6 sm:h-6 text-gray-400" />
-                                 </div>
-                               )}
-                               {status === 'processing' && (
-                                 <div className="absolute inset-0 bg-blue-500/20 rounded flex items-center justify-center">
-                                   <Loader2 className="w-5 h-5 text-blue-600 animate-spin" />
-                                 </div>
-                               )}
-                               {status === 'completed' && (
-                                 <motion.div 
-                                   initial={{ scale: 0 }}
-                                   animate={{ scale: 1 }}
-                                   className="absolute -top-1 -right-1 bg-green-500 rounded-full p-1"
-                                 >
-                                   <CheckCircle className="w-3 h-3 text-white" />
-                                 </motion.div>
-                               )}
-                               {status === 'failed' && (
-                                 <div className="absolute -top-1 -right-1 bg-red-500 rounded-full p-1">
-                                   <AlertCircle className="w-3 h-3 text-white" />
-                                 </div>
-                               )}
-                             </div>
-                             <div className="flex-1 min-w-0">
-                               <p className="text-xs sm:text-sm font-medium text-gray-900 truncate">{f.name}</p>
-                               <p className="text-[10px] sm:text-xs text-gray-500">
-                                 {(f.size / 1024).toFixed(0)} KB
-                               </p>
-                               {status === 'processing' && (
-                                 <div className="mt-1 h-1 bg-gray-200 rounded-full overflow-hidden">
-                                   <motion.div 
-                                     className="h-full bg-gradient-to-r from-[#1EB053] to-[#0072C6]"
-                                     initial={{ width: 0 }}
-                                     animate={{ width: `${queueItem.progress || 0}%` }}
-                                   />
-                                 </div>
-                               )}
-                               {status === 'failed' && (
-                                 <Button
-                                   size="sm"
-                                   variant="ghost"
-                                   className="h-6 text-[10px] sm:text-xs text-red-600 mt-1 p-0"
-                                   onClick={() => retryFailedUpload(f)}
-                                 >
-                                   <RotateCw className="w-3 h-3 mr-1" />
-                                   Retry
-                                 </Button>
-                               )}
-                               </div>
-                               <div className="flex gap-1 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
-                               {previewImages[f.name] && status !== 'processing' && (
-                                 <Button
-                                   size="sm"
-                                   variant="ghost"
-                                   className="h-7 w-7 p-0"
-                                   onClick={() => previewDocument(f)}
-                                 >
-                                   <Eye className="w-3 h-3" />
-                                 </Button>
-                               )}
-                               {status !== 'processing' && (
-                                 <Button
-                                   size="sm"
-                                   variant="ghost"
-                                   className="h-7 w-7 p-0 text-red-600"
-                                   onClick={() => removeQueuedFile(f.name)}
-                                 >
-                                   <X className="w-3 h-3" />
-                                 </Button>
-                               )}
-                             </div>
-                           </div>
-                         </motion.div>
-                       );
-                     })}
+                      return (
+                        <motion.div
+                          key={idx}
+                          initial={{ opacity: 0, scale: 0.9 }}
+                          animate={{ opacity: 1, scale: 1 }}
+                          transition={{ delay: idx * 0.05 }}
+                          className="relative group bg-white p-2 sm:p-3 rounded-lg border hover:border-blue-400 hover:shadow-md transition-all"
+                        >
+                          <div className="flex items-start gap-2 sm:gap-3">
+                            <div className="relative flex-shrink-0">
+                              {previewImages[f.name] ? (
+                                <motion.img 
+                                  src={previewImages[f.name]} 
+                                  alt={f.name}
+                                  className="w-10 h-10 sm:w-12 sm:h-12 object-cover rounded cursor-pointer"
+                                  onClick={() => previewDocument(f)}
+                                  whileHover={{ scale: 1.1 }}
+                                  whileTap={{ scale: 0.95 }}
+                                />
+                              ) : (
+                                <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gray-100 rounded flex items-center justify-center">
+                                  <File className="w-5 h-5 sm:w-6 sm:h-6 text-gray-400" />
+                                </div>
+                              )}
+                              {status === 'processing' && (
+                                <div className="absolute inset-0 bg-blue-500/20 rounded flex items-center justify-center">
+                                  <Loader2 className="w-5 h-5 text-blue-600 animate-spin" />
+                                </div>
+                              )}
+                              {status === 'completed' && (
+                                <motion.div 
+                                  initial={{ scale: 0 }}
+                                  animate={{ scale: 1 }}
+                                  className="absolute -top-1 -right-1 bg-green-500 rounded-full p-1 shadow-lg"
+                                >
+                                  <CheckCircle className="w-3 h-3 text-white" />
+                                </motion.div>
+                              )}
+                              {status === 'failed' && (
+                                <motion.div
+                                  initial={{ scale: 0 }}
+                                  animate={{ scale: 1 }}
+                                  className="absolute -top-1 -right-1 bg-red-500 rounded-full p-1 shadow-lg"
+                                >
+                                  <AlertCircle className="w-3 h-3 text-white" />
+                                </motion.div>
+                              )}
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center gap-2 mb-1">
+                                <p className="text-xs sm:text-sm font-medium text-gray-900 truncate">{f.name}</p>
+                                {status === 'queued' && <Badge className="bg-gray-400 text-white text-[10px] font-bold">Queued</Badge>}
+                                {status === 'processing' && <Badge className="bg-blue-500 text-white text-[10px] font-bold">Processing</Badge>}
+                                {status === 'completed' && <Badge className="bg-green-500 text-white text-[10px] font-bold">✓ Done</Badge>}
+                                {status === 'failed' && <Badge className="bg-red-500 text-white text-[10px] font-bold">✗ Failed</Badge>}
+                              </div>
+                              <p className="text-[10px] sm:text-xs text-gray-500">
+                                {(f.size / 1024).toFixed(0)} KB
+                              </p>
+                              {status === 'processing' && (
+                                <div className="mt-2 space-y-1">
+                                  <div className="flex items-center justify-between text-[10px] text-gray-600">
+                                    <span>Progress</span>
+                                    <span className="font-bold">{queueItem.progress || 0}%</span>
+                                  </div>
+                                  <div className="h-1.5 bg-gray-200 rounded-full overflow-hidden">
+                                    <motion.div 
+                                      className="h-full bg-gradient-to-r from-[#1EB053] to-[#0072C6]"
+                                      initial={{ width: 0 }}
+                                      animate={{ width: `${queueItem.progress || 0}%` }}
+                                      transition={{ duration: 0.3 }}
+                                    />
+                                  </div>
+                                </div>
+                              )}
+                              {status === 'failed' && queueItem?.error && (
+                                <p className="text-[10px] text-red-600 mt-1">{queueItem.error}</p>
+                              )}
+                              {status === 'failed' && (
+                                <Button
+                                  size="sm"
+                                  variant="ghost"
+                                  className="h-6 text-[10px] sm:text-xs text-red-600 mt-1 p-0 hover:text-red-700"
+                                  onClick={() => retryFailedUpload(f)}
+                                >
+                                  <RotateCw className="w-3 h-3 mr-1" />
+                                  Retry
+                                </Button>
+                              )}
+                              </div>
+                              <div className="flex gap-1 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
+                              {previewImages[f.name] && status !== 'processing' && (
+                                <Button
+                                  size="sm"
+                                  variant="ghost"
+                                  className="h-7 w-7 p-0"
+                                  onClick={() => previewDocument(f)}
+                                >
+                                  <Eye className="w-3 h-3" />
+                                </Button>
+                              )}
+                              {status !== 'processing' && status !== 'completed' && (
+                                <Button
+                                  size="sm"
+                                  variant="ghost"
+                                  className="h-7 w-7 p-0 text-red-600"
+                                  onClick={() => removeQueuedFile(f.name)}
+                                  disabled={isProcessingBatch}
+                                >
+                                  <X className="w-3 h-3" />
+                                </Button>
+                              )}
+                            </div>
+                          </div>
+                        </motion.div>
+                      );
+                    })}
                     </div>
-                    <Button
-                      className="w-full bg-gradient-to-r from-[#1EB053] to-[#0072C6] shadow-lg hover:shadow-xl transition-shadow"
-                      onClick={() => {
-                        if (currencyMode === null) {
-                          setPendingFile(queuedFiles[0]);
-                          setShowCurrencyDialog(true);
-                        } else {
-                          processFile(queuedFiles[0]);
-                        }
-                      }}
-                    >
-                      <Sparkles className="w-4 h-4 mr-2" />
-                      Process with AI
-                    </Button>
+                    <div className="flex gap-2">
+                      <Button
+                        className="flex-1 bg-gradient-to-r from-[#1EB053] to-[#0072C6] shadow-lg hover:shadow-xl transition-shadow"
+                        onClick={() => {
+                          if (currencyMode === null) {
+                            setPendingFile(queuedFiles[0]);
+                            setShowCurrencyDialog(true);
+                          } else if (queuedFiles.length === 1) {
+                            processFile(queuedFiles[0]);
+                          } else {
+                            processBatch();
+                          }
+                        }}
+                        disabled={isProcessingBatch}
+                      >
+                        {isProcessingBatch ? (
+                          <>
+                            <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                            Processing {batchProgress.current}/{batchProgress.total}
+                          </>
+                        ) : (
+                          <>
+                            <Sparkles className="w-4 h-4 mr-2" />
+                            {queuedFiles.length === 1 ? 'Process with AI' : `Process ${queuedFiles.length} Files`}
+                          </>
+                        )}
+                      </Button>
+                    </div>
                   </motion.div>
                 )}
               </AnimatePresence>
@@ -2461,8 +2543,11 @@ Provide:
                   className="w-full h-auto py-4 sm:py-5 px-5 sm:px-6 text-left border-2 hover:border-green-500 hover:bg-gradient-to-br hover:from-green-50 hover:to-emerald-50 hover:shadow-xl transition-all duration-300 group"
                   onClick={() => {
                     setCurrencyMode('sle');
-                    if (pendingFile) {
+                    setShowCurrencyDialog(false);
+                    if (pendingFile && queuedFiles.length === 1) {
                       processFile(pendingFile);
+                    } else if (queuedFiles.length > 1) {
+                      processBatch();
                     }
                   }}
                 >
@@ -2492,8 +2577,11 @@ Provide:
                   className="w-full h-auto py-4 sm:py-5 px-5 sm:px-6 text-left border-2 hover:border-blue-500 hover:bg-gradient-to-br hover:from-blue-50 hover:to-cyan-50 hover:shadow-xl transition-all duration-300 group"
                   onClick={() => {
                     setCurrencyMode('sll');
-                    if (pendingFile) {
+                    setShowCurrencyDialog(false);
+                    if (pendingFile && queuedFiles.length === 1) {
                       processFile(pendingFile);
+                    } else if (queuedFiles.length > 1) {
+                      processBatch();
                     }
                   }}
                 >
