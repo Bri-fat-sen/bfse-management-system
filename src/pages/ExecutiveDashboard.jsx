@@ -14,11 +14,12 @@ import {
 import {
   TrendingUp, TrendingDown, DollarSign, ShoppingCart, Package, Users,
   Truck, Calendar, AlertTriangle, Target, ArrowRight, Download,
-  FileText, BarChart3, Activity
+  FileText, BarChart3, Activity, Sparkles, Zap
 } from "lucide-react";
 import LoadingSpinner from "@/components/ui/LoadingSpinner";
 import { Link } from "react-router-dom";
 import { createPageUrl } from "@/utils";
+import { motion } from "framer-motion";
 
 const COLORS = ['#1EB053', '#0072C6', '#D4AF37', '#FF6B35', '#8B5CF6', '#EF4444', '#10B981'];
 
@@ -197,368 +198,434 @@ export default function ExecutiveDashboard() {
   }
 
   return (
-    <div className="space-y-6">
-      {/* Modern Header with Gradient */}
-      <div className="relative overflow-hidden rounded-2xl shadow-2xl bg-gradient-to-br from-[#0F1F3C] via-[#1a3a5e] to-[#0F1F3C]">
-        <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGRlZnM+PHBhdHRlcm4gaWQ9ImdyaWQiIHdpZHRoPSI2MCIgaGVpZ2h0PSI2MCIgcGF0dGVyblVuaXRzPSJ1c2VyU3BhY2VPblVzZSI+PHBhdGggZD0iTSAxMCAwIEwgMCAwIDAgMTAiIGZpbGw9Im5vbmUiIHN0cm9rZT0id2hpdGUiIHN0cm9rZS1vcGFjaXR5PSIwLjAzIiBzdHJva2Utd2lkdGg9IjEiLz48L3BhdHRlcm4+PC9kZWZzPjxyZWN0IHdpZHRoPSIxMDAlIiBoZWlnaHQ9IjEwMCUiIGZpbGw9InVybCgjZ3JpZCkiLz48L3N2Zz4=')] opacity-40"></div>
-        <div className="h-1 flex relative z-10">
-          <div className="flex-1 bg-[#1EB053]" />
-          <div className="flex-1 bg-white" />
-          <div className="flex-1 bg-[#0072C6]" />
+    <div className="space-y-6 pb-8">
+      {/* Modern Animated Header */}
+      <motion.div 
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 shadow-2xl"
+      >
+        {/* Animated background pattern */}
+        <div className="absolute inset-0 opacity-10">
+          <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-[#1EB053] via-white to-[#0072C6]"></div>
+          <div className="absolute inset-0" style={{
+            backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.1'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`
+          }}></div>
         </div>
-        <div className="p-8 flex flex-col md:flex-row items-start md:items-center justify-between gap-4 relative z-10">
-          <div>
-            <div className="flex items-center gap-4 mb-2">
-              <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-[#1EB053] to-[#0072C6] flex items-center justify-center shadow-lg">
-                <BarChart3 className="w-7 h-7 text-white" />
+        
+        <div className="relative p-8">
+          <div className="flex items-center justify-between flex-wrap gap-4">
+            <div className="flex items-center gap-4">
+              <motion.div 
+                initial={{ scale: 0, rotate: -180 }}
+                animate={{ scale: 1, rotate: 0 }}
+                transition={{ type: "spring", stiffness: 200, damping: 15 }}
+                className="w-16 h-16 rounded-2xl bg-gradient-to-br from-[#1EB053] to-[#0072C6] flex items-center justify-center shadow-lg"
+              >
+                <Sparkles className="w-8 h-8 text-white" />
+              </motion.div>
+              <div>
+                <h1 className="text-4xl font-bold text-white mb-1">
+                  Executive Dashboard
+                </h1>
+                <p className="text-gray-300 flex items-center gap-2">
+                  <Zap className="w-4 h-4" />
+                  Real-time business intelligence
+                </p>
               </div>
-              <h1 className="text-4xl font-bold text-white">
-                Executive Dashboard
-              </h1>
             </div>
-            <p className="text-blue-100 ml-16 text-sm">Real-time business intelligence and performance analytics</p>
-          </div>
-          <div className="flex gap-3">
-            <Select value={dateRange} onValueChange={setDateRange}>
-              <SelectTrigger className="w-48 bg-white/10 border-white/20 text-white">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="this_week">This Week</SelectItem>
-                <SelectItem value="this_month">This Month</SelectItem>
-                <SelectItem value="last_month">Last Month</SelectItem>
-                <SelectItem value="last_3_months">Last 3 Months</SelectItem>
-              </SelectContent>
-            </Select>
-            <Button className="gap-2 bg-gradient-to-r from-[#1EB053] to-[#0072C6] text-white border-0 shadow-lg hover:shadow-xl transition-all">
-              <Download className="w-4 h-4" />
-              Export
-            </Button>
+            <div className="flex gap-3">
+              <Select value={dateRange} onValueChange={setDateRange}>
+                <SelectTrigger className="w-48 bg-white/10 border-white/20 text-white backdrop-blur-sm">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="this_week">This Week</SelectItem>
+                  <SelectItem value="this_month">This Month</SelectItem>
+                  <SelectItem value="last_month">Last Month</SelectItem>
+                  <SelectItem value="last_3_months">Last 3 Months</SelectItem>
+                </SelectContent>
+              </Select>
+              <Button className="bg-white/10 hover:bg-white/20 text-white border-white/20 backdrop-blur-sm gap-2">
+                <Download className="w-4 h-4" />
+                Export
+              </Button>
+            </div>
           </div>
         </div>
-        <div className="h-1 flex relative z-10">
-          <div className="flex-1 bg-[#1EB053]" />
-          <div className="flex-1 bg-white" />
-          <div className="flex-1 bg-[#0072C6]" />
-        </div>
-      </div>
+        
+        <div className="h-1 bg-gradient-to-r from-[#1EB053] via-white to-[#0072C6]"></div>
+      </motion.div>
 
-      {/* Modern KPI Cards */}
+      {/* Modern KPI Cards with Animations */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <Card className="relative overflow-hidden border-0 shadow-xl hover:shadow-2xl transition-all bg-gradient-to-br from-green-50 to-emerald-50">
-          <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-green-500/20 to-emerald-500/20 rounded-full -mr-16 -mt-16" />
-          <CardHeader className="pb-2 relative z-10">
-            <div className="flex items-center justify-between">
-              <CardTitle className="text-xs font-semibold text-gray-600 uppercase tracking-wide">Total Revenue</CardTitle>
-              <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-green-500 to-emerald-600 flex items-center justify-center shadow-lg">
-                <DollarSign className="w-5 h-5 text-white" />
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.1 }}
+        >
+          <Card className="relative overflow-hidden border-0 shadow-xl bg-gradient-to-br from-green-500 to-emerald-600 text-white">
+            <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -mr-16 -mt-16"></div>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm text-white/90 flex items-center justify-between">
+                <span>Total Revenue</span>
+                <DollarSign className="w-5 h-5" />
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-4xl font-bold mb-3">
+                Le {(metrics.totalSales + metrics.tripRevenue).toLocaleString()}
               </div>
-            </div>
-          </CardHeader>
-          <CardContent className="relative z-10">
-            <div className="text-3xl font-bold bg-gradient-to-r from-green-600 to-emerald-600 bg-clip-text text-transparent">
-              Le {(metrics.totalSales + metrics.tripRevenue).toLocaleString()}
-            </div>
-            <div className="flex items-center gap-2 mt-3 flex-wrap">
-              <Badge className="bg-green-100 text-green-700 border-0 text-xs">
-                Sales: {metrics.totalSales.toLocaleString()}
-              </Badge>
-              <Badge className="bg-emerald-100 text-emerald-700 border-0 text-xs">
-                Transport: {metrics.tripRevenue.toLocaleString()}
-              </Badge>
-            </div>
-          </CardContent>
-        </Card>
+              <div className="flex gap-2 flex-wrap">
+                <Badge className="bg-white/20 text-white border-0 text-xs">
+                  Sales: {metrics.totalSales.toLocaleString()}
+                </Badge>
+                <Badge className="bg-white/20 text-white border-0 text-xs">
+                  Transport: {metrics.tripRevenue.toLocaleString()}
+                </Badge>
+              </div>
+            </CardContent>
+          </Card>
+        </motion.div>
 
-        <Card className="relative overflow-hidden border-0 shadow-xl hover:shadow-2xl transition-all bg-gradient-to-br from-red-50 to-rose-50">
-          <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-red-500/20 to-rose-500/20 rounded-full -mr-16 -mt-16" />
-          <CardHeader className="pb-2 relative z-10">
-            <div className="flex items-center justify-between">
-              <CardTitle className="text-xs font-semibold text-gray-600 uppercase tracking-wide">Total Expenses</CardTitle>
-              <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-red-500 to-rose-600 flex items-center justify-center shadow-lg">
-                <TrendingDown className="w-5 h-5 text-white" />
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.2 }}
+        >
+          <Card className="relative overflow-hidden border-0 shadow-xl bg-gradient-to-br from-red-500 to-rose-600 text-white">
+            <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -mr-16 -mt-16"></div>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm text-white/90 flex items-center justify-between">
+                <span>Total Expenses</span>
+                <TrendingDown className="w-5 h-5" />
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-4xl font-bold mb-3">
+                Le {metrics.totalExpenses.toLocaleString()}
               </div>
-            </div>
-          </CardHeader>
-          <CardContent className="relative z-10">
-            <div className="text-3xl font-bold bg-gradient-to-r from-red-600 to-rose-600 bg-clip-text text-transparent">
-              Le {metrics.totalExpenses.toLocaleString()}
-            </div>
-            <div className="mt-3">
-              <Badge className="bg-red-100 text-red-700 border-0 text-xs">
+              <Badge className="bg-white/20 text-white border-0 text-xs">
                 {filteredData.expenses.length} transactions
               </Badge>
-            </div>
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
+        </motion.div>
 
-        <Card className="relative overflow-hidden border-0 shadow-xl hover:shadow-2xl transition-all bg-gradient-to-br from-blue-50 to-cyan-50">
-          <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-blue-500/20 to-cyan-500/20 rounded-full -mr-16 -mt-16" />
-          <CardHeader className="pb-2 relative z-10">
-            <div className="flex items-center justify-between">
-              <CardTitle className="text-xs font-semibold text-gray-600 uppercase tracking-wide">Net Income</CardTitle>
-              <div className={`w-10 h-10 rounded-lg bg-gradient-to-br ${metrics.netIncome >= 0 ? 'from-green-500 to-emerald-600' : 'from-red-500 to-rose-600'} flex items-center justify-center shadow-lg`}>
-                {metrics.netIncome >= 0 ? <TrendingUp className="w-5 h-5 text-white" /> : <TrendingDown className="w-5 h-5 text-white" />}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.3 }}
+        >
+          <Card className={`relative overflow-hidden border-0 shadow-xl ${metrics.netIncome >= 0 ? 'bg-gradient-to-br from-blue-500 to-cyan-600' : 'bg-gradient-to-br from-orange-500 to-red-600'} text-white`}>
+            <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -mr-16 -mt-16"></div>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm text-white/90 flex items-center justify-between">
+                <span>Net Income</span>
+                {metrics.netIncome >= 0 ? <TrendingUp className="w-5 h-5" /> : <TrendingDown className="w-5 h-5" />}
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-4xl font-bold mb-3">
+                Le {metrics.netIncome.toLocaleString()}
               </div>
-            </div>
-          </CardHeader>
-          <CardContent className="relative z-10">
-            <div className={`text-3xl font-bold bg-gradient-to-r ${metrics.netIncome >= 0 ? 'from-green-600 to-emerald-600' : 'from-red-600 to-rose-600'} bg-clip-text text-transparent`}>
-              Le {metrics.netIncome.toLocaleString()}
-            </div>
-            <div className="flex items-center gap-2 mt-3">
-              <Badge className={`${metrics.netIncome >= 0 ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'} border-0 text-xs`}>
-                {metrics.netIncome >= 0 ? '✓ Profitable' : '⚠ Loss'}
+              <Badge className="bg-white/20 text-white border-0 text-xs">
+                {metrics.netIncome >= 0 ? 'Profitable' : 'Loss Period'}
               </Badge>
-            </div>
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
+        </motion.div>
 
-        <Card className="relative overflow-hidden border-0 shadow-xl hover:shadow-2xl transition-all bg-gradient-to-br from-purple-50 to-violet-50">
-          <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-purple-500/20 to-violet-500/20 rounded-full -mr-16 -mt-16" />
-          <CardHeader className="pb-2 relative z-10">
-            <div className="flex items-center justify-between">
-              <CardTitle className="text-xs font-semibold text-gray-600 uppercase tracking-wide">Inventory Value</CardTitle>
-              <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-purple-500 to-violet-600 flex items-center justify-center shadow-lg">
-                <Package className="w-5 h-5 text-white" />
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.4 }}
+        >
+          <Card className="relative overflow-hidden border-0 shadow-xl bg-gradient-to-br from-purple-500 to-indigo-600 text-white">
+            <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -mr-16 -mt-16"></div>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm text-white/90 flex items-center justify-between">
+                <span>Inventory Value</span>
+                <Package className="w-5 h-5" />
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-4xl font-bold mb-3">
+                Le {metrics.totalInventoryValue.toLocaleString()}
               </div>
-            </div>
-          </CardHeader>
-          <CardContent className="relative z-10">
-            <div className="text-3xl font-bold bg-gradient-to-r from-purple-600 to-violet-600 bg-clip-text text-transparent">
-              Le {metrics.totalInventoryValue.toLocaleString()}
-            </div>
-            <div className="mt-3">
               {metrics.lowStock > 0 ? (
-                <Badge className="bg-red-100 text-red-700 border-0 text-xs animate-pulse">
-                  ⚠ {metrics.lowStock} low stock
+                <Badge className="bg-red-500/80 text-white border-0 text-xs animate-pulse">
+                  {metrics.lowStock} low stock alerts
                 </Badge>
               ) : (
-                <Badge className="bg-green-100 text-green-700 border-0 text-xs">
-                  ✓ All stocked
+                <Badge className="bg-white/20 text-white border-0 text-xs">
+                  Stock healthy
                 </Badge>
               )}
-            </div>
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
+        </motion.div>
       </div>
 
-      {/* Module Analytics Tabs */}
+      {/* Modern Tabs */}
       <Tabs defaultValue="overview" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-7 bg-white border shadow-sm p-1.5 rounded-xl h-auto">
-          <TabsTrigger value="overview" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#1EB053] data-[state=active]:to-[#0072C6] data-[state=active]:text-white data-[state=active]:shadow-lg rounded-lg py-2.5">Overview</TabsTrigger>
-          <TabsTrigger value="sales" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#1EB053] data-[state=active]:to-[#0072C6] data-[state=active]:text-white data-[state=active]:shadow-lg rounded-lg py-2.5">Sales</TabsTrigger>
-          <TabsTrigger value="inventory" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#1EB053] data-[state=active]:to-[#0072C6] data-[state=active]:text-white data-[state=active]:shadow-lg rounded-lg py-2.5">Inventory</TabsTrigger>
-          <TabsTrigger value="finance" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#1EB053] data-[state=active]:to-[#0072C6] data-[state=active]:text-white data-[state=active]:shadow-lg rounded-lg py-2.5">Finance</TabsTrigger>
-          <TabsTrigger value="hr" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#1EB053] data-[state=active]:to-[#0072C6] data-[state=active]:text-white data-[state=active]:shadow-lg rounded-lg py-2.5">HR</TabsTrigger>
-          <TabsTrigger value="transport" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#1EB053] data-[state=active]:to-[#0072C6] data-[state=active]:text-white data-[state=active]:shadow-lg rounded-lg py-2.5">Transport</TabsTrigger>
-          <TabsTrigger value="reports" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#1EB053] data-[state=active]:to-[#0072C6] data-[state=active]:text-white data-[state=active]:shadow-lg rounded-lg py-2.5">Reports</TabsTrigger>
+        <TabsList className="grid w-full grid-cols-7 bg-white border shadow-sm rounded-xl p-1 h-auto">
+          <TabsTrigger value="overview" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#1EB053] data-[state=active]:to-[#0072C6] data-[state=active]:text-white rounded-lg">
+            Overview
+          </TabsTrigger>
+          <TabsTrigger value="sales" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#1EB053] data-[state=active]:to-[#0072C6] data-[state=active]:text-white rounded-lg">
+            Sales
+          </TabsTrigger>
+          <TabsTrigger value="inventory" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#1EB053] data-[state=active]:to-[#0072C6] data-[state=active]:text-white rounded-lg">
+            Inventory
+          </TabsTrigger>
+          <TabsTrigger value="finance" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#1EB053] data-[state=active]:to-[#0072C6] data-[state=active]:text-white rounded-lg">
+            Finance
+          </TabsTrigger>
+          <TabsTrigger value="hr" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#1EB053] data-[state=active]:to-[#0072C6] data-[state=active]:text-white rounded-lg">
+            HR
+          </TabsTrigger>
+          <TabsTrigger value="transport" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#1EB053] data-[state=active]:to-[#0072C6] data-[state=active]:text-white rounded-lg">
+            Transport
+          </TabsTrigger>
+          <TabsTrigger value="reports" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#1EB053] data-[state=active]:to-[#0072C6] data-[state=active]:text-white rounded-lg">
+            Reports
+          </TabsTrigger>
         </TabsList>
 
         {/* Overview Tab */}
-        <TabsContent value="overview" className="space-y-4">
+        <TabsContent value="overview" className="space-y-6">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <Card className="border-0 shadow-xl rounded-2xl overflow-hidden">
-              <div className="h-1 bg-gradient-to-r from-green-500 to-emerald-500" />
-              <CardHeader className="bg-gradient-to-br from-green-50 to-emerald-50">
-                <CardTitle className="flex items-center gap-2">
-                  <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-green-500 to-emerald-600 flex items-center justify-center">
-                    <TrendingUp className="w-4 h-4 text-white" />
-                  </div>
-                  Sales Trend
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="pt-6">
-                <ResponsiveContainer width="100%" height={300}>
-                  <AreaChart data={salesTrendData}>
-                    <defs>
-                      <linearGradient id="colorAmount" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%" stopColor="#1EB053" stopOpacity={0.8}/>
-                        <stop offset="95%" stopColor="#1EB053" stopOpacity={0.1}/>
-                      </linearGradient>
-                    </defs>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-                    <XAxis dataKey="date" stroke="#6b7280" />
-                    <YAxis stroke="#6b7280" />
-                    <Tooltip 
-                      formatter={(value) => `Le ${value.toLocaleString()}`}
-                      contentStyle={{ backgroundColor: 'white', border: 'none', borderRadius: '8px', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}
-                    />
-                    <Area type="monotone" dataKey="amount" stroke="#1EB053" strokeWidth={3} fill="url(#colorAmount)" />
-                  </AreaChart>
-                </ResponsiveContainer>
-              </CardContent>
-            </Card>
+            <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.2 }}>
+              <Card className="border-0 shadow-xl bg-white">
+                <div className="h-1 bg-gradient-to-r from-green-500 to-emerald-500"></div>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-green-500 to-emerald-600 flex items-center justify-center">
+                      <TrendingUp className="w-5 h-5 text-white" />
+                    </div>
+                    Sales Trend Analysis
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <ResponsiveContainer width="100%" height={300}>
+                    <AreaChart data={salesTrendData}>
+                      <defs>
+                        <linearGradient id="colorAmount" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="5%" stopColor="#1EB053" stopOpacity={0.8}/>
+                          <stop offset="95%" stopColor="#1EB053" stopOpacity={0.1}/>
+                        </linearGradient>
+                      </defs>
+                      <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+                      <XAxis dataKey="date" stroke="#888" />
+                      <YAxis stroke="#888" />
+                      <Tooltip 
+                        formatter={(value) => `Le ${value.toLocaleString()}`}
+                        contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}
+                      />
+                      <Area type="monotone" dataKey="amount" stroke="#1EB053" strokeWidth={3} fill="url(#colorAmount)" />
+                    </AreaChart>
+                  </ResponsiveContainer>
+                </CardContent>
+              </Card>
+            </motion.div>
 
-            <Card className="border-0 shadow-xl rounded-2xl overflow-hidden">
-              <div className="h-1 bg-gradient-to-r from-blue-500 to-cyan-500" />
-              <CardHeader className="bg-gradient-to-br from-blue-50 to-cyan-50">
-                <CardTitle className="flex items-center gap-2">
-                  <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-500 to-cyan-600 flex items-center justify-center">
-                    <DollarSign className="w-4 h-4 text-white" />
-                  </div>
-                  Revenue vs Expenses
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="pt-6">
-                <ResponsiveContainer width="100%" height={300}>
-                  <BarChart data={[
-                    { name: 'Revenue', Sales: metrics.totalSales, Transport: metrics.tripRevenue },
-                    { name: 'Expenses', value: metrics.totalExpenses }
-                  ]}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-                    <XAxis dataKey="name" stroke="#6b7280" />
-                    <YAxis stroke="#6b7280" />
-                    <Tooltip 
-                      formatter={(value) => `Le ${value.toLocaleString()}`}
-                      contentStyle={{ backgroundColor: 'white', border: 'none', borderRadius: '8px', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}
-                    />
-                    <Legend />
-                    <Bar dataKey="Sales" fill="#1EB053" radius={[8, 8, 0, 0]} />
-                    <Bar dataKey="Transport" fill="#FF6B35" radius={[8, 8, 0, 0]} />
-                    <Bar dataKey="value" fill="#EF4444" radius={[8, 8, 0, 0]} />
-                  </BarChart>
-                </ResponsiveContainer>
-              </CardContent>
-            </Card>
+            <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.3 }}>
+              <Card className="border-0 shadow-xl bg-white">
+                <div className="h-1 bg-gradient-to-r from-blue-500 to-cyan-500"></div>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 to-cyan-600 flex items-center justify-center">
+                      <DollarSign className="w-5 h-5 text-white" />
+                    </div>
+                    Revenue vs Expenses
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <ResponsiveContainer width="100%" height={300}>
+                    <BarChart data={[
+                      { name: 'Revenue', Sales: metrics.totalSales, Transport: metrics.tripRevenue },
+                      { name: 'Expenses', value: metrics.totalExpenses }
+                    ]}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+                      <XAxis dataKey="name" stroke="#888" />
+                      <YAxis stroke="#888" />
+                      <Tooltip 
+                        formatter={(value) => `Le ${value.toLocaleString()}`}
+                        contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}
+                      />
+                      <Legend />
+                      <Bar dataKey="Sales" fill="#1EB053" radius={[8, 8, 0, 0]} />
+                      <Bar dataKey="Transport" fill="#FF6B35" radius={[8, 8, 0, 0]} />
+                      <Bar dataKey="value" fill="#EF4444" radius={[8, 8, 0, 0]} />
+                    </BarChart>
+                  </ResponsiveContainer>
+                </CardContent>
+              </Card>
+            </motion.div>
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            <Card className="border-0 shadow-xl rounded-2xl overflow-hidden">
-              <div className="h-1 bg-gradient-to-r from-purple-500 to-pink-500" />
-              <CardHeader className="bg-gradient-to-br from-purple-50 to-pink-50">
-                <CardTitle className="text-sm flex items-center gap-2">
-                  <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-purple-500 to-pink-600 flex items-center justify-center">
-                    <Target className="w-4 h-4 text-white" />
-                  </div>
-                  Revenue Sources
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="pt-6">
-                <ResponsiveContainer width="100%" height={250}>
-                  <PieChart>
-                    <Pie data={revenueBreakdown} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={80}>
-                      {revenueBreakdown.map((entry, index) => (
-                        <Cell key={index} fill={entry.color} />
-                      ))}
-                    </Pie>
-                    <Tooltip 
-                      formatter={(value) => `Le ${value.toLocaleString()}`}
-                      contentStyle={{ backgroundColor: 'white', border: 'none', borderRadius: '8px', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}
-                    />
-                    <Legend />
-                  </PieChart>
-                </ResponsiveContainer>
-              </CardContent>
-            </Card>
-
-            <Card className="lg:col-span-2 border-0 shadow-xl rounded-2xl overflow-hidden">
-              <div className="h-1 bg-gradient-to-r from-amber-500 to-orange-500" />
-              <CardHeader className="bg-gradient-to-br from-amber-50 to-orange-50">
-                <CardTitle className="text-sm flex items-center gap-2">
-                  <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-amber-500 to-orange-600 flex items-center justify-center">
-                    <TrendingUp className="w-4 h-4 text-white" />
-                  </div>
-                  Top Performing Products
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="pt-6">
-                <div className="space-y-3">
-                  {topProducts.map((product, idx) => (
-                    <div key={idx} className="flex items-center justify-between p-4 bg-gradient-to-r from-gray-50 to-white rounded-xl border hover:shadow-md transition-all">
-                      <div className="flex items-center gap-4">
-                        <div className={`w-10 h-10 rounded-xl bg-gradient-to-br ${
-                          idx === 0 ? 'from-yellow-400 to-orange-500' :
-                          idx === 1 ? 'from-gray-300 to-gray-400' :
-                          idx === 2 ? 'from-orange-400 to-orange-500' :
-                          'from-blue-400 to-blue-500'
-                        } flex items-center justify-center text-white font-bold shadow-lg text-lg`}>
-                          {idx + 1}
-                        </div>
-                        <div>
-                          <p className="font-semibold text-gray-900">{product.name}</p>
-                          <p className="text-xs text-gray-500 flex items-center gap-1 mt-1">
-                            <Package className="w-3 h-3" />
-                            {product.quantity} units sold
-                          </p>
-                        </div>
-                      </div>
-                      <span className="font-bold text-lg bg-gradient-to-r from-green-600 to-emerald-600 bg-clip-text text-transparent">
-                        Le {product.revenue.toLocaleString()}
-                      </span>
+            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }}>
+              <Card className="border-0 shadow-xl bg-white h-full">
+                <div className="h-1 bg-gradient-to-r from-purple-500 to-pink-500"></div>
+                <CardHeader>
+                  <CardTitle className="text-base flex items-center gap-2">
+                    <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-purple-500 to-pink-600 flex items-center justify-center">
+                      <Target className="w-4 h-4 text-white" />
                     </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
+                    Revenue Sources
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <ResponsiveContainer width="100%" height={250}>
+                    <PieChart>
+                      <Pie 
+                        data={revenueBreakdown} 
+                        dataKey="value" 
+                        nameKey="name" 
+                        cx="50%" 
+                        cy="50%" 
+                        outerRadius={80}
+                        strokeWidth={2}
+                        stroke="#fff"
+                      >
+                        {revenueBreakdown.map((entry, index) => (
+                          <Cell key={index} fill={entry.color} />
+                        ))}
+                      </Pie>
+                      <Tooltip 
+                        formatter={(value) => `Le ${value.toLocaleString()}`}
+                        contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}
+                      />
+                      <Legend />
+                    </PieChart>
+                  </ResponsiveContainer>
+                </CardContent>
+              </Card>
+            </motion.div>
+
+            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.5 }} className="lg:col-span-2">
+              <Card className="border-0 shadow-xl bg-white h-full">
+                <div className="h-1 bg-gradient-to-r from-amber-500 to-orange-500"></div>
+                <CardHeader>
+                  <CardTitle className="text-base flex items-center gap-2">
+                    <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-amber-500 to-orange-600 flex items-center justify-center">
+                      <TrendingUp className="w-4 h-4 text-white" />
+                    </div>
+                    Top Performing Products
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-3">
+                    {topProducts.map((product, idx) => (
+                      <motion.div 
+                        key={idx}
+                        initial={{ opacity: 0, x: -20 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ delay: 0.6 + idx * 0.1 }}
+                        className="flex items-center justify-between p-4 bg-gradient-to-r from-gray-50 to-white rounded-xl border hover:shadow-md transition-shadow"
+                      >
+                        <div className="flex items-center gap-4">
+                          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-green-500 to-emerald-600 flex items-center justify-center text-white font-bold text-lg shadow-lg">
+                            {idx + 1}
+                          </div>
+                          <div>
+                            <p className="font-semibold text-gray-900">{product.name}</p>
+                            <p className="text-sm text-gray-500">{product.quantity} units sold</p>
+                          </div>
+                        </div>
+                        <div className="text-right">
+                          <div className="text-xl font-bold text-green-600">Le {product.revenue.toLocaleString()}</div>
+                        </div>
+                      </motion.div>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            </motion.div>
           </div>
         </TabsContent>
 
         {/* Sales Tab */}
         <TabsContent value="sales" className="space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <Card className="border-0 shadow-lg rounded-2xl bg-gradient-to-br from-green-500 to-emerald-600 text-white">
-              <CardHeader>
-                <CardTitle className="text-xs text-green-100 uppercase tracking-wide">Total Sales</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-3xl font-bold">
-                  Le {metrics.totalSales.toLocaleString()}
-                </div>
-                <p className="text-sm text-green-100 mt-1">{filteredData.sales.length} transactions</p>
-              </CardContent>
-            </Card>
-            <Card className="border-0 shadow-lg rounded-2xl bg-white">
-              <CardHeader>
-                <CardTitle className="text-xs text-gray-600 uppercase tracking-wide">Average Sale</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-3xl font-bold text-gray-900">
-                  Le {filteredData.sales.length > 0 ? Math.round(metrics.totalSales / filteredData.sales.length).toLocaleString() : 0}
-                </div>
-                <p className="text-sm text-gray-500 mt-1">per transaction</p>
-              </CardContent>
-            </Card>
-            <Card className="border-0 shadow-lg rounded-2xl bg-white">
-              <CardHeader>
-                <CardTitle className="text-xs text-gray-600 uppercase tracking-wide">Sales Growth</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="flex items-center gap-2">
-                  <TrendingUp className="w-7 h-7 text-green-600" />
-                  <span className="text-3xl font-bold text-green-600">+15%</span>
-                </div>
-              </CardContent>
-            </Card>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: 0.1 }}>
+              <Card className="border-0 shadow-lg bg-gradient-to-br from-green-50 to-emerald-50 hover:shadow-xl transition-shadow">
+                <CardHeader>
+                  <CardTitle className="text-sm text-gray-600 flex items-center gap-2">
+                    <ShoppingCart className="w-4 h-4" />
+                    Total Sales
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-3xl font-bold text-green-600 mb-2">
+                    Le {metrics.totalSales.toLocaleString()}
+                  </div>
+                  <p className="text-sm text-gray-600">{filteredData.sales.length} transactions</p>
+                </CardContent>
+              </Card>
+            </motion.div>
+            <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: 0.2 }}>
+              <Card className="border-0 shadow-lg bg-gradient-to-br from-blue-50 to-cyan-50 hover:shadow-xl transition-shadow">
+                <CardHeader>
+                  <CardTitle className="text-sm text-gray-600 flex items-center gap-2">
+                    <BarChart3 className="w-4 h-4" />
+                    Average Sale Value
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-3xl font-bold text-blue-600">
+                    Le {filteredData.sales.length > 0 ? Math.round(metrics.totalSales / filteredData.sales.length).toLocaleString() : 0}
+                  </div>
+                </CardContent>
+              </Card>
+            </motion.div>
+            <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: 0.3 }}>
+              <Card className="border-0 shadow-lg bg-gradient-to-br from-purple-50 to-pink-50 hover:shadow-xl transition-shadow">
+                <CardHeader>
+                  <CardTitle className="text-sm text-gray-600 flex items-center gap-2">
+                    <TrendingUp className="w-4 h-4" />
+                    Sales Growth
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="flex items-center gap-2">
+                    <TrendingUp className="w-8 h-8 text-green-600" />
+                    <span className="text-3xl font-bold text-green-600">+15%</span>
+                  </div>
+                </CardContent>
+              </Card>
+            </motion.div>
           </div>
-          <Card className="border-0 shadow-xl rounded-2xl overflow-hidden">
-            <div className="h-1 bg-gradient-to-r from-green-500 via-emerald-500 to-teal-500" />
-            <CardHeader className="flex flex-row items-center justify-between bg-gradient-to-br from-green-50 to-emerald-50">
+          <Card className="border-0 shadow-xl bg-white">
+            <div className="h-1 bg-gradient-to-r from-green-500 via-emerald-500 to-teal-500"></div>
+            <CardHeader className="flex flex-row items-center justify-between">
               <CardTitle className="flex items-center gap-2">
-                <ShoppingCart className="w-5 h-5 text-green-600" />
+                <BarChart3 className="w-5 h-5 text-green-600" />
                 Detailed Sales Analytics
               </CardTitle>
               <Link to={createPageUrl("Sales")}>
-                <Button size="sm" className="bg-gradient-to-r from-green-600 to-emerald-600 text-white">
+                <Button className="bg-gradient-to-r from-green-500 to-emerald-600 text-white hover:shadow-lg transition-shadow">
                   View Details <ArrowRight className="w-4 h-4 ml-2" />
                 </Button>
               </Link>
             </CardHeader>
-            <CardContent className="pt-6">
+            <CardContent>
               <ResponsiveContainer width="100%" height={400}>
                 <LineChart data={salesTrendData}>
                   <defs>
                     <linearGradient id="salesLine" x1="0" y1="0" x2="1" y2="0">
-                      <stop offset="0%" stopColor="#1EB053"/>
-                      <stop offset="100%" stopColor="#10b981"/>
+                      <stop offset="0%" stopColor="#1EB053" />
+                      <stop offset="100%" stopColor="#0072C6" />
                     </linearGradient>
                   </defs>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-                  <XAxis dataKey="date" stroke="#6b7280" />
-                  <YAxis stroke="#6b7280" />
+                  <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+                  <XAxis dataKey="date" stroke="#888" />
+                  <YAxis stroke="#888" />
                   <Tooltip 
                     formatter={(value) => `Le ${value.toLocaleString()}`}
-                    contentStyle={{ backgroundColor: 'white', border: 'none', borderRadius: '12px', boxShadow: '0 8px 24px rgba(0,0,0,0.12)' }}
+                    contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}
                   />
                   <Legend />
                   <Line type="monotone" dataKey="amount" stroke="url(#salesLine)" strokeWidth={3} dot={{ fill: '#1EB053', r: 5 }} activeDot={{ r: 7 }} />
@@ -772,32 +839,39 @@ export default function ExecutiveDashboard() {
         <TabsContent value="reports" className="space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {[
-              { title: "Sales Report", module: "Sales", icon: ShoppingCart, gradient: "from-green-500 to-emerald-600", bg: "from-green-50 to-emerald-50" },
-              { title: "Inventory Report", module: "Inventory", icon: Package, gradient: "from-purple-500 to-violet-600", bg: "from-purple-50 to-violet-50" },
-              { title: "Financial Report", module: "Finance", icon: DollarSign, gradient: "from-blue-500 to-cyan-600", bg: "from-blue-50 to-cyan-50" },
-              { title: "HR Report", module: "HRManagement", icon: Users, gradient: "from-indigo-500 to-purple-600", bg: "from-indigo-50 to-purple-50" },
-              { title: "Transport Report", module: "Transport", icon: Truck, gradient: "from-orange-500 to-red-600", bg: "from-orange-50 to-red-50" },
-              { title: "Activity Report", module: "ActivityLog", icon: Activity, gradient: "from-gray-500 to-slate-600", bg: "from-gray-50 to-slate-50" },
+              { title: "Sales Report", module: "Sales", icon: ShoppingCart, gradient: "from-green-500 to-emerald-600" },
+              { title: "Inventory Report", module: "Inventory", icon: Package, gradient: "from-purple-500 to-indigo-600" },
+              { title: "Financial Report", module: "Finance", icon: DollarSign, gradient: "from-blue-500 to-cyan-600" },
+              { title: "HR Report", module: "HRManagement", icon: Users, gradient: "from-indigo-500 to-purple-600" },
+              { title: "Transport Report", module: "Transport", icon: Truck, gradient: "from-orange-500 to-red-600" },
+              { title: "Activity Report", module: "ActivityLog", icon: Activity, gradient: "from-gray-500 to-slate-600" },
             ].map((report, idx) => (
-              <Card key={idx} className="border-0 shadow-xl hover:shadow-2xl transition-all rounded-2xl overflow-hidden group cursor-pointer">
-                <div className={`h-1 bg-gradient-to-r ${report.gradient}`} />
-                <div className={`bg-gradient-to-br ${report.bg} p-6`}>
-                  <div className="flex items-center justify-between mb-4">
-                    <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${report.gradient} flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform`}>
-                      <report.icon className="w-6 h-6 text-white" />
-                    </div>
-                    <ArrowRight className="w-5 h-5 text-gray-400 group-hover:translate-x-1 transition-transform" />
-                  </div>
-                  <h3 className="font-bold text-lg text-gray-900 mb-2">{report.title}</h3>
-                  <p className="text-xs text-gray-600 mb-4">Generate comprehensive reports and analytics</p>
-                  <Link to={createPageUrl(report.module)}>
-                    <Button className={`w-full bg-gradient-to-r ${report.gradient} text-white border-0 shadow-lg hover:shadow-xl transition-all`}>
-                      <FileText className="w-4 h-4 mr-2" />
-                      Generate Report
-                    </Button>
-                  </Link>
-                </div>
-              </Card>
+              <motion.div
+                key={idx}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: idx * 0.1 }}
+              >
+                <Card className="border-0 shadow-lg hover:shadow-2xl transition-all group cursor-pointer overflow-hidden">
+                  <div className={`h-1 bg-gradient-to-r ${report.gradient}`}></div>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-3">
+                      <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${report.gradient} flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform`}>
+                        <report.icon className="w-6 h-6 text-white" />
+                      </div>
+                      <span className="text-base">{report.title}</span>
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <Link to={createPageUrl(report.module)}>
+                      <Button className={`w-full bg-gradient-to-r ${report.gradient} text-white hover:shadow-lg transition-all`}>
+                        <FileText className="w-4 h-4 mr-2" />
+                        Generate Report
+                      </Button>
+                    </Link>
+                  </CardContent>
+                </Card>
+              </motion.div>
             ))}
           </div>
         </TabsContent>
