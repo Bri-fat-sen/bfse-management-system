@@ -457,13 +457,39 @@ export default function OrphanedData() {
           <Card className="bg-orange-50 border-orange-200">
             <CardContent className="p-4">
               <div className="flex items-start justify-between gap-4">
-                <div className="flex items-start gap-3">
+                <div className="flex items-start gap-3 flex-1">
                   <AlertTriangle className="w-6 h-6 text-orange-600 flex-shrink-0 mt-0.5" />
-                  <div>
-                    <p className="font-semibold text-orange-800">Orphaned organisations</p>
-                    <p className="text-sm text-orange-700 mb-3">
-                      {orphanedOrganisations.length} organisation{orphanedOrganisations.length !== 1 ? 's' : ''} found with no employees or data
-                    </p>
+                  <div className="flex-1">
+                    <div className="flex items-center justify-between mb-3">
+                      <div>
+                        <p className="font-semibold text-orange-800">Orphaned organisations</p>
+                        <p className="text-sm text-orange-700">
+                          {orphanedOrganisations.length} organisation{orphanedOrganisations.length !== 1 ? 's' : ''} found with no employees or data
+                        </p>
+                      </div>
+                      <Button
+                        variant="destructive"
+                        size="sm"
+                        onClick={async () => {
+                          const confirmDelete = window.confirm(`Delete all ${orphanedOrganisations.length} orphaned organisations? This action cannot be undone.`);
+                          if (confirmDelete) {
+                            try {
+                              for (const org of orphanedOrganisations) {
+                                await base44.asServiceRole.entities.Organisation.delete(org.id);
+                              }
+                              queryClient.invalidateQueries();
+                              toast.success("Organisations deleted", `${orphanedOrganisations.length} organisations removed`);
+                            } catch (err) {
+                              console.error('Delete error:', err);
+                              toast.error("Delete failed", err.message || "Unable to delete organisations");
+                            }
+                          }
+                        }}
+                      >
+                        <Trash2 className="w-4 h-4 mr-2" />
+                        Delete All
+                      </Button>
+                    </div>
                     <div className="space-y-2">
                       {orphanedOrganisations.map(org => (
                         <div key={org.id} className="bg-white rounded-lg p-3 border border-orange-200">
