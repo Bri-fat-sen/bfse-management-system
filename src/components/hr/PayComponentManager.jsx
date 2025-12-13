@@ -32,7 +32,7 @@ import {
 } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
-import { Plus, Pencil, Trash2, DollarSign, Percent, Clock, TrendingUp, Gift, Minus, Copy, Search, Calculator } from "lucide-react";
+import { Plus, Pencil, Trash2, DollarSign, Percent, Clock, TrendingUp, Gift, Minus, Copy, Search, Calculator, Users } from "lucide-react";
 import { formatSLE } from "./PayrollCalculator";
 import { safeNumber } from "@/components/utils/calculations";
 import { Textarea } from "@/components/ui/textarea";
