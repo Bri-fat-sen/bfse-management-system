@@ -1,12 +1,10 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Printer, Receipt, DollarSign, Loader2, Fuel, Wrench, Building2, ShoppingCart, Users, Truck, Megaphone, FileText, Wallet, X, Package, Droplets, Bus, TrendingUp } from "lucide-react";
-import { useToast } from "@/components/ui/Toast";
+import { Receipt, DollarSign, Fuel, Wrench, Building2, ShoppingCart, Users, Truck, Megaphone, FileText, Wallet, X, Package, Droplets, Bus, TrendingUp } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import ModernExportDialog from "@/components/exports/ModernExportDialog";
 
 export default function PrintFormsButtons({ organisation }) {
-  const toast = useToast();
   const [showExpenseDialog, setShowExpenseDialog] = useState(false);
   const [showRevenueDialog, setShowRevenueDialog] = useState(false);
   const [exportDialogOpen, setExportDialogOpen] = useState(false);
@@ -46,8 +44,7 @@ export default function PrintFormsButtons({ organisation }) {
     { id: 'other', name: 'Other Income', icon: FileText, color: 'slate', description: 'Miscellaneous revenue' },
   ];
 
-  const prepareExpenseFormData = (formType) => {
-    const data = [];
+  const generateFormData = (formType, category) => {
     .instructions {
       background: var(--gray-50);
       padding: 16px 20px;
@@ -827,16 +824,21 @@ export default function PrintFormsButtons({ organisation }) {
 
   const handlePrintForm = (formType, category) => {
     const isExpense = category === 'expense';
-    setShowExpenseDialog(false);
-    setShowRevenueDialog(false);
+    if (isExpense) {
+      setPrintingExpense(true);
+      setShowExpenseDialog(false);
+    } else {
+      setPrintingRevenue(true);
+      setShowRevenueDialog(false);
+    }
 
-    const data = isExpense ? prepareExpenseFormData(formType) : prepareRevenueFormData(formType);
+    const html = isExpense ? generateExpenseFormHTML(formType) : generateRevenueFormHTML(formType);
     
-    setCurrentExportData({
-      data,
-      title: formType.name
-    });
-    setExportDialogOpen(true);
+    printUnifiedPDF(html, `${formType.name.replace(/\s+/g, '_')}_${new Date().toISOString().split('T')[0]}.pdf`);
+    
+    setPrintingExpense(false);
+    setPrintingRevenue(false);
+    toast.success("PDF Generated", `${formType.name} downloaded successfully`);
   };
 
   return (
