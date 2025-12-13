@@ -33,6 +33,7 @@ import MyPayslips from "@/components/employee/MyPayslips";
 import TrainingHistory from "@/components/employee/TrainingHistory";
 import LeaveRequestForm from "@/components/employee/LeaveRequestForm";
 import PerformanceReviews from "@/components/employee/PerformanceReviews";
+import WageClockInOut from "@/components/hr/WageClockInOut";
 
 export default function EmployeeSelfService() {
   const [activeTab, setActiveTab] = useState("profile");
@@ -197,6 +198,11 @@ export default function EmployeeSelfService() {
           <div className="flex-1 bg-white opacity-40" />
         </div>
       </div>
+
+      {/* Wage Employee Clock In/Out */}
+      {currentEmployee?.employment_type === 'wage' && (
+        <WageClockInOut employee={currentEmployee} orgId={orgId} />
+      )}
 
       {/* Modern Quick Stats */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
