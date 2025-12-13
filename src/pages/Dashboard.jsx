@@ -53,14 +53,14 @@ import PendingApprovalsWidget from "@/components/finance/PendingApprovalsWidget"
 export default function Dashboard() {
   const [activeTab, setActiveTab] = useState("overview");
 
-  const { data: user } = useQuery({
+  const { data: user, isLoading: loadingUser } = useQuery({
     queryKey: ['currentUser'],
     queryFn: () => base44.auth.me(),
     staleTime: 5 * 60 * 1000, // 5 minutes
     refetchOnWindowFocus: false,
   });
 
-  const { data: employee } = useQuery({
+  const { data: employee, isLoading: loadingEmployee } = useQuery({
     queryKey: ['employee', user?.email],
     queryFn: () => base44.entities.Employee.filter({ user_email: user?.email }),
     enabled: !!user?.email,
@@ -220,6 +220,11 @@ export default function Dashboard() {
     enabled: !!orgId,
     ...queryConfig,
   });
+
+  // Show loading while fetching user data
+  if (loadingUser || (user && loadingEmployee)) {
+    return <LoadingSpinner message="Loading Dashboard..." subtitle="Preparing your overview" fullScreen={true} />;
+  }
 
   // Allow super admins to see dashboard even without employee record
   if (!user) {

@@ -1,4 +1,4 @@
-import { } from "react";
+import React from "react";
 import { format } from "date-fns";
 import {
   ShoppingCart,
@@ -30,34 +30,25 @@ const getActivityIcon = (type) => {
 };
 
 export default function RecentActivity({ activities = [] }) {
-  if (activities.length === 0) {
+  // Ensure activities is always an array
+  const safeActivities = Array.isArray(activities) ? activities : [];
+
+  if (safeActivities.length === 0) {
     return (
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-lg">Recent Activity</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="text-center py-8 text-gray-500">
-            <Clock className="w-12 h-12 mx-auto mb-3 text-gray-300" />
-            <p>No recent activity</p>
-          </div>
-        </CardContent>
-      </Card>
+      <div className="text-center py-8 text-gray-500">
+        <Clock className="w-8 h-8 mx-auto mb-2 text-gray-300" />
+        <p className="text-sm">No recent activity</p>
+      </div>
     );
   }
 
   return (
-    <Card>
-      <CardHeader className="pb-2">
-        <CardTitle className="text-lg">Recent Activity</CardTitle>
-      </CardHeader>
-      <CardContent className="p-0">
-        <ScrollArea className="h-[350px]">
-          <div className="px-6 divide-y">
-            {activities.slice(0, 15).map((activity, idx) => {
+    <ScrollArea className="h-[300px]">
+      <div className="space-y-3">
+        {safeActivities.slice(0, 15).map((activity, idx) => {
               const { icon: Icon, color } = getActivityIcon(activity.action_type);
               return (
-                <div key={activity.id || idx} className="flex items-start gap-3 py-3">
+                <div key={activity.id || idx} className="flex items-start gap-3 py-2 px-3 rounded-lg hover:bg-gray-50 transition-colors">
                   <div className={`w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 ${color}`}>
                     <Icon className="w-4 h-4" />
                   </div>
@@ -65,7 +56,7 @@ export default function RecentActivity({ activities = [] }) {
                     <p className="text-sm font-medium text-gray-900 truncate">
                       {activity.description}
                     </p>
-                    <div className="flex items-center gap-2 mt-1">
+                    <div className="flex items-center gap-2 mt-0.5">
                       <span className="text-xs text-gray-500">{activity.employee_name}</span>
                       {activity.module && (
                         <Badge variant="secondary" className="text-[10px] px-1.5 py-0">
@@ -80,9 +71,7 @@ export default function RecentActivity({ activities = [] }) {
                 </div>
               );
             })}
-          </div>
-        </ScrollArea>
-      </CardContent>
-    </Card>
+      </div>
+    </ScrollArea>
   );
 }
