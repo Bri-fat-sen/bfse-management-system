@@ -127,6 +127,11 @@ export default function DocumentUploadExtractor({
   const [aiInsights, setAiInsights] = useState(null);
   const [showPreview, setShowPreview] = useState(false);
   const [previewFile, setPreviewFile] = useState(null);
+  const [previewZoom, setPreviewZoom] = useState(1);
+  const [previewRotation, setPreviewRotation] = useState(0);
+  const [processingQueue, setProcessingQueue] = useState([]);
+  const [failedUploads, setFailedUploads] = useState([]);
+  const [showSuccessAnimation, setShowSuccessAnimation] = useState(false);
   const videoRef = useRef(null);
   const canvasRef = useRef(null);
 
@@ -176,6 +181,16 @@ export default function DocumentUploadExtractor({
     } else {
       setQueuedFiles(validFiles);
     }
+
+    // Initialize processing queue
+    const queue = validFiles.map((file, idx) => ({
+      id: `file-${Date.now()}-${idx}`,
+      file,
+      status: 'queued', // queued, processing, completed, failed
+      progress: 0,
+      error: null
+    }));
+    setProcessingQueue(queue);
 
     // Generate previews for images
     const previews = {};
@@ -252,7 +267,14 @@ export default function DocumentUploadExtractor({
 
   const previewDocument = (file) => {
     setPreviewFile(file);
+    setPreviewZoom(1);
+    setPreviewRotation(0);
     setShowPreview(true);
+  };
+
+  const retryFailedUpload = async (file) => {
+    setFailedUploads(prev => prev.filter(f => f.name !== file.name));
+    processFile(file);
   };
 
   const handleFileUpload = async (e) => {
@@ -802,6 +824,15 @@ Provide:
         setUploadProgress(100);
         setProcessingStage('Complete!');
         
+        // Update processing queue
+        setProcessingQueue(prev => prev.map(item => 
+          item.file.name === file.name ? { ...item, status: 'completed', progress: 100 } : item
+        ));
+        
+        // Show success animation
+        setShowSuccessAnimation(true);
+        setTimeout(() => setShowSuccessAnimation(false), 2000);
+        
         toast.success("Data extracted successfully!", `${validData.length} items ready to review${colInfo}`, {
           duration: 3000,
           icon: <Sparkles className="w-5 h-5" />
@@ -814,7 +845,19 @@ Provide:
       }
     } catch (error) {
       console.error("Upload error:", error);
-      toast.error("Upload failed", error.message);
+      toast.error("Upload failed", error.message, {
+        action: () => retryFailedUpload(file),
+        actionLabel: "Retry"
+      });
+      
+      // Track failed upload
+      setFailedUploads(prev => [...prev, { file, error: error.message }]);
+      
+      // Update processing queue
+      setProcessingQueue(prev => prev.map(item => 
+        item.file.name === file.name ? { ...item, status: 'failed', error: error.message } : item
+      ));
+      
       setUploadProgress(0);
       setProcessingStage('');
     } finally {
@@ -1172,9 +1215,17 @@ Provide:
       if (inventoryCount > 0) messages.push(`${inventoryCount} stock movement(s)`);
       if (payrollCount > 0) messages.push(`${payrollCount} payroll item(s)`);
 
-      toast.success("Records created", messages.join(', ') + ' added');
+      // Show success animation
+      setShowSuccessAnimation(true);
       
-      if (onSuccess) onSuccess();
+      toast.success("✨ Records created successfully!", messages.join(', ') + ' added', {
+        duration: 4000
+      });
+      
+      setTimeout(() => {
+        setShowSuccessAnimation(false);
+        if (onSuccess) onSuccess();
+      }, 1500);
     } catch (error) {
       toast.error("Failed to create records", error.message);
     } finally {
@@ -1198,13 +1249,51 @@ Provide:
   const isProduction = detectedType === "production";
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-5xl max-h-[95vh] overflow-hidden p-0 w-[95vw] sm:w-[98vw] [&>button]:hidden">
-        <div className="h-2 flex">
-          <div className="flex-1 bg-[#1EB053]" />
-          <div className="flex-1 bg-white" />
-          <div className="flex-1 bg-[#0072C6]" />
-        </div>
+    <>
+      {/* Success Animation Overlay */}
+      <AnimatePresence>
+        {showSuccessAnimation && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/50 backdrop-blur-sm"
+          >
+            <motion.div
+              initial={{ scale: 0, rotate: -180 }}
+              animate={{ scale: 1, rotate: 0 }}
+              exit={{ scale: 0, rotate: 180 }}
+              transition={{ type: "spring", stiffness: 200, damping: 20 }}
+              className="bg-white rounded-3xl p-8 shadow-2xl"
+            >
+              <motion.div
+                initial={{ scale: 0 }}
+                animate={{ scale: [0, 1.2, 1] }}
+                transition={{ delay: 0.2, duration: 0.5 }}
+                className="w-24 h-24 rounded-full bg-gradient-to-br from-[#1EB053] to-[#0072C6] flex items-center justify-center mx-auto mb-4"
+              >
+                <CheckCircle className="w-12 h-12 text-white" />
+              </motion.div>
+              <motion.p
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.4 }}
+                className="text-xl font-bold text-center text-gray-900"
+              >
+                Success! ✨
+              </motion.p>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      <Dialog open={open} onOpenChange={onOpenChange}>
+        <DialogContent className="max-w-5xl max-h-[95vh] overflow-hidden p-0 w-[95vw] sm:w-[98vw] [&>button]:hidden">
+          <div className="h-2 flex">
+            <div className="flex-1 bg-[#1EB053]" />
+            <div className="flex-1 bg-white" />
+            <div className="flex-1 bg-[#0072C6]" />
+          </div>
 
         <div className="px-3 sm:px-6 py-3 sm:py-4 bg-gradient-to-r from-[#1EB053] to-[#0072C6] text-white">
           <div className="flex items-center gap-2 sm:gap-3">
@@ -1489,56 +1578,106 @@ Provide:
                       </Button>
                     </div>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mb-3">
-                      {queuedFiles.map((f, idx) => (
-                        <motion.div
-                          key={idx}
-                          initial={{ opacity: 0, scale: 0.9 }}
-                          animate={{ opacity: 1, scale: 1 }}
-                          transition={{ delay: idx * 0.05 }}
-                          className="relative group bg-white p-3 rounded-lg border hover:border-blue-400 hover:shadow-md transition-all"
-                        >
-                          <div className="flex items-start gap-3">
-                            {previewImages[f.name] ? (
-                              <img 
-                                src={previewImages[f.name]} 
-                                alt={f.name}
-                                className="w-12 h-12 object-cover rounded flex-shrink-0 cursor-pointer"
-                                onClick={() => previewDocument(f)}
-                              />
-                            ) : (
-                              <div className="w-12 h-12 bg-gray-100 rounded flex items-center justify-center flex-shrink-0">
-                                <File className="w-6 h-6 text-gray-400" />
-                              </div>
-                            )}
-                            <div className="flex-1 min-w-0">
-                              <p className="text-sm font-medium text-gray-900 truncate">{f.name}</p>
-                              <p className="text-xs text-gray-500">
-                                {(f.size / 1024).toFixed(0)} KB
-                              </p>
-                            </div>
-                            <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                              {previewImages[f.name] && (
-                                <Button
-                                  size="sm"
-                                  variant="ghost"
-                                  className="h-7 w-7 p-0"
-                                  onClick={() => previewDocument(f)}
-                                >
-                                  <Eye className="w-3 h-3" />
-                                </Button>
-                              )}
-                              <Button
-                                size="sm"
-                                variant="ghost"
-                                className="h-7 w-7 p-0 text-red-600"
-                                onClick={() => removeQueuedFile(f.name)}
-                              >
-                                <X className="w-3 h-3" />
-                              </Button>
-                            </div>
-                          </div>
-                        </motion.div>
-                      ))}
+                     {queuedFiles.map((f, idx) => {
+                       const queueItem = processingQueue.find(q => q.file.name === f.name);
+                       const status = queueItem?.status || 'queued';
+
+                       return (
+                         <motion.div
+                           key={idx}
+                           initial={{ opacity: 0, scale: 0.9 }}
+                           animate={{ opacity: 1, scale: 1 }}
+                           transition={{ delay: idx * 0.05 }}
+                           className="relative group bg-white p-3 rounded-lg border hover:border-blue-400 hover:shadow-md transition-all"
+                         >
+                           <div className="flex items-start gap-3">
+                             <div className="relative flex-shrink-0">
+                               {previewImages[f.name] ? (
+                                 <motion.img 
+                                   src={previewImages[f.name]} 
+                                   alt={f.name}
+                                   className="w-12 h-12 object-cover rounded cursor-pointer"
+                                   onClick={() => previewDocument(f)}
+                                   whileHover={{ scale: 1.1 }}
+                                   whileTap={{ scale: 0.95 }}
+                                 />
+                               ) : (
+                                 <div className="w-12 h-12 bg-gray-100 rounded flex items-center justify-center">
+                                   <File className="w-6 h-6 text-gray-400" />
+                                 </div>
+                               )}
+                               {status === 'processing' && (
+                                 <div className="absolute inset-0 bg-blue-500/20 rounded flex items-center justify-center">
+                                   <Loader2 className="w-5 h-5 text-blue-600 animate-spin" />
+                                 </div>
+                               )}
+                               {status === 'completed' && (
+                                 <motion.div 
+                                   initial={{ scale: 0 }}
+                                   animate={{ scale: 1 }}
+                                   className="absolute -top-1 -right-1 bg-green-500 rounded-full p-1"
+                                 >
+                                   <CheckCircle className="w-3 h-3 text-white" />
+                                 </motion.div>
+                               )}
+                               {status === 'failed' && (
+                                 <div className="absolute -top-1 -right-1 bg-red-500 rounded-full p-1">
+                                   <AlertCircle className="w-3 h-3 text-white" />
+                                 </div>
+                               )}
+                             </div>
+                             <div className="flex-1 min-w-0">
+                               <p className="text-sm font-medium text-gray-900 truncate">{f.name}</p>
+                               <p className="text-xs text-gray-500">
+                                 {(f.size / 1024).toFixed(0)} KB
+                               </p>
+                               {status === 'processing' && (
+                                 <div className="mt-1 h-1 bg-gray-200 rounded-full overflow-hidden">
+                                   <motion.div 
+                                     className="h-full bg-gradient-to-r from-[#1EB053] to-[#0072C6]"
+                                     initial={{ width: 0 }}
+                                     animate={{ width: `${queueItem.progress || 0}%` }}
+                                   />
+                                 </div>
+                               )}
+                               {status === 'failed' && (
+                                 <Button
+                                   size="sm"
+                                   variant="ghost"
+                                   className="h-6 text-xs text-red-600 mt-1 p-0"
+                                   onClick={() => retryFailedUpload(f)}
+                                 >
+                                   <RotateCw className="w-3 h-3 mr-1" />
+                                   Retry
+                                 </Button>
+                               )}
+                             </div>
+                             <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                               {previewImages[f.name] && status !== 'processing' && (
+                                 <Button
+                                   size="sm"
+                                   variant="ghost"
+                                   className="h-7 w-7 p-0"
+                                   onClick={() => previewDocument(f)}
+                                 >
+                                   <Eye className="w-3 h-3" />
+                                 </Button>
+                               )}
+                               {status !== 'processing' && (
+                                 <Button
+                                   size="sm"
+                                   variant="ghost"
+                                   className="h-7 w-7 p-0 text-red-600"
+                                   onClick={() => removeQueuedFile(f.name)}
+                                 >
+                                   <X className="w-3 h-3" />
+                                 </Button>
+                               )}
+                             </div>
+                           </div>
+                         </motion.div>
+                       );
+                     })}
                     </div>
                     <Button
                       className="w-full bg-gradient-to-r from-[#1EB053] to-[#0072C6] shadow-lg hover:shadow-xl transition-shadow"
@@ -2229,35 +2368,86 @@ Provide:
         </DialogContent>
       </Dialog>
 
-      {/* Image Preview Dialog */}
+      {/* Enhanced Image Preview Dialog */}
       <Dialog open={showPreview} onOpenChange={setShowPreview}>
-        <DialogContent className="max-w-4xl">
+        <DialogContent className="max-w-6xl max-h-[95vh]">
           <div className="h-1 flex -mx-6 -mt-6">
             <div className="flex-1 bg-[#1EB053]" />
             <div className="flex-1 bg-white" />
             <div className="flex-1 bg-[#0072C6]" />
           </div>
           <div className="space-y-4">
-            <h3 className="text-lg font-bold flex items-center gap-2">
-              <Eye className="w-5 h-5 text-[#0072C6]" />
-              Document Preview
-            </h3>
+            <div className="flex items-center justify-between">
+              <h3 className="text-lg font-bold flex items-center gap-2">
+                <Eye className="w-5 h-5 text-[#0072C6]" />
+                Document Preview
+              </h3>
+              <div className="flex gap-2">
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => setPreviewRotation((previewRotation - 90) % 360)}
+                >
+                  ↶ Rotate
+                </Button>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => setPreviewZoom(Math.max(0.5, previewZoom - 0.25))}
+                  disabled={previewZoom <= 0.5}
+                >
+                  − Zoom Out
+                </Button>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => setPreviewZoom(Math.min(3, previewZoom + 0.25))}
+                  disabled={previewZoom >= 3}
+                >
+                  + Zoom In
+                </Button>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => { setPreviewZoom(1); setPreviewRotation(0); }}
+                >
+                  Reset
+                </Button>
+              </div>
+            </div>
             {previewFile && previewImages[previewFile.name] && (
-              <div className="bg-gray-100 rounded-xl p-4 max-h-[70vh] overflow-auto">
-                <img 
+              <div className="bg-gray-900 rounded-xl p-4 max-h-[65vh] overflow-auto flex items-center justify-center">
+                <motion.img 
                   src={previewImages[previewFile.name]} 
                   alt={previewFile.name}
-                  className="w-full h-auto object-contain rounded-lg shadow-lg"
+                  className="max-w-full h-auto object-contain rounded-lg shadow-2xl"
+                  style={{
+                    transform: `scale(${previewZoom}) rotate(${previewRotation}deg)`,
+                    transformOrigin: 'center center',
+                    transition: 'transform 0.3s ease'
+                  }}
+                  animate={{ scale: previewZoom, rotate: previewRotation }}
+                  transition={{ type: "spring", stiffness: 300, damping: 30 }}
                 />
               </div>
             )}
-            <div className="p-3 bg-gray-50 rounded-lg">
-              <p className="font-medium text-gray-900">{previewFile?.name}</p>
-              <p className="text-xs text-gray-500">{previewFile?.size ? `${(previewFile.size / 1024).toFixed(0)} KB` : ''}</p>
+            <div className="p-3 bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg border border-blue-200">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="font-medium text-gray-900">{previewFile?.name}</p>
+                  <p className="text-xs text-gray-500">
+                    {previewFile?.size ? `${(previewFile.size / 1024).toFixed(0)} KB • ` : ''}
+                    Zoom: {(previewZoom * 100).toFixed(0)}% • Rotation: {previewRotation}°
+                  </p>
+                </div>
+                <Badge className="bg-blue-100 text-blue-700">
+                  {previewFile?.type?.split('/')[1]?.toUpperCase() || 'FILE'}
+                </Badge>
+              </div>
             </div>
           </div>
         </DialogContent>
       </Dialog>
-    </Dialog>
+    </>
   );
 }
