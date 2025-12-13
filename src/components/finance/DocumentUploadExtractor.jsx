@@ -1,3 +1,4 @@
+
 import React, { useState, useMemo, useRef } from "react";
 import { base44 } from "@/api/base44Client";
 import { format } from "date-fns";
@@ -106,6 +107,7 @@ export default function DocumentUploadExtractor({
 }) {
   const toast = useToast();
   const [uploadLoading, setUploadLoading] = useState(false);
+  const [createLoading, setCreateLoading] = useState(false); // Added state
   const [extractedData, setExtractedData] = useState([]);
   const [extractedColumns, setExtractedColumns] = useState([]);
   const [dynamicCategories, setDynamicCategories] = useState([]);
@@ -132,6 +134,7 @@ export default function DocumentUploadExtractor({
   const [processingQueue, setProcessingQueue] = useState([]);
   const [failedUploads, setFailedUploads] = useState([]);
   const [showSuccessAnimation, setShowSuccessAnimation] = useState(false);
+  const [activeTab, setActiveTab] = useState("upload"); // Added state
   const videoRef = useRef(null);
   const canvasRef = useRef(null);
 
@@ -139,6 +142,11 @@ export default function DocumentUploadExtractor({
   const categories = useMemo(() => {
     return [...(customCategories || baseCategories), ...dynamicCategories];
   }, [customCategories, baseCategories, dynamicCategories]);
+
+  const selectedRows = useMemo(() => 
+    extractedData.filter(e => e.selected).map(e => e.id),
+    [extractedData]
+  );
 
   const handleDragEnter = (e) => {
     e.preventDefault();
@@ -894,7 +902,7 @@ Provide:
       }
     }
 
-    setUploadLoading(true);
+    setCreateLoading(true); // Changed from setUploadLoading
     try {
       const isRevenue = detectedType === "revenue";
       const isProduction = detectedType === "production";
@@ -1229,7 +1237,7 @@ Provide:
     } catch (error) {
       toast.error("Failed to create records", error.message);
     } finally {
-      setUploadLoading(false);
+      setCreateLoading(false); // Changed from setUploadLoading
     }
   };
 
@@ -1245,8 +1253,11 @@ Provide:
     ));
   };
 
+  const createRecords = handleCreateRecords; // Renamed
   const isRevenue = detectedType === "revenue";
   const isProduction = detectedType === "production";
+  const title = isProduction ? "Import Production Batches" : isRevenue ? "Import Revenue/Sales" : "Import Expenses";
+
 
   return (
     <>
@@ -1301,7 +1312,7 @@ Provide:
               <FileUp className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
             </div>
             <div className="flex-1 min-w-0">
-              <h2 className="text-base sm:text-xl font-bold truncate">Import {isProduction ? 'Production Batches' : isRevenue ? 'Revenue/Sales' : 'Expenses'} from Document</h2>
+              <h2 className="text-base sm:text-xl font-bold truncate">{title} from Document</h2> {/* Updated here */}
               <p className="text-white/80 text-xs sm:text-sm truncate">Upload PDF, CSV, or images to extract {isProduction ? 'production batch' : isRevenue ? 'revenue' : 'expense'} data</p>
             </div>
           </div>
@@ -1397,7 +1408,7 @@ Provide:
 
           {extractedData.length === 0 && (
             <div className="space-y-4">
-              <Tabs defaultValue="upload" className="w-full">
+              <Tabs defaultValue="upload" value={activeTab} onValueChange={setActiveTab} className="w-full"> {/* Updated here */}
                 <TabsList className="grid w-full grid-cols-2">
                   <TabsTrigger value="upload" className="gap-2">
                     <FileUp className="w-4 h-4" />
@@ -1810,11 +1821,15 @@ Provide:
               <div className="flex items-center justify-between flex-wrap gap-2 p-4 bg-gradient-to-r from-gray-50 to-gray-100 rounded-xl border">
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#1EB053] to-[#0072C6] flex items-center justify-center shadow-lg">
-                    <CheckCircle className="w-5 h-5 text-white" />
+                    <span className="text-white font-bold text-lg">{extractedData.filter(e => e.selected).length}</span>
                   </div>
                   <div>
-                    <h3 className="font-bold text-gray-900">Extracted Data</h3>
-                    <p className="text-xs text-gray-600">{extractedData.length} items • {extractedData.filter(e => e.selected).length} selected</p>
+                    <p className="font-bold text-gray-900">
+                      {extractedData.filter(e => e.selected).length} item(s) ready
+                    </p>
+                    <p className="text-sm text-gray-600 font-mono">
+                      Total: Le {extractedData.filter(e => e.selected).reduce((sum, e) => sum + (e.amount || 0), 0).toLocaleString()}
+                    </p>
                   </div>
                 </div>
                 <div className="flex gap-2">
@@ -2263,11 +2278,11 @@ Provide:
                       Toggle All
                     </Button>
                     <Button
-                      onClick={handleCreateRecords}
-                      disabled={uploadLoading || extractedData.filter(e => e.selected).length === 0}
+                      onClick={createRecords} // Updated here
+                      disabled={createLoading || extractedData.filter(e => e.selected).length === 0} // Updated here
                       className="bg-gradient-to-r from-[#1EB053] to-[#0072C6] flex-1 sm:flex-none shadow-lg hover:shadow-xl transition-shadow"
                     >
-                      {uploadLoading ? (
+                      {createLoading ? ( // Updated here
                         <Loader2 className="w-4 h-4 mr-2 animate-spin" />
                       ) : (
                         <CheckCircle className="w-4 h-4 mr-2" />
@@ -2454,83 +2469,6 @@ Provide:
                 </Badge>
               </div>
             </div>
-          </div>
-        </DialogContent>
-      </Dialog>
-        <DialogContent className="max-w-md">
-          <div className="space-y-4">
-            <div className="text-center">
-              <div className="w-16 h-16 rounded-full bg-yellow-100 mx-auto mb-4 flex items-center justify-center">
-                <span className="text-3xl">💱</span>
-              </div>
-              <h3 className="text-xl font-bold text-gray-900 mb-2">What Currency is in the Document?</h3>
-              <p className="text-sm text-gray-600">
-                Sierra Leone redenominated in July 2022: 1,000 old Leones (SLL) = 1 new Leone (SLE)
-              </p>
-            </div>
-
-            <div className="space-y-3">
-              <Button
-                type="button"
-                variant="outline"
-                className="w-full h-auto py-4 px-6 text-left hover:border-green-500 hover:bg-green-50"
-                onClick={() => {
-                  setCurrencyMode('sle');
-                  if (pendingFile) {
-                    processFile(pendingFile);
-                  }
-                }}
-              >
-                <div className="flex items-start gap-3">
-                  <div className="w-10 h-10 rounded-lg bg-green-100 flex items-center justify-center flex-shrink-0 mt-1">
-                    <span className="text-xl">✓</span>
-                  </div>
-                  <div className="flex-1">
-                    <div className="font-bold text-gray-900 mb-1">New Leone (SLE)</div>
-                    <div className="text-sm text-gray-600">
-                      Document shows amounts like: <strong>75</strong>, <strong>1,500</strong>, <strong>25,000</strong>
-                    </div>
-                    <div className="text-xs text-gray-500 mt-1">No conversion needed</div>
-                  </div>
-                </div>
-              </Button>
-
-              <Button
-                type="button"
-                variant="outline"
-                className="w-full h-auto py-4 px-6 text-left hover:border-blue-500 hover:bg-blue-50"
-                onClick={() => {
-                  setCurrencyMode('sll');
-                  if (pendingFile) {
-                    processFile(pendingFile);
-                  }
-                }}
-              >
-                <div className="flex items-start gap-3">
-                  <div className="w-10 h-10 rounded-lg bg-blue-100 flex items-center justify-center flex-shrink-0 mt-1">
-                    <span className="text-xl">🔄</span>
-                  </div>
-                  <div className="flex-1">
-                    <div className="font-bold text-gray-900 mb-1">Old Leone (SLL)</div>
-                    <div className="text-sm text-gray-600">
-                      Document shows amounts like: <strong>75,000</strong>, <strong>1,500,000</strong>, <strong>25,000,000</strong>
-                    </div>
-                    <div className="text-xs text-gray-500 mt-1">Will divide by 1,000 to convert</div>
-                  </div>
-                </div>
-              </Button>
-            </div>
-
-            <Button
-              variant="ghost"
-              className="w-full"
-              onClick={() => {
-                setShowCurrencyDialog(false);
-                setPendingFile(null);
-              }}
-            >
-              Cancel
-            </Button>
           </div>
         </DialogContent>
       </Dialog>
