@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
@@ -19,7 +19,7 @@ import { format } from "date-fns";
 import QuickExpenseApproval from "./QuickExpenseApproval";
 
 export default function PendingApprovalsWidget({ orgId, currentEmployee }) {
-  const [selectedExpense, setSelectedExpense] = React.useState(null);
+  const [selectedExpense, setSelectedExpense] = useState(null);
 
   const { data: pendingExpenses = [] } = useQuery({
     queryKey: ['pendingExpenses', orgId],
