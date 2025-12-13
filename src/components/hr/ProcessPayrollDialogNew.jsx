@@ -244,20 +244,34 @@ export default function ProcessPayrollDialog({ open, onOpenChange, orgId, curren
       const packageBonuses = empPackage?.bonuses || [];
       const packageDeductions = empPackage?.deductions || [];
       
+      console.log('Employee:', emp.full_name, 'Base Salary:', baseSalary);
+      console.log('Package Allowances:', packageAllowances);
+      
       // Calculate package allowances (handle percentage type)
       const calculatedPackageAllowances = packageAllowances.map(a => {
+        const parsedAmount = parseFloat(a.amount) || 0;
         if (a.type === 'percentage') {
+          const calculatedAmount = (baseSalary * parsedAmount) / 100;
+          console.log(`Allowance ${a.name}: ${parsedAmount}% of ${baseSalary} = ${calculatedAmount}`);
           return {
             ...a,
-            amount: (baseSalary * (parseFloat(a.amount) || 0)) / 100
+            amount: calculatedAmount
           };
         }
-        return a;
+        console.log(`Allowance ${a.name}: Fixed ${parsedAmount}`);
+        return {
+          ...a,
+          amount: parsedAmount
+        };
       });
+      
+      console.log('Calculated Package Allowances:', calculatedPackageAllowances);
       
       const combinedAllowances = [...allowances, ...calculatedPackageAllowances];
       const combinedBonuses = [...bonuses, ...packageBonuses];
       const combinedDeductions = [...deductions, ...packageDeductions];
+      
+      console.log('Combined Allowances:', combinedAllowances);
       
       const totalAllowances = combinedAllowances.reduce((sum, a) => sum + (parseFloat(a.amount) || 0), 0);
       const totalBonuses = combinedBonuses.reduce((sum, b) => sum + (parseFloat(b.amount) || 0), 0);
