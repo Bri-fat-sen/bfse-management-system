@@ -78,6 +78,7 @@ const menuSections = [
     color: "#1EB053",
     items: [
       { name: "Dashboard", icon: LayoutDashboard, page: "Dashboard", module: "dashboard" },
+      { name: "Executive Dashboard", icon: BarChart3, page: "ExecutiveDashboard", module: "dashboard" },
       { name: "My Portal", icon: User, page: "EmployeeSelfService", module: "dashboard" },
       { name: "Calendar & Tasks", icon: Calendar, page: "Calendar", module: "dashboard" },
     ]
