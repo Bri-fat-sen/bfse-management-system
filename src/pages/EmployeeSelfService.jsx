@@ -33,13 +33,14 @@ import LoadingSpinner from "@/components/ui/LoadingSpinner";
 import PersonalInfoEditor from "@/components/employee/PersonalInfoEditor";
 import MyPayslips from "@/components/employee/MyPayslips";
 import TrainingHistory from "@/components/employee/TrainingHistory";
+import LeaveRequestForm from "@/components/employee/LeaveRequestForm";
 import PerformanceReviews from "@/components/employee/PerformanceReviews";
 import WageClockInOut from "@/components/hr/WageClockInOut";
-import MyLeaveRequests from "@/components/employee/MyLeaveRequests";
 
 export default function EmployeeSelfService() {
   const [activeTab, setActiveTab] = useState("overview");
   const [showPersonalInfoEditor, setShowPersonalInfoEditor] = useState(false);
+  const [showLeaveForm, setShowLeaveForm] = useState(false);
 
   const { data: user, isLoading: loadingUser } = useQuery({
     queryKey: ['currentUser'],
@@ -779,10 +780,166 @@ export default function EmployeeSelfService() {
 
         {/* Leave Tab */}
         <TabsContent value="leave" className="mt-6">
-          <MyLeaveRequests 
-            employee={currentEmployee}
-            orgId={orgId}
-          />
+          <div className="space-y-6">
+            {/* Leave Balances Card */}
+            <Card className="border-0 shadow-lg">
+              <div className="h-1 flex">
+                <div className="flex-1 bg-[#1EB053]" />
+                <div className="flex-1 bg-white" />
+                <div className="flex-1 bg-[#0072C6]" />
+              </div>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Calendar className="w-5 h-5 text-[#1EB053]" />
+                  My Leave Balances
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                  <div className="p-4 bg-green-50 rounded-lg border border-green-100 text-center">
+                    <Calendar className="w-6 h-6 text-[#1EB053] mx-auto mb-2" />
+                    <p className="text-xs text-gray-600 mb-1">Annual Leave</p>
+                    <p className="text-3xl font-bold text-[#1EB053]">
+                      {currentEmployee?.leave_balances?.annual_days ?? 21}
+                    </p>
+                    <p className="text-xs text-gray-500">days remaining</p>
+                  </div>
+                  <div className="p-4 bg-blue-50 rounded-lg border border-blue-100 text-center">
+                    <FileText className="w-6 h-6 text-[#0072C6] mx-auto mb-2" />
+                    <p className="text-xs text-gray-600 mb-1">Sick Leave</p>
+                    <p className="text-3xl font-bold text-[#0072C6]">
+                      {currentEmployee?.leave_balances?.sick_days ?? 10}
+                    </p>
+                    <p className="text-xs text-gray-500">days remaining</p>
+                  </div>
+                  <div className="p-4 bg-pink-50 rounded-lg border border-pink-100 text-center">
+                    <User className="w-6 h-6 text-pink-600 mx-auto mb-2" />
+                    <p className="text-xs text-gray-600 mb-1">Maternity</p>
+                    <p className="text-3xl font-bold text-pink-600">
+                      {currentEmployee?.leave_balances?.maternity_days ?? 90}
+                    </p>
+                    <p className="text-xs text-gray-500">days remaining</p>
+                  </div>
+                  <div className="p-4 bg-purple-50 rounded-lg border border-purple-100 text-center">
+                    <User className="w-6 h-6 text-purple-600 mx-auto mb-2" />
+                    <p className="text-xs text-gray-600 mb-1">Paternity</p>
+                    <p className="text-3xl font-bold text-purple-600">
+                      {currentEmployee?.leave_balances?.paternity_days ?? 5}
+                    </p>
+                    <p className="text-xs text-gray-500">days remaining</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Leave Requests Card */}
+            <Card className="border-0 shadow-lg">
+              <div className="h-1 flex">
+                <div className="flex-1 bg-[#0072C6]" />
+                <div className="flex-1 bg-white" />
+                <div className="flex-1 bg-[#1EB053]" />
+              </div>
+              <CardHeader className="flex flex-row items-center justify-between">
+                <CardTitle className="flex items-center gap-2">
+                  <CalendarDays className="w-5 h-5 text-[#0072C6]" />
+                  My Leave Requests
+                  {pendingLeaves > 0 && (
+                    <Badge className="bg-amber-500">{pendingLeaves} pending</Badge>
+                  )}
+                </CardTitle>
+                <Button 
+                  size="sm" 
+                  className="bg-[#1EB053]"
+                  onClick={() => setShowLeaveForm(true)}
+                >
+                  <CalendarDays className="w-4 h-4 mr-2" />
+                  Request Leave
+                </Button>
+              </CardHeader>
+              <CardContent>
+                {leaveRequests.length === 0 ? (
+                  <div className="text-center py-8">
+                    <CalendarDays className="w-12 h-12 text-gray-300 mx-auto mb-3" />
+                    <p className="text-gray-500 mb-4">No leave requests yet</p>
+                    <Button 
+                      size="sm"
+                      onClick={() => setShowLeaveForm(true)}
+                      className="bg-[#1EB053]"
+                    >
+                      <CalendarDays className="w-4 h-4 mr-2" />
+                      Request Your First Leave
+                    </Button>
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    {leaveRequests.map((leave) => (
+                      <div 
+                        key={leave.id} 
+                        className={`p-4 rounded-lg border-l-4 ${
+                          leave.status === 'pending' ? 'bg-amber-50 border-amber-500' :
+                          leave.status === 'approved' ? 'bg-green-50 border-green-500' :
+                          leave.status === 'rejected' ? 'bg-red-50 border-red-500' :
+                          'bg-gray-50 border-gray-500'
+                        }`}
+                      >
+                        <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3">
+                          <div className="flex-1">
+                            <div className="flex items-center gap-2 mb-2">
+                              <p className="font-semibold text-gray-900 capitalize">
+                                {leave.leave_type.replace('_', ' ')}
+                              </p>
+                              <Badge className={
+                                leave.status === 'pending' ? 'bg-amber-100 text-amber-700' :
+                                leave.status === 'approved' ? 'bg-green-100 text-green-700' :
+                                leave.status === 'rejected' ? 'bg-red-100 text-red-700' :
+                                'bg-gray-100 text-gray-700'
+                              }>
+                                {leave.status}
+                              </Badge>
+                            </div>
+                            <div className="space-y-1">
+                              <p className="text-sm text-gray-600 flex items-center gap-2">
+                                <Calendar className="w-4 h-4" />
+                                {format(new Date(leave.start_date), 'MMM d, yyyy')} - {format(new Date(leave.end_date), 'MMM d, yyyy')}
+                              </p>
+                              <p className="text-sm text-gray-600 flex items-center gap-2">
+                                <Clock className="w-4 h-4" />
+                                {leave.days_requested} day{leave.days_requested !== 1 ? 's' : ''}
+                              </p>
+                              {leave.reason && (
+                                <p className="text-sm text-gray-500 mt-2 italic">"{leave.reason}"</p>
+                              )}
+                              {leave.rejection_reason && (
+                                <div className="mt-2 p-2 bg-red-100 rounded border border-red-200">
+                                  <p className="text-xs font-semibold text-red-700">Rejection Reason:</p>
+                                  <p className="text-xs text-red-600 mt-1">{leave.rejection_reason}</p>
+                                </div>
+                              )}
+                              {leave.approved_by_name && leave.status === 'approved' && (
+                                <p className="text-xs text-gray-500 mt-2">
+                                  Approved by {leave.approved_by_name} on {format(new Date(leave.approval_date), 'MMM d, yyyy')}
+                                </p>
+                              )}
+                            </div>
+                          </div>
+                          {leave.attachment_url && (
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => window.open(leave.attachment_url, '_blank')}
+                            >
+                              <FileText className="w-4 h-4 mr-1" />
+                              View Attachment
+                            </Button>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </div>
         </TabsContent>
 
         {/* Performance Tab */}
@@ -801,6 +958,14 @@ export default function EmployeeSelfService() {
         employee={currentEmployee}
         open={showPersonalInfoEditor}
         onOpenChange={setShowPersonalInfoEditor}
+      />
+
+      {/* Leave Request Form Dialog */}
+      <LeaveRequestForm
+        open={showLeaveForm}
+        onOpenChange={setShowLeaveForm}
+        employee={currentEmployee}
+        orgId={orgId}
       />
     </div>
   );
