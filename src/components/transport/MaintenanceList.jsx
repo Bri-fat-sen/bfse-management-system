@@ -33,10 +33,19 @@ const maintenanceTypeLabels = {
 };
 
 export function MaintenanceCard({ record, onClick }) {
-  const isOverdue = record.next_due_date && isPast(new Date(record.next_due_date));
-  const daysUntilDue = record.next_due_date 
-    ? differenceInDays(new Date(record.next_due_date), new Date()) 
-    : null;
+  const isOverdue = record.next_due_date ? (() => {
+    try {
+      const date = new Date(record.next_due_date);
+      return !isNaN(date.getTime()) && isPast(date);
+    } catch { return false; }
+  })() : false;
+  
+  const daysUntilDue = record.next_due_date ? (() => {
+    try {
+      const date = new Date(record.next_due_date);
+      return !isNaN(date.getTime()) ? differenceInDays(date, new Date()) : null;
+    } catch { return null; }
+  })() : null;
 
   return (
     <div 
@@ -69,10 +78,17 @@ export function MaintenanceCard({ record, onClick }) {
               <p className="text-sm text-gray-600 mt-0.5">{record.description}</p>
             )}
             <div className="flex items-center gap-3 text-sm text-gray-500 mt-1 flex-wrap">
-              <span className="flex items-center gap-1">
-                <Calendar className="w-3 h-3" />
-                {format(new Date(record.date_performed), 'MMM d, yyyy')}
-              </span>
+              {record.date_performed && (() => {
+                try {
+                  const date = new Date(record.date_performed);
+                  return !isNaN(date.getTime()) && (
+                    <span className="flex items-center gap-1">
+                      <Calendar className="w-3 h-3" />
+                      {format(date, 'MMM d, yyyy')}
+                    </span>
+                  );
+                } catch { return null; }
+              })()}
               {record.mileage_at_service > 0 && (
                 <span className="flex items-center gap-1">
                   <Gauge className="w-3 h-3" />
@@ -102,10 +118,19 @@ export function MaintenanceCard({ record, onClick }) {
 }
 
 export function UpcomingMaintenanceCard({ record, vehicle, onClick }) {
-  const isOverdue = record.next_due_date && isPast(new Date(record.next_due_date));
-  const daysUntilDue = record.next_due_date 
-    ? differenceInDays(new Date(record.next_due_date), new Date()) 
-    : null;
+  const isOverdue = record.next_due_date ? (() => {
+    try {
+      const date = new Date(record.next_due_date);
+      return !isNaN(date.getTime()) && isPast(date);
+    } catch { return false; }
+  })() : false;
+  
+  const daysUntilDue = record.next_due_date ? (() => {
+    try {
+      const date = new Date(record.next_due_date);
+      return !isNaN(date.getTime()) ? differenceInDays(date, new Date()) : null;
+    } catch { return null; }
+  })() : null;
   const mileageRemaining = record.next_due_mileage && vehicle?.current_mileage
     ? record.next_due_mileage - vehicle.current_mileage
     : null;
@@ -156,20 +181,31 @@ export function MaintenanceStats({ maintenanceRecords, vehicles }) {
   const now = new Date();
   const thirtyDaysAgo = addDays(now, -30);
   
-  const recentMaintenance = maintenanceRecords.filter(m => 
-    new Date(m.date_performed) >= thirtyDaysAgo
-  );
+  const recentMaintenance = maintenanceRecords.filter(m => {
+    if (!m.date_performed) return false;
+    try {
+      const date = new Date(m.date_performed);
+      return !isNaN(date.getTime()) && date >= thirtyDaysAgo;
+    } catch { return false; }
+  });
   
   const totalCost30Days = recentMaintenance.reduce((sum, m) => sum + (m.cost || 0), 0);
   
-  const upcomingMaintenance = maintenanceRecords.filter(m => 
-    m.next_due_date && !isPast(new Date(m.next_due_date)) && 
-    differenceInDays(new Date(m.next_due_date), now) <= 30
-  );
+  const upcomingMaintenance = maintenanceRecords.filter(m => {
+    if (!m.next_due_date) return false;
+    try {
+      const date = new Date(m.next_due_date);
+      return !isNaN(date.getTime()) && !isPast(date) && differenceInDays(date, now) <= 30;
+    } catch { return false; }
+  });
   
-  const overdueMaintenance = maintenanceRecords.filter(m => 
-    m.next_due_date && isPast(new Date(m.next_due_date)) && m.status !== 'completed'
-  );
+  const overdueMaintenance = maintenanceRecords.filter(m => {
+    if (!m.next_due_date || m.status === 'completed') return false;
+    try {
+      const date = new Date(m.next_due_date);
+      return !isNaN(date.getTime()) && isPast(date);
+    } catch { return false; }
+  });
 
   return (
     <div className="grid grid-cols-2 md:grid-cols-4 gap-2 sm:gap-3">
