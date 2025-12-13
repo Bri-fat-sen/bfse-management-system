@@ -1,95 +1,75 @@
 import React from "react";
 import { usePermissions } from "./PermissionsContext";
-import { AlertTriangle, Lock } from "lucide-react";
+import { AlertCircle, Lock } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Link } from "react-router-dom";
-import { createPageUrl } from "@/utils";
 
-export default function PermissionGuard({ 
+/**
+ * Component to conditionally render content based on permissions
+ * Usage: <PermissionGuard module="finance" action="can_approve_expenses">...</PermissionGuard>
+ */
+export function PermissionGuard({ 
   module, 
-  action = "view",
-  customPermission = null,
+  action, 
+  customPermission,
+  children, 
   fallback = null,
-  children 
+  showDenied = false 
 }) {
-  const permissions = usePermissions();
+  const { permissions, hasCustomPermission } = usePermissions();
   
-  const hasPermission = () => {
-    if (!module) return true;
-    
-    // Check custom permission first
-    if (customPermission) {
-      return permissions.hasCustomPermission(module, customPermission);
-    }
-    
-    // Check standard action
-    switch (action) {
-      case "view": return permissions.canView(module);
-      case "create": return permissions.canCreate(module);
-      case "edit": return permissions.canEdit(module);
-      case "delete": return permissions.canDelete(module);
-      case "export": return permissions.canExport(module);
-      case "approve": return permissions.canApprove(module);
-      default: return false;
-    }
-  };
-
-  if (!hasPermission()) {
-    if (fallback) return fallback;
-    
-    return (
-      <Card className="border-0 shadow-xl rounded-2xl overflow-hidden">
-        <div className="h-1 bg-gradient-to-r from-red-500 to-orange-500"></div>
-        <CardContent className="p-8 text-center">
-          <div className="w-20 h-20 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
-            <Lock className="w-10 h-10 text-red-600" />
-          </div>
-          <h3 className="text-xl font-bold text-gray-900 mb-2">Access Restricted</h3>
-          <p className="text-gray-600 mb-6">
-            You don't have permission to {action} this {module} content.
-            <br />
-            Contact your administrator for access.
-          </p>
-          <Link to={createPageUrl("Dashboard")}>
-            <Button className="bg-gradient-to-r from-[#1EB053] to-[#0072C6] text-white">
-              Return to Dashboard
-            </Button>
-          </Link>
-        </CardContent>
-      </Card>
-    );
+  let hasPermission = false;
+  
+  if (customPermission) {
+    // Check custom permission
+    hasPermission = hasCustomPermission(module, customPermission);
+  } else if (action) {
+    // Check standard action permission
+    hasPermission = permissions[module]?.[action] ?? false;
   }
-
+  
+  if (!hasPermission) {
+    if (showDenied) {
+      return (
+        <Card className="border-red-200 bg-red-50">
+          <CardContent className="p-6 text-center">
+            <Lock className="w-12 h-12 text-red-500 mx-auto mb-3" />
+            <h3 className="font-semibold text-red-900 mb-1">Access Denied</h3>
+            <p className="text-sm text-red-600">You don't have permission to access this feature.</p>
+          </CardContent>
+        </Card>
+      );
+    }
+    return fallback;
+  }
+  
   return <>{children}</>;
 }
 
-// Hook for conditional rendering
-export function useHasPermission(module, action = "view", customPermission = null) {
-  const permissions = usePermissions();
-  
-  if (!module) return true;
+/**
+ * Hook to check if user has specific permission
+ */
+export function useHasPermission(module, action, customPermission) {
+  const { permissions, hasCustomPermission } = usePermissions();
   
   if (customPermission) {
-    return permissions.hasCustomPermission(module, customPermission);
+    return hasCustomPermission(module, customPermission);
   }
   
-  switch (action) {
-    case "view": return permissions.canView(module);
-    case "create": return permissions.canCreate(module);
-    case "edit": return permissions.canEdit(module);
-    case "delete": return permissions.canDelete(module);
-    case "export": return permissions.canExport(module);
-    case "approve": return permissions.canApprove(module);
-    default: return false;
-  }
+  return permissions[module]?.[action] ?? false;
 }
 
-// Component for hiding UI elements based on permissions
-export function PermissionButton({ module, action, customPermission, children, ...props }) {
-  const hasPermission = useHasPermission(module, action, customPermission);
+/**
+ * Utility to get all granted permissions for a module
+ */
+export function useModulePermissions(module) {
+  const { permissions, hasCustomPermission } = usePermissions();
   
-  if (!hasPermission) return null;
+  const modulePerms = permissions[module] || {};
   
-  return <Button {...props}>{children}</Button>;
+  return {
+    ...modulePerms,
+    hasCustomPermission: (perm) => hasCustomPermission(module, perm),
+  };
 }
+
+export default PermissionGuard;
