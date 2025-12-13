@@ -29,6 +29,35 @@ const LEAVE_TYPE_LABELS = {
   study: "Study Leave"
 };
 
+const PREDEFINED_ALLOWANCES = [
+  { name: "Housing Allowance", amount: 0 },
+  { name: "Transport Allowance", amount: 0 },
+  { name: "Meal Allowance", amount: 0 },
+  { name: "Medical Allowance", amount: 0 },
+  { name: "Education Allowance", amount: 0 },
+  { name: "Communication Allowance", amount: 0 },
+  { name: "Hardship Allowance", amount: 0 },
+];
+
+const PREDEFINED_BONUSES = [
+  { name: "Performance Bonus", amount: 0, type: "performance" },
+  { name: "Sales Commission", amount: 0, type: "sales_commission" },
+  { name: "Attendance Bonus", amount: 0, type: "attendance" },
+  { name: "Holiday Bonus", amount: 0, type: "holiday" },
+  { name: "Year-End Bonus", amount: 0, type: "other" },
+  { name: "Productivity Bonus", amount: 0, type: "performance" },
+];
+
+const PREDEFINED_DEDUCTIONS = [
+  { name: "Loan Repayment", amount: 0, type: "loan" },
+  { name: "Salary Advance", amount: 0, type: "advance" },
+  { name: "Union Dues", amount: 0, type: "voluntary" },
+  { name: "Pension Contribution", amount: 0, type: "voluntary" },
+  { name: "Insurance Premium", amount: 0, type: "voluntary" },
+  { name: "Uniform Deduction", amount: 0, type: "other" },
+  { name: "Damage/Loss Recovery", amount: 0, type: "other" },
+];
+
 export default function ProcessPayrollDialog({ open, onOpenChange, orgId, currentEmployee, employees, payCycles }) {
   const [activeStep, setActiveStep] = useState("config");
   const [selectedEmployees, setSelectedEmployees] = useState([]);
@@ -351,7 +380,22 @@ export default function ProcessPayrollDialog({ open, onOpenChange, orgId, curren
             <div className="p-4 border rounded-lg bg-green-50/50">
               <div className="flex justify-between mb-3">
                 <Label className="text-green-700">Allowances</Label>
-                <Button type="button" size="sm" variant="outline" onClick={() => setAllowances([...allowances, { name: '', amount: 0 }])}>+ Add</Button>
+                <div className="flex gap-2">
+                  <Select onValueChange={(value) => {
+                    const preset = PREDEFINED_ALLOWANCES.find(p => p.name === value);
+                    if (preset) setAllowances([...allowances, { ...preset }]);
+                  }}>
+                    <SelectTrigger className="w-48">
+                      <SelectValue placeholder="Add Preset" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {PREDEFINED_ALLOWANCES.map((preset) => (
+                        <SelectItem key={preset.name} value={preset.name}>{preset.name}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <Button type="button" size="sm" variant="outline" onClick={() => setAllowances([...allowances, { name: '', amount: 0 }])}>+ Custom</Button>
+                </div>
               </div>
               {allowances.map((a, idx) => (
                 <div key={idx} className="flex gap-2 mb-2">
@@ -369,7 +413,22 @@ export default function ProcessPayrollDialog({ open, onOpenChange, orgId, curren
             <div className="p-4 border rounded-lg bg-blue-50/50">
               <div className="flex justify-between mb-3">
                 <Label className="text-blue-700">Bonuses</Label>
-                <Button type="button" size="sm" variant="outline" onClick={() => setBonuses([...bonuses, { name: '', amount: 0, type: 'performance' }])}>+ Add</Button>
+                <div className="flex gap-2">
+                  <Select onValueChange={(value) => {
+                    const preset = PREDEFINED_BONUSES.find(p => p.name === value);
+                    if (preset) setBonuses([...bonuses, { ...preset }]);
+                  }}>
+                    <SelectTrigger className="w-48">
+                      <SelectValue placeholder="Add Preset" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {PREDEFINED_BONUSES.map((preset) => (
+                        <SelectItem key={preset.name} value={preset.name}>{preset.name}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <Button type="button" size="sm" variant="outline" onClick={() => setBonuses([...bonuses, { name: '', amount: 0, type: 'performance' }])}>+ Custom</Button>
+                </div>
               </div>
               {bonuses.map((b, idx) => (
                 <div key={idx} className="flex gap-2 mb-2">
@@ -386,9 +445,25 @@ export default function ProcessPayrollDialog({ open, onOpenChange, orgId, curren
 
             <div className="p-4 border rounded-lg bg-red-50/50">
               <div className="flex justify-between mb-3">
-                <Label className="text-red-700">Deductions</Label>
-                <Button type="button" size="sm" variant="outline" onClick={() => setDeductions([...deductions, { name: '', amount: 0, type: 'voluntary' }])}>+ Add</Button>
+                <Label className="text-red-700">Deductions (Voluntary)</Label>
+                <div className="flex gap-2">
+                  <Select onValueChange={(value) => {
+                    const preset = PREDEFINED_DEDUCTIONS.find(p => p.name === value);
+                    if (preset) setDeductions([...deductions, { ...preset }]);
+                  }}>
+                    <SelectTrigger className="w-48">
+                      <SelectValue placeholder="Add Preset" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {PREDEFINED_DEDUCTIONS.map((preset) => (
+                        <SelectItem key={preset.name} value={preset.name}>{preset.name}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <Button type="button" size="sm" variant="outline" onClick={() => setDeductions([...deductions, { name: '', amount: 0, type: 'voluntary' }])}>+ Custom</Button>
+                </div>
               </div>
+              <p className="text-xs text-gray-600 mb-2 italic">Note: NASSIT and PAYE are calculated automatically</p>
               {deductions.map((d, idx) => (
                 <div key={idx} className="flex gap-2 mb-2">
                   <Input placeholder="Name" value={d.name} onChange={(e) => {
