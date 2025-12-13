@@ -64,6 +64,7 @@ const generateFormHTML = (formType, org) => {
   const formTemplate = FORM_TEMPLATES.find(f => f.id === formType);
   const formName = formTemplate?.name || 'Form';
   const totalPages = formTemplate?.pages || 1;
+  const formCategory = formTemplate?.category === 'expense' ? 'EXPENSE' : 'REVENUE';
   
   // Use the unified PDF styles
   const unifiedStyles = getUnifiedPDFStyles(org, 'report');
@@ -303,6 +304,7 @@ const generateFormHTML = (formType, org) => {
     </style>
   `;
 
+  const header = getUnifiedHeader(org, formName, `${formCategory}-FORM`, today, 'report');
   const footer = getUnifiedFooter(org);
 
   const signatureSection = `
@@ -334,12 +336,9 @@ const generateFormHTML = (formType, org) => {
       </ol>
     </div>
   `;
-
-  const getHeader = (formName) => getUnifiedHeader(org, formName, `${formType.toUpperCase().slice(0,3)}-FORM`, today, 'report');
   
   const forms = {
     expense_fuel: `
-      ${getHeader('Fuel Expense Form')}
       <div class="content">
         ${getInstructions('Fuel Expense Form', 'expense')}
         <div class="form-section">
@@ -406,7 +405,6 @@ const generateFormHTML = (formType, org) => {
       </div>
     `,
     expense_maintenance: `
-      ${getHeader('Maintenance Expense Form')}
       <div class="content">
         ${getInstructions('Maintenance Expense Form', 'expense')}
         <div class="form-section">
@@ -468,7 +466,6 @@ const generateFormHTML = (formType, org) => {
       </div>
     `,
     expense_utilities: `
-      ${getHeader('Utilities Expense Form')}
       <div class="content">
         ${getInstructions('Utilities Expense Form', 'expense')}
         <div class="form-section">
@@ -525,7 +522,6 @@ const generateFormHTML = (formType, org) => {
       </div>
     `,
     expense_supplies: `
-      ${getHeader('Supplies Expense Form')}
       <div class="content">
         ${getInstructions('Supplies Expense Form', 'expense')}
         <div class="form-section">
@@ -569,7 +565,6 @@ const generateFormHTML = (formType, org) => {
       </div>
     `,
     expense_rent: `
-      ${getHeader('Rent Expense Form')}
       <div class="content">
         ${getInstructions('Rent Expense Form', 'expense')}
         <div class="form-section">
@@ -626,7 +621,6 @@ const generateFormHTML = (formType, org) => {
       </div>
     `,
     expense_salaries: `
-      ${getHeader('Salary / Wages Form')}
       <div class="content">
         ${getInstructions('Salary / Wages Form', 'expense')}
         <div class="form-section">
@@ -666,7 +660,6 @@ const generateFormHTML = (formType, org) => {
       </div>
     `,
     expense_transport: `
-      ${getHeader('Transport Expense Form')}
       <div class="content">
         ${getInstructions('Transport Expense Form', 'expense')}
         <div class="form-section">
@@ -706,7 +699,6 @@ const generateFormHTML = (formType, org) => {
       </div>
     `,
     expense_marketing: `
-      ${getHeader('Marketing Expense Form')}
       <div class="content">
         ${getInstructions('Marketing Expense Form', 'expense')}
         <div class="form-section">
@@ -750,7 +742,6 @@ const generateFormHTML = (formType, org) => {
       </div>
     `,
     expense_insurance: `
-      ${getHeader('Insurance Expense Form')}
       <div class="content">
         ${getInstructions('Insurance Expense Form', 'expense')}
         <div class="form-section">
@@ -807,7 +798,6 @@ const generateFormHTML = (formType, org) => {
       </div>
     `,
     expense_petty_cash: `
-      ${getHeader('Petty Cash Form')}
       <div class="content">
         ${getInstructions('Petty Cash Form', 'expense')}
         <div class="form-section">
@@ -855,7 +845,6 @@ const generateFormHTML = (formType, org) => {
       </div>
     `,
     expense_truck_contract: `
-      ${getHeader('Truck Contract Expense Form')}
       <div class="content">
         ${getInstructions('Truck Contract Expense Form', 'expense')}
         <div class="form-section">
@@ -908,7 +897,6 @@ const generateFormHTML = (formType, org) => {
       </div>
     `,
     expense_general: `
-      ${getHeader('General Expense Form')}
       <div class="content">
         ${getInstructions('General Expense Form', 'expense')}
         <div class="form-section">
@@ -959,7 +947,6 @@ const generateFormHTML = (formType, org) => {
       </div>
     `,
     revenue_retail_sales: `
-      ${getHeader('Retail Sales Form')}
       <div class="content">
         ${getInstructions('Retail Sales Form', 'revenue')}
         <div class="form-section">
@@ -1021,7 +1008,6 @@ const generateFormHTML = (formType, org) => {
       </div>
     `,
     revenue_warehouse_sales: `
-      ${getHeader('Warehouse/Wholesale Sales Form')}
       <div class="content">
         ${getInstructions('Warehouse/Wholesale Sales Form', 'revenue')}
         <div class="form-section">
@@ -1072,7 +1058,6 @@ const generateFormHTML = (formType, org) => {
       </div>
     `,
     revenue_vehicle_sales: `
-      ${getHeader('Vehicle Sales Form')}
       <div class="content">
         ${getInstructions('Vehicle Sales Form', 'revenue')}
         <div class="form-section">
@@ -1126,7 +1111,6 @@ const generateFormHTML = (formType, org) => {
       </div>
     `,
     revenue_trip: `
-      ${getHeader('Trip Revenue Form')}
       <div class="content">
         ${getInstructions('Trip Revenue Form', 'revenue')}
         <div class="form-section">
@@ -1198,7 +1182,6 @@ const generateFormHTML = (formType, org) => {
       </div>
     `,
     revenue_truck_contract: `
-      ${getHeader('Truck Contract Revenue Form')}
       <div class="content">
         ${getInstructions('Truck Contract Revenue Form', 'revenue')}
         <div class="form-section">
@@ -1265,7 +1248,6 @@ const generateFormHTML = (formType, org) => {
       </div>
     `,
     revenue_other: `
-      ${getHeader('Other Income Form')}
       <div class="content">
         ${getInstructions('Other Income Form', 'revenue')}
         <div class="form-section">
@@ -1331,31 +1313,10 @@ const generateFormHTML = (formType, org) => {
       ${commonStyles}
     </head>
     <body>
-      <div class="print-header-first-page">
-        <div class="print-header-stripe">
-          <div></div>
-          <div></div>
-          <div></div>
-        </div>
-        <div class="print-header-content">
-          <span class="print-header-title">${formName}</span>
-          <span class="print-header-org">${orgName}</span>
-        </div>
-      </div>
-      
-      <div class="print-footer">
-        <div class="print-footer-content">
-          <span>Printed: ${today}</span>
-        </div>
-        <div class="print-footer-stripe">
-          <div></div>
-          <div></div>
-          <div></div>
-        </div>
-      </div>
-      
       <div class="document">
+        ${header}
         ${forms[formType] || ''}
+        ${footer}
       </div>
     </body>
     </html>
