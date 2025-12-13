@@ -1,7 +1,8 @@
 import React, { useState } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Shield, Building2, Plus, Edit, Trash2, Users, CheckCircle, XCircle, AlertTriangle, Search } from "lucide-react";
+import { Shield, Building2, Plus, Edit, Trash2, Users, CheckCircle, XCircle, AlertTriangle, Search, Key } from "lucide-react";
+import SSOConfigDialog from "@/components/organisation/SSOConfigDialog";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -15,6 +16,8 @@ import LoadingSpinner from "@/components/ui/LoadingSpinner";
 export default function SuperAdminPanel() {
   const [showCreateDialog, setShowCreateDialog] = useState(false);
   const [editingOrg, setEditingOrg] = useState(null);
+  const [showSSODialog, setShowSSODialog] = useState(false);
+  const [selectedOrgForSSO, setSelectedOrgForSSO] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [formData, setFormData] = useState({
     name: "",
@@ -345,6 +348,17 @@ export default function SuperAdminPanel() {
                           <Button
                             variant="outline"
                             size="sm"
+                            onClick={() => {
+                              setSelectedOrgForSSO(org);
+                              setShowSSODialog(true);
+                            }}
+                            className="text-blue-600 hover:bg-blue-50"
+                          >
+                            <Key className="w-4 h-4" />
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
                             onClick={() => handleDelete(org)}
                             className="text-red-600 hover:bg-red-50"
                           >
@@ -487,9 +501,9 @@ export default function SuperAdminPanel() {
             </div>
           </div>
         </DialogContent>
-        </Dialog>
+      </Dialog>
 
-        <SSOConfigDialog
+      <SSOConfigDialog
         open={showSSODialog}
         onOpenChange={setShowSSODialog}
         organisation={selectedOrgForSSO}
@@ -497,7 +511,7 @@ export default function SuperAdminPanel() {
           updateOrgMutation.mutate({ id: org.id, data: org });
           setShowSSODialog(false);
         }}
-        />
-        </div>
-        );
-        }
+      />
+    </div>
+  );
+}
