@@ -26,14 +26,27 @@ export default function PayrollProcessingTab({ orgId, employees, payrolls, curre
     enabled: !!orgId,
   });
 
-  const sortedPayrolls = [...payrolls].sort((a, b) => 
-    new Date(b.pay_date) - new Date(a.pay_date)
-  );
+  const sortedPayrolls = [...payrolls].sort((a, b) => {
+    try {
+      const dateA = new Date(a.pay_date);
+      const dateB = new Date(b.pay_date);
+      if (isNaN(dateA.getTime()) || isNaN(dateB.getTime())) return 0;
+      return dateB - dateA;
+    } catch {
+      return 0;
+    }
+  });
 
   const thisMonthPayrolls = sortedPayrolls.filter(p => {
-    const payDate = new Date(p.pay_date);
-    const now = new Date();
-    return payDate.getMonth() === now.getMonth() && payDate.getFullYear() === now.getFullYear();
+    if (!p.pay_date) return false;
+    try {
+      const payDate = new Date(p.pay_date);
+      if (isNaN(payDate.getTime())) return false;
+      const now = new Date();
+      return payDate.getMonth() === now.getMonth() && payDate.getFullYear() === now.getFullYear();
+    } catch {
+      return false;
+    }
   });
 
   const totalPayrollThisMonth = thisMonthPayrolls.reduce((sum, p) => sum + (p.net_salary || 0), 0);
@@ -153,12 +166,21 @@ export default function PayrollProcessingTab({ orgId, employees, payrolls, curre
                   <div className="flex-1 min-w-0">
                     <h3 className="font-semibold text-gray-900 truncate">{payroll.employee_name}</h3>
                     <div className="flex items-center gap-3 mt-1 text-sm text-gray-600 flex-wrap">
-                      <div className="flex items-center gap-1">
-                        <Calendar className="w-3 h-3" />
-                        {format(new Date(payroll.pay_date), 'MMM d, yyyy')}
-                      </div>
-                      <span>•</span>
-                      <span>{payroll.pay_period}</span>
+                      {payroll.pay_date && (() => {
+                        try {
+                          const date = new Date(payroll.pay_date);
+                          return !isNaN(date.getTime()) && (
+                            <div className="flex items-center gap-1">
+                              <Calendar className="w-3 h-3" />
+                              {format(date, 'MMM d, yyyy')}
+                            </div>
+                          );
+                        } catch {
+                          return null;
+                        }
+                      })()}
+                      {payroll.pay_date && payroll.pay_period && <span>•</span>}
+                      {payroll.pay_period && <span>{payroll.pay_period}</span>}
                     </div>
                   </div>
                 </div>
