@@ -2287,9 +2287,6 @@ Provide:
           <div className="flex-1 bg-[#0072C6]" />
         </div>
       </DialogContent>
-
-      {/* Currency Selection Dialog */}
-      <Dialog open={showCurrencyDialog} onOpenChange={setShowCurrencyDialog}>
         <DialogContent className="max-w-md">
           <div className="space-y-4">
             <div className="text-center">
