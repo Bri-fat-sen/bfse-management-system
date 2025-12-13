@@ -219,14 +219,15 @@ export default function Layout({ children, currentPageName }) {
   
   const orgId = currentEmployee?.organisation_id;
 
-  const { data: organisations } = useQuery({
-    queryKey: ['organisations'],
-    queryFn: () => base44.entities.Organisation.list(),
+  const { data: organisationData } = useQuery({
+    queryKey: ['organisation', orgId],
+    queryFn: () => base44.entities.Organisation.filter({ id: orgId }),
+    enabled: !!orgId,
     staleTime: 10 * 60 * 1000,
     refetchOnWindowFocus: false,
   });
 
-  const currentOrg = organisations?.find(org => org.id === orgId);
+  const currentOrg = organisationData?.[0];
 
   const { data: chatRooms = [] } = useQuery({
     queryKey: ['chatRooms', orgId, currentEmployee?.id],
