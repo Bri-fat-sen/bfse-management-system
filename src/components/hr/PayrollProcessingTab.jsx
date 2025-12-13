@@ -10,7 +10,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/components/ui/Toast";
 import { format } from "date-fns";
-import ProcessPayrollDialog from "@/components/hr/ProcessPayrollDialog";
+import ProcessPayrollDialog from "@/components/hr/ProcessPayrollDialogNew";
 import PayrollDetailDialog from "@/components/hr/PayrollDetailDialog";
 import { formatLeone } from "@/components/hr/sierraLeoneTaxCalculator";
 
