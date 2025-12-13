@@ -582,8 +582,8 @@ export default function Layout({ children, currentPageName }) {
                         className={`
                           flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200 group relative
                           ${isActive ? 'sidebar-item-active' : 'sidebar-item'}
-                          ${isActive ? 'text-white' : 'text-gray-400 hover:text-white'}
                         `}
+                        style={{ color: isActive ? section.color : '' }}
                       >
                         <item.icon 
                           className={`w-5 h-5 flex-shrink-0 transition-colors`}
@@ -591,7 +591,7 @@ export default function Layout({ children, currentPageName }) {
                         />
                         {sidebarOpen && (
                           <>
-                            <span className="font-medium text-sm flex-1">{item.name}</span>
+                            <span className="font-medium text-sm flex-1" style={{ color: isActive ? section.color : '' }}>{item.name}</span>
                             {item.badge && (
                               <span className="px-2 py-0.5 text-[10px] font-bold text-white rounded-full" style={{ backgroundColor: section.color }}>
                                 {item.badge}
