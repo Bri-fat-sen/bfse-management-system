@@ -70,6 +70,7 @@ import ConfirmDialog from "@/components/ui/ConfirmDialog";
 import RemunerationPackageManager from "@/components/hr/RemunerationPackageManager";
 import PayCycleManager from "@/components/hr/PayCycleManager";
 import ExportToGoogleDrive from "@/components/exports/ExportToGoogleDrive";
+import EmployeeDetailDialog from "@/components/hr/EmployeeDetailDialog";
 import { format } from "date-fns";
 
 export default function HRManagement() {
@@ -98,6 +99,8 @@ export default function HRManagement() {
   const [payrollToDelete, setPayrollToDelete] = useState(null);
   const [showDriveExport, setShowDriveExport] = useState(false);
   const [exportData, setExportData] = useState([]);
+  const [showEmployeeDetail, setShowEmployeeDetail] = useState(false);
+  const [selectedEmployeeForDetail, setSelectedEmployeeForDetail] = useState(null);
 
   const { data: user, isLoading: loadingUser } = useQuery({
     queryKey: ['currentUser'],
@@ -704,6 +707,13 @@ export default function HRManagement() {
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
                         <DropdownMenuItem onClick={() => {
+                          setSelectedEmployeeForDetail(emp);
+                          setShowEmployeeDetail(true);
+                        }}>
+                          <Eye className="w-4 h-4 mr-2" />
+                          View Details
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => {
                           setSelectedEmployeeForPin(emp);
                           setShowSetPinDialog(true);
                         }}>
@@ -975,6 +985,20 @@ export default function HRManagement() {
         dataType="employees"
         orgId={orgId}
       />
+
+      {selectedEmployeeForDetail && (
+        <EmployeeDetailDialog
+          open={showEmployeeDetail}
+          onOpenChange={(open) => {
+            setShowEmployeeDetail(open);
+            if (!open) setSelectedEmployeeForDetail(null);
+          }}
+          employee={selectedEmployeeForDetail}
+          orgId={orgId}
+          organisation={organisation}
+          canEdit={isAdmin}
+        />
+      )}
     </div>
   );
 }
