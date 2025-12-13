@@ -47,6 +47,31 @@ export default function ExecutiveDashboard() {
 
   const currentEmployee = employee?.[0];
   const orgId = currentEmployee?.organisation_id;
+  const userRole = currentEmployee?.role;
+
+  // Restrict access to super_admin and org_admin only
+  if (currentEmployee && !['super_admin', 'org_admin'].includes(userRole)) {
+    return (
+      <div className="flex items-center justify-center min-h-[60vh]">
+        <Card className="max-w-md w-full">
+          <CardHeader>
+            <CardTitle className="text-center flex items-center justify-center gap-2">
+              <AlertTriangle className="w-5 h-5 text-amber-500" />
+              Access Restricted
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="text-center space-y-4">
+            <p className="text-gray-600">
+              The Executive Dashboard is only accessible to Super Admins and Organisation Admins.
+            </p>
+            <Button onClick={() => window.history.back()} variant="outline">
+              Go Back
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   const { data: organisationData } = useQuery({
     queryKey: ['organisation', orgId],
