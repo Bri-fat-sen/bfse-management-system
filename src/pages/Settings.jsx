@@ -86,6 +86,24 @@ export default function Settings() {
       inventory: true,
       payroll: true,
       system: true
+    },
+    module_colors: {
+      dashboard: '#1EB053',
+      sales: '#0072C6',
+      inventory: '#D4AF37',
+      transport: '#FF6B35',
+      hr: '#8B5CF6',
+      finance: '#EF4444',
+      communication: '#10B981'
+    },
+    module_backgrounds: {
+      dashboard: 'solid',
+      sales: 'solid',
+      inventory: 'solid',
+      transport: 'solid',
+      hr: 'solid',
+      finance: 'solid',
+      communication: 'solid'
     }
   });
 
@@ -612,6 +630,93 @@ export default function Settings() {
                     Preview
                   </div>
                 </div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Layout className="w-5 h-5" />
+                  Module-Specific Customization
+                </CardTitle>
+                <CardDescription>Set unique colors and backgrounds for each app module</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                {[
+                  { key: 'dashboard', label: 'Dashboard', icon: '📊' },
+                  { key: 'sales', label: 'Sales & Customers', icon: '🛒' },
+                  { key: 'inventory', label: 'Inventory & Warehouse', icon: '📦' },
+                  { key: 'transport', label: 'Transport & Fleet', icon: '🚚' },
+                  { key: 'hr', label: 'Human Resources', icon: '👥' },
+                  { key: 'finance', label: 'Finance & Accounting', icon: '💰' },
+                  { key: 'communication', label: 'Communication', icon: '💬' }
+                ].map(module => (
+                  <div key={module.key} className="p-4 border rounded-xl bg-gray-50">
+                    <div className="flex items-center gap-3 mb-4">
+                      <span className="text-2xl">{module.icon}</span>
+                      <h4 className="font-semibold text-lg">{module.label}</h4>
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <Label className="text-sm">Module Color</Label>
+                        <div className="flex gap-2 items-center mt-2">
+                          <Input
+                            type="color"
+                            value={localPrefs.module_colors?.[module.key] || '#1EB053'}
+                            onChange={(e) => setLocalPrefs({
+                              ...localPrefs, 
+                              module_colors: {...(localPrefs.module_colors || {}), [module.key]: e.target.value}
+                            })}
+                            className="w-16 h-10 cursor-pointer"
+                          />
+                          <Input
+                            value={localPrefs.module_colors?.[module.key] || '#1EB053'}
+                            onChange={(e) => setLocalPrefs({
+                              ...localPrefs, 
+                              module_colors: {...(localPrefs.module_colors || {}), [module.key]: e.target.value}
+                            })}
+                            className="font-mono text-sm flex-1"
+                          />
+                        </div>
+                      </div>
+                      <div>
+                        <Label className="text-sm">Background Style</Label>
+                        <Select 
+                          value={localPrefs.module_backgrounds?.[module.key] || 'solid'} 
+                          onValueChange={(v) => setLocalPrefs({
+                            ...localPrefs, 
+                            module_backgrounds: {...(localPrefs.module_backgrounds || {}), [module.key]: v}
+                          })}
+                        >
+                          <SelectTrigger className="mt-2">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="solid">Solid Color</SelectItem>
+                            <SelectItem value="gradient">Gradient</SelectItem>
+                            <SelectItem value="pattern">Pattern</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </div>
+                    <div 
+                      className="h-16 rounded-lg mt-3"
+                      style={{
+                        background: localPrefs.module_backgrounds?.[module.key] === 'gradient' 
+                          ? `linear-gradient(135deg, ${localPrefs.module_colors?.[module.key]}22, ${localPrefs.module_colors?.[module.key]}55)`
+                          : localPrefs.module_backgrounds?.[module.key] === 'pattern'
+                          ? `${localPrefs.module_colors?.[module.key]}11 url("data:image/svg+xml,%3Csvg width='40' height='40' viewBox='0 0 40 40' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='${(localPrefs.module_colors?.[module.key] || '#1EB053').replace('#', '%23')}' fill-opacity='0.15'%3E%3Cpath d='M0 20L20 0L40 20L20 40z'/%3E%3C/g%3E%3C/svg%3E")`
+                          : `${localPrefs.module_colors?.[module.key]}22`
+                      }}
+                    >
+                      <div className="h-full flex items-center justify-center">
+                        <span className="text-xs font-medium" style={{ color: localPrefs.module_colors?.[module.key] }}>
+                          Preview
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                ))}
               </CardContent>
             </Card>
 

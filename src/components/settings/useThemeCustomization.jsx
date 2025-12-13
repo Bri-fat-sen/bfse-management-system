@@ -65,6 +65,19 @@ export function useThemeCustomization(userEmail) {
     // Apply card style
     document.body.setAttribute('data-card-style', preferences.card_style || 'default');
 
+    // Apply module-specific styles
+    if (preferences.module_colors) {
+      Object.entries(preferences.module_colors).forEach(([module, color]) => {
+        root.style.setProperty(`--module-${module}-color`, color);
+      });
+    }
+
+    if (preferences.module_backgrounds) {
+      Object.entries(preferences.module_backgrounds).forEach(([module, style]) => {
+        root.style.setProperty(`--module-${module}-bg`, style);
+      });
+    }
+
   }, [preferences]);
 
   return preferences;
