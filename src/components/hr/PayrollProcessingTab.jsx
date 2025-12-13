@@ -20,6 +20,18 @@ export default function PayrollProcessingTab({ orgId, employees, payrolls, curre
   const queryClient = useQueryClient();
   const toast = useToast();
 
+  const deleteMutation = useMutation({
+    mutationFn: (id) => base44.entities.Payroll.delete(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries(['payrolls']);
+      toast.success("Payroll Deleted", "Payroll record has been deleted successfully");
+      setDeletePayrollId(null);
+    },
+    onError: (error) => {
+      toast.error("Delete Failed", error.message);
+    }
+  });
+
   const { data: payCycles = [] } = useQuery({
     queryKey: ['payCycles', orgId],
     queryFn: () => base44.entities.PayCycle.filter({ organisation_id: orgId, is_active: true }),

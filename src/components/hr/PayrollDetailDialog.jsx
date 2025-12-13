@@ -1,7 +1,7 @@
-import React from "react";
+import React, { useState } from "react";
 import { base44 } from "@/api/base44Client";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { X, Download, Check, FileText, DollarSign, TrendingUp, Calendar } from "lucide-react";
+import { X, Download, Check, FileText, DollarSign, TrendingUp, Calendar, Trash2 } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -13,8 +13,10 @@ import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/components/ui/Toast";
 import { format } from "date-fns";
 import { formatLeone } from "@/components/hr/sierraLeoneTaxCalculator";
+import ConfirmDialog from "@/components/ui/ConfirmDialog";
 
 export default function PayrollDetailDialog({ open, onOpenChange, payroll, orgId }) {
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const queryClient = useQueryClient();
   const toast = useToast();
 
@@ -24,6 +26,18 @@ export default function PayrollDetailDialog({ open, onOpenChange, payroll, orgId
       queryClient.invalidateQueries(['payrolls']);
       toast.success("Status Updated");
     },
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: () => base44.entities.Payroll.delete(payroll.id),
+    onSuccess: () => {
+      queryClient.invalidateQueries(['payrolls']);
+      toast.success("Payroll Deleted", "Payroll record has been deleted successfully");
+      onOpenChange(false);
+    },
+    onError: (error) => {
+      toast.error("Delete Failed", error.message);
+    }
   });
 
   const statusColors = {
@@ -171,7 +185,26 @@ export default function PayrollDetailDialog({ open, onOpenChange, payroll, orgId
               <Download className="w-4 h-4 mr-2" />
               Download Payslip
             </Button>
+            <Button 
+              variant="outline" 
+              onClick={() => setShowDeleteConfirm(true)}
+              className="text-red-600 hover:text-red-700 hover:bg-red-50"
+            >
+              <Trash2 className="w-4 h-4 mr-2" />
+              Delete
+            </Button>
           </div>
+        </div>
+
+        <ConfirmDialog
+          open={showDeleteConfirm}
+          onOpenChange={setShowDeleteConfirm}
+          onConfirm={() => deleteMutation.mutate()}
+          title="Delete Payroll?"
+          description="Are you sure you want to delete this payroll record? This action cannot be undone."
+          confirmText="Delete"
+          variant="destructive"
+        />
         </div>
       </DialogContent>
     </Dialog>
