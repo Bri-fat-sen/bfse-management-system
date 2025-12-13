@@ -177,9 +177,6 @@ export default function Layout({ children, currentPageName }) {
   const [showSetPinDialog, setShowSetPinDialog] = useState(false);
   const [previewRole, setPreviewRole] = useState(null);
 
-  // Apply theme customization
-  const userPreferences = useThemeCustomization(user?.email);
-
   const toggleSection = (title) => {
     setCollapsedSections(prev => ({ ...prev, [title]: !prev[title] }));
   };
@@ -190,6 +187,9 @@ export default function Layout({ children, currentPageName }) {
     staleTime: 10 * 60 * 1000,
     refetchOnWindowFocus: false,
   });
+
+  // Apply theme customization (after user is defined)
+  useThemeCustomization(user?.email);
 
   const { data: employee, isLoading: loadingEmployee, refetch: refetchEmployee } = useQuery({
     queryKey: ['currentEmployee', user?.email],
