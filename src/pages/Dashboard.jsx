@@ -126,7 +126,7 @@ export default function Dashboard() {
     ...queryConfig,
   });
 
-  const { data: attendance = [] } = useQuery({
+  const { data: attendanceData } = useQuery({
     queryKey: ['todayAttendance', orgId],
     queryFn: () => base44.entities.Attendance.filter({ 
       organisation_id: orgId, 
@@ -135,6 +135,8 @@ export default function Dashboard() {
     enabled: !!orgId,
     ...queryConfig,
   });
+
+  const attendance = Array.isArray(attendanceData) ? attendanceData : [];
 
   const { data: stockAlerts = [] } = useQuery({
     queryKey: ['stockAlerts', orgId],
