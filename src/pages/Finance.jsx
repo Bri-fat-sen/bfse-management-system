@@ -78,6 +78,7 @@ import AIExpenseCategorizer from "@/components/finance/AIExpenseCategorizer";
 import UnifiedFinancialReports from "@/components/finance/UnifiedFinancialReports";
 import DriveDataExtractor from "@/components/drive/DriveDataExtractor";
 import ExportToGoogleDrive from "@/components/exports/ExportToGoogleDrive";
+import ModernExportDialog from "@/components/exports/ModernExportDialog";
 
 const expenseCategories = [
   "fuel", "maintenance", "utilities", "supplies", "rent", 
@@ -117,6 +118,8 @@ export default function Finance() {
   const [selectedExpenseIds, setSelectedExpenseIds] = useState([]);
   const [selectedRevenueIds, setSelectedRevenueIds] = useState([]);
   const [showDriveExtractor, setShowDriveExtractor] = useState(false);
+  const [exportDialogOpen, setExportDialogOpen] = useState(false);
+  const [currentExportData, setCurrentExportData] = useState({ data: [], title: "" });
 
   const { data: user, isLoading: loadingUser } = useQuery({
     queryKey: ['currentUser'],
@@ -1555,7 +1558,31 @@ export default function Finance() {
           </TabsContent>
 
           {/* Unified Reports Tab */}
-          <TabsContent value="reports" className="mt-6">
+          <TabsContent value="reports" className="mt-6 space-y-4">
+            <div className="flex justify-end">
+              <Button
+                onClick={() => {
+                  setCurrentExportData({
+                    data: filteredExpenses.map(e => ({
+                      Date: format(new Date(e.date), 'yyyy-MM-dd'),
+                      Category: e.category,
+                      Description: e.description || 'N/A',
+                      Amount: `Le ${e.amount?.toLocaleString() || 0}`,
+                      Vendor: e.vendor || 'N/A',
+                      'Payment Method': e.payment_method,
+                      'Recorded By': e.recorded_by_name || 'N/A',
+                      Status: e.status,
+                    })),
+                    title: 'Financial Report'
+                  });
+                  setExportDialogOpen(true);
+                }}
+                className="bg-gradient-to-r from-[#1EB053] to-[#0072C6] text-white"
+              >
+                <Download className="w-4 h-4 mr-2" />
+                Export Financial Data
+              </Button>
+            </div>
             <UnifiedFinancialReports
               orgId={orgId}
               sales={sales}
@@ -1672,6 +1699,15 @@ export default function Finance() {
             fileName={`finance_${activeTab}_${format(new Date(), 'yyyy-MM-dd')}`}
             dataType={activeTab}
             orgId={orgId}
+          />
+
+          {/* Modern Export Dialog */}
+          <ModernExportDialog
+            open={exportDialogOpen}
+            onOpenChange={setExportDialogOpen}
+            data={currentExportData.data}
+            reportTitle={currentExportData.title}
+            orgData={organisation?.[0]}
           />
 
           {/* Cash Flow Tab */}
