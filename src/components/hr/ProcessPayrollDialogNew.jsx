@@ -137,6 +137,7 @@ export default function ProcessPayrollDialog({ open, onOpenChange, orgId, curren
   const generatePayrollPreview = async () => {
     let allAttendance = [];
     let allLeaveRequests = [];
+    let allPackages = [];
     
     if (wageEmployees.length > 0) {
       const fetchedAttendance = await base44.entities.Attendance.filter({ organisation_id: orgId });
@@ -149,6 +150,10 @@ export default function ProcessPayrollDialog({ open, onOpenChange, orgId, curren
       status: 'approved'
     });
     allLeaveRequests = Array.isArray(fetchedLeave) ? fetchedLeave : [];
+    
+    // Fetch all remuneration packages
+    const fetchedPackages = await base44.entities.RemunerationPackage.filter({ organisation_id: orgId });
+    allPackages = Array.isArray(fetchedPackages) ? fetchedPackages : [];
 
     const preview = [];
 
@@ -231,13 +236,25 @@ export default function ProcessPayrollDialog({ open, onOpenChange, orgId, curren
         }
       }
 
-      const totalAllowances = allowances.reduce((sum, a) => sum + (parseFloat(a.amount) || 0), 0);
-      const totalBonuses = bonuses.reduce((sum, b) => sum + (parseFloat(b.amount) || 0), 0);
+      // Get employee's remuneration package
+      const empPackage = allPackages.find(p => p.id === emp.remuneration_package_id);
+      
+      // Combine manual allowances/bonuses/deductions with package ones
+      const packageAllowances = empPackage?.allowances || [];
+      const packageBonuses = empPackage?.bonuses || [];
+      const packageDeductions = empPackage?.deductions || [];
+      
+      const combinedAllowances = [...allowances, ...packageAllowances];
+      const combinedBonuses = [...bonuses, ...packageBonuses];
+      const combinedDeductions = [...deductions, ...packageDeductions];
+      
+      const totalAllowances = combinedAllowances.reduce((sum, a) => sum + (parseFloat(a.amount) || 0), 0);
+      const totalBonuses = combinedBonuses.reduce((sum, b) => sum + (parseFloat(b.amount) || 0), 0);
       
       const grossBeforeTax = baseSalary + totalAllowances + totalBonuses;
       const taxCalc = calculateSalaryBreakdown(grossBeforeTax, {}, {});
       
-      const customDeductions = deductions.reduce((sum, d) => sum + (parseFloat(d.amount) || 0), 0);
+      const customDeductions = combinedDeductions.reduce((sum, d) => sum + (parseFloat(d.amount) || 0), 0);
       const totalDeductions = taxCalc.totalDeductions + customDeductions;
       const netPay = taxCalc.netSalary - customDeductions;
 
@@ -259,13 +276,13 @@ export default function ProcessPayrollDialog({ open, onOpenChange, orgId, curren
         timesheet_approved: isWageEmployee,
         leave_days_taken: totalLeaveDays,
         unpaid_leave_days: unpaidLeaveDays,
-        allowances,
-        bonuses,
+        allowances: combinedAllowances,
+        bonuses: combinedBonuses,
         deductions: [
-          ...deductions,
+          ...combinedDeductions,
           ...(unpaidLeaveDays > 0 ? [{ 
             name: `Unpaid Leave (${unpaidLeaveDays} days)`, 
-            amount: (emp.base_salary / 30) * unpaidLeaveDays, 
+            amount: ((parseFloat(emp.base_salary) || 0) / 30) * unpaidLeaveDays, 
             type: 'leave' 
           }] : []),
           { name: 'NASSIT (5%)', amount: taxCalc.nassit.employee, type: 'statutory' },
