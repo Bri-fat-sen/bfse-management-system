@@ -1360,7 +1360,7 @@ Provide:
                   <p className="text-xs text-amber-700 mt-1">⚠️ Location required for production batch</p>
                 )}
               </div>
-            </div>
+            </motion.div>
           )}
 
           {/* Location & Sale Type Selection for Revenue/Sales */}
