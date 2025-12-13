@@ -49,11 +49,21 @@ export default function PayrollProcessingTab({ orgId, employees, payrolls, curre
     }
   });
 
-  const totalPayrollThisMonth = thisMonthPayrolls.reduce((sum, p) => sum + (p.net_salary || 0), 0);
-  const totalNassitThisMonth = thisMonthPayrolls.reduce((sum, p) => 
-    sum + (p.nassit_employee || 0) + (p.nassit_employer || 0), 0
-  );
-  const totalPAYEThisMonth = thisMonthPayrolls.reduce((sum, p) => sum + (p.paye_tax || 0), 0);
+  const totalPayrollThisMonth = thisMonthPayrolls.reduce((sum, p) => {
+    const netSalary = parseFloat(p.net_salary) || 0;
+    return sum + netSalary;
+  }, 0);
+  
+  const totalNassitThisMonth = thisMonthPayrolls.reduce((sum, p) => {
+    const employee = parseFloat(p.nassit_employee) || 0;
+    const employer = parseFloat(p.nassit_employer) || 0;
+    return sum + employee + employer;
+  }, 0);
+  
+  const totalPAYEThisMonth = thisMonthPayrolls.reduce((sum, p) => {
+    const paye = parseFloat(p.paye_tax) || 0;
+    return sum + paye;
+  }, 0);
 
   const statusColors = {
     draft: "bg-gray-100 text-gray-800",
@@ -185,10 +195,10 @@ export default function PayrollProcessingTab({ orgId, employees, payrolls, curre
                   </div>
                 </div>
                 <div className="text-right flex-shrink-0">
-                  <p className="text-lg font-bold text-[#1EB053]">{formatLeone(payroll.net_salary)}</p>
-                  <Badge className={`${statusColors[payroll.status]} mt-1`}>
-                    {payroll.status}
-                  </Badge>
+                 <p className="text-lg font-bold text-[#1EB053]">{formatLeone(payroll.net_salary || 0)}</p>
+                 <Badge className={`${statusColors[payroll.status || 'draft']} mt-1`}>
+                   {payroll.status || 'draft'}
+                 </Badge>
                 </div>
               </div>
 
@@ -196,15 +206,15 @@ export default function PayrollProcessingTab({ orgId, employees, payrolls, curre
               <div className="mt-3 pt-3 border-t grid grid-cols-3 gap-3 text-sm">
                 <div>
                   <p className="text-gray-600">Gross</p>
-                  <p className="font-semibold">{formatLeone(payroll.gross_salary)}</p>
+                  <p className="font-semibold">{formatLeone(payroll.gross_salary || 0)}</p>
                 </div>
                 <div>
                   <p className="text-gray-600">NASSIT</p>
-                  <p className="font-semibold">{formatLeone((payroll.nassit_employee || 0) + (payroll.nassit_employer || 0))}</p>
+                  <p className="font-semibold">{formatLeone((parseFloat(payroll.nassit_employee) || 0) + (parseFloat(payroll.nassit_employer) || 0))}</p>
                 </div>
                 <div>
                   <p className="text-gray-600">PAYE</p>
-                  <p className="font-semibold">{formatLeone(payroll.paye_tax || 0)}</p>
+                  <p className="font-semibold">{formatLeone(parseFloat(payroll.paye_tax) || 0)}</p>
                 </div>
               </div>
             </CardContent>
