@@ -1,6 +1,7 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery } from "@tanstack/react-query";
+import { createPageUrl } from "@/utils";
 import { Building2, Search, ArrowRight, Shield, Lock, Globe } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -11,6 +12,25 @@ export default function Landing() {
   const [orgCode, setOrgCode] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedOrg, setSelectedOrg] = useState(null);
+
+  const { data: user } = useQuery({
+    queryKey: ['currentUser'],
+    queryFn: () => base44.auth.me().catch(() => null),
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const { data: employee } = useQuery({
+    queryKey: ['currentEmployee', user?.email],
+    queryFn: () => base44.entities.Employee.filter({ user_email: user?.email }),
+    enabled: !!user?.email,
+  });
+
+  // Redirect authenticated users with employee to Dashboard
+  useEffect(() => {
+    if (user && employee?.[0]) {
+      window.location.href = createPageUrl('Dashboard');
+    }
+  }, [user, employee]);
 
   const { data: organisations = [] } = useQuery({
     queryKey: ['publicOrganisations'],
