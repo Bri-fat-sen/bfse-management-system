@@ -272,6 +272,42 @@ export default function ProcessPayrollDialog({ open, onOpenChange, orgId, curren
   const totalGross = payrollPreview.reduce((sum, p) => sum + (p.gross_pay || 0), 0);
   const totalNet = payrollPreview.reduce((sum, p) => sum + (p.net_pay || 0), 0);
 
+  // Calculate estimated statutory deductions for selected employees
+  const estimatedStatutory = useMemo(() => {
+    if (selectedEmployees.length === 0) return null;
+
+    let totalBase = 0;
+    let totalNassitEmp = 0;
+    let totalNassitEmpr = 0;
+    let totalPaye = 0;
+
+    selectedEmployees.forEach(empId => {
+      const emp = activeEmployees.find(e => e.id === empId);
+      if (!emp) return;
+
+      const baseSalary = emp.base_salary || 0;
+      totalBase += baseSalary;
+
+      const totalAllowances = allowances.reduce((sum, a) => sum + (a.amount || 0), 0);
+      const totalBonuses = bonuses.reduce((sum, b) => sum + (b.amount || 0), 0);
+      const grossBeforeTax = baseSalary + totalAllowances + totalBonuses;
+      
+      const taxCalc = calculateSalaryBreakdown(grossBeforeTax, {}, {});
+      totalNassitEmp += taxCalc.nassit.employee;
+      totalNassitEmpr += taxCalc.nassit.employer;
+      totalPaye += taxCalc.paye.tax;
+    });
+
+    return {
+      totalBase,
+      totalNassitEmp,
+      totalNassitEmpr,
+      totalPaye,
+      totalGross: totalBase + allowances.reduce((sum, a) => sum + (a.amount || 0), 0) * selectedEmployees.length + bonuses.reduce((sum, b) => sum + (b.amount || 0), 0) * selectedEmployees.length,
+      employeeCount: selectedEmployees.length
+    };
+  }, [selectedEmployees, activeEmployees, allowances, bonuses]);
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
@@ -366,6 +402,47 @@ export default function ProcessPayrollDialog({ open, onOpenChange, orgId, curren
               ))}
             </div>
 
+            {/* Estimated Statutory Deductions Preview */}
+            {estimatedStatutory && estimatedStatutory.employeeCount > 0 && (
+              <div className="p-4 bg-gradient-to-r from-blue-50 to-purple-50 border-2 border-blue-300 rounded-xl">
+                <h3 className="font-bold text-blue-900 mb-3 flex items-center gap-2">
+                  <Calculator className="w-5 h-5" />
+                  Estimated Statutory Deductions (Sierra Leone)
+                </h3>
+                <div className="grid grid-cols-2 gap-3 mb-3">
+                  <div className="bg-white p-3 rounded-lg">
+                    <p className="text-xs text-gray-600 mb-1">Selected Employees</p>
+                    <p className="text-2xl font-bold text-blue-700">{estimatedStatutory.employeeCount}</p>
+                  </div>
+                  <div className="bg-white p-3 rounded-lg">
+                    <p className="text-xs text-gray-600 mb-1">Est. Total Gross</p>
+                    <p className="text-lg font-bold text-green-700">{formatLeone(estimatedStatutory.totalGross)}</p>
+                  </div>
+                </div>
+                <div className="space-y-2 text-sm">
+                  <div className="flex justify-between items-center p-2 bg-red-100 rounded">
+                    <span className="font-medium text-red-800">NASSIT Employee (5%):</span>
+                    <span className="font-bold text-red-700">{formatLeone(estimatedStatutory.totalNassitEmp)}</span>
+                  </div>
+                  <div className="flex justify-between items-center p-2 bg-orange-100 rounded">
+                    <span className="font-medium text-orange-800">NASSIT Employer (10%):</span>
+                    <span className="font-bold text-orange-700">{formatLeone(estimatedStatutory.totalNassitEmpr)}</span>
+                  </div>
+                  <div className="flex justify-between items-center p-2 bg-red-100 rounded">
+                    <span className="font-medium text-red-800">PAYE Tax:</span>
+                    <span className="font-bold text-red-700">{formatLeone(estimatedStatutory.totalPaye)}</span>
+                  </div>
+                  <div className="flex justify-between items-center p-2 bg-purple-100 rounded border-2 border-purple-300">
+                    <span className="font-bold text-purple-900">Total Statutory (Employee):</span>
+                    <span className="font-bold text-purple-800">{formatLeone(estimatedStatutory.totalNassitEmp + estimatedStatutory.totalPaye)}</span>
+                  </div>
+                </div>
+                <p className="text-xs text-gray-600 mt-3 italic">
+                  * These are estimates based on base salaries. Final amounts may vary with attendance and actual hours worked.
+                </p>
+              </div>
+            )}
+
             <div>
               <div className="flex justify-between items-center mb-3">
                 <Label>Select Employees *</Label>
@@ -459,62 +536,32 @@ export default function ProcessPayrollDialog({ open, onOpenChange, orgId, curren
 
         {activeStep === "preview" && (
           <div className="space-y-6">
-            {/* Summary Cards */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-              <div className="p-3 bg-green-50 rounded-lg border border-green-200">
+              <div className="p-3 bg-green-50 rounded-lg">
                 <p className="text-xs text-gray-600">Employees</p>
-                <p className="text-xl font-bold text-green-700">{payrollPreview.length}</p>
+                <p className="text-xl font-bold">{payrollPreview.length}</p>
               </div>
-              <div className="p-3 bg-blue-50 rounded-lg border border-blue-200">
+              <div className="p-3 bg-blue-50 rounded-lg">
                 <p className="text-xs text-gray-600">Total Gross</p>
-                <p className="text-sm font-bold text-blue-700">{formatLeone(totalGross)}</p>
+                <p className="text-sm font-bold">{formatLeone(totalGross)}</p>
               </div>
-              <div className="p-3 bg-purple-50 rounded-lg border border-purple-200">
+              <div className="p-3 bg-purple-50 rounded-lg">
                 <p className="text-xs text-gray-600">Total Net</p>
-                <p className="text-sm font-bold text-purple-700">{formatLeone(totalNet)}</p>
+                <p className="text-sm font-bold">{formatLeone(totalNet)}</p>
               </div>
-              <div className="p-3 bg-amber-50 rounded-lg border border-amber-200">
+              <div className="p-3 bg-amber-50 rounded-lg">
                 <p className="text-xs text-gray-600">Employer Cost</p>
-                <p className="text-sm font-bold text-amber-700">{formatLeone(payrollPreview.reduce((s, p) => s + p.employer_cost, 0))}</p>
+                <p className="text-sm font-bold">{formatLeone(payrollPreview.reduce((s, p) => s + p.employer_cost, 0))}</p>
               </div>
             </div>
 
-            {/* Statutory Deductions Summary */}
-            <div className="p-4 bg-gradient-to-r from-red-50 to-orange-50 border-2 border-red-200 rounded-xl">
-              <h3 className="font-bold text-red-900 mb-3 flex items-center gap-2">
-                <AlertTriangle className="w-5 h-5" />
-                Total Statutory Deductions (Sierra Leone)
-              </h3>
-              <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                <div className="bg-white/70 p-3 rounded-lg">
-                  <p className="text-xs text-gray-600 mb-1">NASSIT Employee (5%)</p>
-                  <p className="text-lg font-bold text-red-700">
-                    {formatLeone(payrollPreview.reduce((s, p) => s + p.nassit_employee, 0))}
-                  </p>
-                </div>
-                <div className="bg-white/70 p-3 rounded-lg">
-                  <p className="text-xs text-gray-600 mb-1">NASSIT Employer (10%)</p>
-                  <p className="text-lg font-bold text-orange-700">
-                    {formatLeone(payrollPreview.reduce((s, p) => s + p.nassit_employer, 0))}
-                  </p>
-                </div>
-                <div className="bg-white/70 p-3 rounded-lg">
-                  <p className="text-xs text-gray-600 mb-1">PAYE Tax</p>
-                  <p className="text-lg font-bold text-red-700">
-                    {formatLeone(payrollPreview.reduce((s, p) => s + p.paye_tax, 0))}
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            {/* Employee Breakdown */}
-            <div className="space-y-3 max-h-96 overflow-y-auto">
+            <div className="space-y-2 max-h-96 overflow-y-auto">
               {payrollPreview.map((record, idx) => (
-                <div key={idx} className="p-4 border-2 rounded-xl bg-white shadow-sm hover:shadow-md transition-shadow">
-                  <div className="flex justify-between items-start mb-3">
+                <div key={idx} className="p-3 border rounded-lg bg-gray-50">
+                  <div className="flex justify-between items-start">
                     <div>
                       <div className="flex items-center gap-2">
-                        <p className="font-bold text-gray-900">{record.employee_name}</p>
+                        <p className="font-semibold">{record.employee_name}</p>
                         {record.employment_type === 'wage' && <Badge className="bg-blue-100 text-blue-700 text-xs">Wage</Badge>}
                       </div>
                       {record.employment_type === 'wage' && (
@@ -522,76 +569,15 @@ export default function ProcessPayrollDialog({ open, onOpenChange, orgId, curren
                       )}
                     </div>
                     <div className="text-right">
-                      <p className="text-xl font-bold text-[#1EB053]">{formatLeone(record.net_pay)}</p>
-                      <p className="text-xs text-gray-600 font-medium">Net Pay</p>
+                      <p className="text-lg font-bold text-[#1EB053]">{formatLeone(record.net_pay)}</p>
+                      <p className="text-xs text-gray-500">Net Pay</p>
                     </div>
                   </div>
-
-                  {/* Earnings */}
-                  <div className="mb-3 p-2 bg-green-50 rounded-lg">
-                    <p className="text-xs font-bold text-green-800 mb-1">EARNINGS</p>
-                    <div className="grid grid-cols-2 gap-2 text-xs">
-                      <div className="flex justify-between">
-                        <span className="text-gray-600">Base Salary:</span>
-                        <span className="font-semibold">{formatLeone(record.base_salary)}</span>
-                      </div>
-                      {record.total_allowances > 0 && (
-                        <div className="flex justify-between">
-                          <span className="text-gray-600">Allowances:</span>
-                          <span className="font-semibold text-green-700">+{formatLeone(record.total_allowances)}</span>
-                        </div>
-                      )}
-                      {record.total_bonuses > 0 && (
-                        <div className="flex justify-between">
-                          <span className="text-gray-600">Bonuses:</span>
-                          <span className="font-semibold text-green-700">+{formatLeone(record.total_bonuses)}</span>
-                        </div>
-                      )}
-                    </div>
-                    <div className="flex justify-between mt-2 pt-2 border-t border-green-200 font-bold">
-                      <span className="text-green-800">Gross Pay:</span>
-                      <span className="text-green-800">{formatLeone(record.gross_pay)}</span>
-                    </div>
-                  </div>
-
-                  {/* Statutory Deductions */}
-                  <div className="mb-3 p-2 bg-red-50 rounded-lg border border-red-200">
-                    <p className="text-xs font-bold text-red-800 mb-1 flex items-center gap-1">
-                      <AlertTriangle className="w-3 h-3" />
-                      STATUTORY DEDUCTIONS (Sierra Leone)
-                    </p>
-                    <div className="space-y-1 text-xs">
-                      <div className="flex justify-between">
-                        <span className="text-gray-600">NASSIT Employee (5%):</span>
-                        <span className="font-semibold text-red-700">-{formatLeone(record.nassit_employee)}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-gray-600">PAYE Tax:</span>
-                        <span className="font-semibold text-red-700">-{formatLeone(record.paye_tax)}</span>
-                      </div>
-                      {record.total_deductions > (record.nassit_employee + record.paye_tax) && (
-                        <div className="flex justify-between">
-                          <span className="text-gray-600">Other Deductions:</span>
-                          <span className="font-semibold text-red-700">-{formatLeone(record.total_deductions - record.nassit_employee - record.paye_tax)}</span>
-                        </div>
-                      )}
-                    </div>
-                    <div className="flex justify-between mt-2 pt-2 border-t border-red-200 font-bold">
-                      <span className="text-red-800">Total Deductions:</span>
-                      <span className="text-red-800">-{formatLeone(record.total_deductions)}</span>
-                    </div>
-                  </div>
-
-                  {/* Employer Cost */}
-                  <div className="p-2 bg-amber-50 rounded-lg">
-                    <div className="flex justify-between text-xs">
-                      <span className="text-gray-600">Employer NASSIT (10%):</span>
-                      <span className="font-semibold text-amber-700">{formatLeone(record.nassit_employer)}</span>
-                    </div>
-                    <div className="flex justify-between mt-1 pt-1 border-t border-amber-200 font-bold text-xs">
-                      <span className="text-amber-800">Total Employer Cost:</span>
-                      <span className="text-amber-800">{formatLeone(record.employer_cost)}</span>
-                    </div>
+                  <div className="grid grid-cols-4 gap-2 mt-2 pt-2 border-t text-xs">
+                    <div><p className="text-gray-500">Gross</p><p className="font-semibold">{formatLeone(record.gross_pay)}</p></div>
+                    <div><p className="text-gray-500">NASSIT</p><p className="font-semibold">{formatLeone(record.nassit_employee)}</p></div>
+                    <div><p className="text-gray-500">PAYE</p><p className="font-semibold">{formatLeone(record.paye_tax)}</p></div>
+                    <div><p className="text-gray-500">Total Ded.</p><p className="font-semibold">{formatLeone(record.total_deductions)}</p></div>
                   </div>
                 </div>
               ))}
