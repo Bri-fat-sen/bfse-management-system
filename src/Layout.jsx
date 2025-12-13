@@ -175,7 +175,7 @@ export default function Layout({ children, currentPageName }) {
     refetchOnWindowFocus: false,
   });
 
-  React.useEffect(() => {
+  useEffect(() => {
     const autoLinkEmployee = async () => {
       if (!user?.email || employee?.length > 0) return;
       
@@ -203,7 +203,7 @@ export default function Layout({ children, currentPageName }) {
   const currentEmployee = employee?.[0];
 
   // Redirect users without employee record to JoinOrganisation page
-  React.useEffect(() => {
+  useEffect(() => {
     if (user && !loadingEmployee && !currentEmployee && currentPageName !== 'JoinOrganisation') {
       window.location.href = createPageUrl('JoinOrganisation');
     }
@@ -292,7 +292,7 @@ export default function Layout({ children, currentPageName }) {
     sessionStorage.setItem('pinUnlocked', 'true');
   };
 
-  React.useEffect(() => {
+  useEffect(() => {
     const unlocked = sessionStorage.getItem('pinUnlocked');
     if (unlocked === 'true') {
       setIsPinUnlocked(true);
