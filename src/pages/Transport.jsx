@@ -326,7 +326,7 @@ export default function Transport() {
             onClick={() => {
               const data = activeTab === 'trips' 
                 ? trips.map(t => ({
-                    Date: format(new Date(t.date || t.created_date), 'yyyy-MM-dd'),
+                    Date: (t.date || t.created_date) ? format(new Date(t.date || t.created_date), 'yyyy-MM-dd') : 'N/A',
                     Vehicle: t.vehicle_registration || 'N/A',
                     Driver: t.driver_name || 'N/A',
                     Route: t.route_name || 'N/A',
@@ -349,7 +349,7 @@ export default function Transport() {
                   }))
                 : activeTab === 'maintenance'
                 ? maintenanceRecords.map(m => ({
-                    Date: format(new Date(m.date_performed), 'yyyy-MM-dd'),
+                    Date: m.date_performed ? format(new Date(m.date_performed), 'yyyy-MM-dd') : 'N/A',
                     Vehicle: m.vehicle_registration || 'N/A',
                     'Maintenance Type': m.maintenance_type,
                     'Service Provider': m.service_provider || 'N/A',
@@ -598,7 +598,7 @@ export default function Transport() {
                                 Driver: {vehicle.assigned_driver_name}
                               </p>
                             )}
-                            {lastMaintenance && (
+                            {lastMaintenance && lastMaintenance.date_performed && (
                               <p className="text-sm text-gray-500">
                                 Last service: {format(new Date(lastMaintenance.date_performed), 'MMM d, yyyy')}
                               </p>
