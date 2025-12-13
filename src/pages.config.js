@@ -32,6 +32,7 @@ import UploadedDocuments from './pages/UploadedDocuments';
 import JoinOrganisation from './pages/JoinOrganisation';
 import PendingJoinRequests from './pages/PendingJoinRequests';
 import SuperAdminPanel from './pages/SuperAdminPanel';
+import HRManagement from './pages/HRManagement';
 import __Layout from './Layout.jsx';
 
 
@@ -70,6 +71,7 @@ export const PAGES = {
     "JoinOrganisation": JoinOrganisation,
     "PendingJoinRequests": PendingJoinRequests,
     "SuperAdminPanel": SuperAdminPanel,
+    "HRManagement": HRManagement,
 }
 
 export const pagesConfig = {
