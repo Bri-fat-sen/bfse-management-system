@@ -1,12 +1,10 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Printer, Receipt, DollarSign, Loader2, Fuel, Wrench, Building2, ShoppingCart, Users, Truck, Megaphone, FileText, Wallet, X, Package, Droplets, Bus, TrendingUp } from "lucide-react";
-import { useToast } from "@/components/ui/Toast";
+import { Receipt, DollarSign, Fuel, Wrench, Building2, ShoppingCart, Users, Truck, Megaphone, FileText, Wallet, X, Package, Droplets, Bus, TrendingUp } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import ModernExportDialog from "@/components/exports/ModernExportDialog";
 
 export default function PrintFormsButtons({ organisation }) {
-  const toast = useToast();
   const [showExpenseDialog, setShowExpenseDialog] = useState(false);
   const [showRevenueDialog, setShowRevenueDialog] = useState(false);
   const [exportDialogOpen, setExportDialogOpen] = useState(false);
@@ -46,109 +44,67 @@ export default function PrintFormsButtons({ organisation }) {
     { id: 'other', name: 'Other Income', icon: FileText, color: 'slate', description: 'Miscellaneous revenue' },
   ];
 
-  const prepareExpenseFormData = (formType) => {
-    
-    // Basic form data
-    data.push(
-      { Field: 'Form Type', Value: formType.name },
-      { Field: 'Date', Value: new Date().toLocaleDateString('en-GB') },
-      { Field: 'Reference Number', Value: '___________________' },
-      { Field: '', Value: '' }
-    );
+  const generateFormData = (formType, category) => {
+    const isExpense = category === 'expense';
+    const formFields = [];
 
-    // Add form-specific fields
-    if (formType.id === 'fuel') {
-      data.push(
-        { Field: 'Vehicle Registration *', Value: '___________________' },
-        { Field: 'Driver Name *', Value: '___________________' },
-        { Field: 'Fuel Station/Vendor *', Value: '___________________' },
-        { Field: 'Litres *', Value: '___________________' },
-        { Field: 'Total Amount (Le) *', Value: '___________________' }
-      );
-    } else if (formType.id === 'petty_cash') {
-      for (let i = 1; i <= 10; i++) {
-        data.push({ Field: `Item ${i} - Description`, Value: '___________________' });
-        data.push({ Field: `Item ${i} - Amount (Le)`, Value: '___________________' });
+    // Add form-specific fields based on type
+    if (isExpense) {
+      formFields.push({ Field: 'Form Type', Value: formType.name });
+      formFields.push({ Field: 'Date', Value: '_________________' });
+      formFields.push({ Field: 'Reference Number', Value: '_________________' });
+      formFields.push({ Field: '', Value: '' });
+      
+      if (formType.id === 'general') {
+        for (let i = 1; i <= 15; i++) {
+          formFields.push({
+            Field: `Item ${i}`,
+            Value: '____________________________________'
+          });
+        }
+      } else {
+        formFields.push({ Field: 'Description', Value: '____________________________________' });
+        formFields.push({ Field: 'Vendor/Supplier', Value: '____________________________________' });
+        formFields.push({ Field: 'Amount (Le)', Value: '____________________________________' });
+        formFields.push({ Field: 'Payment Method', Value: '____________________________________' });
       }
     } else {
-      for (let i = 1; i <= 8; i++) {
-        data.push({ Field: `Item ${i} - Description`, Value: '___________________' });
-        data.push({ Field: `Item ${i} - Amount (Le)`, Value: '___________________' });
+      formFields.push({ Field: 'Form Type', Value: formType.name });
+      formFields.push({ Field: 'Date', Value: '_________________' });
+      formFields.push({ Field: 'Reference Number', Value: '_________________' });
+      formFields.push({ Field: '', Value: '' });
+      
+      if (formType.id === 'general') {
+        for (let i = 1; i <= 15; i++) {
+          formFields.push({
+            Field: `Item ${i}`,
+            Value: '____________________________________'
+          });
+        }
+      } else {
+        formFields.push({ Field: 'Contributor/Customer', Value: '____________________________________' });
+        formFields.push({ Field: 'Amount (Le)', Value: '____________________________________' });
+        formFields.push({ Field: 'Payment Method', Value: '____________________________________' });
       }
     }
-    
-    data.push(
-      { Field: '', Value: '' },
-      { Field: 'TOTAL AMOUNT (Le)', Value: '___________________' },
-      { Field: 'Notes/Comments', Value: '___________________' },
-      { Field: 'Prepared By', Value: '___________________' },
-      { Field: 'Approved By', Value: '___________________' }
-    );
-    
-    return data;
-  };
 
-  const prepareRevenueFormData = (formType) => {
-    const data = [];
-    
-    // Basic form data
-    data.push(
-      { Field: 'Form Type', Value: formType.name },
-      { Field: 'Date', Value: new Date().toLocaleDateString('en-GB') },
-      { Field: 'Reference Number', Value: '___________________' },
-      { Field: '', Value: '' }
-    );
+    formFields.push({ Field: '', Value: '' });
+    formFields.push({ Field: 'Notes', Value: '____________________________________' });
+    formFields.push({ Field: '', Value: '' });
+    formFields.push({ Field: 'Prepared By', Value: '_______________________' });
+    formFields.push({ Field: 'Approved By', Value: '_______________________' });
 
-    // Add form-specific fields
-    if (formType.id === 'retail_sales') {
-      for (let i = 1; i <= 10; i++) {
-        data.push({ Field: `Product ${i}`, Value: '___________________' });
-        data.push({ Field: `Qty ${i}`, Value: '___________________' });
-        data.push({ Field: `Unit Price (Le) ${i}`, Value: '___________________' });
-      }
-    } else if (formType.id === 'trip_revenue') {
-      data.push(
-        { Field: 'Vehicle Registration *', Value: '___________________' },
-        { Field: 'Driver Name *', Value: '___________________' },
-        { Field: 'Route *', Value: '___________________' },
-        { Field: 'Total Passengers *', Value: '___________________' },
-        { Field: 'Ticket Price (Le)', Value: '___________________' },
-        { Field: 'Total Revenue (Le) *', Value: '___________________' }
-      );
-    } else if (formType.id === 'owner' || formType.id === 'ceo') {
-      data.push(
-        { Field: `${formType.id === 'owner' ? 'Owner' : 'CEO'} Name *`, Value: '___________________' },
-        { Field: 'Amount (Le) *', Value: '___________________' },
-        { Field: 'Payment Method', Value: '___________________' },
-        { Field: 'Purpose/Notes *', Value: '___________________' }
-      );
-    } else {
-      for (let i = 1; i <= 8; i++) {
-        data.push({ Field: `Item ${i} - Description`, Value: '___________________' });
-        data.push({ Field: `Item ${i} - Amount (Le)`, Value: '___________________' });
-      }
-    }
-    
-    data.push(
-      { Field: '', Value: '' },
-      { Field: 'TOTAL AMOUNT (Le)', Value: '___________________' },
-      { Field: 'Notes/Comments', Value: '___________________' },
-      { Field: 'Recorded By', Value: '___________________' },
-      { Field: 'Verified By', Value: '___________________' }
-    );
-    
-    return data;
+    return formFields;
   };
 
   const handlePrintForm = (formType, category) => {
-    const isExpense = category === 'expense';
     setShowExpenseDialog(false);
     setShowRevenueDialog(false);
 
-    const data = isExpense ? prepareExpenseFormData(formType) : prepareRevenueFormData(formType);
+    const formData = generateFormData(formType, category);
     
     setCurrentExportData({
-      data,
+      data: formData,
       title: formType.name
     });
     setExportDialogOpen(true);
