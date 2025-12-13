@@ -26,8 +26,15 @@ export default function JoinOrganisation() {
   });
 
   const { data: organisations = [], isLoading: loadingOrgs } = useQuery({
-    queryKey: ['activeOrganisations'],
-    queryFn: () => base44.entities.Organisation.filter({ status: 'active' }),
+    queryKey: ['publicOrganisations'],
+    queryFn: async () => {
+      // Try to get all organisations (admin view) or active ones (public view)
+      try {
+        return await base44.entities.Organisation.list();
+      } catch {
+        return await base44.entities.Organisation.filter({ status: 'active' });
+      }
+    },
   });
 
   const { data: myRequests = [] } = useQuery({
@@ -100,16 +107,30 @@ export default function JoinOrganisation() {
   const [orgCode, setOrgCode] = useState("");
   const [foundOrg, setFoundOrg] = useState(null);
 
-  const handleFindByCode = () => {
-    if (!orgCode.trim()) return;
-    const org = organisations.find(o => o.code?.toUpperCase() === orgCode.toUpperCase());
-    if (org) {
-      setFoundOrg(org);
-      setSelectedOrg(org);
-    } else {
-      toast.error("Not Found", "No organisation found with that code");
-      setFoundOrg(null);
+  const handleFindByCode = async () => {
+  if (!orgCode.trim()) return;
+
+  // Search in loaded organisations first
+  let org = organisations.find(o => o.code?.toUpperCase() === orgCode.toUpperCase());
+
+  // If not found, try direct query
+  if (!org) {
+    try {
+      const results = await base44.entities.Organisation.filter({ code: orgCode.toUpperCase() });
+      org = results[0];
+    } catch (error) {
+      console.error("Search error:", error);
     }
+  }
+
+  if (org) {
+    setFoundOrg(org);
+    setSelectedOrg(org);
+    toast.success("Found", `Organisation "${org.name}" found`);
+  } else {
+    toast.error("Not Found", "No organisation found with that code");
+    setFoundOrg(null);
+  }
   };
 
   return (
@@ -148,6 +169,7 @@ export default function JoinOrganisation() {
               <div>
                 <p className="font-semibold text-gray-900">{user.full_name}</p>
                 <p className="text-sm text-gray-600">{user.email}</p>
+                <p className="text-xs text-amber-600 mt-1">Not linked to any organisation</p>
               </div>
             </div>
           </div>
@@ -245,6 +267,25 @@ export default function JoinOrganisation() {
                         Find
                       </Button>
                     </div>
+
+                    {foundOrg && (
+                      <div className="mt-4 p-4 bg-white rounded-lg border-2 border-[#1EB053]">
+                        <div className="flex items-center gap-3 mb-3">
+                          {foundOrg.logo_url ? (
+                            <img src={foundOrg.logo_url} alt={foundOrg.name} className="w-12 h-12 object-contain rounded border" />
+                          ) : (
+                            <div className="w-12 h-12 rounded bg-gradient-to-br from-[#1EB053] to-[#0072C6] flex items-center justify-center text-white font-bold text-lg">
+                              {foundOrg.name.charAt(0)}
+                            </div>
+                          )}
+                          <div className="text-left">
+                            <p className="font-semibold text-gray-900">{foundOrg.name}</p>
+                            <p className="text-sm text-gray-600">{foundOrg.city || foundOrg.code}</p>
+                          </div>
+                        </div>
+                        <p className="text-xs text-gray-500 mb-2">Click below to request access</p>
+                      </div>
+                    )}
                   </div>
                 </div>
               ) : (

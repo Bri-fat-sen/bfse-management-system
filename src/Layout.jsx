@@ -201,6 +201,15 @@ export default function Layout({ children, currentPageName }) {
 
   const currentEmployee = employee?.[0];
 
+  // Redirect users without employee record to JoinOrganisation page
+  const needsOrganisation = user && !currentEmployee && currentPageName !== 'JoinOrganisation';
+  
+  React.useEffect(() => {
+    if (needsOrganisation) {
+      window.location.href = createPageUrl('JoinOrganisation');
+    }
+  }, [needsOrganisation]);
+
   const { data: notifications = [] } = useQuery({
     queryKey: ['notifications', currentEmployee?.id],
     queryFn: () => base44.entities.Notification.filter({ is_read: false }, '-created_date', 10),
@@ -230,6 +239,53 @@ export default function Layout({ children, currentPageName }) {
   });
 
   const currentOrg = organisationData?.[0];
+
+  // If user has no organisation, show minimal layout for JoinOrganisation page
+  if (!currentEmployee && currentPageName === 'JoinOrganisation') {
+    return (
+      <div className="min-h-screen bg-gray-50">
+        <header className="sticky top-0 z-30 h-16 px-4 lg:px-6 flex items-center justify-between bg-white border-b shadow-sm">
+          <div className="flex items-center gap-3">
+            <img 
+              src="https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/69250a5e2096205358a5c476/e3d7b69e5_file_00000000014871faa409619479a5f0ef.png"
+              alt="BRI-FAT-SEN"
+              className="h-10 w-auto"
+            />
+          </div>
+          <div className="flex items-center gap-2">
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" className="flex items-center gap-2">
+                  <Avatar className="w-8 h-8">
+                    <AvatarFallback className="sl-gradient text-white text-sm">
+                      {user?.full_name?.charAt(0) || 'U'}
+                    </AvatarFallback>
+                  </Avatar>
+                  <ChevronDown className="w-4 h-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem onClick={handleLogout} className="text-red-600">
+                  <LogOut className="w-4 h-4 mr-2" />
+                  Log out
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
+        </header>
+        <div className="h-1.5 sl-flag-stripe" />
+        <main className="p-4 lg:p-6">
+          <ToastProvider>
+            <PermissionsProvider>
+              <OfflineProvider>
+                {children}
+              </OfflineProvider>
+            </PermissionsProvider>
+          </ToastProvider>
+        </main>
+      </div>
+    );
+  }
 
   // Handle non-active organisation
   if (currentOrg && currentOrg.status !== 'active' && currentPageName !== 'Settings' && currentPageName !== 'OrganisationManage') {
