@@ -242,7 +242,7 @@ export default function ExpenseManagement() {
   const orgId = currentEmployee?.organisation_id;
   const isAdmin = ['super_admin', 'org_admin'].includes(currentEmployee?.role);
 
-  const { data: employees = [] } = useQuery({
+  const { data: allEmployees = [] } = useQuery({
     queryKey: ['employees', orgId],
     queryFn: () => base44.entities.Employee.filter({ organisation_id: orgId }),
     enabled: !!orgId,
@@ -384,7 +384,7 @@ export default function ExpenseManagement() {
       // Notify admins about new expense
       await notifyAdmins({
         orgId,
-        employees,
+        employees: allEmployees,
         type: 'approval',
         title: 'New Expense Submission',
         message: `${currentEmployee?.full_name} submitted an expense: ${result.description} - Le ${result.amount?.toLocaleString()}`,

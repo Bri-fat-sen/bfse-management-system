@@ -123,6 +123,13 @@ export default function ConstructionExpense() {
   const orgId = currentEmployee?.organisation_id;
   const isAdmin = ['super_admin', 'org_admin'].includes(currentEmployee?.role);
 
+  const { data: employees = [] } = useQuery({
+    queryKey: ['employees', orgId],
+    queryFn: () => base44.entities.Employee.filter({ organisation_id: orgId }),
+    enabled: !!orgId,
+    staleTime: 5 * 60 * 1000,
+  });
+
   const { data: expenses = [], isLoading } = useQuery({
     queryKey: ['constructionExpenses', orgId],
     queryFn: () => base44.entities.Expense.filter({ 
