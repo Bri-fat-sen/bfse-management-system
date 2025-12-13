@@ -65,6 +65,7 @@ import InvoiceDialog from "@/components/sales/InvoiceDialog";
 import DocumentUploadExtractor from "@/components/finance/DocumentUploadExtractor";
 import ExportToGoogleDrive from "@/components/exports/ExportToGoogleDrive";
 import PrintableFormsDownload from "@/components/finance/PrintableFormsDownload";
+import ModernExportDialog from "@/components/exports/ModernExportDialog";
 
 export default function Sales() {
   const toast = useToast();
@@ -90,6 +91,7 @@ export default function Sales() {
   const [selectedSaleIds, setSelectedSaleIds] = useState([]);
   const [showBulkDeleteDialog, setShowBulkDeleteDialog] = useState(false);
   const [showDriveExport, setShowDriveExport] = useState(false);
+  const [exportDialogOpen, setExportDialogOpen] = useState(false);
 
   React.useEffect(() => {
     if (showCheckout) {
@@ -900,6 +902,14 @@ export default function Sales() {
         </div>
         <div className="flex gap-2">
           <Button
+            onClick={() => setExportDialogOpen(true)}
+            variant="outline"
+            className="gap-2 border-[#0072C6] text-[#0072C6] hover:bg-[#0072C6]/10"
+          >
+            <Download className="w-4 h-4" />
+            <span className="hidden sm:inline">Export</span>
+          </Button>
+          <Button
             onClick={() => setShowFormsDialog(true)}
             variant="outline"
             className="gap-2 border-gray-300 hover:border-[#0072C6] hover:bg-[#0072C6]/5"
@@ -1568,6 +1578,26 @@ export default function Sales() {
         fileName={`sales_export_${format(new Date(), 'yyyy-MM-dd')}`}
         dataType="sales"
         orgId={orgId}
+      />
+
+      {/* Modern Export Dialog */}
+      <ModernExportDialog
+        open={exportDialogOpen}
+        onOpenChange={setExportDialogOpen}
+        data={sales.map(s => ({
+          Date: format(new Date(s.created_date), 'yyyy-MM-dd HH:mm'),
+          'Sale Number': s.sale_number || 'N/A',
+          'Sale Type': s.sale_type,
+          Customer: s.customer_name || 'Walk-in',
+          Employee: s.employee_name || 'N/A',
+          Location: s.location || 'N/A',
+          'Items Count': s.items?.length || 0,
+          'Total Amount': `Le ${s.total_amount?.toLocaleString() || 0}`,
+          'Payment Method': s.payment_method,
+          Status: s.payment_status,
+        }))}
+        reportTitle="Sales Report"
+        orgData={organisation?.[0]}
       />
     </div>
   );

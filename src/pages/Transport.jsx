@@ -20,8 +20,7 @@ import {
   Wrench,
   AlertTriangle,
   Printer,
-  Cloud,
-  Download
+  Cloud
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -76,7 +75,6 @@ export default function Transport() {
   const [showDriveExport, setShowDriveExport] = useState(false);
   const [exportData, setExportData] = useState([]);
   const [exportDialogOpen, setExportDialogOpen] = useState(false);
-  const [modernExportData, setModernExportData] = useState({ data: [], title: "" });
 
   const { data: user } = useQuery({
     queryKey: ['currentUser'],
@@ -324,55 +322,50 @@ export default function Transport() {
         </div>
         <div className="flex gap-2">
           <Button
-            onClick={() => setShowFormsDialog(true)}
-            variant="outline"
-            className="gap-2 border-gray-300 hover:border-[#0072C6] hover:bg-[#0072C6]/5"
-          >
-            <Printer className="w-4 h-4" />
-            <span className="hidden sm:inline">Forms</span>
-          </Button>
-          <Button
             onClick={() => {
-              let data = [];
-              let title = "";
-              if (activeTab === 'trips') {
-                data = trips.map(t => ({
-                  Date: format(new Date(t.date), 'yyyy-MM-dd'),
-                  Vehicle: t.vehicle_registration || 'N/A',
-                  Driver: t.driver_name,
-                  Route: t.route_name || 'N/A',
-                  Passengers: t.passengers_count || 0,
-                  Revenue: `Le ${t.total_revenue || 0}`,
-                  'Fuel Cost': `Le ${t.fuel_cost || 0}`,
-                  'Net Revenue': `Le ${t.net_revenue || 0}`,
-                  Status: t.status,
-                }));
-                title = "Transport Trips Report";
-              } else if (activeTab === 'contracts') {
-                data = truckContracts.map(c => ({
-                  'Contract #': c.contract_number,
-                  Client: c.client_name,
-                  Vehicle: c.vehicle_registration || 'N/A',
-                  'Contract Amount': `Le ${c.contract_amount || 0}`,
-                  'Total Expenses': `Le ${c.total_expenses || 0}`,
-                  'Net Revenue': `Le ${c.net_revenue || 0}`,
-                  Status: c.status,
-                  'Payment Status': c.payment_status,
-                }));
-                title = "Truck Contracts Report";
-              } else if (activeTab === 'maintenance') {
-                data = maintenanceRecords.map(m => ({
-                  Date: format(new Date(m.date_performed), 'yyyy-MM-dd'),
-                  Vehicle: m.vehicle_registration,
-                  Type: m.maintenance_type,
-                  Description: m.description || 'N/A',
-                  Cost: `Le ${m.cost || 0}`,
-                  'Performed By': m.performed_by_name || 'N/A',
-                  'Next Due': m.next_due_date || 'N/A',
-                }));
-                title = "Vehicle Maintenance Report";
-              }
-              setModernExportData({ data, title });
+              const data = activeTab === 'trips' 
+                ? trips.map(t => ({
+                    Date: format(new Date(t.date || t.created_date), 'yyyy-MM-dd'),
+                    Vehicle: t.vehicle_registration || 'N/A',
+                    Driver: t.driver_name || 'N/A',
+                    Route: t.route_name || 'N/A',
+                    Passengers: t.passengers_count || 0,
+                    Revenue: `Le ${t.total_revenue?.toLocaleString() || 0}`,
+                    'Fuel Cost': `Le ${t.fuel_cost?.toLocaleString() || 0}`,
+                    'Net Revenue': `Le ${t.net_revenue?.toLocaleString() || 0}`,
+                    Status: t.status,
+                  }))
+                : activeTab === 'contracts'
+                ? truckContracts.map(c => ({
+                    'Contract No': c.contract_number,
+                    Client: c.client_name,
+                    Vehicle: c.vehicle_registration || 'N/A',
+                    'Contract Amount': `Le ${c.contract_amount?.toLocaleString() || 0}`,
+                    'Total Expenses': `Le ${c.total_expenses?.toLocaleString() || 0}`,
+                    'Net Revenue': `Le ${c.net_revenue?.toLocaleString() || 0}`,
+                    Status: c.status,
+                    'Payment Status': c.payment_status,
+                  }))
+                : activeTab === 'maintenance'
+                ? maintenanceRecords.map(m => ({
+                    Date: format(new Date(m.date_performed), 'yyyy-MM-dd'),
+                    Vehicle: m.vehicle_registration || 'N/A',
+                    'Maintenance Type': m.maintenance_type,
+                    'Service Provider': m.service_provider || 'N/A',
+                    Cost: `Le ${m.cost?.toLocaleString() || 0}`,
+                    'Next Due': m.next_due_date || 'N/A',
+                    Status: m.status,
+                  }))
+                : vehicles.map(v => ({
+                    Registration: v.registration_number,
+                    Type: v.vehicle_type,
+                    Brand: v.brand || 'N/A',
+                    Model: v.model || 'N/A',
+                    Capacity: v.capacity || 'N/A',
+                    Driver: v.assigned_driver_name || 'Unassigned',
+                    Status: v.status,
+                  }));
+              setExportData({ data, title: `Transport ${activeTab.charAt(0).toUpperCase() + activeTab.slice(1)} Report` });
               setExportDialogOpen(true);
             }}
             variant="outline"
@@ -382,8 +375,16 @@ export default function Transport() {
             <span className="hidden sm:inline">Export</span>
           </Button>
           <Button
+            onClick={() => setShowFormsDialog(true)}
+            variant="outline"
+            className="gap-2 border-gray-300 hover:border-[#0072C6] hover:bg-[#0072C6]/5"
+          >
+            <Printer className="w-4 h-4" />
+            <span className="hidden sm:inline">Forms</span>
+          </Button>
+          <Button
             onClick={() => setShowTripDialog(true)}
-            className="gap-2 bg-gradient-to-r from-[#1EB053] to-[#0072C6] hover:shadow-xl transition-all"
+            className="gap-2 bg-gradient-to-r from-[#1EB053] to-[#0072C6] hover:shadow-lg transition-all"
           >
             <Plus className="w-5 h-5" />
             <span className="hidden sm:inline">Record Trip</span>
@@ -1020,8 +1021,8 @@ export default function Transport() {
       <ModernExportDialog
         open={exportDialogOpen}
         onOpenChange={setExportDialogOpen}
-        data={modernExportData.data}
-        reportTitle={modernExportData.title}
+        data={exportData.data || []}
+        reportTitle={exportData.title || 'Transport Report'}
         orgData={organisation?.[0]}
       />
 

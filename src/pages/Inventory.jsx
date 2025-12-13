@@ -41,6 +41,7 @@ import InventoryInsights from "@/components/inventory/InventoryInsights";
 import BatchManagement from "@/components/inventory/BatchManagement";
 import LocationStockView from "@/components/inventory/LocationStockView";
 import ExportToGoogleDrive from "@/components/exports/ExportToGoogleDrive";
+import ModernExportDialog from "@/components/exports/ModernExportDialog";
 
 export default function Inventory() {
   const toast = useToast();
@@ -63,6 +64,7 @@ export default function Inventory() {
   const [showBulkDeleteConfirm, setShowBulkDeleteConfirm] = useState(false);
   const [productsToDelete, setProductsToDelete] = useState([]);
   const [showDriveExport, setShowDriveExport] = useState(false);
+  const [exportDialogOpen, setExportDialogOpen] = useState(false);
 
   // Fetch current user and employee
   const { data: user, isLoading: loadingUser } = useQuery({
@@ -248,12 +250,20 @@ export default function Inventory() {
         </div>
         <div className="flex items-center gap-2">
           <Button
+            onClick={() => setExportDialogOpen(true)}
+            variant="outline"
+            className="border-[#0072C6] text-[#0072C6] hover:bg-[#0072C6]/10"
+          >
+            <Download className="w-4 h-4 mr-2" />
+            <span className="hidden sm:inline">Export</span>
+          </Button>
+          <Button
             onClick={() => setShowDriveExport(true)}
             variant="outline"
             className="border-blue-500 text-blue-700 hover:bg-blue-50"
           >
             <Cloud className="w-4 h-4 mr-2" />
-            <span className="hidden sm:inline">Export to Drive</span>
+            <span className="hidden sm:inline">Drive</span>
           </Button>
           <Button
             onClick={() => {
@@ -611,6 +621,24 @@ export default function Inventory() {
         fileName={`inventory_export_${format(new Date(), 'yyyy-MM-dd')}`}
         dataType="inventory"
         orgId={orgId}
+      />
+
+      <ModernExportDialog
+        open={exportDialogOpen}
+        onOpenChange={setExportDialogOpen}
+        data={filteredProducts.map(p => ({
+          Product: p.name,
+          SKU: p.sku || 'N/A',
+          Category: p.category || 'N/A',
+          'Stock Quantity': p.stock_quantity || 0,
+          'Unit Price': `Le ${p.unit_price?.toLocaleString() || 0}`,
+          'Cost Price': `Le ${p.cost_price?.toLocaleString() || 0}`,
+          'Stock Value': `Le ${((p.stock_quantity || 0) * (p.cost_price || 0)).toLocaleString()}`,
+          'Reorder Point': p.reorder_point || 0,
+          Status: p.is_active ? 'Active' : 'Inactive',
+        }))}
+        reportTitle="Inventory Report"
+        orgData={currentOrg}
       />
     </div>
   );
