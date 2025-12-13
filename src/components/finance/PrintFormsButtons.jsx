@@ -3,7 +3,6 @@ import { Button } from "@/components/ui/button";
 import { Receipt, DollarSign, Fuel, Wrench, Building2, ShoppingCart, Users, Truck, Megaphone, FileText, Wallet, X, Package, Droplets, Bus, TrendingUp } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import ModernExportDialog from "@/components/exports/ModernExportDialog";
-import { getUnifiedPDFStyles, getUnifiedHeader, getUnifiedFooter, printUnifiedPDF } from "@/components/exports/UnifiedPDFStyles";
 
 export default function PrintFormsButtons({ organisation }) {
   const [showExpenseDialog, setShowExpenseDialog] = useState(false);
