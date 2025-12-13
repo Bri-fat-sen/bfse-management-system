@@ -211,19 +211,19 @@ export default function ProcessPayrollDialog({ open, onOpenChange, orgId, curren
                  (a.timesheet_status === 'approved' || a.timesheet_status === 'overridden');
         });
         
-        approvedHours = empAttendance.reduce((sum, a) => sum + (a.approved_hours || a.total_hours || 0), 0);
+        approvedHours = empAttendance.reduce((sum, a) => sum + (parseFloat(a.approved_hours) || parseFloat(a.total_hours) || 0), 0);
         
         if (emp.salary_type === 'hourly') {
-          baseSalary = (emp.hourly_rate || 0) * approvedHours;
+          baseSalary = (parseFloat(emp.hourly_rate) || 0) * approvedHours;
         } else if (emp.salary_type === 'daily') {
           const daysWorked = Math.floor(approvedHours / 8);
-          baseSalary = (emp.daily_rate || 0) * daysWorked;
+          baseSalary = (parseFloat(emp.daily_rate) || 0) * daysWorked;
         }
       } else {
         // Salary employee - deduct unpaid leave
-        baseSalary = emp.base_salary || 0;
+        baseSalary = parseFloat(emp.base_salary) || 0;
         
-        if (unpaidLeaveDays > 0) {
+        if (unpaidLeaveDays > 0 && baseSalary > 0) {
           // Calculate daily rate (monthly salary / 30 days)
           const dailyRate = baseSalary / 30;
           const unpaidDeduction = dailyRate * unpaidLeaveDays;
@@ -231,13 +231,13 @@ export default function ProcessPayrollDialog({ open, onOpenChange, orgId, curren
         }
       }
 
-      const totalAllowances = allowances.reduce((sum, a) => sum + (a.amount || 0), 0);
-      const totalBonuses = bonuses.reduce((sum, b) => sum + (b.amount || 0), 0);
+      const totalAllowances = allowances.reduce((sum, a) => sum + (parseFloat(a.amount) || 0), 0);
+      const totalBonuses = bonuses.reduce((sum, b) => sum + (parseFloat(b.amount) || 0), 0);
       
       const grossBeforeTax = baseSalary + totalAllowances + totalBonuses;
       const taxCalc = calculateSalaryBreakdown(grossBeforeTax, {}, {});
       
-      const customDeductions = deductions.reduce((sum, d) => sum + (d.amount || 0), 0);
+      const customDeductions = deductions.reduce((sum, d) => sum + (parseFloat(d.amount) || 0), 0);
       const totalDeductions = taxCalc.totalDeductions + customDeductions;
       const netPay = taxCalc.netSalary - customDeductions;
 
@@ -314,11 +314,11 @@ export default function ProcessPayrollDialog({ open, onOpenChange, orgId, curren
       const emp = activeEmployees.find(e => e.id === empId);
       if (!emp) return;
 
-      const baseSalary = emp.base_salary || 0;
+      const baseSalary = parseFloat(emp.base_salary) || parseFloat(emp.hourly_rate) || parseFloat(emp.daily_rate) || 0;
       totalBase += baseSalary;
 
-      const totalAllowances = allowances.reduce((sum, a) => sum + (a.amount || 0), 0);
-      const totalBonuses = bonuses.reduce((sum, b) => sum + (b.amount || 0), 0);
+      const totalAllowances = allowances.reduce((sum, a) => sum + (parseFloat(a.amount) || 0), 0);
+      const totalBonuses = bonuses.reduce((sum, b) => sum + (parseFloat(b.amount) || 0), 0);
       const grossBeforeTax = baseSalary + totalAllowances + totalBonuses;
       
       const taxCalc = calculateSalaryBreakdown(grossBeforeTax, {}, {});
