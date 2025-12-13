@@ -175,7 +175,7 @@ export default function Layout({ children, currentPageName }) {
     refetchOnWindowFocus: false,
   });
 
-  useEffect(() => {
+  React.useEffect(() => {
     const autoLinkEmployee = async () => {
       if (!user?.email || employee?.length > 0) return;
       
@@ -292,7 +292,7 @@ export default function Layout({ children, currentPageName }) {
     sessionStorage.setItem('pinUnlocked', 'true');
   };
 
-  useEffect(() => {
+  React.useEffect(() => {
     const unlocked = sessionStorage.getItem('pinUnlocked');
     if (unlocked === 'true') {
       setIsPinUnlocked(true);
