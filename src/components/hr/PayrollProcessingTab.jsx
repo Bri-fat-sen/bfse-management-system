@@ -3,7 +3,7 @@ import { base44 } from "@/api/base44Client";
 import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
 import { 
   Plus, DollarSign, Calendar, Download, CheckCircle, Clock,
-  TrendingUp, Users, FileText, Calculator
+  TrendingUp, Users, FileText, Calculator, Trash2
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -13,10 +13,12 @@ import { format } from "date-fns";
 import ProcessPayrollDialog from "@/components/hr/ProcessPayrollDialogNew";
 import PayrollDetailDialog from "@/components/hr/PayrollDetailDialog";
 import { formatLeone } from "@/components/hr/sierraLeoneTaxCalculator";
+import ConfirmDialog from "@/components/ui/ConfirmDialog";
 
 export default function PayrollProcessingTab({ orgId, employees, payrolls, currentEmployee }) {
   const [showProcessDialog, setShowProcessDialog] = useState(false);
   const [selectedPayroll, setSelectedPayroll] = useState(null);
+  const [deletePayrollId, setDeletePayrollId] = useState(null);
   const queryClient = useQueryClient();
   const toast = useToast();
 
@@ -171,8 +173,7 @@ export default function PayrollProcessingTab({ orgId, employees, payrolls, curre
         {sortedPayrolls.map((payroll) => (
           <Card 
             key={payroll.id} 
-            className="border shadow-sm hover:shadow-md transition-shadow cursor-pointer"
-            onClick={() => setSelectedPayroll(payroll)}
+            className="border shadow-sm hover:shadow-md transition-shadow"
           >
             <div className="h-0.5 flex">
               <div className="flex-1 bg-[#1EB053]" />
@@ -181,6 +182,10 @@ export default function PayrollProcessingTab({ orgId, employees, payrolls, curre
             </div>
             <CardContent className="p-4">
               <div className="flex items-center justify-between gap-4">
+                <div 
+                  className="flex items-center gap-4 flex-1 cursor-pointer"
+                  onClick={() => setSelectedPayroll(payroll)}
+                >
                 <div className="flex items-center gap-4 flex-1">
                   <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-[#1EB053] to-[#0072C6] flex items-center justify-center text-white font-bold flex-shrink-0">
                     {payroll.employee_name?.charAt(0) || 'E'}
@@ -205,14 +210,28 @@ export default function PayrollProcessingTab({ orgId, employees, payrolls, curre
                       {payroll.pay_period && <span>{payroll.pay_period}</span>}
                     </div>
                   </div>
-                </div>
-                <div className="text-right flex-shrink-0">
-                 <p className="text-lg font-bold text-[#1EB053]">{formatLeone(payroll.net_salary || 0)}</p>
-                 <Badge className={`${statusColors[payroll.status || 'draft']} mt-1`}>
-                   {payroll.status || 'draft'}
-                 </Badge>
-                </div>
-              </div>
+                  </div>
+                  </div>
+                  <div className="flex items-center gap-2 flex-shrink-0">
+                  <div className="text-right">
+                    <p className="text-lg font-bold text-[#1EB053]">{formatLeone(payroll.net_salary || 0)}</p>
+                    <Badge className={`${statusColors[payroll.status || 'draft']} mt-1`}>
+                      {payroll.status || 'draft'}
+                    </Badge>
+                  </div>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setDeletePayrollId(payroll.id);
+                    }}
+                    className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </Button>
+                  </div>
+                  </div>
 
               {/* Breakdown Summary */}
               <div className="mt-3 pt-3 border-t grid grid-cols-3 gap-3 text-sm">
@@ -267,6 +286,17 @@ export default function PayrollProcessingTab({ orgId, employees, payrolls, curre
           orgId={orgId}
         />
       )}
+
+      {/* Delete Confirmation Dialog */}
+      <ConfirmDialog
+        open={!!deletePayrollId}
+        onOpenChange={(open) => !open && setDeletePayrollId(null)}
+        onConfirm={() => deleteMutation.mutate(deletePayrollId)}
+        title="Delete Payroll?"
+        description="Are you sure you want to delete this payroll record? This action cannot be undone."
+        confirmText="Delete"
+        variant="destructive"
+      />
     </div>
   );
 }
