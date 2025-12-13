@@ -37,6 +37,7 @@ import LowStockAlert from "@/components/dashboard/LowStockAlert";
 import TodayAttendance from "@/components/dashboard/TodayAttendance";
 import TransportSummary from "@/components/dashboard/TransportSummary";
 import FinanceSummary from "@/components/dashboard/FinanceSummary";
+import ActivityFeed from "@/components/dashboard/ActivityFeed";
 import DriverDashboard from "@/components/dashboard/DriverDashboard";
 import SalesDashboard from "@/components/dashboard/SalesDashboard";
 import ManagerDashboard from "@/components/dashboard/ManagerDashboard";
@@ -578,45 +579,36 @@ export default function Dashboard() {
             />
           </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-            <Card className="border-0 shadow-md">
-              <div className="h-1 bg-gradient-to-r from-[#0072C6] to-[#8b5cf6]" />
-              <CardHeader className="pb-3">
-                <CardTitle className="text-sm flex items-center gap-2">
-                  <Activity className="w-4 h-4 text-[#0072C6]" />
-                  Recent Activity
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <RecentActivity activities={recentActivity} />
-              </CardContent>
-            </Card>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            <ActivityFeed orgId={orgId} maxHeight="600px" />
 
-            <Card className="border-0 shadow-md">
-              <div className="h-1 bg-gradient-to-r from-[#8b5cf6] to-[#ec4899]" />
-              <CardHeader className="pb-3">
-                <CardTitle className="text-sm flex items-center gap-2">
-                  <Calendar className="w-4 h-4 text-[#8b5cf6]" />
-                  Upcoming Events
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <UpcomingMeetings meetings={meetings} />
-              </CardContent>
-            </Card>
+            <div className="space-y-4">
+              <Card className="border-0 shadow-md">
+                <div className="h-1 bg-gradient-to-r from-[#8b5cf6] to-[#ec4899]" />
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-sm flex items-center gap-2">
+                    <Calendar className="w-4 h-4 text-[#8b5cf6]" />
+                    Upcoming Events
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <UpcomingMeetings meetings={meetings} />
+                </CardContent>
+              </Card>
 
-            <Card className="border-0 shadow-md">
-              <div className="h-1 bg-gradient-to-r from-[#1EB053] to-[#0072C6]" />
-              <CardHeader className="pb-3">
-                <CardTitle className="text-sm flex items-center gap-2">
-                  <Clock className="w-4 h-4 text-[#1EB053]" />
-                  Today's Snapshot
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <TodayAttendance attendance={attendance} employees={employees} />
-              </CardContent>
-            </Card>
+              <Card className="border-0 shadow-md">
+                <div className="h-1 bg-gradient-to-r from-[#1EB053] to-[#0072C6]" />
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-sm flex items-center gap-2">
+                    <Clock className="w-4 h-4 text-[#1EB053]" />
+                    Today's Snapshot
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <TodayAttendance attendance={attendance} employees={employees} />
+                </CardContent>
+              </Card>
+            </div>
           </div>
 
           <PendingApprovalsWidget orgId={orgId} currentEmployee={currentEmployee} />
