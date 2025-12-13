@@ -80,7 +80,7 @@ export default function ModernExportDialog({
       doc.setFontSize(10);
       doc.setFont(undefined, 'normal');
       doc.text(orgData.name || '', orgData?.logo_url ? 45 : 15, 30);
-      doc.text(`Generated: ${format(new Date(), 'PPP')}`, orgData?.logo_url ? 45 : 15, 36);
+      doc.text(`Generated: ${format(new Date(), 'dd/MM/yyyy')}`, orgData?.logo_url ? 45 : 15, 36);
     }
 
     // Sierra Leone flag stripe separator
@@ -199,7 +199,7 @@ export default function ModernExportDialog({
         <div className="space-y-4 py-4">
           <div className="bg-gradient-to-br from-gray-50 to-white rounded-xl p-4 border">
             <h4 className="font-semibold text-gray-900 mb-1">{reportTitle}</h4>
-            <p className="text-sm text-gray-600">{data.length} records • {format(new Date(), 'PPP')}</p>
+            <p className="text-sm text-gray-600">{data.length} records • {format(new Date(), 'dd/MM/yyyy')}</p>
           </div>
 
           <div className="grid grid-cols-2 gap-3">
