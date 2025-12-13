@@ -237,41 +237,54 @@ export default function ProcessPayrollDialog({ open, onOpenChange, orgId, curren
       }
 
       // Get employee's remuneration package
+      console.log('=== PAYROLL DEBUG ===');
+      console.log('Employee:', emp.full_name);
+      console.log('Employee remuneration_package_id:', emp.remuneration_package_id);
+      console.log('All packages:', allPackages);
+      
       const empPackage = allPackages.find(p => p.id === emp.remuneration_package_id);
+      console.log('Found package for employee:', empPackage);
       
       // Combine manual allowances/bonuses/deductions with package ones
       const packageAllowances = empPackage?.allowances || [];
       const packageBonuses = empPackage?.bonuses || [];
       const packageDeductions = empPackage?.deductions || [];
       
-      console.log('Employee:', emp.full_name, 'Base Salary:', baseSalary);
-      console.log('Package Allowances:', packageAllowances);
+      console.log('Package allowances array:', packageAllowances);
+      console.log('Base Salary:', baseSalary);
+      console.log('Manual allowances from dialog:', allowances);
       
       // Calculate package allowances (handle percentage type)
       const calculatedPackageAllowances = packageAllowances.map(a => {
         const parsedAmount = parseFloat(a.amount) || 0;
         if (a.type === 'percentage') {
           const calculatedAmount = (baseSalary * parsedAmount) / 100;
-          console.log(`Allowance ${a.name}: ${parsedAmount}% of ${baseSalary} = ${calculatedAmount}`);
+          console.log(`✓ Allowance "${a.name}": ${parsedAmount}% of ${baseSalary} = ${calculatedAmount}`);
           return {
-            ...a,
-            amount: calculatedAmount
+            name: a.name,
+            amount: calculatedAmount,
+            type: a.type
           };
         }
-        console.log(`Allowance ${a.name}: Fixed ${parsedAmount}`);
+        console.log(`✓ Allowance "${a.name}": Fixed ${parsedAmount}`);
         return {
-          ...a,
-          amount: parsedAmount
+          name: a.name,
+          amount: parsedAmount,
+          type: a.type || 'fixed'
         };
       });
       
-      console.log('Calculated Package Allowances:', calculatedPackageAllowances);
+      console.log('Calculated package allowances:', calculatedPackageAllowances);
       
       const combinedAllowances = [...allowances, ...calculatedPackageAllowances];
       const combinedBonuses = [...bonuses, ...packageBonuses];
       const combinedDeductions = [...deductions, ...packageDeductions];
       
-      console.log('Combined Allowances:', combinedAllowances);
+      console.log('FINAL Combined Allowances:', combinedAllowances);
+      
+      const totalAllowances = combinedAllowances.reduce((sum, a) => sum + (parseFloat(a.amount) || 0), 0);
+      console.log('Total allowances calculated:', totalAllowances);
+      console.log('===================');
       
       const totalAllowances = combinedAllowances.reduce((sum, a) => sum + (parseFloat(a.amount) || 0), 0);
       const totalBonuses = combinedBonuses.reduce((sum, b) => sum + (parseFloat(b.amount) || 0), 0);
