@@ -194,7 +194,7 @@ export default function MyLeaveRequests({ employee, orgId, onRequestLeave }) {
               <p className="text-gray-500 mb-4">No leave requests yet</p>
               <Button 
                 size="sm"
-                onClick={() => setShowLeaveForm(true)}
+                onClick={() => onRequestLeave ? onRequestLeave() : setShowLeaveForm(true)}
                 className="bg-[#1EB053] hover:bg-[#178f43]"
               >
                 <CalendarDays className="w-4 h-4 mr-2" />
