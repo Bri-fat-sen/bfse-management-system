@@ -301,7 +301,7 @@ export default function ProcessPayrollDialog({ open, onOpenChange, orgId, curren
         ],
         total_allowances: totalAllowances,
         total_bonuses: totalBonuses,
-        gross_pay: taxCalc.grossSalary,
+        gross_pay: grossPay,
         nassit_employee: taxCalc.nassit.employee,
         nassit_employer: taxCalc.nassit.employer,
         paye_tax: taxCalc.paye.tax,
