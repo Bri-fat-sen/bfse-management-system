@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import {
@@ -61,7 +61,13 @@ export default function MaintenanceDialog({
     maintenance_type: 'scheduled_service',
     category: 'scheduled',
     description: '',
-    date_performed: format(new Date(), 'yyyy-MM-dd'),
+    date_performed: (() => {
+      try {
+        return format(new Date(), 'yyyy-MM-dd');
+      } catch {
+        return new Date().toISOString().split('T')[0];
+      }
+    })(),
     mileage_at_service: '',
     cost: '',
     vendor: '',
@@ -73,13 +79,21 @@ export default function MaintenanceDialog({
   });
 
   useEffect(() => {
+    const getDefaultDate = () => {
+      try {
+        return format(new Date(), 'yyyy-MM-dd');
+      } catch {
+        return new Date().toISOString().split('T')[0];
+      }
+    };
+
     if (maintenance) {
       setFormData({
         vehicle_id: maintenance.vehicle_id || '',
         maintenance_type: maintenance.maintenance_type || 'scheduled_service',
         category: maintenance.category || 'scheduled',
         description: maintenance.description || '',
-        date_performed: maintenance.date_performed || format(new Date(), 'yyyy-MM-dd'),
+        date_performed: maintenance.date_performed || getDefaultDate(),
         mileage_at_service: maintenance.mileage_at_service || '',
         cost: maintenance.cost || '',
         vendor: maintenance.vendor || '',
@@ -95,7 +109,7 @@ export default function MaintenanceDialog({
         maintenance_type: 'scheduled_service',
         category: 'scheduled',
         description: '',
-        date_performed: format(new Date(), 'yyyy-MM-dd'),
+        date_performed: getDefaultDate(),
         mileage_at_service: '',
         cost: '',
         vendor: '',
