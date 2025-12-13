@@ -262,12 +262,12 @@ export default function ProcessPayrollDialog({ open, onOpenChange, orgId, curren
       const totalAllowances = combinedAllowances.reduce((sum, a) => sum + (parseFloat(a.amount) || 0), 0);
       const totalBonuses = combinedBonuses.reduce((sum, b) => sum + (parseFloat(b.amount) || 0), 0);
       
-      const grossBeforeTax = baseSalary + totalAllowances + totalBonuses;
-      const taxCalc = calculateSalaryBreakdown(grossBeforeTax, {}, {});
+      const grossPay = baseSalary + totalAllowances + totalBonuses;
+      const taxCalc = calculateSalaryBreakdown(grossPay, {}, {});
       
       const customDeductions = combinedDeductions.reduce((sum, d) => sum + (parseFloat(d.amount) || 0), 0);
       const totalDeductions = taxCalc.totalDeductions + customDeductions;
-      const netPay = taxCalc.netSalary - customDeductions;
+      const netPay = grossPay - taxCalc.totalDeductions - customDeductions;
 
       preview.push({
         organisation_id: orgId,
