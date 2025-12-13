@@ -96,9 +96,11 @@ export default function ProcessPayrollDialog({ open, onOpenChange, orgId, curren
   };
 
   const generatePayrollPreview = async () => {
-    const allAttendance = wageEmployees.length > 0 
-      ? await base44.entities.Attendance.filter({ organisation_id: orgId })
-      : [];
+    let allAttendance = [];
+    if (wageEmployees.length > 0) {
+      const fetchedAttendance = await base44.entities.Attendance.filter({ organisation_id: orgId });
+      allAttendance = Array.isArray(fetchedAttendance) ? fetchedAttendance : [];
+    }
 
     const preview = [];
 
