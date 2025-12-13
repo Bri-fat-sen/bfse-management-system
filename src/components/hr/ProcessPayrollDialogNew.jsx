@@ -244,7 +244,18 @@ export default function ProcessPayrollDialog({ open, onOpenChange, orgId, curren
       const packageBonuses = empPackage?.bonuses || [];
       const packageDeductions = empPackage?.deductions || [];
       
-      const combinedAllowances = [...allowances, ...packageAllowances];
+      // Calculate package allowances (handle percentage type)
+      const calculatedPackageAllowances = packageAllowances.map(a => {
+        if (a.type === 'percentage') {
+          return {
+            ...a,
+            amount: (baseSalary * (parseFloat(a.amount) || 0)) / 100
+          };
+        }
+        return a;
+      });
+      
+      const combinedAllowances = [...allowances, ...calculatedPackageAllowances];
       const combinedBonuses = [...bonuses, ...packageBonuses];
       const combinedDeductions = [...deductions, ...packageDeductions];
       
