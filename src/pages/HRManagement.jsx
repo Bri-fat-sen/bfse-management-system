@@ -25,10 +25,10 @@ import TaxFilingReports from "@/components/hr/TaxFilingReports";
 export default function HRManagement() {
   const [activeTab, setActiveTab] = useState("employees");
   const [searchTerm, setSearchTerm] = useState("");
-  const [exportDialogOpen, setExportDialogOpen] = useState(false);
-  const [exportData, setExportData] = useState({ data: [], title: "" });
   const queryClient = useQueryClient();
   const toast = useToast();
+  const [exportDialogOpen, setExportDialogOpen] = useState(false);
+  const [currentExportData, setCurrentExportData] = useState({ data: [], title: "" });
 
   const { data: user } = useQuery({
     queryKey: ['currentUser'],
@@ -177,7 +177,7 @@ export default function HRManagement() {
             <div className="flex items-center gap-2">
               <Button
                 onClick={() => {
-                  setExportData({
+                  setCurrentExportData({
                     data: employees.map(e => ({
                       'Employee Code': e.employee_code,
                       'Full Name': e.full_name,
@@ -185,8 +185,7 @@ export default function HRManagement() {
                       Department: e.department || 'N/A',
                       Position: e.position || 'N/A',
                       'Employment Type': e.employment_type,
-                      'Base Salary': `Le ${e.base_salary?.toLocaleString() || 0}`,
-                      'Hire Date': e.hire_date || 'N/A',
+                      'Base Salary': e.base_salary ? `Le ${e.base_salary.toLocaleString()}` : 'N/A',
                       Status: e.status,
                     })),
                     title: 'HR Employee Report'
@@ -194,10 +193,9 @@ export default function HRManagement() {
                   setExportDialogOpen(true);
                 }}
                 className="bg-gradient-to-r from-[#1EB053] to-[#0072C6] text-white"
-                size="sm"
               >
                 <Download className="w-4 h-4 mr-2" />
-                Export
+                Export HR Data
               </Button>
               <Badge className="bg-[#1EB053] text-white">NASSIT Integrated</Badge>
               <Badge className="bg-[#0072C6] text-white">Tax Compliant</Badge>
@@ -342,8 +340,8 @@ export default function HRManagement() {
       <ModernExportDialog
         open={exportDialogOpen}
         onOpenChange={setExportDialogOpen}
-        data={exportData.data}
-        reportTitle={exportData.title}
+        data={currentExportData.data}
+        reportTitle={currentExportData.title}
         orgData={currentOrg}
       />
     </div>

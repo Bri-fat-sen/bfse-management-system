@@ -43,9 +43,10 @@ export default function ModernExportDialog({
   const exportToPDF = async () => {
     setExporting(true);
     
-    // Dynamic import to reduce bundle size
-    const jsPDF = (await import('jspdf')).default;
-    const doc = new jsPDF('p', 'mm', 'a4');
+    try {
+      // Dynamic import to reduce bundle size
+      const jsPDF = (await import('jspdf')).default;
+      const doc = new jsPDF('p', 'mm', 'a4');
     
     // Sierra Leone flag stripe at top
     doc.setFillColor(30, 176, 83);
@@ -171,11 +172,15 @@ export default function ModernExportDialog({
       doc.text(`Page ${i} of ${pageCount}`, 105, 293, { align: 'center' });
     }
 
-    doc.save(`${reportTitle}_${format(new Date(), 'yyyy-MM-dd')}.pdf`);
-    
-    setExporting(false);
-    setExportComplete(true);
-    setTimeout(() => setExportComplete(false), 2000);
+      doc.save(`${reportTitle}_${format(new Date(), 'yyyy-MM-dd')}.pdf`);
+      
+      setExporting(false);
+      setExportComplete(true);
+      setTimeout(() => setExportComplete(false), 2000);
+    } catch (error) {
+      console.error('PDF export error:', error);
+      setExporting(false);
+    }
   };
 
   return (
