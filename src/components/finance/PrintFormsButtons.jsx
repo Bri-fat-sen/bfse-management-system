@@ -46,7 +46,55 @@ export default function PrintFormsButtons({ organisation }) {
 
   const generateFormData = (formType, category) => {
     const isExpense = category === 'expense';
-      padding: 16px 20px;
+    const formFields = [];
+
+    // Add form-specific fields based on type
+    if (isExpense) {
+      formFields.push({ Field: 'Form Type', Value: formType.name });
+      formFields.push({ Field: 'Date', Value: '_________________' });
+      formFields.push({ Field: 'Reference Number', Value: '_________________' });
+      formFields.push({ Field: '', Value: '' });
+      
+      if (formType.id === 'general') {
+        for (let i = 1; i <= 15; i++) {
+          formFields.push({
+            Field: `Item ${i}`,
+            Value: '____________________________________'
+          });
+        }
+      } else {
+        formFields.push({ Field: 'Description', Value: '____________________________________' });
+        formFields.push({ Field: 'Vendor/Supplier', Value: '____________________________________' });
+        formFields.push({ Field: 'Amount (Le)', Value: '____________________________________' });
+        formFields.push({ Field: 'Payment Method', Value: '____________________________________' });
+      }
+    } else {
+      formFields.push({ Field: 'Form Type', Value: formType.name });
+      formFields.push({ Field: 'Date', Value: '_________________' });
+      formFields.push({ Field: 'Reference Number', Value: '_________________' });
+      formFields.push({ Field: '', Value: '' });
+      
+      if (formType.id === 'general') {
+        for (let i = 1; i <= 15; i++) {
+          formFields.push({
+            Field: `Item ${i}`,
+            Value: '____________________________________'
+          });
+        }
+      } else {
+        formFields.push({ Field: 'Contributor/Customer', Value: '____________________________________' });
+        formFields.push({ Field: 'Amount (Le)', Value: '____________________________________' });
+        formFields.push({ Field: 'Payment Method', Value: '____________________________________' });
+      }
+    }
+
+    formFields.push({ Field: '', Value: '' });
+    formFields.push({ Field: 'Notes', Value: '____________________________________' });
+    formFields.push({ Field: '', Value: '' });
+    formFields.push({ Field: 'Prepared By', Value: '_______________________' });
+    formFields.push({ Field: 'Approved By', Value: '_______________________' });
+
+    return formFields;
       border-radius: 8px;
       margin-bottom: 24px;
       border-left: 4px solid var(--primary);
