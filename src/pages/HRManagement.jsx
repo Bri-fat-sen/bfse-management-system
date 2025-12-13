@@ -13,12 +13,12 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/components/ui/Toast";
 import LoadingSpinner from "@/components/ui/LoadingSpinner";
-import EmployeeManagementTab from "@/components/hr/EmployeeManagementTab";
-import PayrollProcessingTab from "@/components/hr/PayrollProcessingTab";
-import LeaveManagementTab from "@/components/hr/LeaveManagementTab";
-import AttendanceOverviewTab from "@/components/hr/AttendanceOverviewTab";
-import ReportsAnalyticsTab from "@/components/hr/ReportsAnalyticsTab";
-import SierraLeonePayrollSettings from "@/components/hr/SierraLeonePayrollSettings";
+import EmployeeManagementTab from "@/components/hr/EmployeeManagementTab.jsx";
+import PayrollProcessingTab from "@/components/hr/PayrollProcessingTab.jsx";
+import LeaveManagementTab from "@/components/hr/LeaveManagementTab.jsx";
+import AttendanceOverviewTab from "@/components/hr/AttendanceOverviewTab.jsx";
+import ReportsAnalyticsTab from "@/components/hr/ReportsAnalyticsTab.jsx";
+import SierraLeonePayrollSettings from "@/components/hr/SierraLeonePayrollSettings.jsx";
 
 export default function HRManagement() {
   const [activeTab, setActiveTab] = useState("employees");

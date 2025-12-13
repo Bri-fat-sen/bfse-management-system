@@ -103,6 +103,7 @@ const menuSections = [
   {
     title: "Human Resources",
     items: [
+      { name: "HR & Payroll", icon: Users, page: "HRManagement", module: "hr" },
       { name: "HR Documents", icon: FileText, page: "Documents", module: "hr" },
       { name: "Time & Attendance", icon: Clock, page: "Attendance", module: "attendance" },
       { name: "Schedules", icon: Calendar, page: "WorkSchedules", module: "hr" },

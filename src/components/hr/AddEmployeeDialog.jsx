@@ -1,477 +1,189 @@
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import {
-  Dialog,
-  DialogContent,
-} from "@/components/ui/dialog";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { toast } from "sonner";
-import { 
-  Loader2, User, Mail, Phone, Building2, Briefcase, Send, AlertCircle, 
-  Package, X, Check, DollarSign, Calendar, Shield, MapPin
-} from "lucide-react";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Badge } from "@/components/ui/badge";
-import { generateInviteEmailHTML } from "@/components/email/InviteEmailTemplate";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { useToast } from "@/components/ui/Toast";
 
-const roles = [
-  { value: "super_admin", label: "Super Admin" },
-  { value: "org_admin", label: "Organisation Admin" },
-  { value: "hr_admin", label: "HR Admin" },
-  { value: "payroll_admin", label: "Payroll Admin" },
-  { value: "warehouse_manager", label: "Warehouse Manager" },
-  { value: "retail_cashier", label: "Retail Cashier" },
-  { value: "vehicle_sales", label: "Vehicle Sales" },
-  { value: "driver", label: "Driver" },
-  { value: "accountant", label: "Accountant" },
-  { value: "support_staff", label: "Support Staff" },
-  { value: "read_only", label: "Read Only" },
-];
-
-const departments = ["Management", "Sales", "Operations", "Finance", "Transport", "Support", "HR", "IT"];
-
-export default function AddEmployeeDialog({ open, onOpenChange, orgId, employeeCount, organisation, inviterName }) {
-  const queryClient = useQueryClient();
-  const [showAdvanced, setShowAdvanced] = useState(false);
-  
+export default function AddEmployeeDialog({ open, onOpenChange, employee, orgId }) {
   const [formData, setFormData] = useState({
-    first_name: '',
-    last_name: '',
-    email: '',
-    phone: '',
-    department: '',
-    position: '',
-    role: 'support_staff',
-    salary_type: 'monthly',
-    base_salary: '',
-    hourly_rate: '',
-    hire_date: new Date().toISOString().split('T')[0],
-    remuneration_package_id: '',
-    pay_cycle_id: '',
-    assigned_location_ids: [],
+    first_name: "",
+    last_name: "",
+    employee_code: "",
+    email: "",
+    phone: "",
+    department: "",
+    position: "",
+    role: "read_only",
+    base_salary: 0,
+    status: "active",
   });
-  
-  const [sendWelcomeEmail, setSendWelcomeEmail] = useState(true);
-  const [isSendingEmail, setIsSendingEmail] = useState(false);
+
+  const queryClient = useQueryClient();
+  const toast = useToast();
 
   useEffect(() => {
-    if (open) {
+    if (employee) {
+      setFormData(employee);
+    } else {
       setFormData({
-        first_name: '',
-        last_name: '',
-        email: '',
-        phone: '',
-        department: '',
-        position: '',
-        role: 'support_staff',
-        salary_type: 'monthly',
-        base_salary: '',
-        hourly_rate: '',
-        hire_date: new Date().toISOString().split('T')[0],
-        remuneration_package_id: '',
-        pay_cycle_id: '',
-        assigned_location_ids: [],
+        first_name: "",
+        last_name: "",
+        employee_code: `EMP${Date.now().toString().slice(-6)}`,
+        email: "",
+        phone: "",
+        department: "",
+        position: "",
+        role: "read_only",
+        base_salary: 0,
+        status: "active",
       });
-      setShowAdvanced(false);
-      setSendWelcomeEmail(true);
-      setIsSendingEmail(false);
     }
-  }, [open]);
+  }, [employee, open]);
 
-  const primaryColor = organisation?.primary_color || '#1EB053';
-  const secondaryColor = organisation?.secondary_color || '#0072C6';
-
-  const { data: packages = [] } = useQuery({
-    queryKey: ['remunerationPackages', orgId],
-    queryFn: () => base44.entities.RemunerationPackage.filter({ organisation_id: orgId, is_active: true }),
-    enabled: !!orgId,
-  });
-
-  const { data: payCycles = [] } = useQuery({
-    queryKey: ['payCycles', orgId],
-    queryFn: () => base44.entities.PayCycle.filter({ organisation_id: orgId, is_active: true }),
-    enabled: !!orgId,
-  });
-
-  const { data: warehouses = [] } = useQuery({
-    queryKey: ['warehouses', orgId],
-    queryFn: () => base44.entities.Warehouse.filter({ organisation_id: orgId, is_active: true }),
-    enabled: !!orgId,
-  });
-
-  const { data: vehicles = [] } = useQuery({
-    queryKey: ['vehicles', orgId],
-    queryFn: () => base44.entities.Vehicle.filter({ organisation_id: orgId }),
-    enabled: !!orgId,
-  });
-
-  const allLocations = [
-    ...warehouses.map(w => ({ id: w.id, name: w.name, type: 'warehouse' })),
-    ...vehicles.map(v => ({ id: v.id, name: `${v.registration_number} - ${v.brand || ''} ${v.model || ''}`.trim(), type: 'vehicle' }))
-  ];
-
-  const applicablePackages = packages.filter(pkg => 
-    !pkg.applicable_roles?.length || pkg.applicable_roles.includes(formData.role)
-  );
-
-  useEffect(() => {
-    if (formData.remuneration_package_id) {
-      const pkg = packages.find(p => p.id === formData.remuneration_package_id);
-      if (pkg) {
-        setFormData(prev => ({
-          ...prev,
-          base_salary: pkg.base_salary || prev.base_salary,
-          hourly_rate: pkg.hourly_rate || prev.hourly_rate,
-          salary_type: pkg.salary_type || prev.salary_type,
-        }));
-      }
-    }
-  }, [formData.remuneration_package_id, packages]);
-
-  const createEmployeeMutation = useMutation({
+  const saveMutation = useMutation({
     mutationFn: async (data) => {
-      if (data.email) {
-        const existingByEmail = await base44.entities.Employee.filter({ 
-          organisation_id: orgId, 
-          email: data.email 
-        });
-        if (existingByEmail.length > 0) {
-          throw new Error('An employee with this email already exists');
-        }
-        
-        const existingByUserEmail = await base44.entities.Employee.filter({ 
-          organisation_id: orgId, 
-          user_email: data.email 
-        });
-        if (existingByUserEmail.length > 0) {
-          throw new Error('An employee with this email already exists');
-        }
+      if (employee) {
+        return base44.entities.Employee.update(employee.id, data);
       }
-      
-      const employeeCode = `EMP${String(employeeCount + 1).padStart(4, '0')}`;
-      const selectedPackage = packages.find(p => p.id === data.remuneration_package_id);
-      const employee = await base44.entities.Employee.create({
+      return base44.entities.Employee.create({
         ...data,
         organisation_id: orgId,
-        employee_code: employeeCode,
         full_name: `${data.first_name} ${data.last_name}`,
-        status: 'active',
-        base_salary: parseFloat(data.base_salary) || 0,
-        hourly_rate: parseFloat(data.hourly_rate) || 0,
-        remuneration_package_id: data.remuneration_package_id || null,
-        remuneration_package_name: selectedPackage?.name || null,
-        email: data.email || null,
-        assigned_location_ids: data.assigned_location_ids || [],
-        assigned_location_names: data.assigned_location_ids?.map(id => 
-          allLocations.find(loc => loc.id === id)?.name
-        ).filter(Boolean) || [],
       });
-
-      // Add employee to pay cycle if selected
-      if (data.pay_cycle_id) {
-        const payCycle = payCycles.find(pc => pc.id === data.pay_cycle_id);
-        if (payCycle) {
-          const updatedEmployeeIds = [...(payCycle.employee_ids || []), employee.id];
-          await base44.entities.PayCycle.update(data.pay_cycle_id, {
-            employee_ids: updatedEmployeeIds,
-            employee_count: updatedEmployeeIds.length
-          });
-        }
-      }
-
-      return { employee, email: data.email, firstName: data.first_name, role: data.role, position: data.position };
     },
-    onSuccess: async (result) => {
-      queryClient.invalidateQueries({ queryKey: ['employees'] });
-      queryClient.invalidateQueries({ queryKey: ['payCycles'] });
-      
-      if (sendWelcomeEmail && result.email && organisation) {
-        setIsSendingEmail(true);
-        try {
-          const roleLabel = roles.find(r => r.value === result.role)?.label || result.role;
-          const appDomain = "https://www.brifatsensystems.com";
-          const htmlContent = generateInviteEmailHTML({
-            recipientName: result.firstName,
-            organisationName: organisation.name,
-            organisationLogo: organisation.logo_url,
-            role: roleLabel,
-            position: result.position,
-            inviterName: inviterName,
-            loginUrl: appDomain,
-          });
-          
-          await base44.functions.invoke('sendEmailMailersend', {
-            to: result.email,
-            toName: result.firstName,
-            subject: `Welcome to ${organisation.name}! 🇸🇱`,
-            htmlContent: htmlContent,
-            fromName: organisation.name,
-          });
-          
-          toast.success("Employee added & welcome email sent!");
-        } catch (emailError) {
-          console.error('Failed to send welcome email:', emailError);
-          toast.error("Employee added (email failed to send)");
-        } finally {
-          setIsSendingEmail(false);
-        }
-      } else {
-        toast.success("Employee added successfully");
-      }
-      
+    onSuccess: () => {
+      queryClient.invalidateQueries(['employees']);
+      toast.success(employee ? "Employee Updated" : "Employee Added");
       onOpenChange(false);
-      setFormData({
-        first_name: '',
-        last_name: '',
-        email: '',
-        phone: '',
-        department: '',
-        position: '',
-        role: 'support_staff',
-        salary_type: 'monthly',
-        base_salary: '',
-        hourly_rate: '',
-        hire_date: new Date().toISOString().split('T')[0],
-        remuneration_package_id: '',
-        pay_cycle_id: '',
-        assigned_location_ids: [],
-      });
-      setSendWelcomeEmail(true);
     },
     onError: (error) => {
-      toast.error(error.message || "Failed to add employee");
+      toast.error("Error", error.message);
     },
   });
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    if (!formData.first_name || !formData.last_name) {
-      toast.error("Please fill in required fields");
-      return;
-    }
-    createEmployeeMutation.mutate(formData);
+    saveMutation.mutate(formData);
   };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-lg max-h-[90vh] overflow-hidden p-0 w-[95vw] sm:w-full [&>button]:hidden">
-        <div className="h-2 flex">
-          <div className="flex-1" style={{ backgroundColor: primaryColor }} />
+      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+        <div className="h-1 flex -mt-6 -mx-6">
+          <div className="flex-1 bg-[#1EB053]" />
           <div className="flex-1 bg-white" />
-          <div className="flex-1" style={{ backgroundColor: secondaryColor }} />
+          <div className="flex-1 bg-[#0072C6]" />
         </div>
-
-        <div className="px-6 py-4 text-white border-b border-white/20" style={{ background: `linear-gradient(135deg, ${primaryColor} 0%, ${secondaryColor} 100%)` }}>
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center">
-                <User className="w-5 h-5 text-white" />
-              </div>
-              <div>
-                <h2 className="text-lg font-bold">Add Employee</h2>
-                <p className="text-white/80 text-xs">Press Ctrl+Enter to save</p>
-              </div>
-            </div>
-            <Button variant="ghost" size="icon" onClick={() => onOpenChange(false)} className="text-white hover:bg-white/20">
-              <X className="w-5 h-5" />
-            </Button>
-          </div>
-        </div>
-
-        <form onSubmit={handleSubmit} className="overflow-y-auto max-h-[calc(90vh-180px)]">
-          <div className="p-6 space-y-4">
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <Label className="text-sm">First Name *</Label>
-                <Input value={formData.first_name} onChange={(e) => setFormData(prev => ({ ...prev, first_name: e.target.value }))} placeholder="John" required autoFocus className="mt-1.5" />
-              </div>
-              <div>
-                <Label className="text-sm">Last Name *</Label>
-                <Input value={formData.last_name} onChange={(e) => setFormData(prev => ({ ...prev, last_name: e.target.value }))} placeholder="Doe" required className="mt-1.5" />
-              </div>
-            </div>
-
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <Label className="text-sm">Role *</Label>
-                <Select value={formData.role} onValueChange={(v) => setFormData(prev => ({ ...prev, role: v }))}>
-                  <SelectTrigger className="mt-1.5">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {roles.map(role => (
-                      <SelectItem key={role.value} value={role.value}>{role.label}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div>
-                <Label className="text-sm">Department</Label>
-                <Select value={formData.department} onValueChange={(v) => setFormData(prev => ({ ...prev, department: v }))}>
-                  <SelectTrigger className="mt-1.5">
-                    <SelectValue placeholder="Select" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {departments.map(dept => (
-                      <SelectItem key={dept} value={dept}>{dept}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-
+        <DialogHeader>
+          <DialogTitle>{employee ? "Edit Employee" : "Add New Employee"}</DialogTitle>
+        </DialogHeader>
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div className="grid grid-cols-2 gap-4">
             <div>
-              <Label className="text-sm">Email (optional)</Label>
-              <Input type="email" value={formData.email} onChange={(e) => setFormData(prev => ({ ...prev, email: e.target.value }))} placeholder="john@example.com" className="mt-1.5" />
-              {formData.email && (
-                <div className="flex items-start gap-2 mt-2 p-2 bg-blue-50 rounded border border-blue-200">
-                  <Checkbox id="sendWelcomeEmail" checked={sendWelcomeEmail} onCheckedChange={setSendWelcomeEmail} className="mt-0.5" />
-                  <label htmlFor="sendWelcomeEmail" className="text-xs text-blue-700 cursor-pointer">Send welcome email</label>
-                </div>
-              )}
+              <Label>First Name *</Label>
+              <Input
+                value={formData.first_name}
+                onChange={(e) => setFormData({ ...formData, first_name: e.target.value })}
+                required
+              />
             </div>
-
-            <button type="button" onClick={() => setShowAdvanced(!showAdvanced)} className="w-full text-sm text-gray-600 hover:text-gray-900 text-left">
-              {showAdvanced ? '− Hide' : '+ Show'} More Options
-            </button>
-
-            {showAdvanced && (
-              <div className="space-y-3 pt-2 border-t">
-                <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <Label className="text-sm">Phone</Label>
-                    <Input value={formData.phone} onChange={(e) => setFormData(prev => ({ ...prev, phone: e.target.value }))} placeholder="+232 76 123456" className="mt-1.5" />
-                  </div>
-                  <div>
-                    <Label className="text-sm">Position</Label>
-                    <Input value={formData.position} onChange={(e) => setFormData(prev => ({ ...prev, position: e.target.value }))} placeholder="Job title" className="mt-1.5" />
-                  </div>
-                  <div>
-                    <Label className="text-sm">Hire Date</Label>
-                    <Input type="date" value={formData.hire_date} onChange={(e) => setFormData(prev => ({ ...prev, hire_date: e.target.value }))} className="mt-1.5" />
-                  </div>
-                  <div>
-                    <Label className="text-sm">Base Salary</Label>
-                    <div className="relative mt-1.5">
-                      <span className="absolute left-2 top-1/2 -translate-y-1/2 text-gray-500 text-xs">Le</span>
-                      <Input type="number" value={formData.base_salary} onChange={(e) => setFormData(prev => ({ ...prev, base_salary: e.target.value }))} placeholder="0" className="pl-7" />
-                    </div>
-                  </div>
-                </div>
-
-                {applicablePackages.length > 0 && (
-                  <div>
-                    <Label className="text-sm">Remuneration Package</Label>
-                    <Select value={formData.remuneration_package_id} onValueChange={(v) => setFormData(prev => ({ ...prev, remuneration_package_id: v }))}>
-                      <SelectTrigger className="mt-1.5">
-                        <SelectValue placeholder="None" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value={null}>None</SelectItem>
-                        {applicablePackages.map(pkg => (
-                          <SelectItem key={pkg.id} value={pkg.id}>{pkg.name} (Le {pkg.base_salary?.toLocaleString()})</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                )}
-
-                {payCycles.length > 0 && (
-                  <div>
-                    <Label className="text-sm flex items-center gap-2">
-                      <Calendar className="w-3.5 h-3.5" />
-                      Pay Cycle
-                    </Label>
-                    <Select value={formData.pay_cycle_id} onValueChange={(v) => setFormData(prev => ({ ...prev, pay_cycle_id: v }))}>
-                      <SelectTrigger className="mt-1.5">
-                        <SelectValue placeholder="None" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value={null}>None</SelectItem>
-                        {payCycles.map(pc => (
-                          <SelectItem key={pc.id} value={pc.id}>
-                            {pc.name} ({pc.frequency})
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                )}
-
-                <div>
-                  <Label className="text-sm flex items-center gap-2">
-                    <MapPin className="w-3.5 h-3.5" />
-                    Assigned Locations
-                  </Label>
-                  <div className="mt-2 space-y-2 max-h-48 overflow-y-auto border rounded-lg p-3">
-                    {allLocations.length === 0 ? (
-                      <p className="text-xs text-gray-500 text-center py-2">No locations available</p>
-                    ) : (
-                      allLocations.map(location => (
-                        <div key={location.id} className="flex items-center gap-2">
-                          <Checkbox
-                            id={`location-${location.id}`}
-                            checked={formData.assigned_location_ids.includes(location.id)}
-                            onCheckedChange={(checked) => {
-                              setFormData(prev => ({
-                                ...prev,
-                                assigned_location_ids: checked
-                                  ? [...prev.assigned_location_ids, location.id]
-                                  : prev.assigned_location_ids.filter(id => id !== location.id)
-                              }));
-                            }}
-                          />
-                          <label htmlFor={`location-${location.id}`} className="text-sm cursor-pointer flex-1">
-                            {location.name}
-                            <Badge variant="outline" className="ml-2 text-xs">{location.type}</Badge>
-                          </label>
-                        </div>
-                      ))
-                    )}
-                  </div>
-                  {formData.assigned_location_ids.length > 0 && (
-                    <p className="text-xs text-green-600 mt-1.5">
-                      {formData.assigned_location_ids.length} location(s) selected
-                    </p>
-                  )}
-                </div>
-
-                <Alert className="border-amber-200 bg-amber-50">
-                  <AlertCircle className="h-4 w-4 text-amber-600" />
-                  <AlertDescription className="text-xs text-amber-800">
-                    To enable login, invite via Base44 dashboard using same email
-                  </AlertDescription>
-                </Alert>
-              </div>
-            )}
+            <div>
+              <Label>Last Name *</Label>
+              <Input
+                value={formData.last_name}
+                onChange={(e) => setFormData({ ...formData, last_name: e.target.value })}
+                required
+              />
+            </div>
           </div>
 
-          <div className="sticky bottom-0 bg-white border-t p-4 flex gap-2">
-            <Button type="button" variant="outline" onClick={() => onOpenChange(false)} className="flex-1 sm:flex-none sm:w-24">
+          <div>
+            <Label>Employee Code *</Label>
+            <Input
+              value={formData.employee_code}
+              onChange={(e) => setFormData({ ...formData, employee_code: e.target.value })}
+              required
+            />
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <Label>Email</Label>
+              <Input
+                type="email"
+                value={formData.email}
+                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+              />
+            </div>
+            <div>
+              <Label>Phone</Label>
+              <Input
+                value={formData.phone}
+                onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+              />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <Label>Department</Label>
+              <Input
+                value={formData.department}
+                onChange={(e) => setFormData({ ...formData, department: e.target.value })}
+              />
+            </div>
+            <div>
+              <Label>Position</Label>
+              <Input
+                value={formData.position}
+                onChange={(e) => setFormData({ ...formData, position: e.target.value })}
+              />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <Label>Role *</Label>
+              <Select value={formData.role} onValueChange={(val) => setFormData({ ...formData, role: val })}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="read_only">Read Only</SelectItem>
+                  <SelectItem value="support_staff">Support Staff</SelectItem>
+                  <SelectItem value="retail_cashier">Retail Cashier</SelectItem>
+                  <SelectItem value="driver">Driver</SelectItem>
+                  <SelectItem value="warehouse_manager">Warehouse Manager</SelectItem>
+                  <SelectItem value="accountant">Accountant</SelectItem>
+                  <SelectItem value="hr_admin">HR Admin</SelectItem>
+                  <SelectItem value="payroll_admin">Payroll Admin</SelectItem>
+                  <SelectItem value="org_admin">Org Admin</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <Label>Base Salary (Le)</Label>
+              <Input
+                type="number"
+                value={formData.base_salary}
+                onChange={(e) => setFormData({ ...formData, base_salary: parseFloat(e.target.value) || 0 })}
+              />
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
               Cancel
             </Button>
-            <Button type="submit" disabled={createEmployeeMutation.isPending || isSendingEmail} className="flex-1 text-white" style={{ background: `linear-gradient(135deg, ${primaryColor} 0%, ${secondaryColor} 100%)` }}>
-              {(createEmployeeMutation.isPending || isSendingEmail) ? (isSendingEmail ? 'Sending...' : 'Saving...') : <><Check className="w-4 h-4 mr-2" />Add</>}
+            <Button type="submit" className="bg-gradient-to-r from-[#1EB053] to-[#0072C6] text-white">
+              {employee ? "Update" : "Add"} Employee
             </Button>
-          </div>
+          </DialogFooter>
         </form>
-
-        <div className="h-1.5 flex">
-          <div className="flex-1" style={{ backgroundColor: primaryColor }} />
-          <div className="flex-1 bg-white" />
-          <div className="flex-1" style={{ backgroundColor: secondaryColor }} />
-        </div>
       </DialogContent>
     </Dialog>
   );
