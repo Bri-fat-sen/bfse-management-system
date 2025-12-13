@@ -134,6 +134,7 @@ const menuSections = [
       { name: "Stock Auditing", icon: Package, page: "StockAudit", module: "inventory", adminOnly: true },
       { name: "Document Archive", icon: Upload, page: "UploadedDocuments", module: "settings", adminOnly: true },
       { name: "Data Cleanup", icon: AlertTriangle, page: "OrphanedData", module: "settings", adminOnly: true },
+      { name: "Join Requests", icon: Users, page: "OrganisationRequests", module: "settings", adminOnly: true },
       { name: "System Reset", icon: AlertTriangle, page: "ResetData", module: "settings", adminOnly: true },
     ]
   }
