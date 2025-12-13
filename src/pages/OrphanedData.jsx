@@ -482,15 +482,17 @@ export default function OrphanedData() {
                               variant="outline"
                               size="sm"
                               className="text-red-600 border-red-200 hover:bg-red-50"
-                              onClick={() => {
+                              onClick={async () => {
                                 const confirmDelete = window.confirm(`Delete organisation "${org.name}"? This action cannot be undone.`);
                                 if (confirmDelete) {
-                                  base44.asServiceRole.entities.Organisation.delete(org.id).then(() => {
+                                  try {
+                                    await base44.asServiceRole.entities.Organisation.delete(org.id);
                                     queryClient.invalidateQueries();
-                                    toast.success("Organisation deleted");
-                                  }).catch(err => {
-                                    toast.error("Delete failed", err.message);
-                                  });
+                                    toast.success("Organisation deleted", `${org.name} has been removed`);
+                                  } catch (err) {
+                                    console.error('Delete error:', err);
+                                    toast.error("Delete failed", err.message || "Unable to delete organisation");
+                                  }
                                 }
                               }}
                             >
