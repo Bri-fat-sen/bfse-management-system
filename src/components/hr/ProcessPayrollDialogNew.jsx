@@ -52,7 +52,9 @@ export default function ProcessPayrollDialog({ open, onOpenChange, orgId, curren
 
   const processMutation = useMutation({
     mutationFn: async (payrollRecords) => {
-      return await base44.entities.Payroll.bulkCreate(payrollRecords);
+      return await Promise.all(
+        payrollRecords.map(record => base44.entities.Payroll.create(record))
+      );
     },
     onSuccess: () => {
       queryClient.invalidateQueries(['payrolls']);
