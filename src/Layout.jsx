@@ -57,6 +57,7 @@ import NotificationCenter from "@/components/notifications/NotificationCenter";
 import MobileNav from "@/components/mobile/MobileNav";
 import { OfflineProvider, OfflineStatus } from "@/components/offline/OfflineManager";
 import GlobalSearch from "@/components/search/GlobalSearch";
+import LoadingSpinner from "@/components/ui/LoadingSpinner";
 
 import InstallPrompt from "@/components/pwa/InstallPrompt";
 import ChatPanel from "@/components/communication/ChatPanel";
