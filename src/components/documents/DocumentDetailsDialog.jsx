@@ -22,18 +22,14 @@ import {
   X,
   Plus,
   History,
-  Upload as UploadIcon,
+  Upload,
   Sparkles,
-  Package,
-  DollarSign,
   TrendingUp,
-  Users,
-  FileStack
+  Calendar
 } from "lucide-react";
 import { format } from "date-fns";
 import { useToast } from "@/components/ui/Toast";
 import { motion, AnimatePresence } from "framer-motion";
-import { cn } from "@/lib/utils";
 
 export default function DocumentDetailsDialog({ document, open, onOpenChange, currentEmployee }) {
   const [newTag, setNewTag] = useState("");
@@ -43,14 +39,23 @@ export default function DocumentDetailsDialog({ document, open, onOpenChange, cu
   const toast = useToast();
   const queryClient = useQueryClient();
 
+  React.useEffect(() => {
+    if (document) {
+      setNewDescription(document.description || "");
+    }
+  }, [document]);
+
   const updateMutation = useMutation({
     mutationFn: async (updates) => {
       return await base44.entities.UploadedDocument.update(document.id, updates);
     },
     onSuccess: () => {
       queryClient.invalidateQueries(['uploadedDocuments']);
-      toast.success("Document updated");
+      toast.success("Document updated", "Changes saved successfully");
     },
+    onError: (error) => {
+      toast.error("Update failed", error.message);
+    }
   });
 
   const addTag = () => {
@@ -74,7 +79,9 @@ export default function DocumentDetailsDialog({ document, open, onOpenChange, cu
   };
 
   const updateDescription = () => {
-    updateMutation.mutate({ description: newDescription });
+    if (newDescription !== (document.description || "")) {
+      updateMutation.mutate({ description: newDescription });
+    }
   };
 
   const handleNewVersion = async (e) => {
@@ -88,7 +95,6 @@ export default function DocumentDetailsDialog({ document, open, onOpenChange, cu
       const currentVersion = document.current_version || 1;
       const versionHistory = document.version_history || [];
       
-      // Add current version to history
       versionHistory.push({
         version: currentVersion,
         file_url: document.file_url,
@@ -120,163 +126,167 @@ export default function DocumentDetailsDialog({ document, open, onOpenChange, cu
 
   if (!document) return null;
 
-  const categoryConfig = {
-    expense: { color: "from-red-500 to-red-600", icon: DollarSign, label: "Expense", bg: "bg-red-50" },
-    revenue: { color: "from-green-500 to-green-600", icon: TrendingUp, label: "Revenue", bg: "bg-green-50" },
-    production: { color: "from-blue-500 to-blue-600", icon: Package, label: "Production", bg: "bg-blue-50" },
-    inventory: { color: "from-purple-500 to-purple-600", icon: FileStack, label: "Inventory", bg: "bg-purple-50" },
-    payroll: { color: "from-amber-500 to-amber-600", icon: Users, label: "Payroll", bg: "bg-amber-50" },
-    hr_document: { color: "from-cyan-500 to-cyan-600", icon: Users, label: "HR Document", bg: "bg-cyan-50" },
-    contract: { color: "from-indigo-500 to-indigo-600", icon: FileText, label: "Contract", bg: "bg-indigo-50" },
-    legal: { color: "from-pink-500 to-pink-600", icon: FileText, label: "Legal", bg: "bg-pink-50" },
-    other: { color: "from-gray-500 to-gray-600", icon: FileText, label: "Other", bg: "bg-gray-50" }
+  const categoryColors = {
+    expense: "from-red-500 to-rose-600",
+    revenue: "from-[#1EB053] to-emerald-600",
+    production: "from-[#0072C6] to-blue-600",
+    inventory: "from-purple-500 to-purple-600",
+    payroll: "from-amber-500 to-orange-600",
+    hr_document: "from-cyan-500 to-teal-600",
+    contract: "from-indigo-500 to-indigo-600",
+    legal: "from-pink-500 to-rose-600",
+    other: "from-gray-500 to-gray-600"
   };
 
-  const config = categoryConfig[document?.category] || categoryConfig.other;
-  const CategoryIcon = config.icon;
+  const categoryIcons = {
+    expense: "💸",
+    revenue: "💰",
+    production: "🏭",
+    inventory: "📦",
+    payroll: "💼",
+    hr_document: "👥",
+    contract: "📄",
+    legal: "⚖️",
+    other: "📁"
+  };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto bg-gradient-to-br from-white to-gray-50">
+        {/* Sierra Leone Stripe Header */}
         <div className="h-2 flex -mx-6 -mt-6">
-          <div className="flex-1 bg-gradient-to-r from-[#1EB053] to-[#16a047]" />
+          <div className="flex-1 bg-[#1EB053]" />
           <div className="flex-1 bg-white" />
-          <div className="flex-1 bg-gradient-to-r from-[#0072C6] to-[#005a9e]" />
+          <div className="flex-1 bg-[#0072C6]" />
         </div>
 
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-3 text-2xl">
-            <motion.div
-              initial={{ rotate: -10 }}
-              animate={{ rotate: 0 }}
-              className={cn("w-12 h-12 rounded-xl bg-gradient-to-br flex items-center justify-center shadow-lg", config.color)}
-            >
-              <CategoryIcon className="w-6 h-6 text-white" />
-            </motion.div>
-            <div>
-              <span className="bg-gradient-to-r from-[#1EB053] to-[#0072C6] bg-clip-text text-transparent">
-                Document Details
-              </span>
-              <p className="text-sm font-normal text-gray-600 mt-1">{document?.file_name}</p>
+        <DialogHeader className="space-y-4 pt-4">
+          <div className="flex items-center gap-4">
+            <div className={`p-4 bg-gradient-to-br ${categoryColors[document.category] || categoryColors.other} rounded-2xl shadow-xl`}>
+              <span className="text-4xl">{categoryIcons[document.category] || "📄"}</span>
             </div>
-          </DialogTitle>
+            <div className="flex-1">
+              <DialogTitle className="text-3xl font-black bg-gradient-to-r from-[#0F1F3C] to-[#0072C6] bg-clip-text text-transparent">
+                Document Details
+              </DialogTitle>
+              <p className="text-sm text-gray-500 mt-1 flex items-center gap-2">
+                <Sparkles className="w-4 h-4" />
+                Complete document information and version history
+              </p>
+            </div>
+          </div>
         </DialogHeader>
 
-        <div className="space-y-6">
-          {/* File Info */}
+        <div className="space-y-6 mt-6">
+          {/* File Info Card */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            className={cn("relative overflow-hidden rounded-2xl border-2", config.bg)}
+            className="relative overflow-hidden rounded-3xl border-2 border-gray-200 bg-white"
           >
-            <div className={cn("absolute inset-0 bg-gradient-to-br opacity-5", config.color)} />
-            <div className="relative p-6">
-              <div className="flex items-center gap-3 mb-4">
-                <Sparkles className="w-5 h-5 text-[#0072C6]" />
-                <h3 className="font-bold text-gray-900">File Information</h3>
+            <div className={`h-1 bg-gradient-to-r ${categoryColors[document.category] || categoryColors.other}`} />
+            <div className="p-6">
+              <div className="flex items-center gap-2 mb-4">
+                <FileText className="w-5 h-5 text-[#0072C6]" />
+                <h3 className="font-black text-gray-900">File Information</h3>
               </div>
               <div className="grid grid-cols-2 gap-4">
-                <div className="bg-white/80 backdrop-blur rounded-xl p-4 border border-gray-200">
-                  <p className="text-xs text-gray-600 mb-1">File Name</p>
-                  <p className="font-semibold text-gray-900 text-sm line-clamp-1">{document.file_name}</p>
+                <div className="space-y-3">
+                  <div>
+                    <p className="text-xs font-bold text-gray-500 uppercase mb-1">Name</p>
+                    <p className="font-semibold text-gray-900">{document.file_name}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs font-bold text-gray-500 uppercase mb-1">Size</p>
+                    <p className="font-semibold text-gray-900">{((document.file_size || 0) / 1024).toFixed(1)} KB</p>
+                  </div>
                 </div>
-                <div className="bg-white/80 backdrop-blur rounded-xl p-4 border border-gray-200">
-                  <p className="text-xs text-gray-600 mb-1">Size</p>
-                  <p className="font-semibold text-gray-900 text-sm">{((document.file_size || 0) / 1024).toFixed(1)} KB</p>
-                </div>
-                <div className="bg-white/80 backdrop-blur rounded-xl p-4 border border-gray-200">
-                  <p className="text-xs text-gray-600 mb-1">Type</p>
-                  <p className="font-semibold text-gray-900 text-sm">{document.file_type || 'Unknown'}</p>
-                </div>
-                <div className="bg-white/80 backdrop-blur rounded-xl p-4 border border-gray-200">
-                  <p className="text-xs text-gray-600 mb-1">Category</p>
-                  <Badge className={cn("text-xs", config.color, "text-white border-0")}>
-                    {config.label}
-                  </Badge>
-                </div>
-                <div className="bg-white/80 backdrop-blur rounded-xl p-4 border border-gray-200 col-span-2">
-                  <p className="text-xs text-gray-600 mb-1">Current Version</p>
-                  <div className="flex items-center gap-2">
-                    <span className="text-2xl font-bold bg-gradient-to-r from-[#1EB053] to-[#0072C6] bg-clip-text text-transparent">
+                <div className="space-y-3">
+                  <div>
+                    <p className="text-xs font-bold text-gray-500 uppercase mb-1">Type</p>
+                    <p className="font-semibold text-gray-900">{document.file_type || 'Unknown'}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs font-bold text-gray-500 uppercase mb-1">Version</p>
+                    <Badge className={`bg-gradient-to-r ${categoryColors[document.category] || categoryColors.other} text-white border-0 font-black text-base px-4 py-1`}>
                       v{document.current_version || 1}
-                    </span>
-                    {(document.version_history || []).length > 0 && (
-                      <Badge variant="outline" className="text-xs">
-                        {document.version_history.length + 1} total versions
-                      </Badge>
-                    )}
+                    </Badge>
                   </div>
                 </div>
               </div>
             </div>
           </motion.div>
 
-          {/* Description */}
+          {/* Description Editor */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.1 }}
-            className="bg-white rounded-2xl p-6 border-2 border-gray-100"
+            className="bg-white rounded-3xl border-2 border-gray-200 p-6"
           >
-            <label className="text-sm font-bold text-gray-900 mb-3 block flex items-center gap-2">
-              <FileText className="w-4 h-4 text-[#0072C6]" />
+            <label className="text-sm font-black text-gray-900 mb-3 block flex items-center gap-2">
+              <FileText className="w-4 h-4" />
               Description
             </label>
             <Textarea
               value={newDescription}
               onChange={(e) => setNewDescription(e.target.value)}
-              placeholder="Add a description..."
-              className="mb-3 min-h-[100px] border-2 focus:border-[#0072C6]"
+              placeholder="Add a detailed description..."
+              className="min-h-[100px] border-2 border-gray-200 rounded-2xl"
             />
             {newDescription !== (document.description || "") && (
-              <Button size="sm" onClick={updateDescription} className="bg-gradient-to-r from-[#1EB053] to-[#0072C6]">
-                <Plus className="w-4 h-4 mr-2" />
+              <Button 
+                size="sm" 
+                onClick={updateDescription} 
+                className="mt-3 bg-gradient-to-r from-[#1EB053] to-emerald-600 hover:from-emerald-600 hover:to-[#1EB053] text-white border-0"
+              >
                 Save Description
               </Button>
             )}
           </motion.div>
 
-          {/* Tags */}
+          {/* Tags Manager */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2 }}
-            className="bg-white rounded-2xl p-6 border-2 border-gray-100"
+            className="bg-white rounded-3xl border-2 border-gray-200 p-6"
           >
-            <label className="text-sm font-bold text-gray-900 mb-3 block flex items-center gap-2">
-              <Tag className="w-4 h-4 text-[#1EB053]" />
-              Tags & Labels
+            <label className="text-sm font-black text-gray-900 mb-3 block flex items-center gap-2">
+              <Tag className="w-4 h-4" />
+              Tags
             </label>
-            <div className="flex flex-wrap gap-2 mb-4 min-h-[40px] p-3 bg-gray-50 rounded-xl border-2 border-dashed border-gray-200">
-              {(document.tags || []).length === 0 ? (
-                <p className="text-sm text-gray-400 italic">No tags yet. Add tags to organize your documents.</p>
-              ) : (
-                (document.tags || []).map((tag, idx) => (
+            <div className="flex flex-wrap gap-2 mb-4">
+              <AnimatePresence>
+                {(document.tags || []).map((tag, idx) => (
                   <motion.div
                     key={idx}
-                    initial={{ scale: 0 }}
-                    animate={{ scale: 1 }}
-                    exit={{ scale: 0 }}
+                    initial={{ opacity: 0, scale: 0.8 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    exit={{ opacity: 0, scale: 0.8 }}
                   >
-                    <Badge className="bg-gradient-to-r from-[#1EB053] to-[#0072C6] text-white gap-2 pl-3 pr-2 py-1.5">
+                    <Badge className="bg-gradient-to-r from-[#1EB053] to-[#0072C6] text-white border-0 gap-2 pl-3 pr-2 py-1.5 font-semibold">
                       {tag}
                       <button onClick={() => removeTag(tag)} className="hover:bg-white/20 rounded-full p-1 transition-colors">
                         <X className="w-3 h-3" />
                       </button>
                     </Badge>
                   </motion.div>
-                ))
-              )}
+                ))}
+              </AnimatePresence>
             </div>
             <div className="flex gap-2">
               <Input
-                placeholder="Add a new tag..."
+                placeholder="Add new tag..."
                 value={newTag}
                 onChange={(e) => setNewTag(e.target.value)}
                 onKeyPress={(e) => e.key === 'Enter' && addTag()}
-                className="border-2 focus:border-[#0072C6]"
+                className="border-2 border-gray-200 rounded-xl"
               />
-              <Button onClick={addTag} className="bg-gradient-to-r from-[#1EB053] to-[#0072C6] px-6">
+              <Button 
+                onClick={addTag} 
+                className="bg-gradient-to-r from-[#0072C6] to-blue-600 hover:from-blue-600 hover:to-[#0072C6] text-white border-0 px-6"
+              >
                 <Plus className="w-4 h-4" />
               </Button>
             </div>
@@ -288,194 +298,186 @@ export default function DocumentDetailsDialog({ document, open, onOpenChange, cu
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.3 }}
-              className="relative overflow-hidden rounded-2xl border-2 border-green-200 bg-gradient-to-br from-green-50 to-emerald-50"
+              className="bg-gradient-to-br from-green-50 to-emerald-50 rounded-3xl border-2 border-green-200 p-6"
             >
-              <div className="absolute inset-0 bg-gradient-to-br from-[#1EB053] to-[#0072C6] opacity-5" />
-              <div className="relative p-6">
-                <h3 className="font-bold text-green-900 mb-4 flex items-center gap-2">
-                  <LinkIcon className="w-5 h-5 text-[#1EB053]" />
-                  Linked Records
-                  <Badge className="bg-[#1EB053] text-white ml-auto">
-                    {document.linked_records.length} record{document.linked_records.length !== 1 ? 's' : ''}
-                  </Badge>
-                </h3>
-                <div className="grid gap-3">
-                  {document.linked_records.map((record, idx) => (
+              <h3 className="font-black text-green-900 mb-4 flex items-center gap-2 text-lg">
+                <LinkIcon className="w-5 h-5" />
+                Linked Records ({document.linked_records.length})
+              </h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                {document.linked_records.map((record, idx) => (
+                  <motion.div
+                    key={idx}
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: idx * 0.05 }}
+                    className="flex items-center justify-between p-4 bg-white rounded-2xl shadow-sm border border-green-100"
+                  >
+                    <div className="flex items-center gap-3">
+                      <Badge className="bg-gradient-to-r from-green-500 to-emerald-600 text-white border-0 text-xs font-bold">
+                        {record.entity_type}
+                      </Badge>
+                      <span className="text-sm font-semibold text-gray-900">{record.entity_name}</span>
+                    </div>
+                    {record.created_date && (
+                      <span className="text-xs text-gray-500 flex items-center gap-1">
+                        <Calendar className="w-3 h-3" />
+                        {format(new Date(record.created_date), 'MMM d')}
+                      </span>
+                    )}
+                  </motion.div>
+                ))}
+              </div>
+            </motion.div>
+          )}
+
+          {/* Version History */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.4 }}
+            className="bg-white rounded-3xl border-2 border-gray-200 p-6"
+          >
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="font-black text-gray-900 flex items-center gap-2">
+                <History className="w-5 h-5" />
+                Version History ({(document.version_history || []).length})
+              </h3>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setShowVersionHistory(!showVersionHistory)}
+              >
+                {showVersionHistory ? 'Hide' : 'Show'}
+              </Button>
+            </div>
+
+            <AnimatePresence>
+              {showVersionHistory && document.version_history && document.version_history.length > 0 && (
+                <motion.div
+                  initial={{ opacity: 0, height: 0 }}
+                  animate={{ opacity: 1, height: "auto" }}
+                  exit={{ opacity: 0, height: 0 }}
+                  className="space-y-3"
+                >
+                  {document.version_history.map((version, idx) => (
                     <motion.div
                       key={idx}
                       initial={{ opacity: 0, x: -20 }}
                       animate={{ opacity: 1, x: 0 }}
                       transition={{ delay: idx * 0.05 }}
-                      className="flex items-center justify-between p-4 bg-white/80 backdrop-blur rounded-xl border border-green-200 hover:border-green-300 transition-all"
+                      className="p-4 bg-gray-50 rounded-2xl border border-gray-200"
                     >
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-[#1EB053] to-[#0072C6] flex items-center justify-center">
-                          <FileText className="w-5 h-5 text-white" />
-                        </div>
-                        <div>
-                          <Badge variant="outline" className="text-xs mb-1">
-                            {record.entity_type}
-                          </Badge>
-                          <p className="text-sm font-semibold text-gray-900">{record.entity_name}</p>
-                        </div>
+                      <div className="flex items-center justify-between mb-2">
+                        <Badge className="bg-gray-900 text-white border-0 font-black">
+                          Version {version.version}
+                        </Badge>
+                        {version.uploaded_date && (
+                          <span className="text-xs text-gray-500">
+                            {format(new Date(version.uploaded_date), 'MMM d, yyyy HH:mm')}
+                          </span>
+                        )}
                       </div>
-                      <div className="text-right">
-                        <p className="text-xs text-gray-500">
-                          {record.created_date ? format(new Date(record.created_date), 'MMM d, yyyy') : ''}
-                        </p>
-                        <p className="text-xs text-gray-400">
-                          {record.created_date ? format(new Date(record.created_date), 'HH:mm') : ''}
-                        </p>
-                      </div>
+                      <p className="text-xs text-gray-600 mb-3 flex items-center gap-2">
+                        <User className="w-3 h-3" />
+                        {version.uploaded_by_name || 'Unknown'}
+                      </p>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => window.open(version.file_url, '_blank')}
+                        className="text-xs"
+                      >
+                        <Download className="w-3 h-3 mr-1" />
+                        Download
+                      </Button>
                     </motion.div>
                   ))}
-                </div>
-              </div>
-            </motion.div>
-          )}
-
-          {/* Extracted Data Summary */}
-          {document.extracted_data && (
-            <div className="p-4 bg-gradient-to-br from-amber-50 to-yellow-50 rounded-xl border-2 border-amber-200">
-              <h3 className="font-bold text-amber-900 mb-3">Extraction Summary</h3>
-              <div className="grid grid-cols-2 gap-3">
-                {document.extracted_data.total_items && (
-                  <div className="p-3 bg-white rounded-lg">
-                    <p className="text-xs text-gray-600">Items Extracted</p>
-                    <p className="text-xl font-bold text-amber-700">{document.extracted_data.total_items}</p>
-                  </div>
-                )}
-                {document.extracted_data.total_amount && (
-                  <div className="p-3 bg-white rounded-lg">
-                    <p className="text-xs text-gray-600">Total Amount</p>
-                    <p className="text-lg font-bold text-amber-700">Le {document.extracted_data.total_amount.toLocaleString()}</p>
-                  </div>
-                )}
-              </div>
-            </div>
-          )}
-
-          {/* Version History */}
-          <div>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setShowVersionHistory(!showVersionHistory)}
-              className="mb-3"
-            >
-              <History className="w-4 h-4 mr-2" />
-              {showVersionHistory ? 'Hide' : 'Show'} Version History ({(document.version_history || []).length})
-            </Button>
-
-            {showVersionHistory && document.version_history && document.version_history.length > 0 && (
-              <div className="space-y-2 max-h-48 overflow-y-auto">
-                {document.version_history.map((version, idx) => (
-                  <div key={idx} className="p-3 bg-gray-50 rounded-lg border">
-                    <div className="flex items-center justify-between mb-1">
-                      <span className="font-bold text-gray-900">Version {version.version}</span>
-                      <span className="text-xs text-gray-500">
-                        {version.uploaded_date ? format(new Date(version.uploaded_date), 'MMM d, yyyy HH:mm') : ''}
-                      </span>
-                    </div>
-                    <p className="text-xs text-gray-600 mb-2">
-                      Uploaded by: {version.uploaded_by_name || 'Unknown'}
-                    </p>
-                    {version.notes && (
-                      <p className="text-xs text-gray-700 italic">{version.notes}</p>
-                    )}
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      onClick={() => window.open(version.file_url, '_blank')}
-                      className="mt-2 text-xs"
-                    >
-                      <Download className="w-3 h-3 mr-1" />
-                      Download
-                    </Button>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </motion.div>
 
           {/* Upload Metadata */}
-          <div className="p-4 bg-gray-50 rounded-xl border">
-            <div className="grid grid-cols-2 gap-4 text-sm">
-              <div>
-                <p className="text-gray-600 text-xs mb-1 flex items-center gap-1">
-                  <User className="w-3 h-3" />
-                  Uploaded By
-                </p>
-                <p className="font-medium">{document.uploaded_by_name || 'Unknown'}</p>
-              </div>
-              <div>
-                <p className="text-gray-600 text-xs mb-1 flex items-center gap-1">
-                  <Clock className="w-3 h-3" />
-                  Upload Date
-                </p>
-                <p className="font-medium">
-                  {document.created_date ? format(new Date(document.created_date), 'MMM d, yyyy HH:mm') : '-'}
-                </p>
-              </div>
-            </div>
-          </div>
-
-          {/* Actions */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.5 }}
-            className="sticky bottom-0 bg-white/95 backdrop-blur-xl rounded-2xl p-6 border-2 border-gray-100 shadow-xl"
+            className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-3xl border-2 border-blue-200 p-6"
           >
-            <div className="h-1 flex rounded-full overflow-hidden mb-4">
-              <div className="flex-1 bg-[#1EB053]" />
-              <div className="flex-1 bg-white" />
-              <div className="flex-1 bg-[#0072C6]" />
-            </div>
-            <div className="grid grid-cols-3 gap-3">
-              <Button
-                variant="outline"
-                onClick={() => window.open(document.file_url, '_blank')}
-                className="h-12 border-2 hover:border-[#0072C6] hover:text-[#0072C6] transition-all"
-              >
-                <Eye className="w-4 h-4 mr-2" />
-                View
-              </Button>
-              <Button
-                variant="outline"
-                onClick={() => {
-                  const a = window.document.createElement('a');
-                  a.href = document.file_url;
-                  a.download = document.file_name;
-                  a.click();
-                }}
-                className="h-12 border-2 hover:border-[#1EB053] hover:text-[#1EB053] transition-all"
-              >
-                <Download className="w-4 h-4 mr-2" />
-                Download
-              </Button>
-              <div className="relative">
-                <input
-                  type="file"
-                  accept=".pdf,.csv,.png,.jpg,.jpeg,.xlsx,.xls"
-                  onChange={handleNewVersion}
-                  className="hidden"
-                  id={`new-version-${document.id}`}
-                  disabled={uploadingNewVersion}
-                />
-                <label htmlFor={`new-version-${document.id}`} className="w-full block">
-                  <Button 
-                    variant="outline" 
-                    className="w-full h-12 border-2 bg-gradient-to-r from-[#1EB053] to-[#0072C6] text-white border-0 hover:opacity-90" 
-                    disabled={uploadingNewVersion}
-                  >
-                    <UploadIcon className="w-4 h-4 mr-2" />
-                    {uploadingNewVersion ? 'Uploading...' : 'New Version'}
-                  </Button>
-                </label>
+            <div className="grid grid-cols-2 gap-6">
+              <div className="flex items-center gap-3">
+                <div className="p-3 bg-white rounded-xl shadow-sm">
+                  <User className="w-5 h-5 text-[#0072C6]" />
+                </div>
+                <div>
+                  <p className="text-xs font-bold text-blue-700 uppercase mb-1">Uploaded By</p>
+                  <p className="font-semibold text-gray-900">{document.uploaded_by_name || 'Unknown'}</p>
+                </div>
+              </div>
+              <div className="flex items-center gap-3">
+                <div className="p-3 bg-white rounded-xl shadow-sm">
+                  <Clock className="w-5 h-5 text-[#0072C6]" />
+                </div>
+                <div>
+                  <p className="text-xs font-bold text-blue-700 uppercase mb-1">Upload Date</p>
+                  <p className="font-semibold text-gray-900">
+                    {document.created_date ? format(new Date(document.created_date), 'MMM d, yyyy HH:mm') : '-'}
+                  </p>
+                </div>
               </div>
             </div>
           </motion.div>
+
+          {/* Action Buttons */}
+          <div className="flex gap-3 pt-4 border-t-2 border-gray-200">
+            <Button
+              onClick={() => window.open(document.file_url, '_blank')}
+              className="flex-1 bg-gradient-to-r from-[#0072C6] to-blue-600 hover:from-blue-600 hover:to-[#0072C6] text-white border-0 h-12 text-base font-bold"
+            >
+              <Eye className="w-5 h-5 mr-2" />
+              View Document
+            </Button>
+            <Button
+              onClick={() => {
+                const a = document.createElement('a');
+                a.href = document.file_url;
+                a.download = document.file_name;
+                a.click();
+              }}
+              className="flex-1 bg-gradient-to-r from-[#1EB053] to-emerald-600 hover:from-emerald-600 hover:to-[#1EB053] text-white border-0 h-12 text-base font-bold"
+            >
+              <Download className="w-5 h-5 mr-2" />
+              Download
+            </Button>
+            <div className="relative">
+              <input
+                type="file"
+                accept=".pdf,.csv,.png,.jpg,.jpeg,.xlsx,.xls"
+                onChange={handleNewVersion}
+                className="hidden"
+                id={`new-version-${document.id}`}
+                disabled={uploadingNewVersion}
+              />
+              <label htmlFor={`new-version-${document.id}`}>
+                <Button
+                  as="span"
+                  disabled={uploadingNewVersion}
+                  className="bg-gradient-to-r from-purple-500 to-indigo-600 hover:from-indigo-600 hover:to-purple-500 text-white border-0 h-12 px-6 font-bold cursor-pointer"
+                >
+                  <Upload className="w-5 h-5 mr-2" />
+                  {uploadingNewVersion ? 'Uploading...' : 'New Version'}
+                </Button>
+              </label>
+            </div>
+          </div>
+        </div>
+
+        {/* Bottom Stripe */}
+        <div className="h-2 flex -mx-6 -mb-6 mt-6">
+          <div className="flex-1 bg-[#1EB053]" />
+          <div className="flex-1 bg-white" />
+          <div className="flex-1 bg-[#0072C6]" />
         </div>
       </DialogContent>
     </Dialog>
