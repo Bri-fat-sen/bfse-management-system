@@ -22,10 +22,18 @@ import {
   X,
   Plus,
   History,
-  Upload as UploadIcon
+  Upload as UploadIcon,
+  Sparkles,
+  Package,
+  DollarSign,
+  TrendingUp,
+  Users,
+  FileStack
 } from "lucide-react";
 import { format } from "date-fns";
 import { useToast } from "@/components/ui/Toast";
+import { motion, AnimatePresence } from "framer-motion";
+import { cn } from "@/lib/utils";
 
 export default function DocumentDetailsDialog({ document, open, onOpenChange, currentEmployee }) {
   const [newTag, setNewTag] = useState("");
