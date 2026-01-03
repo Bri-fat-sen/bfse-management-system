@@ -99,7 +99,7 @@ export function ToastProvider({ children }) {
 
 function ToastContainer({ toasts, onRemove, onClearAll }) {
   return (
-    <div className="fixed top-4 right-4 z-[100] flex flex-col gap-2 max-w-sm w-full pointer-events-none px-4 sm:px-0">
+    <div className="fixed top-4 right-4 z-[100] flex flex-col gap-3 max-w-sm w-full pointer-events-none px-4 sm:px-0">
       <AnimatePresence mode="popLayout">
         {toasts.length > 2 && (
           <motion.button
@@ -107,7 +107,7 @@ function ToastContainer({ toasts, onRemove, onClearAll }) {
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -10 }}
             onClick={onClearAll}
-            className="pointer-events-auto self-end text-xs text-gray-700 bg-white border border-gray-300 hover:bg-gray-50 px-3 py-1.5 rounded-lg shadow-sm transition-colors font-medium"
+            className="pointer-events-auto self-end text-xs text-white bg-[#0F1F3C] hover:bg-[#1a2d52] px-3 py-1.5 rounded-full shadow-lg transition-colors"
           >
             Clear all ({toasts.length})
           </motion.button>
@@ -152,45 +152,57 @@ function ToastItem({ toast, onRemove, index, total }) {
   const config = {
     success: {
       icon: CheckCircle2,
-      borderColor: "border-l-emerald-500",
-      iconColor: "text-emerald-600",
-      iconBg: "bg-emerald-50",
-      progressColor: "bg-emerald-500",
+      borderColor: "border-l-[#1EB053]",
+      iconColor: "text-[#1EB053]",
+      iconBg: "bg-[#1EB053]/10",
+      progressColor: "bg-gradient-to-r from-[#1EB053] to-[#16803d]",
+      gradient: "from-[#1EB053]/8 via-[#1EB053]/3 to-transparent",
+      ring: "ring-[#1EB053]/20",
     },
     error: {
       icon: AlertCircle,
       borderColor: "border-l-red-500",
-      iconColor: "text-red-600",
-      iconBg: "bg-red-50",
-      progressColor: "bg-red-500",
+      iconColor: "text-red-500",
+      iconBg: "bg-red-500/10",
+      progressColor: "bg-gradient-to-r from-red-500 to-red-600",
+      gradient: "from-red-500/8 via-red-500/3 to-transparent",
+      ring: "ring-red-500/20",
     },
     warning: {
       icon: AlertTriangle,
       borderColor: "border-l-amber-500",
-      iconColor: "text-amber-600",
-      iconBg: "bg-amber-50",
-      progressColor: "bg-amber-500",
+      iconColor: "text-amber-500",
+      iconBg: "bg-amber-500/10",
+      progressColor: "bg-gradient-to-r from-amber-500 to-amber-600",
+      gradient: "from-amber-500/8 via-amber-500/3 to-transparent",
+      ring: "ring-amber-500/20",
     },
     info: {
       icon: Info,
-      borderColor: "border-l-blue-500",
-      iconColor: "text-blue-600",
-      iconBg: "bg-blue-50",
-      progressColor: "bg-blue-500",
+      borderColor: "border-l-[#0072C6]",
+      iconColor: "text-[#0072C6]",
+      iconBg: "bg-[#0072C6]/10",
+      progressColor: "bg-gradient-to-r from-[#0072C6] to-[#005a9e]",
+      gradient: "from-[#0072C6]/8 via-[#0072C6]/3 to-transparent",
+      ring: "ring-[#0072C6]/20",
     },
     notify: {
       icon: Bell,
-      borderColor: "border-l-gray-500",
-      iconColor: "text-gray-600",
-      iconBg: "bg-gray-50",
-      progressColor: "bg-gray-500",
+      borderColor: "border-l-[#0F1F3C]",
+      iconColor: "text-[#0F1F3C]",
+      iconBg: "bg-[#0F1F3C]/10",
+      progressColor: "bg-gradient-to-r from-[#0F1F3C] to-[#1a2d52]",
+      gradient: "from-[#0F1F3C]/8 via-[#0F1F3C]/3 to-transparent",
+      ring: "ring-[#0F1F3C]/20",
     },
     loading: {
       icon: Loader2,
-      borderColor: "border-l-blue-500",
-      iconColor: "text-blue-600",
-      iconBg: "bg-blue-50",
-      progressColor: "bg-blue-500",
+      borderColor: "border-l-[#0072C6]",
+      iconColor: "text-[#0072C6]",
+      iconBg: "bg-[#0072C6]/10",
+      progressColor: "bg-gradient-to-r from-[#0072C6] to-[#1EB053]",
+      gradient: "from-[#0072C6]/8 via-[#1EB053]/3 to-transparent",
+      ring: "ring-[#0072C6]/20",
       spin: true,
     },
   };
@@ -212,10 +224,17 @@ function ToastItem({ toast, onRemove, index, total }) {
       transition={{ type: "spring", stiffness: 500, damping: 35 }}
       onMouseEnter={() => setIsPaused(true)}
       onMouseLeave={() => setIsPaused(false)}
-      className="pointer-events-auto overflow-hidden rounded-lg shadow-lg"
+      className="pointer-events-auto overflow-hidden rounded-xl shadow-xl"
     >
-      <div className={`bg-white border-l-3 ${borderColor} border border-gray-200`}>
-        <div className="p-3.5">
+      {/* Sierra Leone Flag Stripe - Top */}
+      <div className="h-1 flex">
+        <div className="flex-1 bg-[#1EB053]" />
+        <div className="flex-1 bg-white" />
+        <div className="flex-1 bg-[#0072C6]" />
+      </div>
+      
+      <div className={`bg-white border-l-4 ${borderColor}`}>
+        <div className="p-4">
           <div className="flex items-start gap-3">
             <motion.div 
               initial={{ scale: 0 }}
@@ -223,10 +242,10 @@ function ToastItem({ toast, onRemove, index, total }) {
               transition={{ type: "spring", stiffness: 500, damping: 25, delay: 0.1 }}
               className={`flex-shrink-0 p-2 rounded-lg ${iconBg}`}
             >
-              <Icon className={`w-4 h-4 ${iconColor} ${spin ? 'animate-spin' : ''}`} />
+              <Icon className={`w-5 h-5 ${iconColor} ${spin ? 'animate-spin' : ''}`} />
             </motion.div>
             <div className="flex-1 min-w-0">
-              <p className="text-sm font-semibold text-gray-900">{toast.title}</p>
+              <p className="text-sm font-bold text-[#0F1F3C]">{toast.title}</p>
               {toast.description && (
                 <p className="text-sm text-gray-600 mt-0.5">{toast.description}</p>
               )}
@@ -279,12 +298,12 @@ function ToastItem({ toast, onRemove, index, total }) {
             />
           </div>
         )}
-
+        
         {/* Loading indicator */}
         {toast.type === "loading" && (
           <div className="h-1 bg-gray-100 overflow-hidden">
             <motion.div
-              className="h-full w-1/3 bg-blue-600"
+              className="h-full w-1/3 bg-gradient-to-r from-[#1EB053] via-white to-[#0072C6]"
               animate={{ x: ["-100%", "400%"] }}
               transition={{ duration: 1.2, repeat: Infinity, ease: "linear" }}
             />
