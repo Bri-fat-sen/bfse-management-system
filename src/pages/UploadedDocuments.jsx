@@ -36,15 +36,23 @@ import DocumentDetailsDialog from "@/components/documents/DocumentDetailsDialog"
 import EmptyState from "@/components/ui/EmptyState";
 import { usePermissions } from "@/components/permissions/PermissionsContext";
 import { Shield, Lock } from "lucide-react";
+import AdvancedDocumentFilters from "@/components/documents/AdvancedDocumentFilters";
 
 export default function UploadedDocuments() {
   const [searchTerm, setSearchTerm] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("all");
-  const [tagFilter, setTagFilter] = useState("");
   const [selectedDocument, setSelectedDocument] = useState(null);
   const [viewMode, setViewMode] = useState("grid");
   const [showArchived, setShowArchived] = useState(false);
   const [autoTaggingAll, setAutoTaggingAll] = useState(false);
+  const [advancedFilters, setAdvancedFilters] = useState({
+    tags: [],
+    dateFrom: null,
+    dateTo: null,
+    fileSize: 'all',
+    uploadedBy: 'all',
+    linkedRecords: 'all'
+  });
   const toast = useToast();
   const queryClient = useQueryClient();
 
@@ -160,22 +168,84 @@ Return ONLY a JSON array of tag strings, no duplicates of existing tags.`,
     return Array.from(tags).sort();
   }, [documents]);
 
+  const availableUploaders = useMemo(() => {
+    const uploaders = new Map();
+    documents.forEach(doc => {
+      if (doc.uploaded_by_id && doc.uploaded_by_name) {
+        uploaders.set(doc.uploaded_by_id, {
+          id: doc.uploaded_by_id,
+          name: doc.uploaded_by_name
+        });
+      }
+    });
+    return Array.from(uploaders.values()).sort((a, b) => a.name.localeCompare(b.name));
+  }, [documents]);
+
   const filteredDocuments = useMemo(() => {
     return documents
       .filter(doc => canViewDocument(doc)) // RBAC filter
       .filter(doc => showArchived ? doc.is_archived : !doc.is_archived)
       .filter(doc => categoryFilter === "all" || doc.category === categoryFilter)
-      .filter(doc => !tagFilter || (doc.tags || []).includes(tagFilter))
       .filter(doc => {
+        // Multi-tag filter (AND logic - must have all selected tags)
+        if (advancedFilters.tags && advancedFilters.tags.length > 0) {
+          const docTags = doc.tags || [];
+          return advancedFilters.tags.every(tag => docTags.includes(tag));
+        }
+        return true;
+      })
+      .filter(doc => {
+        // Date range filter
+        if (advancedFilters.dateFrom || advancedFilters.dateTo) {
+          const docDate = new Date(doc.created_date);
+          if (advancedFilters.dateFrom && docDate < new Date(advancedFilters.dateFrom)) return false;
+          if (advancedFilters.dateTo && docDate > new Date(advancedFilters.dateTo)) return false;
+        }
+        return true;
+      })
+      .filter(doc => {
+        // File size filter
+        if (advancedFilters.fileSize && advancedFilters.fileSize !== 'all') {
+          const sizeKB = (doc.file_size || 0) / 1024;
+          const sizeMB = sizeKB / 1024;
+          switch (advancedFilters.fileSize) {
+            case 'small': return sizeKB < 100;
+            case 'medium': return sizeKB >= 100 && sizeMB < 1;
+            case 'large': return sizeMB >= 1 && sizeMB < 10;
+            case 'xlarge': return sizeMB >= 10;
+            default: return true;
+          }
+        }
+        return true;
+      })
+      .filter(doc => {
+        // Uploader filter
+        if (advancedFilters.uploadedBy && advancedFilters.uploadedBy !== 'all') {
+          return doc.uploaded_by_id === advancedFilters.uploadedBy;
+        }
+        return true;
+      })
+      .filter(doc => {
+        // Linked records filter
+        if (advancedFilters.linkedRecords && advancedFilters.linkedRecords !== 'all') {
+          const hasLinks = doc.linked_records && doc.linked_records.length > 0;
+          return advancedFilters.linkedRecords === 'with_links' ? hasLinks : !hasLinks;
+        }
+        return true;
+      })
+      .filter(doc => {
+        // Text search
         if (!searchTerm) return true;
         const search = searchTerm.toLowerCase();
         return (
           doc.file_name?.toLowerCase().includes(search) ||
           doc.description?.toLowerCase().includes(search) ||
-          (doc.tags || []).some(tag => tag.toLowerCase().includes(search))
+          doc.category?.toLowerCase().includes(search) ||
+          (doc.tags || []).some(tag => tag.toLowerCase().includes(search)) ||
+          doc.uploaded_by_name?.toLowerCase().includes(search)
         );
       });
-  }, [documents, showArchived, categoryFilter, tagFilter, searchTerm, canViewDocument]);
+  }, [documents, showArchived, categoryFilter, advancedFilters, searchTerm, canViewDocument]);
 
   const categoryColors = {
     expense: "from-red-500 to-rose-600",
@@ -399,7 +469,7 @@ Return ONLY a JSON array of tag strings, no duplicates of existing tags.`,
             <div className="flex-1 relative">
               <Search className="absolute left-5 top-1/2 -translate-y-1/2 w-6 h-6 text-gray-400" />
               <Input
-                placeholder="Search documents, tags, descriptions..."
+                placeholder="Search documents, tags, descriptions, uploaders..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="pl-14 h-14 text-base border-2 border-gray-200 focus:border-[#1EB053] rounded-2xl shadow-sm"
@@ -445,35 +515,27 @@ Return ONLY a JSON array of tag strings, no duplicates of existing tags.`,
             </div>
           </div>
 
-          {allTags.length > 0 && (
-            <div className="mt-6 pt-6 border-t border-gray-200">
-              <p className="text-sm font-bold text-gray-700 mb-3 flex items-center gap-2">
-                <Tag className="w-4 h-4" />
-                Filter by Tag:
-              </p>
-              <div className="flex flex-wrap gap-2">
-                <AnimatePresence>
-                  {allTags.slice(0, 15).map((tag) => (
-                    <motion.button
-                      key={tag}
-                      initial={{ opacity: 0, scale: 0.8 }}
-                      animate={{ opacity: 1, scale: 1 }}
-                      exit={{ opacity: 0, scale: 0.8 }}
-                      whileHover={{ scale: 1.05 }}
-                      onClick={() => setTagFilter(tagFilter === tag ? "" : tag)}
-                      className={`px-4 py-2 rounded-xl text-sm font-medium transition-all ${
-                        tagFilter === tag
-                          ? "bg-gradient-to-r from-[#1EB053] to-[#0072C6] text-white shadow-lg"
-                          : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-                      }`}
-                    >
-                      {tag}
-                    </motion.button>
-                  ))}
-                </AnimatePresence>
-              </div>
-            </div>
-          )}
+          {/* Advanced Filters Row */}
+          <div className="mt-6 pt-6 border-t border-gray-200">
+            <AdvancedDocumentFilters
+              filters={advancedFilters}
+              onFiltersChange={setAdvancedFilters}
+              availableTags={allTags}
+              availableUploaders={availableUploaders}
+              onClearAll={() => {
+                setAdvancedFilters({
+                  tags: [],
+                  dateFrom: null,
+                  dateTo: null,
+                  fileSize: 'all',
+                  uploadedBy: 'all',
+                  linkedRecords: 'all'
+                });
+                setCategoryFilter('all');
+                setSearchTerm('');
+              }}
+            />
+          </div>
         </motion.div>
       </div>
 
