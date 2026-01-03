@@ -1,6 +1,25 @@
 // Sierra Leone HR Document Templates
 // Based on Employment Act 2023 and local labor laws
 
+export const DOCUMENT_TYPES = [
+  "employment_contract",
+  "nda",
+  "code_of_conduct",
+  "privacy_policy",
+  "health_safety_policy",
+  "anti_harassment_policy",
+  "it_acceptable_use",
+  "disciplinary_policy",
+  "leave_policy",
+  "remote_work_policy",
+  "probation_confirmation",
+  "promotion_letter",
+  "termination_letter",
+  "warning_letter",
+  "salary_revision",
+  "custom"
+];
+
 export const DOCUMENT_TYPE_INFO = {
   employment_contract: {
     label: "Employment Contract",
