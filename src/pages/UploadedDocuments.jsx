@@ -34,6 +34,8 @@ import { format } from "date-fns";
 import { motion, AnimatePresence } from "framer-motion";
 import DocumentDetailsDialog from "@/components/documents/DocumentDetailsDialog";
 import EmptyState from "@/components/ui/EmptyState";
+import { usePermissions } from "@/components/permissions/PermissionsContext";
+import { Shield, Lock } from "lucide-react";
 
 export default function UploadedDocuments() {
   const [searchTerm, setSearchTerm] = useState("");
@@ -59,6 +61,19 @@ export default function UploadedDocuments() {
 
   const currentEmployee = employee?.[0];
   const orgId = currentEmployee?.organisation_id;
+  
+  const { 
+    canView, 
+    canCreate, 
+    canEdit, 
+    canDelete, 
+    canExport,
+    canViewDocument,
+    canEditDocument,
+    canDeleteDocument,
+    permissions,
+    userRole
+  } = usePermissions();
 
   const { data: documents = [], isLoading } = useQuery({
     queryKey: ['uploadedDocuments', orgId],
@@ -147,6 +162,7 @@ Return ONLY a JSON array of tag strings, no duplicates of existing tags.`,
 
   const filteredDocuments = useMemo(() => {
     return documents
+      .filter(doc => canViewDocument(doc)) // RBAC filter
       .filter(doc => showArchived ? doc.is_archived : !doc.is_archived)
       .filter(doc => categoryFilter === "all" || doc.category === categoryFilter)
       .filter(doc => !tagFilter || (doc.tags || []).includes(tagFilter))
@@ -159,7 +175,7 @@ Return ONLY a JSON array of tag strings, no duplicates of existing tags.`,
           (doc.tags || []).some(tag => tag.toLowerCase().includes(search))
         );
       });
-  }, [documents, showArchived, categoryFilter, tagFilter, searchTerm]);
+  }, [documents, showArchived, categoryFilter, tagFilter, searchTerm, canViewDocument]);
 
   const categoryColors = {
     expense: "from-red-500 to-rose-600",
@@ -196,6 +212,29 @@ Return ONLY a JSON array of tag strings, no duplicates of existing tags.`,
     );
   }
 
+  // Check if user has access to documents
+  if (!canView('documents')) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-50 to-gray-100 p-6">
+        <div className="max-w-md w-full">
+          <div className="bg-white rounded-3xl shadow-2xl p-12 text-center border-2 border-gray-100">
+            <div className="w-20 h-20 bg-gradient-to-br from-red-100 to-orange-100 rounded-3xl flex items-center justify-center mx-auto mb-6">
+              <Lock className="w-10 h-10 text-red-600" />
+            </div>
+            <h2 className="text-2xl font-black text-gray-900 mb-3">Access Denied</h2>
+            <p className="text-gray-600 mb-6">
+              You don't have permission to access the document archive. Contact your administrator if you need access.
+            </p>
+            <div className="flex items-center gap-2 justify-center text-sm text-gray-500">
+              <Shield className="w-4 h-4" />
+              <span>Your role: <span className="font-semibold">{userRole}</span></span>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-blue-50/30">
       {/* Modern Hero Header */}
@@ -227,31 +266,35 @@ Return ONLY a JSON array of tag strings, no duplicates of existing tags.`,
               </div>
 
               <div className="flex gap-3">
-                <Button
-                  onClick={autoTagAllDocuments}
-                  disabled={autoTaggingAll}
-                  className="bg-white/10 hover:bg-white/20 backdrop-blur-sm border border-white/20 text-white"
-                >
-                  {autoTaggingAll ? (
-                    <>
-                      <Brain className="w-4 h-4 mr-2 animate-spin" />
-                      Tagging...
-                    </>
-                  ) : (
-                    <>
-                      <Wand2 className="w-4 h-4 mr-2" />
-                      AI Auto-Tag All
-                    </>
-                  )}
-                </Button>
-                <Button
-                  variant="ghost"
-                  onClick={() => setShowArchived(!showArchived)}
-                  className="bg-white/10 hover:bg-white/20 backdrop-blur-sm border border-white/20 text-white"
-                >
-                  <Archive className="w-4 h-4 mr-2" />
-                  {showArchived ? 'Hide Archived' : 'Show Archived'}
-                </Button>
+                {canEdit('documents') && (
+                  <Button
+                    onClick={autoTagAllDocuments}
+                    disabled={autoTaggingAll}
+                    className="bg-white/10 hover:bg-white/20 backdrop-blur-sm border border-white/20 text-white"
+                  >
+                    {autoTaggingAll ? (
+                      <>
+                        <Brain className="w-4 h-4 mr-2 animate-spin" />
+                        Tagging...
+                      </>
+                    ) : (
+                      <>
+                        <Wand2 className="w-4 h-4 mr-2" />
+                        AI Auto-Tag All
+                      </>
+                    )}
+                  </Button>
+                )}
+                {(permissions.documents?.can_archive || canView('documents')) && (
+                  <Button
+                    variant="ghost"
+                    onClick={() => setShowArchived(!showArchived)}
+                    className="bg-white/10 hover:bg-white/20 backdrop-blur-sm border border-white/20 text-white"
+                  >
+                    <Archive className="w-4 h-4 mr-2" />
+                    {showArchived ? 'Hide Archived' : 'Show Archived'}
+                  </Button>
+                )}
               </div>
             </div>
 
@@ -464,7 +507,7 @@ Return ONLY a JSON array of tag strings, no duplicates of existing tags.`,
                   <div className={`h-2 bg-gradient-to-r ${categoryColors[doc.category] || categoryColors.other}`} />
 
                   {/* AI Badge if document has few/no tags */}
-                  {(!doc.tags || doc.tags.length < 3) && (
+                  {canEdit('documents') && (!doc.tags || doc.tags.length < 3) && (
                     <div className="absolute top-4 right-4 z-10">
                       <Button
                         size="sm"
@@ -636,19 +679,21 @@ Return ONLY a JSON array of tag strings, no duplicates of existing tags.`,
                           >
                             <Eye className="w-4 h-4" />
                           </Button>
-                          <Button
-                            size="sm"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              const a = document.createElement('a');
-                              a.href = doc.file_url;
-                              a.download = doc.file_name;
-                              a.click();
-                            }}
-                            className="bg-gradient-to-r from-[#1EB053] to-emerald-600 hover:from-emerald-600 hover:to-[#1EB053] text-white border-0"
-                          >
-                            <Download className="w-4 h-4" />
-                          </Button>
+                          {canExport('documents') && (
+                            <Button
+                              size="sm"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                const a = document.createElement('a');
+                                a.href = doc.file_url;
+                                a.download = doc.file_name;
+                                a.click();
+                              }}
+                              className="bg-gradient-to-r from-[#1EB053] to-emerald-600 hover:from-emerald-600 hover:to-[#1EB053] text-white border-0"
+                            >
+                              <Download className="w-4 h-4" />
+                            </Button>
+                          )}
                         </div>
                       </td>
                     </motion.tr>

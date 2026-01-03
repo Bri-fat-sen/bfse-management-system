@@ -34,6 +34,7 @@ import {
 import { format } from "date-fns";
 import { useToast } from "@/components/ui/Toast";
 import { motion, AnimatePresence } from "framer-motion";
+import { usePermissions } from "@/components/permissions/PermissionsContext";
 
 export default function DocumentDetailsDialog({ document, open, onOpenChange, currentEmployee }) {
   const [newTag, setNewTag] = useState("");
@@ -46,6 +47,11 @@ export default function DocumentDetailsDialog({ document, open, onOpenChange, cu
   const [checkingAnomalies, setCheckingAnomalies] = useState(false);
   const toast = useToast();
   const queryClient = useQueryClient();
+  const { canEdit, canDelete, canEditDocument, canDeleteDocument, permissions } = usePermissions();
+
+  const canEditThisDoc = canEditDocument(document);
+  const canDeleteThisDoc = canDeleteDocument(document);
+  const canManageVersions = permissions.documents?.can_manage_versions ?? false;
 
   React.useEffect(() => {
     if (document) {
@@ -420,32 +426,49 @@ Return an empty array [] if no issues found.`,
           </motion.div>
 
           {/* Description Editor */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.2 }}
-            className="bg-white rounded-3xl border-2 border-gray-200 p-6"
-          >
-            <label className="text-sm font-black text-gray-900 mb-3 block flex items-center gap-2">
-              <FileText className="w-4 h-4" />
-              Description
-            </label>
-            <Textarea
-              value={newDescription}
-              onChange={(e) => setNewDescription(e.target.value)}
-              placeholder="Add a detailed description..."
-              className="min-h-[100px] border-2 border-gray-200 rounded-2xl"
-            />
-            {newDescription !== (document.description || "") && (
-              <Button 
-                size="sm" 
-                onClick={updateDescription} 
-                className="mt-3 bg-gradient-to-r from-[#1EB053] to-emerald-600 hover:from-emerald-600 hover:to-[#1EB053] text-white border-0"
-              >
-                Save Description
-              </Button>
-            )}
-          </motion.div>
+          {canEditThisDoc && (
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.2 }}
+              className="bg-white rounded-3xl border-2 border-gray-200 p-6"
+            >
+              <label className="text-sm font-black text-gray-900 mb-3 block flex items-center gap-2">
+                <FileText className="w-4 h-4" />
+                Description
+              </label>
+              <Textarea
+                value={newDescription}
+                onChange={(e) => setNewDescription(e.target.value)}
+                placeholder="Add a detailed description..."
+                className="min-h-[100px] border-2 border-gray-200 rounded-2xl"
+              />
+              {newDescription !== (document.description || "") && (
+                <Button 
+                  size="sm" 
+                  onClick={updateDescription} 
+                  className="mt-3 bg-gradient-to-r from-[#1EB053] to-emerald-600 hover:from-emerald-600 hover:to-[#1EB053] text-white border-0"
+                >
+                  Save Description
+                </Button>
+              )}
+            </motion.div>
+          )}
+
+          {!canEditThisDoc && document.description && (
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.2 }}
+              className="bg-gray-50 rounded-3xl border-2 border-gray-200 p-6"
+            >
+              <label className="text-sm font-black text-gray-700 mb-3 block flex items-center gap-2">
+                <FileText className="w-4 h-4" />
+                Description (Read-only)
+              </label>
+              <p className="text-gray-700">{document.description}</p>
+            </motion.div>
+          )}
 
           {/* Tags Manager */}
           <motion.div
@@ -456,7 +479,7 @@ Return an empty array [] if no issues found.`,
           >
             <label className="text-sm font-black text-gray-900 mb-3 block flex items-center gap-2">
               <Tag className="w-4 h-4" />
-              Tags
+              Tags {!canEditThisDoc && <span className="text-xs font-normal text-gray-500">(Read-only)</span>}
             </label>
             <div className="flex flex-wrap gap-2 mb-4">
               <AnimatePresence>
@@ -469,29 +492,33 @@ Return an empty array [] if no issues found.`,
                   >
                     <Badge className="bg-gradient-to-r from-[#1EB053] to-[#0072C6] text-white border-0 gap-2 pl-3 pr-2 py-1.5 font-semibold">
                       {tag}
-                      <button onClick={() => removeTag(tag)} className="hover:bg-white/20 rounded-full p-1 transition-colors">
-                        <X className="w-3 h-3" />
-                      </button>
+                      {canEditThisDoc && (
+                        <button onClick={() => removeTag(tag)} className="hover:bg-white/20 rounded-full p-1 transition-colors">
+                          <X className="w-3 h-3" />
+                        </button>
+                      )}
                     </Badge>
                   </motion.div>
                 ))}
               </AnimatePresence>
             </div>
-            <div className="flex gap-2">
-              <Input
-                placeholder="Add new tag..."
-                value={newTag}
-                onChange={(e) => setNewTag(e.target.value)}
-                onKeyPress={(e) => e.key === 'Enter' && addTag()}
-                className="border-2 border-gray-200 rounded-xl"
-              />
-              <Button 
-                onClick={addTag} 
-                className="bg-gradient-to-r from-[#0072C6] to-blue-600 hover:from-blue-600 hover:to-[#0072C6] text-white border-0 px-6"
-              >
-                <Plus className="w-4 h-4" />
-              </Button>
-            </div>
+            {canEditThisDoc && (
+              <div className="flex gap-2">
+                <Input
+                  placeholder="Add new tag..."
+                  value={newTag}
+                  onChange={(e) => setNewTag(e.target.value)}
+                  onKeyPress={(e) => e.key === 'Enter' && addTag()}
+                  className="border-2 border-gray-200 rounded-xl"
+                />
+                <Button 
+                  onClick={addTag} 
+                  className="bg-gradient-to-r from-[#0072C6] to-blue-600 hover:from-blue-600 hover:to-[#0072C6] text-white border-0 px-6"
+                >
+                  <Plus className="w-4 h-4" />
+                </Button>
+              </div>
+            )}
           </motion.div>
 
           {/* Linked Records */}
@@ -640,38 +667,42 @@ Return an empty array [] if no issues found.`,
               <Eye className="w-5 h-5 mr-2" />
               View Document
             </Button>
-            <Button
-              onClick={() => {
-                const a = document.createElement('a');
-                a.href = document.file_url;
-                a.download = document.file_name;
-                a.click();
-              }}
-              className="flex-1 bg-gradient-to-r from-[#1EB053] to-emerald-600 hover:from-emerald-600 hover:to-[#1EB053] text-white border-0 h-12 text-base font-bold"
-            >
-              <Download className="w-5 h-5 mr-2" />
-              Download
-            </Button>
-            <div className="relative">
-              <input
-                type="file"
-                accept=".pdf,.csv,.png,.jpg,.jpeg,.xlsx,.xls"
-                onChange={handleNewVersion}
-                className="hidden"
-                id={`new-version-${document.id}`}
-                disabled={uploadingNewVersion}
-              />
-              <label htmlFor={`new-version-${document.id}`}>
-                <Button
-                  as="span"
+            {permissions.documents?.can_export && (
+              <Button
+                onClick={() => {
+                  const a = document.createElement('a');
+                  a.href = document.file_url;
+                  a.download = document.file_name;
+                  a.click();
+                }}
+                className="flex-1 bg-gradient-to-r from-[#1EB053] to-emerald-600 hover:from-emerald-600 hover:to-[#1EB053] text-white border-0 h-12 text-base font-bold"
+              >
+                <Download className="w-5 h-5 mr-2" />
+                Download
+              </Button>
+            )}
+            {canManageVersions && canEditThisDoc && (
+              <div className="relative">
+                <input
+                  type="file"
+                  accept=".pdf,.csv,.png,.jpg,.jpeg,.xlsx,.xls"
+                  onChange={handleNewVersion}
+                  className="hidden"
+                  id={`new-version-${document.id}`}
                   disabled={uploadingNewVersion}
-                  className="bg-gradient-to-r from-purple-500 to-indigo-600 hover:from-indigo-600 hover:to-purple-500 text-white border-0 h-12 px-6 font-bold cursor-pointer"
-                >
-                  <Upload className="w-5 h-5 mr-2" />
-                  {uploadingNewVersion ? 'Uploading...' : 'New Version'}
-                </Button>
-              </label>
-            </div>
+                />
+                <label htmlFor={`new-version-${document.id}`}>
+                  <Button
+                    as="span"
+                    disabled={uploadingNewVersion}
+                    className="bg-gradient-to-r from-purple-500 to-indigo-600 hover:from-indigo-600 hover:to-purple-500 text-white border-0 h-12 px-6 font-bold cursor-pointer"
+                  >
+                    <Upload className="w-5 h-5 mr-2" />
+                    {uploadingNewVersion ? 'Uploading...' : 'New Version'}
+                  </Button>
+                </label>
+              </div>
+            )}
           </div>
         </div>
 

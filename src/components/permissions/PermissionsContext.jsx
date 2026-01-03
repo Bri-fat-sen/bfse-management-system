@@ -18,6 +18,7 @@ const DEFAULT_ROLE_PERMISSIONS = {
     attendance: { can_view: true, can_create: true, can_edit: true, can_delete: true, can_export: true, can_approve: true },
     settings: { can_view: true, can_create: true, can_edit: true, can_delete: true, can_export: true, can_approve: true },
     activity_log: { can_view: true, can_create: true, can_edit: true, can_delete: true, can_export: true, can_approve: true },
+    documents: { can_view: true, can_create: true, can_edit: true, can_delete: true, can_export: true, can_approve: true, can_archive: true, can_manage_versions: true, can_view_all_org: true },
   },
   org_admin: {
     dashboard: { can_view: true, can_create: true, can_edit: true, can_delete: true, can_export: true, can_approve: true },
@@ -31,6 +32,7 @@ const DEFAULT_ROLE_PERMISSIONS = {
     attendance: { can_view: true, can_create: true, can_edit: true, can_delete: true, can_export: true, can_approve: true },
     settings: { can_view: true, can_create: true, can_edit: true, can_delete: false, can_export: true, can_approve: true },
     activity_log: { can_view: true, can_create: false, can_edit: false, can_delete: false, can_export: true, can_approve: false },
+    documents: { can_view: true, can_create: true, can_edit: true, can_delete: true, can_export: true, can_approve: true, can_archive: true, can_manage_versions: true, can_view_all_org: true },
   },
   hr_admin: {
     dashboard: { can_view: true, can_create: false, can_edit: false, can_delete: false, can_export: false, can_approve: false },
@@ -44,6 +46,7 @@ const DEFAULT_ROLE_PERMISSIONS = {
     attendance: { can_view: true, can_create: true, can_edit: true, can_delete: false, can_export: true, can_approve: true },
     settings: { can_view: true, can_create: false, can_edit: false, can_delete: false, can_export: false, can_approve: false },
     activity_log: { can_view: true, can_create: false, can_edit: false, can_delete: false, can_export: false, can_approve: false },
+    documents: { can_view: true, can_create: true, can_edit: true, can_delete: false, can_export: true, can_approve: false, can_archive: false, can_manage_versions: true, can_view_all_org: true, custom_permissions: { hr_docs_only: true } },
   },
   payroll_admin: {
     dashboard: { can_view: true, can_create: false, can_edit: false, can_delete: false, can_export: false, can_approve: false },
@@ -57,6 +60,7 @@ const DEFAULT_ROLE_PERMISSIONS = {
     attendance: { can_view: true, can_create: false, can_edit: true, can_delete: false, can_export: true, can_approve: true, custom_permissions: { can_approve_overtime: true, can_override_timesheet: true } },
     settings: { can_view: true, can_create: false, can_edit: false, can_delete: false, can_export: false, can_approve: false },
     activity_log: { can_view: false, can_create: false, can_edit: false, can_delete: false, can_export: false, can_approve: false },
+    documents: { can_view: true, can_create: true, can_edit: false, can_delete: false, can_export: true, can_approve: false, can_archive: false, can_manage_versions: false, can_view_all_org: true, custom_permissions: { payroll_docs_only: true } },
   },
   warehouse_manager: {
     dashboard: { can_view: true, can_create: false, can_edit: false, can_delete: false, can_export: false, can_approve: false },
@@ -70,6 +74,7 @@ const DEFAULT_ROLE_PERMISSIONS = {
     attendance: { can_view: true, can_create: true, can_edit: false, can_delete: false, can_export: true, can_approve: false },
     settings: { can_view: true, can_create: false, can_edit: false, can_delete: false, can_export: false, can_approve: false },
     activity_log: { can_view: true, can_create: false, can_edit: false, can_delete: false, can_export: true, can_approve: false },
+    documents: { can_view: true, can_create: true, can_edit: false, can_delete: false, can_export: true, can_approve: false, can_archive: false, can_manage_versions: false, can_view_all_org: false, custom_permissions: { inventory_docs_only: true } },
   },
   retail_cashier: {
     dashboard: { can_view: true, can_create: false, can_edit: false, can_delete: false, can_export: false, can_approve: false },
@@ -83,6 +88,7 @@ const DEFAULT_ROLE_PERMISSIONS = {
     attendance: { can_view: true, can_create: true, can_edit: false, can_delete: false, can_export: false, can_approve: false, custom_permissions: { own_attendance_only: true } },
     settings: { can_view: true, can_create: false, can_edit: false, can_delete: false, can_export: false, can_approve: false },
     activity_log: { can_view: false, can_create: false, can_edit: false, can_delete: false, can_export: false, can_approve: false },
+    documents: { can_view: false, can_create: false, can_edit: false, can_delete: false, can_export: false, can_approve: false, can_archive: false, can_manage_versions: false, can_view_all_org: false },
   },
   vehicle_sales: {
     dashboard: { can_view: true, can_create: false, can_edit: false, can_delete: false, can_export: false, can_approve: false },
@@ -96,6 +102,7 @@ const DEFAULT_ROLE_PERMISSIONS = {
     attendance: { can_view: true, can_create: true, can_edit: false, can_delete: false, can_export: false, can_approve: false, custom_permissions: { own_attendance_only: true } },
     settings: { can_view: true, can_create: false, can_edit: false, can_delete: false, can_export: false, can_approve: false },
     activity_log: { can_view: false, can_create: false, can_edit: false, can_delete: false, can_export: false, can_approve: false },
+    documents: { can_view: false, can_create: false, can_edit: false, can_delete: false, can_export: false, can_approve: false, can_archive: false, can_manage_versions: false, can_view_all_org: false },
   },
   driver: {
     dashboard: { can_view: true, can_create: false, can_edit: false, can_delete: false, can_export: false, can_approve: false },
@@ -109,6 +116,7 @@ const DEFAULT_ROLE_PERMISSIONS = {
     attendance: { can_view: true, can_create: true, can_edit: false, can_delete: false, can_export: false, can_approve: false, custom_permissions: { own_attendance_only: true } },
     settings: { can_view: true, can_create: false, can_edit: false, can_delete: false, can_export: false, can_approve: false },
     activity_log: { can_view: false, can_create: false, can_edit: false, can_delete: false, can_export: false, can_approve: false },
+    documents: { can_view: false, can_create: false, can_edit: false, can_delete: false, can_export: false, can_approve: false, can_archive: false, can_manage_versions: false, can_view_all_org: false },
   },
   accountant: {
     dashboard: { can_view: true, can_create: false, can_edit: false, can_delete: false, can_export: true, can_approve: false },
@@ -122,6 +130,7 @@ const DEFAULT_ROLE_PERMISSIONS = {
     attendance: { can_view: true, can_create: false, can_edit: false, can_delete: false, can_export: true, can_approve: false },
     settings: { can_view: true, can_create: false, can_edit: false, can_delete: false, can_export: false, can_approve: false },
     activity_log: { can_view: true, can_create: false, can_edit: false, can_delete: false, can_export: true, can_approve: false },
+    documents: { can_view: true, can_create: true, can_edit: false, can_delete: false, can_export: true, can_approve: false, can_archive: false, can_manage_versions: false, can_view_all_org: true, custom_permissions: { finance_docs_only: true } },
   },
   support_staff: {
     dashboard: { can_view: true, can_create: false, can_edit: false, can_delete: false, can_export: false, can_approve: false },
@@ -135,6 +144,7 @@ const DEFAULT_ROLE_PERMISSIONS = {
     attendance: { can_view: true, can_create: true, can_edit: false, can_delete: false, can_export: false, can_approve: false, custom_permissions: { own_attendance_only: true } },
     settings: { can_view: true, can_create: false, can_edit: false, can_delete: false, can_export: false, can_approve: false },
     activity_log: { can_view: false, can_create: false, can_edit: false, can_delete: false, can_export: false, can_approve: false },
+    documents: { can_view: true, can_create: false, can_edit: false, can_delete: false, can_export: false, can_approve: false, can_archive: false, can_manage_versions: false, can_view_all_org: false, custom_permissions: { own_docs_only: true } },
   },
   read_only: {
     dashboard: { can_view: true, can_create: false, can_edit: false, can_delete: false, can_export: false, can_approve: false },
@@ -148,6 +158,7 @@ const DEFAULT_ROLE_PERMISSIONS = {
     attendance: { can_view: true, can_create: true, can_edit: false, can_delete: false, can_export: false, can_approve: false },
     settings: { can_view: true, can_create: false, can_edit: false, can_delete: false, can_export: false, can_approve: false },
     activity_log: { can_view: false, can_create: false, can_edit: false, can_delete: false, can_export: false, can_approve: false },
+    documents: { can_view: true, can_create: false, can_edit: false, can_delete: false, can_export: false, can_approve: false, can_archive: false, can_manage_versions: false, can_view_all_org: false, custom_permissions: { own_docs_only: true } },
   },
 };
 
@@ -163,6 +174,7 @@ export const MODULES = [
   { key: 'attendance', name: 'Attendance', icon: 'Clock' },
   { key: 'settings', name: 'Settings', icon: 'Settings' },
   { key: 'activity_log', name: 'Activity Log', icon: 'Activity' },
+  { key: 'documents', name: 'Documents', icon: 'FileText' },
 ];
 
 export const ROLES = [
@@ -244,6 +256,59 @@ export function PermissionsProvider({ children }) {
     // Check if user is admin level
     isAdmin: () => ['super_admin', 'org_admin'].includes(userRole),
     isSuperAdmin: () => userRole === 'super_admin',
+    
+    // Document-specific permission checks
+    canViewDocument: (doc) => {
+      if (!doc) return false;
+      const docPerms = permissions.documents;
+      if (!docPerms?.can_view) return false;
+      
+      // Admins can view all org docs
+      if (docPerms.can_view_all_org) return true;
+      
+      // Check if user can only view their own docs
+      if (docPerms.custom_permissions?.own_docs_only) {
+        return doc.uploaded_by_id === currentEmployee?.id;
+      }
+      
+      // Category-based restrictions
+      if (docPerms.custom_permissions?.hr_docs_only) {
+        return doc.category === 'hr_document' || doc.category === 'payroll';
+      }
+      if (docPerms.custom_permissions?.finance_docs_only) {
+        return ['expense', 'revenue'].includes(doc.category);
+      }
+      if (docPerms.custom_permissions?.inventory_docs_only) {
+        return ['inventory', 'production'].includes(doc.category);
+      }
+      if (docPerms.custom_permissions?.payroll_docs_only) {
+        return doc.category === 'payroll';
+      }
+      
+      return true;
+    },
+    
+    canEditDocument: (doc) => {
+      if (!doc) return false;
+      const docPerms = permissions.documents;
+      if (!docPerms?.can_edit) return false;
+      
+      // Admins can edit all org docs
+      if (['super_admin', 'org_admin'].includes(userRole)) return true;
+      
+      // Others can only edit their own docs
+      return doc.uploaded_by_id === currentEmployee?.id;
+    },
+    
+    canDeleteDocument: (doc) => {
+      if (!doc) return false;
+      const docPerms = permissions.documents;
+      if (!docPerms?.can_delete) return false;
+      
+      // Only admins or document owner can delete
+      if (['super_admin', 'org_admin'].includes(userRole)) return true;
+      return doc.uploaded_by_id === currentEmployee?.id;
+    },
   }), [userRole, permissions, currentEmployee, orgId]);
 
   return (
