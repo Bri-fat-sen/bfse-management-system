@@ -1,3 +1,4 @@
+css
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -7,7 +8,7 @@
   display: none !important;
 }
 
-/* Sierra Leone Toast Notifications */
+/* Modern Toast Notifications */
 [data-sonner-toaster] {
   --normal-bg: white;
   --success-bg: white;
@@ -17,24 +18,24 @@
 }
 
 [data-sonner-toast] {
-  border-radius: 12px !important;
-  box-shadow: 0 4px 20px rgba(15, 31, 60, 0.12) !important;
-  border: 1px solid rgba(0, 0, 0, 0.05) !important;
-  padding: 16px !important;
+  border-radius: 8px !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1) !important;
+  border: 1px solid rgba(0, 0, 0, 0.08) !important;
+  padding: 14px !important;
 }
 
 [data-sonner-toast][data-type="success"] {
-  border-left: 4px solid #1EB053 !important;
-  background: linear-gradient(to right, rgba(30, 176, 83, 0.08), white) !important;
+  border-left: 3px solid #10b981 !important;
+  background: white !important;
 }
 
 [data-sonner-toast][data-type="success"] [data-icon] svg {
-  color: #1EB053 !important;
+  color: #10b981 !important;
 }
 
 [data-sonner-toast][data-type="error"] {
-  border-left: 4px solid #ef4444 !important;
-  background: linear-gradient(to right, rgba(239, 68, 68, 0.08), white) !important;
+  border-left: 3px solid #ef4444 !important;
+  background: white !important;
 }
 
 [data-sonner-toast][data-type="error"] [data-icon] svg {
@@ -42,8 +43,8 @@
 }
 
 [data-sonner-toast][data-type="warning"] {
-  border-left: 4px solid #f59e0b !important;
-  background: linear-gradient(to right, rgba(245, 158, 11, 0.08), white) !important;
+  border-left: 3px solid #f59e0b !important;
+  background: white !important;
 }
 
 [data-sonner-toast][data-type="warning"] [data-icon] svg {
@@ -51,21 +52,21 @@
 }
 
 [data-sonner-toast][data-type="info"] {
-  border-left: 4px solid #0072C6 !important;
-  background: linear-gradient(to right, rgba(0, 114, 198, 0.08), white) !important;
+  border-left: 3px solid #3b82f6 !important;
+  background: white !important;
 }
 
 [data-sonner-toast][data-type="info"] [data-icon] svg {
-  color: #0072C6 !important;
+  color: #3b82f6 !important;
 }
 
 [data-sonner-toast] [data-title] {
   font-weight: 600 !important;
-  color: #0F1F3C !important;
+  color: #111827 !important;
 }
 
 [data-sonner-toast] [data-description] {
-  color: #64748b !important;
+  color: #6b7280 !important;
 }
 
 /* Mobile viewport fixes */
@@ -355,78 +356,42 @@ html, body {
   }
 }
 
-/* Sierra Leone themed scrollbars */
+/* Modern scrollbars */
 *::-webkit-scrollbar {
-  width: 14px !important;
-  height: 14px !important;
+  width: 10px !important;
+  height: 10px !important;
 }
 
 *::-webkit-scrollbar-track {
-  background: #e2e8f0 !important;
-  border-radius: 7px !important;
+  background: #f3f4f6 !important;
+  border-radius: 5px !important;
 }
 
 *::-webkit-scrollbar-thumb {
-  border-radius: 7px !important;
-  border: 3px solid #e2e8f0 !important;
-  background: #1EB053 !important;
-  background-image: linear-gradient(to bottom, 
-    #1EB053 0%, 
-    #1EB053 33.33%, 
-    #FFFFFF 33.33%, 
-    #FFFFFF 66.66%, 
-    #0072C6 66.66%, 
-    #0072C6 100%
-  ) !important;
+  border-radius: 5px !important;
+  background: #d1d5db !important;
+  border: 2px solid #f3f4f6 !important;
 }
 
 *::-webkit-scrollbar-thumb:hover {
-  background: #178f43 !important;
-  background-image: linear-gradient(to bottom, 
-    #178f43 0%, 
-    #178f43 33.33%, 
-    #f0f0f0 33.33%, 
-    #f0f0f0 66.66%, 
-    #005a9e 66.66%, 
-    #005a9e 100%
-  ) !important;
+  background: #9ca3af !important;
 }
 
 *::-webkit-scrollbar-corner {
-  background: #e2e8f0 !important;
-}
-
-/* Horizontal scrollbars - stripe goes left to right */
-*::-webkit-scrollbar:horizontal {
-  height: 14px !important;
-}
-
-*::-webkit-scrollbar-thumb:horizontal {
-  background-image: linear-gradient(to right, 
-    #1EB053 0%, 
-    #1EB053 33.33%, 
-    #FFFFFF 33.33%, 
-    #FFFFFF 66.66%, 
-    #0072C6 66.66%, 
-    #0072C6 100%
-  ) !important;
+  background: #f3f4f6 !important;
 }
 
 /* Firefox scrollbar */
 * {
-  scrollbar-width: auto !important;
-  scrollbar-color: #1EB053 #e2e8f0 !important;
+  scrollbar-width: thin !important;
+  scrollbar-color: #d1d5db #f3f4f6 !important;
 }
 
 /* Mobile scrollbars */
 @media (max-width: 768px) {
   *::-webkit-scrollbar {
-    width: 10px !important;
-    height: 10px !important;
-  }
-  
-  *::-webkit-scrollbar-thumb {
-    border: 2px solid #e2e8f0 !important;
+    width: 6px !important;
+    height: 6px !important;
   }
 }
 

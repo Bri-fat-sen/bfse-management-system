@@ -430,53 +430,52 @@ export default function Layout({ children, currentPageName }) {
           input, select, textarea { font-size: 16px !important; }
         }
         :root {
-          --sl-green: #1EB053;
-          --sl-white: #FFFFFF;
-          --sl-blue: #0072C6;
-          --sl-navy: #0F1F3C;
-          --sl-gold: #D4AF37;
-          --sl-sky: #E3F1FF;
-          --sl-light-green: #E8F5E9;
-          --sl-light-blue: #E3F2FD;
+          --primary: #2563eb;
+          --primary-dark: #1e40af;
+          --primary-light: #3b82f6;
+          --secondary: #8b5cf6;
+          --accent: #06b6d4;
+          --success: #10b981;
+          --warning: #f59e0b;
+          --error: #ef4444;
+          --gray-50: #f9fafb;
+          --gray-100: #f3f4f6;
+          --gray-200: #e5e7eb;
+          --gray-300: #d1d5db;
+          --gray-600: #4b5563;
+          --gray-700: #374151;
+          --gray-800: #1f2937;
+          --gray-900: #111827;
+          --sidebar-bg: #ffffff;
+          --sidebar-text: #374151;
+          --sidebar-hover: #f3f4f6;
+          --sidebar-active: #eff6ff;
+          --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+          --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+          --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1);
+          --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.1);
         }
-        .sl-gradient {
-          background: linear-gradient(135deg, var(--sl-green) 0%, var(--sl-blue) 100%);
+        .modern-gradient {
+          background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
         }
-        .sl-gradient-text {
-          background: linear-gradient(135deg, var(--sl-green) 0%, var(--sl-blue) 100%);
-          -webkit-background-clip: text;
-          -webkit-text-fill-color: transparent;
+        .modern-card {
+          background: white;
+          border-radius: 16px;
+          border: 1px solid var(--gray-200);
+          box-shadow: var(--shadow-sm);
+          transition: all 0.2s ease;
         }
-        .sl-flag-stripe {
-          background: linear-gradient(to right, #1EB053 33.33%, #FFFFFF 33.33%, #FFFFFF 66.66%, #0072C6 66.66%);
-        }
-        .sl-flag-stripe-vertical {
-          background: linear-gradient(to bottom, #1EB053 33.33%, #FFFFFF 33.33%, #FFFFFF 66.66%, #0072C6 66.66%);
+        .modern-card:hover {
+          box-shadow: var(--shadow-lg);
+          border-color: var(--gray-300);
         }
         .sidebar-item-active {
-          background: linear-gradient(90deg, rgba(30, 176, 83, 0.25) 0%, rgba(0, 114, 198, 0.15) 100%);
-          border-left: 4px solid var(--sl-green);
+          background: var(--sidebar-active);
+          border-left: 3px solid var(--primary);
+          color: var(--primary);
         }
         .sidebar-item:hover {
-          background: rgba(255, 255, 255, 0.08);
-        }
-        .dark .card-dark {
-          background: rgba(255, 255, 255, 0.05);
-          border: 1px solid rgba(255, 255, 255, 0.1);
-        }
-        .sl-card-green {
-          border-top: 4px solid #1EB053;
-        }
-        .sl-card-blue {
-          border-top: 4px solid #0072C6;
-        }
-        .sl-pattern {
-          background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.05'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
-        }
-        .sl-hero-pattern {
-          background-image: 
-            linear-gradient(135deg, rgba(30, 176, 83, 0.9) 0%, rgba(0, 114, 198, 0.9) 100%),
-            url("data:image/svg+xml,%3Csvg width='80' height='80' viewBox='0 0 80 80' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.1'%3E%3Cpath d='M50 50c0-5.523 4.477-10 10-10s10 4.477 10 10-4.477 10-10 10c0 5.523-4.477 10-10 10s-10-4.477-10-10 4.477-10 10-10zM10 10c0-5.523 4.477-10 10-10s10 4.477 10 10-4.477 10-10 10c0 5.523-4.477 10-10 10S0 25.523 0 20s4.477-10 10-10zm10 8c4.418 0 8-3.582 8-8s-3.582-8-8-8-8 3.582-8 8 3.582 8 8 8zm40 40c4.418 0 8-3.582 8-8s-3.582-8-8-8-8 3.582-8 8 3.582 8 8 8z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+          background: var(--sidebar-hover);
         }
       `}</style>
 
@@ -488,36 +487,30 @@ export default function Layout({ children, currentPageName }) {
       )}
 
       <aside className={`
-        fixed top-0 left-0 z-50 h-full text-white transition-all duration-300 flex flex-col
+        fixed top-0 left-0 z-50 h-full transition-all duration-300 flex flex-col
         w-[85vw] max-w-64 lg:${sidebarOpen ? 'w-64' : 'w-20'}
         ${mobileMenuOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
-        bg-gradient-to-br from-[#0F1F3C] via-[#1a3a5e] to-[#0F1F3C]
+        bg-white border-r border-gray-200 shadow-xl
       `}
       >
         <div className="flex-shrink-0">
-          <div className="h-2 flex">
-            <div className="flex-1 bg-gradient-to-r from-[#1EB053] to-[#16a047]" />
-            <div className="flex-1 bg-white" />
-            <div className="flex-1 bg-gradient-to-r from-[#0072C6] to-[#005a9e]" />
-          </div>
-
-          <div className="h-20 flex items-center justify-between px-6 border-b border-white/10 bg-white/5 backdrop-blur-sm">
+          <div className="h-20 flex items-center justify-between px-6 border-b border-gray-200">
           {sidebarOpen ? (
             <div className="flex items-center gap-3 min-w-0 flex-1">
               {currentOrg?.logo_url && (
-                <div className="bg-white p-2 rounded-xl flex-shrink-0 inline-flex shadow-lg">
+                <div className="flex-shrink-0">
                   <img 
                     src={currentOrg.logo_url} 
                     alt={currentOrg.name} 
-                    className="h-10 w-auto object-contain"
+                    className="h-12 w-auto object-contain"
                   />
                 </div>
               )}
-              <p className="font-black text-lg text-white leading-tight line-clamp-2 min-w-0">{currentOrg?.name || 'Loading...'}</p>
+              <p className="font-bold text-base text-gray-900 leading-tight line-clamp-2 min-w-0">{currentOrg?.name || 'Loading...'}</p>
             </div>
           ) : (
             currentOrg?.logo_url ? (
-              <div className="bg-white p-2 rounded-xl mx-auto inline-flex shadow-lg">
+              <div className="mx-auto">
                 <img 
                   src={currentOrg.logo_url} 
                   alt={currentOrg.name} 
@@ -525,60 +518,48 @@ export default function Layout({ children, currentPageName }) {
                 />
               </div>
             ) : (
-              <p className="font-bold text-base text-white text-center">{currentOrg?.name?.charAt(0) || '?'}</p>
+              <p className="font-bold text-base text-gray-900 text-center">{currentOrg?.name?.charAt(0) || '?'}</p>
             )
           )}
           <Button
             variant="ghost"
             size="icon"
             onClick={() => setSidebarOpen(!sidebarOpen)}
-            className="text-white hover:bg-white/20 hidden lg:flex rounded-xl transition-all"
+            className="text-gray-600 hover:bg-gray-100 hidden lg:flex rounded-lg transition-all"
           >
-            {sidebarOpen ? <ChevronLeft className="w-6 h-6" /> : <ChevronRight className="w-6 h-6" />}
+            {sidebarOpen ? <ChevronLeft className="w-5 h-5" /> : <ChevronRight className="w-5 h-5" />}
           </Button>
           <Button
             variant="ghost"
             size="icon"
             onClick={() => setMobileMenuOpen(false)}
-            className="text-white hover:bg-white/10 lg:hidden"
+            className="text-gray-600 hover:bg-gray-100 lg:hidden"
           >
             <X className="w-5 h-5" />
             </Button>
             </div>
-
-            <div className="h-1 flex mx-4">
-            <div className="flex-1 bg-gradient-to-r from-[#1EB053] to-[#16a047] opacity-50" />
-            <div className="flex-1 bg-white/50" />
-            <div className="flex-1 bg-gradient-to-r from-[#0072C6] to-[#005a9e] opacity-50" />
-            </div>
             </div>
 
-            <nav className="flex-1 overflow-y-auto p-3 space-y-1">
+            <nav className="flex-1 overflow-y-auto p-4 space-y-6">
             {filteredMenuSections.map((section, sectionIndex) => (
             <div key={section.title}>
-              {sectionIndex > 0 && sidebarOpen && (
-                <div className="h-0.5 flex mx-3 my-3">
-                  <div className="flex-1 bg-[#1EB053]/30" />
-                  <div className="flex-1 bg-white/30" />
-                  <div className="flex-1 bg-[#0072C6]/30" />
-                </div>
-              )}
               {sidebarOpen ? (
                 <button
                   onClick={() => toggleSection(section.title)}
-                  className="w-full flex items-center justify-between px-3 mb-2 text-sm font-semibold uppercase tracking-wider transition-colors"
-                  style={{ color: section.color }}
+                  className="w-full flex items-center justify-between px-3 py-2 mb-2 text-xs font-bold uppercase tracking-wider text-gray-500 hover:text-gray-700 transition-colors"
                 >
                   <span>{section.title}</span>
                   {collapsedSections[section.title] ? (
-                    <ChevronDown className="w-4 h-4" />
+                    <ChevronDown className="w-3.5 h-3.5" />
                   ) : (
-                    <ChevronUp className="w-4 h-4" />
+                    <ChevronUp className="w-3.5 h-3.5" />
                   )}
                 </button>
+              ) : sectionIndex > 0 ? (
+                <div className="h-px bg-gray-200 my-3 mx-3" />
               ) : null}
               {(!collapsedSections[section.title] || !sidebarOpen) && (
-                <div className="space-y-0.5">
+                <div className="space-y-1">
                   {section.items.map((item) => {
                     const isActive = currentPageName === item.page;
                     return (
@@ -587,33 +568,27 @@ export default function Layout({ children, currentPageName }) {
                         to={createPageUrl(item.page)}
                         onClick={() => setMobileMenuOpen(false)}
                         className={`
-                          flex items-center gap-3 px-4 py-3 rounded-2xl transition-all duration-300 group relative
+                          flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all group relative
                           ${isActive 
-                            ? 'bg-gradient-to-r from-white/20 to-white/10 backdrop-blur-lg border-l-4 shadow-xl' 
-                            : 'hover:bg-white/10 hover:backdrop-blur-sm'}
+                            ? 'bg-blue-50 text-blue-700 border-l-3 border-blue-600 font-semibold shadow-sm' 
+                            : 'text-gray-700 hover:bg-gray-100 hover:text-gray-900'}
                         `}
-                        style={isActive ? { borderLeftColor: section.color } : {}}
                       >
-                        <div className={`p-2 rounded-xl transition-all ${isActive ? 'bg-white/20 shadow-lg scale-110' : 'group-hover:bg-white/10'}`}>
-                          <item.icon 
-                            className="w-5 h-5 flex-shrink-0 transition-all"
-                            style={{ color: isActive ? section.color : 'white', filter: isActive ? 'brightness(1.2)' : 'none' }}
-                          />
-                        </div>
+                        <item.icon className={`w-5 h-5 flex-shrink-0 ${isActive ? 'text-blue-600' : 'text-gray-500'}`} />
                         {sidebarOpen && (
                           <>
-                            <span className={`font-bold text-sm flex-1 ${isActive ? 'text-white' : 'text-white/70 group-hover:text-white'}`}>
+                            <span className="text-sm flex-1">
                               {item.name}
                             </span>
                             {item.badge && (
-                              <span className="px-2.5 py-1 text-xs font-black text-white rounded-full shadow-lg bg-gradient-to-r from-[#1EB053] to-[#0072C6]">
+                              <span className="px-2 py-0.5 text-xs font-bold text-white bg-blue-600 rounded-full">
                                 {item.badge}
                               </span>
                             )}
                           </>
                         )}
                         {!sidebarOpen && (
-                          <div className="absolute left-full ml-4 px-4 py-2 bg-gradient-to-r from-[#1EB053] to-[#0072C6] text-white text-sm font-bold rounded-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all whitespace-nowrap z-50 shadow-2xl">
+                          <div className="absolute left-full ml-4 px-3 py-2 bg-gray-900 text-white text-xs font-medium rounded-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all whitespace-nowrap z-50 shadow-xl">
                             {item.name}
                           </div>
                         )}
@@ -626,48 +601,36 @@ export default function Layout({ children, currentPageName }) {
             ))}
             </nav>
 
-        <div className="flex-shrink-0">
-          <div className="h-0.5 flex mx-4 mb-3">
-            <div className="flex-1 bg-[#1EB053]/30" />
-            <div className="flex-1 bg-white/30" />
-            <div className="flex-1 bg-[#0072C6]/30" />
-          </div>
-
+        <div className="flex-shrink-0 border-t border-gray-200">
           {sidebarOpen ? (
-            <div className="px-4 pb-4">
-              <div className="p-3 bg-white/5 rounded-xl border border-white/10">
+            <div className="px-4 py-4">
+              <div className="p-3 bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg border border-blue-100">
                 <div className="flex items-center gap-3">
-                  <div className="flex h-8 w-1 rounded-full overflow-hidden">
-                    <div className="w-full bg-gradient-to-b from-[#1EB053] via-white to-[#0072C6]" />
+                  <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center text-white font-bold text-sm">
+                    {currentOrg?.name?.charAt(0) || '?'}
                   </div>
-                  <div className="text-xs flex-1">
-                    <p className="text-white/90 font-medium">🇸🇱 {currentOrg?.name || 'Organisation'}</p>
-                    <p className="text-gray-400 text-[10px]">{currentOrg?.country || 'Sierra Leone'}</p>
+                  <div className="text-xs flex-1 min-w-0">
+                    <p className="text-gray-900 font-semibold truncate">{currentOrg?.name || 'Organisation'}</p>
+                    <p className="text-gray-500 text-[10px]">{currentOrg?.country || 'Sierra Leone'}</p>
                   </div>
                 </div>
               </div>
             </div>
           ) : (
-            <div className="px-2 pb-4">
-              <div className="flex h-10 w-1 rounded-full overflow-hidden mx-auto">
-                <div className="w-full bg-gradient-to-b from-[#1EB053] via-white to-[#0072C6]" />
+            <div className="px-2 py-4">
+              <div className="w-8 h-8 bg-gradient-to-br from-blue-600 to-purple-600 rounded-lg flex items-center justify-center text-white font-bold text-sm mx-auto">
+                {currentOrg?.name?.charAt(0) || '?'}
               </div>
             </div>
           )}
-
-          <div className="h-1.5 flex">
-            <div className="flex-1 bg-[#1EB053]" />
-            <div className="flex-1 bg-white" />
-            <div className="flex-1 bg-[#0072C6]" />
-          </div>
         </div>
       </aside>
 
       <div className={`transition-all duration-300 ${sidebarOpen ? 'lg:ml-64' : 'lg:ml-20'}`}>
         <header className={`
-          sticky top-0 z-30 h-20 px-6 lg:px-8 flex items-center justify-between
-          ${darkMode ? 'bg-[#0F1F3C]/95 border-white/10' : 'bg-white/95 border-gray-200'}
-          border-b-2 backdrop-blur-xl shadow-lg
+          sticky top-0 z-30 h-16 px-6 lg:px-8 flex items-center justify-between
+          ${darkMode ? 'bg-gray-900/95 border-gray-700' : 'bg-white/95 border-gray-200'}
+          border-b backdrop-blur-xl shadow-sm
         `}>
           <div className="flex items-center gap-4">
             <Button
@@ -681,12 +644,12 @@ export default function Layout({ children, currentPageName }) {
             
             <Button
               variant="outline"
-              className={`hidden md:flex items-center gap-3 w-80 justify-start text-gray-500 h-12 rounded-2xl border-2 ${darkMode ? 'bg-white/5 border-white/10' : 'border-gray-200'} hover:border-[#1EB053] transition-all`}
+              className={`hidden md:flex items-center gap-3 w-80 justify-start text-gray-500 h-10 rounded-lg border ${darkMode ? 'bg-gray-800 border-gray-700' : 'border-gray-200 bg-gray-50'} hover:border-blue-300 hover:bg-white transition-all`}
               onClick={() => setSearchOpen(true)}
             >
-              <Search className="w-5 h-5" />
-              <span className="font-medium">Search anything...</span>
-              <kbd className="ml-auto px-3 py-1 text-xs font-bold bg-gradient-to-r from-[#1EB053] to-[#0072C6] text-white rounded-lg">⌘K</kbd>
+              <Search className="w-4 h-4" />
+              <span className="text-sm">Search anything...</span>
+              <kbd className="ml-auto px-2 py-0.5 text-xs font-semibold bg-gray-200 text-gray-700 rounded">⌘K</kbd>
             </Button>
 
             <RolePreviewSwitcher
@@ -702,14 +665,14 @@ export default function Layout({ children, currentPageName }) {
               size="icon"
               onClick={() => setChatPanelOpen(!chatPanelOpen)}
               className={cn(
-                "relative h-12 w-12 rounded-2xl transition-all",
-                darkMode ? 'text-white hover:bg-white/10' : 'hover:bg-gray-100',
-                chatPanelOpen && 'bg-gradient-to-br from-[#1EB053] to-[#0072C6] text-white shadow-lg scale-110'
+                "relative h-10 w-10 rounded-lg transition-all",
+                darkMode ? 'text-white hover:bg-gray-800' : 'hover:bg-gray-100',
+                chatPanelOpen && 'bg-blue-600 text-white shadow-md'
               )}
             >
-              <MessageSquare className="w-6 h-6" />
+              <MessageSquare className="w-5 h-5" />
               {unreadChatCount > 0 && (
-                <span className="absolute -top-1 -right-1 min-w-6 h-6 px-1.5 bg-gradient-to-r from-red-500 to-orange-500 text-white text-xs font-black rounded-full flex items-center justify-center shadow-lg animate-pulse">
+                <span className="absolute -top-1 -right-1 min-w-5 h-5 px-1.5 bg-red-500 text-white text-xs font-bold rounded-full flex items-center justify-center shadow-lg">
                   {unreadChatCount > 9 ? '9+' : unreadChatCount}
                 </span>
               )}
@@ -778,7 +741,7 @@ export default function Layout({ children, currentPageName }) {
           onExit={() => setPreviewRole(null)} 
         />
 
-        <main className={`p-4 lg:p-6 ${darkMode ? 'text-white' : ''} overflow-x-hidden`} style={{ paddingBottom: 'max(6rem, calc(5rem + env(safe-area-inset-bottom, 0px)))', minHeight: 'calc(100vh - 4.5rem)' }}>
+        <main className={`p-4 lg:p-8 ${darkMode ? 'text-white bg-gray-900' : 'bg-gray-50'} overflow-x-hidden`} style={{ paddingBottom: 'max(6rem, calc(5rem + env(safe-area-inset-bottom, 0px)))', minHeight: 'calc(100vh - 4rem)' }}>
           <ToastProvider>
             <PermissionsProvider>
               <OfflineProvider>
