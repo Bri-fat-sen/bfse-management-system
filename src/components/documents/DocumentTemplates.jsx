@@ -20,6 +20,10 @@ export const DOCUMENT_TYPES = [
   "custom"
 ];
 
+export const getDocumentTypeLabel = (type) => {
+  return DOCUMENT_TYPE_INFO[type]?.label || type;
+};
+
 export const DOCUMENT_TYPE_INFO = {
   employment_contract: {
     label: "Employment Contract",
