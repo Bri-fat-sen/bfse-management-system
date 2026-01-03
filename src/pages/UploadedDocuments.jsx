@@ -486,10 +486,8 @@ Return ONLY a JSON array of tag strings, no duplicates of existing tags.`,
                       </Button>
                     </div>
                   )}
-
-                  <div onClick={() => setSelectedDocument(doc)}>
                   
-                  <div className="p-6">
+                  <div className="p-6" onClick={() => setSelectedDocument(doc)}>
                     <div className="flex items-start justify-between mb-4">
                       <div className={`p-4 bg-gradient-to-br ${categoryColors[doc.category] || categoryColors.other} rounded-2xl shadow-xl transform group-hover:scale-110 transition-transform`}>
                         <span className="text-3xl">{categoryIcons[doc.category] || "📄"}</span>
