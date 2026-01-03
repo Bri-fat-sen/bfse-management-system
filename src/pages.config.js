@@ -1,79 +1,89 @@
-import Dashboard from './pages/Dashboard';
-import Sales from './pages/Sales';
-import Inventory from './pages/Inventory';
-import Transport from './pages/Transport';
-import Communication from './pages/Communication';
-import Finance from './pages/Finance';
 import ActivityLog from './pages/ActivityLog';
-import Settings from './pages/Settings';
-import Support from './pages/Support';
-import Attendance from './pages/Attendance';
-import Profile from './pages/Profile';
-import RolePermissions from './pages/RolePermissions';
-import Suppliers from './pages/Suppliers';
-import OrganisationManage from './pages/OrganisationManage';
 import Analytics from './pages/Analytics';
-import Locations from './pages/Locations';
+import Attendance from './pages/Attendance';
 import CRM from './pages/CRM';
-import WorkSchedules from './pages/WorkSchedules';
-import StockAudit from './pages/StockAudit';
-import ResetData from './pages/ResetData';
-import EmployeeSelfService from './pages/EmployeeSelfService';
 import Calendar from './pages/Calendar';
-import HRAnalytics from './pages/HRAnalytics';
-import Reports from './pages/Reports';
-import Documents from './pages/Documents';
-import UserManagement from './pages/UserManagement';
-import InventoryFix from './pages/InventoryFix';
-import OrphanedData from './pages/OrphanedData';
+import Communication from './pages/Communication';
 import ConstructionExpense from './pages/ConstructionExpense';
-import ExpenseManagement from './pages/ExpenseManagement';
-import UploadedDocuments from './pages/UploadedDocuments';
-import JoinOrganisation from './pages/JoinOrganisation';
-import PendingJoinRequests from './pages/PendingJoinRequests';
-import SuperAdminPanel from './pages/SuperAdminPanel';
-import HRManagement from './pages/HRManagement';
+import Dashboard from './pages/Dashboard';
+import Documents from './pages/Documents';
+import DriverDashboard from './pages/DriverDashboard';
+import EmployeeDocuments from './pages/EmployeeDocuments';
+import EmployeeSelfService from './pages/EmployeeSelfService';
 import ExecutiveDashboard from './pages/ExecutiveDashboard';
+import ExpenseManagement from './pages/ExpenseManagement';
+import Finance from './pages/Finance';
+import HRAnalytics from './pages/HRAnalytics';
+import HRManagement from './pages/HRManagement';
+import Home from './pages/Home';
+import Inventory from './pages/Inventory';
+import InventoryFix from './pages/InventoryFix';
+import JoinOrganisation from './pages/JoinOrganisation';
+import Locations from './pages/Locations';
+import OrganisationManage from './pages/OrganisationManage';
+import OrganisationRequests from './pages/OrganisationRequests';
+import OrphanedData from './pages/OrphanedData';
+import PendingJoinRequests from './pages/PendingJoinRequests';
+import Profile from './pages/Profile';
+import Reports from './pages/Reports';
+import RequestOrganisation from './pages/RequestOrganisation';
+import ResetData from './pages/ResetData';
+import RolePermissions from './pages/RolePermissions';
+import Sales from './pages/Sales';
+import Settings from './pages/Settings';
+import StockAudit from './pages/StockAudit';
+import SuperAdminPanel from './pages/SuperAdminPanel';
+import Suppliers from './pages/Suppliers';
+import Support from './pages/Support';
+import Transport from './pages/Transport';
+import UploadedDocuments from './pages/UploadedDocuments';
+import UserManagement from './pages/UserManagement';
+import WorkSchedules from './pages/WorkSchedules';
 import __Layout from './Layout.jsx';
 
 
 export const PAGES = {
-    "Dashboard": Dashboard,
-    "Sales": Sales,
-    "Inventory": Inventory,
-    "Transport": Transport,
-    "Communication": Communication,
-    "Finance": Finance,
     "ActivityLog": ActivityLog,
-    "Settings": Settings,
-    "Support": Support,
-    "Attendance": Attendance,
-    "Profile": Profile,
-    "RolePermissions": RolePermissions,
-    "Suppliers": Suppliers,
-    "OrganisationManage": OrganisationManage,
     "Analytics": Analytics,
-    "Locations": Locations,
+    "Attendance": Attendance,
     "CRM": CRM,
-    "WorkSchedules": WorkSchedules,
-    "StockAudit": StockAudit,
-    "ResetData": ResetData,
-    "EmployeeSelfService": EmployeeSelfService,
     "Calendar": Calendar,
-    "HRAnalytics": HRAnalytics,
-    "Reports": Reports,
-    "Documents": Documents,
-    "UserManagement": UserManagement,
-    "InventoryFix": InventoryFix,
-    "OrphanedData": OrphanedData,
+    "Communication": Communication,
     "ConstructionExpense": ConstructionExpense,
-    "ExpenseManagement": ExpenseManagement,
-    "UploadedDocuments": UploadedDocuments,
-    "JoinOrganisation": JoinOrganisation,
-    "PendingJoinRequests": PendingJoinRequests,
-    "SuperAdminPanel": SuperAdminPanel,
-    "HRManagement": HRManagement,
+    "Dashboard": Dashboard,
+    "Documents": Documents,
+    "DriverDashboard": DriverDashboard,
+    "EmployeeDocuments": EmployeeDocuments,
+    "EmployeeSelfService": EmployeeSelfService,
     "ExecutiveDashboard": ExecutiveDashboard,
+    "ExpenseManagement": ExpenseManagement,
+    "Finance": Finance,
+    "HRAnalytics": HRAnalytics,
+    "HRManagement": HRManagement,
+    "Home": Home,
+    "Inventory": Inventory,
+    "InventoryFix": InventoryFix,
+    "JoinOrganisation": JoinOrganisation,
+    "Locations": Locations,
+    "OrganisationManage": OrganisationManage,
+    "OrganisationRequests": OrganisationRequests,
+    "OrphanedData": OrphanedData,
+    "PendingJoinRequests": PendingJoinRequests,
+    "Profile": Profile,
+    "Reports": Reports,
+    "RequestOrganisation": RequestOrganisation,
+    "ResetData": ResetData,
+    "RolePermissions": RolePermissions,
+    "Sales": Sales,
+    "Settings": Settings,
+    "StockAudit": StockAudit,
+    "SuperAdminPanel": SuperAdminPanel,
+    "Suppliers": Suppliers,
+    "Support": Support,
+    "Transport": Transport,
+    "UploadedDocuments": UploadedDocuments,
+    "UserManagement": UserManagement,
+    "WorkSchedules": WorkSchedules,
 }
 
 export const pagesConfig = {

@@ -1,5 +1,5 @@
 import { useState, useMemo } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -18,8 +18,11 @@ import {
   List,
   Sparkles,
   FolderOpen,
-  Upload
+  Upload,
+  Wand2,
+  Brain
 } from "lucide-react";
+import { useToast } from "@/components/ui/Toast";
 import {
   Select,
   SelectContent,
@@ -39,6 +42,9 @@ export default function UploadedDocuments() {
   const [selectedDocument, setSelectedDocument] = useState(null);
   const [viewMode, setViewMode] = useState("grid");
   const [showArchived, setShowArchived] = useState(false);
+  const [autoTaggingAll, setAutoTaggingAll] = useState(false);
+  const toast = useToast();
+  const queryClient = useQueryClient();
 
   const { data: user } = useQuery({
     queryKey: ['currentUser'],
@@ -59,6 +65,79 @@ export default function UploadedDocuments() {
     queryFn: () => base44.entities.UploadedDocument.filter({ organisation_id: orgId }, '-created_date'),
     enabled: !!orgId,
   });
+
+  const autoTagDocument = async (doc) => {
+    try {
+      const response = await base44.integrations.Core.InvokeLLM({
+        prompt: `Analyze this document and suggest relevant tags (keywords) for categorization and search:
+
+Document: ${doc.file_name}
+Category: ${doc.category}
+Description: ${doc.description || 'No description'}
+Current Tags: ${(doc.tags || []).join(', ') || 'None'}
+Linked Records: ${(doc.linked_records || []).map(r => r.entity_type).join(', ') || 'None'}
+
+Suggest 3-7 relevant tags that would help categorize and find this document. Consider:
+- Document category and type
+- Business context (finance, HR, inventory, etc.)
+- Time period if relevant (monthly, quarterly, annual, etc.)
+- Department or function
+- Status or stage
+
+Return ONLY a JSON array of tag strings, no duplicates of existing tags.`,
+        response_json_schema: {
+          type: "object",
+          properties: {
+            tags: {
+              type: "array",
+              items: { type: "string" }
+            }
+          }
+        }
+      });
+
+      const newTags = response.tags || [];
+      const existingTags = doc.tags || [];
+      const uniqueNewTags = newTags.filter(t => !existingTags.includes(t));
+      
+      if (uniqueNewTags.length > 0) {
+        await base44.entities.UploadedDocument.update(doc.id, {
+          tags: [...existingTags, ...uniqueNewTags]
+        });
+        return uniqueNewTags.length;
+      }
+      return 0;
+    } catch (error) {
+      console.error('Auto-tag failed:', error);
+      return 0;
+    }
+  };
+
+  const autoTagAllDocuments = async () => {
+    const untaggedDocs = documents.filter(d => !d.is_archived && (!d.tags || d.tags.length < 3));
+    if (untaggedDocs.length === 0) {
+      toast.info("All documents are tagged", "No documents need auto-tagging");
+      return;
+    }
+
+    setAutoTaggingAll(true);
+    toast.loading("AI Tagging", `Processing ${untaggedDocs.length} documents...`);
+
+    try {
+      let tagged = 0;
+      for (const doc of untaggedDocs.slice(0, 10)) {
+        const count = await autoTagDocument(doc);
+        if (count > 0) tagged++;
+      }
+
+      queryClient.invalidateQueries(['uploadedDocuments']);
+      toast.success("Auto-tagging complete", `Added tags to ${tagged} documents`);
+    } catch (error) {
+      toast.error("Auto-tagging failed", error.message);
+    } finally {
+      setAutoTaggingAll(false);
+    }
+  };
 
   const allTags = useMemo(() => {
     const tags = new Set();
@@ -147,14 +226,33 @@ export default function UploadedDocuments() {
                 </div>
               </div>
 
-              <Button
-                variant="ghost"
-                onClick={() => setShowArchived(!showArchived)}
-                className="bg-white/10 hover:bg-white/20 backdrop-blur-sm border border-white/20 text-white"
-              >
-                <Archive className="w-4 h-4 mr-2" />
-                {showArchived ? 'Hide Archived' : 'Show Archived'}
-              </Button>
+              <div className="flex gap-3">
+                <Button
+                  onClick={autoTagAllDocuments}
+                  disabled={autoTaggingAll}
+                  className="bg-white/10 hover:bg-white/20 backdrop-blur-sm border border-white/20 text-white"
+                >
+                  {autoTaggingAll ? (
+                    <>
+                      <Brain className="w-4 h-4 mr-2 animate-spin" />
+                      Tagging...
+                    </>
+                  ) : (
+                    <>
+                      <Wand2 className="w-4 h-4 mr-2" />
+                      AI Auto-Tag All
+                    </>
+                  )}
+                </Button>
+                <Button
+                  variant="ghost"
+                  onClick={() => setShowArchived(!showArchived)}
+                  className="bg-white/10 hover:bg-white/20 backdrop-blur-sm border border-white/20 text-white"
+                >
+                  <Archive className="w-4 h-4 mr-2" />
+                  {showArchived ? 'Hide Archived' : 'Show Archived'}
+                </Button>
+              </div>
             </div>
 
             {/* Stats Row */}
@@ -361,10 +459,35 @@ export default function UploadedDocuments() {
                   exit={{ opacity: 0, scale: 0.9 }}
                   transition={{ delay: index * 0.03 }}
                   whileHover={{ y: -8, scale: 1.02 }}
-                  onClick={() => setSelectedDocument(doc)}
-                  className="group bg-white rounded-3xl shadow-lg hover:shadow-2xl border border-gray-100 overflow-hidden cursor-pointer transition-all duration-300"
+                  className="group bg-white rounded-3xl shadow-lg hover:shadow-2xl border border-gray-100 overflow-hidden cursor-pointer transition-all duration-300 relative"
                 >
                   <div className={`h-2 bg-gradient-to-r ${categoryColors[doc.category] || categoryColors.other}`} />
+
+                  {/* AI Badge if document has few/no tags */}
+                  {(!doc.tags || doc.tags.length < 3) && (
+                    <div className="absolute top-4 right-4 z-10">
+                      <Button
+                        size="sm"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          autoTagDocument(doc).then((count) => {
+                            if (count > 0) {
+                              queryClient.invalidateQueries(['uploadedDocuments']);
+                              toast.success("Tags added", `Added ${count} AI-generated tags`);
+                            } else {
+                              toast.info("No new tags", "Document already has sufficient tags");
+                            }
+                          });
+                        }}
+                        className="bg-gradient-to-r from-purple-500 to-indigo-600 text-white shadow-lg h-8 px-3"
+                      >
+                        <Wand2 className="w-3 h-3 mr-1" />
+                        AI Tag
+                      </Button>
+                    </div>
+                  )}
+
+                  <div onClick={() => setSelectedDocument(doc)}>
                   
                   <div className="p-6">
                     <div className="flex items-start justify-between mb-4">

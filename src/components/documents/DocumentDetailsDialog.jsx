@@ -25,7 +25,11 @@ import {
   Upload,
   Sparkles,
   TrendingUp,
-  Calendar
+  Calendar,
+  Brain,
+  AlertTriangle,
+  CheckCircle,
+  Wand2
 } from "lucide-react";
 import { format } from "date-fns";
 import { useToast } from "@/components/ui/Toast";
@@ -36,14 +40,99 @@ export default function DocumentDetailsDialog({ document, open, onOpenChange, cu
   const [newDescription, setNewDescription] = useState(document?.description || "");
   const [showVersionHistory, setShowVersionHistory] = useState(false);
   const [uploadingNewVersion, setUploadingNewVersion] = useState(false);
+  const [aiSummary, setAiSummary] = useState("");
+  const [generatingSummary, setGeneratingSummary] = useState(false);
+  const [anomalies, setAnomalies] = useState([]);
+  const [checkingAnomalies, setCheckingAnomalies] = useState(false);
   const toast = useToast();
   const queryClient = useQueryClient();
 
   React.useEffect(() => {
     if (document) {
       setNewDescription(document.description || "");
+      setAiSummary("");
+      setAnomalies([]);
     }
   }, [document]);
+
+  const generateAISummary = async () => {
+    setGeneratingSummary(true);
+    try {
+      const response = await base44.integrations.Core.InvokeLLM({
+        prompt: `Analyze this document and provide a comprehensive summary:
+        
+Document: ${document.file_name}
+Category: ${document.category}
+Description: ${document.description || 'No description'}
+Tags: ${(document.tags || []).join(', ')}
+Linked Records: ${(document.linked_records || []).map(r => `${r.entity_type}: ${r.entity_name}`).join(', ')}
+
+Generate a professional 2-3 sentence summary highlighting the key information and purpose of this document.`,
+      });
+
+      setAiSummary(response);
+      toast.success("AI Summary Generated", "Document analyzed successfully");
+    } catch (error) {
+      toast.error("Failed to generate summary", error.message);
+    } finally {
+      setGeneratingSummary(false);
+    }
+  };
+
+  const detectAnomalies = async () => {
+    setCheckingAnomalies(true);
+    try {
+      const response = await base44.integrations.Core.InvokeLLM({
+        prompt: `Analyze this document for potential issues, inconsistencies, or anomalies:
+
+Document: ${document.file_name}
+Category: ${document.category}
+File Type: ${document.file_type}
+Size: ${((document.file_size || 0) / 1024).toFixed(1)} KB
+Upload Date: ${document.created_date ? format(new Date(document.created_date), 'MMM d, yyyy') : 'Unknown'}
+Description: ${document.description || 'No description'}
+Tags: ${(document.tags || []).join(', ')}
+Linked Records: ${document.linked_records?.length || 0} records
+Version: ${document.current_version || 1}
+
+Check for:
+1. Missing critical information or incomplete data
+2. Unusual file patterns (wrong category, missing tags, no description)
+3. Potential data quality issues
+4. Recommendations for improvement
+
+Respond ONLY with a JSON array of anomalies. Each anomaly should have: {"type": "warning|error|info", "title": "brief title", "description": "detailed explanation"}
+Return an empty array [] if no issues found.`,
+        response_json_schema: {
+          type: "object",
+          properties: {
+            anomalies: {
+              type: "array",
+              items: {
+                type: "object",
+                properties: {
+                  type: { type: "string" },
+                  title: { type: "string" },
+                  description: { type: "string" }
+                }
+              }
+            }
+          }
+        }
+      });
+
+      setAnomalies(response.anomalies || []);
+      if (response.anomalies?.length > 0) {
+        toast.warning("Anomalies Detected", `Found ${response.anomalies.length} potential issue${response.anomalies.length > 1 ? 's' : ''}`);
+      } else {
+        toast.success("No Issues Found", "Document looks good");
+      }
+    } catch (error) {
+      toast.error("Anomaly check failed", error.message);
+    } finally {
+      setCheckingAnomalies(false);
+    }
+  };
 
   const updateMutation = useMutation({
     mutationFn: async (updates) => {
@@ -217,11 +306,124 @@ export default function DocumentDetailsDialog({ document, open, onOpenChange, cu
             </div>
           </motion.div>
 
-          {/* Description Editor */}
+          {/* AI Summary Section */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.1 }}
+            className="bg-gradient-to-br from-purple-50 to-indigo-50 rounded-3xl border-2 border-purple-200 p-6"
+          >
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="font-black text-purple-900 flex items-center gap-2 text-lg">
+                <Brain className="w-5 h-5" />
+                AI Document Summary
+              </h3>
+              <Button
+                onClick={generateAISummary}
+                disabled={generatingSummary}
+                className="bg-gradient-to-r from-purple-500 to-indigo-600 hover:from-indigo-600 hover:to-purple-500 text-white border-0"
+              >
+                {generatingSummary ? (
+                  <>
+                    <motion.div
+                      animate={{ rotate: 360 }}
+                      transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+                    >
+                      <Sparkles className="w-4 h-4 mr-2" />
+                    </motion.div>
+                    Analyzing...
+                  </>
+                ) : (
+                  <>
+                    <Wand2 className="w-4 h-4 mr-2" />
+                    Generate Summary
+                  </>
+                )}
+              </Button>
+            </div>
+            {aiSummary && (
+              <div className="bg-white rounded-2xl p-4 border border-purple-100 shadow-sm">
+                <p className="text-gray-700 leading-relaxed">{aiSummary}</p>
+              </div>
+            )}
+          </motion.div>
+
+          {/* Anomaly Detection */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.15 }}
+            className="bg-gradient-to-br from-amber-50 to-orange-50 rounded-3xl border-2 border-amber-200 p-6"
+          >
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="font-black text-amber-900 flex items-center gap-2 text-lg">
+                <AlertTriangle className="w-5 h-5" />
+                AI Anomaly Detection
+              </h3>
+              <Button
+                onClick={detectAnomalies}
+                disabled={checkingAnomalies}
+                className="bg-gradient-to-r from-amber-500 to-orange-600 hover:from-orange-600 hover:to-amber-500 text-white border-0"
+              >
+                {checkingAnomalies ? (
+                  <>
+                    <motion.div
+                      animate={{ rotate: 360 }}
+                      transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+                    >
+                      <Brain className="w-4 h-4 mr-2" />
+                    </motion.div>
+                    Checking...
+                  </>
+                ) : (
+                  <>
+                    <Sparkles className="w-4 h-4 mr-2" />
+                    Check Quality
+                  </>
+                )}
+              </Button>
+            </div>
+            {anomalies.length > 0 && (
+              <div className="space-y-2">
+                {anomalies.map((anomaly, idx) => (
+                  <div
+                    key={idx}
+                    className={`p-4 rounded-2xl border-2 ${
+                      anomaly.type === 'error' ? 'bg-red-50 border-red-200' :
+                      anomaly.type === 'warning' ? 'bg-amber-50 border-amber-200' :
+                      'bg-blue-50 border-blue-200'
+                    }`}
+                  >
+                    <div className="flex items-start gap-3">
+                      {anomaly.type === 'error' ? (
+                        <AlertTriangle className="w-5 h-5 text-red-600 mt-0.5" />
+                      ) : anomaly.type === 'warning' ? (
+                        <AlertTriangle className="w-5 h-5 text-amber-600 mt-0.5" />
+                      ) : (
+                        <CheckCircle className="w-5 h-5 text-blue-600 mt-0.5" />
+                      )}
+                      <div className="flex-1">
+                        <p className="font-bold text-gray-900 mb-1">{anomaly.title}</p>
+                        <p className="text-sm text-gray-600">{anomaly.description}</p>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+            {anomalies.length === 0 && !checkingAnomalies && (
+              <div className="text-center py-8 text-gray-500">
+                <CheckCircle className="w-12 h-12 mx-auto mb-2 text-green-500" />
+                <p className="font-semibold">Click "Check Quality" to analyze this document</p>
+              </div>
+            )}
+          </motion.div>
+
+          {/* Description Editor */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.2 }}
             className="bg-white rounded-3xl border-2 border-gray-200 p-6"
           >
             <label className="text-sm font-black text-gray-900 mb-3 block flex items-center gap-2">
@@ -249,7 +451,7 @@ export default function DocumentDetailsDialog({ document, open, onOpenChange, cu
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.2 }}
+            transition={{ delay: 0.3 }}
             className="bg-white rounded-3xl border-2 border-gray-200 p-6"
           >
             <label className="text-sm font-black text-gray-900 mb-3 block flex items-center gap-2">
@@ -297,7 +499,7 @@ export default function DocumentDetailsDialog({ document, open, onOpenChange, cu
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.3 }}
+              transition={{ delay: 0.4 }}
               className="bg-gradient-to-br from-green-50 to-emerald-50 rounded-3xl border-2 border-green-200 p-6"
             >
               <h3 className="font-black text-green-900 mb-4 flex items-center gap-2 text-lg">
@@ -335,7 +537,7 @@ export default function DocumentDetailsDialog({ document, open, onOpenChange, cu
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.4 }}
+            transition={{ delay: 0.5 }}
             className="bg-white rounded-3xl border-2 border-gray-200 p-6"
           >
             <div className="flex items-center justify-between mb-4">
@@ -402,7 +604,7 @@ export default function DocumentDetailsDialog({ document, open, onOpenChange, cu
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.5 }}
+            transition={{ delay: 0.6 }}
             className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-3xl border-2 border-blue-200 p-6"
           >
             <div className="grid grid-cols-2 gap-6">
