@@ -210,6 +210,162 @@ export function calculateProfitMargin(sellingPrice, costPrice) {
 }
 
 /**
+ * Calculate Sierra Leone PAYE Tax (2024 rates)
+ */
+export function calculatePAYE(annualGross) {
+  const annual = safeNumber(annualGross);
+  
+  // Tax-free threshold: Le 6,000,000 annually (Le 500,000 monthly)
+  const taxFreeThreshold = 6000000;
+  if (annual <= taxFreeThreshold) return 0;
+  
+  const taxableIncome = annual - taxFreeThreshold;
+  
+  // Progressive tax brackets
+  let tax = 0;
+  
+  // 15% on first Le 6,000,000 of taxable income
+  const bracket1 = Math.min(taxableIncome, 6000000);
+  tax += bracket1 * 0.15;
+  
+  // 20% on next Le 6,000,000
+  if (taxableIncome > 6000000) {
+    const bracket2 = Math.min(taxableIncome - 6000000, 6000000);
+    tax += bracket2 * 0.20;
+  }
+  
+  // 25% on next Le 12,000,000
+  if (taxableIncome > 12000000) {
+    const bracket3 = Math.min(taxableIncome - 12000000, 12000000);
+    tax += bracket3 * 0.25;
+  }
+  
+  // 30% on income above Le 24,000,000 + Le 6,000,000 threshold
+  if (taxableIncome > 24000000) {
+    const bracket4 = taxableIncome - 24000000;
+    tax += bracket4 * 0.30;
+  }
+  
+  return safeRound(tax);
+}
+
+/**
+ * Calculate NASSIT contributions (Sierra Leone)
+ */
+export function calculateNASSIT(grossPay) {
+  const gross = safeNumber(grossPay);
+  
+  return {
+    employee: safeRound(gross * 0.05), // 5% employee contribution
+    employer: safeRound(gross * 0.10), // 10% employer contribution
+    total: safeRound(gross * 0.15)
+  };
+}
+
+/**
+ * Calculate comprehensive payroll
+ */
+export function calculatePayroll(employeeData, periodData = {}) {
+  const {
+    base_salary = 0,
+    employment_type = 'salary',
+    hourly_rate = 0,
+    daily_rate = 0,
+    hours_worked = 0,
+    days_worked = 0,
+    overtime_hours = 0,
+    allowances = [],
+    bonuses = [],
+    deductions = [],
+    payroll_frequency = 'monthly'
+  } = { ...employeeData, ...periodData };
+  
+  // Calculate base pay
+  let basePay = 0;
+  if (employment_type === 'salary') {
+    basePay = safeNumber(base_salary);
+    // Prorate for payroll frequency
+    if (payroll_frequency === 'weekly') {
+      basePay = basePay / 4.33; // Average weeks per month
+    } else if (payroll_frequency === 'bi_weekly') {
+      basePay = basePay / 2.165; // Average bi-weeks per month
+    }
+  } else if (employment_type === 'wage') {
+    if (hourly_rate > 0) {
+      basePay = safeMultiply(hourly_rate, hours_worked);
+    } else if (daily_rate > 0) {
+      basePay = safeMultiply(daily_rate, days_worked);
+    }
+  }
+  
+  // Overtime (1.5x rate for hourly employees)
+  const overtimePay = safeMultiply(hourly_rate, overtime_hours, 1.5);
+  
+  // Allowances and bonuses
+  const totalAllowances = Array.isArray(allowances) 
+    ? allowances.reduce((sum, a) => sum + safeNumber(a.amount), 0)
+    : 0;
+  const totalBonuses = Array.isArray(bonuses)
+    ? bonuses.reduce((sum, b) => sum + safeNumber(b.amount), 0)
+    : 0;
+  
+  // Gross pay
+  const grossPay = safeSum(basePay, overtimePay, totalAllowances, totalBonuses);
+  
+  // Calculate annual equivalent for tax
+  let annualGross = grossPay * 12;
+  if (payroll_frequency === 'weekly') {
+    annualGross = grossPay * 52;
+  } else if (payroll_frequency === 'bi_weekly') {
+    annualGross = grossPay * 26;
+  }
+  
+  // NASSIT contributions
+  const nassit = calculateNASSIT(grossPay);
+  
+  // PAYE tax
+  const annualPAYE = calculatePAYE(annualGross);
+  let payeTax = annualPAYE / 12;
+  if (payroll_frequency === 'weekly') {
+    payeTax = annualPAYE / 52;
+  } else if (payroll_frequency === 'bi_weekly') {
+    payeTax = annualPAYE / 26;
+  }
+  
+  // Other deductions
+  const otherDeductions = Array.isArray(deductions)
+    ? deductions.filter(d => d.type !== 'statutory').reduce((sum, d) => sum + safeNumber(d.amount), 0)
+    : 0;
+  
+  // Total deductions
+  const totalStatutoryDeductions = safeSum(nassit.employee, payeTax);
+  const totalDeductions = safeSum(totalStatutoryDeductions, otherDeductions);
+  
+  // Net pay
+  const netPay = safeRound(grossPay - totalDeductions);
+  
+  // Employer cost (includes employer NASSIT)
+  const employerCost = safeRound(grossPay + nassit.employer);
+  
+  return {
+    base_pay: safeRound(basePay),
+    overtime_pay: safeRound(overtimePay),
+    total_allowances: safeRound(totalAllowances),
+    total_bonuses: safeRound(totalBonuses),
+    gross_pay: safeRound(grossPay),
+    nassit_employee: nassit.employee,
+    nassit_employer: nassit.employer,
+    paye_tax: safeRound(payeTax),
+    total_statutory_deductions: safeRound(totalStatutoryDeductions),
+    other_deductions: safeRound(otherDeductions),
+    total_deductions: safeRound(totalDeductions),
+    net_pay: netPay,
+    employer_cost: employerCost,
+    annual_gross_equivalent: safeRound(annualGross),
+  };
+}
+
+/**
  * Calculate markup percentage
  */
 export function calculateMarkup(sellingPrice, costPrice) {

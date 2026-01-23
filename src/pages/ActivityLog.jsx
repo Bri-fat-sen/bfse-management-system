@@ -81,12 +81,16 @@ export default function ActivityLog() {
   const { data: user } = useQuery({
     queryKey: ['currentUser'],
     queryFn: () => base44.auth.me(),
+    staleTime: 5 * 60 * 1000,
+    refetchOnWindowFocus: false,
   });
 
   const { data: employee } = useQuery({
     queryKey: ['employee', user?.email],
     queryFn: () => base44.entities.Employee.filter({ user_email: user?.email }),
     enabled: !!user?.email,
+    staleTime: 5 * 60 * 1000,
+    refetchOnWindowFocus: false,
   });
 
   const currentEmployee = employee?.[0];
@@ -94,8 +98,11 @@ export default function ActivityLog() {
 
   const { data: activities = [], isLoading } = useQuery({
     queryKey: ['activities', orgId],
-    queryFn: () => base44.entities.ActivityLog.filter({ organisation_id: orgId }, '-created_date', 200),
+    queryFn: () => base44.entities.ActivityLog.filter({ organisation_id: orgId }, '-created_date', 500),
     enabled: !!orgId,
+    staleTime: 30 * 1000,
+    refetchInterval: 60 * 1000,
+    refetchOnWindowFocus: true,
   });
 
   if (!user) {

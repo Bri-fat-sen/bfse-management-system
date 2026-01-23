@@ -138,24 +138,27 @@ export default function Finance() {
     queryKey: ['expenses', orgId],
     queryFn: () => base44.entities.Expense.filter({ organisation_id: orgId }, '-date', 10000),
     enabled: !!orgId,
-    staleTime: 0,
+    staleTime: 60 * 1000,
     refetchOnWindowFocus: true,
+    refetchInterval: 2 * 60 * 1000,
   });
 
   const { data: sales = [] } = useQuery({
     queryKey: ['sales', orgId],
-    queryFn: () => base44.entities.Sale.filter({ organisation_id: orgId }, '-created_date', 200),
+    queryFn: () => base44.entities.Sale.filter({ organisation_id: orgId }, '-created_date', 500),
     enabled: !!orgId,
-    staleTime: 0,
+    staleTime: 30 * 1000,
     refetchOnWindowFocus: true,
+    refetchInterval: 60 * 1000,
   });
 
   const { data: trips = [] } = useQuery({
     queryKey: ['trips', orgId],
-    queryFn: () => base44.entities.Trip.filter({ organisation_id: orgId }, '-date', 200),
+    queryFn: () => base44.entities.Trip.filter({ organisation_id: orgId }, '-date', 500),
     enabled: !!orgId,
-    staleTime: 0,
+    staleTime: 60 * 1000,
     refetchOnWindowFocus: true,
+    refetchInterval: 2 * 60 * 1000,
   });
 
   const { data: truckContracts = [] } = useQuery({
@@ -196,32 +199,36 @@ export default function Finance() {
 
   const { data: revenues = [] } = useQuery({
     queryKey: ['revenues', orgId],
-    queryFn: () => base44.entities.Revenue.filter({ organisation_id: orgId }, '-date', 200),
+    queryFn: () => base44.entities.Revenue.filter({ organisation_id: orgId }, '-date', 500),
     enabled: !!orgId,
-    staleTime: 0,
+    staleTime: 60 * 1000,
     refetchOnWindowFocus: true,
+    refetchInterval: 2 * 60 * 1000,
   });
 
   const { data: bankDeposits = [] } = useQuery({
     queryKey: ['bankDeposits', orgId],
-    queryFn: () => base44.entities.BankDeposit.filter({ organisation_id: orgId }, '-date', 200),
+    queryFn: () => base44.entities.BankDeposit.filter({ organisation_id: orgId }, '-date', 500),
     enabled: !!orgId,
-    staleTime: 0,
+    staleTime: 60 * 1000,
     refetchOnWindowFocus: true,
+    refetchInterval: 2 * 60 * 1000,
   });
 
   const createExpenseMutation = useMutation({
     mutationFn: (data) => base44.entities.Expense.create(data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['expenses', orgId] });
+      queryClient.invalidateQueries({ queryKey: ['expenses'] });
+      queryClient.invalidateQueries({ queryKey: ['activities'] });
       setShowExpenseDialog(false);
       setEditingExpense(null);
-      toast.success("Expense recorded successfully");
+      toast.success("Expense recorded", "Financial record updated successfully");
     },
     onError: (error) => {
       console.error('Create expense error:', error);
-      toast.error("Failed to record expense");
-    }
+      toast.error("Failed to record expense", error.message || "Please try again");
+    },
+    retry: 1,
   });
 
   const updateExpenseMutation = useMutation({
@@ -251,15 +258,17 @@ export default function Finance() {
   const createRevenueMutation = useMutation({
     mutationFn: (data) => base44.entities.Revenue.create(data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['revenues', orgId] });
+      queryClient.invalidateQueries({ queryKey: ['revenues'] });
+      queryClient.invalidateQueries({ queryKey: ['activities'] });
       setShowRevenueDialog(false);
       setEditingRevenue(null);
-      toast.success("Revenue recorded successfully");
+      toast.success("Revenue recorded", "Contribution added successfully");
     },
     onError: (error) => {
       console.error('Create revenue error:', error);
-      toast.error("Failed to record revenue");
-    }
+      toast.error("Failed to record revenue", error.message || "Please check your input and try again");
+    },
+    retry: 1,
   });
 
   const updateRevenueMutation = useMutation({
@@ -531,19 +540,33 @@ export default function Finance() {
   const handleExpenseSubmit = (e) => {
     e.preventDefault();
     const formData = new FormData(e.target);
+    
+    // Validation
+    const amount = parseFloat(formData.get('amount'));
+    if (!amount || amount <= 0) {
+      toast.error("Invalid amount", "Amount must be greater than 0");
+      return;
+    }
+    
+    const description = formData.get('description')?.trim();
+    if (!description) {
+      toast.error("Description required", "Please provide a description");
+      return;
+    }
+    
     const data = {
       organisation_id: orgId,
       expense_type: 'regular',
       category: formData.get('category'),
-      description: formData.get('description'),
-      amount: parseFloat(formData.get('amount')) || 0,
+      description: description,
+      amount: Math.round(amount * 100) / 100, // Round to 2 decimals
       date: formData.get('date'),
-      vendor: formData.get('vendor'),
+      vendor: formData.get('vendor')?.trim() || null,
       payment_method: formData.get('payment_method'),
       recorded_by: currentEmployee?.id,
       recorded_by_name: currentEmployee?.full_name,
       status: 'pending',
-      notes: formData.get('notes'),
+      notes: formData.get('notes')?.trim() || null,
     };
 
     if (editingExpense) {
@@ -555,17 +578,35 @@ export default function Finance() {
 
   const handleBulkDeleteExpenses = async () => {
     setBulkDeleteLoading(true);
+    let successCount = 0;
+    let failCount = 0;
+    
     try {
       const expensesToDelete = categoryFilteredExpenses;
+      const totalToDelete = expensesToDelete.length;
+      
       for (const expense of expensesToDelete) {
-        await base44.entities.Expense.delete(expense.id);
+        try {
+          await base44.entities.Expense.delete(expense.id);
+          successCount++;
+        } catch (error) {
+          console.error(`Failed to delete expense ${expense.id}:`, error);
+          failCount++;
+        }
       }
-      queryClient.invalidateQueries({ queryKey: ['expenses', orgId] });
-      queryClient.invalidateQueries({ queryKey: ['allExpenses', orgId] });
-      toast.success(`Deleted ${expensesToDelete.length} expense(s) successfully`);
+      
+      queryClient.invalidateQueries({ queryKey: ['expenses'] });
+      queryClient.invalidateQueries({ queryKey: ['activities'] });
+      
+      if (failCount === 0) {
+        toast.success("Bulk delete complete", `Deleted ${successCount} expense(s)`);
+      } else {
+        toast.warning("Partial success", `Deleted ${successCount} of ${totalToDelete}. ${failCount} failed.`);
+      }
+      
       setShowBulkDeleteExpenses(false);
     } catch (error) {
-      toast.error("Bulk delete failed");
+      toast.error("Bulk delete failed", error.message || "Please try again");
     } finally {
       setBulkDeleteLoading(false);
     }
@@ -595,16 +636,30 @@ export default function Finance() {
   const handleRevenueSubmit = (e) => {
     e.preventDefault();
     const formData = new FormData(e.target);
+    
+    // Validation
+    const amount = parseFloat(formData.get('amount'));
+    if (!amount || amount <= 0) {
+      toast.error("Invalid amount", "Amount must be greater than 0");
+      return;
+    }
+    
+    const contributorName = formData.get('contributor_name')?.trim();
+    if (!contributorName) {
+      toast.error("Contributor name required", "Please provide the contributor's name");
+      return;
+    }
+    
     const data = {
       organisation_id: orgId,
       source: formData.get('source'),
-      contributor_name: formData.get('contributor_name'),
-      amount: parseFloat(formData.get('amount')) || 0,
+      contributor_name: contributorName,
+      amount: Math.round(amount * 100) / 100, // Round to 2 decimals
       date: formData.get('date'),
       payment_method: formData.get('payment_method'),
-      reference_number: formData.get('reference_number'),
-      purpose: formData.get('purpose'),
-      notes: formData.get('notes'),
+      reference_number: formData.get('reference_number')?.trim() || null,
+      purpose: formData.get('purpose')?.trim() || null,
+      notes: formData.get('notes')?.trim() || null,
       recorded_by: currentEmployee?.id,
       recorded_by_name: currentEmployee?.full_name,
       status: 'confirmed',

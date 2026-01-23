@@ -58,6 +58,8 @@ import MobileNav from "@/components/mobile/MobileNav";
 import { OfflineProvider, OfflineStatus } from "@/components/offline/OfflineManager";
 import GlobalSearch from "@/components/search/GlobalSearch";
 import LoadingSpinner from "@/components/ui/LoadingSpinner";
+import ErrorBoundary from "@/components/ui/ErrorBoundary";
+import { useRealtimeEntities } from "@/components/hooks/useRealtimeEntity";
 
 import InstallPrompt from "@/components/pwa/InstallPrompt";
 import ChatPanel from "@/components/communication/ChatPanel";
@@ -253,6 +255,13 @@ export default function Layout({ children, currentPageName }) {
   );
   
   const orgId = currentEmployee?.organisation_id;
+  
+  // Subscribe to real-time updates for critical entities
+  useRealtimeEntities(
+    ['Notification', 'ChatMessage', 'ChatRoom', 'Attendance'],
+    orgId,
+    { enabled: !!orgId }
+  );
 
   const { data: organisationData } = useQuery({
     queryKey: ['organisation', orgId],
@@ -779,13 +788,15 @@ export default function Layout({ children, currentPageName }) {
         />
 
         <main className={`p-4 lg:p-6 ${darkMode ? 'text-white' : ''} overflow-x-hidden`} style={{ paddingBottom: 'max(6rem, calc(5rem + env(safe-area-inset-bottom, 0px)))', minHeight: 'calc(100vh - 4.5rem)' }}>
-          <ToastProvider>
-            <PermissionsProvider>
-              <OfflineProvider>
-                {children}
-              </OfflineProvider>
-            </PermissionsProvider>
-          </ToastProvider>
+          <ErrorBoundary fallbackMessage="A problem occurred while rendering this page. Please refresh to continue.">
+            <ToastProvider>
+              <PermissionsProvider>
+                <OfflineProvider>
+                  {children}
+                </OfflineProvider>
+              </PermissionsProvider>
+            </ToastProvider>
+          </ErrorBoundary>
         </main>
 
         <MobileNav currentPageName={currentPageName} />
