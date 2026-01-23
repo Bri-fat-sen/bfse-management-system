@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { base44 } from "@/api/base44Client";
 import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
-import { X, Download, Check, FileText, DollarSign, TrendingUp, Calendar, Trash2 } from "lucide-react";
+import { X, Download, Check, FileText, DollarSign, TrendingUp, Calendar, Trash2, Mail, Send } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -53,6 +53,28 @@ export default function PayrollDetailDialog({ open, onOpenChange, payroll, orgId
     },
     onError: (error) => {
       toast.error("Delete Failed", error.message);
+    }
+  });
+
+  const sendNotificationMutation = useMutation({
+    mutationFn: async () => {
+      if (!currentEmployee?.email) {
+        throw new Error('Employee email not found');
+      }
+      
+      const response = await base44.functions.invoke('sendPayrollNotificationGmail', {
+        payroll_id: payroll.id,
+        employee_email: currentEmployee.email,
+        employee_name: payroll.employee_name
+      });
+      
+      return response.data;
+    },
+    onSuccess: () => {
+      toast.success("Email sent", "Payroll notification sent to employee");
+    },
+    onError: (error) => {
+      toast.error("Failed to send email", error.response?.data?.details || error.message);
     }
   });
 
@@ -195,6 +217,25 @@ export default function PayrollDetailDialog({ open, onOpenChange, payroll, orgId
               >
                 <Check className="w-4 h-4 mr-2" />
                 Mark as Paid
+              </Button>
+            )}
+            {currentEmployee?.email && (
+              <Button
+                onClick={() => sendNotificationMutation.mutate()}
+                disabled={sendNotificationMutation.isPending}
+                className="flex-1 min-w-[140px] bg-blue-600 hover:bg-blue-700 text-white"
+              >
+                {sendNotificationMutation.isPending ? (
+                  <>
+                    <Mail className="w-4 h-4 mr-2 animate-pulse" />
+                    Sending...
+                  </>
+                ) : (
+                  <>
+                    <Send className="w-4 h-4 mr-2" />
+                    Email Employee
+                  </>
+                )}
               </Button>
             )}
             {currentEmployee && currentOrg && (
