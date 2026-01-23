@@ -3,8 +3,9 @@ import { base44 } from "@/api/base44Client";
 import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
 import { 
   Plus, DollarSign, Calendar, Download, CheckCircle, Clock,
-  TrendingUp, Users, FileText, Calculator, Trash2
+  TrendingUp, Users, FileText, Calculator, Trash2, Mail
 } from "lucide-react";
+import BulkPayrollEmailDialog from "@/components/hr/BulkPayrollEmailDialog";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -21,6 +22,7 @@ export default function PayrollProcessingTab({ orgId, employees, payrolls, curre
   const [selectedPayroll, setSelectedPayroll] = useState(null);
   const [deletePayrollId, setDeletePayrollId] = useState(null);
   const [exportDialogOpen, setExportDialogOpen] = useState(false);
+  const [showBulkEmailDialog, setShowBulkEmailDialog] = useState(false);
   const queryClient = useQueryClient();
   const toast = useToast();
 
@@ -168,6 +170,15 @@ export default function PayrollProcessingTab({ orgId, employees, payrolls, curre
           <Plus className="w-4 h-4 mr-2" />
           Process Payroll
         </Button>
+        {thisMonthPayrolls.length > 0 && (
+          <Button
+            onClick={() => setShowBulkEmailDialog(true)}
+            className="bg-blue-600 hover:bg-blue-700 text-white"
+          >
+            <Mail className="w-4 h-4 mr-2" />
+            Email Notifications ({thisMonthPayrolls.length})
+          </Button>
+        )}
         <Button 
           variant="outline"
           onClick={() => {
@@ -345,6 +356,14 @@ export default function PayrollProcessingTab({ orgId, employees, payrolls, curre
         }))}
         reportTitle="Payroll Report"
         orgData={currentOrg}
+      />
+
+      {/* Bulk Email Dialog */}
+      <BulkPayrollEmailDialog
+        open={showBulkEmailDialog}
+        onOpenChange={setShowBulkEmailDialog}
+        payrolls={thisMonthPayrolls}
+        employees={employees}
       />
     </div>
   );
