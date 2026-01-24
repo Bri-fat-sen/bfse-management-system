@@ -1,5 +1,21 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.4';
 
+async function sendUnifiedNotification(base44, recipientEmployeeId, notificationType, title, message, options = {}) {
+  try {
+    await base44.functions.invoke('sendUnifiedNotification', {
+      recipient_employee_id: recipientEmployeeId,
+      notification_type: notificationType,
+      title,
+      message,
+      link: options.link || null,
+      priority: options.priority || 'normal',
+      metadata: options.metadata || {}
+    });
+  } catch (error) {
+    console.error('Failed to send unified notification:', error);
+  }
+}
+
 Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
@@ -69,45 +85,22 @@ Deno.serve(async (req) => {
       entity_id: expense_id,
     });
 
-    // Notify the employee who submitted the expense
+    // Send unified notification (in-app + email based on preferences)
     if (expense.recorded_by) {
-      await base44.asServiceRole.entities.Notification.create({
-        organisation_id: expense.organisation_id,
-        recipient_id: expense.recorded_by,
-        type: 'expense',
-        title: `Expense ${action === 'approve' ? 'Approved' : 'Rejected'}`,
-        message: action === 'approve' 
-          ? `Your expense of Le ${expense.amount} for ${expense.description || 'N/A'} has been approved by ${currentEmployee.full_name}.`
-          : `Your expense of Le ${expense.amount} for ${expense.description || 'N/A'} was rejected. ${rejection_reason ? `Reason: ${rejection_reason}` : ''}`,
-        priority: action === 'approve' ? 'normal' : 'high',
-        link: '/Finance',
-      });
-    }
-
-    // Send email notification to submitter
-    if (expense.recorded_by) {
-      const submitters = await base44.asServiceRole.entities.Employee.filter({ id: expense.recorded_by });
-      const submitter = submitters[0];
-      
-      if (submitter?.email) {
-        try {
-          await base44.asServiceRole.integrations.Core.SendEmail({
-            to: submitter.email,
-            subject: `Expense ${action === 'approve' ? 'Approved' : 'Rejected'} - Le ${expense.amount}`,
-            body: `
-              <h2>Expense ${action === 'approve' ? 'Approved ✓' : 'Rejected ✗'}</h2>
-              <p><strong>Description:</strong> ${expense.description || 'N/A'}</p>
-              <p><strong>Amount:</strong> Le ${expense.amount.toLocaleString()}</p>
-              <p><strong>Category:</strong> ${expense.category}</p>
-              <p><strong>${action === 'approve' ? 'Approved' : 'Rejected'} by:</strong> ${currentEmployee.full_name}</p>
-              ${action === 'reject' && rejection_reason ? `<p><strong>Reason:</strong> ${rejection_reason}</p>` : ''}
-              <p>View all expenses in your Finance dashboard.</p>
-            `,
-          });
-        } catch (emailError) {
-          console.error('Email notification failed:', emailError);
+      await sendUnifiedNotification(
+        base44,
+        expense.recorded_by,
+        'expense_approvals',
+        action === 'approve' ? '✅ Expense Approved' : '❌ Expense Rejected',
+        action === 'approve' 
+          ? `Your ${expense.category} expense of Le ${expense.amount?.toLocaleString()} has been approved by ${currentEmployee.full_name}.`
+          : `Your ${expense.category} expense of Le ${expense.amount?.toLocaleString()} was rejected.${rejection_reason ? ` Reason: ${rejection_reason}` : ''}`,
+        {
+          link: '/Finance',
+          priority: action === 'approve' ? 'normal' : 'high',
+          metadata: { expense_id: expense.id, approved: action === 'approve' }
         }
-      }
+      );
     }
 
     return Response.json({ 
