@@ -39,6 +39,7 @@ import Transport from './pages/Transport';
 import UploadedDocuments from './pages/UploadedDocuments';
 import UserManagement from './pages/UserManagement';
 import WorkSchedules from './pages/WorkSchedules';
+import NotificationCenter from './pages/NotificationCenter';
 import __Layout from './Layout.jsx';
 
 
@@ -84,6 +85,7 @@ export const PAGES = {
     "UploadedDocuments": UploadedDocuments,
     "UserManagement": UserManagement,
     "WorkSchedules": WorkSchedules,
+    "NotificationCenter": NotificationCenter,
 }
 
 export const pagesConfig = {
