@@ -16,6 +16,7 @@ import {
   Sparkles,
   RefreshCw
 } from "lucide-react";
+import NotificationSettings from "@/components/settings/NotificationSettings";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -317,42 +318,10 @@ export default function Settings() {
         </TabsContent>
 
         <TabsContent value="notifications">
-          <Card>
-            <CardHeader>
-              <CardTitle>Notification Preferences</CardTitle>
-              <CardDescription>Manage how you receive notifications</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4 sm:space-y-6">
-                {[
-                  { id: 'chat', label: 'Chat Messages', description: 'Get notified when you receive new messages' },
-                  { id: 'meetings', label: 'Meeting Reminders', description: 'Receive reminders before scheduled meetings' },
-                  { id: 'sales', label: 'Sales Alerts', description: 'Get notified about sales activities' },
-                  { id: 'inventory', label: 'Low Stock Alerts', description: 'Be alerted when products are running low' },
-                  { id: 'payroll', label: 'Payroll Updates', description: 'Notifications about payroll processing' },
-                  { id: 'system', label: 'System Announcements', description: 'Important system updates and announcements' },
-                ].map((item) => (
-                  <div key={item.id} className="flex items-start sm:items-center justify-between gap-3 p-3 sm:p-0 bg-gray-50 sm:bg-transparent rounded-lg">
-                    <div className="flex-1 min-w-0">
-                      <p className="font-medium text-sm sm:text-base">{item.label}</p>
-                      <p className="text-xs sm:text-sm text-gray-500 truncate sm:whitespace-normal">{item.description}</p>
-                    </div>
-                    <Switch 
-                      checked={localPrefs.notifications?.[item.id]}
-                      onCheckedChange={(checked) => setLocalPrefs({...localPrefs, notifications: {...localPrefs.notifications, [item.id]: checked}})}
-                      className="shrink-0" 
-                    />
-                  </div>
-                ))}
-              </div>
-              <div className="flex justify-end mt-6">
-                <Button onClick={handleSavePreferences} className="bg-gradient-to-r from-[#1EB053] to-[#0072C6]">
-                  <Save className="w-4 h-4 mr-2" />
-                  Save Preferences
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
+          <NotificationSettings 
+            currentEmployee={currentEmployee} 
+            orgId={currentEmployee?.organisation_id} 
+          />
         </TabsContent>
 
         <TabsContent value="appearance">
