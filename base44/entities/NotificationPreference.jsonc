@@ -1,0 +1,268 @@
+{
+  "name": "NotificationPreference",
+  "type": "object",
+  "properties": {
+    "organisation_id": {
+      "type": "string"
+    },
+    "employee_id": {
+      "type": "string",
+      "description": "Employee who owns these preferences"
+    },
+    "employee_email": {
+      "type": "string"
+    },
+    "payroll_updates": {
+      "type": "object",
+      "properties": {
+        "in_app": {
+          "type": "boolean",
+          "default": true
+        },
+        "email": {
+          "type": "boolean",
+          "default": true
+        }
+      },
+      "default": {
+        "in_app": true,
+        "email": true
+      }
+    },
+    "leave_requests": {
+      "type": "object",
+      "properties": {
+        "in_app": {
+          "type": "boolean",
+          "default": true
+        },
+        "email": {
+          "type": "boolean",
+          "default": true
+        }
+      },
+      "default": {
+        "in_app": true,
+        "email": true
+      }
+    },
+    "document_expirations": {
+      "type": "object",
+      "properties": {
+        "in_app": {
+          "type": "boolean",
+          "default": true
+        },
+        "email": {
+          "type": "boolean",
+          "default": true
+        },
+        "days_before": {
+          "type": "number",
+          "default": 30,
+          "description": "Days before expiration to notify"
+        }
+      },
+      "default": {
+        "in_app": true,
+        "email": true,
+        "days_before": 30
+      }
+    },
+    "expense_approvals": {
+      "type": "object",
+      "properties": {
+        "in_app": {
+          "type": "boolean",
+          "default": true
+        },
+        "email": {
+          "type": "boolean",
+          "default": true
+        }
+      },
+      "default": {
+        "in_app": true,
+        "email": true
+      }
+    },
+    "stock_alerts": {
+      "type": "object",
+      "properties": {
+        "in_app": {
+          "type": "boolean",
+          "default": true
+        },
+        "email": {
+          "type": "boolean",
+          "default": false
+        }
+      },
+      "default": {
+        "in_app": true,
+        "email": false
+      }
+    },
+    "meeting_reminders": {
+      "type": "object",
+      "properties": {
+        "in_app": {
+          "type": "boolean",
+          "default": true
+        },
+        "email": {
+          "type": "boolean",
+          "default": true
+        },
+        "minutes_before": {
+          "type": "number",
+          "default": 15,
+          "description": "Minutes before meeting to notify"
+        }
+      },
+      "default": {
+        "in_app": true,
+        "email": true,
+        "minutes_before": 15
+      }
+    },
+    "system_errors": {
+      "type": "object",
+      "properties": {
+        "in_app": {
+          "type": "boolean",
+          "default": true
+        },
+        "email": {
+          "type": "boolean",
+          "default": false
+        }
+      },
+      "default": {
+        "in_app": true,
+        "email": false
+      }
+    },
+    "chat_messages": {
+      "type": "object",
+      "properties": {
+        "in_app": {
+          "type": "boolean",
+          "default": true
+        },
+        "email": {
+          "type": "boolean",
+          "default": false
+        }
+      },
+      "default": {
+        "in_app": true,
+        "email": false
+      }
+    },
+    "email_digest": {
+      "type": "object",
+      "properties": {
+        "enabled": {
+          "type": "boolean",
+          "default": false
+        },
+        "frequency": {
+          "type": "string",
+          "enum": [
+            "daily",
+            "weekly"
+          ],
+          "default": "daily"
+        },
+        "time": {
+          "type": "string",
+          "default": "09:00",
+          "description": "Time to send digest in HH:MM format"
+        }
+      },
+      "default": {
+        "enabled": false,
+        "frequency": "daily",
+        "time": "09:00"
+      }
+    },
+    "quiet_hours": {
+      "type": "object",
+      "properties": {
+        "enabled": {
+          "type": "boolean",
+          "default": false
+        },
+        "start_time": {
+          "type": "string",
+          "default": "22:00"
+        },
+        "end_time": {
+          "type": "string",
+          "default": "08:00"
+        }
+      },
+      "default": {
+        "enabled": false,
+        "start_time": "22:00",
+        "end_time": "08:00"
+      }
+    }
+  },
+  "required": [
+    "organisation_id",
+    "employee_id"
+  ],
+  "rls": {
+    "create": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "organisation_id": "{{employee.organisation_id}}",
+          "employee_id": "{{employee.id}}"
+        }
+      ]
+    },
+    "read": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "employee_id": "{{employee.id}}"
+        }
+      ]
+    },
+    "update": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "employee_id": "{{employee.id}}"
+        }
+      ]
+    },
+    "delete": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "employee_id": "{{employee.id}}"
+        }
+      ]
+    }
+  }
+}

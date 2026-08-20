@@ -1,0 +1,271 @@
+{
+  "name": "Customer",
+  "type": "object",
+  "properties": {
+    "organisation_id": {
+      "type": "string"
+    },
+    "name": {
+      "type": "string",
+      "description": "Customer full name or business name"
+    },
+    "email": {
+      "type": "string"
+    },
+    "phone": {
+      "type": "string"
+    },
+    "secondary_phone": {
+      "type": "string"
+    },
+    "customer_type": {
+      "type": "string",
+      "enum": [
+        "individual",
+        "business",
+        "wholesale",
+        "retail"
+      ],
+      "default": "individual"
+    },
+    "segment": {
+      "type": "string",
+      "enum": [
+        "vip",
+        "regular",
+        "new",
+        "at_risk",
+        "churned"
+      ],
+      "default": "new"
+    },
+    "address": {
+      "type": "string"
+    },
+    "city": {
+      "type": "string"
+    },
+    "company_name": {
+      "type": "string"
+    },
+    "tax_id": {
+      "type": "string"
+    },
+    "tags": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Custom tags for segmentation"
+    },
+    "total_purchases": {
+      "type": "number",
+      "default": 0
+    },
+    "total_spent": {
+      "type": "number",
+      "default": 0
+    },
+    "last_purchase_date": {
+      "type": "string",
+      "format": "date"
+    },
+    "average_order_value": {
+      "type": "number",
+      "default": 0
+    },
+    "loyalty_points": {
+      "type": "number",
+      "default": 0
+    },
+    "credit_limit": {
+      "type": "number",
+      "default": 0
+    },
+    "outstanding_balance": {
+      "type": "number",
+      "default": 0
+    },
+    "preferred_payment_method": {
+      "type": "string",
+      "enum": [
+        "cash",
+        "card",
+        "mobile_money",
+        "credit"
+      ],
+      "default": "cash"
+    },
+    "notes": {
+      "type": "string"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "active",
+        "inactive",
+        "blocked"
+      ],
+      "default": "active"
+    },
+    "source": {
+      "type": "string",
+      "enum": [
+        "walk_in",
+        "referral",
+        "online",
+        "marketing",
+        "other"
+      ],
+      "default": "walk_in"
+    },
+    "assigned_sales_rep_id": {
+      "type": "string"
+    },
+    "assigned_sales_rep_name": {
+      "type": "string"
+    },
+    "birthday": {
+      "type": "string",
+      "format": "date"
+    }
+  },
+  "required": [
+    "organisation_id",
+    "name"
+  ],
+  "rls": {
+    "create": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "organisation_id": "{{employee.organisation_id}}",
+          "$or": [
+            {
+              "user_condition": {
+                "role": "super_admin"
+              }
+            },
+            {
+              "user_condition": {
+                "role": "org_admin"
+              }
+            },
+            {
+              "user_condition": {
+                "role": "retail_cashier"
+              }
+            },
+            {
+              "user_condition": {
+                "role": "vehicle_sales"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    "read": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "assigned_sales_rep_id": "{{employee.id}}"
+        },
+        {
+          "organisation_id": "{{employee.organisation_id}}",
+          "$or": [
+            {
+              "user_condition": {
+                "role": "super_admin"
+              }
+            },
+            {
+              "user_condition": {
+                "role": "org_admin"
+              }
+            },
+            {
+              "user_condition": {
+                "role": "retail_cashier"
+              }
+            },
+            {
+              "user_condition": {
+                "role": "vehicle_sales"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    "update": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "assigned_sales_rep_id": "{{employee.id}}"
+        },
+        {
+          "organisation_id": "{{employee.organisation_id}}",
+          "$or": [
+            {
+              "user_condition": {
+                "role": "super_admin"
+              }
+            },
+            {
+              "user_condition": {
+                "role": "org_admin"
+              }
+            },
+            {
+              "user_condition": {
+                "role": "retail_cashier"
+              }
+            },
+            {
+              "user_condition": {
+                "role": "vehicle_sales"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    "delete": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "organisation_id": "{{employee.organisation_id}}",
+          "$or": [
+            {
+              "user_condition": {
+                "role": "super_admin"
+              }
+            },
+            {
+              "user_condition": {
+                "role": "org_admin"
+              }
+            }
+          ]
+        }
+      ]
+    }
+  }
+}

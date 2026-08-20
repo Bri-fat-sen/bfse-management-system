@@ -1,0 +1,206 @@
+{
+  "name": "BankDeposit",
+  "type": "object",
+  "properties": {
+    "organisation_id": {
+      "type": "string"
+    },
+    "deposit_number": {
+      "type": "string",
+      "description": "Unique deposit reference"
+    },
+    "bank_name": {
+      "type": "string",
+      "description": "Name of the bank"
+    },
+    "account_number": {
+      "type": "string",
+      "description": "Bank account number"
+    },
+    "amount": {
+      "type": "number",
+      "default": 0
+    },
+    "currency": {
+      "type": "string",
+      "default": "SLE"
+    },
+    "date": {
+      "type": "string",
+      "format": "date"
+    },
+    "deposit_type": {
+      "type": "string",
+      "enum": [
+        "cash",
+        "cheque",
+        "transfer",
+        "mobile_money"
+      ],
+      "default": "cash"
+    },
+    "source": {
+      "type": "string",
+      "enum": [
+        "sales_revenue",
+        "transport_revenue",
+        "contract_revenue",
+        "owner_contribution",
+        "other"
+      ],
+      "default": "sales_revenue",
+      "description": "Source of funds being deposited"
+    },
+    "reference_number": {
+      "type": "string",
+      "description": "Bank slip or transaction reference"
+    },
+    "deposited_by": {
+      "type": "string",
+      "description": "Employee ID who made the deposit"
+    },
+    "deposited_by_name": {
+      "type": "string"
+    },
+    "notes": {
+      "type": "string"
+    },
+    "receipt_url": {
+      "type": "string",
+      "description": "URL to uploaded bank slip or receipt"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "pending",
+        "confirmed",
+        "rejected"
+      ],
+      "default": "pending"
+    },
+    "confirmed_by": {
+      "type": "string"
+    },
+    "confirmed_by_name": {
+      "type": "string"
+    },
+    "confirmed_date": {
+      "type": "string",
+      "format": "date"
+    }
+  },
+  "required": [
+    "organisation_id",
+    "bank_name",
+    "amount",
+    "date"
+  ],
+  "rls": {
+    "create": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "organisation_id": "{{employee.organisation_id}}",
+          "$or": [
+            {
+              "user_condition": {
+                "role": "super_admin"
+              }
+            },
+            {
+              "user_condition": {
+                "role": "org_admin"
+              }
+            },
+            {
+              "user_condition": {
+                "role": "accountant"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    "read": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "organisation_id": "{{employee.organisation_id}}",
+          "$or": [
+            {
+              "user_condition": {
+                "role": "super_admin"
+              }
+            },
+            {
+              "user_condition": {
+                "role": "org_admin"
+              }
+            },
+            {
+              "user_condition": {
+                "role": "accountant"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    "update": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "organisation_id": "{{employee.organisation_id}}",
+          "$or": [
+            {
+              "user_condition": {
+                "role": "super_admin"
+              }
+            },
+            {
+              "user_condition": {
+                "role": "org_admin"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    "delete": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "organisation_id": "{{employee.organisation_id}}",
+          "$or": [
+            {
+              "user_condition": {
+                "role": "super_admin"
+              }
+            },
+            {
+              "user_condition": {
+                "role": "org_admin"
+              }
+            }
+          ]
+        }
+      ]
+    }
+  }
+}

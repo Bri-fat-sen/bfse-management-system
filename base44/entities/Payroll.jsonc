@@ -1,0 +1,438 @@
+{
+  "name": "Payroll",
+  "type": "object",
+  "properties": {
+    "organisation_id": {
+      "type": "string"
+    },
+    "employee_id": {
+      "type": "string"
+    },
+    "employee_name": {
+      "type": "string"
+    },
+    "employee_role": {
+      "type": "string"
+    },
+    "employee_location": {
+      "type": "string"
+    },
+    "employment_type": {
+      "type": "string",
+      "enum": [
+        "salary",
+        "wage"
+      ],
+      "description": "Distinguishes salary vs wage employees"
+    },
+    "payroll_frequency": {
+      "type": "string",
+      "enum": [
+        "weekly",
+        "bi_weekly",
+        "monthly"
+      ],
+      "default": "monthly",
+      "description": "How often this payroll is processed"
+    },
+    "period_start": {
+      "type": "string",
+      "format": "date"
+    },
+    "period_end": {
+      "type": "string",
+      "format": "date"
+    },
+    "base_salary": {
+      "type": "number",
+      "default": 0
+    },
+    "prorated_salary": {
+      "type": "number",
+      "default": 0,
+      "description": "Salary adjusted for payroll frequency"
+    },
+    "salary_type": {
+      "type": "string",
+      "enum": [
+        "monthly",
+        "hourly",
+        "daily"
+      ],
+      "default": "monthly"
+    },
+    "hours_worked": {
+      "type": "number",
+      "default": 0,
+      "description": "Actual hours worked (from attendance)"
+    },
+    "hours_scheduled": {
+      "type": "number",
+      "default": 0,
+      "description": "Expected hours from schedule"
+    },
+    "hours_approved": {
+      "type": "number",
+      "default": 0,
+      "description": "Admin-approved hours for wage employees"
+    },
+    "days_worked": {
+      "type": "number",
+      "default": 0
+    },
+    "overtime_hours": {
+      "type": "number",
+      "default": 0
+    },
+    "overtime_rate_multiplier": {
+      "type": "number",
+      "default": 1.5,
+      "description": "Multiplier for overtime pay"
+    },
+    "overtime_pay": {
+      "type": "number",
+      "default": 0
+    },
+    "weekend_hours": {
+      "type": "number",
+      "default": 0
+    },
+    "weekend_pay": {
+      "type": "number",
+      "default": 0
+    },
+    "holiday_hours": {
+      "type": "number",
+      "default": 0
+    },
+    "holiday_pay": {
+      "type": "number",
+      "default": 0
+    },
+    "timesheet_approved": {
+      "type": "boolean",
+      "default": false,
+      "description": "For wage employees: whether timesheet was approved"
+    },
+    "timesheet_approved_by": {
+      "type": "string"
+    },
+    "timesheet_approved_by_name": {
+      "type": "string"
+    },
+    "timesheet_approval_date": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "timesheet_notes": {
+      "type": "string",
+      "description": "Notes from timesheet approval/override"
+    },
+    "bonuses": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "amount": {
+            "type": "number"
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "performance",
+              "sales_commission",
+              "attendance",
+              "role_based",
+              "holiday",
+              "other"
+            ]
+          }
+        }
+      }
+    },
+    "total_bonuses": {
+      "type": "number",
+      "default": 0
+    },
+    "allowances": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "amount": {
+            "type": "number"
+          }
+        }
+      }
+    },
+    "total_allowances": {
+      "type": "number",
+      "default": 0
+    },
+    "gross_pay": {
+      "type": "number",
+      "default": 0
+    },
+    "deductions": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "amount": {
+            "type": "number"
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "statutory",
+              "voluntary",
+              "loan",
+              "advance",
+              "other"
+            ]
+          }
+        }
+      }
+    },
+    "nassit_employee": {
+      "type": "number",
+      "default": 0,
+      "description": "NASSIT employee contribution (5%)"
+    },
+    "nassit_employer": {
+      "type": "number",
+      "default": 0,
+      "description": "NASSIT employer contribution (10%)"
+    },
+    "paye_tax": {
+      "type": "number",
+      "default": 0,
+      "description": "Pay As You Earn income tax"
+    },
+    "total_statutory_deductions": {
+      "type": "number",
+      "default": 0
+    },
+    "total_deductions": {
+      "type": "number",
+      "default": 0
+    },
+    "net_pay": {
+      "type": "number",
+      "default": 0
+    },
+    "employer_cost": {
+      "type": "number",
+      "default": 0,
+      "description": "Total cost to employer including their NASSIT contribution"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "draft",
+        "pending_approval",
+        "approved",
+        "paid",
+        "cancelled"
+      ],
+      "default": "draft"
+    },
+    "payment_date": {
+      "type": "string",
+      "format": "date"
+    },
+    "payment_method": {
+      "type": "string",
+      "enum": [
+        "bank_transfer",
+        "cash",
+        "mobile_money",
+        "cheque"
+      ],
+      "default": "bank_transfer"
+    },
+    "bank_name": {
+      "type": "string"
+    },
+    "bank_account": {
+      "type": "string"
+    },
+    "approved_by": {
+      "type": "string"
+    },
+    "approved_by_name": {
+      "type": "string"
+    },
+    "approval_date": {
+      "type": "string",
+      "format": "date"
+    },
+    "notes": {
+      "type": "string"
+    },
+    "calculation_details": {
+      "type": "object",
+      "properties": {
+        "hourly_rate": {
+          "type": "number"
+        },
+        "daily_rate": {
+          "type": "number"
+        },
+        "tax_bracket": {
+          "type": "string"
+        },
+        "effective_tax_rate": {
+          "type": "number"
+        },
+        "annual_gross_equivalent": {
+          "type": "number"
+        },
+        "frequency_multiplier": {
+          "type": "number"
+        }
+      }
+    }
+  },
+  "required": [
+    "organisation_id",
+    "employee_id",
+    "period_start",
+    "period_end"
+  ],
+  "rls": {
+    "create": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "organisation_id": "{{employee.organisation_id}}",
+          "$or": [
+            {
+              "user_condition": {
+                "role": "super_admin"
+              }
+            },
+            {
+              "user_condition": {
+                "role": "org_admin"
+              }
+            },
+            {
+              "user_condition": {
+                "role": "payroll_admin"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    "read": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "employee_id": "{{employee.id}}"
+        },
+        {
+          "organisation_id": "{{employee.organisation_id}}",
+          "$or": [
+            {
+              "user_condition": {
+                "role": "super_admin"
+              }
+            },
+            {
+              "user_condition": {
+                "role": "org_admin"
+              }
+            },
+            {
+              "user_condition": {
+                "role": "payroll_admin"
+              }
+            },
+            {
+              "user_condition": {
+                "role": "accountant"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    "update": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "organisation_id": "{{employee.organisation_id}}",
+          "$or": [
+            {
+              "user_condition": {
+                "role": "super_admin"
+              }
+            },
+            {
+              "user_condition": {
+                "role": "org_admin"
+              }
+            },
+            {
+              "user_condition": {
+                "role": "payroll_admin"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    "delete": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "organisation_id": "{{employee.organisation_id}}",
+          "$or": [
+            {
+              "user_condition": {
+                "role": "super_admin"
+              }
+            },
+            {
+              "user_condition": {
+                "role": "org_admin"
+              }
+            },
+            {
+              "user_condition": {
+                "role": "payroll_admin"
+              }
+            }
+          ]
+        }
+      ]
+    }
+  }
+}

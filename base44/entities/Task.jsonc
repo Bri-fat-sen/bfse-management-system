@@ -1,0 +1,188 @@
+{
+  "name": "Task",
+  "type": "object",
+  "properties": {
+    "organisation_id": {
+      "type": "string"
+    },
+    "title": {
+      "type": "string"
+    },
+    "description": {
+      "type": "string"
+    },
+    "assigned_to_id": {
+      "type": "string"
+    },
+    "assigned_to_name": {
+      "type": "string"
+    },
+    "due_date": {
+      "type": "string",
+      "format": "date"
+    },
+    "due_time": {
+      "type": "string",
+      "description": "Time in HH:mm format"
+    },
+    "priority": {
+      "type": "string",
+      "enum": [
+        "low",
+        "medium",
+        "high",
+        "urgent"
+      ],
+      "default": "medium"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "pending",
+        "in_progress",
+        "completed",
+        "cancelled"
+      ],
+      "default": "pending"
+    },
+    "category": {
+      "type": "string",
+      "enum": [
+        "work",
+        "meeting",
+        "deadline",
+        "reminder",
+        "personal",
+        "other"
+      ],
+      "default": "work"
+    },
+    "tags": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "related_entity_type": {
+      "type": "string",
+      "description": "Type of related entity (e.g., sale, trip, payroll)"
+    },
+    "related_entity_id": {
+      "type": "string"
+    },
+    "completed_date": {
+      "type": "string",
+      "format": "date"
+    },
+    "google_event_id": {
+      "type": "string",
+      "description": "Google Calendar event ID for sync"
+    }
+  },
+  "required": [
+    "organisation_id",
+    "title",
+    "due_date"
+  ],
+  "rls": {
+    "create": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "organisation_id": "{{employee.organisation_id}}"
+        }
+      ]
+    },
+    "read": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "assigned_to_id": "{{employee.id}}"
+        },
+        {
+          "created_by": "{{user.email}}"
+        },
+        {
+          "organisation_id": "{{employee.organisation_id}}",
+          "$or": [
+            {
+              "user_condition": {
+                "role": "super_admin"
+              }
+            },
+            {
+              "user_condition": {
+                "role": "org_admin"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    "update": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "assigned_to_id": "{{employee.id}}"
+        },
+        {
+          "created_by": "{{user.email}}"
+        },
+        {
+          "organisation_id": "{{employee.organisation_id}}",
+          "$or": [
+            {
+              "user_condition": {
+                "role": "super_admin"
+              }
+            },
+            {
+              "user_condition": {
+                "role": "org_admin"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    "delete": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "created_by": "{{user.email}}"
+        },
+        {
+          "organisation_id": "{{employee.organisation_id}}",
+          "$or": [
+            {
+              "user_condition": {
+                "role": "super_admin"
+              }
+            },
+            {
+              "user_condition": {
+                "role": "org_admin"
+              }
+            }
+          ]
+        }
+      ]
+    }
+  }
+}

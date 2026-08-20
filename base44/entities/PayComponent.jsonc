@@ -1,0 +1,247 @@
+{
+  "name": "PayComponent",
+  "type": "object",
+  "properties": {
+    "organisation_id": {
+      "type": "string"
+    },
+    "name": {
+      "type": "string",
+      "description": "Name of the pay component"
+    },
+    "code": {
+      "type": "string",
+      "description": "Unique code for the component"
+    },
+    "type": {
+      "type": "string",
+      "enum": [
+        "earning",
+        "deduction"
+      ],
+      "description": "Whether this adds or subtracts from pay"
+    },
+    "category": {
+      "type": "string",
+      "enum": [
+        "basic",
+        "allowance",
+        "bonus",
+        "commission",
+        "overtime",
+        "statutory",
+        "voluntary",
+        "loan",
+        "advance",
+        "other"
+      ],
+      "default": "other"
+    },
+    "calculation_type": {
+      "type": "string",
+      "enum": [
+        "fixed",
+        "percentage",
+        "formula",
+        "hours_based"
+      ],
+      "default": "fixed"
+    },
+    "amount": {
+      "type": "number",
+      "default": 0,
+      "description": "Fixed amount or percentage value"
+    },
+    "percentage_of": {
+      "type": "string",
+      "enum": [
+        "base_salary",
+        "gross_pay",
+        "net_pay",
+        "custom"
+      ],
+      "default": "base_salary"
+    },
+    "formula": {
+      "type": "string",
+      "description": "Custom formula for calculation (e.g., 'sales * 0.02')"
+    },
+    "min_amount": {
+      "type": "number",
+      "description": "Minimum amount cap"
+    },
+    "max_amount": {
+      "type": "number",
+      "description": "Maximum amount cap"
+    },
+    "is_taxable": {
+      "type": "boolean",
+      "default": true
+    },
+    "affects_nassit": {
+      "type": "boolean",
+      "default": true,
+      "description": "Whether this component is included in NASSIT calculation"
+    },
+    "is_recurring": {
+      "type": "boolean",
+      "default": true,
+      "description": "Automatically applied each payroll period"
+    },
+    "frequency": {
+      "type": "string",
+      "enum": [
+        "every_payroll",
+        "monthly",
+        "quarterly",
+        "annually",
+        "one_time"
+      ],
+      "default": "every_payroll"
+    },
+    "applies_to_roles": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "applies_to_employees": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "applies_to_departments": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "effective_from": {
+      "type": "string",
+      "format": "date"
+    },
+    "effective_to": {
+      "type": "string",
+      "format": "date"
+    },
+    "is_active": {
+      "type": "boolean",
+      "default": true
+    },
+    "display_order": {
+      "type": "number",
+      "default": 0
+    },
+    "description": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "organisation_id",
+    "name",
+    "type",
+    "calculation_type"
+  ],
+  "rls": {
+    "create": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "organisation_id": "{{employee.organisation_id}}",
+          "$or": [
+            {
+              "user_condition": {
+                "role": "super_admin"
+              }
+            },
+            {
+              "user_condition": {
+                "role": "org_admin"
+              }
+            },
+            {
+              "user_condition": {
+                "role": "payroll_admin"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    "read": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "organisation_id": "{{employee.organisation_id}}"
+        }
+      ]
+    },
+    "update": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "organisation_id": "{{employee.organisation_id}}",
+          "$or": [
+            {
+              "user_condition": {
+                "role": "super_admin"
+              }
+            },
+            {
+              "user_condition": {
+                "role": "org_admin"
+              }
+            },
+            {
+              "user_condition": {
+                "role": "payroll_admin"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    "delete": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "organisation_id": "{{employee.organisation_id}}",
+          "$or": [
+            {
+              "user_condition": {
+                "role": "super_admin"
+              }
+            },
+            {
+              "user_condition": {
+                "role": "org_admin"
+              }
+            },
+            {
+              "user_condition": {
+                "role": "payroll_admin"
+              }
+            }
+          ]
+        }
+      ]
+    }
+  }
+}

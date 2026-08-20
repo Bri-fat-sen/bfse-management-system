@@ -1,0 +1,136 @@
+{
+  "name": "SupplierProduct",
+  "type": "object",
+  "properties": {
+    "organisation_id": {
+      "type": "string"
+    },
+    "supplier_id": {
+      "type": "string"
+    },
+    "supplier_name": {
+      "type": "string"
+    },
+    "product_id": {
+      "type": "string"
+    },
+    "product_name": {
+      "type": "string"
+    },
+    "supplier_sku": {
+      "type": "string",
+      "description": "Supplier's product code"
+    },
+    "unit_cost": {
+      "type": "number",
+      "default": 0
+    },
+    "minimum_order_quantity": {
+      "type": "number",
+      "default": 1
+    },
+    "lead_time_days": {
+      "type": "number",
+      "default": 7
+    },
+    "is_preferred": {
+      "type": "boolean",
+      "default": false
+    },
+    "notes": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "organisation_id",
+    "supplier_id",
+    "product_id"
+  ],
+  "rls": {
+    "create": {
+      "organisation_id": "{{employee.organisation_id}}",
+      "$or": [
+        {
+          "user_condition": {
+            "role": "super_admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "org_admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "warehouse_manager"
+          }
+        }
+      ]
+    },
+    "read": {
+      "organisation_id": "{{employee.organisation_id}}",
+      "$or": [
+        {
+          "user_condition": {
+            "role": "super_admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "org_admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "warehouse_manager"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "accountant"
+          }
+        }
+      ]
+    },
+    "update": {
+      "organisation_id": "{{employee.organisation_id}}",
+      "$or": [
+        {
+          "user_condition": {
+            "role": "super_admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "org_admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "warehouse_manager"
+          }
+        }
+      ]
+    },
+    "delete": {
+      "organisation_id": "{{employee.organisation_id}}",
+      "$or": [
+        {
+          "user_condition": {
+            "role": "super_admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "org_admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "warehouse_manager"
+          }
+        }
+      ]
+    }
+  }
+}

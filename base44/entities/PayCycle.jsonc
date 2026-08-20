@@ -1,0 +1,183 @@
+{
+  "name": "PayCycle",
+  "type": "object",
+  "properties": {
+    "organisation_id": {
+      "type": "string"
+    },
+    "name": {
+      "type": "string",
+      "description": "Pay cycle name e.g. 'Monthly - End of Month'"
+    },
+    "frequency": {
+      "type": "string",
+      "enum": [
+        "weekly",
+        "bi_weekly",
+        "monthly"
+      ],
+      "default": "monthly",
+      "description": "How often payroll runs"
+    },
+    "pay_day": {
+      "type": "number",
+      "description": "Day of month (1-31) for monthly, or day of week (0-6) for weekly"
+    },
+    "start_date": {
+      "type": "string",
+      "format": "date",
+      "description": "When this pay cycle starts"
+    },
+    "next_run_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Next scheduled payroll processing date"
+    },
+    "last_run_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Last time payroll was processed"
+    },
+    "employee_ids": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Employees assigned to this pay cycle"
+    },
+    "employee_count": {
+      "type": "number",
+      "default": 0
+    },
+    "auto_process": {
+      "type": "boolean",
+      "default": false,
+      "description": "Automatically process payroll on schedule"
+    },
+    "is_active": {
+      "type": "boolean",
+      "default": true
+    },
+    "use_package_settings": {
+      "type": "boolean",
+      "default": true,
+      "description": "Use remuneration package settings for calculations"
+    },
+    "include_attendance": {
+      "type": "boolean",
+      "default": true,
+      "description": "Factor in attendance records"
+    },
+    "auto_approve": {
+      "type": "boolean",
+      "default": false,
+      "description": "Auto-approve generated payrolls"
+    },
+    "notification_days_before": {
+      "type": "number",
+      "default": 2,
+      "description": "Days before run to notify HR"
+    }
+  },
+  "required": [
+    "organisation_id",
+    "name",
+    "frequency"
+  ],
+  "rls": {
+    "create": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "organisation_id": "{{employee.organisation_id}}",
+          "$or": [
+            {
+              "user_condition": {
+                "role": "super_admin"
+              }
+            },
+            {
+              "user_condition": {
+                "role": "org_admin"
+              }
+            },
+            {
+              "user_condition": {
+                "role": "payroll_admin"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    "read": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "organisation_id": "{{employee.organisation_id}}"
+        }
+      ]
+    },
+    "update": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "organisation_id": "{{employee.organisation_id}}",
+          "$or": [
+            {
+              "user_condition": {
+                "role": "super_admin"
+              }
+            },
+            {
+              "user_condition": {
+                "role": "org_admin"
+              }
+            },
+            {
+              "user_condition": {
+                "role": "payroll_admin"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    "delete": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "organisation_id": "{{employee.organisation_id}}",
+          "$or": [
+            {
+              "user_condition": {
+                "role": "super_admin"
+              }
+            },
+            {
+              "user_condition": {
+                "role": "org_admin"
+              }
+            }
+          ]
+        }
+      ]
+    }
+  }
+}

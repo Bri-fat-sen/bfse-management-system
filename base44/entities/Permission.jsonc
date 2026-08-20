@@ -1,0 +1,124 @@
+{
+  "name": "Permission",
+  "type": "object",
+  "properties": {
+    "organisation_id": {
+      "type": "string"
+    },
+    "role": {
+      "type": "string",
+      "description": "Role this permission set applies to"
+    },
+    "module": {
+      "type": "string",
+      "enum": [
+        "dashboard",
+        "sales",
+        "inventory",
+        "transport",
+        "hr",
+        "finance",
+        "communication",
+        "attendance",
+        "settings",
+        "activity_log"
+      ],
+      "description": "Module name"
+    },
+    "can_view": {
+      "type": "boolean",
+      "default": false
+    },
+    "can_create": {
+      "type": "boolean",
+      "default": false
+    },
+    "can_edit": {
+      "type": "boolean",
+      "default": false
+    },
+    "can_delete": {
+      "type": "boolean",
+      "default": false
+    },
+    "can_export": {
+      "type": "boolean",
+      "default": false
+    },
+    "can_approve": {
+      "type": "boolean",
+      "default": false
+    },
+    "custom_permissions": {
+      "type": "object",
+      "description": "Module-specific permissions"
+    }
+  },
+  "required": [
+    "organisation_id",
+    "role",
+    "module"
+  ],
+  "rls": {
+    "create": {
+      "organisation_id": "{{employee.organisation_id}}",
+      "$or": [
+        {
+          "user_condition": {
+            "role": "super_admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "org_admin"
+          }
+        }
+      ]
+    },
+    "read": {
+      "organisation_id": "{{employee.organisation_id}}",
+      "$or": [
+        {
+          "user_condition": {
+            "role": "super_admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "org_admin"
+          }
+        }
+      ]
+    },
+    "update": {
+      "organisation_id": "{{employee.organisation_id}}",
+      "$or": [
+        {
+          "user_condition": {
+            "role": "super_admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "org_admin"
+          }
+        }
+      ]
+    },
+    "delete": {
+      "organisation_id": "{{employee.organisation_id}}",
+      "$or": [
+        {
+          "user_condition": {
+            "role": "super_admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "org_admin"
+          }
+        }
+      ]
+    }
+  }
+}

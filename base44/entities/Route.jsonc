@@ -1,0 +1,112 @@
+{
+  "name": "Route",
+  "type": "object",
+  "properties": {
+    "organisation_id": {
+      "type": "string"
+    },
+    "name": {
+      "type": "string"
+    },
+    "start_location": {
+      "type": "string"
+    },
+    "end_location": {
+      "type": "string"
+    },
+    "distance_km": {
+      "type": "number"
+    },
+    "estimated_duration_mins": {
+      "type": "number"
+    },
+    "base_ticket_price": {
+      "type": "number",
+      "default": 0
+    },
+    "is_active": {
+      "type": "boolean",
+      "default": true
+    },
+    "stops": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "price": {
+            "type": "number"
+          }
+        }
+      }
+    }
+  },
+  "required": [
+    "organisation_id",
+    "name",
+    "start_location",
+    "end_location"
+  ],
+  "rls": {
+    "create": {
+      "organisation_id": "{{employee.organisation_id}}",
+      "$or": [
+        {
+          "user_condition": {
+            "role": "super_admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "org_admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "warehouse_manager"
+          }
+        }
+      ]
+    },
+    "read": {
+      "organisation_id": "{{employee.organisation_id}}"
+    },
+    "update": {
+      "organisation_id": "{{employee.organisation_id}}",
+      "$or": [
+        {
+          "user_condition": {
+            "role": "super_admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "org_admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "warehouse_manager"
+          }
+        }
+      ]
+    },
+    "delete": {
+      "organisation_id": "{{employee.organisation_id}}",
+      "$or": [
+        {
+          "user_condition": {
+            "role": "super_admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "org_admin"
+          }
+        }
+      ]
+    }
+  }
+}

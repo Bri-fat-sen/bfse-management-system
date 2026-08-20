@@ -1,0 +1,162 @@
+{
+  "name": "ReorderSuggestion",
+  "type": "object",
+  "properties": {
+    "organisation_id": {
+      "type": "string"
+    },
+    "product_id": {
+      "type": "string"
+    },
+    "product_name": {
+      "type": "string"
+    },
+    "current_stock": {
+      "type": "number",
+      "default": 0
+    },
+    "reorder_point": {
+      "type": "number",
+      "default": 0
+    },
+    "suggested_quantity": {
+      "type": "number",
+      "default": 0
+    },
+    "avg_daily_sales": {
+      "type": "number",
+      "default": 0
+    },
+    "days_of_stock": {
+      "type": "number",
+      "default": 0,
+      "description": "Estimated days until stockout"
+    },
+    "lead_time_days": {
+      "type": "number",
+      "default": 7,
+      "description": "Supplier lead time in days"
+    },
+    "priority": {
+      "type": "string",
+      "enum": [
+        "critical",
+        "high",
+        "medium",
+        "low"
+      ],
+      "default": "medium"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "pending",
+        "ordered",
+        "dismissed",
+        "completed"
+      ],
+      "default": "pending"
+    },
+    "supplier_id": {
+      "type": "string"
+    },
+    "supplier_name": {
+      "type": "string"
+    },
+    "estimated_cost": {
+      "type": "number",
+      "default": 0
+    },
+    "purchase_order_id": {
+      "type": "string",
+      "description": "Reference to PurchaseOrder if created"
+    },
+    "notes": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "organisation_id",
+    "product_id",
+    "suggested_quantity"
+  ],
+  "rls": {
+    "create": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "organisation_id": "{{employee.organisation_id}}"
+        }
+      ]
+    },
+    "read": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "organisation_id": "{{employee.organisation_id}}"
+        }
+      ]
+    },
+    "update": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "organisation_id": "{{employee.organisation_id}}",
+          "$or": [
+            {
+              "user_condition": {
+                "role": "super_admin"
+              }
+            },
+            {
+              "user_condition": {
+                "role": "org_admin"
+              }
+            },
+            {
+              "user_condition": {
+                "role": "warehouse_manager"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    "delete": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "organisation_id": "{{employee.organisation_id}}",
+          "$or": [
+            {
+              "user_condition": {
+                "role": "super_admin"
+              }
+            },
+            {
+              "user_condition": {
+                "role": "org_admin"
+              }
+            }
+          ]
+        }
+      ]
+    }
+  }
+}

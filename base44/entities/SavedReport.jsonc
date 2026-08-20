@@ -1,0 +1,343 @@
+{
+  "name": "SavedReport",
+  "type": "object",
+  "properties": {
+    "organisation_id": {
+      "type": "string"
+    },
+    "name": {
+      "type": "string"
+    },
+    "description": {
+      "type": "string"
+    },
+    "report_type": {
+      "type": "string",
+      "enum": [
+        "sales",
+        "inventory",
+        "payroll",
+        "transport",
+        "custom"
+      ],
+      "default": "sales"
+    },
+    "data_sources": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Entities to include in report"
+    },
+    "filters": {
+      "type": "object",
+      "properties": {
+        "date_range": {
+          "type": "string",
+          "enum": [
+            "today",
+            "yesterday",
+            "this_week",
+            "last_week",
+            "this_month",
+            "last_month",
+            "this_quarter",
+            "last_quarter",
+            "this_year",
+            "custom"
+          ]
+        },
+        "start_date": {
+          "type": "string",
+          "format": "date"
+        },
+        "end_date": {
+          "type": "string",
+          "format": "date"
+        },
+        "employee_ids": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "warehouse_ids": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "vehicle_ids": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "categories": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "statuses": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "payment_methods": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "sale_types": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "columns": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "field": {
+            "type": "string"
+          },
+          "label": {
+            "type": "string"
+          },
+          "visible": {
+            "type": "boolean"
+          },
+          "aggregate": {
+            "type": "string",
+            "enum": [
+              "none",
+              "sum",
+              "avg",
+              "count",
+              "min",
+              "max"
+            ]
+          }
+        }
+      }
+    },
+    "group_by": {
+      "type": "string"
+    },
+    "sort_by": {
+      "type": "string"
+    },
+    "sort_order": {
+      "type": "string",
+      "enum": [
+        "asc",
+        "desc"
+      ],
+      "default": "desc"
+    },
+    "chart_type": {
+      "type": "string",
+      "enum": [
+        "none",
+        "bar",
+        "line",
+        "pie",
+        "area"
+      ],
+      "default": "none"
+    },
+    "chart_config": {
+      "type": "object",
+      "properties": {
+        "x_axis": {
+          "type": "string"
+        },
+        "y_axis": {
+          "type": "string"
+        },
+        "series": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "schedule": {
+      "type": "object",
+      "properties": {
+        "enabled": {
+          "type": "boolean",
+          "default": false
+        },
+        "frequency": {
+          "type": "string",
+          "enum": [
+            "daily",
+            "weekly",
+            "monthly"
+          ]
+        },
+        "day_of_week": {
+          "type": "number",
+          "description": "0=Sunday, 1=Monday, etc."
+        },
+        "day_of_month": {
+          "type": "number",
+          "description": "1-31"
+        },
+        "time": {
+          "type": "string",
+          "description": "HH:mm format"
+        },
+        "format": {
+          "type": "string",
+          "enum": [
+            "pdf",
+            "csv",
+            "both"
+          ],
+          "default": "pdf"
+        },
+        "recipients": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "last_sent": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "next_run": {
+          "type": "string",
+          "format": "date-time"
+        }
+      }
+    },
+    "is_favorite": {
+      "type": "boolean",
+      "default": false
+    },
+    "is_shared": {
+      "type": "boolean",
+      "default": false
+    },
+    "created_by_id": {
+      "type": "string"
+    },
+    "created_by_name": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "organisation_id",
+    "name",
+    "report_type"
+  ],
+  "rls": {
+    "create": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "organisation_id": "{{employee.organisation_id}}"
+        }
+      ]
+    },
+    "read": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "created_by_id": "{{employee.id}}"
+        },
+        {
+          "is_shared": true,
+          "organisation_id": "{{employee.organisation_id}}"
+        },
+        {
+          "organisation_id": "{{employee.organisation_id}}",
+          "$or": [
+            {
+              "user_condition": {
+                "role": "super_admin"
+              }
+            },
+            {
+              "user_condition": {
+                "role": "org_admin"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    "update": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "created_by_id": "{{employee.id}}"
+        },
+        {
+          "organisation_id": "{{employee.organisation_id}}",
+          "$or": [
+            {
+              "user_condition": {
+                "role": "super_admin"
+              }
+            },
+            {
+              "user_condition": {
+                "role": "org_admin"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    "delete": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "created_by_id": "{{employee.id}}"
+        },
+        {
+          "organisation_id": "{{employee.organisation_id}}",
+          "$or": [
+            {
+              "user_condition": {
+                "role": "super_admin"
+              }
+            },
+            {
+              "user_condition": {
+                "role": "org_admin"
+              }
+            }
+          ]
+        }
+      ]
+    }
+  }
+}

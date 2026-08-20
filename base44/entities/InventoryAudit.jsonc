@@ -1,0 +1,154 @@
+{
+  "name": "InventoryAudit",
+  "type": "object",
+  "properties": {
+    "organisation_id": {
+      "type": "string"
+    },
+    "action_type": {
+      "type": "string",
+      "enum": [
+        "batch_created",
+        "batch_updated",
+        "batch_deleted",
+        "stock_allocated",
+        "stock_transferred",
+        "stock_adjusted",
+        "product_created",
+        "product_updated",
+        "product_deleted",
+        "stock_level_created",
+        "stock_level_updated",
+        "stock_level_deleted"
+      ],
+      "description": "Type of inventory action performed"
+    },
+    "entity_type": {
+      "type": "string",
+      "enum": [
+        "batch",
+        "product",
+        "stock_level",
+        "stock_movement"
+      ],
+      "description": "The type of entity affected"
+    },
+    "entity_id": {
+      "type": "string",
+      "description": "ID of the affected entity"
+    },
+    "entity_name": {
+      "type": "string",
+      "description": "Name/identifier of the affected entity"
+    },
+    "performed_by_id": {
+      "type": "string"
+    },
+    "performed_by_name": {
+      "type": "string"
+    },
+    "performed_by_email": {
+      "type": "string"
+    },
+    "details": {
+      "type": "object",
+      "description": "Additional details about the action"
+    },
+    "previous_values": {
+      "type": "object",
+      "description": "Values before the change"
+    },
+    "new_values": {
+      "type": "object",
+      "description": "Values after the change"
+    },
+    "quantity_changed": {
+      "type": "number",
+      "description": "Quantity involved in the action"
+    },
+    "location_id": {
+      "type": "string"
+    },
+    "location_name": {
+      "type": "string"
+    },
+    "batch_number": {
+      "type": "string"
+    },
+    "notes": {
+      "type": "string"
+    },
+    "ip_address": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "organisation_id",
+    "action_type",
+    "entity_type",
+    "performed_by_id"
+  ],
+  "rls": {
+    "create": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "organisation_id": "{{employee.organisation_id}}"
+        }
+      ]
+    },
+    "read": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "organisation_id": "{{employee.organisation_id}}",
+          "$or": [
+            {
+              "user_condition": {
+                "role": "super_admin"
+              }
+            },
+            {
+              "user_condition": {
+                "role": "org_admin"
+              }
+            },
+            {
+              "user_condition": {
+                "role": "warehouse_manager"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    "update": {},
+    "delete": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "organisation_id": "{{employee.organisation_id}}",
+          "$or": [
+            {
+              "user_condition": {
+                "role": "super_admin"
+              }
+            }
+          ]
+        }
+      ]
+    }
+  }
+}

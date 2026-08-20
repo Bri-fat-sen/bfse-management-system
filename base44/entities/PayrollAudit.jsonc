@@ -1,0 +1,119 @@
+{
+  "name": "PayrollAudit",
+  "type": "object",
+  "properties": {
+    "organisation_id": {
+      "type": "string"
+    },
+    "payroll_id": {
+      "type": "string",
+      "description": "Reference to the Payroll record"
+    },
+    "employee_id": {
+      "type": "string"
+    },
+    "employee_name": {
+      "type": "string"
+    },
+    "action": {
+      "type": "string",
+      "enum": [
+        "created",
+        "updated",
+        "approved",
+        "rejected",
+        "paid",
+        "cancelled",
+        "recalculated"
+      ],
+      "description": "Type of action performed"
+    },
+    "changed_by_id": {
+      "type": "string"
+    },
+    "changed_by_name": {
+      "type": "string"
+    },
+    "changes": {
+      "type": "object",
+      "properties": {
+        "field": {
+          "type": "string"
+        },
+        "old_value": {
+          "type": "string"
+        },
+        "new_value": {
+          "type": "string"
+        }
+      },
+      "description": "Details of what was changed"
+    },
+    "previous_values": {
+      "type": "object",
+      "description": "Snapshot of values before change"
+    },
+    "new_values": {
+      "type": "object",
+      "description": "Snapshot of values after change"
+    },
+    "reason": {
+      "type": "string",
+      "description": "Reason for the change"
+    },
+    "ip_address": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "organisation_id",
+    "payroll_id",
+    "action",
+    "changed_by_id"
+  ],
+  "rls": {
+    "create": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "organisation_id": "{{employee.organisation_id}}"
+        }
+      ]
+    },
+    "read": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "organisation_id": "{{employee.organisation_id}}",
+          "$or": [
+            {
+              "user_condition": {
+                "role": "super_admin"
+              }
+            },
+            {
+              "user_condition": {
+                "role": "org_admin"
+              }
+            },
+            {
+              "user_condition": {
+                "role": "payroll_admin"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    "update": {},
+    "delete": {}
+  }
+}

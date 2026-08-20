@@ -1,0 +1,193 @@
+{
+  "name": "UserPreferences",
+  "type": "object",
+  "properties": {
+    "user_email": {
+      "type": "string",
+      "description": "User email"
+    },
+    "theme_mode": {
+      "type": "string",
+      "enum": [
+        "light",
+        "dark",
+        "auto"
+      ],
+      "default": "light"
+    },
+    "primary_color": {
+      "type": "string",
+      "default": "#1EB053"
+    },
+    "secondary_color": {
+      "type": "string",
+      "default": "#0072C6"
+    },
+    "accent_color": {
+      "type": "string",
+      "default": "#D4AF37"
+    },
+    "sidebar_color": {
+      "type": "string",
+      "default": "#0F1F3C"
+    },
+    "background_style": {
+      "type": "string",
+      "enum": [
+        "solid",
+        "gradient",
+        "pattern",
+        "image"
+      ],
+      "default": "solid"
+    },
+    "background_color": {
+      "type": "string",
+      "default": "#F9FAFB"
+    },
+    "background_gradient_start": {
+      "type": "string",
+      "default": "#F9FAFB"
+    },
+    "background_gradient_end": {
+      "type": "string",
+      "default": "#E5E7EB"
+    },
+    "background_image_url": {
+      "type": "string"
+    },
+    "card_style": {
+      "type": "string",
+      "enum": [
+        "default",
+        "bordered",
+        "elevated",
+        "flat"
+      ],
+      "default": "default"
+    },
+    "sidebar_collapsed": {
+      "type": "boolean",
+      "default": false
+    },
+    "compact_mode": {
+      "type": "boolean",
+      "default": false
+    },
+    "font_size": {
+      "type": "string",
+      "enum": [
+        "small",
+        "medium",
+        "large"
+      ],
+      "default": "medium"
+    },
+    "language": {
+      "type": "string",
+      "default": "en"
+    },
+    "timezone": {
+      "type": "string",
+      "default": "Africa/Freetown"
+    },
+    "notifications": {
+      "type": "object",
+      "properties": {
+        "chat": {
+          "type": "boolean",
+          "default": true
+        },
+        "meetings": {
+          "type": "boolean",
+          "default": true
+        },
+        "sales": {
+          "type": "boolean",
+          "default": true
+        },
+        "inventory": {
+          "type": "boolean",
+          "default": true
+        },
+        "payroll": {
+          "type": "boolean",
+          "default": true
+        },
+        "system": {
+          "type": "boolean",
+          "default": true
+        }
+      }
+    },
+    "module_colors": {
+      "type": "object",
+      "properties": {
+        "dashboard": {
+          "type": "string",
+          "default": "#1EB053"
+        },
+        "sales": {
+          "type": "string",
+          "default": "#0072C6"
+        },
+        "inventory": {
+          "type": "string",
+          "default": "#D4AF37"
+        },
+        "transport": {
+          "type": "string",
+          "default": "#FF6B35"
+        },
+        "hr": {
+          "type": "string",
+          "default": "#8B5CF6"
+        },
+        "finance": {
+          "type": "string",
+          "default": "#EF4444"
+        },
+        "communication": {
+          "type": "string",
+          "default": "#10B981"
+        }
+      }
+    },
+    "module_backgrounds": {
+      "type": "object",
+      "properties": {
+        "dashboard": {
+          "type": "string",
+          "default": "solid"
+        },
+        "sales": {
+          "type": "string",
+          "default": "solid"
+        },
+        "inventory": {
+          "type": "string",
+          "default": "solid"
+        },
+        "transport": {
+          "type": "string",
+          "default": "solid"
+        },
+        "hr": {
+          "type": "string",
+          "default": "solid"
+        },
+        "finance": {
+          "type": "string",
+          "default": "solid"
+        },
+        "communication": {
+          "type": "string",
+          "default": "solid"
+        }
+      }
+    }
+  },
+  "required": [
+    "user_email"
+  ]
+}

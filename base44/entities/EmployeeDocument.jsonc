@@ -1,0 +1,171 @@
+{
+  "name": "EmployeeDocument",
+  "type": "object",
+  "properties": {
+    "organisation_id": {
+      "type": "string"
+    },
+    "employee_id": {
+      "type": "string",
+      "description": "Target employee for this document"
+    },
+    "employee_name": {
+      "type": "string"
+    },
+    "employee_email": {
+      "type": "string"
+    },
+    "document_type": {
+      "type": "string",
+      "enum": [
+        "employment_contract",
+        "nda",
+        "code_of_conduct",
+        "privacy_policy",
+        "health_safety_policy",
+        "anti_harassment_policy",
+        "it_acceptable_use",
+        "disciplinary_policy",
+        "leave_policy",
+        "remote_work_policy",
+        "probation_confirmation",
+        "promotion_letter",
+        "termination_letter",
+        "warning_letter",
+        "salary_revision",
+        "custom"
+      ],
+      "default": "employment_contract"
+    },
+    "title": {
+      "type": "string",
+      "description": "Document title"
+    },
+    "content": {
+      "type": "string",
+      "description": "Full document content in HTML/Markdown"
+    },
+    "template_id": {
+      "type": "string",
+      "description": "Reference to DocumentTemplate if used"
+    },
+    "variables": {
+      "type": "object",
+      "description": "Variables used to populate the template"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "draft",
+        "pending_signature",
+        "signed",
+        "rejected",
+        "expired",
+        "cancelled"
+      ],
+      "default": "draft"
+    },
+    "requires_signature": {
+      "type": "boolean",
+      "default": true
+    },
+    "signed_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "signature_name": {
+      "type": "string",
+      "description": "Full name used for digital signature"
+    },
+    "signature_ip": {
+      "type": "string",
+      "description": "IP address at time of signing"
+    },
+    "issued_by_id": {
+      "type": "string"
+    },
+    "issued_by_name": {
+      "type": "string"
+    },
+    "issued_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "effective_date": {
+      "type": "string",
+      "format": "date"
+    },
+    "expiry_date": {
+      "type": "string",
+      "format": "date"
+    },
+    "rejection_reason": {
+      "type": "string"
+    },
+    "email_sent": {
+      "type": "boolean",
+      "default": false
+    },
+    "email_sent_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "reminder_count": {
+      "type": "number",
+      "default": 0
+    },
+    "last_reminder_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "notes": {
+      "type": "string"
+    },
+    "version": {
+      "type": "number",
+      "default": 1,
+      "description": "Current version number"
+    },
+    "version_history": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "version": {
+            "type": "number"
+          },
+          "content": {
+            "type": "string"
+          },
+          "variables": {
+            "type": "object"
+          },
+          "status": {
+            "type": "string"
+          },
+          "updated_by_id": {
+            "type": "string"
+          },
+          "updated_by_name": {
+            "type": "string"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "change_reason": {
+            "type": "string"
+          }
+        }
+      },
+      "description": "History of previous document versions"
+    }
+  },
+  "required": [
+    "organisation_id",
+    "employee_id",
+    "document_type",
+    "title",
+    "content"
+  ]
+}

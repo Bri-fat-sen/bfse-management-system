@@ -1,0 +1,385 @@
+{
+  "name": "Employee",
+  "type": "object",
+  "properties": {
+    "organisation_id": {
+      "type": "string",
+      "description": "Reference to Organisation"
+    },
+    "employee_code": {
+      "type": "string",
+      "description": "Unique employee code within organisation"
+    },
+    "user_email": {
+      "type": "string",
+      "description": "Linked Base44 user email"
+    },
+    "first_name": {
+      "type": "string"
+    },
+    "last_name": {
+      "type": "string"
+    },
+    "full_name": {
+      "type": "string"
+    },
+    "pin_hash": {
+      "type": "string",
+      "description": "Hashed PIN for secondary auth"
+    },
+    "role": {
+      "type": "string",
+      "enum": [
+        "super_admin",
+        "org_admin",
+        "hr_admin",
+        "payroll_admin",
+        "warehouse_manager",
+        "retail_cashier",
+        "vehicle_sales",
+        "driver",
+        "accountant",
+        "support_staff",
+        "read_only"
+      ],
+      "default": "read_only"
+    },
+    "department": {
+      "type": "string"
+    },
+    "position": {
+      "type": "string"
+    },
+    "manager_id": {
+      "type": "string",
+      "description": "ID of direct manager/supervisor who approves expenses"
+    },
+    "manager_name": {
+      "type": "string",
+      "description": "Name of direct manager"
+    },
+    "phone": {
+      "type": "string"
+    },
+    "email": {
+      "type": "string"
+    },
+    "profile_photo": {
+      "type": "string"
+    },
+    "hire_date": {
+      "type": "string",
+      "format": "date"
+    },
+    "employment_type": {
+      "type": "string",
+      "enum": [
+        "salary",
+        "wage"
+      ],
+      "default": "salary",
+      "description": "Salary: Fixed monthly pay, unaffected by schedules. Wage: Hourly/daily pay based on hours worked"
+    },
+    "salary_type": {
+      "type": "string",
+      "enum": [
+        "monthly",
+        "hourly",
+        "daily"
+      ],
+      "default": "monthly"
+    },
+    "base_salary": {
+      "type": "number",
+      "default": 0,
+      "description": "Monthly base salary for salary employees"
+    },
+    "hourly_rate": {
+      "type": "number",
+      "default": 0,
+      "description": "Hourly rate for wage employees"
+    },
+    "daily_rate": {
+      "type": "number",
+      "default": 0,
+      "description": "Daily rate for wage employees"
+    },
+    "remuneration_package_id": {
+      "type": "string",
+      "description": "Reference to assigned remuneration package"
+    },
+    "remuneration_package_name": {
+      "type": "string",
+      "description": "Name of assigned remuneration package"
+    },
+    "leave_balances": {
+      "type": "object",
+      "properties": {
+        "annual_days": {
+          "type": "number",
+          "default": 21,
+          "description": "Annual leave days remaining"
+        },
+        "sick_days": {
+          "type": "number",
+          "default": 10,
+          "description": "Sick leave days remaining"
+        },
+        "maternity_days": {
+          "type": "number",
+          "default": 90,
+          "description": "Maternity leave days remaining"
+        },
+        "paternity_days": {
+          "type": "number",
+          "default": 5,
+          "description": "Paternity leave days remaining"
+        }
+      },
+      "description": "Employee leave balances"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "active",
+        "inactive",
+        "suspended",
+        "terminated"
+      ],
+      "default": "active"
+    },
+    "emergency_contact": {
+      "type": "string"
+    },
+    "emergency_phone": {
+      "type": "string"
+    },
+    "address": {
+      "type": "string"
+    },
+    "assigned_location_id": {
+      "type": "string",
+      "description": "ID of the warehouse, store, or vehicle assigned to"
+    },
+    "assigned_location_name": {
+      "type": "string",
+      "description": "Name of the assigned location"
+    },
+    "assigned_location_type": {
+      "type": "string",
+      "enum": [
+        "warehouse",
+        "store",
+        "vehicle"
+      ],
+      "description": "Type of assigned location"
+    },
+    "assigned_location_ids": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Multiple location IDs for super_admin and org_admin roles"
+    },
+    "assigned_location_names": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Names of multiple assigned locations"
+    },
+    "skills": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "level": {
+            "type": "string",
+            "enum": [
+              "beginner",
+              "intermediate",
+              "advanced",
+              "expert"
+            ]
+          },
+          "years_experience": {
+            "type": "number"
+          }
+        }
+      },
+      "description": "Employee skills list"
+    },
+    "certifications": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "issuing_authority": {
+            "type": "string"
+          },
+          "issue_date": {
+            "type": "string",
+            "format": "date"
+          },
+          "expiry_date": {
+            "type": "string",
+            "format": "date"
+          },
+          "credential_id": {
+            "type": "string"
+          },
+          "document_url": {
+            "type": "string"
+          }
+        }
+      },
+      "description": "Professional certifications"
+    },
+    "training_history": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "title": {
+            "type": "string"
+          },
+          "provider": {
+            "type": "string"
+          },
+          "completion_date": {
+            "type": "string",
+            "format": "date"
+          },
+          "duration_hours": {
+            "type": "number"
+          },
+          "certificate_url": {
+            "type": "string"
+          },
+          "notes": {
+            "type": "string"
+          }
+        }
+      },
+      "description": "Training courses completed"
+    },
+    "source_document_id": {
+      "type": "string",
+      "description": "Link to uploaded document that created this record"
+    }
+  },
+  "required": [
+    "organisation_id",
+    "employee_code",
+    "first_name",
+    "last_name"
+  ],
+  "rls": {
+    "create": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "organisation_id": "{{employee.organisation_id}}"
+        }
+      ]
+    },
+    "read": {
+      "$or": [
+        {
+          "user_email": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "organisation_id": "{{employee.organisation_id}}",
+          "$or": [
+            {
+              "user_condition": {
+                "role": "super_admin"
+              }
+            },
+            {
+              "user_condition": {
+                "role": "org_admin"
+              }
+            },
+            {
+              "user_condition": {
+                "role": "hr_admin"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    "update": {
+      "$or": [
+        {
+          "user_email": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "organisation_id": "{{employee.organisation_id}}",
+          "$or": [
+            {
+              "user_condition": {
+                "role": "super_admin"
+              }
+            },
+            {
+              "user_condition": {
+                "role": "org_admin"
+              }
+            },
+            {
+              "user_condition": {
+                "role": "hr_admin"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    "delete": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "organisation_id": "{{employee.organisation_id}}",
+          "$or": [
+            {
+              "user_condition": {
+                "role": "super_admin"
+              }
+            },
+            {
+              "user_condition": {
+                "role": "org_admin"
+              }
+            }
+          ]
+        }
+      ]
+    }
+  }
+}

@@ -1,0 +1,171 @@
+{
+  "name": "StockLevel",
+  "type": "object",
+  "properties": {
+    "organisation_id": {
+      "type": "string"
+    },
+    "product_id": {
+      "type": "string"
+    },
+    "product_name": {
+      "type": "string"
+    },
+    "warehouse_id": {
+      "type": "string",
+      "description": "ID of warehouse or vehicle"
+    },
+    "warehouse_name": {
+      "type": "string"
+    },
+    "location_type": {
+      "type": "string",
+      "enum": [
+        "warehouse",
+        "store",
+        "vehicle"
+      ],
+      "default": "warehouse",
+      "description": "Type of location"
+    },
+    "parent_warehouse_id": {
+      "type": "string",
+      "description": "For vehicles: the warehouse this vehicle is linked to"
+    },
+    "quantity": {
+      "type": "number",
+      "default": 0
+    },
+    "reserved_quantity": {
+      "type": "number",
+      "default": 0,
+      "description": "Quantity reserved for pending orders"
+    },
+    "available_quantity": {
+      "type": "number",
+      "default": 0
+    },
+    "reorder_level": {
+      "type": "number",
+      "default": 10
+    },
+    "max_stock_level": {
+      "type": "number",
+      "default": 1000
+    },
+    "last_count_date": {
+      "type": "string",
+      "format": "date"
+    },
+    "bin_location": {
+      "type": "string",
+      "description": "Physical location in warehouse"
+    }
+  },
+  "required": [
+    "organisation_id",
+    "product_id",
+    "warehouse_id"
+  ],
+  "rls": {
+    "create": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "organisation_id": "{{employee.organisation_id}}",
+          "$or": [
+            {
+              "user_condition": {
+                "role": "super_admin"
+              }
+            },
+            {
+              "user_condition": {
+                "role": "org_admin"
+              }
+            },
+            {
+              "user_condition": {
+                "role": "warehouse_manager"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    "read": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "organisation_id": "{{employee.organisation_id}}"
+        }
+      ]
+    },
+    "update": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "organisation_id": "{{employee.organisation_id}}",
+          "$or": [
+            {
+              "user_condition": {
+                "role": "super_admin"
+              }
+            },
+            {
+              "user_condition": {
+                "role": "org_admin"
+              }
+            },
+            {
+              "user_condition": {
+                "role": "warehouse_manager"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    "delete": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "organisation_id": "{{employee.organisation_id}}",
+          "$or": [
+            {
+              "user_condition": {
+                "role": "super_admin"
+              }
+            },
+            {
+              "user_condition": {
+                "role": "org_admin"
+              }
+            },
+            {
+              "user_condition": {
+                "role": "warehouse_manager"
+              }
+            }
+          ]
+        }
+      ]
+    }
+  }
+}

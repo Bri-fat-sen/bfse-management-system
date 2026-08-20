@@ -1,0 +1,168 @@
+{
+  "name": "DocumentTemplate",
+  "type": "object",
+  "properties": {
+    "organisation_id": {
+      "type": "string"
+    },
+    "name": {
+      "type": "string",
+      "description": "Template name"
+    },
+    "description": {
+      "type": "string",
+      "description": "Rich text description of the template"
+    },
+    "document_type": {
+      "type": "string",
+      "enum": [
+        "employment_contract",
+        "nda",
+        "code_of_conduct",
+        "privacy_policy",
+        "health_safety_policy",
+        "anti_harassment_policy",
+        "it_acceptable_use",
+        "disciplinary_policy",
+        "leave_policy",
+        "remote_work_policy",
+        "probation_confirmation",
+        "promotion_letter",
+        "termination_letter",
+        "warning_letter",
+        "salary_revision",
+        "custom"
+      ],
+      "default": "custom"
+    },
+    "category": {
+      "type": "string",
+      "enum": [
+        "employment",
+        "policy",
+        "disciplinary",
+        "compensation",
+        "leave",
+        "other"
+      ],
+      "default": "other",
+      "description": "Template category for organization"
+    },
+    "content": {
+      "type": "string",
+      "description": "Template content with {{variables}}"
+    },
+    "variables": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "key": {
+            "type": "string"
+          },
+          "label": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "text",
+              "date",
+              "number",
+              "select"
+            ]
+          },
+          "options": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "default": {
+            "type": "string"
+          },
+          "auto_fill": {
+            "type": "string",
+            "description": "Auto-fill from employee data: employee.full_name, employee.position, etc."
+          }
+        }
+      },
+      "description": "Variables that can be filled in the template"
+    },
+    "requires_signature": {
+      "type": "boolean",
+      "default": true
+    },
+    "is_active": {
+      "type": "boolean",
+      "default": true
+    },
+    "is_system": {
+      "type": "boolean",
+      "default": false,
+      "description": "System templates cannot be deleted"
+    },
+    "allowed_roles": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Roles allowed to use this template. Empty or ['all'] means all roles."
+    },
+    "version": {
+      "type": "number",
+      "default": 1
+    },
+    "version_history": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "version": {
+            "type": "number"
+          },
+          "content": {
+            "type": "string"
+          },
+          "variables": {
+            "type": "array"
+          },
+          "updated_by_id": {
+            "type": "string"
+          },
+          "updated_by_name": {
+            "type": "string"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "change_notes": {
+            "type": "string"
+          }
+        }
+      },
+      "description": "History of template versions"
+    },
+    "last_updated_by": {
+      "type": "string"
+    },
+    "duplicated_from": {
+      "type": "string",
+      "description": "ID of the template this was duplicated from"
+    },
+    "tags": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Tags for better organization"
+    }
+  },
+  "required": [
+    "organisation_id",
+    "name",
+    "document_type",
+    "content"
+  ]
+}

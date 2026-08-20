@@ -1,0 +1,277 @@
+{
+  "name": "Product",
+  "type": "object",
+  "properties": {
+    "organisation_id": {
+      "type": "string"
+    },
+    "name": {
+      "type": "string"
+    },
+    "sku": {
+      "type": "string"
+    },
+    "barcode": {
+      "type": "string"
+    },
+    "category": {
+      "type": "string"
+    },
+    "description": {
+      "type": "string"
+    },
+    "specifications": {
+      "type": "object",
+      "properties": {
+        "weight": {
+          "type": "string"
+        },
+        "dimensions": {
+          "type": "string"
+        },
+        "color": {
+          "type": "string"
+        },
+        "material": {
+          "type": "string"
+        },
+        "brand": {
+          "type": "string"
+        },
+        "model": {
+          "type": "string"
+        },
+        "warranty": {
+          "type": "string"
+        },
+        "custom": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "key": {
+                "type": "string"
+              },
+              "value": {
+                "type": "string"
+              }
+            }
+          }
+        }
+      },
+      "description": "Product specifications and attributes"
+    },
+    "unit_price": {
+      "type": "number",
+      "default": 0
+    },
+    "cost_price": {
+      "type": "number",
+      "default": 0
+    },
+    "wholesale_price": {
+      "type": "number",
+      "default": 0
+    },
+    "unit": {
+      "type": "string",
+      "default": "piece"
+    },
+    "stock_quantity": {
+      "type": "number",
+      "default": 0,
+      "description": "Total stock across all locations"
+    },
+    "low_stock_threshold": {
+      "type": "number",
+      "default": 10
+    },
+    "reorder_point": {
+      "type": "number",
+      "default": 10,
+      "description": "Stock level that triggers reorder suggestion"
+    },
+    "reorder_quantity": {
+      "type": "number",
+      "default": 50,
+      "description": "Default quantity to order when restocking"
+    },
+    "lead_time_days": {
+      "type": "number",
+      "default": 7,
+      "description": "Supplier lead time in days"
+    },
+    "warehouse_id": {
+      "type": "string",
+      "description": "Primary warehouse ID (legacy)"
+    },
+    "location_ids": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Array of location IDs where this product is available"
+    },
+    "image_url": {
+      "type": "string"
+    },
+    "images": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Multiple product images"
+    },
+    "is_active": {
+      "type": "boolean",
+      "default": true
+    },
+    "expiry_date": {
+      "type": "string",
+      "format": "date"
+    },
+    "is_water_product": {
+      "type": "boolean",
+      "default": false
+    },
+    "is_serialized": {
+      "type": "boolean",
+      "default": false,
+      "description": "Whether this product requires serial number tracking"
+    },
+    "track_batches": {
+      "type": "boolean",
+      "default": false,
+      "description": "Whether this product uses batch/lot tracking"
+    },
+    "min_stock_level": {
+      "type": "number",
+      "default": 0,
+      "description": "Minimum stock to maintain"
+    },
+    "max_stock_level": {
+      "type": "number",
+      "default": 1000,
+      "description": "Maximum stock capacity"
+    },
+    "preferred_supplier_id": {
+      "type": "string"
+    },
+    "preferred_supplier_name": {
+      "type": "string"
+    },
+    "tags": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Searchable tags for product"
+    }
+  },
+  "required": [
+    "organisation_id",
+    "name",
+    "unit_price"
+  ],
+  "rls": {
+    "create": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "organisation_id": "{{employee.organisation_id}}",
+          "$or": [
+            {
+              "user_condition": {
+                "role": "super_admin"
+              }
+            },
+            {
+              "user_condition": {
+                "role": "org_admin"
+              }
+            },
+            {
+              "user_condition": {
+                "role": "warehouse_manager"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    "read": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "organisation_id": "{{employee.organisation_id}}"
+        }
+      ]
+    },
+    "update": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "organisation_id": "{{employee.organisation_id}}",
+          "$or": [
+            {
+              "user_condition": {
+                "role": "super_admin"
+              }
+            },
+            {
+              "user_condition": {
+                "role": "org_admin"
+              }
+            },
+            {
+              "user_condition": {
+                "role": "warehouse_manager"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    "delete": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "organisation_id": "{{employee.organisation_id}}",
+          "$or": [
+            {
+              "user_condition": {
+                "role": "super_admin"
+              }
+            },
+            {
+              "user_condition": {
+                "role": "org_admin"
+              }
+            },
+            {
+              "user_condition": {
+                "role": "warehouse_manager"
+              }
+            }
+          ]
+        }
+      ]
+    }
+  }
+}

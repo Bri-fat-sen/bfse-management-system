@@ -1,0 +1,202 @@
+{
+  "name": "WorkSchedule",
+  "type": "object",
+  "properties": {
+    "organisation_id": {
+      "type": "string"
+    },
+    "employee_id": {
+      "type": "string"
+    },
+    "employee_name": {
+      "type": "string"
+    },
+    "schedule_type": {
+      "type": "string",
+      "enum": [
+        "fixed",
+        "rotating",
+        "flexible"
+      ],
+      "default": "fixed"
+    },
+    "work_days": {
+      "type": "array",
+      "items": {
+        "type": "number"
+      },
+      "description": "Days of week (0=Sunday, 1=Monday, etc.)"
+    },
+    "start_time": {
+      "type": "string",
+      "description": "Default start time HH:mm"
+    },
+    "end_time": {
+      "type": "string",
+      "description": "Default end time HH:mm"
+    },
+    "break_duration_mins": {
+      "type": "number",
+      "default": 60
+    },
+    "expected_hours_per_day": {
+      "type": "number",
+      "default": 8
+    },
+    "expected_hours_per_week": {
+      "type": "number",
+      "default": 40
+    },
+    "overtime_threshold_daily": {
+      "type": "number",
+      "default": 8,
+      "description": "Hours after which overtime starts"
+    },
+    "overtime_threshold_weekly": {
+      "type": "number",
+      "default": 40
+    },
+    "effective_from": {
+      "type": "string",
+      "format": "date"
+    },
+    "effective_to": {
+      "type": "string",
+      "format": "date"
+    },
+    "is_active": {
+      "type": "boolean",
+      "default": true
+    },
+    "notes": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "organisation_id",
+    "employee_id",
+    "start_time",
+    "end_time"
+  ],
+  "rls": {
+    "create": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "organisation_id": "{{employee.organisation_id}}",
+          "$or": [
+            {
+              "user_condition": {
+                "role": "super_admin"
+              }
+            },
+            {
+              "user_condition": {
+                "role": "org_admin"
+              }
+            },
+            {
+              "user_condition": {
+                "role": "hr_admin"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    "read": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "employee_id": "{{employee.id}}"
+        },
+        {
+          "organisation_id": "{{employee.organisation_id}}",
+          "$or": [
+            {
+              "user_condition": {
+                "role": "super_admin"
+              }
+            },
+            {
+              "user_condition": {
+                "role": "org_admin"
+              }
+            },
+            {
+              "user_condition": {
+                "role": "hr_admin"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    "update": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "organisation_id": "{{employee.organisation_id}}",
+          "$or": [
+            {
+              "user_condition": {
+                "role": "super_admin"
+              }
+            },
+            {
+              "user_condition": {
+                "role": "org_admin"
+              }
+            },
+            {
+              "user_condition": {
+                "role": "hr_admin"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    "delete": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "organisation_id": "{{employee.organisation_id}}",
+          "$or": [
+            {
+              "user_condition": {
+                "role": "super_admin"
+              }
+            },
+            {
+              "user_condition": {
+                "role": "org_admin"
+              }
+            },
+            {
+              "user_condition": {
+                "role": "hr_admin"
+              }
+            }
+          ]
+        }
+      ]
+    }
+  }
+}

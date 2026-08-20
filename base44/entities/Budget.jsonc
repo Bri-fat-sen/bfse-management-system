@@ -1,0 +1,205 @@
+{
+  "name": "Budget",
+  "type": "object",
+  "properties": {
+    "organisation_id": {
+      "type": "string"
+    },
+    "name": {
+      "type": "string",
+      "description": "Budget name/label"
+    },
+    "budget_type": {
+      "type": "string",
+      "enum": [
+        "expense",
+        "revenue_target"
+      ],
+      "default": "expense",
+      "description": "Type of budget"
+    },
+    "category": {
+      "type": "string",
+      "enum": [
+        "fuel",
+        "maintenance",
+        "utilities",
+        "supplies",
+        "rent",
+        "salaries",
+        "transport",
+        "marketing",
+        "insurance",
+        "petty_cash",
+        "other"
+      ],
+      "description": "Expense category (for expense budgets)"
+    },
+    "location_id": {
+      "type": "string",
+      "description": "Warehouse/Store location ID"
+    },
+    "location_name": {
+      "type": "string",
+      "description": "Warehouse/Store name"
+    },
+    "assigned_to_id": {
+      "type": "string",
+      "description": "Employee ID (warehouse manager) this budget is assigned to"
+    },
+    "assigned_to_name": {
+      "type": "string"
+    },
+    "period_type": {
+      "type": "string",
+      "enum": [
+        "monthly",
+        "quarterly",
+        "yearly"
+      ],
+      "default": "monthly"
+    },
+    "year": {
+      "type": "number",
+      "description": "Budget year"
+    },
+    "month": {
+      "type": "number",
+      "description": "Month (1-12) for monthly budgets"
+    },
+    "quarter": {
+      "type": "number",
+      "description": "Quarter (1-4) for quarterly budgets"
+    },
+    "budgeted_amount": {
+      "type": "number",
+      "default": 0
+    },
+    "notes": {
+      "type": "string"
+    },
+    "is_active": {
+      "type": "boolean",
+      "default": true
+    },
+    "created_by_id": {
+      "type": "string"
+    },
+    "created_by_name": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "organisation_id",
+    "budget_type",
+    "period_type",
+    "year",
+    "budgeted_amount"
+  ],
+  "rls": {
+    "create": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "organisation_id": "{{employee.organisation_id}}",
+          "$or": [
+            {
+              "user_condition": {
+                "role": "super_admin"
+              }
+            },
+            {
+              "user_condition": {
+                "role": "org_admin"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    "read": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "organisation_id": "{{employee.organisation_id}}",
+          "$or": [
+            {
+              "user_condition": {
+                "role": "super_admin"
+              }
+            },
+            {
+              "user_condition": {
+                "role": "org_admin"
+              }
+            },
+            {
+              "user_condition": {
+                "role": "accountant"
+              }
+            },
+            {
+              "assigned_to_id": "{{employee.id}}"
+            }
+          ]
+        }
+      ]
+    },
+    "update": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "organisation_id": "{{employee.organisation_id}}",
+          "$or": [
+            {
+              "user_condition": {
+                "role": "super_admin"
+              }
+            },
+            {
+              "user_condition": {
+                "role": "org_admin"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    "delete": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "organisation_id": "{{employee.organisation_id}}",
+          "$or": [
+            {
+              "user_condition": {
+                "role": "super_admin"
+              }
+            },
+            {
+              "user_condition": {
+                "role": "org_admin"
+              }
+            }
+          ]
+        }
+      ]
+    }
+  }
+}

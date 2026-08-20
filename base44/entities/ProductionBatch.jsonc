@@ -1,0 +1,191 @@
+{
+  "name": "ProductionBatch",
+  "type": "object",
+  "properties": {
+    "organisation_id": {
+      "type": "string"
+    },
+    "batch_number": {
+      "type": "string"
+    },
+    "product_id": {
+      "type": "string"
+    },
+    "product_name": {
+      "type": "string"
+    },
+    "production_date": {
+      "type": "string",
+      "format": "date"
+    },
+    "start_time": {
+      "type": "string",
+      "description": "Production start time in HH:MM format"
+    },
+    "end_time": {
+      "type": "string",
+      "description": "Production end time in HH:MM format"
+    },
+    "duration_hours": {
+      "type": "number",
+      "default": 0,
+      "description": "Total hours taken to complete production"
+    },
+    "expiry_date": {
+      "type": "string",
+      "format": "date"
+    },
+    "quantity_produced": {
+      "type": "number",
+      "default": 0,
+      "description": "Total quantity produced before wastage"
+    },
+    "wastage_quantity": {
+      "type": "number",
+      "default": 0,
+      "description": "Quantity lost to wastage/damage"
+    },
+    "wastage_cost": {
+      "type": "number",
+      "default": 0,
+      "description": "Total cost of wastage"
+    },
+    "final_quantity": {
+      "type": "number",
+      "default": 0,
+      "description": "Final usable quantity (quantity_produced - wastage_quantity)"
+    },
+    "raw_materials": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "material_name": {
+            "type": "string"
+          },
+          "quantity_used": {
+            "type": "number"
+          },
+          "unit": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "quality_status": {
+      "type": "string",
+      "enum": [
+        "pending",
+        "passed",
+        "failed"
+      ],
+      "default": "pending"
+    },
+    "supervisor_id": {
+      "type": "string"
+    },
+    "supervisor_name": {
+      "type": "string"
+    },
+    "notes": {
+      "type": "string"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "in_progress",
+        "completed",
+        "cancelled"
+      ],
+      "default": "in_progress"
+    }
+  },
+  "required": [
+    "organisation_id",
+    "batch_number",
+    "product_id",
+    "production_date"
+  ],
+  "rls": {
+    "create": {
+      "organisation_id": "{{employee.organisation_id}}",
+      "$or": [
+        {
+          "user_condition": {
+            "role": "super_admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "org_admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "warehouse_manager"
+          }
+        }
+      ]
+    },
+    "read": {
+      "organisation_id": "{{employee.organisation_id}}",
+      "$or": [
+        {
+          "user_condition": {
+            "role": "super_admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "org_admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "warehouse_manager"
+          }
+        }
+      ]
+    },
+    "update": {
+      "organisation_id": "{{employee.organisation_id}}",
+      "$or": [
+        {
+          "user_condition": {
+            "role": "super_admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "org_admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "warehouse_manager"
+          }
+        }
+      ]
+    },
+    "delete": {
+      "organisation_id": "{{employee.organisation_id}}",
+      "$or": [
+        {
+          "user_condition": {
+            "role": "super_admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "org_admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "warehouse_manager"
+          }
+        }
+      ]
+    }
+  }
+}

@@ -1,0 +1,203 @@
+{
+  "name": "StatutoryRate",
+  "type": "object",
+  "properties": {
+    "organisation_id": {
+      "type": "string"
+    },
+    "name": {
+      "type": "string",
+      "description": "Name of the statutory deduction (e.g., NASSIT, PAYE)"
+    },
+    "code": {
+      "type": "string",
+      "description": "Unique code (e.g., NASSIT_EMP, NASSIT_EMP, PAYE)"
+    },
+    "type": {
+      "type": "string",
+      "enum": [
+        "social_security",
+        "income_tax",
+        "health_insurance",
+        "other"
+      ],
+      "default": "other"
+    },
+    "calculation_method": {
+      "type": "string",
+      "enum": [
+        "flat_rate",
+        "percentage",
+        "tiered",
+        "progressive"
+      ],
+      "default": "percentage"
+    },
+    "rate": {
+      "type": "number",
+      "description": "Percentage rate (e.g., 5 for 5%)"
+    },
+    "employer_rate": {
+      "type": "number",
+      "description": "Employer contribution rate if applicable"
+    },
+    "tiers": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "min": {
+            "type": "number"
+          },
+          "max": {
+            "type": "number"
+          },
+          "rate": {
+            "type": "number"
+          },
+          "label": {
+            "type": "string"
+          }
+        }
+      },
+      "description": "Tax brackets for progressive/tiered calculations"
+    },
+    "exemption_threshold": {
+      "type": "number",
+      "default": 0,
+      "description": "Income below this is exempt"
+    },
+    "max_contribution": {
+      "type": "number",
+      "description": "Maximum contribution cap"
+    },
+    "applies_to_base": {
+      "type": "string",
+      "enum": [
+        "gross_pay",
+        "basic_salary",
+        "taxable_income"
+      ],
+      "default": "gross_pay"
+    },
+    "is_mandatory": {
+      "type": "boolean",
+      "default": true
+    },
+    "effective_from": {
+      "type": "string",
+      "format": "date"
+    },
+    "effective_to": {
+      "type": "string",
+      "format": "date"
+    },
+    "is_active": {
+      "type": "boolean",
+      "default": true
+    },
+    "country": {
+      "type": "string",
+      "default": "Sierra Leone"
+    },
+    "legal_reference": {
+      "type": "string",
+      "description": "Reference to the law/act"
+    },
+    "notes": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "organisation_id",
+    "name",
+    "code",
+    "calculation_method"
+  ],
+  "rls": {
+    "create": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "organisation_id": "{{employee.organisation_id}}",
+          "$or": [
+            {
+              "user_condition": {
+                "role": "super_admin"
+              }
+            },
+            {
+              "user_condition": {
+                "role": "org_admin"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    "read": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "organisation_id": "{{employee.organisation_id}}"
+        }
+      ]
+    },
+    "update": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "organisation_id": "{{employee.organisation_id}}",
+          "$or": [
+            {
+              "user_condition": {
+                "role": "super_admin"
+              }
+            },
+            {
+              "user_condition": {
+                "role": "org_admin"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    "delete": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "organisation_id": "{{employee.organisation_id}}",
+          "$or": [
+            {
+              "user_condition": {
+                "role": "super_admin"
+              }
+            },
+            {
+              "user_condition": {
+                "role": "org_admin"
+              }
+            }
+          ]
+        }
+      ]
+    }
+  }
+}

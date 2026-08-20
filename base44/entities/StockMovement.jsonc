@@ -1,0 +1,124 @@
+{
+  "name": "StockMovement",
+  "type": "object",
+  "properties": {
+    "organisation_id": {
+      "type": "string"
+    },
+    "product_id": {
+      "type": "string"
+    },
+    "product_name": {
+      "type": "string"
+    },
+    "warehouse_id": {
+      "type": "string"
+    },
+    "warehouse_name": {
+      "type": "string"
+    },
+    "movement_type": {
+      "type": "string",
+      "enum": [
+        "in",
+        "out",
+        "transfer",
+        "adjustment",
+        "return"
+      ],
+      "default": "in"
+    },
+    "quantity": {
+      "type": "number",
+      "default": 0
+    },
+    "previous_stock": {
+      "type": "number",
+      "default": 0
+    },
+    "new_stock": {
+      "type": "number",
+      "default": 0
+    },
+    "reference_type": {
+      "type": "string",
+      "enum": [
+        "sale",
+        "purchase",
+        "production",
+        "manual",
+        "transfer"
+      ]
+    },
+    "reference_id": {
+      "type": "string"
+    },
+    "recorded_by": {
+      "type": "string"
+    },
+    "recorded_by_name": {
+      "type": "string"
+    },
+    "notes": {
+      "type": "string"
+    },
+    "source_document_id": {
+      "type": "string",
+      "description": "Link to uploaded document that created this record"
+    }
+  },
+  "required": [
+    "organisation_id",
+    "product_id",
+    "movement_type",
+    "quantity"
+  ],
+  "rls": {
+    "create": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "organisation_id": "{{employee.organisation_id}}"
+        }
+      ]
+    },
+    "read": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "recorded_by": "{{employee.id}}"
+        },
+        {
+          "organisation_id": "{{employee.organisation_id}}",
+          "$or": [
+            {
+              "user_condition": {
+                "role": "super_admin"
+              }
+            },
+            {
+              "user_condition": {
+                "role": "org_admin"
+              }
+            },
+            {
+              "user_condition": {
+                "role": "warehouse_manager"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    "update": {},
+    "delete": {}
+  }
+}

@@ -1,0 +1,217 @@
+{
+  "name": "Attendance",
+  "type": "object",
+  "properties": {
+    "organisation_id": {
+      "type": "string"
+    },
+    "employee_id": {
+      "type": "string"
+    },
+    "employee_name": {
+      "type": "string"
+    },
+    "date": {
+      "type": "string",
+      "format": "date"
+    },
+    "clock_in_time": {
+      "type": "string"
+    },
+    "clock_out_time": {
+      "type": "string"
+    },
+    "total_hours": {
+      "type": "number"
+    },
+    "scheduled_hours": {
+      "type": "number",
+      "default": 0,
+      "description": "Expected hours from work schedule"
+    },
+    "overtime_hours": {
+      "type": "number",
+      "default": 0
+    },
+    "overtime_approved": {
+      "type": "boolean",
+      "default": false,
+      "description": "Whether overtime hours have been approved by admin"
+    },
+    "overtime_approved_by": {
+      "type": "string",
+      "description": "Employee ID of approver"
+    },
+    "overtime_approved_by_name": {
+      "type": "string",
+      "description": "Name of approver"
+    },
+    "overtime_approval_date": {
+      "type": "string",
+      "format": "date"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "present",
+        "absent",
+        "late",
+        "half_day",
+        "leave"
+      ],
+      "default": "present"
+    },
+    "timesheet_status": {
+      "type": "string",
+      "enum": [
+        "pending",
+        "approved",
+        "rejected",
+        "overridden"
+      ],
+      "default": "pending",
+      "description": "Status for wage employee timesheets"
+    },
+    "approved_hours": {
+      "type": "number",
+      "description": "Admin-approved hours (can differ from total_hours)"
+    },
+    "approved_by": {
+      "type": "string",
+      "description": "Admin who approved/overrode timesheet"
+    },
+    "approved_by_name": {
+      "type": "string"
+    },
+    "approval_date": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "approval_notes": {
+      "type": "string",
+      "description": "Notes from admin about timesheet approval/override"
+    },
+    "clock_in_location": {
+      "type": "string"
+    },
+    "clock_out_location": {
+      "type": "string"
+    },
+    "clock_in_device": {
+      "type": "string"
+    },
+    "clock_out_device": {
+      "type": "string"
+    },
+    "notes": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "organisation_id",
+    "employee_id",
+    "date"
+  ],
+  "rls": {
+    "create": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "organisation_id": "{{employee.organisation_id}}"
+        }
+      ]
+    },
+    "read": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "employee_id": "{{employee.id}}"
+        },
+        {
+          "organisation_id": "{{employee.organisation_id}}",
+          "$or": [
+            {
+              "user_condition": {
+                "role": "super_admin"
+              }
+            },
+            {
+              "user_condition": {
+                "role": "org_admin"
+              }
+            },
+            {
+              "user_condition": {
+                "role": "hr_admin"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    "update": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "employee_id": "{{employee.id}}"
+        },
+        {
+          "organisation_id": "{{employee.organisation_id}}",
+          "$or": [
+            {
+              "user_condition": {
+                "role": "super_admin"
+              }
+            },
+            {
+              "user_condition": {
+                "role": "org_admin"
+              }
+            },
+            {
+              "user_condition": {
+                "role": "hr_admin"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    "delete": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "organisation_id": "{{employee.organisation_id}}",
+          "$or": [
+            {
+              "user_condition": {
+                "role": "super_admin"
+              }
+            },
+            {
+              "user_condition": {
+                "role": "hr_admin"
+              }
+            }
+          ]
+        }
+      ]
+    }
+  }
+}

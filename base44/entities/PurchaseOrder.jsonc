@@ -1,0 +1,366 @@
+{
+  "name": "PurchaseOrder",
+  "type": "object",
+  "properties": {
+    "organisation_id": {
+      "type": "string"
+    },
+    "po_number": {
+      "type": "string"
+    },
+    "supplier_id": {
+      "type": "string"
+    },
+    "supplier_name": {
+      "type": "string"
+    },
+    "warehouse_id": {
+      "type": "string"
+    },
+    "warehouse_name": {
+      "type": "string"
+    },
+    "order_date": {
+      "type": "string",
+      "format": "date"
+    },
+    "expected_delivery_date": {
+      "type": "string",
+      "format": "date"
+    },
+    "actual_delivery_date": {
+      "type": "string",
+      "format": "date"
+    },
+    "items": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "product_id": {
+            "type": "string"
+          },
+          "product_name": {
+            "type": "string"
+          },
+          "is_inventory_item": {
+            "type": "boolean",
+            "default": true
+          },
+          "description": {
+            "type": "string"
+          },
+          "quantity_ordered": {
+            "type": "number"
+          },
+          "quantity_received": {
+            "type": "number"
+          },
+          "unit": {
+            "type": "string",
+            "default": "piece"
+          },
+          "unit_cost": {
+            "type": "number"
+          },
+          "total": {
+            "type": "number"
+          },
+          "delivery_history": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "delivery_date": {
+                  "type": "string",
+                  "format": "date-time"
+                },
+                "quantity_delivered": {
+                  "type": "number"
+                },
+                "quantity_accepted": {
+                  "type": "number"
+                },
+                "quantity_rejected": {
+                  "type": "number"
+                },
+                "discrepancy_notes": {
+                  "type": "string"
+                },
+                "received_by": {
+                  "type": "string"
+                },
+                "received_by_name": {
+                  "type": "string"
+                }
+              }
+            },
+            "description": "Granular tracking of partial deliveries"
+          }
+        }
+      }
+    },
+    "subtotal": {
+      "type": "number",
+      "default": 0
+    },
+    "tax_amount": {
+      "type": "number",
+      "default": 0
+    },
+    "shipping_cost": {
+      "type": "number",
+      "default": 0
+    },
+    "total_amount": {
+      "type": "number",
+      "default": 0
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "draft",
+        "pending_approval",
+        "approved",
+        "ordered",
+        "partial",
+        "received",
+        "cancelled",
+        "rejected"
+      ],
+      "default": "draft"
+    },
+    "payment_status": {
+      "type": "string",
+      "enum": [
+        "unpaid",
+        "partial",
+        "paid"
+      ],
+      "default": "unpaid"
+    },
+    "created_by": {
+      "type": "string"
+    },
+    "created_by_name": {
+      "type": "string"
+    },
+    "approval_workflow": {
+      "type": "object",
+      "properties": {
+        "required_approvers": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "level": {
+                "type": "number"
+              },
+              "role": {
+                "type": "string"
+              },
+              "employee_id": {
+                "type": "string"
+              },
+              "employee_name": {
+                "type": "string"
+              },
+              "status": {
+                "type": "string",
+                "enum": [
+                  "pending",
+                  "approved",
+                  "rejected"
+                ]
+              },
+              "decision_date": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "notes": {
+                "type": "string"
+              }
+            }
+          }
+        },
+        "current_level": {
+          "type": "number",
+          "default": 1
+        },
+        "workflow_type": {
+          "type": "string",
+          "enum": [
+            "value_based",
+            "type_based",
+            "manual"
+          ],
+          "default": "value_based"
+        }
+      }
+    },
+    "is_recurring": {
+      "type": "boolean",
+      "default": false
+    },
+    "recurrence": {
+      "type": "object",
+      "properties": {
+        "frequency": {
+          "type": "string",
+          "enum": [
+            "weekly",
+            "bi_weekly",
+            "monthly",
+            "quarterly"
+          ],
+          "default": "monthly"
+        },
+        "next_order_date": {
+          "type": "string",
+          "format": "date"
+        },
+        "end_date": {
+          "type": "string",
+          "format": "date"
+        },
+        "auto_approve": {
+          "type": "boolean",
+          "default": false
+        },
+        "quantity_adjustment": {
+          "type": "object",
+          "properties": {
+            "enabled": {
+              "type": "boolean",
+              "default": false
+            },
+            "adjustment_percentage": {
+              "type": "number",
+              "default": 0
+            }
+          }
+        }
+      }
+    },
+    "parent_recurring_po_id": {
+      "type": "string",
+      "description": "Reference to parent recurring PO if this is auto-generated"
+    },
+    "discrepancies": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "item_id": {
+            "type": "string"
+          },
+          "product_name": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "quantity_mismatch",
+              "quality_issue",
+              "damaged",
+              "wrong_item",
+              "missing_item"
+            ]
+          },
+          "expected_quantity": {
+            "type": "number"
+          },
+          "received_quantity": {
+            "type": "number"
+          },
+          "variance": {
+            "type": "number"
+          },
+          "description": {
+            "type": "string"
+          },
+          "resolution_status": {
+            "type": "string",
+            "enum": [
+              "pending",
+              "resolved",
+              "escalated"
+            ],
+            "default": "pending"
+          },
+          "resolution_notes": {
+            "type": "string"
+          },
+          "reported_by": {
+            "type": "string"
+          },
+          "reported_date": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      }
+    },
+    "approved_by": {
+      "type": "string"
+    },
+    "notes": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "organisation_id",
+    "supplier_id",
+    "order_date"
+  ],
+  "rls": {
+    "create": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "organisation_id": "{{employee.organisation_id}}"
+        }
+      ]
+    },
+    "read": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "organisation_id": "{{employee.organisation_id}}"
+        }
+      ]
+    },
+    "update": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "organisation_id": "{{employee.organisation_id}}"
+        }
+      ]
+    },
+    "delete": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "organisation_id": "{{employee.organisation_id}}"
+        }
+      ]
+    }
+  }
+}

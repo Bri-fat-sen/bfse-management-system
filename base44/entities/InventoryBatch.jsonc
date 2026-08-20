@@ -1,0 +1,218 @@
+{
+  "name": "InventoryBatch",
+  "type": "object",
+  "properties": {
+    "organisation_id": {
+      "type": "string"
+    },
+    "product_id": {
+      "type": "string"
+    },
+    "product_name": {
+      "type": "string"
+    },
+    "batch_number": {
+      "type": "string"
+    },
+    "warehouse_id": {
+      "type": "string"
+    },
+    "warehouse_name": {
+      "type": "string"
+    },
+    "quantity": {
+      "type": "number",
+      "default": 0,
+      "description": "Total batch quantity (units/rolls)"
+    },
+    "allocated_quantity": {
+      "type": "number",
+      "default": 0,
+      "description": "Quantity already allocated to locations"
+    },
+    "rolls": {
+      "type": "number",
+      "default": 0,
+      "description": "Number of rolls in the batch"
+    },
+    "weight_kg": {
+      "type": "number",
+      "default": 0,
+      "description": "Total weight in kilograms"
+    },
+    "unit_cost": {
+      "type": "number",
+      "default": 0
+    },
+    "manufacturing_date": {
+      "type": "string",
+      "format": "date"
+    },
+    "start_time": {
+      "type": "string",
+      "description": "Production start time in HH:MM format"
+    },
+    "end_time": {
+      "type": "string",
+      "description": "Production end time in HH:MM format"
+    },
+    "duration_hours": {
+      "type": "number",
+      "default": 0,
+      "description": "Total hours taken to complete production"
+    },
+    "expiry_date": {
+      "type": "string",
+      "format": "date"
+    },
+    "received_date": {
+      "type": "string",
+      "format": "date"
+    },
+    "supplier_id": {
+      "type": "string"
+    },
+    "supplier_name": {
+      "type": "string"
+    },
+    "purchase_order_id": {
+      "type": "string"
+    },
+    "cost_price": {
+      "type": "number",
+      "default": 0
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "active",
+        "expired",
+        "depleted",
+        "quarantine"
+      ],
+      "default": "active"
+    },
+    "quality_status": {
+      "type": "string",
+      "enum": [
+        "pending",
+        "passed",
+        "failed"
+      ],
+      "default": "pending",
+      "description": "Quality control status"
+    },
+    "wastage_quantity": {
+      "type": "number",
+      "default": 0,
+      "description": "Quantity lost to wastage/damage"
+    },
+    "wastage_cost": {
+      "type": "number",
+      "default": 0,
+      "description": "Total cost of wastage"
+    },
+    "supervisor_id": {
+      "type": "string",
+      "description": "Employee ID of the person who produced the batch"
+    },
+    "supervisor_name": {
+      "type": "string",
+      "description": "Name of the person who produced the batch"
+    },
+    "notes": {
+      "type": "string"
+    },
+    "source_document_id": {
+      "type": "string",
+      "description": "Link to uploaded document that created this record"
+    }
+  },
+  "required": [
+    "organisation_id",
+    "product_id",
+    "batch_number"
+  ],
+  "rls": {
+    "create": {
+      "organisation_id": "{{employee.organisation_id}}",
+      "$or": [
+        {
+          "user_condition": {
+            "role": "super_admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "org_admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "warehouse_manager"
+          }
+        }
+      ]
+    },
+    "read": {
+      "organisation_id": "{{employee.organisation_id}}",
+      "$or": [
+        {
+          "user_condition": {
+            "role": "super_admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "org_admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "warehouse_manager"
+          }
+        }
+      ]
+    },
+    "update": {
+      "organisation_id": "{{employee.organisation_id}}",
+      "$or": [
+        {
+          "user_condition": {
+            "role": "super_admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "org_admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "warehouse_manager"
+          }
+        }
+      ]
+    },
+    "delete": {
+      "organisation_id": "{{employee.organisation_id}}",
+      "$or": [
+        {
+          "user_condition": {
+            "role": "super_admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "org_admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "warehouse_manager"
+          }
+        }
+      ]
+    }
+  }
+}

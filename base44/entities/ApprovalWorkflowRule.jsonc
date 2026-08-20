@@ -1,0 +1,177 @@
+{
+  "name": "ApprovalWorkflowRule",
+  "type": "object",
+  "properties": {
+    "organisation_id": {
+      "type": "string"
+    },
+    "name": {
+      "type": "string"
+    },
+    "description": {
+      "type": "string"
+    },
+    "is_active": {
+      "type": "boolean",
+      "default": true
+    },
+    "trigger_type": {
+      "type": "string",
+      "enum": [
+        "value_based",
+        "type_based",
+        "supplier_based"
+      ],
+      "default": "value_based"
+    },
+    "conditions": {
+      "type": "object",
+      "properties": {
+        "min_amount": {
+          "type": "number"
+        },
+        "max_amount": {
+          "type": "number"
+        },
+        "order_types": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "supplier_ids": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "approval_levels": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "level": {
+            "type": "number"
+          },
+          "required_role": {
+            "type": "string",
+            "enum": [
+              "warehouse_manager",
+              "org_admin",
+              "super_admin",
+              "accountant"
+            ]
+          },
+          "specific_approvers": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "require_all": {
+            "type": "boolean",
+            "default": false
+          }
+        }
+      }
+    },
+    "priority": {
+      "type": "number",
+      "default": 0,
+      "description": "Higher priority rules are evaluated first"
+    }
+  },
+  "required": [
+    "organisation_id",
+    "name",
+    "trigger_type"
+  ],
+  "rls": {
+    "create": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "organisation_id": "{{employee.organisation_id}}",
+          "$or": [
+            {
+              "user_condition": {
+                "role": "super_admin"
+              }
+            },
+            {
+              "user_condition": {
+                "role": "org_admin"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    "read": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "organisation_id": "{{employee.organisation_id}}"
+        }
+      ]
+    },
+    "update": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "organisation_id": "{{employee.organisation_id}}",
+          "$or": [
+            {
+              "user_condition": {
+                "role": "super_admin"
+              }
+            },
+            {
+              "user_condition": {
+                "role": "org_admin"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    "delete": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "organisation_id": "{{employee.organisation_id}}",
+          "$or": [
+            {
+              "user_condition": {
+                "role": "super_admin"
+              }
+            },
+            {
+              "user_condition": {
+                "role": "org_admin"
+              }
+            }
+          ]
+        }
+      ]
+    }
+  }
+}
